@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "type": "harbour-dbg",
+            "request": "attach",
+            "name": "Attach Program DataDictionary.exe",
+            "windows":{
+                "program": "C:\\Harbour_websites\\fcgi_DataDictionary\\backend\\FCGIDataDictionary.exe",
+                "sourcePaths": [
+                    "${workspaceFolder}",
+                    "C:\\Harbour_ORM\\",
+                    "C:\\Harbour_VFP\\"
+                ]
+            },
+            "linux":{
+                "program": "/etc/fcgi_DataDictionary/backend/FCGIDataDictionary.exe",
+                "sourcePaths": [
+                    "${workspaceFolder}",
+                    "/etc/Harbour_ORM/",
+                    "/etc/Harbour_VFP/"
+                ]
+            }
+        }
+    ]
+}

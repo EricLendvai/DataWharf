@@ -1,0 +1,305 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "RunDebug",
+            "command": "${command:workbench.action.debug.start}",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {"label" : "<Debug>","hide" : false}
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
+        {
+            "label": "CompileDebug",
+            "windows":{
+                "type": "shell",
+                "command": "${workspaceFolder}\\..\\BuildEXE.bat",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "env": {
+                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_ORM_ROOT":"C:\\Harbour_ORM",
+                        "FastCGIRootPath":"..\\..\\",
+                        "EXEName":"DataDictionary",
+                        "BuildMode":"debug",
+//                        "HB_COMPILER":"${input:CCompiler}",
+                        "HB_COMPILER":"mingw64",
+                        "WebsiteDrive":"C:",
+                        "SiteRootFolder":"\\Harbour_websites\\fcgi_datadictionary\\"
+                    },
+                    "statusbar": {"label" : "<Compile Debug>","hide" : false}
+                },
+                "dependsOrder": "sequence",
+                "dependsOn":["SoftKillFcgiExe"],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            },
+            "linux":{
+                "type": "shell",
+                "command": "/etc/Harbour_FastCGI/hb_fcgi/BuildEXE.sh",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "env": {
+                        "HB_VFP_ROOT":"/etc/Harbour_VFP",
+                        "HB_ORM_ROOT":"/etc/Harbour_ORM",
+                        "FastCGIRootPath":"/etc/Harbour_FastCGI/",
+                        "EXEName":"DataDictionary",
+                        "BuildMode":"debug",
+                        "HB_COMPILER":"gcc",
+                        "WebsiteDrive":"",
+                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_datadictionary/"
+                    },
+                    "statusbar": {"label" : "<Compile Debug>","hide" : false}
+                },
+                "dependsOrder": "sequence",
+                "dependsOn":["SoftKillFcgiExe"],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            }
+        },
+        {
+            "label": "CompileRelease",
+            "windows":{
+                "type": "shell",
+                "command": "${workspaceFolder}\\..\\BuildEXE.bat",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "env": {
+                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_ORM_ROOT":"C:\\Harbour_ORM",
+                        "FastCGIRootPath":"..\\..\\",
+                        "EXEName":"DataDictionary",
+                        "BuildMode":"release",
+                        // "HB_COMPILER":"${input:CCompiler}",
+                        "HB_COMPILER":"mingw64",
+                        "WebsiteDrive":"C:",
+                        "SiteRootFolder":"\\Harbour_websites\\fcgi_datadictionary\\"
+                    },
+                    "statusbar": {"label" : "<Compile Release>","hide" : false}
+                },
+                "dependsOrder": "sequence",
+                "dependsOn":["SoftKillFcgiExe"],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            },
+            "linux":{
+                "type": "shell",
+                "command": "/etc/Harbour_FastCGI/hb_fcgi/BuildEXE.sh",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "env": {
+                        "HB_VFP_ROOT":"/etc/Harbour_VFP",
+                        "HB_ORM_ROOT":"/etc/Harbour_ORM",
+                        "FastCGIRootPath":"/etc/Harbour_FastCGI/",
+                        "EXEName":"DataDictionary",
+                        "BuildMode":"release",
+                        "HB_COMPILER":"gcc",
+                        "WebsiteDrive":"",
+                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_datadictionary/"
+                    },
+                    "statusbar": {"label" : "<Compile Release>","hide" : false}
+                },
+                "dependsOrder": "sequence",
+                "dependsOn":["SoftKillFcgiExe"],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            }
+        },
+        {
+            "label":"KillFcgiExe",
+            "windows":{
+                "type": "shell",
+                "command":"taskkill",
+                "args": ["/IM","FCGIDataDictionary.exe","/f","/t"],
+                "options": {
+                    "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
+                }
+            },
+            "linux":{
+                "type": "shell",
+                "command":"taskkill",
+                "args": ["/IM","FCGIDataDictionary.exe","/f","/t"],
+                "options": {
+                    "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
+                }
+            }
+        },
+        {
+            "label":"SoftKillFcgiExe",
+            "windows":{
+                "type": "shell",
+                "command":"${workspaceFolder}\\..\\..\\FCGITaskManagerBin\\FCGITaskManager.exe",
+                "args": ["kill","http","localhost","8164","/fcgi_datadictionary/","C:/Harbour_websites/fcgi_DataDictionary/","DataDictionary",""],
+                "options": {
+                    "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
+                }
+            },
+            "linux":{
+                "type": "shell",
+                "command":"/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe",
+                "args": ["kill","http","localhost","80","/fcgi_datadictionary/","/etc/Harbour_websites/fcgi_DataDictionary/","DataDictionary",""],
+                "options": {
+                    "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
+                }
+            }
+        },
+        {
+            "label": "DelAllPPO",
+            "windows":{
+                "type": "shell",
+                "command": "del *.ppo",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del All PPO>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "del *.ppo",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del All PPO>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
+            "label": "Down",
+            "windows":{
+                "type": "shell",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_datadictionary/ C:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Down>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Down>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
+            "label": "ActivateDataDictionary",
+            "windows":{
+                "type": "shell",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_datadictionary/ C:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Activate DataDictionary>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Activate DataDictionary>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
+            "label": "KillDataDictionary",
+            "windows":{
+                "type": "shell",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_datadictionary/ C:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Kill DataDictionary>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Kill DataDictionary>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
+            "label": "BrowseDataDictionary",
+            "windows":{
+                "type": "shell",
+                "command": "\"C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe\" http://localhost:8164/fcgi_datadictionary/",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Browse >","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "firefox http://DataDictionary/",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Browse Data Dictionary>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "CCompiler",
+            "type": "pickString",
+            "description": "Select C Compiler",
+            "options": ["mingw64","msvc64"],
+            "default": "mingw64"
+        }
+    ]
+}

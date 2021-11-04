@@ -1,0 +1,23 @@
+* text=auto
+
+*.sh text eol=lf
+
+*.bmp binary
+*.dbf binary
+*.cdx binary
+*.fpt binary
+*.dll binary
+*.exe binary
+*.ico binary
+*.lib binary
+*.obj binary
+*.pdb binary
+*.so binary
+*.sh binary
+*.exp binary
+*.suo binary
+*.db binary
+*.dsw binary
+*.sdf binary
+*.sln binary
+

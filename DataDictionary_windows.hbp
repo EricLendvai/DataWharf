@@ -1,0 +1,45 @@
+-hbexe
+
+-trace
+
+#To enabled progressing recompilation uncomment the following line
+-inc
+
+-workdir=build\win64\${HB_COMPILER}\${BuildMode}\hbmk2\
+
+#To also create a list of all the object files linked uncomment the following line
+#-map
+
+#Temporary solution due to conflict of same definition in Harbour_FastCGI and Harbour_VFP
+-ldflag=-Wl,--allow-multiple-definition
+
+#To include the hb_vfp module, and even allow its debugging
+-incpath=${HB_VFP_ROOT}\
+#Update the path where the HB_VFP package is installed
+-L${HB_VFP_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}
+-lhb_vfp
+#The following will force the linking of all functions in hb_vfp module
+${HB_VFP_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_vfp.hbx
+
+#To include the hb_orm module, and even allow its debugging
+-incpath=${HB_ORM_ROOT}\
+#Update the path where the HB_ORM package is installed
+-L${HB_ORM_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}
+-lhb_orm
+#The following will force the linking of all functions in hb_orm module
+${HB_ORM_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_orm.hbx
+#The following are includes used by the HB_ORM
+sddodbc.hbc
+xhb.hbc
+
+#To load additional contrib libraries
+hbct.hbc
+hbmisc.hbc
+
+-obuild\win64\${HB_COMPILER}\${BuildMode}\${EXEName}.exe
+
+DataDictionary.prg
+WebPages.hbm
+
+..\..\hb_fcgi\hb_fcgi_windows.hbm
+..\debugger.hbm

@@ -1,0 +1,17 @@
+*.com
+*.class
+*.o
+*.so
+*.tmp
+*.bak
+*.hrb
+*.ppo
+*.log
+.history
+.hbmk
+*.NotInGit
+Thumbs.db
+*_rnd.*
+*sdol*.*
+sdol
+hb_out.log
