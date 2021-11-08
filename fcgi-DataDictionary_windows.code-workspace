@@ -10,7 +10,7 @@
             "path": "c:\\apache24-64\\conf"
         }
         ,{
-            "path": "C:\\Harbour_ORM\\"
+            "path": "R:\\Harbour_ORM\\"
         }
     ],
     "settings": {
@@ -18,12 +18,12 @@
         "harbour.compilerExecutable": "C:\\Harbour\\bin\\win\\mingw64\\harbour.exe",
         "harbour.extraOptions": "-iC:\\Harbour\\include",
         "harbour.extraIncludePaths":["C:\\Harbour\\include\\",
-                                     "C:\\Harbour_VFP\\",
-                                     "C:\\Harbour_ORM\\",
-                                     "C:\\Harbour_FastCGI\\hb_fcgi\\"],
+                                     "R:\\Harbour_VFP\\",
+                                     "R:\\Harbour_ORM\\",
+                                     "R:\\Harbour_FastCGI\\hb_fcgi\\"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
-        "local-history.path": "C:\\VSCode_History\\Harbour_FastCGI",
+        "local-history.path": "R:\\VSCode_History\\Harbour_FastCGI",
         "local-history.treeLocation": "localHistory",
         "local-history.daysLimit": 0,
         "local-history.maxDisplay": 5

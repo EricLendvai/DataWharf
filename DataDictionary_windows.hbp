@@ -39,6 +39,7 @@ hbmisc.hbc
 -obuild\win64\${HB_COMPILER}\${BuildMode}\${EXEName}.exe
 
 DataDictionary.prg
+LoadSchema.prg
 WebPages.hbm
 
 ..\..\hb_fcgi\hb_fcgi_windows.hbm

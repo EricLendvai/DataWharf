@@ -10,11 +10,11 @@
             "request": "attach",
             "name": "Attach Program DataDictionary.exe",
             "windows":{
-                "program": "C:\\Harbour_websites\\fcgi_DataDictionary\\backend\\FCGIDataDictionary.exe",
+                "program": "R:\\Harbour_websites\\fcgi_DataDictionary\\backend\\FCGIDataDictionary.exe",
                 "sourcePaths": [
                     "${workspaceFolder}",
-                    "C:\\Harbour_ORM\\",
-                    "C:\\Harbour_VFP\\"
+                    "R:\\Harbour_ORM\\",
+                    "R:\\Harbour_VFP\\"
                 ]
             },
             "linux":{

@@ -39,6 +39,7 @@ hbmisc.hbc
 -obuild/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe
 
 DataDictionary.prg
+LoadSchema.prg
 WebPages.hbm
 
 

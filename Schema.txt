@@ -1,12 +1,19 @@
 l_Schema := ;
 {"public.Application"=>{;   //Field Definition
-   {"pk"         =>{,  "I",   0,  0,"+"};
-   ,"sysc"       =>{, "DT",   0,  6,"N"};
-   ,"sysm"       =>{, "DT",   0,  6,"N"};
-   ,"LinkCode"   =>{, "CV",  10,  0,};     // Used to create direct link to the Application for data dic management
-   ,"Name"       =>{, "CV", 200,  0,};
-   ,"Status"     =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
-   ,"Description"=>{,  "M",   0,  0,"N"}};
+   {"pk"             =>{,  "I",   0,  0,"+"};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"LinkCode"       =>{, "CV",  10,  0,};     // Used to create direct link to the Application for data dic management
+   ,"Name"           =>{, "CV", 200,  0,};
+   ,"Status"         =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"Description"    =>{,  "M",   0,  0,"N"};
+   ,"SyncBackendType"=>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
+   ,"SyncServer"     =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
+   ,"SyncPort"       =>{,  "I",   0,  0,"N"};  // Connection Info To Sync To.  Port if not default one for Backend Type.
+   ,"SyncUser"       =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  User Account to use to connect.
+   ,"SyncDatabase"   =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Database to connect to.
+   ,"SyncNameSpaces" =>{, "CV", 400,  0,"N"};  // Connection Info To Sync To.  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
+   };
    ,;   //Index Definition
    NIL};
 ,"public.Column"=>{;   //Field Definition
@@ -61,7 +68,7 @@ l_Schema := ;
    ,"Unique"     =>{,  "L",   0,  0,};
    ,"Order"      =>{,  "N",   1,  0,};
    ,"Description"=>{,  "M",   0,  0,"N"};
-   ,"Algo"       =>{,  "N",   0,  0,};         // 1 = BTREE
+   ,"Algo"       =>{,  "N",   1,  0,};         // 1 = BTREE
    ,"UsedBy"     =>{,  "N",   1,  0,}};        // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,;   //Index Definition
    {"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};

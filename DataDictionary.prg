@@ -6,9 +6,7 @@ request HB_CODEPAGE_UTF8
 
 #include "DataDictionary.ch"
 
-#xtranslate NVL(<vValue1>,<xValue2>) => hb_DefaultValue(<vValue1>,<xValue2>)
-
-#define BUILDVERSION "0.9"
+#define BUILDVERSION "0.10"
 
 memvar v_hPP
 
@@ -55,24 +53,25 @@ class MyFcgi from hb_Fcgi
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
     data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
 
-    data p_ColumnTypes      init {{  "I","Integer"                                      ,.f.,.f.,.f.,"integer"                    ,"int"      },;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
-                                  { "IB","Integer Big"                                  ,.f.,.f.,.f.,"bigint"                     ,"bigint"   },;
-                                  {  "N","Numeric"                                      ,.t.,.t.,.f.,"numeric"                    ,"decimal"  },;
-                                  {  "C","Character String"                             ,.t.,.f.,.f.,"character"                  ,"character"},;
-                                  { "CV","Character String Varying"                     ,.t.,.f.,.f.,"character varying"          ,"xxxxx"    },;
-                                  {  "B","Binary String"                                ,.t.,.f.,.f.,"bit"                        ,"xxxxx"    },;
-                                  { "BV","Binary String Varying"                        ,.t.,.f.,.f.,"bit varying"                ,"xxxxx"    },;
-                                  {  "M","Memo / Long Text"                             ,.f.,.f.,.f.,"text"                       ,"xxxxx"    },;
-                                  {  "R","Raw Binary"                                   ,.f.,.f.,.f.,"bytea"                      ,"xxxxx"    },;
-                                  {  "L","Logical"                                      ,.f.,.f.,.f.,"boolean"                    ,"xxxxx"    },;
-                                  {  "D","Date"                                         ,.f.,.f.,.f.,"date"                       ,"xxxxx"    },;
-                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,"time"                       ,"xxxxx"    },;
-                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,"time without time zone"     ,"xxxxx"    },;
-                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,"timestamp"                  ,"xxxxx"    },;
-                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,"timestamp without time zone","xxxxx"    },;
-                                  {  "Y","Money"                                        ,.f.,.f.,.f.,"money"                      ,"xxxxx"    },;
-                                  {  "E","Enumeration"                                  ,.f.,.f.,.t.,"enum"                       ,"enum"     },;
-                                  {  "?","Other"                                        ,.f.,.f.,.f.,""                           ,""         };
+    data p_ColumnTypes      init {{  "I","Integer"                                      ,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
+                                  { "IB","Integer Big"                                  ,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
+                                  {  "N","Numeric"                                      ,.t.,.t.,.f.,"numeric"                    ,"DECIMAL"},;
+                                  {  "C","Character String"                             ,.t.,.f.,.f.,"character"                  ,"CHAR"},;
+                                  { "CV","Character String Varying"                     ,.t.,.f.,.f.,"character varying"          ,"VARCHAR"},;
+                                  {  "B","Binary String"                                ,.t.,.f.,.f.,"bit"                        ,"BINARY"},;
+                                  { "BV","Binary String Varying"                        ,.t.,.f.,.f.,"bit varying"                ,"VARBINARY"},;
+                                  {  "M","Memo / Long Text"                             ,.f.,.f.,.f.,"text"                       ,"LONGTEXT"},;
+                                  {  "R","Raw Binary"                                   ,.f.,.f.,.f.,"bytea"                      ,"LONGBLOB"},;
+                                  {  "L","Logical"                                      ,.f.,.f.,.f.,"boolean"                    ,"TINYINT(1)"},;
+                                  {  "D","Date"                                         ,.f.,.f.,.f.,"date"                       ,"DATE"},;
+                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'with timezone'"},;
+                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,"time without time zone"     ,"TIME"},;
+                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"},;
+                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
+                                  {  "Y","Money"                                        ,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'money'"},;
+                                  {  "E","Enumeration"                                  ,.f.,.f.,.t.,"enum"                       ,"ENUM"},;
+                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.t.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
+                                  {  "?","Other"                                        ,.f.,.f.,.f.,""                           ,""};
                                  }
 //12345
     method OnFirstRequest()
@@ -484,7 +483,7 @@ function GetPageHeader(par_LoggedIn,par_cCurrentPage,par_cUserName,par_nUserAcce
 local l_cHtml := []
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
-l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #e3f2fd;">]
+l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+COLOR_HEADER_BACKGROUND+[;">]
     l_cHtml += [<div id="app" class="container">]
         l_cHtml += [<a class="navbar-brand" href="#">Data Dictionary</a>]
         if par_LoggedIn
