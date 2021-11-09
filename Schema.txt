@@ -29,6 +29,7 @@ l_Schema := ;
    ,"Type"           =>{,  "C",   3,  0,};
    ,"Length"         =>{,  "I",   0,  0,"N"};
    ,"Scale"          =>{,  "I",   0,  0,"N"};
+   ,"Nullable"       =>{,  "L",   0,  0,};
    ,"Description"    =>{,  "M",   0,  0,"N"};
    ,"UsedBy"         =>{,  "N",   1,  0,}};     // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,;   //Index Definition

@@ -410,6 +410,7 @@ case l_cURLAction == "EditColumn"
         :Column("Column.Type"            ,"Column_Type")
         :Column("Column.Length"          ,"Column_Length")
         :Column("Column.Scale"           ,"Column_Scale")
+        :Column("Column.Nullable"        ,"Column_Nullable")
         :Column("Column.UsedBy"          ,"Column_UsedBy")
         :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign")
         :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")
@@ -435,8 +436,8 @@ case l_cURLAction == "EditColumn"
             if oFcgi:isGet()
                 l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_iColumnPk,"",;
                                                AllTrim(l_aSQLResult[1, 4]),l_aSQLResult[1, 5],l_aSQLResult[1, 6],;
-                                               AllTrim(l_aSQLResult[1, 7]),l_aSQLResult[1, 8],l_aSQLResult[1, 9],;
-                                               l_aSQLResult[1,10],l_aSQLResult[1,11],l_aSQLResult[1,12])
+                                               AllTrim(l_aSQLResult[1, 7]),l_aSQLResult[1, 8],l_aSQLResult[1, 9],(alltrim(l_aSQLResult[1, 10])=="1"),;
+                                               l_aSQLResult[1,11],l_aSQLResult[1,12],l_aSQLResult[1,13])
             else
                 //Post
                 l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
@@ -704,7 +705,7 @@ if l_iTypePos > 0
         l_cResult += [ (]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
         
     case oFcgi:p_ColumnTypes[l_iTypePos,5]  // Enumeration
-        if !hb_isnil(par_cEnumerationName) .and. !hb_isnil(par_iEnumerationImplementAs) .and. !hb_isnil(par_iEnumerationImplementLength)
+        if !hb_isnil(par_cEnumerationName) .and. !hb_isnil(par_iEnumerationImplementAs) //.and. !hb_isnil(par_iEnumerationImplementLength)
             l_cResult += [ (]
             l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
             l_cResult += par_cEnumerationName
@@ -717,9 +718,9 @@ if l_iTypePos > 0
             case par_iEnumerationImplementAs == 2
                 l_cResult += [Integer)]
             case par_iEnumerationImplementAs == 3
-                l_cResult += [Numeric ]+Trans(par_iEnumerationImplementLength)+[ digit]+iif(par_iEnumerationImplementLength > 1,[s],[])+[)]
+                l_cResult += [Numeric ]+Trans(nvl(par_iEnumerationImplementLength,0))+[ digit]+iif(nvl(par_iEnumerationImplementLength,0) > 1,[s],[])+[)]
             case par_iEnumerationImplementAs == 4
-                l_cResult += [String ]+Trans(par_iEnumerationImplementLength)+[ character]+iif(par_iEnumerationImplementLength > 1,[s],[])+[)]
+                l_cResult += [String ]+Trans(nvl(par_iEnumerationImplementLength,0))+[ character]+iif(nvl(par_iEnumerationImplementLength,0) > 1,[s],[])+[)]
             endcase
 
         endif
@@ -1798,6 +1799,7 @@ with object l_oDB1
     :Column("Column.Type"           ,"Column_Type")
     :Column("Column.Length"         ,"Column_Length")
     :Column("Column.Scale"          ,"Column_Scale")
+    :Column("Column.Nullable"       ,"Column_Nullable")
     :Column("Column.UsedBy"         ,"Column_UsedBy")
     :Column("Column.fk_TableForeign","Column_fk_TableForeign")
     :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
@@ -1854,6 +1856,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
@@ -1879,6 +1882,11 @@ l_cHtml += [<div class="m-2">]
                                                             l_cSitePath,;
                                                             par_cURLApplicationLinkCode,;
                                                             par_cURLNameSpaceName)
+                        l_cHtml += [</td>]
+
+                        // Nullable
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_cHtml += iif(alltrim(ListOfColumns->Column_Nullable) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
                         l_cHtml += [</td>]
 
                         // Foreign Key To
@@ -2057,7 +2065,7 @@ return l_cHtml
 //=================================================================================================================
 static function ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_iPk,par_cErrorText,;
                                     par_cName,par_iStatus,par_cDescription,;
-                                    par_cType,par_iLength,par_iScale,;
+                                    par_cType,par_iLength,par_iScale,par_iNullable,;
                                     par_iUsedBy,par_iFk_TableForeign,par_iFk_Enumeration)
 local l_cHtml := ""
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
@@ -2067,6 +2075,7 @@ local l_cDescription     := hb_DefaultValue(par_cDescription,"")
 local l_cType            := Alltrim(hb_DefaultValue(par_cType,""))
 local l_cLength          := iif(pcount() > 7 .and. !hb_IsNil(par_iLength),Trans(par_iLength),"")
 local l_cScale           := iif(pcount() > 7 .and. !hb_IsNil(par_iScale) ,Trans(par_iScale),"")
+local l_lNullable        := hb_DefaultValue(par_iNullable,.t.)
 local l_iUsedBy          := hb_DefaultValue(par_iUsedBy,1)
 local l_iFk_TableForeign := hb_DefaultValue(par_iFk_TableForeign,0)
 local l_iFk_Enumeration  := hb_DefaultValue(par_iFk_Enumeration,0)
@@ -2191,6 +2200,14 @@ l_cHtml += [<div class="m-2">]
 
 
     l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pr-2 pb-3">Nullable</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<input type="checkbox" name="CheckNullable" id="CheckNullable" value="1"]+iif(l_lNullable," checked","")+[>]   // class="form-check-input"
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+
+    l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pr-2 pb-3">Foreign Key To</td>]
         l_cHtml += [<td class="pb-3">]
             //fk_TableForeign
@@ -2235,6 +2252,25 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [</table>]
     
+
+l_cHtml += [<div class="form-check form-switch">]
+l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">]
+l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckDefault">Default switch checkbox input</label>]
+l_cHtml += [</div>]
+l_cHtml += [<div class="form-check form-switch">]
+l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked>]
+l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckChecked">Checked switch checkbox input</label>]
+l_cHtml += [</div>]
+l_cHtml += [<div class="form-check form-switch">]
+l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckDisabled" disabled>]
+l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckDisabled">Disabled switch checkbox input</label>]
+l_cHtml += [</div>]
+l_cHtml += [<div class="form-check form-switch">]
+l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckCheckedDisabled" checked disabled>]
+l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckCheckedDisabled">Disabled checked switch checkbox input</label>]
+l_cHtml += [</div>]
+
+
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
@@ -2260,6 +2296,7 @@ local l_cColumnLength
 local l_iColumnLength
 local l_cColumnScale
 local l_iColumnScale
+local l_lColumnNullable
 local l_iColumnUsedBy
 local l_iColumnFk_TableForeign
 local l_iColumnFk_Enumeration
@@ -2287,6 +2324,9 @@ l_iColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength)
 
 l_cColumnScale           := SanitizeInput(oFcgi:GetInputValue("TextScale"))
 l_iColumnScale           := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
+
+l_lColumnNullable        := (oFcgi:GetInputValue("CheckNullable") == "1")
+Altd()
 
 l_iColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
@@ -2380,6 +2420,7 @@ case l_cActionOnSubmit == "Save"
                         :Field("Type"            , l_cColumnType)
                         :Field("Length"          , l_iColumnLength)
                         :Field("Scale"           , l_iColumnScale)
+                        :Field("Nullable"        , l_lColumnNullable)
                         :Field("UsedBy"          , l_iColumnUsedBy)
                         :Field("Fk_TableForeign" , l_iColumnFk_TableForeign)
                         :Field("Fk_Enumeration"  , l_iColumnFk_Enumeration)
@@ -2427,7 +2468,7 @@ endcase
 if !empty(l_cErrorMessage)
     l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_iColumnPk,l_cErrorMessage,;
                                    l_cColumnName,l_iColumnStatus,l_cColumnDescription,;
-                                   l_cColumnType,l_iColumnLength,l_iColumnScale,;
+                                   l_cColumnType,l_iColumnLength,l_iColumnScale,l_lColumnNullable,;
                                    l_iColumnUsedBy,l_iColumnFk_TableForeign,l_iColumnFk_Enumeration)
 endif
 
