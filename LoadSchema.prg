@@ -22,6 +22,7 @@ local l_iNameSpacePk
 local l_iTablePk
 local l_iColumnPk
 local l_iEnumerationPk
+local l_iIndexPk
 
 local l_LastColumnOrder
 local l_LastEnumValueOrder
@@ -31,6 +32,11 @@ local l_iColumnLength
 local l_iColumnScale
 local l_cColumnNullable    // Due to a bug in hb_orm on fetching Boolean field types, use a Char instead. This will need some change after bug fix in ORM
 local l_iFk_Enumeration
+
+local l_cIndexName
+local l_cIndexExpression
+local l_cIndexUnique
+local l_iIndexAlgo
 
 local l_oDB1
 local l_oDB2
@@ -43,8 +49,16 @@ local l_iNewColumns      := 0
 local l_iNewEnumerations := 0
 local l_iNewEnumValues   := 0
 local l_iUpdatedColumns  := 0
+local l_iNewIndexes      := 0
+local l_iUpdatedIndexes  := 0
+
+local l_nPos
 
 local l_hEnumerations := {=>}
+
+//The following is not the most memory efficient, a 3 layer hash array would be better. 
+local l_hTables       := {=>}  // The key is <NameSpace>.<TableName>
+local l_hColumns      := {=>}  // The key is <NameSpace>.<TableName>.<ColumnName>
 
 
 
@@ -402,6 +416,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 if :Add()
                                     l_iNewTables += 1
                                     l_iTablePk := :Key()
+                                    l_hTables[l_cLastNameSpace+"."+l_cLastTableName] := l_iTablePk
                                 else
                                     l_cErrorMessage := "Failed to add Table record."
                                 endif
@@ -410,6 +425,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         case :Tally == 1
                             l_iNameSpacePk   := l_aSQLResult[1,1]
                             l_iTablePk       := l_aSQLResult[1,2]
+                            l_hTables[l_cLastNameSpace+"."+l_cLastTableName] := l_iTablePk
 
                         otherwise
                             l_cErrorMessage := "Failed to Query Meta database. Error 104."
@@ -487,25 +503,25 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     case "character"
                         l_cColumnType   := "C"
-                        l_iColumnLength := field->field_clength
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
                         l_iColumnScale  := NIL
                         exit
 
                     case "character varying"
                         l_cColumnType   := "CV"
-                        l_iColumnLength := field->field_clength
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
                         l_iColumnScale  := NIL
                         exit
 
                     case "bit"
                         l_cColumnType   := "B"
-                        l_iColumnLength := field->field_clength
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
                         l_iColumnScale  := NIL
                         exit
 
                     case "bit varying"
                         l_cColumnType   := "BV"
-                        l_iColumnLength := field->field_clength
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
                         l_iColumnScale  := NIL
                         exit
 
@@ -537,26 +553,26 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     case "time with time zone"
                         l_cColumnType   := "TOZ"
                         l_iColumnLength := NIL
-                        l_iColumnScale  := field->field_tlength
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "time without time zone"
                         l_cColumnType   := "TO"
                         l_iColumnLength := NIL
-                        l_iColumnScale  := field->field_tlength
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "timestamp"
                     case "timestamp with time zone"
                         l_cColumnType   := "DTZ"
                         l_iColumnLength := NIL
-                        l_iColumnScale  := field->field_tlength
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "timestamp without time zone"
                         l_cColumnType   := "DT"
                         l_iColumnLength := NIL
-                        l_iColumnScale  := field->field_tlength
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "money"
@@ -595,6 +611,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     if vfp_Seek(upper(l_cColumnName),"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
+                        l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType     .and. ;
                            ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength   .and. ;
@@ -641,6 +658,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
+                                l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
                             else
                                 l_cErrorMessage := "Failed to add Column record."
                             endif
@@ -657,10 +675,131 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     endcase
 endif
 
+//--Load Indexes----------------
+    if empty(l_cErrorMessage)
+        if !SQLExec(par_SQLHandle,l_SQLCommandIndexes,"ListOfIndexesForLoads")
+            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+        else
+            // ExportTableToHtmlFile("ListOfIndexesForLoads","d:\PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+
+            l_cLastNameSpace  := ""
+            l_cLastTableName  := ""
+            l_cIndexName      := ""
+
+            select ListOfIndexesForLoads
+            scan all while empty(l_cErrorMessage)
+                if !(ListOfIndexesForLoads->schema_name == l_cLastNameSpace .and. ListOfIndexesForLoads->table_name == l_cLastTableName)
+                    l_cLastNameSpace := ListOfIndexesForLoads->schema_name
+                    l_cLastTableName := ListOfIndexesForLoads->table_name
+                    l_iTablePk       := hb_HGetDef(l_hTables,l_cLastNameSpace+"."+l_cLastTableName,0)
+
+                    with object l_oDB2
+                        :Table("Index")
+                        :Column("Index.Pk"          ,"Pk")
+                        :Column("Index.Name"        ,"Index_Name")
+                        :Column("Index.Unique"      ,"Index_Unique")
+                        :Column("Index.Algo"        ,"Index_Algo")
+                        :Column("Index.Expression"  ,"Index_Expression")
+                        :Column("upper(Index.Name)" ,"tag1")
+                        :Where("Index.fk_Table = ^" , l_iTablePk)
+                        :SQL("ListOfIndexesInDataDictionary")
+                        if :Tally < 0
+                            l_cErrorMessage := [Failed to Get index info.]
+                        else
+                            With Object :p_oCursor
+                                :Index("tag1","tag1")
+                                :CreateIndexes()
+                            endwith
+                        endif
+                    endwith
+
+                endif
+
+                if empty(l_cErrorMessage) .and. l_iTablePk > 0
+                    l_cIndexName       := ListOfIndexesForLoads->index_name
+                    l_cIndexExpression := ListOfIndexesForLoads->index_definition
+
+                    l_cIndexUnique := iif(("CREATE UNIQUE INDEX" $ l_cIndexExpression),"1","0")
+                    if "USING btree" $ l_cIndexExpression
+                        l_iIndexAlgo := 1
+                    else
+                        l_iIndexAlgo := 0
+                    endif
+
+                    l_nPos := at("(",l_cIndexExpression)
+                    if l_nPos > 0
+                        l_cIndexExpression := SubStr(l_cIndexExpression,l_nPos+1)
+                        l_nPos := rat(")",l_cIndexExpression)
+                        if l_nPos > 0
+                            l_cIndexExpression := left(l_cIndexExpression,l_nPos-1)
+                        endif
+                    endif
+                    
+                    if vfp_Seek(upper(l_cIndexName),"ListOfIndexesInDataDictionary","tag1")
+                        l_iIndexPk := ListOfIndexesInDataDictionary->Pk
+
+                        if !(trim(nvl(ListOfIndexesInDataDictionary->Index_Name,"")) == l_cIndexName) .or. ;
+                            Alltrim(ListOfIndexesInDataDictionary->Index_Unique) <> l_cIndexUnique    .or. ;
+                            ListOfIndexesInDataDictionary->Index_Algo <> l_iIndexAlgo                 .or. ;
+                            ListOfIndexesInDataDictionary->Index_Expression <> l_cIndexExpression
+
+                            with object l_oDB1
+                                :Table("Index")
+                                :Field("Name"       , l_cIndexName)
+                                :Field("Unique"     ,(l_cIndexUnique == "1"))
+                                :Field("Algo"       ,l_iIndexAlgo)
+                                :Field("Expression" ,l_cIndexExpression)
+                                if :Update(l_iIndexPk)
+                                    l_iUpdatedIndexes += 1
+                                else
+                                    l_cErrorMessage := [Failed to update Index Name.]
+                                endif
+                            endwith
+
+                        else
+
+                        endif
+
+                    else
+                        //Missing Index
+                        with object l_oDB1
+                            :Table("Index")
+                            :Field("Name"       ,l_cIndexName)
+                            :Field("fk_Table"   ,l_iTablePk)
+                            :Field("Status"     ,1)
+                            :Field("UsedBy"     ,1)
+                            :Field("Unique"     ,(l_cIndexUnique == "1"))
+                            :Field("Algo"       ,l_iIndexAlgo)
+                            :Field("Expression" ,l_cIndexExpression)
+                            if :Add()
+                                l_iNewIndexes += 1
+                                l_iIndexPk := :Key()
+                            else
+                                l_cErrorMessage := "Failed to add Index record."
+                            endif
+                        endwith
+
+                    endif
+                endif
+            endscan
+        endif
+    endif
+
+
+//--Final Return Info-----------
+
 if empty(l_cErrorMessage)
     l_cErrorMessage := "Success"
 
-    if !empty(l_iNewTables) .or. !empty(l_iNewNameSpace) .or. !empty(l_iNewColumns) .or. !empty(l_iUpdatedColumns) .or. !empty(l_iNewEnumerations) .or. !empty(l_iNewEnumValues)
+    if !empty(l_iNewTables)       .or. ;
+       !empty(l_iNewNameSpace)    .or. ;
+       !empty(l_iNewColumns)      .or. ;
+       !empty(l_iUpdatedColumns)  .or. ;
+       !empty(l_iNewEnumerations) .or. ;
+       !empty(l_iNewEnumValues)   .or. ;
+       !empty(l_iNewIndexes)      .or. ;
+       !empty(l_iUpdatedIndexes)
+
         if !empty(l_iNewTables)
             l_cErrorMessage += [  New Tables: ]+trans(l_iNewTables)
         endif
@@ -678,6 +817,12 @@ if empty(l_cErrorMessage)
         endif
         if !empty(l_iNewEnumValues)
             l_cErrorMessage += [  New Enumeration Value: ]+trans(l_iNewEnumValues)
+        endif
+        if !empty(l_iNewIndexes)
+            l_cErrorMessage += [  New Indexes: ]+trans(l_iNewIndexes)
+        endif
+        if !empty(l_iUpdatedIndexes)
+            l_cErrorMessage += [  Updated Indexes: ]+trans(l_iUpdatedIndexes)
         endif
     endif
 endif

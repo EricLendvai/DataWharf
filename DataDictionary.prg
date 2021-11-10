@@ -70,7 +70,7 @@ class MyFcgi from hb_Fcgi
                                   { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
                                   {  "Y","Money"                                        ,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'money'"},;
                                   {  "E","Enumeration"                                  ,.f.,.f.,.t.,"enum"                       ,"ENUM"},;
-                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.t.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
+                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
                                   {  "?","Other"                                        ,.f.,.f.,.f.,""                           ,""};
                                  }
 //12345

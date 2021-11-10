@@ -67,10 +67,11 @@ l_Schema := ;
    ,"fk_Table"   =>{,  "I",   0,  0,};
    ,"Name"       =>{, "CV", 200,  0,};
    ,"Unique"     =>{,  "L",   0,  0,};
-   ,"Order"      =>{,  "N",   1,  0,};
+   ,"Expression" =>{,  "M",   0,  0,"N"};
    ,"Description"=>{,  "M",   0,  0,"N"};
    ,"Algo"       =>{,  "N",   1,  0,};         // 1 = BTREE
-   ,"UsedBy"     =>{,  "N",   1,  0,}};        // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
+   ,"UsedBy"     =>{,  "N",   1,  0,};         // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
+   ,"Status"     =>{,  "N",   1,  0,}};        // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
    ,;   //Index Definition
    {"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};
 ,"public.IndexColumn"=>{;   //Field Definition

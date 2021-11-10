@@ -69,6 +69,9 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 // Applications/NewColumn/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
 // Applications/EditColumn/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/<ColumnName>
 
+// Applications/ListIndexes/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
+
+
 // Applications/ListEnumerations/<ApplicationLinkCode>/
 // Applications/NewEnumeration/<ApplicationLinkCode>/
 // Applications/EditEnumeration/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/
@@ -93,13 +96,13 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cURLApplicationLinkCode := oFcgi:p_URLPathElements[3]
     endif
 
-    if vfp_Inlist(l_cURLAction,"EditNameSpace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
+    if vfp_Inlist(l_cURLAction,"EditNameSpace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
             l_cURLNameSpaceName := oFcgi:p_URLPathElements[4]
         endif
     endif
 
-    if vfp_Inlist(l_cURLAction,"EditTable","ListColumns","OrderColumns","NewColumn","EditColumn")
+    if vfp_Inlist(l_cURLAction,"EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes")
         if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
             l_cURLTableName := oFcgi:p_URLPathElements[5]
         endif
@@ -444,6 +447,43 @@ case l_cURLAction == "EditColumn"
             endif
         endif
     endif
+
+
+
+
+
+
+
+
+
+case l_cURLAction == "ListIndexes"
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+
+    //Find the iTablePk
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    with object l_oDB1
+        :Table("Table")
+        :Column("Table.pk"     ,"TablePk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
+        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
+        l_aSQLResult := {}
+        :SQL(@l_aSQLResult)
+    endwith
+
+    if l_oDB1:Tally == 1
+        l_iTablePk := l_aSQLResult[1,1]
+        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+    endif
+
+
+
+
+
+
+
+
 
 
 
@@ -1782,7 +1822,6 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-//123456
 static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
 local l_cHtml := []
 local l_oDB1
@@ -2471,6 +2510,108 @@ if !empty(l_cErrorMessage)
                                    l_cColumnType,l_iColumnLength,l_iColumnScale,l_lColumnNullable,;
                                    l_iColumnUsedBy,l_iColumnFk_TableForeign,l_iColumnFk_Enumeration)
 endif
+
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+local l_cHtml := []
+local l_oDB1
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB1
+    :Table("Index")
+    :Column("Index.pk"             ,"pk")
+    :Column("Index.Name"           ,"Index_Name")
+    :Column("Index.Status"         ,"Index_Status")
+    :Column("Index.Description"    ,"Index_Description")
+    :Column("Index.UsedBy"         ,"Index_UsedBy")
+    :Column("upper(Index.Name)"    ,"tag1")
+    
+    :Where("Index.fk_Table = ^",par_iTablePk)
+    :OrderBy("tag1")
+    :SQL("ListOfIndexes")
+
+    // ExportTableToHtmlFile("ListOfIndexes","d:\PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
+
+endwith
+
+l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+l_cHtml += [<div class="m-2">]
+
+    select ListOfIndexes
+
+    if eof()
+        l_cHtml += [<nav class="navbar navbar-light bg-light">]
+            l_cHtml += [<div class="input-group">]
+                l_cHtml += [<span class="navbar-brand mr-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [</div>]
+        l_cHtml += [</nav>]
+
+    else
+        l_cHtml += [<nav class="navbar navbar-light bg-light">]
+            l_cHtml += [<div class="input-group">]
+                l_cHtml += [<span class="navbar-brand mr-3">List of Indexes for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["</span>]
+                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [</div>]
+        l_cHtml += [</nav>]
+
+        l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+        l_cHtml += [<div class="row justify-content-center">]
+            l_cHtml += [<div class="col-auto">]
+
+                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                l_cHtml += [</tr>]
+
+                scan all
+                    l_cHtml += [<tr>]
+
+                        // Name
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)+[/">]+Allt(ListOfIndexes->Index_Name)+[</a>]
+                        l_cHtml += [</td>]
+
+                        // Used By
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
+                        l_cHtml += [</td>]
+
+                        // Description
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,""))
+                        l_cHtml += [</td>]
+
+                        // Status
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_Status,1,4),ListOfIndexes->Index_Status,1)]
+                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                        l_cHtml += [</td>]
+
+                    l_cHtml += [</tr>]
+                endscan
+                l_cHtml += [</table>]
+                
+            l_cHtml += [</div>]
+        l_cHtml += [</div>]
+
+    endif
+
+l_cHtml += [</div>]
+
+// Column
 
 return l_cHtml
 //=================================================================================================================
