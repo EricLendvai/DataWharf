@@ -6,7 +6,7 @@ request HB_CODEPAGE_UTF8
 
 #include "DataDictionary.ch"
 
-#define BUILDVERSION "0.10"
+#define BUILDVERSION "0.11"
 
 memvar v_hPP
 
@@ -226,9 +226,9 @@ l_cPageHeaderHtml += [<title>Data Dictionary</title>]
 
 l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
 l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
-l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_4_6_0/css/bootstrap.min.css">]
+l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
 l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
-l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_4_6_0/js/bootstrap.bundle.min.js"></script>]
+l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
 l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
 l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
 

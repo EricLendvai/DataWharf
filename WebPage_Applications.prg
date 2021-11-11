@@ -189,8 +189,8 @@ case l_cURLAction == "ListApplications"
     l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
         // l_cHtml += [<div class="container-fluid">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<a class="navbar-brand text-white mr-3" href="]+l_cSitePath+[Applications/">Applications</a>]
-            l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
+            l_cHtml += [<a class="navbar-brand text-white me-3" href="]+l_cSitePath+[Applications/">Applications</a>]
+            l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -282,7 +282,7 @@ case l_cURLAction == "NewTable"
         l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,0)
     else
         //Post
-        l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+        l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
     endif
 
 case l_cURLAction == "EditTable"
@@ -311,7 +311,7 @@ case l_cURLAction == "EditTable"
             //static function TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iStatus,par_cDescription)
         else
             //Post
-            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
         endif
     endif
 
@@ -777,9 +777,9 @@ local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
 
-l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
+l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand text-white">Manage Application - ]+par_cApplicationName+[</span>]
+        l_cHtml += [<span class="ps-2 navbar-brand text-white">Manage Application - ]+par_cApplicationName+[</span>]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -933,14 +933,14 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         if empty(par_iPk)
-            l_cHtml += [<span class="navbar-brand mr-3">New Application</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand me-3">New Application</span>]   //navbar-text
         else
-            l_cHtml += [<span class="navbar-brand mr-3">Update Application Settings</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand me-3">Update Application Settings</span>]   //navbar-text
         endif
-        l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -952,17 +952,17 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Name</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Name</td>]
             l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Link Code</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Link Code</td>]
             l_cHtml += [<td class="pb-3"><input type="text" name="TextLinkCode" id="TextLinkCode" value="]+FcgiPrepFieldForValue(l_cLinkCode)+[" maxlength="10" size="10" style="text-transform: uppercase;"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
                 l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
@@ -974,7 +974,7 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
             l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
@@ -1139,16 +1139,16 @@ l_cHtml += [<div class="m-2">]
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Name Space on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Name Space on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Name Spaces</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+                l_cHtml += [<span class="navbar-brand me-3">List of Name Spaces</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1216,11 +1216,11 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Name Space</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Name Space</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -1234,12 +1234,12 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pr-2 pb-3">Name</td>]
+    l_cHtml += [<td class="pe-2 pb-3">Name</td>]
     l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+    l_cHtml += [<td class="pe-2 pb-3">Status</td>]
     l_cHtml += [<td class="pb-3">]
 
     l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
@@ -1253,7 +1253,7 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
-    l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+    l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
     l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
@@ -1371,22 +1371,29 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_cTableName
+local l_cTableDescription
 local l_cColumnName
+local l_cColumnDescription
 local l_cURL
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_cTableName  := SanitizeInput(oFcgi:GetInputValue("TextTableName"))
-l_cColumnName := SanitizeInput(oFcgi:GetInputValue("TextColumnName"))
+l_cTableName         := SanitizeInput(oFcgi:GetInputValue("TextTableName"))
+l_cTableDescription  := SanitizeInput(oFcgi:GetInputValue("TextTableDescription"))
+
+l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextColumnName"))
+l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextColumnDescription"))
 
 l_cURL := oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/"
 
 do case
 case l_cActionOnSubmit == "Search"
     l_cURL += [Search?TableName=]+hb_StrToHex(l_cTableName)
+    l_cURL += [&TableDescription=]+hb_StrToHex(l_cTableDescription)
     l_cURL += [&ColumnName=]+hb_StrToHex(l_cColumnName)
+    l_cURL += [&ColumnDescription=]+hb_StrToHex(l_cColumnDescription)
     
-    SendToClipboard(l_cURL)
+    //SendToClipboard(l_cURL)
 
     oFcgi:Redirect(l_cURL)
 
@@ -1411,10 +1418,18 @@ local l_iColumnCount
 local l_iIndexCount
 
 local l_cSearchTableName
-local l_cSearchColumnName
+local l_cSearchTableDescription
 
-l_cSearchTableName  := hb_HexToStr(oFcgi:GetQueryString("TableName"))
-l_cSearchColumnName := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
+local l_cSearchColumnName
+local l_cSearchColumnDescription
+
+l_cSearchTableName         := hb_HexToStr(oFcgi:GetQueryString("TableName"))
+l_cSearchTableDescription  := hb_HexToStr(oFcgi:GetQueryString("TableDescription"))
+
+l_cSearchColumnName        := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
+l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescription"))
+
+// Altd()
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1433,18 +1448,29 @@ With Object l_oDB1
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
     if !empty(l_cSearchTableName)
-        :Where("upper(Table.Name) Like '%"+upper(l_cSearchTableName)+"%'")
+        :KeywordCondition(l_cSearchTableName,"Table.Name")
+    endif
+    if !empty(l_cSearchTableDescription)
+        :KeywordCondition(l_cSearchTableDescription,"Table.Description")
     endif
 
-    if !empty(l_cSearchColumnName)
+    if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
         :Distinct(.t.)
         :Join("inner","Column","","Column.fk_Table = Table.pk")
-        :Where("upper(Column.Name) Like '%"+upper(l_cSearchColumnName)+"%'")
+        if !empty(l_cSearchColumnName)
+            :KeywordCondition(l_cSearchColumnName,"Column.Name")
+        endif
+        if !empty(l_cSearchColumnDescription)
+            :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
+        endif
     endif
 
     :OrderBy("tag1")
     :OrderBy("tag2")
     :SQL("ListOfTables")
+
+SendToClipboard(:LastSQL())
+
 endwith
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
@@ -1493,8 +1519,8 @@ l_cHtml += [<div class="m-2">]
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Table on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Table on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1502,8 +1528,8 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [<div class="container-fluid">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Tables</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
+                l_cHtml += [<span class="navbar-brand me-3">List of Tables</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1516,12 +1542,51 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">Search</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+            // l_cHtml += [<span class="navbar-brand me-3">Search</span>]   //navbar-text
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
 
-            l_cHtml += [<span class="mr-2">Table Name</span><input type="text" name="TextTableName" size="30" maxlength="100" value="]  +FcgiPrepFieldForValue(l_cSearchTableName)+[" class="mr-5">]
-            l_cHtml += [<span class="mr-2">Column Name</span><input type="text" name="TextColumnName" size="30" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+[">]
+            // l_cHtml += [<span class="me-3 align-middle">Table Name</span><input type="text" name="TextTableName" size="30" maxlength="100" value="]  +FcgiPrepFieldForValue(l_cSearchTableName)+[" class="me-5">]
+            // l_cHtml += [<span class="me-3 align-middle">Column Name</span><input type="text" name="TextColumnName" size="30" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+[">]
+
+            l_cHtml += [<table>]
+                l_cHtml += [<tr>]
+                    // ----------------------------------------
+                    l_cHtml += [<td valign="top">]
+
+                        l_cHtml += [<span class="navbar-brand me-3">Search</span>]   //navbar-text
+                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+
+                    l_cHtml += [</td>]
+                    // ----------------------------------------
+                    l_cHtml += [<td valign="top">]
+//123456
+                        l_cHtml += [<table>]
+                            l_cHtml += [<tr>]
+                                l_cHtml += [<td></td>]
+                                l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                                l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
+                            l_cHtml += [</tr>]
+                            l_cHtml += [<tr>]
+                                l_cHtml += [<td><span class="me-2">Table</span></td>]
+                                l_cHtml += [<td><input type="text" name="TextTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+["></td>]
+                                l_cHtml += [<td><input type="text" name="TextTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+["></td>]
+                            l_cHtml += [</tr>]
+                            l_cHtml += [<tr>]
+                                l_cHtml += [<td><span class="me-2">Column</span></td>]
+                                l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
+                                l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                            l_cHtml += [</tr>]
+                        l_cHtml += [</table>]
+
+
+                    l_cHtml += [</td>]
+                    // ----------------------------------------
+                l_cHtml += [</tr>]
+            l_cHtml += [</table>]
+
+
 
         l_cHtml += [</div>]
 
@@ -1628,8 +1693,8 @@ if l_oDB1:Tally <= 0
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 else
@@ -1645,11 +1710,11 @@ else
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
-                l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -1661,7 +1726,7 @@ else
         l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Name Space</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select name="ComboNameSpacePk" id="ComboNameSpacePk">]
             select ListOfNameSpaces
@@ -1673,12 +1738,12 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Table Name</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Table Name</td>]
         l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Status</td>]
         l_cHtml += [<td class="pb-3">]
 
         l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
@@ -1692,7 +1757,7 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-        l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
         l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
@@ -1711,16 +1776,18 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function TableEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function TableEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iTablePk
 local l_iNameSpacePk
+local l_cNameSpace
 local l_cTableName
 local l_iTableStatus
 local l_cTableDescription
-
+local l_cFrom
+local l_oData
 local l_cErrorMessage := ""
 local l_oDB1
 
@@ -1767,13 +1834,47 @@ case l_cActionOnSubmit == "Save"
                     :Update(l_iTablePk)
                 endif
             endwith
+//12345
 
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")  //+l_cTableName+"/"
+            l_cFrom := oFcgi:GetQueryString('From')
+            if !empty(l_cFrom)
+                with object l_oDB1
+                    :Table("NameSpace")
+                    :Column("NameSpace.Name","NameSpace_Name")
+                    l_oData := :Get(l_iNameSpacePk)
+                    if :Tally == 1
+                        l_cNameSpace := l_oData:NameSpace_Name
+                    else
+                        l_cFrom := ""
+                    endif
+                endwith
+            endif
+            switch l_cFrom
+            case 'Columns'
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_cNameSpace+"/"+l_cTableName+"/")
+                exit
+            case 'Indexes'
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_cNameSpace+"/"+l_cTableName+"/")
+                exit
+            otherwise
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+            endswitch
+
         endif
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+    l_cFrom := oFcgi:GetQueryString('From')
+    switch l_cFrom
+    case 'Columns'
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+        exit
+    case 'Indexes'
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+        exit
+    otherwise
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+    endswitch
 
 case l_cActionOnSubmit == "Delete"   // Table
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1866,22 +1967,27 @@ l_cHtml += [<div class="m-2">]
 
     select ListOfColumns
 
+//12345
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">List of Indexes</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Columns for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order List of Columns</a>]
+                // l_cHtml += [<span class="navbar-brand me-3">List of Columns for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order List of Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">List of Indexes</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1893,13 +1999,19 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
+                        l_cHtml += [Columns for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                    l_cHtml += [</th>]
+                l_cHtml += [</tr>]
+
+                l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -1937,11 +2049,6 @@ l_cHtml += [<div class="m-2">]
                             endif
                         l_cHtml += [</td>]
 
-                        // Used By
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
-                        l_cHtml += [</td>]
-
                         // Description
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
@@ -1951,6 +2058,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_Status,1,4),ListOfColumns->Column_Status,1)]
                             // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                        l_cHtml += [</td>]
+
+                        // Used By
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -2024,9 +2136,9 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">Order Columns for Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-3" value="Save" onclick="SendOrderList();" role="button">]
-            l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Cancel</a>]
+            l_cHtml += [<span class="navbar-brand me-3">Order Columns for Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="SendOrderList();" role="button">]
+            l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -2181,11 +2293,11 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -2199,16 +2311,16 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Name</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Name</td>]
         l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Type</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Type</td>]
         l_cHtml += [<td class="pb-3">]
 
-            l_cHtml += [<span class="pr-5">]
+            l_cHtml += [<span class="pe-5">]
                 l_cHtml += [<select name="ComboType" id="ComboType" onchange="OnChangeType(this.value)">]
                 for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
                     l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,1],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,2]+[</option>]
@@ -2216,15 +2328,15 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [</select>]
             l_cHtml += [</span>]
 
-            l_cHtml += [<span class="pr-5" id="SpanLength" style="display: none;">]
-                l_cHtml += [<span class="pr-2">Length</span><input type="text" name="TextLength" id="TextLength" value="]+FcgiPrepFieldForValue(l_cLength)+[" size="5" maxlength="5">]
+            l_cHtml += [<span class="pe-5" id="SpanLength" style="display: none;">]
+                l_cHtml += [<span class="pe-2">Length</span><input type="text" name="TextLength" id="TextLength" value="]+FcgiPrepFieldForValue(l_cLength)+[" size="5" maxlength="5">]
             l_cHtml += [</span>]
 
-            l_cHtml += [<span class="pr-5" id="SpanScale" style="display: none;">]
-                l_cHtml += [<span class="pr-2">Scale</span><input type="text" name="TextScale" id="TextScale" value="]+FcgiPrepFieldForValue(l_cScale)+[" size="2" maxlength="2">]
+            l_cHtml += [<span class="pe-5" id="SpanScale" style="display: none;">]
+                l_cHtml += [<span class="pe-2">Scale</span><input type="text" name="TextScale" id="TextScale" value="]+FcgiPrepFieldForValue(l_cScale)+[" size="2" maxlength="2">]
             l_cHtml += [</span>]
 
-            l_cHtml += [<span class="pr-5" id="SpanEnumeration" style="display: none;">]
+            l_cHtml += [<span class="pe-5" id="SpanEnumeration" style="display: none;">]
                 l_cHtml += [<select name="ComboFk_Enumeration" id="ComboFk_Enumeration">]
                     l_cHtml += [<option value="0"]+iif(l_iFk_Enumeration==0,[ selected],[])+[></option>]
                     select ListOfEnumeration
@@ -2239,15 +2351,15 @@ l_cHtml += [<div class="m-2">]
 
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Nullable</td>]
-        l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<input type="checkbox" name="CheckNullable" id="CheckNullable" value="1"]+iif(l_lNullable," checked","")+[>]   // class="form-check-input"
-        l_cHtml += [</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Nullable</td>]
+        l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+            l_cHtml += [<input type="checkbox" name="CheckNullable" id="CheckNullable" value="1"]+iif(l_lNullable," checked","")+[ class="form-check-input">]
+        l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Foreign Key To</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Foreign Key To</td>]
         l_cHtml += [<td class="pb-3">]
             //fk_TableForeign
             l_cHtml += [<select name="ComboFk_TableForeign" id="ComboFk_TableForeign">]
@@ -2262,7 +2374,7 @@ l_cHtml += [<div class="m-2">]
 
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Used By</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select name="ComboUsedBy" id="ComboUsedBy">]
             l_cHtml += [<option value="1"]+iif(l_iUsedBy==1,[ selected],[])+[>All Servers</option>]
@@ -2273,7 +2385,7 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
             l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
@@ -2285,31 +2397,12 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
-        l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
         l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
     
-
-l_cHtml += [<div class="form-check form-switch">]
-l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">]
-l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckDefault">Default switch checkbox input</label>]
-l_cHtml += [</div>]
-l_cHtml += [<div class="form-check form-switch">]
-l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked>]
-l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckChecked">Checked switch checkbox input</label>]
-l_cHtml += [</div>]
-l_cHtml += [<div class="form-check form-switch">]
-l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckDisabled" disabled>]
-l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckDisabled">Disabled switch checkbox input</label>]
-l_cHtml += [</div>]
-l_cHtml += [<div class="form-check form-switch">]
-l_cHtml += [  <input class="form-check-input" type="checkbox" id="flexSwitchCheckCheckedDisabled" checked disabled>]
-l_cHtml += [  <label class="form-check-label" for="flexSwitchCheckCheckedDisabled">Disabled checked switch checkbox input</label>]
-l_cHtml += [</div>]
-
-
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
@@ -2525,6 +2618,9 @@ with object l_oDB1
     :Table("Index")
     :Column("Index.pk"             ,"pk")
     :Column("Index.Name"           ,"Index_Name")
+    :Column("Index.Expression"     ,"Index_Expression")
+    :Column("Index.Unique"         ,"Index_Unique")
+    :Column("Index.Algo"           ,"Index_Algo")
     :Column("Index.Status"         ,"Index_Status")
     :Column("Index.Description"    ,"Index_Description")
     :Column("Index.UsedBy"         ,"Index_UsedBy")
@@ -2543,22 +2639,26 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfIndexes
-
+//12345
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">List of Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Indexes for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                // l_cHtml += [<span class="navbar-brand me-3">List of Indexes for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">List of Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2569,11 +2669,21 @@ l_cHtml += [<div class="m-2">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
+                        l_cHtml += [Indexes for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                    l_cHtml += [</th>]
+                l_cHtml += [</tr>]
+
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Expression</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -2584,9 +2694,20 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += [<a href="]+l_cSitePath+[Applications/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)+[/">]+Allt(ListOfIndexes->Index_Name)+[</a>]
                         l_cHtml += [</td>]
 
-                        // Used By
+                        // Expression
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
+                            l_cHtml += hb_DefaultValue(ListOfIndexes->Index_Expression,"")
+                        l_cHtml += [</td>]
+
+                        // Unique
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_cHtml += iif(alltrim(ListOfIndexes->Index_Unique) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                        l_cHtml += [</td>]
+
+                        // Algo
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"BTREE"}[iif(vfp_between(ListOfIndexes->Index_Algo,1,1),ListOfIndexes->Index_Algo,1)]
+                            // 1 = BTREE
                         l_cHtml += [</td>]
 
                         // Description
@@ -2598,6 +2719,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_Status,1,4),ListOfIndexes->Index_Status,1)]
                             // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                        l_cHtml += [</td>]
+
+                        // Used By
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -2672,8 +2798,8 @@ l_cHtml += [<div class="m-2">]
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Enumeration on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Enumeration on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2681,8 +2807,8 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [<div class="container-fluid">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Enumerations</span>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+                l_cHtml += [<span class="navbar-brand me-3">List of Enumerations</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2746,7 +2872,6 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iStatus,par_cDescription,par_iImplementAs,par_iImplementLength)
-//12345
 local l_cHtml := ""
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_iNameSpacePk     := hb_DefaultValue(par_iNameSpacePk,0)
@@ -2787,8 +2912,8 @@ if l_oDB1:Tally <= 0
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -2799,11 +2924,11 @@ else
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
-                l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -2815,7 +2940,7 @@ else
         l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Name Space</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select name="ComboNameSpacePk" id="ComboNameSpacePk">]
                 select ListOfNameSpaces
@@ -2827,15 +2952,15 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Enumeration Name</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Enumeration Name</td>]
             l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Implement As</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Implement As</td>]
             l_cHtml += [<td class="pb-3">]
 
-                l_cHtml += [<span class="pr-5">]
+                l_cHtml += [<span class="pe-5">]
                     l_cHtml += [<select name="ComboImplementAs" id="ComboImplementAs" onchange="OnChangeImplementAs(this.value);">]
                         l_cHtml += [<option value="1"]+iif(l_iImplementAs==1,[ selected],[])+[>SQL Enum</option>]
                         l_cHtml += [<option value="2"]+iif(l_iImplementAs==2,[ selected],[])+[>Integer</option>]
@@ -2844,15 +2969,15 @@ else
                     l_cHtml += [</select>]
                 l_cHtml += [</span>]
 
-            l_cHtml += [<span class="pr-5" id="ImplementLengthEntry" style="display: none;">]
-                l_cHtml += [<span class="pr-2">Length</span><input type="text" size="5" maxlength="5" name="TextImplementLength" id="TextImplementLength" value="]+Trans(l_iImplementLength)+[">]
+            l_cHtml += [<span class="pe-5" id="ImplementLengthEntry" style="display: none;">]
+                l_cHtml += [<span class="pe-2">Length</span><input type="text" size="5" maxlength="5" name="TextImplementLength" id="TextImplementLength" value="]+Trans(l_iImplementLength)+[">]
             l_cHtml += [</span>]
 
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
 
                 l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
@@ -2866,7 +2991,7 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-        l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
         l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
@@ -3030,19 +3155,19 @@ l_cHtml += [<div class="m-2">]
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+                l_cHtml += [<span class="navbar-brand me-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand mr-3">List of Values for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</span>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
-                l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order List of Values</a>]
+                l_cHtml += [<span class="navbar-brand me-3">List of Values for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</span>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order List of Values</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -3154,11 +3279,11 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
-            // l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Back To Enumeration Values</a>]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-3" value="Save" onclick="SendOrderList();" role="button">]
-            // l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
-            l_cHtml += [<a class="btn btn-primary mr-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
+            l_cHtml += [<span class="navbar-brand me-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
+            // l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Back To Enumeration Values</a>]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="SendOrderList();" role="button">]
+            // l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
+            l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3271,11 +3396,11 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand mr-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary mr-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary ml-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -3289,17 +3414,17 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pr-2 pb-3">Name</td>]
+    l_cHtml += [<td class="pe-2 pb-3">Name</td>]
     l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pr-2 pb-3">Number</td>]
+    l_cHtml += [<td class="pe-2 pb-3">Number</td>]
     l_cHtml += [<td class="pb-3"><input type="text" name="TextNumber" id="TextNumber" value="]+FcgiPrepFieldForValue(l_cNumber)+[" maxlength="8" size="8"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pr-2 pb-3">Status</td>]
+    l_cHtml += [<td class="pe-2 pb-3">Status</td>]
     l_cHtml += [<td class="pb-3">]
 
     l_cHtml += [<select name="ComboStatus" id="ComboStatus">]
@@ -3313,7 +3438,7 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
-    l_cHtml += [<td valign="top" class="pr-2 pb-3">Description</td>]
+    l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
     l_cHtml += [<td class="pb-3"><textarea name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
@@ -3475,9 +3600,9 @@ endif
 if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand mr-3">Load Schema - Enter Connection Information</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary mr-2" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand me-3">Load Schema - Enter Connection Information</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3488,7 +3613,7 @@ if !empty(par_iPk)
         l_cHtml += [<table>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Server Type</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Server Type</td>]
                 l_cHtml += [<td class="pb-3">]
                     l_cHtml += [<select name="ComboSyncBackendType" id="ComboSyncBackendType">]
                     l_cHtml += [<option value="0"]+iif(l_iSyncBackendType==0,[ selected],[])+[>Unknown</option>]
@@ -3500,32 +3625,32 @@ if !empty(par_iPk)
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Server Address/IP</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Server Address/IP</td>]
                 l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncServer" id="TextSyncServer" value="]+FcgiPrepFieldForValue(l_cSyncServer)+[" maxlength="200" size="80"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Port (If not default)</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Port (If not default)</td>]
                 l_cHtml += [<td class="pb-3"><input type="text" name="SyncPort" id="SyncPort" value="]+iif(empty(l_iSyncPort),"",Trans(l_iSyncPort))+[" maxlength="10" size="10"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">User Name</td>]
+                l_cHtml += [<td class="pe-2 pb-3">User Name</td>]
                 l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncUser" id="TextSyncUser" value="]+FcgiPrepFieldForValue(l_cSyncUser)+[" maxlength="200" size="80"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Password</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Password</td>]
                 l_cHtml += [<td class="pb-3"><input type="password" name="TextSyncPassword" id="TextSyncPassword" value="]+FcgiPrepFieldForValue(l_cSyncPassword)+[" maxlength="200" size="80"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Database</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Database</td>]
                 l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncDatabase" id="TextSyncDatabase" value="]+FcgiPrepFieldForValue(l_cSyncDatabase)+[" maxlength="200" size="80"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pr-2 pb-3">Name Spaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
+                l_cHtml += [<td class="pe-2 pb-3">Name Spaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
                 l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncNameSpaces" id="TextSyncNameSpaces" value="]+FcgiPrepFieldForValue(l_cSyncNameSpaces)+[" maxlength="400" size="80"></td>]
             l_cHtml += [</tr>]
 
