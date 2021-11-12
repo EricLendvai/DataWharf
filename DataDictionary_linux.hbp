@@ -40,6 +40,7 @@ hbmisc.hbc
 
 DataDictionary.prg
 LoadSchema.prg
+DataDictionaryVisualize.prg
 WebPages.hbm
 
 

@@ -55,6 +55,8 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 // Applications/ApplicationSettings/<ApplicationLinkCode>/
 // Applications/ApplicationLoadSchema/<ApplicationLinkCode>/
 
+// Applications/ApplicationVisualize/<ApplicationLinkCode>/
+
 
 // Applications/ListNameSpaces/<ApplicationLinkCode>/
 // Applications/NewNameSpace/<ApplicationLinkCode>/
@@ -150,6 +152,9 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     case vfp_Inlist(l_cURLAction,"ApplicationLoadSchema")
         l_cApplicationElement := "LOADSCHEMA"
+
+    case vfp_Inlist(l_cURLAction,"ApplicationVisualize")
+        l_cApplicationElement := "VISUALIZE"
 
     otherwise
         l_cApplicationElement := "TABLES"
@@ -255,6 +260,41 @@ case l_cURLAction == "ApplicationLoadSchema"
         if l_iApplicationPk > 0
             l_cHtml += ApplicationLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
         endif
+    endif
+
+
+case l_cURLAction == "ApplicationVisualize"
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    
+    if oFcgi:isGet()
+        l_cHtml += DataDictionaryVisualize(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        // l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+        // l_oDB1:Table("public.Application")
+        // with object l_oDB1
+        //     :Column("Application.SyncBackendType","Application_SyncBackendType")
+        //     :Column("Application.SyncServer"     ,"Application_SyncServer")
+        //     :Column("Application.SyncPort"       ,"Application_SyncPort")
+        //     :Column("Application.SyncUser"       ,"Application_SyncUser")
+        //     :Column("Application.SyncDatabase"   ,"Application_SyncDatabase")
+        //     :Column("Application.SyncNameSpaces" ,"Application_SyncNameSpaces")
+        //     l_oData := :Get(l_iApplicationPk)
+        // endwith
+
+        // if l_oDB1:Tally == 1
+        //     l_cHtml += ApplicationLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+        //                                                    l_oData:Application_SyncBackendType,;
+        //                                                    l_oData:Application_SyncServer,;
+        //                                                    l_oData:Application_SyncPort,;
+        //                                                    l_oData:Application_SyncUser,;
+        //                                                    "",;
+        //                                                    l_oData:Application_SyncDatabase,;
+        //                                                    l_oData:Application_SyncNameSpaces)
+        // endif
+    else
+        // if l_iApplicationPk > 0
+        //     l_cHtml += ApplicationLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+        // endif
     endif
 
 
@@ -830,6 +870,9 @@ l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [<li class="nav-item">]
         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ApplicationLoadSchema/]+par_cURLApplicationLinkCode+[/">Load/Sync Schema</a>]
     l_cHtml += [</li>]
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ApplicationVisualize/]+par_cURLApplicationLinkCode+[/">Visualize</a>]
+    l_cHtml += [</li>]
 l_cHtml += [</ul>]
 
 l_cHtml += [<div class="m-2"></div>]
@@ -877,7 +920,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -933,14 +976,15 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         if empty(par_iPk)
-            l_cHtml += [<span class="navbar-brand me-3">New Application</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3 me-3">New Application</span>]   //navbar-text
         else
-            l_cHtml += [<span class="navbar-brand me-3">Update Application Settings</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3 me-3">Update Application Settings</span>]   //navbar-text
         endif
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -1108,8 +1152,6 @@ if !empty(l_cErrorMessage)
 endif
 
 return l_cHtml
-
-return nil
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
@@ -1147,7 +1189,7 @@ l_cHtml += [<div class="m-2">]
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">List of Name Spaces</span>]
+                l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Name Spaces</span>]
                 l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -1162,7 +1204,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -1220,7 +1262,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -1423,6 +1466,8 @@ local l_cSearchTableDescription
 local l_cSearchColumnName
 local l_cSearchColumnDescription
 
+local l_iNumberOfTablesInList := 0
+
 l_cSearchTableName         := hb_HexToStr(oFcgi:GetQueryString("TableName"))
 l_cSearchTableDescription  := hb_HexToStr(oFcgi:GetQueryString("TableDescription"))
 
@@ -1469,7 +1514,8 @@ With Object l_oDB1
     :OrderBy("tag2")
     :SQL("ListOfTables")
 
-SendToClipboard(:LastSQL())
+    l_iNumberOfTablesInList := :Tally
+// SendToClipboard(:LastSQL())
 
 endwith
 
@@ -1515,7 +1561,6 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfTables
-
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -1525,13 +1570,13 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [</nav>]
 
     else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            // l_cHtml += [<div class="container-fluid">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">List of Tables</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+        // l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        //     // l_cHtml += [<div class="container-fluid">]
+        //     l_cHtml += [<div class="input-group">]
+        //         // l_cHtml += [<span class="navbar-brand me-3">List of Tables</span>]
+        //         l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
+        //     l_cHtml += [</div>]
+        // l_cHtml += [</nav>]
 
     endif
 
@@ -1552,12 +1597,8 @@ l_cHtml += [<div class="m-2">]
             l_cHtml += [<table>]
                 l_cHtml += [<tr>]
                     // ----------------------------------------
-                    l_cHtml += [<td valign="top">]
-
-                        l_cHtml += [<span class="navbar-brand me-3">Search</span>]   //navbar-text
-                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
-                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
-
+                    l_cHtml += [<td>]  // valign="top"
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
                     l_cHtml += [</td>]
                     // ----------------------------------------
                     l_cHtml += [<td valign="top">]
@@ -1580,6 +1621,14 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += [</tr>]
                         l_cHtml += [</table>]
 
+
+                    l_cHtml += [</td>]
+                    // ----------------------------------------
+                    l_cHtml += [<td>]  // valign="top"
+
+                        // l_cHtml += [<span class="navbar-brand me-3">Search</span>]   //navbar-text
+                        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
 
                     l_cHtml += [</td>]
                     // ----------------------------------------
@@ -1610,12 +1659,16 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+                l_cHtml += [</tr>]
+
+                l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -1629,14 +1682,14 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Allt(ListOfTables->Table_Name)+[</a>]
                         l_cHtml += [</td>]
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                             l_iColumnCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">Columns (]+Trans(l_iColumnCount)+[)</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iColumnCount)+[</a>]
                         l_cHtml += [</td>]
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                             l_iIndexCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">Indexes (]+Trans(l_iIndexCount)+[)</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iIndexCount)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1714,7 +1767,8 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
-                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -1834,7 +1888,6 @@ case l_cActionOnSubmit == "Save"
                     :Update(l_iTablePk)
                 endif
             endwith
-//12345
 
             l_cFrom := oFcgi:GetQueryString('From')
             if !empty(l_cFrom)
@@ -1966,8 +2019,6 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfColumns
-
-//12345
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -2010,7 +2061,7 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
@@ -2297,7 +2348,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -2639,7 +2691,6 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfIndexes
-//12345
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -2682,7 +2733,7 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
@@ -2794,11 +2845,10 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfEnumerations
-
     if eof()
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">No Enumeration on file for current application.</span>]
+                l_cHtml += [<span class="navbar-brand ms-3 me-3">No Enumeration on file for current application.</span>]
                 l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -2807,7 +2857,7 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [<div class="container-fluid">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">List of Enumerations</span>]
+                l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Enumerations</span>]
                 l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -2825,7 +2875,7 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Implemented As</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Values</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -2841,9 +2891,9 @@ l_cHtml += [<div class="m-2">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]+EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength)+[</td>]
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                             l_iEnumValueCount := iif( VFP_Seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfEnumerations->NameSpace_Name)+[/]+Allt(ListOfEnumerations->Enumeration_Name)+[/">Values (]+Trans(l_iEnumValueCount)+[)</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfEnumerations->NameSpace_Name)+[/]+Allt(ListOfEnumerations->Enumeration_Name)+[/">]+Trans(l_iEnumValueCount)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2928,7 +2978,8 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
-                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -3182,7 +3233,7 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -3400,7 +3451,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+//12345
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Delete" onclick="ConfirmDelete();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -3600,7 +3653,7 @@ endif
 if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand me-3">Load Schema - Enter Connection Information</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3 me-3">Load Schema - Enter Connection Information</span>]   //navbar-text
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
             l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
@@ -3839,6 +3892,8 @@ if !empty(l_cErrorMessage)
 endif
 
 return l_cHtml
-
-return nil
 //=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+
+

@@ -1,6 +1,8 @@
 #include "hb_orm.ch"
 #include "hb_vfp.ch"
 
+#define BUILDVERSION "0.12"
+
 #xtranslate NVL(<vValue1>,<xValue2>) => hb_DefaultValue(<vValue1>,<xValue2>)
 
 #define WEBPAGEHANDLE_NAME            1

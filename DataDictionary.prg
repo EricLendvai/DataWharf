@@ -6,8 +6,6 @@ request HB_CODEPAGE_UTF8
 
 #include "DataDictionary.ch"
 
-#define BUILDVERSION "0.11"
-
 memvar v_hPP
 
 memvar v_hPageMapping
@@ -140,6 +138,7 @@ local l_nLoginOutUserPk
 local l_aWebPageHandle
 local l_aPathElements
 local l_iLoop
+local l_cAjaxAction
 
 //AltD()
 
@@ -208,31 +207,45 @@ endif
     //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
     // endfor
 
+if l_cPageName <> "ajax"
 
-l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
-// #define WEBPAGEHANDLE_NAME            1
-// #define WEBPAGEHANDLE_ACCESSLEVEL     2
-// #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
+    l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
+    // #define WEBPAGEHANDLE_NAME            1
+    // #define WEBPAGEHANDLE_ACCESSLEVEL     2
+    // #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
 
-::p_cHeader       := ""
-::p_cjQueryScript := ""
+    ::p_cHeader       := ""
+    ::p_cjQueryScript := ""
 
 
-// l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
+    // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
-l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
-l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-l_cPageHeaderHtml += [<title>Data Dictionary</title>]
+    l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
+    l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
+    l_cPageHeaderHtml += [<title>Data Dictionary</title>]
 
-l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
-l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
-l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
-l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
-l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
-l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
-l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
 
-::p_cHeader := l_cPageHeaderHtml
+    l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
+    l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
+    l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
+
+    l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
+    l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
+
+    l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
+    l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
+
+
+    // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/Themes/smoothness/jQueryUI.css">]
+    // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_4_6_0/js/bootstrap.bundle.min.js"></script>]
+    // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_4_6_0/css/bootstrap.min.css">]
+    // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/jquery-ui.min.js"></script>]
+
+
+
+    ::p_cHeader := l_cPageHeaderHtml
+endif
+
 l_cPageHeaderHtml := NIL  //To free memory
 
 l_oDB1       := hb_SQLData(::p_o_SQLConnection)
@@ -326,85 +339,104 @@ if !empty(l_cSessionID)
     endif
 endif
 
-//If not a public page and not logged in, then request to log in.
-if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0 .and. !l_lLoggedIn
-    if oFcgi:IsGet()
-        l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
-        l_cBody += BuildPageLoginScreen()
-    else
-        //Post
-        l_cFormName       := oFcgi:GetInputValue("formname")
-        l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
-        l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
-        l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
+if l_cPageName <> "ajax"
+    //If not a public page and not logged in, then request to log in.
+    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0 .and. !l_lLoggedIn
+        if oFcgi:IsGet()
+            l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+            l_cBody += BuildPageLoginScreen()
+        else
+            //Post
+            l_cFormName       := oFcgi:GetInputValue("formname")
+            l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+            l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
+            l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 
-        with object l_oDB1
-            :Table("public.User")
-            :Column("User.pk"        ,"User_pk")
-            :Column("User.Name"      ,"User_Name")
-            :Column("User.AccessMode","User_AccessMode")
-            :Where("trim(User.id) = ^",l_cID)
-            :Where("trim(User.Password) = ^",l_cPassword)
-            :Where("User.Status = 1")
-            :SQL("ListOfResults")
+            with object l_oDB1
+                :Table("public.User")
+                :Column("User.pk"        ,"User_pk")
+                :Column("User.Name"      ,"User_Name")
+                :Column("User.AccessMode","User_AccessMode")
+                :Where("trim(User.id) = ^",l_cID)
+                :Where("trim(User.Password) = ^",l_cPassword)
+                :Where("User.Status = 1")
+                :SQL("ListOfResults")
 
-// l_cLastSQL   := :LastSQL()
-// l_cLastError := :ErrorMessage()
-// Altd()
+    // l_cLastSQL   := :LastSQL()
+    // l_cLastError := :ErrorMessage()
+    // Altd()
 
-            if :Tally == 1
-                l_nUserPk         := ListOfResults->User_Pk
-                l_cUserName       := Trim(ListOfResults->User_Name)
-                l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-                l_nUserAccessMode := ListOfResults->User_AccessMode
+                if :Tally == 1
+                    l_nUserPk         := ListOfResults->User_Pk
+                    l_cUserName       := Trim(ListOfResults->User_Name)
+                    l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+                    l_nUserAccessMode := ListOfResults->User_AccessMode
 
-                :Table("LoginLogs")
-                :Field("fk_User"  ,l_nUserPk)
-                :Field("TimeIn"   ,{"S","now()"})
-                :Field("IP"       ,l_cIP)
-                :Field("Attempts" ,1)   //_M_ for later use to prevent brute force attacks
-                :Field("Status"   ,1)
-                :Field("Signature",l_cSignature)
-                if :Add()
-                    l_nLoginLogsPk := :Key()
-                    l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
-                    ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
-                    l_lLoggedIn := .t.
+                    :Table("LoginLogs")
+                    :Field("fk_User"  ,l_nUserPk)
+                    :Field("TimeIn"   ,{"S","now()"})
+                    :Field("IP"       ,l_cIP)
+                    :Field("Attempts" ,1)   //_M_ for later use to prevent brute force attacks
+                    :Field("Status"   ,1)
+                    :Field("Signature",l_cSignature)
+                    if :Add()
+                        l_nLoginLogsPk := :Key()
+                        l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
+                        ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
+                        l_lLoggedIn := .t.
+                    endif
+                else
+                    //Invalid Login
+                    l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+                    l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password")
                 endif
-            else
-                //Invalid Login
-                l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
-                l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password")
-            endif
 
-        endwith
+            endwith
 
+        endif
     endif
 endif
 
 if l_lLoggedIn
     ::p_nUserAccessMode := l_nUserAccessMode
 
-    l_cBody += GetPageHeader(.t.,l_cPageName,l_cUserName,::p_nUserAccessMode)
+    if l_cPageName == "ajax"
+        l_cBody := [UNBUFFERED]
+        if len(::p_URLPathElements) >= 2 .and. !empty(::p_URLPathElements[2])
+            l_cAjaxAction := ::p_URLPathElements[2]
 
-    // l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),l_cUserName,l_nUserPk)
-    l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(l_cUserName,l_nUserPk)
+            switch l_cAjaxAction
+            case "VisualizationPositions"
+                l_cBody += SaveVisualizationPositions()
+                exit
+            endswitch
 
-    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
-        l_cBody += "<div>&nbsp;Web Site Version: " + BUILDVERSION + "</div>"
+        endif
+    else
+        l_cBody += GetPageHeader(.t.,l_cPageName,l_cUserName,::p_nUserAccessMode)
+
+        // l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),l_cUserName,l_nUserPk)
+        l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(l_cUserName,l_nUserPk)
+
+
+        if l_cUserName == "Eric"
+            l_cBody += [<div class="m-3"></div>]   //Spacer
+            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
+                l_cBody += "<div>&nbsp;Web Site Version: " + BUILDVERSION + "</div>"
+            endif
+            l_cBody += [<div>&nbsp;Site Build Info: ]+hb_buildinfo()+[</div>]
+            l_cBody += [<div>&nbsp;ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
+            l_cBody += [<div>&nbsp;VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+        endif
     endif
-
-    if l_cUserName == "Eric" .and. !(lower(left(l_cPageName,4)) == "ajax")
-        l_cBody += [<div class="m-3"></div>]   //Spacer
-        l_cBody += [<div>&nbsp;Site Build Info: ]+hb_buildinfo()+[</div>]
-        l_cBody += [<div>&nbsp;ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
-        l_cBody += [<div>&nbsp;VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
-    endif
-
 else
-    ::p_nUserAccessMode := 0
-    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] == 0   //public page
-        l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),"",0)
+    if l_cPageName == "ajax"
+        l_cBody := [UNBUFFERED Not Logged In]
+    else
+        ::p_nUserAccessMode := 0
+        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] == 0   //public page
+            l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),"",0)
+        endif
     endif
 endif
 
@@ -494,13 +526,6 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
                     l_cHtml += [<li class="nav-item]+iif(par_cCurrentPage == "applications"," active","")+["><a class="nav-link" href="]+l_cSitePath+[Applications">Applications</a></li>]
                     l_cHtml += [<li class="nav-item]+iif(par_cCurrentPage == "info"," active","")+["><a class="nav-link" href="]+l_cSitePath+[Info">Info</a></li>]
 
-                    l_cHtml += []
-                    l_cHtml += []
-                    l_cHtml += []
-                    l_cHtml += []
-                    l_cHtml += []
-                    l_cHtml += []
-
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
                     l_cHtml += [<li class="nav-item"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]
@@ -526,34 +551,58 @@ return l_result
 function GetConfirmationModalForms()
 local cHtml
 
-TEXT TO VAR cHtml
-<script>
+// Following Method failed once upgrated to bootstrap 5.
+// TEXT TO VAR cHtml
+// <script>
    
-function ConfirmDelete(par_Action) {
-    $('#modal').find('.modal-title').text('Confirm Delete?');
-    $('#modal-btn-yes').click(function(){$('#ActionOnSubmit').val('Delete');document.form.submit(); });
-    $('#modal').modal({show:true});
-} ;
+// function ConfirmDelete(par_Action) {
+//     $('#modal').find('.modal-title').text('Confirm Delete?');
+//     $('#modal-btn-yes').click(function(){$('#ActionOnSubmit').val('Delete');document.form.submit(); });
+//     $('#modal').modal({show:true});
+// } ;
    
-</script>
+// </script>
 
-<div class="modal fade " id="modal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Are You Sure?</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                This action cannot be undone.
-            </div>
-            <div class="modal-footer">
-                <a id="modal-btn-yes" class="btn btn-danger" >Yes</a>
-                <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
-            </div>
-        </div>
+// <div class="modal fade" id="modal">
+//     <div class="modal-dialog">
+//         <div class="modal-content">
+//             <div class="modal-header">
+//                 <h4 class="modal-title">Are You Sure?</h4>
+//                 <button type="button" class="close" data-dismiss="modal">&times;</button>
+//             </div>
+//             <div class="modal-body">
+//                 This action cannot be undone.
+//             </div>
+//             <div class="modal-footer">
+//                 <a id="modal-btn-yes" class="btn btn-danger" >Yes</a>
+//                 <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
+//             </div>
+//         </div>
+//     </div>
+// </div>
+// ENDTEXT
+
+
+TEXT TO VAR cHtml
+
+<div class="modal fade" id="ConfirmDeleteModal" tabindex="-1" aria-labelledby="ConfirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ConfirmDeleteModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This action cannot be undone
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Delete');document.form.submit();">Yes</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+      </div>
     </div>
+  </div>
 </div>
+
 ENDTEXT
 
 return cHtml
