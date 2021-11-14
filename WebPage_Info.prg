@@ -1,4 +1,4 @@
-#include "DataDictionary.ch"
+#include "DataWharf.ch"
 memvar oFcgi
 //=================================================================================================================
 function BuildPageAppInfo(par_cUserName,par_nUserPk)

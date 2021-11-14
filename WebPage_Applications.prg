@@ -1,4 +1,4 @@
-#include "DataDictionary.ch"
+#include "DataWharf.ch"
 memvar oFcgi
 
 #include "dbinfo.ch"
@@ -194,7 +194,7 @@ case l_cURLAction == "ListApplications"
     l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
         // l_cHtml += [<div class="container-fluid">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<a class="navbar-brand text-white me-3" href="]+l_cSitePath+[Applications/">Applications</a>]
+            l_cHtml += [<a class="navbar-brand text-white ms-3 me-3" href="]+l_cSitePath+[Applications/">Applications</a>]
             l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -262,41 +262,14 @@ case l_cURLAction == "ApplicationLoadSchema"
         endif
     endif
 
-
 case l_cURLAction == "ApplicationVisualize"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
     
     if oFcgi:isGet()
-        l_cHtml += DataDictionaryVisualize(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
-        // l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-        // l_oDB1:Table("public.Application")
-        // with object l_oDB1
-        //     :Column("Application.SyncBackendType","Application_SyncBackendType")
-        //     :Column("Application.SyncServer"     ,"Application_SyncServer")
-        //     :Column("Application.SyncPort"       ,"Application_SyncPort")
-        //     :Column("Application.SyncUser"       ,"Application_SyncUser")
-        //     :Column("Application.SyncDatabase"   ,"Application_SyncDatabase")
-        //     :Column("Application.SyncNameSpaces" ,"Application_SyncNameSpaces")
-        //     l_oData := :Get(l_iApplicationPk)
-        // endwith
-
-        // if l_oDB1:Tally == 1
-        //     l_cHtml += ApplicationLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
-        //                                                    l_oData:Application_SyncBackendType,;
-        //                                                    l_oData:Application_SyncServer,;
-        //                                                    l_oData:Application_SyncPort,;
-        //                                                    l_oData:Application_SyncUser,;
-        //                                                    "",;
-        //                                                    l_oData:Application_SyncDatabase,;
-        //                                                    l_oData:Application_SyncNameSpaces)
-        // endif
+        l_cHtml += DataDictionaryVisualizeBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
     else
-        // if l_iApplicationPk > 0
-        //     l_cHtml += ApplicationLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
-        // endif
+        l_cHtml += DataDictionaryVisualizeOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
     endif
-
 
 case l_cURLAction == "ListTables"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -765,7 +738,7 @@ otherwise
 endcase
 return l_cResult
 //=================================================================================================================
-static function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_iEnumerationImplementAs,par_iEnumerationImplementLength,;
+function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_iEnumerationImplementAs,par_iEnumerationImplementLength,;
                                     par_cSitePath,par_cURLApplicationLinkCode,par_cURLNameSpaceName)
 local l_cResult
 local l_iTypePos
@@ -1159,6 +1132,7 @@ static function NameSpacesListFormBuild(par_iApplicationPk,par_cURLApplicationLi
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfNameSpaces
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
@@ -1171,6 +1145,7 @@ with object l_oDB1
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
     :SQL("ListOfNameSpaces")
+    l_nNumberOfNameSpaces := :Tally
 endwith
 
 l_cHtml += [<div class="m-3"></div>]   //Spacer
@@ -1189,8 +1164,8 @@ l_cHtml += [<div class="m-2">]
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Name Spaces</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+                // l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Name Spaces</span>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1200,6 +1175,10 @@ l_cHtml += [<div class="m-2">]
             l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
+                l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
@@ -1980,6 +1959,7 @@ static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfColumns
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
@@ -2009,6 +1989,7 @@ with object l_oDB1
     :Where("Column.fk_Table = ^",par_iTablePk)
     :OrderBy("Column_Order")
     :SQL("ListOfColumns")
+    l_nNumberOfColumns := :Tally
 
     // ExportTableToHtmlFile("ListOfColumns","d:\PostgreSQL_ListOfColumns.html","From PostgreSQL",,25,.t.)
 
@@ -2019,7 +2000,7 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfColumns
-    if eof()
+    if l_nNumberOfColumns <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
                 l_cHtml += [<span class="navbar-brand me-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
@@ -2051,7 +2032,7 @@ l_cHtml += [<div class="m-2">]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
-                        l_cHtml += [Columns for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
 
@@ -2664,6 +2645,7 @@ static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfIndexes
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
@@ -2681,6 +2663,7 @@ with object l_oDB1
     :Where("Index.fk_Table = ^",par_iTablePk)
     :OrderBy("tag1")
     :SQL("ListOfIndexes")
+    l_nNumberOfIndexes := :Tally
 
     // ExportTableToHtmlFile("ListOfIndexes","d:\PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
 
@@ -2691,7 +2674,7 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfIndexes
-    if eof()
+    if l_nNumberOfIndexes <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
                 l_cHtml += [<span class="navbar-brand me-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
@@ -2723,7 +2706,7 @@ l_cHtml += [<div class="m-2">]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
-                        l_cHtml += [Indexes for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                        l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
 
@@ -2800,6 +2783,7 @@ local l_oDB1
 local l_oDB2
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_iEnumValueCount
+local l_nNumberOfEnumerations
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2820,6 +2804,7 @@ with object l_oDB1
     :OrderBy("tag1")
     :OrderBy("tag2")
     :SQL("ListOfEnumerations")
+    l_nNumberOfEnumerations := :Tally
 endwith
 
 With Object l_oDB2
@@ -2845,7 +2830,7 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfEnumerations
-    if eof()
+    if l_nNumberOfEnumerations <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
                 l_cHtml += [<span class="navbar-brand ms-3 me-3">No Enumeration on file for current application.</span>]
@@ -2857,8 +2842,8 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [<div class="container-fluid">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Enumerations</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+                // l_cHtml += [<span class="navbar-brand ms-3 me-3">List of Enumerations</span>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2868,6 +2853,10 @@ l_cHtml += [<div class="m-2">]
             l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
@@ -3182,6 +3171,7 @@ static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLin
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfEnumValues
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
@@ -3195,6 +3185,7 @@ with object l_oDB1
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
     :OrderBy("EnumValue_order")
     :SQL("ListOfEnumValues")
+    l_nNumberOfEnumValues := :Tally
 endwith
 
 l_cHtml += [<div class="m-3"></div>]   //Spacer
@@ -3202,8 +3193,7 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfEnumValues
-
-    if eof()
+    if l_nNumberOfEnumValues <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
                 l_cHtml += [<span class="navbar-brand me-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
@@ -3215,7 +3205,7 @@ l_cHtml += [<div class="m-2">]
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">List of Values for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</span>]
+                // l_cHtml += [<span class="navbar-brand me-3">List of Values for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</span>]
                 l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
                 l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
                 l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order List of Values</a>]
@@ -3228,6 +3218,10 @@ l_cHtml += [<div class="m-2">]
             l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
+                l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]

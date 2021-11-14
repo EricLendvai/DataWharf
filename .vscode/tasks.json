@@ -30,12 +30,12 @@
                         "HB_VFP_ROOT":"R:\\Harbour_VFP",
                         "HB_ORM_ROOT":"R:\\Harbour_ORM",
                         "FastCGIRootPath":"..\\..\\",
-                        "EXEName":"DataDictionary",
+                        "EXEName":"DataWharf",
                         "BuildMode":"debug",
 //                        "HB_COMPILER":"${input:CCompiler}",
                         "HB_COMPILER":"mingw64",
                         "WebsiteDrive":"R:",
-                        "SiteRootFolder":"\\Harbour_websites\\fcgi_datadictionary\\"
+                        "SiteRootFolder":"\\Harbour_websites\\fcgi_DataWharf\\"
                     },
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
                 },
@@ -59,11 +59,11 @@
                         "HB_VFP_ROOT":"/etc/Harbour_VFP",
                         "HB_ORM_ROOT":"/etc/Harbour_ORM",
                         "FastCGIRootPath":"/etc/Harbour_FastCGI/",
-                        "EXEName":"DataDictionary",
+                        "EXEName":"DataWharf",
                         "BuildMode":"debug",
                         "HB_COMPILER":"gcc",
                         "WebsiteDrive":"",
-                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_datadictionary/"
+                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_DataWharf/"
                     },
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
                 },
@@ -90,12 +90,12 @@
                         "HB_VFP_ROOT":"R:\\Harbour_VFP",
                         "HB_ORM_ROOT":"R:\\Harbour_ORM",
                         "FastCGIRootPath":"..\\..\\",
-                        "EXEName":"DataDictionary",
+                        "EXEName":"DataWharf",
                         "BuildMode":"release",
                         // "HB_COMPILER":"${input:CCompiler}",
                         "HB_COMPILER":"mingw64",
                         "WebsiteDrive":"R:",
-                        "SiteRootFolder":"\\Harbour_websites\\fcgi_datadictionary\\"
+                        "SiteRootFolder":"\\Harbour_websites\\fcgi_DataWharf\\"
                     },
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
                 },
@@ -119,11 +119,11 @@
                         "HB_VFP_ROOT":"/etc/Harbour_VFP",
                         "HB_ORM_ROOT":"/etc/Harbour_ORM",
                         "FastCGIRootPath":"/etc/Harbour_FastCGI/",
-                        "EXEName":"DataDictionary",
+                        "EXEName":"DataWharf",
                         "BuildMode":"release",
                         "HB_COMPILER":"gcc",
                         "WebsiteDrive":"",
-                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_datadictionary/"
+                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_DataWharf/"
                     },
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
                 },
@@ -144,7 +144,7 @@
             "windows":{
                 "type": "shell",
                 "command":"taskkill",
-                "args": ["/IM","FCGIDataDictionary.exe","/f","/t"],
+                "args": ["/IM","FCGIDataWharf.exe","/f","/t"],
                 "options": {
                     "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
                 }
@@ -152,7 +152,7 @@
             "linux":{
                 "type": "shell",
                 "command":"taskkill",
-                "args": ["/IM","FCGIDataDictionary.exe","/f","/t"],
+                "args": ["/IM","FCGIDataWharf.exe","/f","/t"],
                 "options": {
                     "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
                 }
@@ -163,7 +163,7 @@
             "windows":{
                 "type": "shell",
                 "command":"${workspaceFolder}\\..\\..\\FCGITaskManagerBin\\FCGITaskManager.exe",
-                "args": ["kill","http","localhost","8164","/fcgi_datadictionary/","R:/Harbour_websites/fcgi_DataDictionary/","DataDictionary",""],
+                "args": ["kill","http","localhost","8164","/fcgi_DataWharf/","R:/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
                 "options": {
                     "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
                 }
@@ -171,7 +171,7 @@
             "linux":{
                 "type": "shell",
                 "command":"/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe",
-                "args": ["kill","http","localhost","80","/fcgi_datadictionary/","/etc/Harbour_websites/fcgi_DataDictionary/","DataDictionary",""],
+                "args": ["kill","http","localhost","80","/fcgi_DataWharf/","/etc/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
                 "options": {
                     "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
                 }
@@ -204,7 +204,7 @@
             "label": "Down",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_datadictionary/ R:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -214,7 +214,7 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -224,56 +224,56 @@
             }
         },
         {
-            "label": "ActivateDataDictionary",
+            "label": "ActivateDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_datadictionary/ R:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Activate DataDictionary>","hide" : false}
+                    "statusbar": {"label" : "<Activate DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Activate DataDictionary>","hide" : false}
+                    "statusbar": {"label" : "<Activate DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             }
         },
         {
-            "label": "KillDataDictionary",
+            "label": "KillDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_datadictionary/ R:/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Kill DataDictionary>","hide" : false}
+                    "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_datadictionary/ /etc/Harbour_websites/fcgi_DataDictionary/ DataDictionary",
+                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Kill DataDictionary>","hide" : false}
+                    "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             }
         },
         {
-            "label": "BrowseDataDictionary",
+            "label": "BrowseDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "\"C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe\" http://localhost:8164/fcgi_datadictionary/",
+                "command": "\"C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe\" http://localhost:8164/fcgi_DataWharf/",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -283,11 +283,11 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "firefox http://DataDictionary/",
+                "command": "firefox http://DataWharf/",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Browse Data Dictionary>","hide" : false}
+                    "statusbar": {"label" : "<Browse DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             }

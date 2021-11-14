@@ -8,9 +8,9 @@
         {
             "type": "harbour-dbg",
             "request": "attach",
-            "name": "Attach Program DataDictionary.exe",
+            "name": "Attach Program DataWharf.exe",
             "windows":{
-                "program": "R:\\Harbour_websites\\fcgi_DataDictionary\\backend\\FCGIDataDictionary.exe",
+                "program": "R:\\Harbour_websites\\fcgi_DataWharf\\backend\\FCGIDataWharf.exe",
                 "sourcePaths": [
                     "${workspaceFolder}",
                     "R:\\Harbour_ORM\\",
@@ -18,7 +18,7 @@
                 ]
             },
             "linux":{
-                "program": "/etc/fcgi_DataDictionary/backend/FCGIDataDictionary.exe",
+                "program": "/etc/fcgi_DataWharf/backend/FCGIDataWharf.exe",
                 "sourcePaths": [
                     "${workspaceFolder}",
                     "/etc/Harbour_ORM/",

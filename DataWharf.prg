@@ -4,7 +4,7 @@
 
 request HB_CODEPAGE_UTF8
 
-#include "DataDictionary.ch"
+#include "DataWharf.ch"
 
 memvar v_hPP
 
@@ -26,7 +26,7 @@ public v_hPageMapping := {"home"             => {"Home"           ,1,@BuildPageH
 
 hb_HCaseMatch(v_hPageMapping,.f.)
 
-SendToDebugView("Starting DataDictionary FastCGI App")
+SendToDebugView("Starting DataWharf FastCGI App")
 
 hb_cdpSelect("UTF8")
 
@@ -37,7 +37,7 @@ do while oFcgi:Wait()
     oFcgi:OnRequest()
 enddo
 
-SendToDebugView("Ending DataDictionary FastCGI App")
+SendToDebugView("Ending DataWharf FastCGI App")
 
 return nil
 //=================================================================================================================
@@ -91,7 +91,7 @@ set delete on
 ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",,,,;
                                     ::GetAppConfig("POSTGRESID"),;
                                     ::GetAppConfig("POSTGRESPASSWORD"),;
-                                    "Harbour_DataDictionary","public";
+                                    "DataWharf","public";
                                     )
 with object ::p_o_SQLConnection
     :PostgreSQLHBORMSchemaName  := "ORM"
@@ -150,7 +150,7 @@ if ::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected()
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",,,,;
                                         ::GetAppConfig("POSTGRESID"),;
                                         ::GetAppConfig("POSTGRESPASSWORD"),;
-                                        "Harbour_DataDictionary","public";
+                                        "DataWharf","public";
                                         )
     with object ::p_o_SQLConnection
         :PostgreSQLHBORMSchemaName  := "ORM"
@@ -222,7 +222,7 @@ if l_cPageName <> "ajax"
 
     l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
     l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-    l_cPageHeaderHtml += [<title>Data Dictionary</title>]
+    l_cPageHeaderHtml += [<title>DataWharf</title>]
 
 
     l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
@@ -406,8 +406,11 @@ if l_lLoggedIn
             l_cAjaxAction := ::p_URLPathElements[2]
 
             switch l_cAjaxAction
-            case "VisualizationPositions"
-                l_cBody += SaveVisualizationPositions()
+            // case "VisualizationPositions"
+            //     l_cBody += SaveVisualizationPositions()
+            //     exit
+            case "GetInfo"
+                l_cBody += GetInfoDuringVisualization()
                 exit
             endswitch
 
@@ -517,7 +520,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+COLOR_HEADER_BACKGROUND+[;">]
     l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand" href="#">Data Dictionary</a>]
+        l_cHtml += [<a class="navbar-brand" href="#">DataWharf</a>]
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]

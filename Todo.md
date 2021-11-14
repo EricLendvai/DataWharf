@@ -1,5 +1,7 @@
 # List
 
+Enhance Visualize.prg to allow multiple diagrams.
+
 Finish LoadSchema.prg
 - Add support to index files
 - Add support to MySQL

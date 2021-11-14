@@ -7,7 +7,6 @@ l_Schema := ;
    ,"Name"           =>{, "CV", 200,  0,};
    ,"Status"         =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
    ,"Description"    =>{,  "M",   0,  0,"N"};
-   ,"VisPos"         =>{,  "M",   0,  0,"N"};  // Last Visualization Positions
    ,"SyncBackendType"=>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
    ,"SyncServer"     =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
    ,"SyncPort"       =>{,  "I",   0,  0,"N"};  // Connection Info To Sync To.  Port if not default one for Backend Type.
@@ -114,6 +113,26 @@ l_Schema := ;
    ,"Description"   =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
+,"public.Diagram"=>{;   //Field Definition
+   {"pk"            =>{,  "I",   0,  0,"+"};
+   ,"sysc"          =>{, "DT",   0,  6,"N"};
+   ,"sysm"          =>{, "DT",   0,  6,"N"};
+   ,"fk_Application"=>{,  "I",   0,  0,};
+   ,"Name"          =>{, "CV", 200,  0,};
+   ,"Status"        =>{,  "N",   1,  0,};    // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"Description"   =>{,  "M",   0,  0,"N"};
+   ,"VisPos"        =>{,  "M",   0,  0,"N"}};  // Last Visualization Positions
+   ,;   //Index Definition
+   {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
+,"public.DiagramTable"=>{;   //Field Definition
+   {"pk"        =>{,  "I",   0,  0,};
+   ,"sysc"      =>{, "DT",   0,  6,"N"};
+   ,"sysm"      =>{, "DT",   0,  6,"N"};
+   ,"fk_Diagram"=>{,  "I",   0,  0,};
+   ,"fk_Table"  =>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_Diagram"=>{,"fk_Diagram",.f.,"BTREE"};
+   ,"fk_Table"  =>{,"fk_Table",.f.,"BTREE"}}};
 ,"public.User"=>{;   //Field Definition
    {"pk"          =>{,  "I",   0,  0,};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
