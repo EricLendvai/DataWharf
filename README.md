@@ -14,6 +14,7 @@ The following is the list of additional open source projects used to design, bui
 | https://getbootstrap.com/                      | Bootstrap 5 |
 | https://jquery.com/                            | Browser independent JavaScript library |
 | https://jqueryui.com/                          | UI toolkit for jQuery |
+| https://github.com/visjs/vis-network           | JavaScript Library used to make interactive diagrams (visualize) |
 | https://code.visualstudio.com/                 | Also used to automate compilation |
 
 DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
