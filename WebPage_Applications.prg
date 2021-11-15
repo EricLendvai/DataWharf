@@ -24,6 +24,8 @@ local l_iTablePk
 local l_iColumnPk
 local l_iEnumerationPk
 local l_iEnumValuePk
+local l_iDiagrampk
+// local l_cDiagramName
 
 local l_cApplicationElement := "TABLES"  //Default Element
 
@@ -266,9 +268,43 @@ case l_cURLAction == "ApplicationVisualize"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
     
     if oFcgi:isGet()
-        l_cHtml += DataDictionaryVisualizeBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        l_iDiagramPk := 0
+        With Object l_oDB1
+
+            :Table("Diagram")
+            :Column("Diagram.pk"         ,"Diagram_pk")
+            // :Column("Diagram.Name"       ,"Diagram_name")
+            :Column("upper(Diagram.Name)","Tag1")
+            :Where("Diagram.fk_Application = ^" , l_iApplicationPk)
+            :OrderBy("tag1")
+            :SQL("ListOfDiagrams")
+            if :Tally > 0
+                l_iDiagramPk   := ListOfDiagrams->Diagram_pk
+                // l_cDiagramName := ListOfDiagrams->Diagram_Name
+            else
+                // l_cDiagramName := "All Tables"
+                //Add an initial Diagram File
+                :Table("Diagram")
+                :Field("fk_Application" ,l_iApplicationPk)
+                :Field("Name"           ,"All Tables")  // l_cDiagramName
+                :Field("Status"         ,1)
+                // :Field("VisPos"         ,"")
+                if :Add()
+                    l_iDiagramPk := :Key()
+                endif
+            endif
+        endwith
+        if l_iDiagramPk > 0
+            l_cHtml += DataDictionaryVisualizeBuildDesign(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iDiagramPk)
+        endif
     else
-        l_cHtml += DataDictionaryVisualizeOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        l_cFormName := oFcgi:GetInputValue("formname")
+        do case
+        case l_cFormName == "Design"
+            l_cHtml += DataDictionaryVisualizeOnSubmitDesign(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        case l_cFormName == "Settings"
+         l_cHtml += DataDictionaryVisualizeOnSubmitSettings(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        endcase
     endif
 
 case l_cURLAction == "ListTables"

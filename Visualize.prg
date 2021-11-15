@@ -2,9 +2,10 @@
 memvar oFcgi
 
 //=================================================================================================================
-function DataDictionaryVisualizeBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+function DataDictionaryVisualizeBuildDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk)
 local l_cHtml := []
 local l_oDB1
+local l_oDB2
 local l_oData
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions := ""
@@ -13,27 +14,23 @@ local l_nLengthDecoded
 local l_hCoordinate
 local l_iNumberOfNameSpaces
 local l_cNodeLabel
-local l_iDiagram_pk
+local l_nNumberOfTableInDiagram
 
 // See https://visjs.github.io/vis-network/examples/
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 With Object l_oDB1
 
     :Table("Diagram")
     :Column("Diagram.pk"     ,"Diagram_pk")
+    :Column("Diagram.Name"   ,"Diagram_Name")
     :Column("Diagram.VisPos" ,"Diagram_VisPos")
     :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
     :SQL("ListOfDiagrams")
 
-    if :Tally > 0
-        l_iDiagram_pk    := ListOfDiagrams->Diagram_pk
-        l_cNodePositions := ListOfDiagrams->Diagram_VisPos
-    else
-        l_cNodePositions := ""
-        l_iDiagram_pk    := 0
-    endif
+    l_cNodePositions := ""
 
     // :Table("Application")
     // :Column("Application.VisPos","Application_VisPos")
@@ -44,9 +41,8 @@ With Object l_oDB1
 
 endwith
 
-l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 
-With Object l_oDB1
+With Object l_oDB2
     :Table("NameSpace")
     :Distinct(.t.)
     :Column("NameSpace.Name"   ,"NameSpace_Name")
@@ -54,17 +50,47 @@ With Object l_oDB1
     :SQL()
     l_iNumberOfNameSpaces := :Tally
 
-    :Table("Table")
-    :Column("Table.pk"         ,"pk")
-    :Column("NameSpace.Name"   ,"NameSpace_Name")
-    :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.Status"     ,"Table_Status")
-    :Column("Table.Description","Table_Description")
-    :Column("Upper(NameSpace.Name)","tag1")
-    :Column("Upper(Table.Name)","tag2")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :SQL("ListOfTables")
+    //Check if there is at least one in DiagramTable
+
+    :Table("DiagramTable")
+    :Column("DiagramTable.pk","pk")
+    :Where("DiagramTable.fk_Diagram = ^" , par_iDiagramPk)
+    :SQL("ListOfTablesInDiagram")   //_M_ Once added to ORM a count, refactor this code
+    l_nNumberOfTableInDiagram := :Tally
+// Altd()
+
+    if l_nNumberOfTableInDiagram == 0
+        // All Tables
+
+        :Table("Table")
+        :Column("Table.pk"         ,"pk")
+        :Column("NameSpace.Name"   ,"NameSpace_Name")
+        :Column("Table.Name"       ,"Table_Name")
+        :Column("Table.Status"     ,"Table_Status")
+        :Column("Table.Description","Table_Description")
+        :Column("Upper(NameSpace.Name)","tag1")
+        :Column("Upper(Table.Name)","tag2")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :SQL("ListOfTables")
+    else
+        // A subset of Tables
+
+        :Table("DiagramTable")
+        :Distinct(.t.)
+        :Column("Table.pk"         ,"pk")
+        :Column("NameSpace.Name"   ,"NameSpace_Name")
+        :Column("Table.Name"       ,"Table_Name")
+        :Column("Table.Status"     ,"Table_Status")
+        :Column("Table.Description","Table_Description")
+        :Column("Upper(NameSpace.Name)","tag1")
+        :Column("Upper(Table.Name)","tag2")
+        :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("DiagramTable.fk_Diagram = ^" , par_iDiagramPk)
+        :SQL("ListOfTables")
+
+    endif
 
 endwith
 
@@ -85,7 +111,7 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
 l_cHtml += [<input type="hidden" name="formname" value="Design">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" id="TextNodePositions" name="TextNodePositions" value="">]
-l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+Trans(l_iDiagram_pk)+[">]
+l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+Trans(par_iDiagramPk)+[">]
 
 
 
@@ -97,7 +123,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         // l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
 
         //---------------------------------------------------------------------------
-        l_cHtml += [<button class="btn btn-primary rounded ms-3 me-3" onclick="]
+        l_cHtml += [<button id="ButtonSaveLayout" class="btn btn-primary rounded ms-3 me-3" onclick="]
 
         l_cHtml += [network.storePositions();]
 
@@ -110,7 +136,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         // l_cHtml += [});]
 
         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-        l_cHtml += [$('#ActionOnSubmit').val('Save');document.form.submit();]
+        l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
         // l_cHtml += [alert('step 1');]
         // l_cHtml += [network.redraw();]
@@ -125,20 +151,48 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
         //---------------------------------------------------------------------------
 
-        l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="]
+        // l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="]
         
-        // l_cHtml += [$.ajax({]
-        // l_cHtml += [  type: 'GET',]
-        // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
-        // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos=reset',]
-        // l_cHtml += [  cache: false ]
-        // l_cHtml += [});]
+        // // l_cHtml += [$.ajax({]
+        // // l_cHtml += [  type: 'GET',]
+        // // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
+        // // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos=reset',]
+        // // l_cHtml += [  cache: false ]
+        // // l_cHtml += [});]
 
-        //Code used to debug the positions.
-        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-        l_cHtml += [$('#ActionOnSubmit').val('Reset');document.form.submit();]
+        // //Code used to debug the positions.
+        // l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+        // l_cHtml += [$('#ActionOnSubmit').val('ResetLayout');document.form.submit();]
 
-        l_cHtml += [">Reset Layout</button>]
+        // l_cHtml += [">Reset Layout</button>]
+        //---------------------------------------------------------------------------
+         l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="$('#ActionOnSubmit').val('Settings');document.form.submit();">Settings</button>]
+        //---------------------------------------------------------------------------
+
+        //  l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="OnChangeDiagram(this.value)" class="me-3">]
+         l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="me-3">]
+
+
+
+            select ListOfDiagrams
+            scan all
+                l_cHtml += [<option value="]+Trans(ListOfDiagrams->Diagram_Pk)+["]+iif(ListOfDiagrams->Diagram_Pk == par_iDiagramPk,[ selected],[])+[>]+ListOfDiagrams->Diagram_Name+[ ]+Trans(ListOfDiagrams->Diagram_Pk)+[</option>]
+
+                if ListOfDiagrams->Diagram_pk == par_iDiagramPk
+                    l_cNodePositions := ListOfDiagrams->Diagram_VisPos
+                endif
+
+
+            endscan
+         l_cHtml += [</select>]
+
+        l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
+
+        //---------------------------------------------------------------------------
+         l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">New Diagram</button>]
+
+
+        //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
 
 
@@ -199,7 +253,7 @@ endscan
 l_cHtml += ']);'
 
 // create an array with edges
-With Object l_oDB1
+With Object l_oDB2
     :Table("Table")
     :Column("Table.pk"               ,"pkFrom")
     :Column("Column.fk_TableForeign" ,"pkTo")
@@ -237,9 +291,13 @@ l_cHtml += [  network = new vis.Network(container, data, options);]  //var
 
 l_cHtml += ' network.on("click", function (params) {'
 l_cHtml += '   params.event = "[original event]";'
-
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","info="+JSON.stringify(params) );'
+l_cHtml += '      });'
 
+l_cHtml += ' network.on("dragStart", function (params) {'
+l_cHtml += '   params.event = "[original event]";'
+// l_cHtml += '   debugger;'
+l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
 l_cHtml += '      });'
 
 l_cHtml += [};]
@@ -251,24 +309,36 @@ oFcgi:p_cjQueryScript += [MakeVis();]
 
 return l_cHtml
 //=================================================================================================================
-function DataDictionaryVisualizeOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+function DataDictionaryVisualizeOnSubmitDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
 local l_cHtml := []
+
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 local l_cNodePositions
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_iDiagram_pk
+local l_cErrorMessage
 
 l_iDiagram_pk := Val(oFcgi:GetInputValue("TextDiagramPk"))
 
 do case
-case l_cActionOnSubmit == "Save"
+case l_cActionOnSubmit == "Show"
+altd()
+    l_cHtml += DataDictionaryVisualizeBuildDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+
+case l_cActionOnSubmit == "Settings"
+    l_cHtml := DataDictionaryVisualizeBuildSettings(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+
+case l_cActionOnSubmit == "NewDiagram"
+    l_cHtml := DataDictionaryVisualizeBuildSettings(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
+
+case l_cActionOnSubmit == "SaveLayout"
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
 
     With Object l_oDB1
         :Table("Diagram")
         :Field("VisPos",l_cNodePositions)
         if empty(l_iDiagram_pk)
-            //Add an initial Diagram File
+            //Add an initial Diagram File this should not happen, since record was already added
             :Field("fk_Application" ,par_iApplicationPk)
             :Field("Name"           ,"All Tables")
             :Field("Status"         ,1)
@@ -279,28 +349,134 @@ case l_cActionOnSubmit == "Save"
             :Update(l_iDiagram_pk)
         endif
     endwith
-
-case l_cActionOnSubmit == "Reset"
-    With Object l_oDB1
-        :Table("Diagram")
-        :Field("VisPos","")
-        if empty(l_iDiagram_pk)
-            //Add an initial Diagram File
-            :Field("fk_Application" ,par_iApplicationPk)
-            :Field("Name"           ,"All Tables")
-            :Field("Status"         ,1)
-            if :Add()
-                l_iDiagram_pk := :Key()
-            endif
-        else
-            :Update(l_iDiagram_pk)
-        endif
-    endwith
+    l_cHtml += DataDictionaryVisualizeBuildDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
 endcase
 
-l_cHtml += DataDictionaryVisualizeBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
 return l_cHtml
+
+//=================================================================================================================
+function DataDictionaryVisualizeOnSubmitSettings(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+local l_cHtml := []
+
+local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+local l_cNodePositions
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_iDiagram_pk
+local l_cDiagram_Name
+local l_cErrorMessage
+local l_lSelected
+local l_cValue
+
+l_iDiagram_pk := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_cDiagram_Name := SanitizeInput(oFcgi:GetInputValue("TextName"))
+
+
+do case
+case l_cActionOnSubmit == "SaveDiagram"
+    //Always save the check box selection even if an error would occur afterwards. Refactor this later on. Not critical
+    //Get current list of diagram tables
+    with Object l_oDB1
+        :Table("DiagramTable")
+        :Distinct(.t.)
+        :Column("Table.pk","pk")
+        :Column("DiagramTable.pk","DiagramTable_pk")
+        :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+        :SQL("ListOfCurrentTablesInDiagram")
+        With Object :p_oCursor
+            :Index("pk","pk")
+            :CreateIndexes()
+            :SetOrder("pk")
+        endwith        
+    endwith
+
+    //Get all the Application Tables.
+    with Object l_oDB2
+        :Table("Table")
+        :Column("Table.pk"         ,"pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :SQL("ListOfAllApplicationTables")
+    endwith
+
+    select ListOfAllApplicationTables
+    scan all
+        l_lSelected := (oFcgi:GetInputValue("CheckTable"+Trans(ListOfAllApplicationTables->pk)) == "1")
+
+        if VFP_Seek(ListOfAllApplicationTables->pk,"ListOfCurrentTablesInDiagram","pk")
+            if !l_lSelected
+                // Remove the table
+                with Object l_oDB3
+                    :Table("DiagramTable")
+                    :Delete(ListOfCurrentTablesInDiagram->DiagramTable_pk)
+                endwith
+            endif
+        else
+            if l_lSelected
+                // Add the table
+                with Object l_oDB3
+                    :Table("DiagramTable")
+                    :Field("fk_Table"   ,ListOfAllApplicationTables->pk)
+                    :Field("fk_Diagram" ,l_iDiagram_pk)
+                    :Add()
+                endwith
+            endif
+        endif
+    endscan
+
+
+    do case
+    case empty(l_cDiagram_Name)
+        l_cErrorMessage := "Missing Name"
+    endcase
+
+    if empty(l_cErrorMessage)
+        With Object l_oDB1
+            :Table("Diagram")
+            :Field("Name",l_cDiagram_Name)
+            if empty(l_iDiagram_pk)
+                :Field("fk_Application" ,par_iApplicationPk)
+                :Field("Status" , 1)
+                if :Add()
+                    l_iDiagram_pk := :Key()
+                else
+                    l_iDiagram_pk := 0
+                endif
+                // :Field("VisPos" , "")
+            else
+                :Update(l_iDiagram_pk)
+            endif
+        endwith
+        if l_iDiagram_pk > 0
+            l_cHtml += DataDictionaryVisualizeBuildDesign(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+        endif
+
+    else
+        l_cHtml := DataDictionaryVisualizeBuildSettings(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0,l_cDiagram_Name)
+    endif
+
+case l_cActionOnSubmit == "Cancel"
+    l_cHtml += DataDictionaryVisualizeBuildDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+
+case l_cActionOnSubmit == "Delete"
+
+case l_cActionOnSubmit == "ResetLayout"
+    With Object l_oDB1
+        :Table("Diagram")
+        :Field("VisPos",NIL)
+        :Update(l_iDiagram_pk)
+    endwith
+    l_cHtml += DataDictionaryVisualizeBuildDesign(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+
+endcase
+
+return l_cHtml
+
+
 //=================================================================================================================
 // The Following function was used by deprecated Ajax Call
 // function SaveVisualizationPositions()
@@ -554,4 +730,126 @@ endif
 
 
 return l_cHtml
+//=================================================================================================================
+
+
+
+
+//=================================================================================================================
+function DataDictionaryVisualizeBuildSettings(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk,par_cDiagramName)
+local l_cHtml := ""
+local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
+local l_cName        := hb_DefaultValue(par_cDiagramName,"")
+local l_CheckBoxId
+
+local l_oDB1
+local l_oDB2
+local l_oData
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+if pcount() == 5
+    // Initial Build, meaning not from a failing editing
+    with object l_oDB1
+        :Table("Diagram")
+        :Column("Diagram.name" , "Diagram_name")
+        l_oData := :Get(par_iDiagramPk)
+        if :Tally == 1
+            l_cName := l_oData:Diagram_name
+        endif
+    endwith
+endif
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<input type="hidden" name="formname" value="Settings">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
+
+if !empty(par_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3 me-3">]+iif(empty(par_iDiagramPk),"New Diagram","Settings")+[</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        if !empty(par_iDiagramPk)
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5 me-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
+        endif
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-2">]
+
+    l_cHtml += [<table>]
+
+    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
+    l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+
+l_cHtml += [<div class="m-3"></div>]
+//List all the tables
+
+with Object l_oDB1
+    :Table("Table")
+    :Column("Table.pk"         ,"pk")
+    :Column("NameSpace.Name"   ,"NameSpace_Name")
+    :Column("Table.Name"       ,"Table_Name")
+    :Column("Table.Status"     ,"Table_Status")
+    :Column("Table.Description","Table_Description")
+    :Column("Upper(NameSpace.Name)","tag1")
+    :Column("Upper(Table.Name)","tag2")
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :OrderBy("tag1")
+    :OrderBy("tag2")
+    :SQL("ListOfTables")
+endwith
+
+with Object l_oDB2
+    :Table("DiagramTable")
+    :Distinct(.t.)
+    :Column("Table.pk","pk")
+    :Column("DiagramTable.pk","DiagramTable_pk")
+    :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Where("DiagramTable.fk_Diagram = ^" , par_iDiagramPk)
+    :SQL("ListOfCurrentTablesInDiagram")
+    With Object :p_oCursor
+        :Index("pk","pk")
+        :CreateIndexes()
+        :SetOrder("pk")
+    endwith        
+endwith
+
+
+l_cHtml += [<div class="form-check form-switch">]
+select ListOfTables
+scan all
+    l_CheckBoxId := "CheckTable"+Trans(ListOfTables->pk)
+    l_cHtml += [<div class="ms-5">]
+        l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( VFP_Seek(ListOfTables->pk,"ListOfCurrentTablesInDiagram","pk")," checked","")+[ class="form-check-input">]
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]+ListOfTables->NameSpace_Name+[.]+ListOfTables->Table_Name+[</label>]
+    l_cHtml += [</div>]
+endscan
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+
+l_cHtml += [</form>]
+
+return l_cHtml
+//=================================================================================================================
 //=================================================================================================================
