@@ -295,15 +295,15 @@ case l_cURLAction == "ApplicationVisualize"
             endif
         endwith
         if l_iDiagramPk > 0
-            l_cHtml += DataDictionaryVisualizeBuildDesign(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iDiagramPk)
+            l_cHtml += DataDictionaryVisualizeDesignBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iDiagramPk)
         endif
     else
         l_cFormName := oFcgi:GetInputValue("formname")
         do case
         case l_cFormName == "Design"
-            l_cHtml += DataDictionaryVisualizeOnSubmitDesign(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += DataDictionaryVisualizeDesignOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "Settings"
-         l_cHtml += DataDictionaryVisualizeOnSubmitSettings(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+         l_cHtml += DataDictionaryVisualizeSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         endcase
     endif
 
@@ -1057,6 +1057,7 @@ local l_cApplicationDescription
 
 local l_cErrorMessage := ""
 local l_oDB1
+local l_oDB2
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
@@ -1129,30 +1130,48 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Application
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
     with object l_oDB1
         :Table("NameSpace")
         :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
         :SQL()
-    endwith
 
-    if l_oDB1:Tally == 0
-        with object l_oDB1
+        if :Tally == 0
             :Table("Version")
             :Where("Version.fk_Application = ^",l_iApplicationPk)
             :SQL()
-        endwith
 
-        if l_oDB1:Tally == 0
-            l_oDB1:Table("Application")
-            l_oDB1:Delete(l_iApplicationPk)
+            if :Tally == 0
+                //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
+                //But we may have some left over Table less diagrams. Remove them
 
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
+                :Table("Diagram")
+                :Column("Diagram.pk" , "pk")
+                :Where("Diagram.fk_Application = ^",l_iApplicationPk)
+                :SQL("ListOfDiagramRecordsToDelete")
+                if :Tally >= 0
+                    if :Tally > 0
+                        select ListOfDiagramRecordsToDelete
+                        scan
+                            l_oDB2:Delete("Diagram",ListOfDiagramRecordsToDelete->pk)
+                        endscan
+                    endif
+
+                    :Table("Application")
+                    :Delete(l_iApplicationPk)
+                else
+                    l_cErrorMessage := "Failed to clear related DiagramTable records."
+                endif
+
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
+            else
+                l_cErrorMessage := "Related Version record on file"
+            endif
         else
-            l_cErrorMessage := "Related Version record on file"
+            l_cErrorMessage := "Related Name Space record on file"
         endif
-    else
-        l_cErrorMessage := "Related Name Space record on file"
-    endif
+    endwith
 
 endcase
 
@@ -1859,6 +1878,7 @@ local l_cFrom
 local l_oData
 local l_cErrorMessage := ""
 local l_oDB1
+local l_oDB2
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
@@ -1946,40 +1966,54 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Table
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
     with object l_oDB1
         :Table("Column")
         :Where("Column.fk_Table = ^",l_iTablePk)
         :SQL()
-    endwith
 
-    if l_oDB1:Tally == 0
-        with object l_oDB1
+        if :Tally == 0
             :Table("Column")
             :Where("Column.fk_TableForeign = ^",l_iTablePk)
             :SQL()
-        endwith
 
-        if l_oDB1:Tally == 0
-            with object l_oDB1
+            if :Tally == 0
                 :Table("Index")
                 :Where("Index.fk_Table = ^",l_iTablePk)
                 :SQL()
-            endwith
 
-            if l_oDB1:Tally == 0
-                l_oDB1:Table("Table")
-                l_oDB1:Delete(l_iTablePk)
+                if :Tally == 0
+                    //Delete any DiagramTable related records
+                    :Table("DiagramTable")
+                    :Column("DiagramTable.pk" , "pk")
+                    :Where("DiagramTable.fk_Table = ^",l_iTablePk)
+                    :SQL("ListOfDiagramTableRecordsToDelete")
+                    if :Tally >= 0
+                        if :Tally > 0
+                            select ListOfDiagramTableRecordsToDelete
+                            scan
+                                l_oDB2:Delete("DiagramTable",ListOfDiagramTableRecordsToDelete->pk)
+                            endscan
+                        endif
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+                        :Table("Table")
+                        :Delete(l_iTablePk)
+
+                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+                    else
+                        l_cErrorMessage := "Failed to clear related DiagramTable records."
+                    endif
+                else
+                    l_cErrorMessage := "Related Index record on file"
+                endif
             else
-                l_cErrorMessage := "Related Index record on file"
+                l_cErrorMessage := "Related Column record on file (Foreign Key Link)"
             endif
         else
-            l_cErrorMessage := "Related Column record on file (Foreign Key Link)"
+            l_cErrorMessage := "Related Column record on file"
         endif
-    else
-        l_cErrorMessage := "Related Column record on file"
-    endif
+    endwith
 
 endcase
 
