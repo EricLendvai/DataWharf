@@ -105,7 +105,7 @@ l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
-        l_cHtml += [<button id="ButtonSaveLayout" class="btn btn-primary rounded ms-3 me-3" onclick="]
+        l_cHtml += [<button id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
         l_cHtml += [network.storePositions();]
 
@@ -138,9 +138,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
         // l_cHtml += [">Reset Layout</button>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="$('#ActionOnSubmit').val('Settings');document.form.submit();">Settings</button>]
+         l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('Settings');document.form.submit();">Settings</button>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="me-3">]
+         l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3">]
 
             select ListOfDiagrams
             scan all
@@ -153,7 +153,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             endscan
          l_cHtml += [</select>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">New Diagram</button>]
+         l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">New Diagram</button>]
         //---------------------------------------------------------------------------
 
     l_cHtml += [</div>]
@@ -556,7 +556,7 @@ if len(l_aNodes) == 1
 
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nTableStatus>=4,"feb4b4","d2e5ff")+[;">]
                 l_cHtml += [<div class="input-group">]
-                    l_cHtml += [<span class="navbar-brand ms-3 me-3">]+l_cNameSpaceName+[.]+l_cTableName+[</span>]
+                    l_cHtml += [<span class="navbar-brand ms-3">]+l_cNameSpaceName+[.]+l_cTableName+[</span>]
                     if !empty(l_cTableDescription)
                         l_cHtml += [<div>]+TextToHTML(l_cTableDescription)+[</div>]
                     endif
@@ -712,9 +712,9 @@ else
 
                 l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nColumnStatus>=4,"feb4b4","d2e5ff")+[;">]
                     l_cHtml += [<div class="input-group">]
-                        l_cHtml += [<span class="navbar-brand ms-3 me-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+[</span>]
-                        l_cHtml += [<span class="navbar-brand ms-3 me-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+[</span>]
-                        l_cHtml += [<span class="navbar-brand ms-3 me-3">Column: ]+l_cColumnName+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">Column: ]+l_cColumnName+[</span>]
                     l_cHtml += [</div>]
                 l_cHtml += [</nav>]
 
@@ -782,12 +782,12 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3 me-3">]+iif(empty(par_iDiagramPk),"New Diagram","Settings")+[</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iDiagramPk),"New Diagram","Settings")+[</span>]   //navbar-text
+        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iDiagramPk)
-            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5 me-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
-            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Reset" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]

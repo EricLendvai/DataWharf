@@ -198,8 +198,8 @@ case l_cURLAction == "ListApplications"
     l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
         // l_cHtml += [<div class="container-fluid">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<a class="navbar-brand text-white ms-3 me-3" href="]+l_cSitePath+[Applications/">Applications</a>]
-            l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
+            l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[Applications/">Applications</a>]
+            l_cHtml += [<a class="btn btn-primary rounded" ms-0 href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -978,12 +978,12 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         if empty(par_iPk)
-            l_cHtml += [<span class="navbar-brand ms-3 me-3">New Application</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3">New Application</span>]   //navbar-text
         else
-            l_cHtml += [<span class="navbar-brand ms-3 me-3">Update Application Settings</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3">Update Application Settings</span>]   //navbar-text
         endif
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
@@ -1595,14 +1595,14 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="m-2">]
 
     select ListOfTables
-    if eof()
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Table on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-    endif
+    // if eof()
+    //     l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    //         l_cHtml += [<div class="input-group">]
+    //             l_cHtml += [<span class="navbar-brand ms-3">No Table on file for current application.</span>]
+    //             l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
+    //         l_cHtml += [</div>]
+    //     l_cHtml += [</nav>]
+    // endif
 
 
     l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
@@ -1866,7 +1866,7 @@ local l_oData
 local l_cErrorMessage := ""
 local l_oDB1
 local l_oDB2
-local l_cButtonSave
+// local l_cButtonSave
 
 oFcgi:TraceAdd("TableEditFormOnSubmit")
 
@@ -1878,8 +1878,8 @@ l_cTableName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," "
 l_iTableStatus      := Val(oFcgi:GetInputValue("ComboStatus"))
 l_cTableDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
-l_cButtonSave       := SanitizeInput(oFcgi:GetInputValue("ButtonSave"))
-Altd()
+// l_cButtonSave       := SanitizeInput(oFcgi:GetInputValue("ButtonSave"))
+// Altd()
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -1919,7 +1919,9 @@ case l_cActionOnSubmit == "Save"
                         l_cErrorMessage := "Failed to add Table."
                     endif
                 else
-                    if !:Update(l_iTablePk)
+                    if :Update(l_iTablePk)
+                        l_cFrom := oFcgi:GetQueryString('From')
+                    else
                         l_cErrorMessage := "Failed to update Table."
                     endif
                 endif
@@ -1998,6 +2000,8 @@ otherwise
 
 endcase
 
+Altd()
+
 do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
@@ -2017,10 +2021,10 @@ otherwise
     endwith
     switch l_cFrom
     case 'Columns'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:Name_Space+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
         exit
     case 'Indexes'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:Name_Space+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
@@ -2085,7 +2089,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
                 l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -2096,7 +2100,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -2248,9 +2252,9 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand me-3">Order Columns for Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
-            l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Cancel</a>]
+            l_cHtml += [<span class="navbar-brand ms-3">Order Columns for Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -2409,9 +2413,9 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
+        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
@@ -2763,21 +2767,21 @@ l_cHtml += [<div class="m-2">]
     if l_nNumberOfIndexes <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+                l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2920,8 +2924,8 @@ l_cHtml += [<div class="m-2">]
     if l_nNumberOfEnumerations <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3 me-3">No Enumeration on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+                l_cHtml += [<span class="navbar-brand ms-3">No Enumeration on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -3048,8 +3052,8 @@ if l_oDB1:Tally <= 0
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3060,13 +3064,13 @@ else
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Enumeration</span>]   //navbar-text
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5 me-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
 //12345  EnumValues
-                l_cHtml += [<a class="btn btn-primary rounded ms-3 me-3 HideOnEdit" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
             endif
         l_cHtml += [</div>]
@@ -3229,7 +3233,9 @@ case l_cActionOnSubmit == "Save"
                         l_cErrorMessage := "Failed to add Enumeration."
                     endif
                 else
-                    if !:Update(l_iEnumerationPk)
+                    if :Update(l_iEnumerationPk)
+                        l_cFrom := oFcgi:GetQueryString('From')
+                    else
                         l_cErrorMessage := "Failed to update Enumeration."
                     endif
                 endif
@@ -3279,8 +3285,8 @@ do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iEnumerationPk,l_cErrorMessage,l_iNameSpacePk,l_cEnumerationName,l_iEnumerationStatus,l_cEnumerationDescription,l_iEnumerationImplementAs,l_iEnumerationImplementLength)
-case empty(l_cFrom) .or. empty(l_iTablePk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+case empty(l_cFrom) .or. empty(l_iEnumerationPk)
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
 otherwise
     with object l_oDB1
         :Table("da356f83-c733-465e-a73c-e0af9e06d192","Enumeration")
@@ -3337,22 +3343,20 @@ l_cHtml += [<div class="m-2">]
     if l_nNumberOfEnumValues <= 0
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand me-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+                l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+                l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                // l_cHtml += [<span class="navbar-brand me-3">List of Values for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</span>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
-                l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
-//12345
-l_cHtml += [<a  class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
-
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
+                l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -3407,8 +3411,6 @@ l_cHtml += [<a  class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applic
     endif
 
 l_cHtml += [</div>]
-
-CloseAlias("ListOfEnumValues")
 
 return l_cHtml
 //=================================================================================================================
@@ -3470,9 +3472,9 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand me-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
-            l_cHtml += [<a class="btn btn-primary rounded me-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
+            l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3584,9 +3586,9 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand me-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
+        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
         endif
@@ -3777,9 +3779,9 @@ endif
 if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3 me-3">Load Schema - Enter Connection Information</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
-            l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<span class="navbar-brand ms-3">Load Schema - Enter Connection Information</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
