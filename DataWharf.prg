@@ -222,7 +222,7 @@ if l_cPageName <> "ajax"
 
     l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
     l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-    l_cPageHeaderHtml += [<title>DataWharf</title>]
+    l_cPageHeaderHtml += [<title>]+APPLICATION_TITLE+[</title>]
 
 
     l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
@@ -260,7 +260,7 @@ if l_cAction == "logout"
         l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
         l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
         if !empty(l_nLoggedInPk)
-            l_oDB1:Table("public.LoginLogs")
+            l_oDB1:Table("f40ca9ad-ef2c-4628-af82-67c1a8102f11","public.LoginLogs")
             l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
             l_oDB1:Column("LoginLogs.Signature","LoginLogs_Signature")
             l_oDB1:Column("LoginLogs.fk_User","User_pk")
@@ -269,21 +269,21 @@ if l_cAction == "logout"
             if l_oDB1:Tally == 1
                 l_nLoginOutUserPk := l_oData:User_pk
                 if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
-                    l_oDB1:Table("Public.LoginLogs")
+                    l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
                     l_oDB1:Field("Status",2)
                     l_oDB1:Field("TimeOut",{"S","now()"})
                     l_oDB1:Update(l_nLoggedInPk)
                 endif
 
                 //Logout implicitly any other session for the same user
-                l_oDB1:Table("public.LoginLogs")
+                l_oDB1:Table("dbe98b47-b5ce-4fbd-aedd-8f59fac60ec3","public.LoginLogs")
                 l_oDB1:Column("LoginLogs.pk","pk")
                 l_oDB1:Where("LoginLogs.fk_User = ^" , l_nLoginOutUserPk)
                 l_oDB1:Where("LoginLogs.Status = 1")
                 l_oDB1:SQL("ListOfResults")
                 select ListOfResults
                 scan all
-                    l_oDB1:Table("public.LoginLogs")
+                    l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
                     l_oDB1:Field("Status",3)
                     l_oDB1:Field("TimeOut",{"S","now()"})
                     l_oDB1:Update(ListOfResults->pk)
@@ -313,8 +313,7 @@ if !empty(l_cSessionID)
     l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
     if !empty(l_nLoggedInPk)
         // Verify if valid loggin
-
-        l_oDB1:Table("public.LoginLogs")
+        l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
         l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
         l_oDB1:Column("User.pk"         ,"User_pk")
         l_oDB1:Column("User.id"         ,"User_id")
@@ -353,7 +352,7 @@ if l_cPageName <> "ajax"
             l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 
             with object l_oDB1
-                :Table("public.User")
+                :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
                 :Column("User.pk"        ,"User_pk")
                 :Column("User.Name"      ,"User_Name")
                 :Column("User.AccessMode","User_AccessMode")
@@ -372,7 +371,7 @@ if l_cPageName <> "ajax"
                     l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
                     l_nUserAccessMode := ListOfResults->User_AccessMode
 
-                    :Table("LoginLogs")
+                    :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
                     :Field("fk_User"  ,l_nUserPk)
                     :Field("TimeIn"   ,{"S","now()"})
                     :Field("IP"       ,l_cIP)
@@ -423,13 +422,15 @@ if l_lLoggedIn
 
 
         if l_cUserName == "Eric"
-            l_cBody += [<div class="m-3"></div>]   //Spacer
-            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
-                l_cBody += "<div>&nbsp;Web Site Version: " + BUILDVERSION + "</div>"
-            endif
-            l_cBody += [<div>&nbsp;Site Build Info: ]+hb_buildinfo()+[</div>]
-            l_cBody += [<div>&nbsp;ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
-            l_cBody += [<div>&nbsp;VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+            l_cBody += [<div class="m-3">]   //Spacer
+                if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
+                    l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
+                endif
+                l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
+                l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
+                l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+                l_cBody += ::TraceList(4)
+            l_cBody += [</div>]   //Spacer
         endif
     endif
 else
@@ -520,15 +521,13 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+COLOR_HEADER_BACKGROUND+[;">]
     l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand" href="#">DataWharf</a>]
+        l_cHtml += [<a class="navbar-brand" href="#">]+APPLICATION_TITLE+[</a>]
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
-
-                    l_cHtml += [<li class="nav-item]+iif(par_cCurrentPage == "home"," active","")+["><a class="nav-link" href="]+l_cSitePath+[Home">Home</a></li>]
-                    l_cHtml += [<li class="nav-item]+iif(par_cCurrentPage == "applications"," active","")+["><a class="nav-link" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    l_cHtml += [<li class="nav-item]+iif(par_cCurrentPage == "info"," active","")+["><a class="nav-link" href="]+l_cSitePath+[Info">Info</a></li>]
-
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "home"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "applications",[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "info"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
                     l_cHtml += [<li class="nav-item"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]

@@ -201,7 +201,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 l_iEnumerationPk       := -1
 
                 with object l_oDB1
-                    :Table("Enumeration")
+                    :Table("b9de5e1b-bfd9-4c18-a4af-96ca5873160d","Enumeration")
                     :Column("Enumeration.fk_NameSpace", "fk_NameSpace")
                     :Column("Enumeration.pk"          , "Pk")
                     :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
@@ -218,7 +218,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     case empty(:Tally)
                         //Enumerations is not in datadic, load it.
                         //Find the Name Space
-                        :Table("NameSpace")
+                        :Table("2e160bfe-dcc3-46dd-b263-cfa86b9ee0b7","NameSpace")
                         :Column("NameSpace.pk"          , "Pk")
                         :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
                         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cLastNameSpace," ","")))
@@ -230,7 +230,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_cErrorMessage := "Failed to Query Meta database. Error 102."
                         case empty(:Tally)
                             //Add the NameSpace
-                            :Table("NameSpace")
+                            :Table("1e4d6164-d02d-4590-b143-02ab9e9aac2b","NameSpace")
                             :Field("Name" , l_cLastNameSpace)
                             :Field("fk_Application" , par_iApplicationPk)
                             :Field("Status" , 1)
@@ -248,7 +248,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         endcase
 
                         if l_iNameSpacePk > 0
-                            :Table("Enumeration")
+                            :Table("4f5a321c-e9fd-4e3f-af6f-9e956b697ed7","Enumeration")
                             :Field("Name"         , l_cLastEnumerationName)
                             :Field("fk_NameSpace" , l_iNameSpacePk)
                             :Field("ImplementAs"  , 1)
@@ -275,7 +275,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                 // Load all the Enumerations current EnumValues
                 with object l_oDB2
-                    :Table("EnumValue")
+                    :Table("d8748388-1484-46cf-bb5d-d990bf9fcfad","EnumValue")
                     :Column("EnumValue.Pk"             , "Pk")
                     :Column("EnumValue.Order"          , "EnumValue_Order")
                     :Column("EnumValue.Name"           , "EnumValue_Name")
@@ -316,7 +316,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     //Missing EnumValue, Add it
                     with object l_oDB1
                         l_LastEnumValueOrder += 1
-                        :Table("EnumValue")
+                        :Table("4a1d27a3-e85e-4631-9f75-30534fa6e5d0","EnumValue")
                         :Field("Name"    ,l_cEnumValueName)
                         :Field("Order"   ,l_LastEnumValueOrder)
                         :Field("fk_Enumeration",l_iEnumerationPk)
@@ -362,7 +362,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     l_iTablePk       := -1
 
                     with object l_oDB1
-                        :Table("Table")
+                        :Table("7c364883-b3ee-4828-953c-69316d5e0e03","Table")
                         :Column("Table.fk_NameSpace", "fk_NameSpace")
                         :Column("Table.pk"          , "Pk")
                         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -379,7 +379,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
                             //Find the Name Space
-                            :Table("NameSpace")
+                            :Table("0b38bd6e-f72d-4c15-92dc-b6bbacafbbc3","NameSpace")
                             :Column("NameSpace.pk"          , "Pk")
                             :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
                             :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cLastNameSpace," ","")))
@@ -391,7 +391,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 l_cErrorMessage := "Failed to Query Meta database. Error 102."
                             case empty(:Tally)
                                 //Add the NameSpace
-                                :Table("NameSpace")
+                                :Table("1d4e6580-fc99-4002-aa7a-5734e311b947","NameSpace")
                                 :Field("Name" , l_cLastNameSpace)
                                 :Field("fk_Application" , par_iApplicationPk)
                                 :Field("Status" , 1)
@@ -409,7 +409,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             endcase
 
                             if l_iNameSpacePk > 0
-                                :Table("Table")
+                                :Table("926f2eb7-276f-4ea9-bef4-e0147d53989e","Table")
                                 :Field("Name"         , l_cLastTableName)
                                 :Field("fk_NameSpace" , l_iNameSpacePk)
                                 :Field("Status"       , 1)
@@ -435,7 +435,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     // Load all the tables current columns
                     with object l_oDB2
-                        :Table("Column")
+                        :Table("088a71c4-f56d-4b18-8dc9-df25eee291f8","Column")
                         :Column("Column.Pk"             , "Pk")
                         :Column("Column.Order"          , "Column_Order")
                         :Column("Column.Name"           , "Column_Name")
@@ -624,7 +624,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
                                 with object l_oDB1
                                     l_LastColumnOrder += 1
-                                    :Table("Column")
+                                    :Table("288eca6a-be39-47cc-a70a-908d6b45059f","Column")
                                     :Field("Type"          ,l_cColumnType)
                                     :Field("Length"        ,l_iColumnLength)
                                     :Field("Scale"         ,l_iColumnScale)
@@ -644,7 +644,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         //Missing Field, Add it
                         with object l_oDB1
                             l_LastColumnOrder += 1
-                            :Table("Column")
+                            :Table("6c3137a2-395e-488c-bc71-94990c022851","Column")
                             :Field("Name"          ,l_cColumnName)
                             :Field("Order"         ,l_LastColumnOrder)
                             :Field("fk_Table"      ,l_iTablePk)
@@ -694,7 +694,7 @@ endif
                     l_iTablePk       := hb_HGetDef(l_hTables,l_cLastNameSpace+"."+l_cLastTableName,0)
 
                     with object l_oDB2
-                        :Table("Index")
+                        :Table("9888318c-7195-4f75-9fbb-c102440aacd3","Index")
                         :Column("Index.Pk"          ,"Pk")
                         :Column("Index.Name"        ,"Index_Name")
                         :Column("Index.Unique"      ,"Index_Unique")
@@ -744,7 +744,7 @@ endif
                             ListOfIndexesInDataDictionary->Index_Expression <> l_cIndexExpression
 
                             with object l_oDB1
-                                :Table("Index")
+                                :Table("200c26df-5127-4d07-b381-0d44ccd7aee7","Index")
                                 :Field("Name"       , l_cIndexName)
                                 :Field("Unique"     ,(l_cIndexUnique == "1"))
                                 :Field("Algo"       ,l_iIndexAlgo)
@@ -763,7 +763,7 @@ endif
                     else
                         //Missing Index
                         with object l_oDB1
-                            :Table("Index")
+                            :Table("a785c331-8a68-4f1e-b86a-2df09140d1a6","Index")
                             :Field("Name"       ,l_cIndexName)
                             :Field("fk_Table"   ,l_iTablePk)
                             :Field("Status"     ,1)

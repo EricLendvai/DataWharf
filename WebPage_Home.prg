@@ -5,6 +5,8 @@ function BuildPageHome(par_cUserName,par_nUserPk)
 local l_cHtml := []
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+oFcgi:TraceAdd("BuildPageHome")
+
 l_cHtml += [<div class="m-3"></div>]   //Spacer
 
 l_cHtml += [<div class="row justify-content-center">]
@@ -12,7 +14,7 @@ l_cHtml += [<div class="row justify-content-center">]
         l_cHtml += [<div><h3>Hello World ]+par_cUserName+[</h3></div>]
 
         with object l_oDB1
-            :Table("LoginLogs")
+            :Table("c5f56e48-2b2a-4f06-a951-f72238cfe7d7","LoginLogs")
             :Limit(10)
             :Column("LoginLogs.TimeIn","TimeIn")
             :Column("LoginLogs.IP"    ,"IP")

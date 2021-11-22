@@ -12,6 +12,9 @@
         ,{
             "path": "R:\\Harbour_ORM\\"
         }
+        ,{
+            "path": "R:\\Harbour_VFP\\"
+        }
     ],
     "settings": {
         "files.autoSave": "onFocusChange",
@@ -26,6 +29,9 @@
         "local-history.path": "R:\\VSCode_History\\Harbour_FastCGI",
         "local-history.treeLocation": "localHistory",
         "local-history.daysLimit": 0,
-        "local-history.maxDisplay": 5
+        "local-history.maxDisplay": 5,
+        "cSpell.words": [
+            "UPDATESAVEBUTTON"
+        ]
     }
 }

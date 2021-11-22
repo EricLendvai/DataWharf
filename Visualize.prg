@@ -17,6 +17,8 @@ local l_nNumberOfTableInDiagram
 local l_lShowNameSpace := .f.
 local l_cNameSpace_Name
 
+oFcgi:TraceAdd("DataDictionaryVisualizeDesignBuild")
+
 // See https://visjs.github.io/vis-network/examples/
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -24,7 +26,7 @@ l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 With Object l_oDB1
 
-    :Table("Diagram")
+    :Table("44eabf03-8b35-4e96-a128-e9c1bc6168f0","Diagram")
     :Column("Diagram.pk"         ,"Diagram_pk")
     :Column("Diagram.Name"       ,"Diagram_Name")
     :Column("Upper(Diagram.Name)","Tag1")
@@ -35,26 +37,17 @@ With Object l_oDB1
 
     l_cNodePositions := ""
 
-    // :Table("Application")
-    // :Column("Application.VisPos","Application_VisPos")
-    // l_oData := :Get(par_iApplicationPk)
-    // if :Tally == 1
-    //     l_cNodePositions := l_oData:Application_VisPos
-    // endif
-
 endwith
 
 With Object l_oDB2
     //Check if there is at least one record in DiagramTable for the current Diagram
-    :Table("DiagramTable")
-    :Column("DiagramTable.pk","pk")
+    :Table("66daafd2-9566-43be-85e5-b663682ba88c","DiagramTable")
     :Where("DiagramTable.fk_Diagram = ^" , par_iDiagramPk)
-    :SQL("ListOfTablesInDiagram")   //_M_ Once added to ORM a count, refactor this code
-    l_nNumberOfTableInDiagram := :Tally
-
+    l_nNumberOfTableInDiagram := :Count()
+    
     if l_nNumberOfTableInDiagram == 0
         // All Tables
-        :Table("Table")
+        :Table("5ad2a893-e8bd-40e5-8eb0-a6e4bafbbf51","Table")
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
@@ -68,7 +61,7 @@ With Object l_oDB2
     else
         // A subset of Tables
 
-        :Table("DiagramTable")
+        :Table("545ab66b-9384-4e06-abf3-ce8e529aa6e1","DiagramTable")
         :Distinct(.t.)
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
@@ -111,9 +104,6 @@ l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        // l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        // l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
-
         //---------------------------------------------------------------------------
         l_cHtml += [<button id="ButtonSaveLayout" class="btn btn-primary rounded ms-3 me-3" onclick="]
 
@@ -221,7 +211,7 @@ l_cHtml += ']);'
 
 // create an array with edges
 With Object l_oDB2
-    :Table("Table")
+    :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
     :Column("Table.pk"               ,"pkFrom")
     :Column("Column.fk_TableForeign" ,"pkTo")
     :Column("Column.Status"          ,"Column_Status")
@@ -284,6 +274,8 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_iDiagram_pk
 local l_cErrorMessage
 
+oFcgi:TraceAdd("DataDictionaryVisualizeDesignOnSubmit")
+
 l_iDiagram_pk := Val(oFcgi:GetInputValue("TextDiagramPk"))
 
 do case
@@ -300,13 +292,13 @@ case l_cActionOnSubmit == "SaveLayout"
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
 
     With Object l_oDB1
-        :Table("Diagram")
+        :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
         :Field("VisPos",l_cNodePositions)
         if empty(l_iDiagram_pk)
             //Add an initial Diagram File this should not happen, since record was already added
-            :Field("fk_Application" ,par_iApplicationPk)
-            :Field("Name"           ,"All Tables")
-            :Field("Status"         ,1)
+            :Field("Diagram.fk_Application" ,par_iApplicationPk)
+            :Field("Diagram.Name"           ,"All Tables")
+            :Field("Diagram.Status"         ,1)
             if :Add()
                 l_iDiagram_pk := :Key()
             endif
@@ -335,6 +327,8 @@ local l_lSelected
 local l_cValue
 local l_hValues := {=>}
 
+oFcgi:TraceAdd("DataDictionaryVisualizeSettingsOnSubmit")
+
 l_iDiagram_pk   := Val(oFcgi:GetInputValue("TextDiagramPk"))
 l_cDiagram_Name := SanitizeInput(oFcgi:GetInputValue("TextName"))
 
@@ -342,7 +336,7 @@ do case
 case l_cActionOnSubmit == "SaveDiagram"
     //Get all the Application Tables to help scan all the selection checkboxes.
     with Object l_oDB2
-        :Table("Table")
+        :Table("70126bd9-f5b7-49e1-8d65-6aef01ab3368","Table")
         :Column("Table.pk"         ,"pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
@@ -354,7 +348,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         l_cErrorMessage := "Missing Name"
     otherwise
         with object l_oDB1
-            :Table("Diagram")
+            :Table("bcc7cf4c-4fb4-41a3-a8d8-88c8c9f3d797","Diagram")
             :Where([lower(replace(Diagram.Name,' ','')) = ^],lower(StrTran(l_cDiagram_Name," ","")))
             :Where([Diagram.fk_Application = ^],par_iApplicationPk)
             if l_iDiagram_pk > 0
@@ -369,18 +363,17 @@ case l_cActionOnSubmit == "SaveDiagram"
 
     if empty(l_cErrorMessage)
         With Object l_oDB1
-            :Table("Diagram")
+            :Table("d303eed8-944e-4a7c-8314-133eb13fca3d","Diagram")
             :Field("Name",l_cDiagram_Name)
             if empty(l_iDiagram_pk)
-                :Field("fk_Application" ,par_iApplicationPk)
-                :Field("Status" , 1)
+                :Field("Diagram.fk_Application" ,par_iApplicationPk)
+                :Field("Diagram.Status" , 1)
                 if :Add()
                     l_iDiagram_pk := :Key()
                 else
                     l_iDiagram_pk := 0
                     l_cErrorMessage := "Failed to save changes!"
                 endif
-                // :Field("VisPos" , "")
             else
                 if !:Update(l_iDiagram_pk)
                     l_cErrorMessage := "Failed to save changes!"
@@ -394,7 +387,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         //Update the list selected tables
         //Get current list of diagram tables
         with Object l_oDB1
-            :Table("DiagramTable")
+            :Table("225a41d2-6c7d-4c3d-bdbb-4757f6acc087","DiagramTable")
             :Distinct(.t.)
             :Column("Table.pk","pk")
             :Column("DiagramTable.pk","DiagramTable_pk")
@@ -417,8 +410,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 if !l_lSelected
                     // Remove the table
                     with Object l_oDB3
-                        :Table("DiagramTable")
-                        if !:Delete(ListOfCurrentTablesInDiagram->DiagramTable_pk)
+                        if !:Delete("254d6227-f160-412e-a8b7-9ff4f3cf1dc5","DiagramTable",ListOfCurrentTablesInDiagram->DiagramTable_pk)
                             l_cErrorMessage := "Failed to Save table selection."
                             exit
                         endif
@@ -428,9 +420,9 @@ case l_cActionOnSubmit == "SaveDiagram"
                 if l_lSelected
                     // Add the table
                     with Object l_oDB3
-                        :Table("DiagramTable")
-                        :Field("fk_Table"   ,ListOfAllTablesInApplication->pk)
-                        :Field("fk_Diagram" ,l_iDiagram_pk)
+                        :Table("0f252d7a-6656-4ef0-a2be-f85bf84f93fb","DiagramTable")
+                        :Field("DiagramTable.fk_Table"   ,ListOfAllTablesInApplication->pk)
+                        :Field("DiagramTable.fk_Diagram" ,l_iDiagram_pk)
                         if !:Add()
                             l_cErrorMessage := "Failed to Save table selection."
                             exit
@@ -463,22 +455,22 @@ case l_cActionOnSubmit == "Cancel"
 case l_cActionOnSubmit == "Delete"
     With Object l_oDB1
         //Delete related records in DiagramTable
-        :Table("DiagramTable")
+        :Table("c4d616b9-9f17-47f2-a536-42ec624b3d46","DiagramTable")
         :Column("DiagramTable.pk","pk")
         :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
         :SQL("ListOfDiagramTableToDelete")
         select ListOfDiagramTableToDelete
         scan all
-            l_oDB2:Delete("DiagramTable",ListOfDiagramTableToDelete->pk)
+            l_oDB2:Delete("469afb28-2829-4400-9670-a3e6acfd592a","DiagramTable",ListOfDiagramTableToDelete->pk)
         endscan
-        l_oDB2:Delete("Diagram",l_iDiagram_pk)
+        l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagram_pk)
     endwith
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ApplicationVisualize/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
     With Object l_oDB1
-        :Table("Diagram")
-        :Field("VisPos",NIL)
+        :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
+        :Field("Diagram.VisPos",NIL)
         :Update(l_iDiagram_pk)
     endwith
     l_cHtml += DataDictionaryVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
@@ -496,8 +488,8 @@ return l_cHtml
 // local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 // With Object l_oDB1
-//     :Table("Application")
-//     :Field("VisPos",l_cNodePositions)
+//     :Table("44111d36-963b-42f1-b4e5-4c4e4e5ffd13","Application")
+//     :Field("Application.VisPos",l_cNodePositions)
 //     :Update(l_iApplicationPk)
 // endwith
 
@@ -528,6 +520,8 @@ local l_cFrom_Table_Name
 local l_cTo_NameSpace_Name
 local l_cTo_Table_Name
 
+oFcgi:TraceAdd("GetInfoDuringVisualization")
+
 // l_cHtml += [Hello World c2 - ]+hb_TtoS(hb_DateTime())+[  ]+l_cInfo
 
 l_nLengthDecoded := hb_jsonDecode(l_cInfo,@l_hOnClickInfo)
@@ -542,7 +536,7 @@ if len(l_aNodes) == 1
 
     //Clicked on a table
     with object l_oDB1
-        :Table("Table")
+        :Table("da9443c6-bffe-4ccd-bded-c3a7221bac9f","Table")
         :Column("Application.LinkCode" ,"Application_LinkCode")
         :Column("NameSpace.name"       ,"NameSpace_Name")
         :Column("Table.Name"           ,"Table_Name")
@@ -571,7 +565,7 @@ if len(l_aNodes) == 1
 
             l_cHtml += [<div class="m-3"></div>]
 
-            :Table("Column")
+            :Table("4d84f290-c1f8-42f1-a2b0-e41244ccdfd2","Column")
             :Column("Column.pk"             ,"pk")
             :Column("Column.Name"           ,"Column_Name")
             :Column("Column.Status"         ,"Column_Status")
@@ -687,7 +681,7 @@ else
         l_iColumnPk := l_aEdges[1]
 
         with object l_oDB1
-            :Table("Column")
+            :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Column")
 
             :Column("Column.Name  "    ,"Column_Name")
             :Column("Column.Status"    ,"Column_Status")
@@ -744,6 +738,8 @@ local l_cNameSpace_Name
 local l_oDB1
 local l_oData
 
+oFcgi:TraceAdd("DataDictionaryVisualizeSettingsBuild")
+
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 if pcount() < 6
@@ -751,7 +747,7 @@ if pcount() < 6
         // Initial Build, meaning not from a failing editing
         with object l_oDB1
             //Get current Diagram Name
-            :Table("Diagram")
+            :Table("cadc1049-56e3-4efa-bb61-dd9396e2c6fe","Diagram")
             :Column("Diagram.name" , "Diagram_name")
             l_oData := :Get(par_iDiagramPk)
             if :Tally == 1
@@ -759,7 +755,7 @@ if pcount() < 6
             endif
 
             //Get the current list of selected tables
-            :Table("DiagramTable")
+            :Table("1f5273de-4ed2-49e3-a82e-580b842025d9","DiagramTable")
             :Distinct(.t.)
             :Column("Table.pk","pk")
             :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
@@ -787,7 +783,7 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3 me-3">]+iif(empty(par_iDiagramPk),"New Diagram","Settings")+[</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded me-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iDiagramPk)
             l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5 me-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
@@ -804,7 +800,7 @@ l_cHtml += [<div class="m-2">]
 
     l_cHtml += [<tr class="pb-5">]
     l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
-    l_cHtml += [<td class="pb-3"><input type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+    l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -823,7 +819,7 @@ l_cHtml += [<div class="m-3"></div>]
 l_lShowNameSpace := .f.
 
 with Object l_oDB1
-    :Table("Table")
+    :Table("ce7c29dc-9396-4fbb-9704-eb121bf139a2","Table")
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
@@ -862,7 +858,7 @@ select ListOfAllTablesInApplication
 scan all
     l_CheckBoxId := "CheckTable"+Trans(ListOfAllTablesInApplication->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Table"+Trans(ListOfAllTablesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Table"+Trans(ListOfAllTablesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+iif(l_lShowNameSpace,ListOfAllTablesInApplication->NameSpace_Name+[.],[])+ListOfAllTablesInApplication->Table_Name+[</span></label>]
     l_cHtml += [</td></tr>]
 endscan
