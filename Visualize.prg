@@ -51,7 +51,8 @@ With Object l_oDB2
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.Status"     ,"Table_Status")
+        :Column("Table.UseStatus"  ,"Table_UseStatus")
+        :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
         :Column("Upper(NameSpace.Name)","tag1")
         :Column("Upper(Table.Name)","tag2")
@@ -66,7 +67,8 @@ With Object l_oDB2
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.Status"     ,"Table_Status")
+        :Column("Table.UseStatus"  ,"Table_UseStatus")
+        :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
         :Column("Upper(NameSpace.Name)","tag1")
         :Column("Upper(Table.Name)","tag2")
@@ -195,7 +197,7 @@ scan all
     endif
     l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+["]
 
-    if ListOfTables->Table_Status >= 4
+    if ListOfTables->Table_UseStatus >= 4
         l_cHtml += [,color:{background:'#ff9696',highlight:{background:'#feb4b4'}}]
     endif
 
@@ -212,10 +214,11 @@ l_cHtml += ']);'
 // create an array with edges
 With Object l_oDB2
     :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
-    :Column("Table.pk"               ,"pkFrom")
-    :Column("Column.fk_TableForeign" ,"pkTo")
-    :Column("Column.Status"          ,"Column_Status")
-    :Column("Column.pk"              ,"Column_Pk")
+    :Column("Table.pk"              ,"pkFrom")
+    :Column("Column.fk_TableForeign","pkTo")
+    :Column("Column.UseStatus"      ,"Column_UseStatus")
+    :Column("Column.DocStatus"      ,"Column_DocStatus")
+    :Column("Column.pk"             ,"Column_Pk")
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
@@ -228,7 +231,7 @@ l_cHtml += 'var edges = new vis.DataSet(['
 select ListOfLinks
 scan all
     l_cHtml += [{id:"]+Trans(ListOfLinks->Column_Pk)+[",from:]+Trans(ListOfLinks->pkFrom)+[,to:]+Trans(ListOfLinks->pkTo)+[,arrows:"from"]
-    if ListOfLinks->Column_Status >= 4
+    if ListOfLinks->Column_UseStatus >= 4
         l_cHtml += [,color:{color:'#ff6b6b',highlight:'#ff3e3e'}]
     endif
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
@@ -293,12 +296,13 @@ case l_cActionOnSubmit == "SaveLayout"
 
     With Object l_oDB1
         :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
-        :Field("VisPos",l_cNodePositions)
+        :Field("Diagram.VisPos",l_cNodePositions)
         if empty(l_iDiagram_pk)
             //Add an initial Diagram File this should not happen, since record was already added
-            :Field("Diagram.fk_Application" ,par_iApplicationPk)
-            :Field("Diagram.Name"           ,"All Tables")
-            :Field("Diagram.Status"         ,1)
+            :Field("Diagram.fk_Application",par_iApplicationPk)
+            :Field("Diagram.Name"          ,"All Tables")
+            :Field("Diagram.UseStatus"     ,1)
+            :Field("Diagram.DocStatus"     ,1)
             if :Add()
                 l_iDiagram_pk := :Key()
             endif
@@ -364,10 +368,11 @@ case l_cActionOnSubmit == "SaveDiagram"
     if empty(l_cErrorMessage)
         With Object l_oDB1
             :Table("d303eed8-944e-4a7c-8314-133eb13fca3d","Diagram")
-            :Field("Name",l_cDiagram_Name)
+            :Field("Diagram.Name",l_cDiagram_Name)
             if empty(l_iDiagram_pk)
-                :Field("Diagram.fk_Application" ,par_iApplicationPk)
-                :Field("Diagram.Status" , 1)
+                :Field("Diagram.fk_Application",par_iApplicationPk)
+                :Field("Diagram.UseStatus"     , 1)
+                :Field("Diagram.DocStatus"     , 1)
                 if :Add()
                     l_iDiagram_pk := :Key()
                 else
@@ -512,9 +517,11 @@ local l_cApplicationLinkCode
 local l_cNameSpaceName
 local l_cTableName
 local l_cTableDescription
-local l_nTableStatus
+local l_nTableUseStatus
+local l_nTableDocStatus
 local l_cColumnName
-local l_nColumnStatus
+local l_nColumnUseStatus
+local l_nColumnDocStatus
 local l_cFrom_NameSpace_Name
 local l_cFrom_Table_Name
 local l_cTo_NameSpace_Name
@@ -537,11 +544,12 @@ if len(l_aNodes) == 1
     //Clicked on a table
     with object l_oDB1
         :Table("da9443c6-bffe-4ccd-bded-c3a7221bac9f","Table")
-        :Column("Application.LinkCode" ,"Application_LinkCode")
-        :Column("NameSpace.name"       ,"NameSpace_Name")
-        :Column("Table.Name"           ,"Table_Name")
-        :Column("Table.Description"    ,"Table_Description")
-        :Column("Table.Status"         ,"Table_Status")
+        :Column("Application.LinkCode","Application_LinkCode")
+        :Column("NameSpace.name"      ,"NameSpace_Name")
+        :Column("Table.Name"          ,"Table_Name")
+        :Column("Table.Description"   ,"Table_Description")
+        :Column("Table.UseStatus"     ,"Table_UseStatus")
+        :Column("Table.DocStatus"     ,"Table_DocStatus")
         :join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :join("inner","Application","","NameSpace.fk_Application = Application.pk")
         :Where("Table.pk = ^" , l_iTablePk)
@@ -552,9 +560,10 @@ if len(l_aNodes) == 1
             l_cNameSpaceName       := AllTrim(l_aSQLResult[1,2])
             l_cTableName           := AllTrim(l_aSQLResult[1,3])
             l_cTableDescription    := nvl(l_aSQLResult[1,4],"")
-            l_nTableStatus         := l_aSQLResult[1,5]
+            l_nTableUseStatus      := l_aSQLResult[1,5]
+            l_nTableDocStatus      := l_aSQLResult[1,6]
 
-            l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nTableStatus>=4,"feb4b4","d2e5ff")+[;">]
+            l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nTableUseStatus>=4,"feb4b4","d2e5ff")+[;">]
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">]+l_cNameSpaceName+[.]+l_cTableName+[</span>]
                     if !empty(l_cTableDescription)
@@ -568,7 +577,8 @@ if len(l_aNodes) == 1
             :Table("4d84f290-c1f8-42f1-a2b0-e41244ccdfd2","Column")
             :Column("Column.pk"             ,"pk")
             :Column("Column.Name"           ,"Column_Name")
-            :Column("Column.Status"         ,"Column_Status")
+            :Column("Column.UseStatus"      ,"Column_UseStatus")
+            :Column("Column.DocStatus"      ,"Column_DocStatus")
             :Column("Column.Description"    ,"Column_Description")
             :Column("Column.Order"          ,"Column_Order")
             :Column("Column.Type"           ,"Column_Type")
@@ -606,7 +616,8 @@ if len(l_aNodes) == 1
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                             l_cHtml += [</tr>]
 
@@ -651,10 +662,14 @@ if len(l_aNodes) == 1
                                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
                                     l_cHtml += [</td>]
 
-                                    // Status
+                                    // Use Status
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_Status,1,4),ListOfColumns->Column_Status,1)]
-                                        // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                                        l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_UseStatus,1,4),ListOfColumns->Column_UseStatus,1)]
+                                    l_cHtml += [</td>]
+
+                                    // Doc Status
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(vfp_between(ListOfColumns->Column_DocStatus,1,4),ListOfColumns->Column_DocStatus,1)]
                                     l_cHtml += [</td>]
 
                                     // Used By
@@ -684,7 +699,8 @@ else
             :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Column")
 
             :Column("Column.Name  "    ,"Column_Name")
-            :Column("Column.Status"    ,"Column_Status")
+            :Column("Column.UseStatus" ,"Column_UseStatus")
+            :Column("Column.DocStatus" ,"Column_DocStatus")
             
             :Column("NameSpace.Name"   ,"From_NameSpace_Name")
             :Column("Table.Name"       ,"From_Table_Name")
@@ -702,15 +718,16 @@ else
 
             if :Tally == 1
                 l_cColumnName          := Alltrim(l_aSQLResult[1,1])
-                l_nColumnStatus        := l_aSQLResult[1,2]
+                l_nColumnUseStatus     := l_aSQLResult[1,2]
+                l_nColumnDocStatus     := l_aSQLResult[1,3]
 
-                l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,3])
-                l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,4])
+                l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,4])
+                l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,5])
 
-                l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,5])
-                l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,6])
+                l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,6])
+                l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,7])
 
-                l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nColumnStatus>=4,"feb4b4","d2e5ff")+[;">]
+                l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nColumnUseStatus>=4,"feb4b4","d2e5ff")+[;">]
                     l_cHtml += [<div class="input-group">]
                         l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+[</span>]
                         l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+[</span>]
@@ -783,7 +800,7 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iDiagramPk),"New Diagram","Settings")+[</span>]   //navbar-text
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iDiagramPk)
             l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
@@ -823,7 +840,8 @@ with Object l_oDB1
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.Status"     ,"Table_Status")
+    :Column("Table.UseStatus"  ,"Table_UseStatus")
+    :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
     :Column("Upper(NameSpace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")

@@ -13,5 +13,6 @@
 
 #define APPLICATION_TITLE "DataWharf"
 #define COLOR_HEADER_BACKGROUND "e3f2fd"
+#define COLOR_HEADER_TEXT_WHITE .f.
 
 #define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();"]

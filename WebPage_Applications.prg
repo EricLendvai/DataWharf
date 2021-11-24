@@ -16,7 +16,8 @@ local l_cActionOnSubmit
 
 local l_iApplicationPk
 local l_cApplicationName
-local l_iApplicationStatus
+local l_iApplicationUseStatus
+local l_iApplicationDocStatus
 local l_cApplicationDescription
 
 local l_iNameSpacePk
@@ -26,6 +27,7 @@ local l_iEnumerationPk
 local l_iEnumValuePk
 local l_iDiagrampk
 // local l_cDiagramName
+local l_hValues := {=>}
 
 local l_cApplicationElement := "TABLES"  //Default Element
 
@@ -172,7 +174,8 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Table("eee95bea-1fc1-4712-a0c4-772b3a416e1e","Application")
             :Column("Application.pk"          , "pk")
             :Column("Application.Name"        , "Application_Name")
-            :Column("Application.Status"      , "Application_Status")
+            :Column("Application.UseStatus"   , "Application_UseStatus")
+            :Column("Application.DocStatus"   , "Application_DocStatus")
             :Column("Application.Description" , "Application_Description")
             :Where("Application.LinkCode = ^" ,l_cURLApplicationLinkCode)
             :SQL(@l_aSQLResult)
@@ -181,8 +184,9 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         if l_oDB1:Tally == 1
             l_iApplicationPk          := l_aSQLResult[1,1]
             l_cApplicationName        := l_aSQLResult[1,2]
-            l_iApplicationStatus      := l_aSQLResult[1,3]
-            l_cApplicationDescription := l_aSQLResult[1,4]
+            l_iApplicationUseStatus   := l_aSQLResult[1,3]
+            l_iApplicationDocStatus   := l_aSQLResult[1,4]
+            l_cApplicationDescription := l_aSQLResult[1,5]
         else
             l_iApplicationPk   := -1
             l_cApplicationName := "Unknown"
@@ -225,7 +229,7 @@ case l_cURLAction == "ApplicationSettings"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     if oFcgi:isGet()
-        l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iApplicationStatus,l_cApplicationDescription)
+        l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iApplicationUseStatus,l_iApplicationDocStatus,l_cApplicationDescription)
     else
         if l_iApplicationPk > 0
             l_cHtml += ApplicationEditFormOnSubmit(l_cURLApplicationLinkCode)
@@ -286,10 +290,10 @@ case l_cURLAction == "ApplicationVisualize"
                 // l_cDiagramName := "All Tables"
                 //Add an initial Diagram File
                 :Table("0ee46e84-8a73-4702-ab76-53ed6e33a933","Diagram")
-                :Field("fk_Application" ,l_iApplicationPk)
-                :Field("Name"           ,"All Tables")  // l_cDiagramName
-                :Field("Status"         ,1)
-                // :Field("VisPos"         ,"")
+                :Field("Diagram.fk_Application" ,l_iApplicationPk)
+                :Field("Diagram.Name"           ,"All Tables")  // l_cDiagramName
+                :Field("Diagram.UseStatus"      ,1)
+                :Field("Diagram.DocStatus"      ,1)
                 if :Add()
                     l_iDiagramPk := :Key()
                 endif
@@ -343,7 +347,8 @@ case l_cURLAction == "EditTable"
         :Column("Table.pk"          , "Pk")
         :Column("Table.fk_NameSpace", "fk_NameSpace")
         :Column("Table.Name"        , "Name")
-        :Column("Table.Status"      , "Status")
+        :Column("Table.UseStatus"   , "UseStatus")
+        :Column("Table.DocStatus"   , "DocStatus")
         :Column("Table.Description" , "Description")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
@@ -435,7 +440,7 @@ case l_cURLAction == "NewColumn"
         l_iTablePk     := l_aSQLResult[1,2]
 
         if oFcgi:isGet()
-            l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,0)
+            l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",0,{=>})
         else
             l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
         endif
@@ -448,21 +453,22 @@ case l_cURLAction == "EditColumn"
     with object l_oDB1
         :Table("0f8ba8eb-5046-4183-97de-5182a7a0ef2a","Column")
 
-        :Column("Column.pk"              ,"Column_pk")
-        :Column("NameSpace.pk"           ,"NameSpace_pk")
-        :Column("Table.pk"               ,"Table_pk")
+        :Column("Column.pk"              ,"Column_pk")              //  1
+        :Column("NameSpace.pk"           ,"NameSpace_pk")           //  2
+        :Column("Table.pk"               ,"Table_pk")               //  3
 
-        :Column("Column.Name"            ,"Column_Name")
-        :Column("Column.Status"          ,"Column_Status")
-        :Column("Column.Description"     ,"Column_Description")
+        :Column("Column.Name"            ,"Column_Name")            //  4
+        :Column("Column.UseStatus"       ,"Column_UseStatus")       //  5
+        :Column("Column.DocStatus"       ,"Column_DocStatus")       //  6
+        :Column("Column.Description"     ,"Column_Description")     //  7
 
-        :Column("Column.Type"            ,"Column_Type")
-        :Column("Column.Length"          ,"Column_Length")
-        :Column("Column.Scale"           ,"Column_Scale")
-        :Column("Column.Nullable"        ,"Column_Nullable")
-        :Column("Column.UsedBy"          ,"Column_UsedBy")
-        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign")
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")
+        :Column("Column.Type"            ,"Column_Type")            //  8
+        :Column("Column.Length"          ,"Column_Length")          //  9
+        :Column("Column.Scale"           ,"Column_Scale")           // 10
+        :Column("Column.Nullable"        ,"Column_Nullable")        // 11
+        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 12
+        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 13
+        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 14
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -483,10 +489,19 @@ case l_cURLAction == "EditColumn"
             oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+l_cURLApplicationLinkCode+"/")
         else
             if oFcgi:isGet()
-                l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_iColumnPk,"",;
-                                               AllTrim(l_aSQLResult[1, 4]),l_aSQLResult[1, 5],l_aSQLResult[1, 6],;
-                                               AllTrim(l_aSQLResult[1, 7]),l_aSQLResult[1, 8],l_aSQLResult[1, 9],(alltrim(l_aSQLResult[1, 10])=="1"),;
-                                               l_aSQLResult[1,11],l_aSQLResult[1,12],l_aSQLResult[1,13])
+                l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
+                l_hValues["UseStatus"]       := l_aSQLResult[1, 5]
+                l_hValues["DocStatus"]       := l_aSQLResult[1, 6]
+                l_hValues["Description"]     := l_aSQLResult[1, 7]
+                l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 8])
+                l_hValues["Length"]          := l_aSQLResult[1, 9]
+                l_hValues["Scale"]           := l_aSQLResult[1,10]
+                l_hValues["Nullable"]        := (alltrim(l_aSQLResult[1, 11])=="1")
+                l_hValues["UsedBy"]          := l_aSQLResult[1,12]
+                l_hValues["Fk_TableForeign"] := l_aSQLResult[1,13]
+                l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,14]
+
+                l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",l_iColumnPk,l_hValues)
             else
                 l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
             endif
@@ -554,7 +569,8 @@ case l_cURLAction == "EditEnumeration"
         :Column("Enumeration.pk"              , "Pk")
         :Column("Enumeration.fk_NameSpace"    , "fk_NameSpace")
         :Column("Enumeration.Name"            , "Name")
-        :Column("Enumeration.Status"          , "Status")
+        :Column("Enumeration.UseStatus"       , "UseStatus")
+        :Column("Enumeration.DocStatus"       , "DocStatus")
         :Column("Enumeration.Description"     , "Description")
         :Column("Enumeration.ImplementAs"     , "ImplementAs")
         :Column("Enumeration.ImplementLength" , "ImplementLength")
@@ -663,7 +679,8 @@ case l_cURLAction == "EditEnumValue"
 
         :Column("EnumValue.Name"       ,"EnumValue_Name")
         :Column("EnumValue.Number"     ,"EnumValue_Number")
-        :Column("EnumValue.Status"     ,"EnumValue_Status")
+        :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
+        :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")
         :Column("EnumValue.Description","EnumValue_Description")
 
         :Join("inner","Enumeration"    ,"","EnumValue.fk_Enumeration = Enumeration.pk")
@@ -686,7 +703,6 @@ case l_cURLAction == "EditEnumValue"
         else
             if oFcgi:isGet()
                 l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,l_iEnumValuePk,"",AllTrim(l_aSQLResult[1,4]),l_aSQLResult[1,5],l_aSQLResult[1,6],l_aSQLResult[1,7])
-                //static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_iPk,par_cErrorText,par_cName,par_iNumber,par_iStatus,par_cDescription)
             else
                 l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
             endif
@@ -716,7 +732,8 @@ case l_cURLAction == "EditNameSpace"
         :Table("f0f2eaea-8306-49c9-afef-d72afb41601c","NameSpace")
         :Column("NameSpace.pk"          , "Pk")
         :Column("NameSpace.Name"        , "Name")
-        :Column("NameSpace.Status"      , "Status")
+        :Column("NameSpace.UseStatus"   , "UseStatus")
+        :Column("NameSpace.DocStatus"   , "DocStatus")
         :Column("NameSpace.Description" , "Description")
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
@@ -893,7 +910,8 @@ with object l_oDB1
     :Column("Application.pk"         ,"pk")
     :Column("Application.Name"       ,"Application_Name")
     :Column("Application.LinkCode"   ,"Application_LinkCode")
-    :Column("Application.Status"     ,"Application_Status")
+    :Column("Application.UseStatus"  ,"Application_UseStatus")
+    :Column("Application.DocStatus"  ,"Application_DocStatus")
     :Column("Application.Description","Application_Description")
     :Column("Upper(Application.Name)","tag1")
     :OrderBy("tag1")
@@ -920,7 +938,8 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -935,8 +954,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfApplications->Application_Status,1,4),ListOfApplications->Application_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfApplications->Application_UseStatus,1,4),ListOfApplications->Application_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,1,4),ListOfApplications->Application_DocStatus,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -954,13 +976,14 @@ CloseAlias("ListOfApplications")
 
 return l_cHtml
 //=================================================================================================================
-static function ApplicationEditFormBuild(par_iPk,par_cErrorText,par_cName,par_cLinkCode,par_iStatus,par_cDescription)
+static function ApplicationEditFormBuild(par_iPk,par_cErrorText,par_cName,par_cLinkCode,par_iUseStatus,par_iDocStatus,par_cDescription)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName        := hb_DefaultValue(par_cName,"")
 local l_cLinkCode    := hb_DefaultValue(par_cLinkCode,"")
-local l_iStatus      := hb_DefaultValue(par_iStatus,1)
+local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
+local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
 local l_cDescription := hb_DefaultValue(par_cDescription,"")
 
 oFcgi:TraceAdd("ApplicationEditFormBuild")
@@ -1007,13 +1030,25 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Status</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-                l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-                l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-                l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-                l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1044,7 +1079,8 @@ local l_cActionOnSubmit
 local l_iApplicationPk
 local l_cApplicationName
 local l_cApplicationLinkCode
-local l_iApplicationStatus
+local l_iApplicationUseStatus
+local l_iApplicationDocStatus
 local l_cApplicationDescription
 
 local l_cErrorMessage := ""
@@ -1058,7 +1094,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iApplicationPk             := Val(oFcgi:GetInputValue("TableKey"))
 l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_cApplicationLinkCode       := Upper(Strtran(SanitizeInput(oFcgi:GetInputValue("TextLinkCode"))," ",""))
-l_iApplicationStatus         := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cApplicationDescription    := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 do case
@@ -1099,13 +1136,19 @@ case l_cActionOnSubmit == "Save"
                 //Save the Application
                 with object l_oDB1
                     :Table("3cbf7dbb-cdec-483d-9660-a9043820b170","Application")
-                    :Field("Name"        , l_cApplicationName)
-                    :Field("LinkCode"    , l_cApplicationLinkCode)
-                    :Field("Status"      , l_iApplicationStatus)
-                    :Field("Description" , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
+                    :Field("Application.Name"        , l_cApplicationName)
+                    :Field("Application.LinkCode"    , l_cApplicationLinkCode)
+                    :Field("Application.UseStatus"   , l_iApplicationUseStatus)
+                    :Field("Application.DocStatus"   , l_iApplicationDocStatus)
+                    :Field("Application.Description" , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
                     if empty(l_iApplicationPk)
-                        :Add()
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+l_cApplicationLinkCode+"/")
+                        if :Add()
+                            l_iApplicationPk := :Key()
+                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+l_cApplicationLinkCode+"/")
+                        else
+                            l_cErrorMessage := "Failed to add Application."
+                        endif
+
                     else
                         :Update(l_iApplicationPk)
                         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+l_cApplicationLinkCode+"/")
@@ -1169,7 +1212,7 @@ case l_cActionOnSubmit == "Delete"   // Application
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,l_cErrorMessage,l_cApplicationName,l_cApplicationLinkCode,l_iApplicationStatus,l_cApplicationDescription)
+    l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,l_cErrorMessage,l_cApplicationName,l_cApplicationLinkCode,l_iApplicationUseStatus,l_iApplicationDocStatus,l_cApplicationDescription)
 endif
 
 return l_cHtml
@@ -1189,7 +1232,8 @@ with object l_oDB1
     :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","NameSpace")
     :Column("NameSpace.pk"         ,"pk")
     :Column("NameSpace.Name"       ,"NameSpace_Name")
-    :Column("NameSpace.Status"     ,"NameSpace_Status")
+    :Column("NameSpace.UseStatus"  ,"NameSpace_UseStatus")
+    :Column("NameSpace.DocStatus"  ,"NameSpace_DocStatus")
     :Column("NameSpace.Description","NameSpace_Description")
     :Column("Upper(NameSpace.Name)","tag1")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
@@ -1226,13 +1270,14 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -1247,8 +1292,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfNameSpaces->NameSpace_Status,1,4),ListOfNameSpaces->NameSpace_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfNameSpaces->NameSpace_UseStatus,1,4),ListOfNameSpaces->NameSpace_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfNameSpaces->NameSpace_DocStatus,1,4),ListOfNameSpaces->NameSpace_DocStatus,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -1267,12 +1315,13 @@ CloseAlias("ListOfNameSpaces")
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_cName,par_iStatus,par_cDescription)
+static function NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName        := hb_DefaultValue(par_cName,"")
-local l_iStatus      := hb_DefaultValue(par_iStatus,1)
+local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
+local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
 local l_cDescription := hb_DefaultValue(par_cDescription,"")
 
 oFcgi:TraceAdd("NameSpaceEditFormBuild")
@@ -1311,17 +1360,27 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pe-2 pb-3">Status</td>]
-    l_cHtml += [<td class="pb-3">]
+        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
 
-    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-    l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-    l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-    l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-    l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
-    l_cHtml += [</select>]
-
-    l_cHtml += [</td>]
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
@@ -1349,7 +1408,8 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iNameSpacePk
 local l_cNameSpaceName
-local l_iNameSpaceStatus
+local l_iNameSpaceUseStatus
+local l_iNameSpaceDocStatus
 local l_cNameSpaceDescription
 
 local l_cErrorMessage := ""
@@ -1361,7 +1421,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iNameSpacePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_cNameSpaceName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
-l_iNameSpaceStatus      := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iNameSpaceUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iNameSpaceDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cNameSpaceDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 do case
@@ -1386,12 +1447,17 @@ case l_cActionOnSubmit == "Save"
             //Save the Name Space
             with object l_oDB1
                 :Table("baf7af76-6013-4b53-ba26-4006e22f52cb","NameSpace")
-                :Field("Name"        , l_cNameSpaceName)
-                :Field("Status"      , l_iNameSpaceStatus)
-                :Field("Description" , iif(empty(l_cNameSpaceDescription),NULL,l_cNameSpaceDescription))
+                :Field("NameSpace.Name"       ,l_cNameSpaceName)
+                :Field("NameSpace.UseStatus"  ,l_iNameSpaceUseStatus)
+                :Field("NameSpace.DocStatus"  ,l_iNameSpaceDocStatus)
+                :Field("NameSpace.Description",iif(empty(l_cNameSpaceDescription),NULL,l_cNameSpaceDescription))
                 if empty(l_iNameSpacePk)
-                    :Field("fk_Application" , par_iApplicationPk)
-                    :Add()
+                    :Field("NameSpace.fk_Application" , par_iApplicationPk)
+                    if :Add()
+                        l_iNameSpacePk := :Key()
+                    else
+                        l_cErrorMessage := "Failed to add NameSpace."
+                    endif
                 else
                     :Update(l_iNameSpacePk)
                 endif
@@ -1433,7 +1499,7 @@ case l_cActionOnSubmit == "Delete"   // NameSpace
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iNameSpacePk,l_cErrorMessage,l_cNameSpaceName,l_iNameSpaceStatus,l_cNameSpaceDescription)
+    l_cHtml += NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iNameSpacePk,l_cErrorMessage,l_cNameSpaceName,l_iNameSpaceUseStatus,l_iNameSpaceDocStatus,l_cNameSpaceDescription)
 endif
 
 return l_cHtml
@@ -1519,7 +1585,8 @@ With Object l_oDB1
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.Status"     ,"Table_Status")
+    :Column("Table.UseStatus"  ,"Table_UseStatus")
+    :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
     :Column("Upper(NameSpace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
@@ -1666,7 +1733,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
@@ -1675,7 +1742,8 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -1704,8 +1772,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfTables->Table_Status,1,4),ListOfTables->Table_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfTables->Table_UseStatus,1,4),ListOfTables->Table_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfTables->Table_DocStatus,1,4),ListOfTables->Table_DocStatus,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -1722,12 +1793,13 @@ l_cHtml += [</div>]
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iStatus,par_cDescription)
+static function TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_iNameSpacePk := hb_DefaultValue(par_iNameSpacePk,0)
 local l_cName        := hb_DefaultValue(par_cName,"")
-local l_iStatus      := hb_DefaultValue(par_iStatus,1)
+local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
+local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
 local l_cDescription := hb_DefaultValue(par_cDescription,"")
 local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 
@@ -1819,17 +1891,27 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Status</td>]
-        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
 
-        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-        l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-        l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-        l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-        l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
-        l_cHtml += [</select>]
-
-        l_cHtml += [</td>]
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
@@ -1859,7 +1941,8 @@ local l_cActionOnSubmit
 local l_iTablePk
 local l_iNameSpacePk
 local l_cTableName
-local l_iTableStatus
+local l_iTableUseStatus
+local l_iTableDocStatus
 local l_cTableDescription
 local l_cFrom := ""
 local l_oData
@@ -1875,7 +1958,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_iNameSpacePk      := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cTableName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
-l_iTableStatus      := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iTableUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iTableDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cTableDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 // l_cButtonSave       := SanitizeInput(oFcgi:GetInputValue("ButtonSave"))
@@ -1907,10 +1991,11 @@ case l_cActionOnSubmit == "Save"
             //Save the Table
             with object l_oDB1
                 :Table("895da8f1-8cdb-4792-a5b9-3d3b6e646430","Table")
-                :Field("fk_NameSpace", l_iNameSpacePk)
-                :Field("Name"        , l_cTableName)
-                :Field("Status"      , l_iTableStatus)
-                :Field("Description" , iif(empty(l_cTableDescription),NULL,l_cTableDescription))
+                :Field("Table.fk_NameSpace",l_iNameSpacePk)
+                :Field("Table.Name"        ,l_cTableName)
+                :Field("Table.UseStatus"   ,l_iTableUseStatus)
+                :Field("Table.DocStatus"   ,l_iTableDocStatus)
+                :Field("Table.Description" ,iif(empty(l_cTableDescription),NULL,l_cTableDescription))
                 if empty(l_iTablePk)
                     if :Add()
                         l_iTablePk := :Key()
@@ -2005,7 +2090,7 @@ Altd()
 do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
-    l_cHtml += TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iTablePk,l_cErrorMessage,l_iNameSpacePk,l_cTableName,l_iTableStatus,l_cTableDescription)
+    l_cHtml += TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iTablePk,l_cErrorMessage,l_iNameSpacePk,l_cTableName,l_iTableUseStatus,l_iTableDocStatus,l_cTableDescription)
 case empty(l_cFrom) .or. empty(l_iTablePk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
 otherwise
@@ -2049,7 +2134,8 @@ with object l_oDB1
     :Table("27682ad7-bafd-409f-b6ab-1057770ec119","Column")
     :Column("Column.pk"             ,"pk")
     :Column("Column.Name"           ,"Column_Name")
-    :Column("Column.Status"         ,"Column_Status")
+    :Column("Column.UseStatus"      ,"Column_UseStatus")
+    :Column("Column.DocStatus"      ,"Column_DocStatus")
     :Column("Column.Description"    ,"Column_Description")
     :Column("Column.Order"          ,"Column_Order")
     :Column("Column.Type"           ,"Column_Type")
@@ -2113,7 +2199,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
                         l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
@@ -2124,7 +2210,8 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
@@ -2168,10 +2255,14 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
                         l_cHtml += [</td>]
 
-                        // Status
+                        // Usage Status
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_Status,1,4),ListOfColumns->Column_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_UseStatus,1,4),ListOfColumns->Column_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        // Doc Status
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfColumns->Column_DocStatus,1,4),ListOfColumns->Column_DocStatus,1)]
                         l_cHtml += [</td>]
 
                         // Used By
@@ -2319,7 +2410,7 @@ case l_cActionOnSubmit == "Save"
         if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfColumn","pk") .and. ListOfColumn->order <> l_Counter
             with object l_oDB1
                 :Table("ae13b924-6f6c-4241-bbaf-f840225b7057","Column")
-                :Field("order",l_Counter)
+                :Field("Column.order",l_Counter)
                 :Update(val(l_aOrderedPks[l_Counter]))
             endwith
         endif
@@ -2332,22 +2423,21 @@ endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_iPk,par_cErrorText,;
-                                    par_cName,par_iStatus,par_cDescription,;
-                                    par_cType,par_iLength,par_iScale,par_iNullable,;
-                                    par_iUsedBy,par_iFk_TableForeign,par_iFk_Enumeration)
+static function ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cErrorText,par_iPk,par_hValues)
+
 local l_cHtml := ""
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
-local l_cName            := hb_DefaultValue(par_cName,"")
-local l_iStatus          := hb_DefaultValue(par_iStatus,1)
-local l_cDescription     := hb_DefaultValue(par_cDescription,"")
-local l_cType            := Alltrim(hb_DefaultValue(par_cType,""))
-local l_cLength          := iif(pcount() > 7 .and. !hb_IsNil(par_iLength),Trans(par_iLength),"")
-local l_cScale           := iif(pcount() > 7 .and. !hb_IsNil(par_iScale) ,Trans(par_iScale),"")
-local l_lNullable        := hb_DefaultValue(par_iNullable,.t.)
-local l_iUsedBy          := hb_DefaultValue(par_iUsedBy,1)
-local l_iFk_TableForeign := hb_DefaultValue(par_iFk_TableForeign,0)
-local l_iFk_Enumeration  := hb_DefaultValue(par_iFk_Enumeration,0)
+local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
+local l_cLength          := Trans(hb_HGetDef(par_hValues,"Length",""))
+local l_cScale           := Trans(hb_HGetDef(par_hValues,"Scale",""))
+local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
+local l_iUsedBy          := hb_HGetDef(par_hValues,"UsedBy",1)
+local l_iFk_TableForeign := hb_HGetDef(par_hValues,"Fk_TableForeign",0)
+local l_iFk_Enumeration  := hb_HGetDef(par_hValues,"Fk_Enumeration",0)
 
 local l_iTypeCount
 local l_aSQLResult   := {}
@@ -2505,13 +2595,25 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Status</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
         l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-            l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-            l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-            l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-            l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -2541,7 +2643,8 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iColumnPk
 local l_cColumnName
-local l_iColumnStatus
+local l_iColumnUseStatus
+local l_iColumnDocStatus
 local l_cColumnDescription
 local l_cColumnType
 local l_cColumnLength
@@ -2556,6 +2659,8 @@ local l_iColumnFk_Enumeration
 local l_iColumnOrder
 local l_iTypePos   //The position in the oFcgi:p_ColumnTypes array
 
+local l_hValues := {=>}
+
 local l_aSQLResult   := {}
 
 local l_cErrorMessage := ""
@@ -2567,7 +2672,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iColumnPk              := Val(oFcgi:GetInputValue("TableKey"))
 l_cColumnName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
-l_iColumnStatus          := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cColumnDescription     := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 
@@ -2580,7 +2686,6 @@ l_cColumnScale           := SanitizeInput(oFcgi:GetInputValue("TextScale"))
 l_iColumnScale           := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
 
 l_lColumnNullable        := (oFcgi:GetInputValue("CheckNullable") == "1")
-Altd()
 
 l_iColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
@@ -2667,22 +2772,27 @@ case l_cActionOnSubmit == "Save"
                     //Save the Column
                     with object l_oDB1
                         :Table("1a6da9a6-6812-4129-979c-c8b8f848f351","Column")
-                        :Field("Name"            , l_cColumnName)
-                        :Field("Status"          , l_iColumnStatus)
-                        :Field("Description"     , iif(empty(l_cColumnDescription),NULL,l_cColumnDescription))
+                        :Field("Column.Name"            , l_cColumnName)
+                        :Field("Column.UseStatus"       , l_iColumnUseStatus)
+                        :Field("Column.DocStatus"       , l_iColumnDocStatus)
+                        :Field("Column.Description"     , iif(empty(l_cColumnDescription),NULL,l_cColumnDescription))
 
-                        :Field("Type"            , l_cColumnType)
-                        :Field("Length"          , l_iColumnLength)
-                        :Field("Scale"           , l_iColumnScale)
-                        :Field("Nullable"        , l_lColumnNullable)
-                        :Field("UsedBy"          , l_iColumnUsedBy)
-                        :Field("Fk_TableForeign" , l_iColumnFk_TableForeign)
-                        :Field("Fk_Enumeration"  , l_iColumnFk_Enumeration)
+                        :Field("Column.Type"            , l_cColumnType)
+                        :Field("Column.Length"          , l_iColumnLength)
+                        :Field("Column.Scale"           , l_iColumnScale)
+                        :Field("Column.Nullable"        , l_lColumnNullable)
+                        :Field("Column.UsedBy"          , l_iColumnUsedBy)
+                        :Field("Column.Fk_TableForeign" , l_iColumnFk_TableForeign)
+                        :Field("Column.Fk_Enumeration"  , l_iColumnFk_Enumeration)
                     
                         if empty(l_iColumnPk)
-                            :Field("fk_Table" , par_iTablePk)
-                            :Field("Order"    ,l_iColumnOrder)
-                            :Add()
+                            :Field("Column.fk_Table" , par_iTablePk)
+                            :Field("Column.Order"    ,l_iColumnOrder)
+                            if :Add()
+                                l_iColumnPk := :Key()
+                            else
+                                l_cErrorMessage := "Failed to add Column."
+                            endif
                         else
                             :Update(l_iColumnPk)
                         endif
@@ -2719,10 +2829,19 @@ case l_cActionOnSubmit == "Delete"   // Column
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_iColumnPk,l_cErrorMessage,;
-                                   l_cColumnName,l_iColumnStatus,l_cColumnDescription,;
-                                   l_cColumnType,l_iColumnLength,l_iColumnScale,l_lColumnNullable,;
-                                   l_iColumnUsedBy,l_iColumnFk_TableForeign,l_iColumnFk_Enumeration)
+    l_hValues["Name"]            := l_cColumnName
+    l_hValues["UseStatus"]       := l_iColumnUseStatus
+    l_hValues["DocStatus"]       := l_iColumnDocStatus
+    l_hValues["Description"]     := l_cColumnDescription
+    l_hValues["Type"]            := l_cColumnType
+    l_hValues["Length"]          := l_iColumnLength
+    l_hValues["Scale"]           := l_iColumnScale
+    l_hValues["Nullable"]        := l_lColumnNullable
+    l_hValues["UsedBy"]          := l_iColumnUsedBy
+    l_hValues["Fk_TableForeign"] := l_iColumnFk_TableForeign
+    l_hValues["Fk_Enumeration"]  := l_iColumnFk_Enumeration
+
+    l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_cErrorMessage,l_iColumnPk,l_hValues)
 endif
 
 return l_cHtml
@@ -2745,7 +2864,8 @@ with object l_oDB1
     :Column("Index.Expression"     ,"Index_Expression")
     :Column("Index.Unique"         ,"Index_Unique")
     :Column("Index.Algo"           ,"Index_Algo")
-    :Column("Index.Status"         ,"Index_Status")
+    :Column("Index.UseStatus"      ,"Index_UseStatus")
+    :Column("Index.DocStatus"      ,"Index_DocStatus")
     :Column("Index.Description"    ,"Index_Description")
     :Column("Index.UsedBy"         ,"Index_UsedBy")
     :Column("upper(Index.Name)"    ,"tag1")
@@ -2794,7 +2914,7 @@ l_cHtml += [<div class="m-2">]
 
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="7">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
                         l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
@@ -2805,7 +2925,8 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
                 l_cHtml += [</tr>]
 
@@ -2838,10 +2959,14 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,""))
                         l_cHtml += [</td>]
 
-                        // Status
+                        // Usage Status
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_Status,1,4),ListOfIndexes->Index_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_UseStatus,1,4),ListOfIndexes->Index_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        // Doc Status
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfIndexes->Index_DocStatus,1,4),ListOfIndexes->Index_DocStatus,1)]
                         l_cHtml += [</td>]
 
                         // Used By
@@ -2884,7 +3009,8 @@ with object l_oDB1
     :Column("Enumeration.pk"             ,"pk")
     :Column("NameSpace.Name"             ,"NameSpace_Name")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
-    :Column("Enumeration.Status"         ,"Enumeration_Status")
+    :Column("Enumeration.UseStatus"      ,"Enumeration_UseStatus")
+    :Column("Enumeration.DocStatus"      ,"Enumeration_DocStatus")
     :Column("Enumeration.Description"    ,"Enumeration_Description")
     :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
@@ -2945,7 +3071,7 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
@@ -2954,7 +3080,8 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Implemented As</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Values</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -2980,8 +3107,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumerations->Enumeration_Status,1,4),ListOfEnumerations->Enumeration_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumerations->Enumeration_UseStatus,1,4),ListOfEnumerations->Enumeration_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfEnumerations->Enumeration_DocStatus,1,4),ListOfEnumerations->Enumeration_DocStatus,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -3000,13 +3130,14 @@ CloseAlias("ListOfEnumerations")
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iStatus,par_cDescription,par_iImplementAs,par_iImplementLength)
+static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription,par_iImplementAs,par_iImplementLength)
 local l_cHtml := ""
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_iNameSpacePk     := hb_DefaultValue(par_iNameSpacePk,0)
 local l_cName            := hb_DefaultValue(par_cName,"")
-local l_iStatus          := hb_DefaultValue(par_iStatus,1)
+local l_iUseStatus       := hb_DefaultValue(par_iUseStatus,1)
+local l_iDocStatus       := hb_DefaultValue(par_iDocStatus,1)
 local l_cDescription     := hb_DefaultValue(par_cDescription,"")
 local l_iImplementAs     := hb_DefaultValue(par_iImplementAs,1)
 local l_iImplementLength := hb_DefaultValue(par_iImplementLength,1)
@@ -3120,16 +3251,26 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Status</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-                    l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
                 l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
@@ -3160,7 +3301,8 @@ local l_cActionOnSubmit
 local l_iEnumerationPk
 local l_iNameSpacePk
 local l_cEnumerationName
-local l_iEnumerationStatus
+local l_iEnumerationUseStatus
+local l_iEnumerationDocStatus
 local l_cEnumerationDescription
 local l_iEnumerationImplementAs
 local l_iEnumerationImplementLength
@@ -3180,7 +3322,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_iNameSpacePk                  := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cEnumerationName              := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
-l_iEnumerationStatus            := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iEnumerationUseStatus         := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iEnumerationDocStatus         := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cEnumerationDescription       := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 l_iEnumerationImplementAs       := Val(oFcgi:GetInputValue("ComboImplementAs"))
@@ -3219,12 +3362,13 @@ case l_cActionOnSubmit == "Save"
             //Save the Enumeration
             with object l_oDB1
                 :Table("92372d16-01ca-41d7-8f45-d145a2ce3cdc","Enumeration")
-                :Field("fk_NameSpace"     , l_iNameSpacePk)
-                :Field("Name"             , l_cEnumerationName)
-                :Field("Status"           , l_iEnumerationStatus)
-                :Field("Description"      , iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
-                :Field("ImplementAs"    , l_iEnumerationImplementAs)
-                :Field("ImplementLength", iif(vfp_Inlist(l_iEnumerationImplementAs,3,4),l_iEnumerationImplementLength,NULL))
+                :Field("Enumeration.fk_NameSpace"   , l_iNameSpacePk)
+                :Field("Enumeration.Name"           , l_cEnumerationName)
+                :Field("Enumeration.UseStatus"      , l_iEnumerationUseStatus)
+                :Field("Enumeration.DocStatus"      , l_iEnumerationDocStatus)
+                :Field("Enumeration.Description"    , iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
+                :Field("Enumeration.ImplementAs"    , l_iEnumerationImplementAs)
+                :Field("Enumeration.ImplementLength", iif(vfp_Inlist(l_iEnumerationImplementAs,3,4),l_iEnumerationImplementLength,NULL))
                 if empty(l_iEnumerationPk)
                     if :Add()
                         l_iEnumerationPk := :Key()
@@ -3284,7 +3428,7 @@ endcase
 do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
-    l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iEnumerationPk,l_cErrorMessage,l_iNameSpacePk,l_cEnumerationName,l_iEnumerationStatus,l_cEnumerationDescription,l_iEnumerationImplementAs,l_iEnumerationImplementLength)
+    l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iEnumerationPk,l_cErrorMessage,l_iNameSpacePk,l_cEnumerationName,l_iEnumerationUseStatus,l_iEnumerationDocStatus,l_cEnumerationDescription,l_iEnumerationImplementAs,l_iEnumerationImplementLength)
 case empty(l_cFrom) .or. empty(l_iEnumerationPk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
 otherwise
@@ -3326,7 +3470,8 @@ with object l_oDB1
     :Column("EnumValue.pk"         ,"pk")
     :Column("EnumValue.Name"       ,"EnumValue_Name")
     :Column("EnumValue.Number"     ,"EnumValue_Number")
-    :Column("EnumValue.Status"     ,"EnumValue_Status")
+    :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
+    :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")
     :Column("EnumValue.Description","EnumValue_Description")
     :Column("EnumValue.Order"      ,"EnumValue_Order")
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
@@ -3368,14 +3513,15 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 scan all
@@ -3397,8 +3543,11 @@ l_cHtml += [<div class="m-2">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Unknown","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumValues->EnumValue_Status,1,4),ListOfEnumValues->EnumValue_Status,1)]
-                            // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumValues->EnumValue_UseStatus,1,4),ListOfEnumValues->EnumValue_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfEnumValues->EnumValue_DocStatus,1,4),ListOfEnumValues->EnumValue_DocStatus,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -3544,7 +3693,7 @@ case l_cActionOnSubmit == "Save"
         if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfEnumValue","pk") .and. ListOfEnumValue->order <> l_Counter
             with object l_oDB1
                 :Table("b2b226c3-c799-4147-8158-d601709cb9a0","EnumValue")
-                :Field("order",l_Counter)
+                :Field("EnumValue.order",l_Counter)
                 :Update(val(l_aOrderedPks[l_Counter]))
             endwith
         endif
@@ -3557,12 +3706,13 @@ endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_iPk,par_cErrorText,par_cName,par_iNumber,par_iStatus,par_cDescription)
+static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_iPk,par_cErrorText,par_cName,par_iNumber,par_iUseStatus,par_iDocStatus,par_cDescription)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName        := hb_DefaultValue(par_cName,"")
 local l_cNumber      := iif(pcount() > 6 .and. !hb_IsNil(par_iNumber),Trans(par_iNumber),"")
-local l_iStatus      := hb_DefaultValue(par_iStatus,1)
+local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
+local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
 local l_cDescription := hb_DefaultValue(par_cDescription,"")
 
 local l_aSQLResult   := {}
@@ -3604,32 +3754,42 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-    l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+        l_cHtml += [<td class="pe-2 pb-3">Name</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pe-2 pb-3">Number</td>]
-    l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNumber" id="TextNumber" value="]+FcgiPrepFieldForValue(l_cNumber)+[" maxlength="8" size="8"></td>]
+        l_cHtml += [<td class="pe-2 pb-3">Number</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNumber" id="TextNumber" value="]+FcgiPrepFieldForValue(l_cNumber)+[" maxlength="8" size="8"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pe-2 pb-3">Status</td>]
-    l_cHtml += [<td class="pb-3">]
+        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
+                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
 
-    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-    l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Unknown</option>]
-    l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Active</option>]
-    l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Inactive (Read Only)</option>]
-    l_cHtml += [<option value="4"]+iif(l_iStatus==4,[ selected],[])+[>Archived (Read Only and Hidden)</option>]
-    l_cHtml += [</select>]
-
-    l_cHtml += [</td>]
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
-    l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-    l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -3653,7 +3813,8 @@ local l_cActionOnSubmit
 local l_iEnumValuePk
 local l_cEnumValueName
 local l_cEnumValueNumber,l_iEnumValueNumber
-local l_iEnumValueStatus
+local l_iEnumValueUseStatus
+local l_iEnumValueDocStatus
 local l_cEnumValueDescription
 local l_iEnumValueOrder
 local l_aSQLResult   := {}
@@ -3671,7 +3832,8 @@ l_cEnumValueName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")
 l_cEnumValueNumber      := SanitizeInput(oFcgi:GetInputValue("TextNumber"))
 l_iEnumValueNumber      := iif(empty(l_cEnumValueNumber),NULL,val(l_cEnumValueNumber))
 
-l_iEnumValueStatus      := Val(oFcgi:GetInputValue("ComboStatus"))
+l_iEnumValueUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iEnumValueDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cEnumValueDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
 
 do case
@@ -3715,14 +3877,20 @@ case l_cActionOnSubmit == "Save"
             //Save the Enumeration Value
             with object l_oDB1
                 :Table("1ed0fff1-f702-4c77-b66e-55a468ad8ad2","EnumValue")
-                :Field("Name"        , l_cEnumValueName)
-                :Field("Number"      , l_iEnumValueNumber)
-                :Field("Status"      , l_iEnumValueStatus)
-                :Field("Description" , iif(empty(l_cEnumValueDescription),NULL,l_cEnumValueDescription))
+                :Field("EnumValue.Name"       ,l_cEnumValueName)
+                :Field("EnumValue.Number"     ,l_iEnumValueNumber)
+                :Field("EnumValue.UseStatus"  ,l_iEnumValueUseStatus)
+                :Field("EnumValue.DocStatus"  ,l_iEnumValueDocStatus)
+                :Field("EnumValue.Description",iif(empty(l_cEnumValueDescription),NULL,l_cEnumValueDescription))
                 if empty(l_iEnumValuePk)
-                    :Field("fk_Enumeration" , par_iEnumerationPk)
-                    :Field("Order"          ,l_iEnumValueOrder)
-                    :Add()
+                    :Field("EnumValue.fk_Enumeration" , par_iEnumerationPk)
+                    :Field("EnumValue.Order"          ,l_iEnumValueOrder)
+                    if :Add()
+                        l_iEnumValuePk := :Key()
+                    else
+                        l_cErrorMessage := "Failed to add Column."
+                    endif
+
                 else
                     :Update(l_iEnumValuePk)
                 endif
@@ -3744,7 +3912,7 @@ case l_cActionOnSubmit == "Delete"   // EnumValue
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_iEnumValuePk,l_cErrorMessage,l_cEnumValueName,l_iEnumValueNumber,l_iEnumValueStatus,l_cEnumValueDescription)
+    l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_iEnumValuePk,l_cErrorMessage,l_cEnumValueName,l_iEnumValueNumber,l_iEnumValueUseStatus,l_iEnumValueDocStatus,l_cEnumValueDescription)
 endif
 
 return l_cHtml
@@ -3907,12 +4075,12 @@ case l_cActionOnSubmit == "Load"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c5","Application")
-            :Field("SyncBackendType",l_iSyncBackendType)
-            :Field("SyncServer"     ,l_cSyncServer)
-            :Field("SyncPort"       ,l_iSyncPort)
-            :Field("SyncUser"       ,l_cSyncUser)
-            :Field("SyncDatabase"   ,l_cSyncDatabase)
-            :Field("SyncNameSpaces" ,l_cSyncNameSpaces)
+            :Field("Application.SyncBackendType",l_iSyncBackendType)
+            :Field("Application.SyncServer"     ,l_cSyncServer)
+            :Field("Application.SyncPort"       ,l_iSyncPort)
+            :Field("Application.SyncUser"       ,l_cSyncUser)
+            :Field("Application.SyncDatabase"   ,l_cSyncDatabase)
+            :Field("Application.SyncNameSpaces" ,l_cSyncNameSpaces)
             :Update(par_iApplicationPk)
         endwith
 

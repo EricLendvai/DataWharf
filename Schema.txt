@@ -5,7 +5,8 @@ l_Schema := ;
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"LinkCode"       =>{, "CV",  10,  0,};     // Used to create direct link to the Application for data dic management
    ,"Name"           =>{, "CV", 200,  0,};
-   ,"Status"         =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"      =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"      =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"    =>{,  "M",   0,  0,"N"};
    ,"SyncBackendType"=>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
    ,"SyncServer"     =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
@@ -25,7 +26,8 @@ l_Schema := ;
    ,"fk_Enumeration" =>{,  "I",   0,  0,"N"};
    ,"Order"          =>{,  "I",   0,  0,};      // Display Order
    ,"Name"           =>{, "CV", 200,  0,};
-   ,"Status"         =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"      =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"      =>{,  "N",   1,  0,};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Type"           =>{,  "C",   3,  0,};
    ,"Length"         =>{,  "I",   0,  0,"N"};
    ,"Scale"          =>{,  "I",   0,  0,"N"};
@@ -33,9 +35,9 @@ l_Schema := ;
    ,"Description"    =>{,  "M",   0,  0,"N"};
    ,"UsedBy"         =>{,  "N",   1,  0,}};     // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,;   //Index Definition
-   {"fk_Table"       =>{,"fk_Table",.f.,"BTREE"};
+   {"fk_Table"       =>{,"fk_Table"       ,.f.,"BTREE"};
    ,"fk_TableForeign"=>{,"fk_TableForeign",.f.,"BTREE"};
-   ,"fk_Enumeration" =>{,"fk_Enumeration",.f.,"BTREE"}}};
+   ,"fk_Enumeration" =>{,"fk_Enumeration" ,.f.,"BTREE"}}};
 ,"public.Enumeration"=>{;   //Field Definition
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
@@ -45,7 +47,8 @@ l_Schema := ;
    ,"ImplementAs"     =>{,  "N",   1,  0,};      // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
    ,"ImplementLength" =>{,  "I",   0,  0,"N"};   // Used if ImplementAs is 3 or 4.
    ,"Description"     =>{,  "M",   0,  0,"N"};
-   ,"Status"          =>{,  "N",   1,  0,}};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"       =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"       =>{,  "N",   1,  0,}};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,;   //Index Definition
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
 ,"public.EnumValue"=>{;   //Field Definition
@@ -53,11 +56,12 @@ l_Schema := ;
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Enumeration"=>{,  "I",   0,  0,};
-   ,"Number"        =>{,  "I",   0,  0,"N"};   // Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
-   ,"Order"         =>{,  "I",   0,  0,};      // Display Order
+   ,"Number"        =>{,  "I",   0,  0,"N"};    // Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
+   ,"Order"         =>{,  "I",   0,  0,};       // Display Order
    ,"Name"          =>{, "CV", 200,  0,};
    ,"Description"   =>{,  "M",   0,  0,"N"};
-   ,"Status"        =>{,  "N",   1,  0,}};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"     =>{,  "N",   1,  0,};       // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,}};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,;   //Index Definition
    {"fk_Enumeration"=>{,"fk_Enumeration",.f.,"BTREE"}}};
 ,"public.Index"=>{;   //Field Definition
@@ -71,7 +75,8 @@ l_Schema := ;
    ,"Description"=>{,  "M",   0,  0,"N"};
    ,"Algo"       =>{,  "N",   1,  0,};         // 1 = BTREE
    ,"UsedBy"     =>{,  "N",   1,  0,};         // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
-   ,"Status"     =>{,  "N",   1,  0,}};        // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"  =>{,  "N",   1,  0,};         // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"  =>{,  "N",   1,  0,}};        // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,;   //Index Definition
    {"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};
 ,"public.IndexColumn"=>{;   //Field Definition
@@ -89,7 +94,8 @@ l_Schema := ;
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Application"=>{,  "I",   0,  0,};
    ,"Name"          =>{, "CV", 200,  0,};
-   ,"Status"        =>{,  "N",   1,  0,};    // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"     =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"   =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
@@ -99,7 +105,8 @@ l_Schema := ;
    ,"sysm"        =>{, "DT",   0,  6,"N"};
    ,"fk_NameSpace"=>{,  "I",   0,  0,"N"};
    ,"Name"        =>{, "CV", 200,  0,};
-   ,"Status"      =>{,  "N",   1,  0,};    // 1 = Active, 2 = Inactive
+   ,"UseStatus"   =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"   =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description" =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
@@ -109,7 +116,8 @@ l_Schema := ;
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Application"=>{,  "I",   0,  0,};
    ,"Code"          =>{, "CV",  20,  0,};
-   ,"Status"        =>{,  "N",   1,  0,};    // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"     =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"   =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
@@ -119,7 +127,8 @@ l_Schema := ;
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Application"=>{,  "I",   0,  0,};
    ,"Name"          =>{, "CV", 200,  0,};
-   ,"Status"        =>{,  "N",   1,  0,};    // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"UseStatus"     =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"   =>{,  "M",   0,  0,"N"};
    ,"VisPos"        =>{,  "M",   0,  0,"N"}};  // Last Visualization Positions
    ,;   //Index Definition
@@ -132,7 +141,63 @@ l_Schema := ;
    ,"fk_Table"  =>{,  "I",   0,  0,}};
    ,;   //Index Definition
    {"fk_Diagram"=>{,"fk_Diagram",.f.,"BTREE"};
-   ,"fk_Table"  =>{,"fk_Table",.f.,"BTREE"}}};
+   ,"fk_Table"  =>{,"fk_Table"  ,.f.,"BTREE"}}};
+,"public.Flag"=>{;   //Field Definition
+   {"pk"         =>{,  "I",   0,  0,};
+   ,"sysc"       =>{, "DT",   0,  6,"N"};
+   ,"sysm"       =>{, "DT",   0,  6,"N"};
+   ,"Name"       =>{, "CV", 200,  0,};
+   ,"Description"=>{,  "M",   0,  0,"N"};
+   ,"Order"      =>{,  "I",   0,  0,};      // Display Order
+   ,"Status"     =>{,  "N",   1,  0,}};      // 1 = Active, 2 = Inactive
+   ,;   //Index Definition
+   NIL};
+,"public.ApplicationFlag"=>{;   //Field Definition
+   {"pk"            =>{,  "I",   0,  0,};
+   ,"sysc"          =>{, "DT",   0,  6,"N"};
+   ,"sysm"          =>{, "DT",   0,  6,"N"};
+   ,"fk_Flag"       =>{,  "I",   0,  0,};
+   ,"fk_Application"=>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_Flag"       =>{,"fk_Flag"       ,.f.,"BTREE"};
+   ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
+,"public.FlagNameSpace"=>{;   //Field Definition
+   {"pk"          =>{,  "I",   0,  0,};
+   ,"sysc"        =>{, "DT",   0,  6,"N"};
+   ,"sysm"        =>{, "DT",   0,  6,"N"};
+   ,"fk_Flag"     =>{,  "I",   0,  0,};
+   ,"fk_NameSpace"=>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_Flag"     =>{,"fk_Flag"     ,.f.,"BTREE"};
+   ,"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
+,"public.FlagTable"=>{;   //Field Definition
+   {"pk"      =>{,  "I",   0,  0,};
+   ,"sysc"    =>{, "DT",   0,  6,"N"};
+   ,"sysm"    =>{, "DT",   0,  6,"N"};
+   ,"fk_Flag" =>{,  "I",   0,  0,};
+   ,"fk_Table"=>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_Flag" =>{,"fk_Flag" ,.f.,"BTREE"};
+   ,"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};
+,"public.FlagColumn"=>{;   //Field Definition
+   {"pk"             =>{,  "I",   0,  0,};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"fk_Flag"        =>{,  "I",   0,  0,};
+   ,"fk_Column"      =>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_Flag"  =>{,"fk_Flag" ,.f.,"BTREE"};
+   ,"fk_Column"=>{,"fk_Column",.f.,"BTREE"}}};
+,"public.UserAccess"=>{;   //Field Definition
+   {"pk"             =>{,  "I",   0,  0,};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"Access"         =>{,  "N",   1,  0,};     // 1 = Read Only, 2 = Add Documentation, 3 = Full Access
+   ,"fk_User"        =>{,  "I",   0,  0,};
+   ,"fk_Application" =>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
+   ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
 ,"public.User"=>{;   //Field Definition
    {"pk"          =>{,  "I",   0,  0,};
    ,"sysc"        =>{, "DT",   0,  6,"N"};

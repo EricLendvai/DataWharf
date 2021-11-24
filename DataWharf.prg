@@ -270,8 +270,8 @@ if l_cAction == "logout"
                 l_nLoginOutUserPk := l_oData:User_pk
                 if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
                     l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
-                    l_oDB1:Field("Status",2)
-                    l_oDB1:Field("TimeOut",{"S","now()"})
+                    l_oDB1:Field("LoginLogs.Status",2)
+                    l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
                     l_oDB1:Update(l_nLoggedInPk)
                 endif
 
@@ -284,8 +284,8 @@ if l_cAction == "logout"
                 select ListOfResults
                 scan all
                     l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
-                    l_oDB1:Field("Status",3)
-                    l_oDB1:Field("TimeOut",{"S","now()"})
+                    l_oDB1:Field("LoginLogs.Status",3)
+                    l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
                     l_oDB1:Update(ListOfResults->pk)
 // SendToDebugView("1 "+l_oDB1:LastSQL())
                 endscan
@@ -372,12 +372,12 @@ if l_cPageName <> "ajax"
                     l_nUserAccessMode := ListOfResults->User_AccessMode
 
                     :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
-                    :Field("fk_User"  ,l_nUserPk)
-                    :Field("TimeIn"   ,{"S","now()"})
-                    :Field("IP"       ,l_cIP)
-                    :Field("Attempts" ,1)   //_M_ for later use to prevent brute force attacks
-                    :Field("Status"   ,1)
-                    :Field("Signature",l_cSignature)
+                    :Field("LoginLogs.fk_User"  ,l_nUserPk)
+                    :Field("LoginLogs.TimeIn"   ,{"S","now()"})
+                    :Field("LoginLogs.IP"       ,l_cIP)
+                    :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
+                    :Field("LoginLogs.Status"   ,1)
+                    :Field("LoginLogs.Signature",l_cSignature)
                     if :Add()
                         l_nLoginLogsPk := :Key()
                         l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
@@ -519,15 +519,17 @@ function GetPageHeader(par_LoggedIn,par_cCurrentPage,par_cUserName,par_nUserAcce
 local l_cHtml := []
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
+local l_cExtraClass := iif(COLOR_HEADER_TEXT_WHITE," text-white","")
+
 l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+COLOR_HEADER_BACKGROUND+[;">]
     l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand" href="#">]+APPLICATION_TITLE+[</a>]
+        l_cHtml += [<a class="navbar-brand]+l_cExtraClass+[" href="#">]+APPLICATION_TITLE+[</a>]
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "home"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "applications",[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+iif(lower(par_cCurrentPage) == "info"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications",[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
                     l_cHtml += [<li class="nav-item"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]
@@ -631,14 +633,14 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
 
             l_cHtml += [<div class="form-group has-success">]
                 l_cHtml += [<label class="control-label" for="TextID">User ID</label>]
-                l_cHtml += [<div class="">]
+                l_cHtml += [<div class="mt-2">]
                     l_cHtml += [<input class="form-control" type="text" name="TextID" id="TextID" placeholder="Enter your User ID" maxlength="50" size="30" value="]+FcgiPrepFieldForValue(l_cID)+[" autocomplete="off">]
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 
-            l_cHtml += [<div class="form-group has-success">]
+            l_cHtml += [<div class="form-group has-success mt-4">]
                 l_cHtml += [<label class="control-label" for="TextPassword">Password</label>]
-                l_cHtml += [<div class="">]
+                l_cHtml += [<div class="mt-2">]
                     l_cHtml += [<input class="form-control" type="text" name="TextPassword" id="TextPassword" placeholder="Enter your password" maxlength="50" size="30" value="]+FcgiPrepFieldForValue(l_cPassword)+[" autocomplete="off">]
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
