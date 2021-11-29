@@ -4,7 +4,7 @@ memvar oFcgi
 #include "dbinfo.ch"
 #include "hb_orm.ch"
 
-function LoadSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces)
+function LoadSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces,par_iSyncSetForeignKey)
 local l_SQLCommandEnums := []
 local l_SQLCommandFields := []
 local l_SQLCommandIndexes := []
@@ -676,33 +676,55 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 endif
 
 //--Try to setup Foreign Links----------------
-// with object l_oDB1
-//     :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")
-//     :Column("Column.pk","Column_pk")
-//     :Column("Table.pk" ,"Table_pk")
+if par_iSyncSetForeignKey > 1
+    with object l_oDB1
+        :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")
+        :Column("Column.pk","Column_pk")
+        :Column("Table.pk" ,"Table_pk")
 
-//     //Ensure we only check on the columns in the current application
-//     :Join("inner","Table"    ,"TableOfColumn"    ,"Column.fk_Table = TableOfColumn.pk")
-//     :Join("inner","NameSpace","NameSpaceOfColumn","TableOfColumn.fk_NameSpace = NameSpaceOfColumn.pk")
-//     :Where("NameSpaceOfColumn.fk_Application = ^",par_iApplicationPk)
-//     :Where("left(Column.Name,3) = ^" , "fk_")
-//     :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
-//     :Where("Column.DocUse = 1")
+        //Ensure we only check on the columns in the current application
+        :Join("inner","Table"    ,"TableOfColumn"    ,"Column.fk_Table = TableOfColumn.pk")
+        :Join("inner","NameSpace","NameSpaceOfColumn","TableOfColumn.fk_NameSpace = NameSpaceOfColumn.pk")
+        :Where("NameSpaceOfColumn.fk_Application = ^",par_iApplicationPk)
 
-//     :Join("inner","Table","","Column.Name = 'fk_'+Table.Name")
-//     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-//     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        do case
+        case par_iSyncSetForeignKey = 2
+            :Where("left(Column.Name,2) = ^" , "p_")
+            :Join("inner","Table","","lower(Column.Name) = lower(concat('p_',Table.Name))")
+        case par_iSyncSetForeignKey = 3
+            :Where("left(Column.Name,3) = ^" , "fk_")
+            :Join("inner","Table","","lower(Column.Name) = lower(concat('fk_',Table.Name))")
+        endcase
+            
+        :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
+        :Where("Column.DocStatus <= 1")
 
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
-//     // :Where("Column.fk_TableForeign is null")
-// Altd()
-//     :SQL("FieldToMarkAsForeignKeys")
+        :Where("Column.fk_TableForeign is null")
+        :SQL("FieldToMarkAsForeignKeys")
 
+        // SendToClipboard(:LastSQL())
+        // ExportTableToHtmlFile("FieldToMarkAsForeignKeys","d:\PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
 
-// SendToClipboard(:LastSQL())
-// ExportTableToHtmlFile("FieldToMarkAsForeignKeys","d:\PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
-
-// endwith
+        if :Tally > 0
+            with object l_oDB2
+                select FieldToMarkAsForeignKeys
+                scan all
+                    :Table("606f3256-52c4-4e12-ada1-33a7f48d327c","Column")
+                    :Field("Column.fk_TableForeign" , FieldToMarkAsForeignKeys->Table_pk)
+                    if :Update(FieldToMarkAsForeignKeys->Column_pk)
+                        l_iUpdatedColumns += 1
+                    else
+                        l_cErrorMessage := "Failed to update Column fk_TableForeign."
+                        exit
+                    endif
+                endscan
+            endwith
+        endif
+    endwith
+endif
 
 //--Load Indexes----------------
     if empty(l_cErrorMessage)

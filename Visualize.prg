@@ -603,7 +603,7 @@ if len(l_aNodes) == 1
             :SQL("ListOfColumns")
 
             if :Tally > 0
-                l_cHtml += [<div class="m-2">]
+                l_cHtml += [<div class="m-3">]
 
                     l_cHtml += [<div class="row justify-content-center">]
                         l_cHtml += [<div class="col-auto">]
@@ -674,7 +674,7 @@ if len(l_aNodes) == 1
 
                                     // Used By
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
+                                        l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
                                     l_cHtml += [</td>]
 
                                 l_cHtml += [</tr>]
@@ -811,7 +811,7 @@ l_cHtml += [</nav>]
 
 l_cHtml += [<div class="m-3"></div>]
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
@@ -826,12 +826,6 @@ l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
 //List all the tables
-
-l_cHtml += [<div>]
-l_cHtml += [<span class="ms-2">Filter on Table Name</span><input type="text" id="TableSearch" value="" size="40" class="ms-1"><span class="ms-3"> (Press Enter)</span>]
-l_cHtml += [</div>]
-
-l_cHtml += [<div class="m-3"></div>]
 
 l_lShowNameSpace := .f.
 
@@ -851,11 +845,19 @@ with Object l_oDB1
     :OrderBy("tag2")
     :SQL("ListOfAllTablesInApplication")
 
-    if :Tally > 1  //Will only display NameSpace names if there are more than 1 name space used
-        select ListOfAllTablesInApplication
-        l_cNameSpace_Name := ListOfAllTablesInApplication->NameSpace_Name  //Get name from first record
-        locate for ListOfAllTablesInApplication->NameSpace_Name <> l_cNameSpace_Name
-        l_lShowNameSpace := Found()
+    if :Tally > 0
+        l_cHtml += [<div>]
+            l_cHtml += [<span class="ms-3">Filter on Table Name</span><input type="text" id="TableSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span>]
+        l_cHtml += [</div>]
+
+        l_cHtml += [<div class="m-3"></div>]
+
+        if :Tally > 1  //Will only display NameSpace names if there are more than 1 name space used
+            select ListOfAllTablesInApplication
+            l_cNameSpace_Name := ListOfAllTablesInApplication->NameSpace_Name  //Get name from first record
+            locate for ListOfAllTablesInApplication->NameSpace_Name <> l_cNameSpace_Name
+            l_lShowNameSpace := Found()
+        endif
     endif
 endwith
 

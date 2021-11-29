@@ -1,19 +1,21 @@
 l_Schema := ;
 {"public.Application"=>{;   //Field Definition
-   {"pk"             =>{,  "I",   0,  0,"+"};
-   ,"sysc"           =>{, "DT",   0,  6,"N"};
-   ,"sysm"           =>{, "DT",   0,  6,"N"};
-   ,"LinkCode"       =>{, "CV",  10,  0,};     // Used to create direct link to the Application for data dic management
-   ,"Name"           =>{, "CV", 200,  0,};
-   ,"UseStatus"      =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
-   ,"DocStatus"      =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,"Description"    =>{,  "M",   0,  0,"N"};
-   ,"SyncBackendType"=>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
-   ,"SyncServer"     =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
-   ,"SyncPort"       =>{,  "I",   0,  0,"N"};  // Connection Info To Sync To.  Port if not default one for Backend Type.
-   ,"SyncUser"       =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  User Account to use to connect.
-   ,"SyncDatabase"   =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Database to connect to.
-   ,"SyncNameSpaces" =>{, "CV", 400,  0,"N"};  // Connection Info To Sync To.  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
+   {"pk"                    =>{,  "I",   0,  0,"+"};
+   ,"sysc"                  =>{, "DT",   0,  6,"N"};
+   ,"sysm"                  =>{, "DT",   0,  6,"N"};
+   ,"LinkCode"              =>{, "CV",  10,  0,};     // Used to create direct link to the Application for data dic management
+   ,"Name"                  =>{, "CV", 200,  0,};
+   ,"UseStatus"             =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"             =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
+   ,"Description"           =>{,  "M",   0,  0,"N"};
+   ,"AllowDestructiveDelete"=>{,  "L",   0,  0,};     // If true can delete entire tables and even entire application. For now has to be set outside of UI.
+   ,"SyncBackendType"       =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
+   ,"SyncServer"            =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
+   ,"SyncPort"              =>{,  "I",   0,  0,"N"};  // Connection Info To Sync To.  Port if not default one for Backend Type.
+   ,"SyncUser"              =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  User Account to use to connect.
+   ,"SyncDatabase"          =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Database to connect to.
+   ,"SyncNameSpaces"        =>{, "CV", 400,  0,"N"};  // Connection Info To Sync To.  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
+   ,"SyncSetForeignKey"     =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  1 - Not, 2 - On p_<TableName>, 3 - on fk_<TableName>
    };
    ,;   //Index Definition
    NIL};
@@ -142,59 +144,54 @@ l_Schema := ;
    ,;   //Index Definition
    {"fk_Diagram"=>{,"fk_Diagram",.f.,"BTREE"};
    ,"fk_Table"  =>{,"fk_Table"  ,.f.,"BTREE"}}};
-,"public.Flag"=>{;   //Field Definition
-   {"pk"         =>{,  "I",   0,  0,};
-   ,"sysc"       =>{, "DT",   0,  6,"N"};
-   ,"sysm"       =>{, "DT",   0,  6,"N"};
-   ,"Name"       =>{, "CV", 200,  0,};
-   ,"Description"=>{,  "M",   0,  0,"N"};
-   ,"Order"      =>{,  "I",   0,  0,};      // Display Order
-   ,"Status"     =>{,  "N",   1,  0,}};      // 1 = Active, 2 = Inactive
+,"public.CustomField"=>{;   //Field Definition
+   {"pk"                =>{,  "I",   0,  0,};
+   ,"sysc"              =>{, "DT",   0,  6,"N"};
+   ,"sysm"              =>{, "DT",   0,  6,"N"};
+   ,"Code"              =>{, "CV",  10,  0,};
+   ,"Name"              =>{, "CV", 200,  0,};     // Must be unique
+   ,"Label"             =>{, "CV", 200,  0,};     // Used on Entry screen. Can be the same as long as UsedOn is different or Status is 3.
+   ,"Type"              =>{,  "N",   1,  0,};     // 1 - Logical, 2 - Multi Choice, 3 - String, 4 - Text Area, 5 - Date
+   ,"OptionDefinition"  =>{,  "M",   0,  0,"N"};  // Used if Type = 2. Row of integer / labels
+   ,"Length"            =>{,  "N",   4,  0,"N"};  // Used if Type = 3.
+   ,"Width"             =>{,  "N",   3,  0,"N"};  // Used if Type = 4. Width in Characters
+   ,"Height"            =>{,  "N",   3,  0,"N"};  // Used if Type = 4. Number of Rows.
+   ,"Description"       =>{,  "M",   0,  0,"N"};
+   ,"UsedOn"            =>{,  "N",   1,  0,};     // 1 - Application, 2 - Name Space, 3 - Table, 4 - Column
+   ,"Status"            =>{,  "N",   1,  0,}};    // 1 = Active, 2 = Inactive (Read Only), 3 = Hidden
    ,;   //Index Definition
    NIL};
-,"public.ApplicationFlag"=>{;   //Field Definition
+,"public.ApplicationCustomField"=>{;   //Field Definition.  To tell if the record is to be used in an application. The Order will also depend of public.CustomField.UsedOn
+   {"pk"               =>{,  "I",   0,  0,};
+   ,"sysc"             =>{, "DT",   0,  6,"N"};
+   ,"sysm"             =>{, "DT",   0,  6,"N"};
+   ,"fk_CustomField"   =>{,  "I",   0,  0,};
+   ,"fk_Application"   =>{,  "I",   0,  0,};
+   ,"Order"            =>{,  "I",   0,  0,}};       // Display Order
+   ,;   //Index Definition
+   {"fk_CustomField"=>{,"fk_CustomField",.f.,"BTREE"};
+   ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
+,"public.CustomFieldValue"=>{;   //Field Definition
    {"pk"            =>{,  "I",   0,  0,};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag"       =>{,  "I",   0,  0,};
-   ,"fk_Application"=>{,  "I",   0,  0,}};
+   ,"fk_CustomField"=>{,  "I",   0,  0,};
+   ,"fk_Entity"     =>{,  "I",   0,  0,};       // Will be the foreign key to Application, NameSpace, Table or Column. See value in public.CustomField.UsedOn
+   ,"ValueI"        =>{,  "I",   0,  0,"N"};     // Used if public.CustomField.Type = 2
+   ,"ValueM"        =>{,  "M",   0,  0,"N"};     // Used if public.CustomField.Type = 3 or 4
+   ,"ValueD"        =>{,  "D",   0,  0,"N"}};    // Used if public.CustomField.Type = 5
    ,;   //Index Definition
-   {"fk_Flag"       =>{,"fk_Flag"       ,.f.,"BTREE"};
-   ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.FlagNameSpace"=>{;   //Field Definition
-   {"pk"          =>{,  "I",   0,  0,};
-   ,"sysc"        =>{, "DT",   0,  6,"N"};
-   ,"sysm"        =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag"     =>{,  "I",   0,  0,};
-   ,"fk_NameSpace"=>{,  "I",   0,  0,}};
-   ,;   //Index Definition
-   {"fk_Flag"     =>{,"fk_Flag"     ,.f.,"BTREE"};
-   ,"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
-,"public.FlagTable"=>{;   //Field Definition
-   {"pk"      =>{,  "I",   0,  0,};
-   ,"sysc"    =>{, "DT",   0,  6,"N"};
-   ,"sysm"    =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag" =>{,  "I",   0,  0,};
-   ,"fk_Table"=>{,  "I",   0,  0,}};
-   ,;   //Index Definition
-   {"fk_Flag" =>{,"fk_Flag" ,.f.,"BTREE"};
-   ,"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};
-,"public.FlagColumn"=>{;   //Field Definition
+   {"fk_CustomField" =>{,"fk_CustomField",.f.,"BTREE"};
+   ,"fk_Entity"      =>{,"fk_Entity"  ,.f.,"BTREE"}}};
+,"public.UserAccessApplication"=>{;   //Field Definition
    {"pk"             =>{,  "I",   0,  0,};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag"        =>{,  "I",   0,  0,};
-   ,"fk_Column"      =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
-   {"fk_Flag"  =>{,"fk_Flag" ,.f.,"BTREE"};
-   ,"fk_Column"=>{,"fk_Column",.f.,"BTREE"}}};
-,"public.UserAccess"=>{;   //Field Definition
-   {"pk"             =>{,  "I",   0,  0,};
-   ,"sysc"           =>{, "DT",   0,  6,"N"};
-   ,"sysm"           =>{, "DT",   0,  6,"N"};
-   ,"Access"         =>{,  "N",   1,  0,};     // 1 = Read Only, 2 = Add Documentation, 3 = Full Access
    ,"fk_User"        =>{,  "I",   0,  0,};
-   ,"fk_Application" =>{,  "I",   0,  0,}};
+   ,"fk_Application" =>{,  "I",   0,  0,};
+   ,"AccessLevel"    =>{,  "N",   1,  0,};     // 1 = Read Only, 2 = Limited Access (Flags), 3 = Full Access
+   ,"AccessUpdateDoc"=>{,  "L",   0,  0,};
+   ,"AccessSyncLoad" =>{,  "L",   0,  0,}};
    ,;   //Index Definition
    {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
@@ -202,10 +199,11 @@ l_Schema := ;
    {"pk"          =>{,  "I",   0,  0,};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
    ,"sysm"        =>{, "DT",   0,  6,"N"};
-   ,"id"          =>{, "CV", 200,  0,};
-   ,"Password"    =>{, "CV", 200,  0,};
-   ,"Name"        =>{, "CV", 200,  0,};
-   ,"AccessMode"  =>{,  "N",   1,  0,};    // 1 = View Only, 2 = Restricted Edit Mode, 3 = Full Admin
+   ,"id"          =>{, "CV",  20,  0,};
+   ,"Password"    =>{, "CV", 200,  0,"N"};   // Allow Nul so to set a password to default.
+   ,"FirstName"   =>{, "CV", 200,  0,};
+   ,"LastName"    =>{, "CV", 200,  0,};
+   ,"AccessMode"  =>{,  "N",   1,  0,};    // 1 = Application Specific, 2 = All Application Read Only, 3 = All Application Admin, 4 = Root Admin (User Control)
    ,"Status"      =>{,  "N",   1,  0,};    // 1 = Active, 2 = Inactive
    ,"Description" =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition

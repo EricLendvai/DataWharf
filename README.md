@@ -18,3 +18,6 @@ The following is the list of additional open source projects used to design, bui
 | https://code.visualstudio.com/                 | Also used to automate compilation |
 
 DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
+
+View [Todo.md](./todo.md) for list of upcoming fixes and enhancements.
+

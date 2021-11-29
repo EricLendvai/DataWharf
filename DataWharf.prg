@@ -22,7 +22,9 @@ v_hPP := nil
 public v_hPageMapping := {"home"             => {"Home"           ,1,@BuildPageHome()},;
                           "Info"             => {"Info"           ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
                           "Applications"     => {"Applications"   ,1,@BuildPageApplications()},;
-                          "Application"      => {"Applications"   ,1,@BuildPageApplications()} }
+                          "Application"      => {"Applications"   ,1,@BuildPageApplications()},;
+                          "CustomFields"     => {"Custom Fields"  ,1,@BuildPageCustomFields()},;
+                          "Users"            => {"Users"          ,1,@BuildPageUsers()} }
 
 hb_HCaseMatch(v_hPageMapping,.f.)
 
@@ -80,6 +82,10 @@ class MyFcgi from hb_Fcgi
 endclass
 //=================================================================================================================
 method OnFirstRequest() class MyFcgi
+local l_oDB1
+local l_oDB2
+local l_cSecuritySalt
+local l_cSecurityDefaultPassword
 SendToDebugView("Called from method OnFirstRequest")
 
 set century on
@@ -100,6 +106,42 @@ with object ::p_o_SQLConnection
 
     if :Connect() >= 0
         UpdateSchema(::p_o_SQLConnection)
+
+        l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
+        l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
+
+        //Setup first User if none exists
+        l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+        with object l_oDB1
+            :Table("994ff6fd-0f5f-48eb-a882-2bab357885a1","User")
+            :Where("User.Status = 1")
+            if :Count() == 0
+                :Table("09f376b4-8c89-4c7a-8e59-8a59f8f32402","User")
+                :Field("User.id"         , "main")
+                :Field("User.FirstName"  , "main")
+                :Field("User.LastName"   , "account")
+                :Field("User.AccessMode" , 4)
+                :Field("User.Status"     , 1)
+                :Add()
+            endif
+
+            :Table("eabc5786-5394-4961-aa00-2563c2494c38","User")
+            :Column("User.pk","pk")
+            :Where("User.Password is null")
+            :SQL("ListOfPasswordsToReset")
+            if :Tally > 0
+                l_oDB2 := hb_SQLData(::p_o_SQLConnection)
+                With Object l_oDB2
+                    select ListOfPasswordsToReset
+                    scan all
+                        :Table("7d6e5721-ec9b-46c1-9c5a-e8239a406e32","User")
+                        :Field("User.Password" , hb_SHA512(l_cSecuritySalt+l_cSecurityDefaultPassword+Trans(ListOfPasswordsToReset->pk)))
+                        :Update(ListOfPasswordsToReset->pk)
+                    endscan
+                endwith
+            endif
+
+        endwith
     else
         ::p_o_SQLConnection := NIL
     endif
@@ -124,7 +166,7 @@ local l_cID
 local l_cPassword
 local l_oDB1
 local l_cSessionCookie
-local l_nUserPk
+local l_iUserPk
 local l_cUserId
 local l_cUserName
 local l_nUserAccessMode
@@ -139,8 +181,8 @@ local l_aWebPageHandle
 local l_aPathElements
 local l_iLoop
 local l_cAjaxAction
-
-//AltD()
+local l_cThisAppTitle
+local l_cSecuritySalt
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -220,9 +262,14 @@ if l_cPageName <> "ajax"
 
     // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
+    l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
+    if empty(l_cThisAppTitle)
+        l_cThisAppTitle := APPLICATION_TITLE
+    endif
+
     l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
     l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-    l_cPageHeaderHtml += [<title>]+APPLICATION_TITLE+[</title>]
+    l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
 
 
     l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
@@ -317,7 +364,8 @@ if !empty(l_cSessionID)
         l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
         l_oDB1:Column("User.pk"         ,"User_pk")
         l_oDB1:Column("User.id"         ,"User_id")
-        l_oDB1:Column("User.Name"       ,"User_Name")
+        l_oDB1:Column("User.FirstName"  ,"User_FirstName")
+        l_oDB1:Column("User.LastName"   ,"User_LastName")
         l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
         l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
         l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
@@ -325,10 +373,10 @@ if !empty(l_cSessionID)
         l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
         l_oDB1:SQL("ListOfResults")
         if l_oDB1:Tally = 1
-            l_lLoggedIn := .t.
-            l_nUserPk := ListOfResults->User_pk
-            l_cUserId := AllTrim(ListOfResults->User_Id)
-            l_cUserName := Alltrim(hb_DefaultValue(ListOfResults->User_Name,"Me"))
+            l_lLoggedIn       := .t.
+            l_iUserPk         := ListOfResults->User_pk
+            l_cUserId         := AllTrim(ListOfResults->User_Id)
+            l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
             l_nUserAccessMode := ListOfResults->User_AccessMode
         else
             // Clear the cookie
@@ -337,7 +385,7 @@ if !empty(l_cSessionID)
         CloseAlias("ListOfResults")
     endif
 endif
-
+ 
 if l_cPageName <> "ajax"
     //If not a public page and not logged in, then request to log in.
     if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0 .and. !l_lLoggedIn
@@ -354,40 +402,48 @@ if l_cPageName <> "ajax"
             with object l_oDB1
                 :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
                 :Column("User.pk"        ,"User_pk")
-                :Column("User.Name"      ,"User_Name")
+                :Column("User.FirstName" ,"User_FirstName")
+                :Column("User.LastName"  ,"User_LastName")
+                :Column("User.Password"  ,"User_Password")
                 :Column("User.AccessMode","User_AccessMode")
                 :Where("trim(User.id) = ^",l_cID)
-                :Where("trim(User.Password) = ^",l_cPassword)
+                // :Where("trim(User.Password) = ^",l_cPassword)
                 :Where("User.Status = 1")
                 :SQL("ListOfResults")
 
-    // l_cLastSQL   := :LastSQL()
-    // l_cLastError := :ErrorMessage()
-    // Altd()
-
                 if :Tally == 1
-                    l_nUserPk         := ListOfResults->User_Pk
-                    l_cUserName       := Trim(ListOfResults->User_Name)
-                    l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-                    l_nUserAccessMode := ListOfResults->User_AccessMode
+                    l_iUserPk := ListOfResults->User_Pk
 
-                    :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
-                    :Field("LoginLogs.fk_User"  ,l_nUserPk)
-                    :Field("LoginLogs.TimeIn"   ,{"S","now()"})
-                    :Field("LoginLogs.IP"       ,l_cIP)
-                    :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
-                    :Field("LoginLogs.Status"   ,1)
-                    :Field("LoginLogs.Signature",l_cSignature)
-                    if :Add()
-                        l_nLoginLogsPk := :Key()
-                        l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
-                        ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
-                        l_lLoggedIn := .t.
+                    //Check if valid Password
+                    l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
+
+                    if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
+                        l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                        l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+                        l_nUserAccessMode := ListOfResults->User_AccessMode
+
+                        :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
+                        :Field("LoginLogs.fk_User"  ,l_iUserPk)
+                        :Field("LoginLogs.TimeIn"   ,{"S","now()"})
+                        :Field("LoginLogs.IP"       ,l_cIP)
+                        :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
+                        :Field("LoginLogs.Status"   ,1)
+                        :Field("LoginLogs.Signature",l_cSignature)
+                        if :Add()
+                            l_nLoginLogsPk := :Key()
+                            l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
+                            ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
+                            l_lLoggedIn := .t.
+                        endif
+                    else
+                        //Invalid Password
+                        l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+                        l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.1")
                     endif
                 else
-                    //Invalid Login
+                    //Invalid Active ID
                     l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
-                    l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password")
+                    l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.2")
                 endif
 
             endwith
@@ -417,11 +473,11 @@ if l_lLoggedIn
     else
         l_cBody += GetPageHeader(.t.,l_cPageName,l_cUserName,::p_nUserAccessMode)
 
-        // l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),l_cUserName,l_nUserPk)
-        l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(l_cUserName,l_nUserPk)
+        // l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),l_cUserName,l_iUserPk)
+        l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(l_cUserName,l_iUserPk)
 
 
-        if l_cUserName == "Eric"
+        if upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y"
             l_cBody += [<div class="m-3">]   //Spacer
                 if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
                     l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
@@ -519,20 +575,41 @@ function GetPageHeader(par_LoggedIn,par_cCurrentPage,par_cUserName,par_nUserAcce
 local l_cHtml := []
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
-local l_cExtraClass := iif(COLOR_HEADER_TEXT_WHITE," text-white","")
+local l_cThisAppTitle                 := oFcgi:GetAppConfig("APPLICATION_TITLE")
+local l_cThisAppColorHeaderBackground := oFcgi:GetAppConfig("COLOR_HEADER_BACKGROUND")
+local l_cThisAppColorHeaderTextWhite  := oFcgi:GetAppConfig("COLOR_HEADER_TEXT_WHITE")
+local l_lThisAppColorHeaderTextWhite
 
-l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+COLOR_HEADER_BACKGROUND+[;">]
+local l_cExtraClass
+
+if empty(l_cThisAppTitle)
+    l_cThisAppTitle := APPLICATION_TITLE
+endif
+if empty(l_cThisAppColorHeaderBackground)
+    l_cThisAppColorHeaderBackground := COLOR_HEADER_BACKGROUND
+endif
+if empty(l_cThisAppColorHeaderTextWhite)
+    l_lThisAppColorHeaderTextWhite := COLOR_HEADER_TEXT_WHITE
+else
+    l_lThisAppColorHeaderTextWhite := ("T" $ upper(l_cThisAppColorHeaderTextWhite))
+endif
+
+l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
+
+l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
     l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand]+l_cExtraClass+[" href="#">]+APPLICATION_TITLE+[</a>]
+        l_cHtml += [<a class="navbar-brand]+l_cExtraClass+[" href="#">]+l_cThisAppTitle+[</a>]
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications",[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"        ,[ active" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
-                    l_cHtml += [<li class="nav-item"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]
+                    l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]
                 l_cHtml += [</ul>]
             l_cHtml += [</div>]
         endif
@@ -645,8 +722,8 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 
-            l_cHtml += [<div class="m-3">]
-                l_cHtml += [<span><input type="button" class="btn btn-primary" value="Login" onclick="$('#ActionOnSubmit').val('Login');document.form.submit();" role="button"></span>]
+            l_cHtml += [<div class="mt-4">]
+                l_cHtml += [<span><input type="submit" class="btn btn-primary" value="Login" onclick="$('#ActionOnSubmit').val('Login');document.form.submit();" role="button"></span>]
             l_cHtml += [</div>]
 
         l_cHtml += [</div>]
@@ -685,5 +762,13 @@ return l_Text
 function GetItemInListAtPosition(par_iPos,par_aValues,par_xDefault)
 return iif(!hb_isnil(par_iPos) .and. par_iPos > 0 .and. par_iPos <= Len(par_aValues), par_aValues[par_iPos], par_xDefault)
 //=================================================================================================================
+function MultiLineTrim(par_cText)
+local l_nPos := len(par_cText)
+
+do while l_nPos > 0 .and. vfp_inlist(Substr(par_cText,l_nPos,1),chr(13),chr(10),chr(9),chr(32))
+    l_nPos -= 1
+enddo
+
+return left(par_cText,l_nPos)
 //=================================================================================================================
  

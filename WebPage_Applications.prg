@@ -8,6 +8,8 @@ memvar oFcgi
 //=================================================================================================================
 function BuildPageApplications(par_cUserName,par_nUserPk)
 local l_cHtml := []
+local l_cHtmlUnderHeader
+
 local l_oDB1
 local l_oData
 
@@ -207,29 +209,36 @@ case l_cURLAction == "ListApplications"
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
-    l_cHtml += ApplicationsListFormBuild()
+    l_cHtml += ApplicationListFormBuild()
 
 case l_cURLAction == "NewApplication"
     l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
     // l_cHtml +=     [<div class="container-fluid">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand text-white">New Application</span>]
+            l_cHtml += [<span class="navbar-brand text-white ms-3">New Application</span>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
     
     if oFcgi:isGet()
         //Brand new request of add an application.
-        l_cHtml += ApplicationEditFormBuild(0)
+        l_cHtml += ApplicationEditFormBuild("",0,{=>})
     else
         l_cHtml += ApplicationEditFormOnSubmit("")
     endif
-
 
 case l_cURLAction == "ApplicationSettings"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     if oFcgi:isGet()
-        l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iApplicationUseStatus,l_iApplicationDocStatus,l_cApplicationDescription)
+        l_hValues["Name"]       := l_cApplicationName
+        l_hValues["LinkCode"]   := l_cURLApplicationLinkCode
+        l_hValues["UseStatus"]  := l_iApplicationUseStatus
+        l_hValues["DocStatus"]  := l_iApplicationDocStatus
+        l_hValues["Description"]:= l_cApplicationDescription
+
+        CustomFieldsLoad(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk,@l_hValues)
+
+        l_cHtml += ApplicationEditFormBuild("",l_iApplicationPk,l_hValues)
     else
         if l_iApplicationPk > 0
             l_cHtml += ApplicationEditFormOnSubmit(l_cURLApplicationLinkCode)
@@ -237,37 +246,43 @@ case l_cURLAction == "ApplicationSettings"
     endif
 
 case l_cURLAction == "ApplicationLoadSchema"
-    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-    
+    // l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    //Will Build the header after new entities are created.
+    l_cHtmlUnderHeader := []
+
     if oFcgi:isGet()
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
         l_oDB1:Table("87efb98c-f94f-4202-b97b-c41d8522e288","public.Application")
         with object l_oDB1
-            :Column("Application.SyncBackendType","Application_SyncBackendType")
-            :Column("Application.SyncServer"     ,"Application_SyncServer")
-            :Column("Application.SyncPort"       ,"Application_SyncPort")
-            :Column("Application.SyncUser"       ,"Application_SyncUser")
-            :Column("Application.SyncDatabase"   ,"Application_SyncDatabase")
-            :Column("Application.SyncNameSpaces" ,"Application_SyncNameSpaces")
+            :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
+            :Column("Application.SyncServer"       ,"Application_SyncServer")
+            :Column("Application.SyncPort"         ,"Application_SyncPort")
+            :Column("Application.SyncUser"         ,"Application_SyncUser")
+            :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
+            :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
+            :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
             l_oData := :Get(l_iApplicationPk)
         endwith
 
         if l_oDB1:Tally == 1
-            l_cHtml += ApplicationLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+            l_cHtmlUnderHeader += ApplicationLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
                                                            l_oData:Application_SyncBackendType,;
                                                            l_oData:Application_SyncServer,;
                                                            l_oData:Application_SyncPort,;
                                                            l_oData:Application_SyncUser,;
                                                            "",;
                                                            l_oData:Application_SyncDatabase,;
-                                                           l_oData:Application_SyncNameSpaces)
+                                                           l_oData:Application_SyncNameSpaces,;
+                                                           l_oData:Application_SyncSetForeignKey)
         endif
     else
         if l_iApplicationPk > 0
-            l_cHtml += ApplicationLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtmlUnderHeader += ApplicationLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
         endif
     endif
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += l_cHtmlUnderHeader
 
 case l_cURLAction == "ApplicationVisualize"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -316,9 +331,9 @@ case l_cURLAction == "ListTables"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
 
     if oFcgi:isGet()
-        l_cHtml += TablesListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
+        l_cHtml += TableListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
     else
-        l_cHtml += TablesListFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+        l_cHtml += TableListFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
     endif
 
 // Table Name                Includes/Starts With
@@ -328,12 +343,11 @@ case l_cURLAction == "ListTables"
 
 //?TableNameText=xxxxxx&TableNameSearchMode=Includes/StartsWith
 
-
 case l_cURLAction == "NewTable"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     if oFcgi:isGet()
-        l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,0)
+        l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
     else
         l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
     endif
@@ -344,12 +358,12 @@ case l_cURLAction == "EditTable"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("a6af8449-79c8-488c-be62-507ef4f0696c","Table")
-        :Column("Table.pk"          , "Pk")
-        :Column("Table.fk_NameSpace", "fk_NameSpace")
-        :Column("Table.Name"        , "Name")
-        :Column("Table.UseStatus"   , "UseStatus")
-        :Column("Table.DocStatus"   , "DocStatus")
-        :Column("Table.Description" , "Description")
+        :Column("Table.pk"          , "Pk")            // 1
+        :Column("Table.fk_NameSpace", "fk_NameSpace")  // 2
+        :Column("Table.Name"        , "Name")          // 3
+        :Column("Table.UseStatus"   , "UseStatus")     // 4
+        :Column("Table.DocStatus"   , "DocStatus")     // 5
+        :Column("Table.Description" , "Description")   // 6
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -361,12 +375,21 @@ case l_cURLAction == "EditTable"
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
-            l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,l_aSQLResult[1,1],"",l_aSQLResult[1,2],AllTrim(l_aSQLResult[1,3]),l_aSQLResult[1,4],l_aSQLResult[1,5])
+            l_iTablePk    := l_aSQLResult[1,1]
+
+            l_hValues["Fk_NameSpace"] := l_aSQLResult[1,2]
+            l_hValues["Name"]         := AllTrim(l_aSQLResult[1,3])
+            l_hValues["UseStatus"]    := l_aSQLResult[1,4]
+            l_hValues["DocStatus"]    := l_aSQLResult[1,5]
+            l_hValues["Description"]  := l_aSQLResult[1,6]
+ 
+            CustomFieldsLoad(l_iApplicationPk,USEDON_TABLE,l_iTablePk,@l_hValues)
+
+            l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iTablePk,l_hValues)
         else
             l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
         endif
     endif
-
 
 case l_cURLAction == "ListColumns"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -388,7 +411,6 @@ case l_cURLAction == "ListColumns"
         l_iTablePk := l_aSQLResult[1,1]
         l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
     endif
-
 
 case l_cURLAction == "OrderColumns"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -414,8 +436,6 @@ case l_cURLAction == "OrderColumns"
             l_cHtml += ColumnOrderFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
         endif
     endif
-
-
 
 case l_cURLAction == "NewColumn"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
@@ -480,41 +500,33 @@ case l_cURLAction == "EditColumn"
         :SQL(@l_aSQLResult)
     endwith
 
-    if l_oDB1:Tally == 1
-        l_iColumnPk    := l_aSQLResult[1,1]
-        l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
-        l_iTablePk     := l_aSQLResult[1,3]
+    if l_oDB1:Tally != 1
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+l_cURLApplicationLinkCode+"/")
+    else
+        if oFcgi:isGet()
+            l_iColumnPk    := l_aSQLResult[1,1]
+            l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
+            l_iTablePk     := l_aSQLResult[1,3]
 
-        if l_oDB1:Tally != 1
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+l_cURLApplicationLinkCode+"/")
+            l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
+            l_hValues["UseStatus"]       := l_aSQLResult[1, 5]
+            l_hValues["DocStatus"]       := l_aSQLResult[1, 6]
+            l_hValues["Description"]     := l_aSQLResult[1, 7]
+            l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 8])
+            l_hValues["Length"]          := l_aSQLResult[1, 9]
+            l_hValues["Scale"]           := l_aSQLResult[1,10]
+            l_hValues["Nullable"]        := (alltrim(l_aSQLResult[1, 11])=="1")
+            l_hValues["UsedBy"]          := l_aSQLResult[1,12]
+            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,13]
+            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,14]
+
+            CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
+
+            l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",l_iColumnPk,l_hValues)
         else
-            if oFcgi:isGet()
-                l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
-                l_hValues["UseStatus"]       := l_aSQLResult[1, 5]
-                l_hValues["DocStatus"]       := l_aSQLResult[1, 6]
-                l_hValues["Description"]     := l_aSQLResult[1, 7]
-                l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 8])
-                l_hValues["Length"]          := l_aSQLResult[1, 9]
-                l_hValues["Scale"]           := l_aSQLResult[1,10]
-                l_hValues["Nullable"]        := (alltrim(l_aSQLResult[1, 11])=="1")
-                l_hValues["UsedBy"]          := l_aSQLResult[1,12]
-                l_hValues["Fk_TableForeign"] := l_aSQLResult[1,13]
-                l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,14]
-
-                l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",l_iColumnPk,l_hValues)
-            else
-                l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
-            endif
+            l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
         endif
     endif
-
-
-
-
-
-
-
-
 
 case l_cURLAction == "ListIndexes"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -537,19 +549,9 @@ case l_cURLAction == "ListIndexes"
         l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
     endif
 
-
-
-
-
-
-
-
-
-
-
 case l_cURLAction == "ListEnumerations"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-    l_cHtml += EnumerationsListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
+    l_cHtml += EnumerationListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
 
 case l_cURLAction == "NewEnumeration"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
@@ -709,17 +711,15 @@ case l_cURLAction == "EditEnumValue"
         endif
     endif
 
-
-
 case l_cURLAction == "ListNameSpaces"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-    l_cHtml += NameSpacesListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
+    l_cHtml += NameSpaceListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
 
 case l_cURLAction == "NewNameSpace"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     if oFcgi:isGet()
-        l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,0)
+        l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
     else
         l_cHtml += NameSpaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
     endif
@@ -730,11 +730,11 @@ case l_cURLAction == "EditNameSpace"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("f0f2eaea-8306-49c9-afef-d72afb41601c","NameSpace")
-        :Column("NameSpace.pk"          , "Pk")
-        :Column("NameSpace.Name"        , "Name")
-        :Column("NameSpace.UseStatus"   , "UseStatus")
-        :Column("NameSpace.DocStatus"   , "DocStatus")
-        :Column("NameSpace.Description" , "Description")
+        :Column("NameSpace.pk"          , "Pk")           // 1
+        :Column("NameSpace.Name"        , "Name")         // 2
+        :Column("NameSpace.UseStatus"   , "UseStatus")    // 3
+        :Column("NameSpace.DocStatus"   , "DocStatus")    // 4
+        :Column("NameSpace.Description" , "Description")  // 5
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :SQL(@l_aSQLResult)
@@ -744,7 +744,16 @@ case l_cURLAction == "EditNameSpace"
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
-            l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,l_aSQLResult[1,1],"",AllTrim(l_aSQLResult[1,2]),l_aSQLResult[1,3],l_aSQLResult[1,4])
+            l_iNameSpacePk    := l_aSQLResult[1,1]
+
+            l_hValues["Name"]         := AllTrim(l_aSQLResult[1,2])
+            l_hValues["UseStatus"]    := l_aSQLResult[1,3]
+            l_hValues["DocStatus"]    := l_aSQLResult[1,4]
+            l_hValues["Description"]  := l_aSQLResult[1,5]
+
+            CustomFieldsLoad(l_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk,@l_hValues)
+
+            l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iNameSpacePk,l_hValues)
         else
             l_cHtml += NameSpaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
         endif
@@ -757,8 +766,6 @@ case l_cURLAction == "ListVersions"
 otherwise
 
 endcase
-
-l_cHtml += [<div class="m-5"></div>]
 
 return l_cHtml
 //=================================================================================================================
@@ -838,7 +845,7 @@ l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-l_cHtml += [<div class="m-2"></div>]
+l_cHtml += [<div class="m-3"></div>]
 
 l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [<li class="nav-item">]
@@ -890,21 +897,27 @@ l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [</li>]
 l_cHtml += [</ul>]
 
-l_cHtml += [<div class="m-2"></div>]
+l_cHtml += [<div class="m-3"></div>]  // Spacer
 
 return l_cHtml
 //=================================================================================================================                      
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function ApplicationsListFormBuild()
+static function ApplicationListFormBuild()
 local l_cHtml := []
 local l_oDB1
+local l_oDB2
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfApplications
+local l_nNumberOfCustomFieldValues := 0
+local l_hOptionValueToDescriptionMapping := {=>}
 
-oFcgi:TraceAdd("ApplicationsListFormBuild")
+oFcgi:TraceAdd("ApplicationListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
 with object l_oDB1
     :Table("d5b0a13d-7048-457c-a826-a80a09384464","Application")
     :Column("Application.pk"         ,"pk")
@@ -916,17 +929,51 @@ with object l_oDB1
     :Column("Upper(Application.Name)","tag1")
     :OrderBy("tag1")
     :SQL("ListOfApplications")
+    l_nNumberOfApplications := :Tally
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-l_cHtml += [<div class="m-2">]
+if l_nNumberOfApplications > 0
+    with object l_oDB2
+        :Table("3deb9b62-0c79-4c9c-a7af-b4e1d47dfed8","Application")
+        :Distinct(.t.)
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Application.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("CustomField.UsedOn = ^",USEDON_APPLICATION)
+        :Where("CustomField.Status <= 2")
+        :Where("CustomField.Type = 2")   // Multi Choice
+        :SQL("ListOfCustomFieldOptionDefinition")
+        if :Tally > 0
+            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+        endif
 
-    select ListOfApplications
+        :Table("6b6ca0e1-6883-490c-9dd7-89e50b7df8d8","Application")
+        :Column("Application.pk"              ,"fk_entity")
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.Label"           ,"CustomField_Label")
+        :Column("CustomField.Type"            ,"CustomField_Type")
+        :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
+        :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
+        :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
+        :Column("upper(CustomField.Name)" ,"tag1")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Application.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("CustomField.UsedOn = ^",USEDON_APPLICATION)
+        :Where("CustomField.Status <= 2")
+        :OrderBy("tag1")
+        :SQL("ListOfCustomFieldValues")
+        l_nNumberOfCustomFieldValues := :Tally
 
-    if eof()
+    endwith
+endif
+
+l_cHtml += [<div class="m-3">]
+
+    if empty(l_nNumberOfApplications)
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span>No application on file.</span>]
+            l_cHtml += [<span>No Application on file.</span>]
         l_cHtml += [</div>]
 
     else
@@ -936,12 +983,20 @@ l_cHtml += [<div class="m-2">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                l_cHtml += [</tr>]
+
+                l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                    if l_nNumberOfCustomFieldValues > 0
+                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    endif
                 l_cHtml += [</tr>]
 
+                select ListOfApplications
                 scan all
                     l_cHtml += [<tr>]
 
@@ -961,6 +1016,12 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,1,4),ListOfApplications->Application_DocStatus,1)]
                         l_cHtml += [</td>]
 
+                        if l_nNumberOfCustomFieldValues > 0
+                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                l_cHtml += CustomFieldsBuildGridOther(ListOfApplications->pk,l_hOptionValueToDescriptionMapping)
+                            l_cHtml += [</td>]
+                        endif
+
                     l_cHtml += [</tr>]
                 endscan
                 l_cHtml += [</table>]
@@ -972,19 +1033,18 @@ l_cHtml += [<div class="m-2">]
 
 l_cHtml += [</div>]
 
-CloseAlias("ListOfApplications")
-
 return l_cHtml
 //=================================================================================================================
-static function ApplicationEditFormBuild(par_iPk,par_cErrorText,par_cName,par_cLinkCode,par_iUseStatus,par_iDocStatus,par_cDescription)
+static function ApplicationEditFormBuild(par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
-local l_cName        := hb_DefaultValue(par_cName,"")
-local l_cLinkCode    := hb_DefaultValue(par_cLinkCode,"")
-local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
-local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
-local l_cDescription := hb_DefaultValue(par_cDescription,"")
+
+local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_cLinkCode    := hb_HGetDef(par_hValues,"LinkCode","")
+local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 oFcgi:TraceAdd("ApplicationEditFormBuild")
 
@@ -996,7 +1056,6 @@ l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 if !empty(l_cErrorText)
     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
 endif
-
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
@@ -1013,10 +1072,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-
 l_cHtml += [<div class="m-3"></div>]
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
     l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -1058,10 +1116,14 @@ l_cHtml += [<div class="m-2">]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
+        if !empty(par_iPk)
+            l_cHtml += CustomFieldsBuild(par_iPk,USEDON_APPLICATION,par_iPk,par_hValues)
+        endif
+
     l_cHtml += [</table>]
 
 l_cHtml += [</div>]
-
+ 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
@@ -1084,6 +1146,8 @@ local l_iApplicationDocStatus
 local l_cApplicationDescription
 
 local l_cErrorMessage := ""
+local l_hValues := {=>}
+
 local l_oDB1
 local l_oDB2
 
@@ -1096,7 +1160,7 @@ l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_cApplicationLinkCode       := Upper(Strtran(SanitizeInput(oFcgi:GetInputValue("TextLinkCode"))," ",""))
 l_iApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cApplicationDescription    := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cApplicationDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -1148,10 +1212,13 @@ case l_cActionOnSubmit == "Save"
                         else
                             l_cErrorMessage := "Failed to add Application."
                         endif
-
                     else
-                        :Update(l_iApplicationPk)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+l_cApplicationLinkCode+"/")
+                        if :Update(l_iApplicationPk)
+                            CustomFieldsSave(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
+                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+l_cApplicationLinkCode+"/")
+                        else
+                            l_cErrorMessage := "Failed to update Application."
+                        endif
                     endif
                 endwith
             endif
@@ -1166,68 +1233,90 @@ case l_cActionOnSubmit == "Cancel"
     endif
 
 case l_cActionOnSubmit == "Delete"   // Application
-    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    if CheckIfAllowDestructiveDelete(l_iApplicationPk)
+        l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk)
+        if empty(l_cErrorMessage)
+            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
+        endif
+    else
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-    with object l_oDB1
-        :Table("05cf16e0-69e1-47da-92d0-f1300f9a817b","NameSpace")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-        :SQL()
-
-        if :Tally == 0
-            :Table("63d2b106-567c-4dda-8564-d0a8d8b1620f","Version")
-            :Where("Version.fk_Application = ^",l_iApplicationPk)
+        with object l_oDB1
+            :Table("05cf16e0-69e1-47da-92d0-f1300f9a817b","NameSpace")
+            :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
             :SQL()
 
             if :Tally == 0
-                //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
-                //But we may have some left over Table less diagrams. Remove them
+                :Table("63d2b106-567c-4dda-8564-d0a8d8b1620f","Version")
+                :Where("Version.fk_Application = ^",l_iApplicationPk)
+                :SQL()
 
-                :Table("eb5f58e8-907e-4b4e-9d75-382a63f35c6c","Diagram")
-                :Column("Diagram.pk" , "pk")
-                :Where("Diagram.fk_Application = ^",l_iApplicationPk)
-                :SQL("ListOfDiagramRecordsToDelete")
-                if :Tally >= 0
-                    if :Tally > 0
-                        select ListOfDiagramRecordsToDelete
-                        scan
-                            l_oDB2:Delete("3f5178a9-920c-479d-b4d3-925afb31b7e8","Diagram",ListOfDiagramRecordsToDelete->pk)
-                        endscan
+                if :Tally == 0
+                    //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
+                    //But we may have some left over Table less diagrams. Remove them
+
+                    :Table("eb5f58e8-907e-4b4e-9d75-382a63f35c6c","Diagram")
+                    :Column("Diagram.pk" , "pk")
+                    :Where("Diagram.fk_Application = ^",l_iApplicationPk)
+                    :SQL("ListOfDiagramRecordsToDelete")
+                    if :Tally >= 0
+                        if :Tally > 0
+                            select ListOfDiagramRecordsToDelete
+                            scan
+                                l_oDB2:Delete("3f5178a9-920c-479d-b4d3-925afb31b7e8","Diagram",ListOfDiagramRecordsToDelete->pk)
+                            endscan
+                        endif
+
+CustomFieldsDelete(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
+                        :Delete("001192b9-5840-48d6-976b-e162a91af2d8","Application",l_iApplicationPk)
+                    else
+                        l_cErrorMessage := "Failed to clear related DiagramTable records."
                     endif
 
-                    :Delete("001192b9-5840-48d6-976b-e162a91af2d8","Application",l_iApplicationPk)
+                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
                 else
-                    l_cErrorMessage := "Failed to clear related DiagramTable records."
+                    l_cErrorMessage := "Related Version record on file"
                 endif
-
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
             else
-                l_cErrorMessage := "Related Version record on file"
+                l_cErrorMessage := "Related Name Space record on file"
             endif
-        else
-            l_cErrorMessage := "Related Name Space record on file"
-        endif
-    endwith
+        endwith
+    endif
 
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += ApplicationEditFormBuild(l_iApplicationPk,l_cErrorMessage,l_cApplicationName,l_cApplicationLinkCode,l_iApplicationUseStatus,l_iApplicationDocStatus,l_cApplicationDescription)
+    l_hValues["Name"]        := l_cApplicationName
+    l_hValues["LinkCode"]    := l_cApplicationLinkCode
+    l_hValues["UseStatus"]   := l_iApplicationUseStatus
+    l_hValues["DocStatus"]   := l_iApplicationDocStatus
+    l_hValues["Description"] := l_cApplicationDescription
+
+    CustomFieldsFormToHash(l_iApplicationPk,USEDON_APPLICATION,@l_hValues)
+
+    l_cHtml += ApplicationEditFormBuild(l_cErrorMessage,l_iApplicationPk,l_hValues)
 endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function NameSpacesListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function NameSpaceListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
+local l_oDB2
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfNameSpaces
+local l_nNumberOfCustomFieldValues := 0
 
-oFcgi:TraceAdd("NameSpacesListFormBuild")
+local l_hOptionValueToDescriptionMapping := {=>}
+
+oFcgi:TraceAdd("NameSpaceListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
 with object l_oDB1
     :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","NameSpace")
     :Column("NameSpace.pk"         ,"pk")
@@ -1242,35 +1331,70 @@ with object l_oDB1
     l_nNumberOfNameSpaces := :Tally
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
+if l_nNumberOfNameSpaces > 0
+    with object l_oDB2
+        :Table("713be6a6-ff44-4b10-893c-aa80400864bf","NameSpace")
+        :Distinct(.t.)
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = NameSpace.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("CustomField.UsedOn = ^",USEDON_NAMESPACE)
+        :Where("CustomField.Status <= 2")
+        :Where("CustomField.Type = 2")   // Multi Choice
+        :SQL("ListOfCustomFieldOptionDefinition")
+        if :Tally > 0
+            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+        endif
 
-l_cHtml += [<div class="m-2">]
+        :Table("8e9d02fa-3cfe-41f2-b426-dbe222d62db2","NameSpace")
+        :Column("NameSpace.pk"                ,"fk_entity")
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.Label"           ,"CustomField_Label")
+        :Column("CustomField.Type"            ,"CustomField_Type")
+        :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
+        :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
+        :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
+        :Column("upper(CustomField.Name)" ,"tag1")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = NameSpace.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("CustomField.UsedOn = ^",USEDON_NAMESPACE)
+        :Where("CustomField.Status <= 2")
+        :OrderBy("tag1")
+        :SQL("ListOfCustomFieldValues")
+        l_nNumberOfCustomFieldValues := :Tally
 
-    select ListOfNameSpaces
-    if eof()
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Name Space on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+    endwith
 
-    else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+endif
 
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
+if empty(l_nNumberOfNameSpaces)
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Name Space on file for current application.</span>]
+            l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
+
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+    l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
@@ -1278,8 +1402,12 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                    if l_nNumberOfCustomFieldValues > 0
+                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    endif
                 l_cHtml += [</tr>]
 
+                select ListOfNameSpaces
                 scan all
                     l_cHtml += [<tr>]
 
@@ -1299,30 +1427,34 @@ l_cHtml += [<div class="m-2">]
                             l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfNameSpaces->NameSpace_DocStatus,1,4),ListOfNameSpaces->NameSpace_DocStatus,1)]
                         l_cHtml += [</td>]
 
+                        if l_nNumberOfCustomFieldValues > 0
+                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                l_cHtml += CustomFieldsBuildGridOther(ListOfNameSpaces->pk,l_hOptionValueToDescriptionMapping)
+                            l_cHtml += [</td>]
+                        endif
+
                     l_cHtml += [</tr>]
                 endscan
                 l_cHtml += [</table>]
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
+    l_cHtml += [</div>]
 
-    endif
-
-l_cHtml += [</div>]
-
-CloseAlias("ListOfNameSpaces")
+endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription)
+static function NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
-local l_cName        := hb_DefaultValue(par_cName,"")
-local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
-local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
-local l_cDescription := hb_DefaultValue(par_cDescription,"")
+
+local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 oFcgi:TraceAdd("NameSpaceEditFormBuild")
 
@@ -1346,11 +1478,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-
 l_cHtml += [<div class="m-3"></div>]
 
-
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
@@ -1388,6 +1518,8 @@ l_cHtml += [<div class="m-2">]
     l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
+    l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_NAMESPACE,par_iPk,par_hValues)
+
     l_cHtml += [</table>]
     
 l_cHtml += [</div>]
@@ -1413,6 +1545,8 @@ local l_iNameSpaceDocStatus
 local l_cNameSpaceDescription
 
 local l_cErrorMessage := ""
+local l_hValues := {=>}
+
 local l_oDB1
 
 oFcgi:TraceAdd("NameSpaceEditFormOnSubmit")
@@ -1423,7 +1557,7 @@ l_iNameSpacePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_cNameSpaceName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
 l_iNameSpaceUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iNameSpaceDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cNameSpaceDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cNameSpaceDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -1459,7 +1593,13 @@ case l_cActionOnSubmit == "Save"
                         l_cErrorMessage := "Failed to add NameSpace."
                     endif
                 else
-                    :Update(l_iNameSpacePk)
+                    if !:Update(l_iNameSpacePk)
+                        l_cErrorMessage := "Failed to update NameSpace."
+                    endif
+                endif
+
+                if empty(l_cErrorMessage)
+                    CustomFieldsSave(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
                 endif
             endwith
 
@@ -1471,41 +1611,56 @@ case l_cActionOnSubmit == "Cancel"
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "Delete"   // NameSpace
-    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    with object l_oDB1
-        :Table("910d6dd3-4bcb-4d96-a092-61730e83380c","Table")
-        :Where("table.fk_NameSpace = ^",l_iNameSpacePk)
-        :SQL()
-    endwith
-
-    if l_oDB1:Tally == 0
+    if CheckIfAllowDestructiveDelete(par_iApplicationPk)
+        l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,l_iNameSpacePk)
+        if empty(l_cErrorMessage)
+            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+        endif
+    else
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
-            :Table("1228e164-50b6-447a-81c3-e2e0430983fc","Enumeration")
-            :Where("Enumeration.fk_NameSpace = ^",l_iNameSpacePk)
+            :Table("910d6dd3-4bcb-4d96-a092-61730e83380c","Table")
+            :Where("table.fk_NameSpace = ^",l_iNameSpacePk)
             :SQL()
         endwith
 
         if l_oDB1:Tally == 0
-            l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
+            with object l_oDB1
+                :Table("1228e164-50b6-447a-81c3-e2e0430983fc","Enumeration")
+                :Where("Enumeration.fk_NameSpace = ^",l_iNameSpacePk)
+                :SQL()
+            endwith
 
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+            if l_oDB1:Tally == 0
+CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
+                l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
+
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+            else
+                l_cErrorMessage := "Related Enumeration record on file"
+            endif
         else
-            l_cErrorMessage := "Related Enumeration record on file"
+            l_cErrorMessage := "Related Table record on file"
         endif
-    else
-        l_cErrorMessage := "Related Table record on file"
     endif
 
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iNameSpacePk,l_cErrorMessage,l_cNameSpaceName,l_iNameSpaceUseStatus,l_iNameSpaceDocStatus,l_cNameSpaceDescription)
+    l_hValues["Name"]            := l_cNameSpaceName
+    l_hValues["UseStatus"]       := l_iNameSpaceUseStatus
+    l_hValues["DocStatus"]       := l_iNameSpaceDocStatus
+    l_hValues["Description"]     := l_cNameSpaceDescription
+
+    CustomFieldsFormToHash(par_iApplicationPk,USEDON_NAMESPACE,@l_hValues)
+
+    l_cHtml += NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iNameSpacePk,l_hValues)
 endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function TablesListFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function TableListFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -1515,7 +1670,7 @@ local l_cColumnName
 local l_cColumnDescription
 local l_cURL
 
-oFcgi:TraceAdd("TablesListFormOnSubmit")
+oFcgi:TraceAdd("TableListFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
@@ -1542,17 +1697,18 @@ case l_cActionOnSubmit == "Reset"
     oFcgi:Redirect(l_cURL)
 
 otherwise
-    l_cHtml += TablesListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+    l_cHtml += TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
-static function TablesListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
 local l_oDB3
+local l_oDB4
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_oCursor
 local l_iColumnCount
@@ -1565,8 +1721,12 @@ local l_cSearchColumnName
 local l_cSearchColumnDescription
 
 local l_iNumberOfTablesInList := 0
+local l_nNumberOfCustomFieldValues := 0
 
-oFcgi:TraceAdd("TablesListFormBuild")
+local l_hOptionValueToDescriptionMapping := {=>}
+
+
+oFcgi:TraceAdd("TableListFormBuild")
 
 l_cSearchTableName         := hb_HexToStr(oFcgi:GetQueryString("TableName"))
 l_cSearchTableDescription  := hb_HexToStr(oFcgi:GetQueryString("TableDescription"))
@@ -1579,6 +1739,7 @@ l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescriptio
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB4 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 With Object l_oDB1
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
@@ -1614,11 +1775,90 @@ With Object l_oDB1
     :OrderBy("tag1")
     :OrderBy("tag2")
     :SQL("ListOfTables")
-
     l_iNumberOfTablesInList := :Tally
-// SendToClipboard(:LastSQL())
 
 endwith
+
+if l_iNumberOfTablesInList > 0
+    With Object l_oDB4
+        :Table("9002a459-657d-428b-b5e2-665851c7f853","Table")
+        :Distinct(.t.)
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Table.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+
+        :Where("CustomField.UsedOn = ^",USEDON_TABLE)
+        :Where("CustomField.Status <= 2")
+        :Where("CustomField.Type = 2")   // Multi Choice
+
+        if !empty(l_cSearchTableName)
+            :KeywordCondition(l_cSearchTableName,"Table.Name")
+        endif
+        if !empty(l_cSearchTableDescription)
+            :KeywordCondition(l_cSearchTableDescription,"Table.Description")
+        endif
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+            :Distinct(.t.)
+            :Join("inner","Column","","Column.fk_Table = Table.pk")
+            if !empty(l_cSearchColumnName)
+                :KeywordCondition(l_cSearchColumnName,"Column.Name")
+            endif
+            if !empty(l_cSearchColumnDescription)
+                :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
+            endif
+        endif
+        :SQL("ListOfCustomFieldOptionDefinition")
+        if :Tally > 0
+            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+        endif
+
+        :Table("0fef6f2f-e47c-4472-931a-84b5c23b52b4","Table")
+        :Column("Table.pk"               ,"fk_entity")
+
+        :Column("CustomField.pk"         ,"CustomField_pk")
+        :Column("CustomField.Label"      ,"CustomField_Label")
+        :Column("CustomField.Type"       ,"CustomField_Type")
+        :Column("CustomFieldValue.ValueI","CustomFieldValue_ValueI")
+        :Column("CustomFieldValue.ValueM","CustomFieldValue_ValueM")
+        :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
+        :Column("upper(CustomField.Name)","tag1")
+
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Table.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("CustomField.UsedOn = ^",USEDON_TABLE)
+        :Where("CustomField.Status <= 2")
+
+        if !empty(l_cSearchTableName)
+            :KeywordCondition(l_cSearchTableName,"Table.Name")
+        endif
+        if !empty(l_cSearchTableDescription)
+            :KeywordCondition(l_cSearchTableDescription,"Table.Description")
+        endif
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+            :Distinct(.t.)
+            :Join("inner","Column","","Column.fk_Table = Table.pk")
+            if !empty(l_cSearchColumnName)
+                :KeywordCondition(l_cSearchColumnName,"Column.Name")
+            endif
+            if !empty(l_cSearchColumnDescription)
+                :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
+            endif
+        endif
+        :OrderBy("tag1")
+        :SQL("ListOfCustomFieldValues")
+        l_nNumberOfCustomFieldValues := :Tally
+
+    endwith
+endif
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
 With Object l_oDB2
@@ -1657,150 +1897,144 @@ With Object l_oDB3
 
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<input type="hidden" name="formname" value="List">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<table>]
+            l_cHtml += [<tr>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td valign="top">]
+                    l_cHtml += [<table>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td></td>]
+                            l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                            l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
+                        l_cHtml += [</tr>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td><span class="me-2">Table</span></td>]
+                            l_cHtml += [<td><input type="text" name="TextTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+["></td>]
+                            l_cHtml += [<td><input type="text" name="TextTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+["></td>]
+                        l_cHtml += [</tr>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td><span class="me-2">Column</span></td>]
+                            l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
+                            l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                        l_cHtml += [</tr>]
+                    l_cHtml += [</table>]
 
-    select ListOfTables
-    // if eof()
-    //     l_cHtml += [<nav class="navbar navbar-light bg-light">]
-    //         l_cHtml += [<div class="input-group">]
-    //             l_cHtml += [<span class="navbar-brand ms-3">No Table on file for current application.</span>]
-    //             l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
-    //         l_cHtml += [</div>]
-    //     l_cHtml += [</nav>]
-    // endif
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+                    l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+            l_cHtml += [</tr>]
+        l_cHtml += [</table>]
 
 
-    l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
-    l_cHtml += [<input type="hidden" name="formname" value="List">]
-    l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 
-    l_cHtml += [<nav class="navbar navbar-light bg-light">]
-        l_cHtml += [<div class="input-group">]
-            l_cHtml += [<table>]
+    l_cHtml += [</div>]
+
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [</form>]
+
+if !empty(l_iNumberOfTablesInList)
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                if l_nNumberOfCustomFieldValues > 0
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                endif
+            l_cHtml += [</tr>]
+
+            select ListOfTables
+            scan all
                 l_cHtml += [<tr>]
-                    // ----------------------------------------
-                    l_cHtml += [<td>]  // valign="top"
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Applications/NewTable/]+par_cURLApplicationLinkCode+[/">New Table</a>]
-                    l_cHtml += [</td>]
-                    // ----------------------------------------
-                    l_cHtml += [<td valign="top">]
-                        l_cHtml += [<table>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td></td>]
-                                l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
-                                l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
-                            l_cHtml += [</tr>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td><span class="me-2">Table</span></td>]
-                                l_cHtml += [<td><input type="text" name="TextTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+["></td>]
-                                l_cHtml += [<td><input type="text" name="TextTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+["></td>]
-                            l_cHtml += [</tr>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td><span class="me-2">Column</span></td>]
-                                l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
-                                l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
-                            l_cHtml += [</tr>]
-                        l_cHtml += [</table>]
 
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += Allt(ListOfTables->NameSpace_Name)
                     l_cHtml += [</td>]
-                    // ----------------------------------------
-                    l_cHtml += [<td>]  // valign="top"
-                        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
-                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Allt(ListOfTables->Table_Name)+[</a>]
                     l_cHtml += [</td>]
-                    // ----------------------------------------
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
+                        l_iColumnCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iColumnCount)+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
+                        l_iIndexCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iIndexCount)+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfTables->Table_UseStatus,1,4),ListOfTables->Table_UseStatus,1)]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfTables->Table_DocStatus,1,4),ListOfTables->Table_DocStatus,1)]
+                    l_cHtml += [</td>]
+
+                    if l_nNumberOfCustomFieldValues > 0
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += CustomFieldsBuildGridOther(ListOfTables->pk,l_hOptionValueToDescriptionMapping)
+                        l_cHtml += [</td>]
+                    endif
                 l_cHtml += [</tr>]
+            endscan
             l_cHtml += [</table>]
-
-
-
+            
         l_cHtml += [</div>]
+    l_cHtml += [</div>]
 
-    l_cHtml += [</nav>]
-
-    l_cHtml += [<div class="m-3"></div>]
-
-    l_cHtml += [</form>]
-
-    if !eof()
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-        l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
-
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
-                l_cHtml += [</tr>]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [</tr>]
-
-                scan all
-                    l_cHtml += [<tr>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += Allt(ListOfTables->NameSpace_Name)
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Allt(ListOfTables->Table_Name)+[</a>]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                            l_iColumnCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iColumnCount)+[</a>]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                            l_iIndexCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iIndexCount)+[</a>]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfTables->Table_UseStatus,1,4),ListOfTables->Table_UseStatus,1)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfTables->Table_DocStatus,1,4),ListOfTables->Table_DocStatus,1)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
-            l_cHtml += [</div>]
-        l_cHtml += [</div>]
-
-    endif
-
-l_cHtml += [</div>]
+endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription)
+static function TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
-local l_iNameSpacePk := hb_DefaultValue(par_iNameSpacePk,0)
-local l_cName        := hb_DefaultValue(par_cName,"")
-local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
-local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
-local l_cDescription := hb_DefaultValue(par_cDescription,"")
+
+local l_iNameSpacePk := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
+local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+
 local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 
 local l_oDB1
@@ -1810,11 +2044,13 @@ oFcgi:TraceAdd("TableEditFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
-    :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
-    :Column("NameSpace.Name"     ,"NameSpace_Name")
-    :Column("Table.Name"         ,"Table_Name")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    l_oDataTableInfo := :Get(par_iPk)
+    if !empty(par_iPk)
+        :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
+        :Column("NameSpace.Name"     ,"NameSpace_Name")
+        :Column("Table.Name"         ,"Table_Name")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        l_oDataTableInfo := :Get(par_iPk)
+    endif
 
     :Table("46e97041-1a30-466a-93ed-2172c7dcfedd","NameSpace")
     :Column("NameSpace.pk"         ,"pk")
@@ -1869,7 +2105,7 @@ else
 
     l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<div class="m-2">]
+    l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<table>]
 
@@ -1879,7 +2115,7 @@ else
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk">]
             select ListOfNameSpaces
             scan all
-                l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = par_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
+                l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
             endscan
             l_cHtml += [</select>]
         l_cHtml += [</td>]
@@ -1919,6 +2155,8 @@ else
         l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_TABLE,par_iPk,par_hValues)
+
         l_cHtml += [</table>]
         
     l_cHtml += [</div>]
@@ -1947,6 +2185,9 @@ local l_cTableDescription
 local l_cFrom := ""
 local l_oData
 local l_cErrorMessage := ""
+
+local l_hValues := {=>}
+
 local l_oDB1
 local l_oDB2
 // local l_cButtonSave
@@ -1960,7 +2201,7 @@ l_iNameSpacePk      := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cTableName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
 l_iTableUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iTableDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cTableDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cTableDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 // l_cButtonSave       := SanitizeInput(oFcgi:GetInputValue("ButtonSave"))
 // Altd()
@@ -2010,6 +2251,10 @@ case l_cActionOnSubmit == "Save"
                         l_cErrorMessage := "Failed to update Table."
                     endif
                 endif
+
+                if empty(l_cErrorMessage)
+                    CustomFieldsSave(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
+                endif
             endwith
 
         endif
@@ -2029,68 +2274,83 @@ case l_cActionOnSubmit == "Cancel"
     // endswitch
 
 case l_cActionOnSubmit == "Delete"   // Table
-    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-    with object l_oDB1
-        :Table("c0dabef1-454d-4665-8cac-cc42192cdc6c","Column")
-        :Where("Column.fk_Table = ^",l_iTablePk)
-        :SQL()
-
-        if :Tally == 0
-            :Table("9a98d575-76ce-4da4-8b8b-13a0e6f67f6b","Column")
-            :Where("Column.fk_TableForeign = ^",l_iTablePk)
+    if CheckIfAllowDestructiveDelete(par_iApplicationPk)
+        l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,l_iTablePk)
+        if empty(l_cErrorMessage)
+            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+            l_cFrom := "Redirect"
+        endif
+    else
+        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("c0dabef1-454d-4665-8cac-cc42192cdc6c","Column")
+            :Where("Column.fk_Table = ^",l_iTablePk)
             :SQL()
 
             if :Tally == 0
-                :Table("8c926070-36da-4c35-9f63-1db6322e7bdb","Index")
-                :Where("Index.fk_Table = ^",l_iTablePk)
+                :Table("9a98d575-76ce-4da4-8b8b-13a0e6f67f6b","Column")
+                :Where("Column.fk_TableForeign = ^",l_iTablePk)
                 :SQL()
 
                 if :Tally == 0
-                    //Delete any DiagramTable related records
-                    :Table("3c006261-26e5-4e1a-9164-278f5bd4e31a","DiagramTable")
-                    :Column("DiagramTable.pk" , "pk")
-                    :Where("DiagramTable.fk_Table = ^",l_iTablePk)
-                    :SQL("ListOfDiagramTableRecordsToDelete")
-                    if :Tally >= 0
-                        if :Tally > 0
-                            select ListOfDiagramTableRecordsToDelete
-                            scan
-                                l_oDB2:Delete("e1d662cd-cbad-4402-96f6-c387aaf6077b","DiagramTable",ListOfDiagramTableRecordsToDelete->pk)
-                            endscan
-                        endif
+                    :Table("8c926070-36da-4c35-9f63-1db6322e7bdb","Index")
+                    :Where("Index.fk_Table = ^",l_iTablePk)
+                    :SQL()
 
-                        if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
-                            l_cFrom := "Redirect"
+                    if :Tally == 0
+                        //Delete any DiagramTable related records
+                        :Table("3c006261-26e5-4e1a-9164-278f5bd4e31a","DiagramTable")
+                        :Column("DiagramTable.pk" , "pk")
+                        :Where("DiagramTable.fk_Table = ^",l_iTablePk)
+                        :SQL("ListOfDiagramTableRecordsToDelete")
+                        if :Tally >= 0
+                            if :Tally > 0
+                                select ListOfDiagramTableRecordsToDelete
+                                scan
+                                    l_oDB2:Delete("e1d662cd-cbad-4402-96f6-c387aaf6077b","DiagramTable",ListOfDiagramTableRecordsToDelete->pk)
+                                endscan
+                            endif
+
+CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
+                            if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
+                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+                                l_cFrom := "Redirect"
+                            else
+                                l_cErrorMessage := "Failed to delete Table"
+                            endif
                         else
-                            l_cErrorMessage := "Failed to delete Table"
+                            l_cErrorMessage := "Failed to clear related DiagramTable records."
                         endif
                     else
-                        l_cErrorMessage := "Failed to clear related DiagramTable records."
+                        l_cErrorMessage := "Related Index record on file"
                     endif
                 else
-                    l_cErrorMessage := "Related Index record on file"
+                    l_cErrorMessage := "Related Column record on file (Foreign Key Link)"
                 endif
             else
-                l_cErrorMessage := "Related Column record on file (Foreign Key Link)"
+                l_cErrorMessage := "Related Column record on file"
             endif
-        else
-            l_cErrorMessage := "Related Column record on file"
-        endif
-    endwith
+        endwith
+    endif
 
 otherwise
     l_cErrorMessage := "Unknown Option"
 
 endcase
 
-Altd()
-
 do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
-    l_cHtml += TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iTablePk,l_cErrorMessage,l_iNameSpacePk,l_cTableName,l_iTableUseStatus,l_iTableDocStatus,l_cTableDescription)
+    l_hValues["Fk_NameSpace"]    := l_iNameSpacePk
+    l_hValues["Name"]            := l_cTableName
+    l_hValues["UseStatus"]       := l_iTableUseStatus
+    l_hValues["DocStatus"]       := l_iTableDocStatus
+    l_hValues["Description"]     := l_cTableDescription
+
+    CustomFieldsFormToHash(par_iApplicationPk,USEDON_TABLE,@l_hValues)
+
+    l_cHtml += TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iTablePk,l_hValues)
+
 case empty(l_cFrom) .or. empty(l_iTablePk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
 otherwise
@@ -2124,12 +2384,19 @@ return l_cHtml
 static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
 local l_cHtml := []
 local l_oDB1
+local l_oDB2
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_nNumberOfColumns
+local l_nNumberOfColumns := 0
+local l_nNumberOfCustomFieldValues := 0
+local l_iColumnPk
+
+local l_hOptionValueToDescriptionMapping := {=>}
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
 with object l_oDB1
     :Table("27682ad7-bafd-409f-b6ab-1057770ec119","Column")
     :Column("Column.pk"             ,"pk")
@@ -2160,128 +2427,168 @@ with object l_oDB1
     :SQL("ListOfColumns")
     l_nNumberOfColumns := :Tally
 
-    // ExportTableToHtmlFile("ListOfColumns","d:\PostgreSQL_ListOfColumns.html","From PostgreSQL",,25,.t.)
-
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
+if l_nNumberOfColumns > 0
+    with object l_oDB2
+        :Table("8f1aab3d-5f57-44c6-b58b-e2756afef2ed","Column")
+        :Distinct(.t.)
+        :Column("CustomField.pk"              ,"CustomField_pk")
+        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Column.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("Column.fk_Table = ^",par_iTablePk)
+        :Where("CustomField.UsedOn = ^",USEDON_COLUMN)
+        :Where("CustomField.Status <= 2")
+        :Where("CustomField.Type = 2")   // Multi Choice
+        :SQL("ListOfCustomFieldOptionDefinition")
+        if :Tally > 0
+            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+        endif
 
-l_cHtml += [<div class="m-2">]
+        :Table("6462bd89-41a5-4427-996b-853f9773341f","Column")
+        :Column("Column.pk"              ,"fk_entity")
+        :Column("CustomField.pk"         ,"CustomField_pk")
+        :Column("CustomField.Label"      ,"CustomField_Label")
+        :Column("CustomField.Type"       ,"CustomField_Type")
+        :Column("CustomFieldValue.ValueI","CustomFieldValue_ValueI")
+        :Column("CustomFieldValue.ValueM","CustomFieldValue_ValueM")
+        :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
+        :Column("upper(CustomField.Name)","tag1")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Column.pk")
+        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+        :Where("Column.fk_Table = ^",par_iTablePk)
+        :Where("CustomField.UsedOn = ^",USEDON_COLUMN)
+        :Where("CustomField.Status <= 2")
+        // :OrderBy("Column_pk")
+        :OrderBy("tag1")
+        :SQL("ListOfCustomFieldValues")
+        l_nNumberOfCustomFieldValues := :Tally
 
-    select ListOfColumns
-    if l_nNumberOfColumns <= 0
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+    endwith
+endif
 
-    else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+// ExportTableToHtmlFile("ListOfCustomFieldValues","d:\PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-        l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
-
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
-                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
-                    l_cHtml += [</th>]
-                l_cHtml += [</tr>]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
-                l_cHtml += [</tr>]
-
-                scan all
-                    l_cHtml += [<tr>]
-
-                        // Name
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfColumns->Column_Name)+[/">]+Allt(ListOfColumns->Column_Name)+[</a>]
-                        l_cHtml += [</td>]
-
-                        // Type
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
-                                                            ListOfColumns->Column_Length,;
-                                                            ListOfColumns->Column_Scale,;
-                                                            ListOfColumns->Enumeration_Name,;
-                                                            ListOfColumns->Enumeration_ImplementAs,;
-                                                            ListOfColumns->Enumeration_ImplementLength,;
-                                                            l_cSitePath,;
-                                                            par_cURLApplicationLinkCode,;
-                                                            par_cURLNameSpaceName)
-                        l_cHtml += [</td>]
-
-                        // Nullable
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_cHtml += iif(alltrim(ListOfColumns->Column_Nullable) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
-                        l_cHtml += [</td>]
-
-                        // Foreign Key To
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            if !hb_isNil(ListOfColumns->Table_Name)
-                                l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
-                                l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name
-                                l_cHtml += [</a>]
-                            endif
-                        l_cHtml += [</td>]
-
-                        // Description
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
-                        l_cHtml += [</td>]
-
-                        // Usage Status
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_UseStatus,1,4),ListOfColumns->Column_UseStatus,1)]
-                        l_cHtml += [</td>]
-
-                        // Doc Status
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfColumns->Column_DocStatus,1,4),ListOfColumns->Column_DocStatus,1)]
-                        l_cHtml += [</td>]
-
-                        // Used By
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
-            l_cHtml += [</div>]
+if l_nNumberOfColumns <= 0
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+            l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
         l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-    endif
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-l_cHtml += [</div>]
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-CloseAlias("ListOfColumns")
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">]
+                    l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                l_cHtml += [</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Used By</th>]
+                if l_nNumberOfCustomFieldValues > 0
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                endif
+            l_cHtml += [</tr>]
+
+            select ListOfColumns
+            scan all
+                l_cHtml += [<tr>]
+
+                    // Name
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfColumns->Column_Name)+[/">]+Allt(ListOfColumns->Column_Name)+[</a>]
+                    l_cHtml += [</td>]
+
+                    // Type
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
+                                                        ListOfColumns->Column_Length,;
+                                                        ListOfColumns->Column_Scale,;
+                                                        ListOfColumns->Enumeration_Name,;
+                                                        ListOfColumns->Enumeration_ImplementAs,;
+                                                        ListOfColumns->Enumeration_ImplementLength,;
+                                                        l_cSitePath,;
+                                                        par_cURLApplicationLinkCode,;
+                                                        par_cURLNameSpaceName)
+                    l_cHtml += [</td>]
+
+                    // Nullable
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += iif(alltrim(ListOfColumns->Column_Nullable) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                    l_cHtml += [</td>]
+
+                    // Foreign Key To
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        if !hb_isNil(ListOfColumns->Table_Name)
+                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
+                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name
+                            l_cHtml += [</a>]
+                        endif
+                    l_cHtml += [</td>]
+
+                    // Description
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
+                    l_cHtml += [</td>]
+
+                    // Usage Status
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfColumns->Column_UseStatus,1,4),ListOfColumns->Column_UseStatus,1)]
+                    l_cHtml += [</td>]
+
+                    // Doc Status
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfColumns->Column_DocStatus,1,4),ListOfColumns->Column_DocStatus,1)]
+                    l_cHtml += [</td>]
+
+                    // Used By
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                    l_cHtml += [</td>]
+
+                    if l_nNumberOfCustomFieldValues > 0
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
+                        l_cHtml += [</td>]
+                    endif
+
+                l_cHtml += [</tr>]
+            endscan
+            l_cHtml += [</table>]
+            
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
 
 return l_cHtml
 //=================================================================================================================
@@ -2335,9 +2642,7 @@ oFcgi:p_cjQueryScript += [$( "#sortable" ).disableSelection();]
 //The following line sets the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
 oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );]
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
 
     select ListOfColumns
 
@@ -2516,7 +2821,7 @@ l_cHtml += [</nav>]
 l_cHtml += [<div class="m-3"></div>]
 
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
@@ -2623,8 +2928,11 @@ l_cHtml += [<div class="m-2">]
         l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
+    l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_COLUMN,par_iPk,par_hValues)
+
     l_cHtml += [</table>]
     
+
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
@@ -2674,7 +2982,7 @@ l_iColumnPk              := Val(oFcgi:GetInputValue("TableKey"))
 l_cColumnName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
 l_iColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cColumnDescription     := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 
 l_cColumnType            := SanitizeInput(Strtran(oFcgi:GetInputValue("ComboType")," ",""))
@@ -2794,7 +3102,13 @@ case l_cActionOnSubmit == "Save"
                                 l_cErrorMessage := "Failed to add Column."
                             endif
                         else
-                            :Update(l_iColumnPk)
+                            if !:Update(l_iColumnPk)
+                                l_cErrorMessage := "Failed to update Column."
+                            endif
+                        endif
+
+                        if empty(l_cErrorMessage)
+                            CustomFieldsSave(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
                         endif
                     endwith
 
@@ -2817,6 +3131,7 @@ case l_cActionOnSubmit == "Delete"   // Column
     endwith
 
     if l_oDB1:Tally == 0
+CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
         l_oDB1:Delete("57e4ebae-00bf-4438-9c47-18e21601260a","Column",l_iColumnPk)
 
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
@@ -2840,6 +3155,8 @@ if !empty(l_cErrorMessage)
     l_hValues["UsedBy"]          := l_iColumnUsedBy
     l_hValues["Fk_TableForeign"] := l_iColumnFk_TableForeign
     l_hValues["Fk_Enumeration"]  := l_iColumnFk_Enumeration
+
+    CustomFieldsFormToHash(par_iApplicationPk,USEDON_COLUMN,@l_hValues)
 
     l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_cErrorMessage,l_iColumnPk,l_hValues)
 endif
@@ -2879,119 +3196,114 @@ with object l_oDB1
 
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
+// l_cHtml += [<div class="m-3">]
+// l_cHtml += [</div>]
 
-l_cHtml += [<div class="m-2">]
-
-    select ListOfIndexes
-    if l_nNumberOfIndexes <= 0
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-
-    else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-        l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
-
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
-
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
-                        l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
-                    l_cHtml += [</th>]
-                l_cHtml += [</tr>]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Expression</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used By</th>]
-                l_cHtml += [</tr>]
-
-                scan all
-                    l_cHtml += [<tr>]
-
-                        // Name
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)+[/">]+Allt(ListOfIndexes->Index_Name)+[</a>]
-                        l_cHtml += [</td>]
-
-                        // Expression
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += hb_DefaultValue(ListOfIndexes->Index_Expression,"")
-                        l_cHtml += [</td>]
-
-                        // Unique
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_cHtml += iif(alltrim(ListOfIndexes->Index_Unique) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
-                        l_cHtml += [</td>]
-
-                        // Algo
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"BTREE"}[iif(vfp_between(ListOfIndexes->Index_Algo,1,1),ListOfIndexes->Index_Algo,1)]
-                            // 1 = BTREE
-                        l_cHtml += [</td>]
-
-                        // Description
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,""))
-                        l_cHtml += [</td>]
-
-                        // Usage Status
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_UseStatus,1,4),ListOfIndexes->Index_UseStatus,1)]
-                        l_cHtml += [</td>]
-
-                        // Doc Status
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfIndexes->Index_DocStatus,1,4),ListOfIndexes->Index_DocStatus,1)]
-                        l_cHtml += [</td>]
-
-                        // Used By
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"All Servers","MySQL Only","PostgreSQL Only"},"")
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
-            l_cHtml += [</div>]
+if l_nNumberOfIndexes <= 0
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
         l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-    endif
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-l_cHtml += [</div>]
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-// Column
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
+                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                l_cHtml += [</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Expression</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Used By</th>]
+            l_cHtml += [</tr>]
+
+            select ListOfIndexes
+            scan all
+                l_cHtml += [<tr>]
+
+                    // Name
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)+[/">]+Allt(ListOfIndexes->Index_Name)+[</a>]
+                    l_cHtml += [</td>]
+
+                    // Expression
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += hb_DefaultValue(ListOfIndexes->Index_Expression,"")
+                    l_cHtml += [</td>]
+
+                    // Unique
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += iif(alltrim(ListOfIndexes->Index_Unique) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                    l_cHtml += [</td>]
+
+                    // Algo
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"BTREE"}[iif(vfp_between(ListOfIndexes->Index_Algo,1,1),ListOfIndexes->Index_Algo,1)]
+                        // 1 = BTREE
+                    l_cHtml += [</td>]
+
+                    // Description
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,""))
+                    l_cHtml += [</td>]
+
+                    // Usage Status
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfIndexes->Index_UseStatus,1,4),ListOfIndexes->Index_UseStatus,1)]
+                    l_cHtml += [</td>]
+
+                    // Doc Status
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfIndexes->Index_DocStatus,1,4),ListOfIndexes->Index_DocStatus,1)]
+                    l_cHtml += [</td>]
+
+                    // Used By
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                    l_cHtml += [</td>]
+
+                l_cHtml += [</tr>]
+            endscan
+            l_cHtml += [</table>]
+            
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function EnumerationsListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function EnumerationListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
@@ -2999,7 +3311,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_iEnumValueCount
 local l_nNumberOfEnumerations
 
-oFcgi:TraceAdd("EnumerationsListFormBuild")
+oFcgi:TraceAdd("EnumerationListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3042,29 +3354,26 @@ With Object l_oDB2
 
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-l_cHtml += [<div class="m-2">]
+if l_nNumberOfEnumerations <= 0
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Enumeration on file for current application.</span>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-    select ListOfEnumerations
-    if l_nNumberOfEnumerations <= 0
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Enumeration on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        // l_cHtml += [<div class="container-fluid">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-    else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            // l_cHtml += [<div class="container-fluid">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumeration/]+par_cURLApplicationLinkCode+[/">New Enumeration</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
-
+    l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
@@ -3084,6 +3393,7 @@ l_cHtml += [<div class="m-2">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [</tr>]
 
+                select ListOfEnumerations
                 scan all
                     l_cHtml += [<tr>]
 
@@ -3120,12 +3430,8 @@ l_cHtml += [<div class="m-2">]
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
-
-    endif
-
-l_cHtml += [</div>]
-
-CloseAlias("ListOfEnumerations")
+    l_cHtml += [</div>]
+endif
 
 return l_cHtml
 //=================================================================================================================
@@ -3209,7 +3515,7 @@ else
 
     l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<div class="m-2">]
+    l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<table>]
 
@@ -3324,7 +3630,7 @@ l_iNameSpacePk                  := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cEnumerationName              := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
 l_iEnumerationUseStatus         := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iEnumerationDocStatus         := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cEnumerationDescription       := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cEnumerationDescription       := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 l_iEnumerationImplementAs       := Val(oFcgi:GetInputValue("ComboImplementAs"))
 
@@ -3480,86 +3786,83 @@ with object l_oDB1
     l_nNumberOfEnumValues := :Tally
 endwith
 
-l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-l_cHtml += [<div class="m-2">]
-
-    select ListOfEnumValues
-    if l_nNumberOfEnumValues <= 0
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
-                l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-
-    else
-        l_cHtml += [<nav class="navbar navbar-light bg-light">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
-                l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-
-        l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-        l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
-
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
-                l_cHtml += [</tr>]
-
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [</tr>]
-
-                scan all
-                    l_cHtml += [<tr>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+Allt(ListOfEnumValues->EnumValue_Name)+[/">]+Allt(ListOfEnumValues->EnumValue_Name)+[</a>]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
-                                l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
-                            endif
-                            l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumValues->EnumValue_UseStatus,1,4),ListOfEnumValues->EnumValue_UseStatus,1)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfEnumValues->EnumValue_DocStatus,1,4),ListOfEnumValues->EnumValue_DocStatus,1)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
-            l_cHtml += [</div>]
+if l_nNumberOfEnumValues <= 0
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+            l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
         l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-    endif
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
+            l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
 
-l_cHtml += [</div>]
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+            l_cHtml += [</tr>]
+
+            select ListOfEnumValues
+            scan all
+                l_cHtml += [<tr>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+Allt(ListOfEnumValues->EnumValue_Name)+[/">]+Allt(ListOfEnumValues->EnumValue_Name)+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
+                            l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
+                        endif
+                        l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,""))
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Active","Inactive (Read Only)","Archived (Read Only and Hidden)"}[iif(vfp_between(ListOfEnumValues->EnumValue_UseStatus,1,4),ListOfEnumValues->EnumValue_UseStatus,1)]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfEnumValues->EnumValue_DocStatus,1,4),ListOfEnumValues->EnumValue_DocStatus,1)]
+                    l_cHtml += [</td>]
+
+                l_cHtml += [</tr>]
+            endscan
+            l_cHtml += [</table>]
+            
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
+
+// l_cHtml += [<div class="m-3">]
+// l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
@@ -3613,35 +3916,33 @@ oFcgi:p_cjQueryScript += [$( "#sortable" ).disableSelection();]
 //The following line sets the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
 oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );]
 
+// l_cHtml += [<div class="m-3">]
+// l_cHtml += [</div>]
+
+select ListOfEnumValues
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
+        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
+        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
 l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="row justify-content-center m-3">]
+    l_cHtml += [<div class="col-auto">]
 
-    select ListOfEnumValues
+    l_cHtml += [<ul id="sortable">]
+    scan all
+        l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfEnumValues->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+Allt(ListOfEnumValues->EnumValue_Name)+[</span></li>]
+    endscan
+    l_cHtml += [</ul>]
 
-    l_cHtml += [<nav class="navbar navbar-light bg-light">]
-        l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
-        l_cHtml += [</div>]
-    l_cHtml += [</nav>]
-
-    l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-    l_cHtml += [<div class="row justify-content-center">]
-        l_cHtml += [<div class="col-auto">]
-
-        l_cHtml += [<ul id="sortable">]
-        scan all
-            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfEnumValues->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+Allt(ListOfEnumValues->EnumValue_Name)+[</span></li>]
-        endscan
-        l_cHtml += [</ul>]
-
-        l_cHtml += [</div>]
     l_cHtml += [</div>]
-
 l_cHtml += [</div>]
+
 
 //Set the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
 // l_cHtml += [<button onclick="$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );return false;">Freeze Width</button>]
@@ -3749,7 +4050,7 @@ l_cHtml += [</nav>]
 l_cHtml += [<div class="m-3"></div>]
 
 
-l_cHtml += [<div class="m-2">]
+l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
@@ -3834,7 +4135,7 @@ l_iEnumValueNumber      := iif(empty(l_cEnumValueNumber),NULL,val(l_cEnumValueNu
 
 l_iEnumValueUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iEnumValueDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cEnumValueDescription := SanitizeInput(oFcgi:GetInputValue("TextDescription"))
+l_cEnumValueDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -3918,20 +4219,21 @@ endif
 return l_cHtml
 //=================================================================================================================
 static function ApplicationLoadSchemaStep1FormBuild(par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
-                                                    par_iSyncBackendType,par_cSyncServer,par_iSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces)
+                                                    par_iSyncBackendType,par_cSyncServer,par_iSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_iSyncSetForeignKey)
 
 local l_cHtml := ""
-local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
-local l_cApplicationName := hb_DefaultValue(par_cApplicationName,"")
-local l_cLinkCode        := hb_DefaultValue(par_cLinkCode,"")
+local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
+local l_cApplicationName   := hb_DefaultValue(par_cApplicationName,"")
+local l_cLinkCode          := hb_DefaultValue(par_cLinkCode,"")
 
-local l_iSyncBackendType := hb_DefaultValue(par_iSyncBackendType,0)
-local l_cSyncServer      := hb_DefaultValue(par_cSyncServer,"")
-local l_iSyncPort        := hb_DefaultValue(par_iSyncPort,0)
-local l_cSyncUser        := hb_DefaultValue(par_cSyncUser,"")
-local l_cSyncPassword    := hb_DefaultValue(par_cSyncPassword,"")
-local l_cSyncDatabase    := hb_DefaultValue(par_cSyncDatabase,"")
-local l_cSyncNameSpaces  := hb_DefaultValue(par_cSyncNameSpaces,"")
+local l_iSyncBackendType   := hb_DefaultValue(par_iSyncBackendType,0)
+local l_cSyncServer        := hb_DefaultValue(par_cSyncServer,"")
+local l_iSyncPort          := hb_DefaultValue(par_iSyncPort,0)
+local l_cSyncUser          := hb_DefaultValue(par_cSyncUser,"")
+local l_cSyncPassword      := hb_DefaultValue(par_cSyncPassword,"")
+local l_cSyncDatabase      := hb_DefaultValue(par_cSyncDatabase,"")
+local l_cSyncNameSpaces    := hb_DefaultValue(par_cSyncNameSpaces,"")
+local l_iSyncSetForeignKey := hb_DefaultValue(par_iSyncSetForeignKey,1)
 
 oFcgi:TraceAdd("ApplicationLoadSchemaStep1FormBuild")
 
@@ -3956,7 +4258,7 @@ if !empty(par_iPk)
 
     l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<div class="m-2">]
+    l_cHtml += [<div class="m-3">]
         l_cHtml += [<table>]
 
             l_cHtml += [<tr class="pb-5">]
@@ -4001,6 +4303,17 @@ if !empty(par_iPk)
                 l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncNameSpaces" id="TextSyncNameSpaces" value="]+FcgiPrepFieldForValue(l_cSyncNameSpaces)+[" maxlength="400" size="80"></td>]
             l_cHtml += [</tr>]
 
+            l_cHtml += [<tr class="pb-5">]
+                l_cHtml += [<td class="pe-2 pb-3">Set Foreign Key</td>]
+                l_cHtml += [<td class="pb-3">]
+                    l_cHtml += [<select name="ComboSyncSetForeignKey" id="ComboSyncSetForeignKey">]
+                    l_cHtml += [<option value="1"]+iif(l_iSyncSetForeignKey==1,[ selected],[])+[>Not</option>]
+                    l_cHtml += [<option value="2"]+iif(l_iSyncSetForeignKey==2,[ selected],[])+[>On p_&lt;TableName&gt;</option>]
+                    l_cHtml += [<option value="3"]+iif(l_iSyncSetForeignKey==3,[ selected],[])+[>On fk_&lt;TableName&gt;</option>]
+                    l_cHtml += [</select>]
+                l_cHtml += [</td>]
+            l_cHtml += [</tr>]
+
 
         l_cHtml += [</table>]
 
@@ -4027,6 +4340,8 @@ local l_cSyncUser
 local l_cSyncPassword
 local l_cSyncDatabase
 local l_cSyncNameSpaces
+local l_iSyncSetForeignKey
+
 
 local l_cErrorMessage := ""
 local l_oDB1
@@ -4042,13 +4357,14 @@ oFcgi:TraceAdd("ApplicationLoadSchemaStep1FormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iSyncBackendType := Val(oFcgi:GetInputValue("ComboSyncBackendType"))
-l_cSyncServer      := SanitizeInput(oFcgi:GetInputValue("TextSyncServer"))
-l_iSyncPort        := Val(oFcgi:GetInputValue("SyncPort"))
-l_cSyncUser        := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
-l_cSyncPassword    := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
-l_cSyncDatabase    := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
-l_cSyncNameSpaces  := strtran(SanitizeInput(oFcgi:GetInputValue("TextSyncNameSpaces"))," ","")
+l_iSyncBackendType   := Val(oFcgi:GetInputValue("ComboSyncBackendType"))
+l_cSyncServer        := SanitizeInput(oFcgi:GetInputValue("TextSyncServer"))
+l_iSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
+l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
+l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
+l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
+l_cSyncNameSpaces    := strtran(SanitizeInput(oFcgi:GetInputValue("TextSyncNameSpaces"))," ","")
+l_iSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
 
@@ -4075,12 +4391,13 @@ case l_cActionOnSubmit == "Load"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c5","Application")
-            :Field("Application.SyncBackendType",l_iSyncBackendType)
-            :Field("Application.SyncServer"     ,l_cSyncServer)
-            :Field("Application.SyncPort"       ,l_iSyncPort)
-            :Field("Application.SyncUser"       ,l_cSyncUser)
-            :Field("Application.SyncDatabase"   ,l_cSyncDatabase)
-            :Field("Application.SyncNameSpaces" ,l_cSyncNameSpaces)
+            :Field("Application.SyncBackendType"  ,l_iSyncBackendType)
+            :Field("Application.SyncServer"       ,l_cSyncServer)
+            :Field("Application.SyncPort"         ,l_iSyncPort)
+            :Field("Application.SyncUser"         ,l_cSyncUser)
+            :Field("Application.SyncDatabase"     ,l_cSyncDatabase)
+            :Field("Application.SyncNameSpaces"   ,l_cSyncNameSpaces)
+            :Field("Application.SyncSetForeignKey",l_iSyncSetForeignKey)
             :Update(par_iApplicationPk)
         endwith
 
@@ -4127,7 +4444,7 @@ case l_cActionOnSubmit == "Load"
                 l_cErrorMessage := "Unable connect to the server!"+Chr(13)+Chr(10)+Str(hb_RDDInfo( RDDI_ERRORNO ))+Chr(13)+Chr(10)+hb_RDDInfo( RDDI_ERROR )
 
             else
-                l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces)
+                l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_iSyncSetForeignKey)
 
                 hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_SQLHandle)
                 // l_cErrorMessage := "Connected OK"
@@ -4149,10 +4466,292 @@ if !empty(l_cErrorMessage)
                                                    l_cSyncUser,;
                                                    l_cSyncPassword,;
                                                    l_cSyncDatabase,;
-                                                   l_cSyncNameSpaces)
+                                                   l_cSyncNameSpaces,;
+                                                   l_iSyncSetForeignKey)
 endif
 
 return l_cHtml
 //=================================================================================================================
+static function CheckIfAllowDestructiveDelete(par_iApplicationPk)
+local l_AllowDestructiveDelete := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+//Check if the application as AllowDestructiveDelete set to true
+with object l_oDB1
+    :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c91","Application")
+    :Column("Application.AllowDestructiveDelete" , "Application_AllowDestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        l_AllowDestructiveDelete := (l_oData:Application_AllowDestructiveDelete == "1")
+    endif
+endwith
+return l_AllowDestructiveDelete
 //=================================================================================================================
 //=================================================================================================================
+//=================================================================================================================
+static function CascadeDeleteTable(par_iApplicationPk,par_iTablePk)
+local l_cErrorMessage := ""
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+with object l_oDB1
+    :Table("8dea28f8-9666-4d76-a2a0-6797a22c1042","Index")
+    :Column("IndexColumn.pk","pk")
+    :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
+    :Where("Index.fk_Table = ^" , par_iTablePk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+    if :Tally < 0
+        l_cErrorMessage := "Failed to delete Table. Error 1."
+    else
+        select ListOfRecordsToDeleteInCascadeDeleteTable
+        scan all
+            if !:Delete("983c83f7-48dd-4388-be20-43db08a03777","IndexColumn",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                l_cErrorMessage := "Failed to delete Table. Error 2."
+                exit
+            endif
+        endscan
+
+        if empty(l_cErrorMessage)
+            :Table("770e1c6b-7997-4003-87ec-d6305a11027a","Index")
+            :Column("Index.pk","pk")
+            :Where("Index.fk_Table = ^" , par_iTablePk)
+            :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+            if :Tally < 0
+                l_cErrorMessage := "Failed to delete Table. Error 3."
+            else
+                select ListOfRecordsToDeleteInCascadeDeleteTable
+                scan all
+                    if !:Delete("3bd0abf8-44e9-4380-8082-f20521dfe84a","Index",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                        l_cErrorMessage := "Failed to delete Table. Error 4."
+                        exit
+                    endif
+                endscan
+
+                if empty(l_cErrorMessage)
+
+                    :Table("38e49098-14af-4ff8-a09f-71de2bad430b","Column")
+                    :Column("Column.pk","pk")
+                    :Where("Column.fk_Table = ^" , par_iTablePk)
+                    :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+                    if :Tally < 0
+                        l_cErrorMessage := "Failed to delete Table. Error 5."
+                    else
+                        select ListOfRecordsToDeleteInCascadeDeleteTable
+                        scan all
+CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                            if !:Delete("03fece13-f350-456d-badc-1a989702e79f","Column",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                l_cErrorMessage := "Failed to delete Table. Error 6."
+                                exit
+                            endif
+                        endscan
+                        if empty(l_cErrorMessage)
+
+                            :Table("08bc2a9b-86fa-4b9d-8b03-67a0e3fdf56e","DiagramTable")
+                            :Column("DiagramTable.pk","pk")
+                            :Where("DiagramTable.fk_Table = ^" , par_iTablePk)
+                            :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+                            if :Tally < 0
+                                l_cErrorMessage := "Failed to delete Table. Error 7."
+                            else
+                                select ListOfRecordsToDeleteInCascadeDeleteTable
+                                scan all
+                                    if !:Delete("665dad21-e904-404a-8bd4-7aa57025c81b","DiagramTable",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                        l_cErrorMessage := "Failed to delete Table. Error 8."
+                                        exit
+                                    endif
+                                endscan
+
+                                if empty(l_cErrorMessage)
+CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
+                                    if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+                                        l_cErrorMessage := "Failed to delete Table. Error 9."
+                                    endif
+                                endif
+                            endif
+                        endif
+                    endif
+                endif
+            endif
+        endif
+    endif
+endwith
+return l_cErrorMessage
+//=================================================================================================================
+static function CascadeDeleteNameSpace(par_iApplicationPk,par_iNameSpacePk)
+
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
+local l_cErrorMessage := ""
+
+with object l_oDB1
+
+    :Table("40f4bf76-ffc0-45cd-ba04-f84dad486ea3","Table")
+    :Column("Table.pk","pk")
+    :Where("Table.fk_NameSpace = ^" , par_iNameSpacePk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+    if :Tally < 0
+        l_cErrorMessage := "Failed to delete NameSpace. Error 1."
+    else
+        select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+        scan all
+            l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
+            if !empty(l_cErrorMessage)
+                exit
+            endif
+        endscan
+    endif
+    
+    if empty(l_cErrorMessage)
+        :Table("6f7e5169-b207-4cf9-be62-d61400b38de4","Enumeration")
+        :Column("EnumValue.pk","pk")
+        :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
+        :Where("Enumeration.fk_NameSpace = ^" , par_iNameSpacePk)
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+        if :Tally < 0
+            l_cErrorMessage := "Failed to delete NameSpace. Error 2."
+        else
+            select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+            scan all
+                if !:Delete("6ebff3a3-99db-40ef-ade6-a6e9c2642423","EnumValue",ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
+                    l_cErrorMessage := "Failed to delete NameSpace. Error 3."
+                    exit
+                endif
+            endscan
+
+            if empty(l_cErrorMessage)
+                :Table("980a812a-b5c6-4296-96f5-ec8e5ed66947","Enumeration")
+                :Column("Enumeration.pk","pk")
+                :Where("Enumeration.fk_NameSpace = ^" , par_iNameSpacePk)
+                :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+                if :Tally < 0
+                    l_cErrorMessage := "Failed to delete NameSpace. Error 4."
+                else
+                    select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+                    scan all
+                        if !:Delete("4c254a46-f12a-4a03-94d1-5850fa61af22","Enumeration",ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
+                            l_cErrorMessage := "Failed to delete NameSpace. Error 5."
+                            exit
+                        endif
+                    endscan
+
+                    if empty(l_cErrorMessage)
+CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,par_iNameSpacePk)
+                        if !:Delete("1e8e8f31-df5d-47bf-9b1b-de3f87a6792a","NameSpace",par_iNameSpacePk)
+                            l_cErrorMessage := "Failed to delete NameSpace. Error 6."
+                        endif
+                    endif
+                endif
+            endif
+        endif
+    endif
+endwith
+
+return l_cErrorMessage
+//=================================================================================================================
+static function CascadeDeleteApplication(par_iApplicationPk)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
+local l_cErrorMessage := ""
+
+with object l_oDB1
+    :Table("b32dcdfe-f196-4324-a9d0-c0a95b21850f","NameSpace")
+    :Column("NameSpace.pk","pk")
+    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+    if :Tally < 0
+        l_cErrorMessage := "Failed to delete Application. Error 1."
+    else
+        select ListOfRecordsToDeleteInCascadeDeleteApplication
+        scan all
+            l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+            if !empty(l_cErrorMessage)
+                exit
+            endif
+        endscan
+    endif
+    
+    if empty(l_cErrorMessage)
+        :Table("b47cd94c-420d-4405-b60e-6728a8e58277","Diagram")
+        :Column("Diagram.pk","pk")
+        :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+        if :Tally < 0
+            l_cErrorMessage := "Failed to delete Application. Error 2."
+        else
+            select ListOfRecordsToDeleteInCascadeDeleteApplication
+            scan all
+                if !:Delete("e3a26e10-af99-4a22-88b9-16d18c529072","Diagram",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                    l_cErrorMessage := "Failed to delete Application. Error 3."
+                    exit
+                endif
+            endscan
+
+            if empty(l_cErrorMessage)
+
+                :Table("c7a11182-d771-44fc-b9cf-6be4c6b9404b","Version")
+                :Column("Version.pk","pk")
+                :Where("Version.fk_Application = ^" , par_iApplicationPk)
+                :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+                if :Tally < 0
+                    l_cErrorMessage := "Failed to delete Application. Error 4."
+                else
+                    select ListOfRecordsToDeleteInCascadeDeleteApplication
+                    scan all
+                        if !:Delete("5b87b713-bef5-4662-a006-e4d0dd9b5a8d","Version",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                            l_cErrorMessage := "Failed to delete Application. Error 5."
+                            exit
+                        endif
+                    endscan
+                    
+                    if empty(l_cErrorMessage)
+
+                        :Table("e1475eba-6bab-4853-89d2-6efd54a71456","ApplicationCustomField")
+                        :Column("ApplicationCustomField.pk","pk")
+                        :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+                        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+                        if :Tally < 0
+                            l_cErrorMessage := "Failed to delete Application. Error 6."
+                        else
+                            select ListOfRecordsToDeleteInCascadeDeleteApplication
+                            scan all
+                                if !:Delete("1f1dfb70-418f-4b18-b553-0612e7aff79b","ApplicationCustomField",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                                    l_cErrorMessage := "Failed to delete Application. Error 7."
+                                    exit
+                                endif
+                            endscan
+                            
+                            if empty(l_cErrorMessage)
+
+                                :Table("a41abf4f-0bc9-4661-b363-0090cce6a903","UserAccess")
+                                :Column("UserAccess.pk","pk")
+                                :Where("UserAccess.fk_Application = ^" , par_iApplicationPk)
+                                :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+                                if :Tally < 0
+                                    l_cErrorMessage := "Failed to delete Application. Error 8."
+                                else
+                                    select ListOfRecordsToDeleteInCascadeDeleteApplication
+                                    scan all
+                                        if !:Delete("27d200ff-c0d2-4126-8230-e15edf0e9202","UserAccess",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                                            l_cErrorMessage := "Failed to delete Application. Error 9."
+                                            exit
+                                        endif
+                                    endscan
+                                    
+                                    if empty(l_cErrorMessage)
+CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
+                                        if !:Delete("7995ba50-8aa8-419c-8933-131cee5addc0","Application",par_iApplicationPk)
+                                            l_cErrorMessage := "Failed to delete Application. Error 10."
+                                        endif
+                                    endif
+                                endif
+                            endif
+                        endif
+                    endif
+                endif
+            endif
+        endif
+    endif
+endwith
+return l_cErrorMessage
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+
