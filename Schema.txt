@@ -8,6 +8,10 @@ l_Schema := ;
    ,"UseStatus"             =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
    ,"DocStatus"             =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"           =>{,  "M",   0,  0,"N"};
+   ,"PublishingUseStatus1"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Unknown"
+   ,"PublishingUseStatus2"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Active"
+   ,"PublishingUseStatus3"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Inactive (Read Only)"
+   ,"PublishingUseStatus4"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Archived"
    ,"AllowDestructiveDelete"=>{,  "L",   0,  0,};     // If true can delete entire tables and even entire application. For now has to be set outside of UI.
    ,"SyncBackendType"       =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
    ,"SyncServer"            =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
@@ -28,6 +32,7 @@ l_Schema := ;
    ,"fk_Enumeration" =>{,  "I",   0,  0,"N"};
    ,"Order"          =>{,  "I",   0,  0,};      // Display Order
    ,"Name"           =>{, "CV", 200,  0,};
+   ,"AKA"            =>{, "CV", 200,  0,"N"};   // Used for display only, not in physical implementation.
    ,"UseStatus"      =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
    ,"DocStatus"      =>{,  "N",   1,  0,};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Type"           =>{,  "C",   3,  0,};
@@ -46,6 +51,7 @@ l_Schema := ;
    ,"sysm"            =>{, "DT",   0,  6,"N"};
    ,"fk_NameSpace"    =>{,  "I",   0,  0,};
    ,"Name"            =>{, "CV", 200,  0,};
+   ,"AKA"             =>{, "CV", 200,  0,"N"};   // Used for display only, not in physical implementation.
    ,"ImplementAs"     =>{,  "N",   1,  0,};      // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
    ,"ImplementLength" =>{,  "I",   0,  0,"N"};   // Used if ImplementAs is 3 or 4.
    ,"Description"     =>{,  "M",   0,  0,"N"};
@@ -58,12 +64,13 @@ l_Schema := ;
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Enumeration"=>{,  "I",   0,  0,};
-   ,"Number"        =>{,  "I",   0,  0,"N"};    // Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
-   ,"Order"         =>{,  "I",   0,  0,};       // Display Order
+   ,"Number"        =>{,  "I",   0,  0,"N"};   // Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
+   ,"Order"         =>{,  "I",   0,  0,};      // Display Order
    ,"Name"          =>{, "CV", 200,  0,};
+   ,"AKA"           =>{, "CV", 200,  0,"N"};   // Used for display only, not in physical implementation.
    ,"Description"   =>{,  "M",   0,  0,"N"};
-   ,"UseStatus"     =>{,  "N",   1,  0,};       // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
-   ,"DocStatus"     =>{,  "N",   1,  0,}};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
+   ,"UseStatus"     =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,}};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,;   //Index Definition
    {"fk_Enumeration"=>{,"fk_Enumeration",.f.,"BTREE"}}};
 ,"public.Index"=>{;   //Field Definition
@@ -96,8 +103,9 @@ l_Schema := ;
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Application"=>{,  "I",   0,  0,};
    ,"Name"          =>{, "CV", 200,  0,};
-   ,"UseStatus"     =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
-   ,"DocStatus"     =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
+   ,"AKA"           =>{, "CV", 200,  0,"N"};   // Used for display only, not in physical implementation.
+   ,"UseStatus"     =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"     =>{,  "N",   1,  0,};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"   =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
@@ -107,9 +115,11 @@ l_Schema := ;
    ,"sysm"        =>{, "DT",   0,  6,"N"};
    ,"fk_NameSpace"=>{,  "I",   0,  0,"N"};
    ,"Name"        =>{, "CV", 200,  0,};
-   ,"UseStatus"   =>{,  "N",   1,  0,};     // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
-   ,"DocStatus"   =>{,  "N",   1,  0,};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,"Description" =>{,  "M",   0,  0,"N"}};
+   ,"AKA"         =>{, "CV", 200,  0,"N"};   // Used for display only, not in physical implementation.
+   ,"UseStatus"   =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Active, 3 = Inactive (Read Only), 4 = Archived (Read Only and Hidden)
+   ,"DocStatus"   =>{,  "N",   1,  0,};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
+   ,"Description" =>{,  "M",   0,  0,"N"};
+   ,"Information" =>{,  "M",   0,  0,"N"}};  // More any engineering notes.
    ,;   //Index Definition
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
 ,"public.Version"=>{;   //Field Definition

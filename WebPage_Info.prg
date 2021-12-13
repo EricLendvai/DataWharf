@@ -28,10 +28,10 @@ l_cHtml += [<div class="row justify-content-center">]
         l_cHtml += [<tr><td>Web Server IP</td>]       +[<td>]+oFcgi:RequestSettings["WebServerIP"]+[</td></tr>]
         l_cHtml += [<tr><td>Client IP</td>]           +[<td>]+oFcgi:RequestSettings["ClientIP"]   +[</td></tr>]
 
-        l_cHtml += [<tr><td>Web Site Version</td>]    +[<td>]+BUILDVERSION                            +[</td></tr>]
-        l_cHtml += [<tr><td>Site Build Info</td>]     +[<td>]+hb_buildinfo()                           +[</td></tr>]
-        l_cHtml += [<tr><td>ORM Build Info</td>]      +[<td>]+hb_orm_buildinfo()                       +[</td></tr>]
-        l_cHtml += [<tr><td>VFP Build Info</td>]      +[<td>]+hb_vfp_buildinfo()                       +[</td></tr>]
+        l_cHtml += [<tr><td>Web Site Version</td>]    +[<td>]+BUILDVERSION                        +[</td></tr>]
+        l_cHtml += [<tr><td>Site Build Info</td>]     +[<td>]+hb_buildinfo()                      +[</td></tr>]
+        l_cHtml += [<tr><td>ORM Build Info</td>]      +[<td>]+hb_orm_buildinfo()                  +[</td></tr>]
+        l_cHtml += [<tr><td>VFP Build Info</td>]      +[<td>]+hb_vfp_buildinfo()                  +[</td></tr>]
 
         l_cHtml += [</table>]
 

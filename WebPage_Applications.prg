@@ -44,6 +44,9 @@ local l_cURLVersionCode         := ""
 local l_cURLColumnName          := ""
 local l_cURLEnumValueName       := ""
 
+local l_cTableAKA
+local l_cEnumerationAKA
+
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 oFcgi:TraceAdd("BuildPageApplications")
@@ -361,9 +364,11 @@ case l_cURLAction == "EditTable"
         :Column("Table.pk"          , "Pk")            // 1
         :Column("Table.fk_NameSpace", "fk_NameSpace")  // 2
         :Column("Table.Name"        , "Name")          // 3
-        :Column("Table.UseStatus"   , "UseStatus")     // 4
-        :Column("Table.DocStatus"   , "DocStatus")     // 5
-        :Column("Table.Description" , "Description")   // 6
+        :Column("Table.AKA"         , "AKA")           // 4
+        :Column("Table.UseStatus"   , "UseStatus")     // 5
+        :Column("Table.DocStatus"   , "DocStatus")     // 6
+        :Column("Table.Description" , "Description")   // 7
+        :Column("Table.Information" , "Information")   // 8
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -379,9 +384,11 @@ case l_cURLAction == "EditTable"
 
             l_hValues["Fk_NameSpace"] := l_aSQLResult[1,2]
             l_hValues["Name"]         := AllTrim(l_aSQLResult[1,3])
-            l_hValues["UseStatus"]    := l_aSQLResult[1,4]
-            l_hValues["DocStatus"]    := l_aSQLResult[1,5]
-            l_hValues["Description"]  := l_aSQLResult[1,6]
+            l_hValues["AKA"]          := AllTrim(nvl(l_aSQLResult[1,4],""))
+            l_hValues["UseStatus"]    := l_aSQLResult[1,5]
+            l_hValues["DocStatus"]    := l_aSQLResult[1,6]
+            l_hValues["Description"]  := l_aSQLResult[1,7]
+            l_hValues["Information"]  := l_aSQLResult[1,8]
  
             CustomFieldsLoad(l_iApplicationPk,USEDON_TABLE,l_iTablePk,@l_hValues)
 
@@ -398,7 +405,8 @@ case l_cURLAction == "ListColumns"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("ce52204c-5a31-4d27-8983-2267a1e524af","Table")
-        :Column("Table.pk"     ,"TablePk")
+        :Column("Table.pk"     ,"TablePk")  // 1
+        :Column("Table.AKA"    ,"TableAKA") // 2
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -408,8 +416,9 @@ case l_cURLAction == "ListColumns"
     endwith
 
     if l_oDB1:Tally == 1
-        l_iTablePk := l_aSQLResult[1,1]
-        l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+        l_iTablePk  := l_aSQLResult[1,1]
+        l_cTableAKA := l_aSQLResult[1,2]
+        l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_cTableAKA)
     endif
 
 case l_cURLAction == "OrderColumns"
@@ -478,17 +487,18 @@ case l_cURLAction == "EditColumn"
         :Column("Table.pk"               ,"Table_pk")               //  3
 
         :Column("Column.Name"            ,"Column_Name")            //  4
-        :Column("Column.UseStatus"       ,"Column_UseStatus")       //  5
-        :Column("Column.DocStatus"       ,"Column_DocStatus")       //  6
-        :Column("Column.Description"     ,"Column_Description")     //  7
+        :Column("Column.AKA"             ,"Column_AKA")             //  5
+        :Column("Column.UseStatus"       ,"Column_UseStatus")       //  6
+        :Column("Column.DocStatus"       ,"Column_DocStatus")       //  7
+        :Column("Column.Description"     ,"Column_Description")     //  8
 
-        :Column("Column.Type"            ,"Column_Type")            //  8
-        :Column("Column.Length"          ,"Column_Length")          //  9
-        :Column("Column.Scale"           ,"Column_Scale")           // 10
-        :Column("Column.Nullable"        ,"Column_Nullable")        // 11
-        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 12
-        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 13
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 14
+        :Column("Column.Type"            ,"Column_Type")            //  9
+        :Column("Column.Length"          ,"Column_Length")          // 10
+        :Column("Column.Scale"           ,"Column_Scale")           // 11
+        :Column("Column.Nullable"        ,"Column_Nullable")        // 12
+        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 13
+        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 14
+        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 15
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -509,16 +519,17 @@ case l_cURLAction == "EditColumn"
             l_iTablePk     := l_aSQLResult[1,3]
 
             l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
-            l_hValues["UseStatus"]       := l_aSQLResult[1, 5]
-            l_hValues["DocStatus"]       := l_aSQLResult[1, 6]
-            l_hValues["Description"]     := l_aSQLResult[1, 7]
-            l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 8])
-            l_hValues["Length"]          := l_aSQLResult[1, 9]
-            l_hValues["Scale"]           := l_aSQLResult[1,10]
-            l_hValues["Nullable"]        := (alltrim(l_aSQLResult[1, 11])=="1")
-            l_hValues["UsedBy"]          := l_aSQLResult[1,12]
-            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,13]
-            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,14]
+            l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,5],""))
+            l_hValues["UseStatus"]       := l_aSQLResult[1, 6]
+            l_hValues["DocStatus"]       := l_aSQLResult[1, 7]
+            l_hValues["Description"]     := l_aSQLResult[1, 8]
+            l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 9])
+            l_hValues["Length"]          := l_aSQLResult[1,10]
+            l_hValues["Scale"]           := l_aSQLResult[1,11]
+            l_hValues["Nullable"]        := l_aSQLResult[1,12]
+            l_hValues["UsedBy"]          := l_aSQLResult[1,13]
+            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,14]
+            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,15]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -535,7 +546,8 @@ case l_cURLAction == "ListIndexes"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("18dd5d01-b702-4b96-8c48-44b8323ffc69","Table")
-        :Column("Table.pk"     ,"TablePk")
+        :Column("Table.pk"     ,"TablePk")   // 1
+        :Column("Table.AKA"    ,"TableAKA")  // 2
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -545,8 +557,9 @@ case l_cURLAction == "ListIndexes"
     endwith
 
     if l_oDB1:Tally == 1
-        l_iTablePk := l_aSQLResult[1,1]
-        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+        l_iTablePk  := l_aSQLResult[1,1]
+        l_cTableAKA := l_aSQLResult[1,2]
+        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_cTableAKA)
     endif
 
 case l_cURLAction == "ListEnumerations"
@@ -557,7 +570,7 @@ case l_cURLAction == "NewEnumeration"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     if oFcgi:isGet()
-        l_cHtml += EnumerationEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,0)
+        l_cHtml += EnumerationEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
     else
         l_cHtml += EnumerationEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
     endif
@@ -568,14 +581,15 @@ case l_cURLAction == "EditEnumeration"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("1c9e2373-6ded-4456-b4d2-bc63991fd0db","Enumeration")
-        :Column("Enumeration.pk"              , "Pk")
-        :Column("Enumeration.fk_NameSpace"    , "fk_NameSpace")
-        :Column("Enumeration.Name"            , "Name")
-        :Column("Enumeration.UseStatus"       , "UseStatus")
-        :Column("Enumeration.DocStatus"       , "DocStatus")
-        :Column("Enumeration.Description"     , "Description")
-        :Column("Enumeration.ImplementAs"     , "ImplementAs")
-        :Column("Enumeration.ImplementLength" , "ImplementLength")
+        :Column("Enumeration.pk"              , "Enumeration_Pk")                //  1
+        :Column("Enumeration.fk_NameSpace"    , "Enumeration_fk_NameSpace")      //  2
+        :Column("Enumeration.Name"            , "Enumeration_Name")              //  3
+        :Column("Enumeration.AKA"             , "Enumeration_AKA")               //  4
+        :Column("Enumeration.UseStatus"       , "Enumeration_UseStatus")         //  5
+        :Column("Enumeration.DocStatus"       , "Enumeration_DocStatus")         //  6
+        :Column("Enumeration.Description"     , "Enumeration_Description")       //  7
+        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")       //  8
+        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")   //  9
         :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -587,7 +601,18 @@ case l_cURLAction == "EditEnumeration"
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumerations/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
-            l_cHtml += EnumerationEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,l_aSQLResult[1,1],"",l_aSQLResult[1,2],AllTrim(l_aSQLResult[1,3]),l_aSQLResult[1,4],l_aSQLResult[1,5],l_aSQLResult[1,6],l_aSQLResult[1,7])
+            l_iEnumerationPk    := l_aSQLResult[1,1]
+
+            l_hValues["Fk_NameSpace"]    := l_aSQLResult[1,2]
+            l_hValues["Name"]            := AllTrim(l_aSQLResult[1,3])
+            l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,4],""))
+            l_hValues["UseStatus"]       := l_aSQLResult[1,5]
+            l_hValues["DocStatus"]       := l_aSQLResult[1,6]
+            l_hValues["Description"]     := l_aSQLResult[1,7]
+            l_hValues["ImplementAs"]     := l_aSQLResult[1,8]
+            l_hValues["ImplementLength"] := l_aSQLResult[1,9]
+
+            l_cHtml += EnumerationEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iEnumerationPk,l_hValues)
         else
             l_cHtml += EnumerationEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
         endif
@@ -600,7 +625,8 @@ case l_cURLAction == "ListEnumValues"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("8122e1ae-644c-4b30-bfa6-779400a520e0","Enumeration")
-        :Column("Enumeration.pk"     ,"EnumerationPk")
+        :Column("Enumeration.pk"     ,"EnumerationPk")   // 1
+        :Column("Enumeration.AKA"    ,"EnumerationAKA")  // 2
         :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -610,8 +636,9 @@ case l_cURLAction == "ListEnumValues"
     endwith
 
     if l_oDB1:Tally == 1
-        l_iEnumerationPk := l_aSQLResult[1,1]
-        l_cHtml += EnumValueListFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+        l_iEnumerationPk  := l_aSQLResult[1,1]
+        l_cEnumerationAKA := l_aSQLResult[1,2]
+        l_cHtml += EnumValueListFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,l_cEnumerationAKA)
     endif
 
 case l_cURLAction == "OrderEnumValues"
@@ -662,7 +689,7 @@ case l_cURLAction == "NewEnumValue"
         l_iEnumerationPk     := l_aSQLResult[1,2]
 
         if oFcgi:isGet()
-            l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,0)
+            l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",0,{=>})
         else
             l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
         endif
@@ -675,15 +702,16 @@ case l_cURLAction == "EditEnumValue"
     with object l_oDB1
         :Table("b96a6a89-c1b6-4629-8d00-3ebf37e93845","EnumValue")
 
-        :Column("EnumValue.pk"         ,"EnumValue_pk")
-        :Column("NameSpace.pk"         ,"NameSpace_pk")
-        :Column("Enumeration.pk"       ,"Enumeration_pk")
+        :Column("EnumValue.pk"         ,"EnumValue_pk")             //  1
+        :Column("NameSpace.pk"         ,"NameSpace_pk")             //  2
+        :Column("Enumeration.pk"       ,"Enumeration_pk")           //  3
 
-        :Column("EnumValue.Name"       ,"EnumValue_Name")
-        :Column("EnumValue.Number"     ,"EnumValue_Number")
-        :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
-        :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")
-        :Column("EnumValue.Description","EnumValue_Description")
+        :Column("EnumValue.Name"       ,"EnumValue_Name")           //  4
+        :Column("EnumValue.AKA"        ,"EnumValue_AKA")            //  5
+        :Column("EnumValue.Number"     ,"EnumValue_Number")         //  6
+        :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")      //  7
+        :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")      //  8
+        :Column("EnumValue.Description","EnumValue_Description")    //  9
 
         :Join("inner","Enumeration"    ,"","EnumValue.fk_Enumeration = Enumeration.pk")
         :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
@@ -695,19 +723,25 @@ case l_cURLAction == "EditEnumValue"
         :SQL(@l_aSQLResult)
     endwith
 
-    if l_oDB1:Tally == 1
+    if l_oDB1:Tally != 1
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
+    else
         l_iEnumValuePk    := l_aSQLResult[1,1]
-        l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
-        l_iEnumerationPk     := l_aSQLResult[1,3]
+        l_iNameSpacePk    := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
+        l_iEnumerationPk  := l_aSQLResult[1,3]
 
-        if l_oDB1:Tally != 1
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
+        if oFcgi:isGet()
+
+            l_hValues["Name"]            := AllTrim(l_aSQLResult[1,4])
+            l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,5],""))
+            l_hValues["Number"]          := l_aSQLResult[1,6]
+            l_hValues["UseStatus"]       := l_aSQLResult[1,7]
+            l_hValues["DocStatus"]       := l_aSQLResult[1,8]
+            l_hValues["Description"]     := l_aSQLResult[1,9]
+
+            l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",l_iEnumValuePk,l_hValues)
         else
-            if oFcgi:isGet()
-                l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,l_iEnumValuePk,"",AllTrim(l_aSQLResult[1,4]),l_aSQLResult[1,5],l_aSQLResult[1,6],l_aSQLResult[1,7])
-            else
-                l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
-            endif
+            l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
         endif
     endif
 
@@ -732,9 +766,10 @@ case l_cURLAction == "EditNameSpace"
         :Table("f0f2eaea-8306-49c9-afef-d72afb41601c","NameSpace")
         :Column("NameSpace.pk"          , "Pk")           // 1
         :Column("NameSpace.Name"        , "Name")         // 2
-        :Column("NameSpace.UseStatus"   , "UseStatus")    // 3
-        :Column("NameSpace.DocStatus"   , "DocStatus")    // 4
-        :Column("NameSpace.Description" , "Description")  // 5
+        :Column("NameSpace.AKA"         , "AKA")          // 3
+        :Column("NameSpace.UseStatus"   , "UseStatus")    // 4
+        :Column("NameSpace.DocStatus"   , "DocStatus")    // 5
+        :Column("NameSpace.Description" , "Description")  // 6
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :SQL(@l_aSQLResult)
@@ -747,9 +782,10 @@ case l_cURLAction == "EditNameSpace"
             l_iNameSpacePk    := l_aSQLResult[1,1]
 
             l_hValues["Name"]         := AllTrim(l_aSQLResult[1,2])
-            l_hValues["UseStatus"]    := l_aSQLResult[1,3]
-            l_hValues["DocStatus"]    := l_aSQLResult[1,4]
-            l_hValues["Description"]  := l_aSQLResult[1,5]
+            l_hValues["AKA"]          := AllTrim(nvl(l_aSQLResult[1,3],""))
+            l_hValues["UseStatus"]    := l_aSQLResult[1,4]
+            l_hValues["DocStatus"]    := l_aSQLResult[1,5]
+            l_hValues["Description"]  := l_aSQLResult[1,6]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk,@l_hValues)
 
@@ -785,7 +821,7 @@ otherwise
 endcase
 return l_cResult
 //=================================================================================================================
-function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_iEnumerationImplementAs,par_iEnumerationImplementLength,;
+function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_cEnumerationAKA,par_iEnumerationImplementAs,par_iEnumerationImplementLength,;
                                     par_cSitePath,par_cURLApplicationLinkCode,par_cURLNameSpaceName)
 local l_cResult
 local l_iTypePos
@@ -796,19 +832,19 @@ if l_iTypePos > 0
     l_cResult := par_cColumnType+" "+oFcgi:p_ColumnTypes[l_iTypePos,2]
     do case
     case oFcgi:p_ColumnTypes[l_iTypePos,4] .and. oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length and Scale
-        l_cResult += [ (]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[,]+iif(hb_isnil(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
+        l_cResult += [&nbsp;(]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[,]+iif(hb_isnil(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
 
     case oFcgi:p_ColumnTypes[l_iTypePos,4]  // Scale
         l_cResult += [ (Scale: ]+iif(hb_isnil(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
         
     case oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length
-        l_cResult += [ (]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
+        l_cResult += [&nbsp;(]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
         
     case oFcgi:p_ColumnTypes[l_iTypePos,5]  // Enumeration
         if !hb_isnil(par_cEnumerationName) .and. !hb_isnil(par_iEnumerationImplementAs) //.and. !hb_isnil(par_iEnumerationImplementLength)
-            l_cResult += [ (]
+            l_cResult += [&nbsp;(]
             l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
-            l_cResult += par_cEnumerationName
+            l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
             l_cResult += [</a>]
             l_cResult += [ - ]
 
@@ -1113,7 +1149,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         if !empty(par_iPk)
@@ -1268,7 +1304,7 @@ case l_cActionOnSubmit == "Delete"   // Application
                             endscan
                         endif
 
-CustomFieldsDelete(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
+                        CustomFieldsDelete(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
                         :Delete("001192b9-5840-48d6-976b-e162a91af2d8","Application",l_iApplicationPk)
                     else
                         l_cErrorMessage := "Failed to clear related DiagramTable records."
@@ -1321,6 +1357,7 @@ with object l_oDB1
     :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","NameSpace")
     :Column("NameSpace.pk"         ,"pk")
     :Column("NameSpace.Name"       ,"NameSpace_Name")
+    :Column("NameSpace.AKA"        ,"NameSpace_AKA")
     :Column("NameSpace.UseStatus"  ,"NameSpace_UseStatus")
     :Column("NameSpace.DocStatus"  ,"NameSpace_DocStatus")
     :Column("NameSpace.Description","NameSpace_Description")
@@ -1412,7 +1449,7 @@ else
                     l_cHtml += [<tr>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditNameSpace/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfNameSpaces->NameSpace_Name)+[/">]+Allt(ListOfNameSpaces->NameSpace_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditNameSpace/]+par_cURLApplicationLinkCode+[/]+ListOfNameSpaces->NameSpace_Name+[/">]+ListOfNameSpaces->NameSpace_Name+FormatAKAForDisplay(ListOfNameSpaces->NameSpace_AKA)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1452,6 +1489,7 @@ local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA         := hb_HGetDef(par_hValues,"AKA","")
 local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -1485,8 +1523,13 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
-    l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-    l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+        l_cHtml += [<td class="pe-2 pb-3">Name</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
@@ -1514,8 +1557,8 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr>]
-    l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-    l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_NAMESPACE,par_iPk,par_hValues)
@@ -1540,6 +1583,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iNameSpacePk
 local l_cNameSpaceName
+local l_cNameSpaceAKA
 local l_iNameSpaceUseStatus
 local l_iNameSpaceDocStatus
 local l_cNameSpaceDescription
@@ -1555,6 +1599,10 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iNameSpacePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_cNameSpaceName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cNameSpaceAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cNameSpaceAKA)
+    l_cNameSpaceAKA := NIL
+endif
 l_iNameSpaceUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iNameSpaceDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cNameSpaceDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
@@ -1582,6 +1630,7 @@ case l_cActionOnSubmit == "Save"
             with object l_oDB1
                 :Table("baf7af76-6013-4b53-ba26-4006e22f52cb","NameSpace")
                 :Field("NameSpace.Name"       ,l_cNameSpaceName)
+                :Field("NameSpace.AKA"        ,l_cNameSpaceAKA)
                 :Field("NameSpace.UseStatus"  ,l_iNameSpaceUseStatus)
                 :Field("NameSpace.DocStatus"  ,l_iNameSpaceDocStatus)
                 :Field("NameSpace.Description",iif(empty(l_cNameSpaceDescription),NULL,l_cNameSpaceDescription))
@@ -1596,6 +1645,7 @@ case l_cActionOnSubmit == "Save"
                     if !:Update(l_iNameSpacePk)
                         l_cErrorMessage := "Failed to update NameSpace."
                     endif
+                    SendToClipboard(:LastSQL())
                 endif
 
                 if empty(l_cErrorMessage)
@@ -1632,7 +1682,7 @@ case l_cActionOnSubmit == "Delete"   // NameSpace
             endwith
 
             if l_oDB1:Tally == 0
-CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
+                CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
                 l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
 
                 oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
@@ -1648,6 +1698,7 @@ endcase
 
 if !empty(l_cErrorMessage)
     l_hValues["Name"]            := l_cNameSpaceName
+    l_hValues["AKA"]             := l_cNameSpaceAKA
     l_hValues["UseStatus"]       := l_iNameSpaceUseStatus
     l_hValues["DocStatus"]       := l_iNameSpaceDocStatus
     l_hValues["Description"]     := l_cNameSpaceDescription
@@ -1746,9 +1797,11 @@ With Object l_oDB1
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
+    :Column("Table.AKA"        ,"Table_AKA")
     :Column("Table.UseStatus"  ,"Table_UseStatus")
     :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
+    :Column("Table.Information","Table_Information")
     :Column("Upper(NameSpace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -1958,7 +2011,7 @@ if !empty(l_iNumberOfTablesInList)
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-info">]
@@ -1967,6 +2020,7 @@ if !empty(l_iNumberOfTablesInList)
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Info</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
@@ -1983,7 +2037,7 @@ if !empty(l_iNumberOfTablesInList)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Allt(ListOfTables->Table_Name)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+ListOfTables->Table_Name+[/">]+ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
@@ -1998,6 +2052,10 @@ if !empty(l_iNumberOfTablesInList)
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += iif(len(nvl(ListOfTables->Table_Information,"")) > 0,[<i class="fas fa-check"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2031,9 +2089,11 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_iNameSpacePk := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA         := hb_HGetDef(par_hValues,"AKA","")
 local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
 local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 
@@ -2094,11 +2154,8 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
-//12345
-
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
-
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -2110,20 +2167,25 @@ else
         l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
-        l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk">]
-            select ListOfNameSpaces
-            scan all
-                l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
-            endscan
-            l_cHtml += [</select>]
-        l_cHtml += [</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk">]
+                select ListOfNameSpaces
+                scan all
+                    l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
+                endscan
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Table Name</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pe-2 pb-3">Table Name</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -2151,8 +2213,13 @@ else
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br><span class="small">Engineering Notes</span></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_TABLE,par_iPk,par_hValues)
@@ -2164,6 +2231,7 @@ else
     oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
     oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+    oFcgi:p_cjQueryScript += [$('#TextInformation').resizable();]
 
     l_cHtml += [</form>]
 
@@ -2179,9 +2247,11 @@ local l_cActionOnSubmit
 local l_iTablePk
 local l_iNameSpacePk
 local l_cTableName
+local l_cTableAKA
 local l_iTableUseStatus
 local l_iTableDocStatus
 local l_cTableDescription
+local l_cTableInformation
 local l_cFrom := ""
 local l_oData
 local l_cErrorMessage := ""
@@ -2199,9 +2269,14 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_iNameSpacePk      := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cTableName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cTableAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cTableAKA)
+    l_cTableAKA := NIL
+endif
 l_iTableUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iTableDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cTableDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_cTableInformation := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextInformation")))
 
 // l_cButtonSave       := SanitizeInput(oFcgi:GetInputValue("ButtonSave"))
 // Altd()
@@ -2234,9 +2309,11 @@ case l_cActionOnSubmit == "Save"
                 :Table("895da8f1-8cdb-4792-a5b9-3d3b6e646430","Table")
                 :Field("Table.fk_NameSpace",l_iNameSpacePk)
                 :Field("Table.Name"        ,l_cTableName)
+                :Field("Table.AKA"         ,l_cTableAKA)
                 :Field("Table.UseStatus"   ,l_iTableUseStatus)
                 :Field("Table.DocStatus"   ,l_iTableDocStatus)
                 :Field("Table.Description" ,iif(empty(l_cTableDescription),NULL,l_cTableDescription))
+                :Field("Table.Information" ,iif(empty(l_cTableInformation),NULL,l_cTableInformation))
                 if empty(l_iTablePk)
                     if :Add()
                         l_iTablePk := :Key()
@@ -2311,7 +2388,7 @@ case l_cActionOnSubmit == "Delete"   // Table
                                 endscan
                             endif
 
-CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
+                            CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
                             if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
                                 oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
                                 l_cFrom := "Redirect"
@@ -2343,9 +2420,11 @@ case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_hValues["Fk_NameSpace"]    := l_iNameSpacePk
     l_hValues["Name"]            := l_cTableName
+    l_hValues["AKA"]             := l_cTableAKA
     l_hValues["UseStatus"]       := l_iTableUseStatus
     l_hValues["DocStatus"]       := l_iTableDocStatus
     l_hValues["Description"]     := l_cTableDescription
+    l_hValues["Information"]     := l_cTableInformation
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_TABLE,@l_hValues)
 
@@ -2353,6 +2432,7 @@ case !empty(l_cErrorMessage)
 
 case empty(l_cFrom) .or. empty(l_iTablePk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+
 otherwise
     with object l_oDB1
         :Table("95c1f7a1-500d-4451-95bd-2c4d9df9114a","Table")
@@ -2381,7 +2461,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
@@ -2401,6 +2481,7 @@ with object l_oDB1
     :Table("27682ad7-bafd-409f-b6ab-1057770ec119","Column")
     :Column("Column.pk"             ,"pk")
     :Column("Column.Name"           ,"Column_Name")
+    :Column("Column.AKA"            ,"Column_AKA")
     :Column("Column.UseStatus"      ,"Column_UseStatus")
     :Column("Column.DocStatus"      ,"Column_DocStatus")
     :Column("Column.Description"    ,"Column_Description")
@@ -2415,7 +2496,9 @@ with object l_oDB1
 
     :Column("NameSpace.Name"                ,"NameSpace_Name")
     :Column("Table.Name"                    ,"Table_Name")
+    :Column("Table.AKA"                     ,"Table_AKA")
     :Column("Enumeration.Name"              ,"Enumeration_Name")
+    :Column("Enumeration.AKA"               ,"Enumeration_AKA")
     :Column("Enumeration.ImplementAs"       ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength"   ,"Enumeration_ImplementLength")
     
@@ -2473,7 +2556,7 @@ endif
 if l_nNumberOfColumns <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
             l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Applications/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
@@ -2501,7 +2584,7 @@ else
 
             l_cHtml += [<tr class="bg-info">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">]
-                    l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                    l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
@@ -2525,7 +2608,7 @@ else
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfColumns->Column_Name)+[/">]+Allt(ListOfColumns->Column_Name)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+ListOfColumns->Column_Name+[/">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     // Type
@@ -2534,6 +2617,7 @@ else
                                                         ListOfColumns->Column_Length,;
                                                         ListOfColumns->Column_Scale,;
                                                         ListOfColumns->Enumeration_Name,;
+                                                        ListOfColumns->Enumeration_AKA,;
                                                         ListOfColumns->Enumeration_ImplementAs,;
                                                         ListOfColumns->Enumeration_ImplementLength,;
                                                         l_cSitePath,;
@@ -2543,14 +2627,14 @@ else
 
                     // Nullable
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(alltrim(ListOfColumns->Column_Nullable) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="fas fa-check"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
                     // Foreign Key To
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         if !hb_isNil(ListOfColumns->Table_Name)
                             l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
-                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name
+                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                             l_cHtml += [</a>]
                         endif
                     l_cHtml += [</td>]
@@ -2611,6 +2695,7 @@ with object l_oDB1
     :Table("db41b4bd-7cb6-4918-b949-e0e806f959f4","Column")
     :Column("Column.pk"         ,"pk")
     :Column("Column.Name"       ,"Column_Name")
+    :Column("Column.AKA"        ,"Column_AKA")
     :Column("Column.Order"      ,"Column_Order")
     :Where("Column.fk_Table = ^",par_iTablePk)
     :OrderBy("Column_order")
@@ -2661,7 +2746,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<ul id="sortable">]
         scan all
-            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfColumns->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+Allt(ListOfColumns->Column_Name)+[</span></li>]
+            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfColumns->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></li>]
         endscan
         l_cHtml += [</ul>]
 
@@ -2733,6 +2818,7 @@ static function ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTab
 local l_cHtml := ""
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA             := hb_HGetDef(par_hValues,"AKA","")
 local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -2830,6 +2916,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"></td>]
+    l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Type</td>]
@@ -2856,7 +2946,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<option value="0"]+iif(l_iFk_Enumeration==0,[ selected],[])+[></option>]
                     select ListOfEnumeration
                     scan all
-                        l_cHtml += [<option value="]+Trans(ListOfEnumeration->Enumeration_pk)+["]+iif(ListOfEnumeration->Enumeration_pk == l_iFk_Enumeration,[ selected],[])+[>]+Allt(ListOfEnumeration->Enumeration_Name)+[ (]+EnumerationImplementAsInfo(ListOfEnumeration->Enumeration_ImplementAs,ListOfEnumeration->Enumeration_ImplementLength)+[)]+[</option>]
+                        l_cHtml += [<option value="]+Trans(ListOfEnumeration->Enumeration_pk)+["]+iif(ListOfEnumeration->Enumeration_pk == l_iFk_Enumeration,[ selected],[])+[>]+Allt(ListOfEnumeration->Enumeration_Name)+[&nbsp;(]+EnumerationImplementAsInfo(ListOfEnumeration->Enumeration_ImplementAs,ListOfEnumeration->Enumeration_ImplementLength)+[)]+[</option>]
                     endscan
                 l_cHtml += [</select>]
             l_cHtml += [</span>]
@@ -2925,7 +3015,7 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<tr>]
         l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_COLUMN,par_iPk,par_hValues)
@@ -2951,6 +3041,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iColumnPk
 local l_cColumnName
+local l_cColumnAKA
 local l_iColumnUseStatus
 local l_iColumnDocStatus
 local l_cColumnDescription
@@ -2980,6 +3071,10 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iColumnPk              := Val(oFcgi:GetInputValue("TableKey"))
 l_cColumnName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cColumnAKA             := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cColumnAKA)
+    l_cColumnAKA := NIL
+endif)
 l_iColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
@@ -3081,6 +3176,7 @@ case l_cActionOnSubmit == "Save"
                     with object l_oDB1
                         :Table("1a6da9a6-6812-4129-979c-c8b8f848f351","Column")
                         :Field("Column.Name"            , l_cColumnName)
+                        :Field("Column.AKA"             , l_cColumnAKA)
                         :Field("Column.UseStatus"       , l_iColumnUseStatus)
                         :Field("Column.DocStatus"       , l_iColumnDocStatus)
                         :Field("Column.Description"     , iif(empty(l_cColumnDescription),NULL,l_cColumnDescription))
@@ -3131,7 +3227,7 @@ case l_cActionOnSubmit == "Delete"   // Column
     endwith
 
     if l_oDB1:Tally == 0
-CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
+        CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
         l_oDB1:Delete("57e4ebae-00bf-4438-9c47-18e21601260a","Column",l_iColumnPk)
 
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
@@ -3145,6 +3241,7 @@ endcase
 
 if !empty(l_cErrorMessage)
     l_hValues["Name"]            := l_cColumnName
+    l_hValues["AKA"]             := l_cColumnAKA
     l_hValues["UseStatus"]       := l_iColumnUseStatus
     l_hValues["DocStatus"]       := l_iColumnDocStatus
     l_hValues["Description"]     := l_cColumnDescription
@@ -3165,7 +3262,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
@@ -3202,7 +3299,7 @@ endwith
 if l_nNumberOfIndexes <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
             l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
@@ -3230,7 +3327,7 @@ else
 
             l_cHtml += [<tr class="bg-info">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
-                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+["]
+                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
@@ -3261,7 +3358,7 @@ else
 
                     // Unique
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(alltrim(ListOfIndexes->Index_Unique) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                        l_cHtml += iif(ListOfIndexes->Index_Unique,[<i class="fas fa-check"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
                     // Algo
@@ -3321,6 +3418,7 @@ with object l_oDB1
     :Column("Enumeration.pk"             ,"pk")
     :Column("NameSpace.Name"             ,"NameSpace_Name")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
+    :Column("Enumeration.AKA"            ,"Enumeration_AKA")
     :Column("Enumeration.UseStatus"      ,"Enumeration_UseStatus")
     :Column("Enumeration.DocStatus"      ,"Enumeration_DocStatus")
     :Column("Enumeration.Description"    ,"Enumeration_Description")
@@ -3402,7 +3500,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfEnumerations->NameSpace_Name)+[/]+Allt(ListOfEnumerations->Enumeration_Name)+[/">]+Allt(ListOfEnumerations->Enumeration_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+ListOfEnumerations->NameSpace_Name+[/]+ListOfEnumerations->Enumeration_Name+[/">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]+EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength)+[</td>]
@@ -3436,17 +3534,19 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,par_cErrorText,par_iNameSpacePk,par_cName,par_iUseStatus,par_iDocStatus,par_cDescription,par_iImplementAs,par_iImplementLength)
+static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
-local l_iNameSpacePk     := hb_DefaultValue(par_iNameSpacePk,0)
-local l_cName            := hb_DefaultValue(par_cName,"")
-local l_iUseStatus       := hb_DefaultValue(par_iUseStatus,1)
-local l_iDocStatus       := hb_DefaultValue(par_iDocStatus,1)
-local l_cDescription     := hb_DefaultValue(par_cDescription,"")
-local l_iImplementAs     := hb_DefaultValue(par_iImplementAs,1)
-local l_iImplementLength := hb_DefaultValue(par_iImplementLength,1)
+
+local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
+local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA             := hb_HGetDef(par_hValues,"AKA","")
+local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_iImplementAs     := hb_HGetDef(par_hValues,"par_iImplementAs",1)
+local l_iImplementLength := hb_HGetDef(par_hValues,"par_iImplementLength",1)
 
 local l_oDataTableInfo
 local l_oDB1
@@ -3506,7 +3606,6 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
-//12345  EnumValues
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Applications/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
             endif
@@ -3525,7 +3624,7 @@ else
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk">]
                 select ListOfNameSpaces
                 scan all
-                    l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = par_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
+                    l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
                 endscan
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
@@ -3534,6 +3633,11 @@ else
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Enumeration Name</td>]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -3582,7 +3686,7 @@ else
 
         l_cHtml += [<tr>]
         l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [</table>]
@@ -3607,13 +3711,14 @@ local l_cActionOnSubmit
 local l_iEnumerationPk
 local l_iNameSpacePk
 local l_cEnumerationName
+local l_cEnumerationAKA
 local l_iEnumerationUseStatus
 local l_iEnumerationDocStatus
 local l_cEnumerationDescription
 local l_iEnumerationImplementAs
 local l_iEnumerationImplementLength
 local l_cFrom := ""
-
+local l_hValues := {=>}
 local l_cErrorMessage := ""
 local l_oDB1
 local l_oData
@@ -3628,6 +3733,12 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_iNameSpacePk                  := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
 l_cEnumerationName              := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+
+l_cEnumerationAKA               := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cEnumerationAKA)
+    l_cEnumerationAKA := NIL
+endif
+
 l_iEnumerationUseStatus         := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iEnumerationDocStatus         := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cEnumerationDescription       := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
@@ -3670,6 +3781,7 @@ case l_cActionOnSubmit == "Save"
                 :Table("92372d16-01ca-41d7-8f45-d145a2ce3cdc","Enumeration")
                 :Field("Enumeration.fk_NameSpace"   , l_iNameSpacePk)
                 :Field("Enumeration.Name"           , l_cEnumerationName)
+                :Field("Enumeration.AKA"            , l_cEnumerationAKA)
                 :Field("Enumeration.UseStatus"      , l_iEnumerationUseStatus)
                 :Field("Enumeration.DocStatus"      , l_iEnumerationDocStatus)
                 :Field("Enumeration.Description"    , iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
@@ -3733,8 +3845,19 @@ endcase
 
 do case
 case l_cFrom == "Redirect"
+
 case !empty(l_cErrorMessage)
-    l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_iEnumerationPk,l_cErrorMessage,l_iNameSpacePk,l_cEnumerationName,l_iEnumerationUseStatus,l_iEnumerationDocStatus,l_cEnumerationDescription,l_iEnumerationImplementAs,l_iEnumerationImplementLength)
+    l_hValues["Fk_NameSpace"]    := l_iNameSpacePk
+    l_hValues["Name"]            := l_cEnumerationName
+    l_hValues["AKA"]             := l_cEnumerationAKA
+    l_hValues["UseStatus"]       := l_iEnumerationUseStatus
+    l_hValues["DocStatus"]       := l_iEnumerationDocStatus
+    l_hValues["Description"]     := l_cEnumerationDescription
+    l_hValues["ImplementAs"]     := l_iEnumerationImplementAs
+    l_hValues["ImplementLength"] := l_iEnumerationImplementLength
+
+    l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iEnumerationPk,l_hValues)
+
 case empty(l_cFrom) .or. empty(l_iEnumerationPk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
 otherwise
@@ -3762,7 +3885,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName)
+static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cEnumerationAKA)
 local l_cHtml := []
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfEnumValues
@@ -3775,6 +3898,7 @@ with object l_oDB1
     :Table("6e36b50f-9e7c-43d6-bba3-00d402a649d0","EnumValue")
     :Column("EnumValue.pk"         ,"pk")
     :Column("EnumValue.Name"       ,"EnumValue_Name")
+    :Column("EnumValue.AKA"        ,"EnumValue_AKA")
     :Column("EnumValue.Number"     ,"EnumValue_Number")
     :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
     :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")
@@ -3789,7 +3913,7 @@ endwith
 if l_nNumberOfEnumValues <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+[".</span>]
             l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Applications/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
             l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
@@ -3814,7 +3938,7 @@ else
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+["</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+["</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-info">]
@@ -3830,7 +3954,7 @@ else
                 l_cHtml += [<tr>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+Allt(ListOfEnumValues->EnumValue_Name)+[/">]+Allt(ListOfEnumValues->EnumValue_Name)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[Applications/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
@@ -3884,6 +4008,7 @@ with object l_oDB1
     :Table("a24b374e-ad17-4af1-a2a3-9c97633f7770","EnumValue")
     :Column("EnumValue.pk"         ,"pk")
     :Column("EnumValue.Name"       ,"EnumValue_Name")
+    :Column("EnumValue.AKA"        ,"EnumValue_AKA")
     :Column("EnumValue.Order"      ,"EnumValue_Order")
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
     :OrderBy("EnumValue_order")
@@ -3936,7 +4061,7 @@ l_cHtml += [<div class="row justify-content-center m-3">]
 
     l_cHtml += [<ul id="sortable">]
     scan all
-        l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfEnumValues->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+Allt(ListOfEnumValues->EnumValue_Name)+[</span></li>]
+        l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfEnumValues->pk)+["><span class="fas fa-arrows-alt-v"></span><span> ]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</span></li>]
     endscan
     l_cHtml += [</ul>]
 
@@ -4007,14 +4132,19 @@ endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_iPk,par_cErrorText,par_cName,par_iNumber,par_iUseStatus,par_iDocStatus,par_cDescription)
+static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cErrorText,par_iPk,par_hValues)
+
+//par_cName,par_iNumber,par_iUseStatus,par_iDocStatus,par_cDescription
+
 local l_cHtml := ""
-local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
-local l_cName        := hb_DefaultValue(par_cName,"")
-local l_cNumber      := iif(pcount() > 6 .and. !hb_IsNil(par_iNumber),Trans(par_iNumber),"")
-local l_iUseStatus   := hb_DefaultValue(par_iUseStatus,1)
-local l_iDocStatus   := hb_DefaultValue(par_iDocStatus,1)
-local l_cDescription := hb_DefaultValue(par_cDescription,"")
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
+
+local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA             := hb_HGetDef(par_hValues,"AKA","")
+local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",""))
+local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_aSQLResult   := {}
 
@@ -4046,9 +4176,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-
 l_cHtml += [<div class="m-3"></div>]
-
 
 l_cHtml += [<div class="m-3">]
 
@@ -4057,6 +4185,11 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Name</td>]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
@@ -4090,7 +4223,7 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<tr>]
         l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -4113,13 +4246,14 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iEnumValuePk
 local l_cEnumValueName
+local l_cEnumValueAKA
 local l_cEnumValueNumber,l_iEnumValueNumber
 local l_iEnumValueUseStatus
 local l_iEnumValueDocStatus
 local l_cEnumValueDescription
 local l_iEnumValueOrder
 local l_aSQLResult   := {}
-
+local l_hValues := {=>}
 local l_cErrorMessage := ""
 local l_oDB1
 
@@ -4129,6 +4263,13 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumValuePk          := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_cEnumValueName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+
+l_cEnumValueAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cEnumValueAKA)
+    l_cEnumValueAKA := NIL
+endif
+
+//oFcgi:GetInputValue("TextAKA")
 
 l_cEnumValueNumber      := SanitizeInput(oFcgi:GetInputValue("TextNumber"))
 l_iEnumValueNumber      := iif(empty(l_cEnumValueNumber),NULL,val(l_cEnumValueNumber))
@@ -4179,6 +4320,7 @@ case l_cActionOnSubmit == "Save"
             with object l_oDB1
                 :Table("1ed0fff1-f702-4c77-b66e-55a468ad8ad2","EnumValue")
                 :Field("EnumValue.Name"       ,l_cEnumValueName)
+                :Field("EnumValue.AKA"        ,l_cEnumValueAKA)
                 :Field("EnumValue.Number"     ,l_iEnumValueNumber)
                 :Field("EnumValue.UseStatus"  ,l_iEnumValueUseStatus)
                 :Field("EnumValue.DocStatus"  ,l_iEnumValueDocStatus)
@@ -4213,7 +4355,14 @@ case l_cActionOnSubmit == "Delete"   // EnumValue
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_iEnumValuePk,l_cErrorMessage,l_cEnumValueName,l_iEnumValueNumber,l_iEnumValueUseStatus,l_iEnumValueDocStatus,l_cEnumValueDescription)
+    l_hValues["Name"]            := l_cEnumValueName
+    l_hValues["AKA"]             := l_cEnumValueAKA
+    l_hValues["Number"]          := l_iEnumValueNumber
+    l_hValues["UseStatus"]       := l_iEnumValueUseStatus
+    l_hValues["DocStatus"]       := l_iEnumValueDocStatus
+    l_hValues["Description"]     := l_cEnumValueDescription
+
+    l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_cErrorMessage,l_iEnumValuePk,l_hValues)
 endif
 
 return l_cHtml
@@ -4482,7 +4631,7 @@ with object l_oDB1
     :Column("Application.AllowDestructiveDelete" , "Application_AllowDestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_AllowDestructiveDelete := (l_oData:Application_AllowDestructiveDelete == "1")
+        l_AllowDestructiveDelete := l_oData:Application_AllowDestructiveDelete
     endif
 endwith
 return l_AllowDestructiveDelete
@@ -4537,7 +4686,7 @@ with object l_oDB1
                     else
                         select ListOfRecordsToDeleteInCascadeDeleteTable
                         scan all
-CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                            CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,ListOfRecordsToDeleteInCascadeDeleteTable->pk)
                             if !:Delete("03fece13-f350-456d-badc-1a989702e79f","Column",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
                                 l_cErrorMessage := "Failed to delete Table. Error 6."
                                 exit
@@ -4561,7 +4710,7 @@ CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,ListOfRecordsToDeleteInCasca
                                 endscan
 
                                 if empty(l_cErrorMessage)
-CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
+                                    CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
                                     if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
                                         l_cErrorMessage := "Failed to delete Table. Error 9."
                                     endif
@@ -4633,7 +4782,7 @@ with object l_oDB1
                     endscan
 
                     if empty(l_cErrorMessage)
-CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,par_iNameSpacePk)
+                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,par_iNameSpacePk)
                         if !:Delete("1e8e8f31-df5d-47bf-9b1b-de3f87a6792a","NameSpace",par_iNameSpacePk)
                             l_cErrorMessage := "Failed to delete NameSpace. Error 6."
                         endif
@@ -4735,7 +4884,7 @@ with object l_oDB1
                                     endscan
                                     
                                     if empty(l_cErrorMessage)
-CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
+                                        CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
                                         if !:Delete("7995ba50-8aa8-419c-8933-131cee5addc0","Application",par_iApplicationPk)
                                             l_cErrorMessage := "Failed to delete Application. Error 10."
                                         endif

@@ -30,12 +30,16 @@
 
 ## Visualization
 - When selecting a table in a diagram, if the same table is used in additional diagrams allow to easily open a new tab with that diagram.
-- When viewing a table detail, allow to easily add related tables.
 - Handle when multiple foreign keys link the same parent and child table (Collapsed Arrows), or bidirectional links (Like last child added.)
 - Support for multiple canvas dimension.
 - Allow to reposition entire diagram.
 - Auto Align tables or multi-select align.
 - Color coding for tables and link that are inactive (being implemented).
+- At the level of diagrams add settings to set what the table (nodes) and columns (arrows) should display, including on hover.
+- At the level of diagrams add settings to specify colors, fonts, spacing and other CSS settings for tables and columns.
+- At the level of diagrams add settings to not show certain fields like pk, fk_*, created_by ....
+- Free form navigation diagram. Specify a starting table, then navigate throughout the network of tables.
+- Store User and Diagram specific preferences (DiagramUser), for example: which tab to display when displaying the node (table) detail.
 
 ## Intra Application Mapping
 - Allow to map tables and columns across application.

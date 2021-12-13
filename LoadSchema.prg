@@ -30,12 +30,12 @@ local l_LastEnumValueOrder
 local l_cColumnType
 local l_iColumnLength
 local l_iColumnScale
-local l_cColumnNullable    // Due to a bug in hb_orm on fetching Boolean field types, use a Char instead. This will need some change after bug fix in ORM
+local l_lColumnNullable
 local l_iFk_Enumeration
 
 local l_cIndexName
 local l_cIndexExpression
-local l_cIndexUnique
+local l_lIndexUnique
 local l_iIndexAlgo
 
 local l_oDB1
@@ -60,7 +60,7 @@ local l_hEnumerations := {=>}
 local l_hTables       := {=>}  // The key is <NameSpace>.<TableName>
 local l_hColumns      := {=>}  // The key is <NameSpace>.<TableName>.<ColumnName>
 
-
+// If switching to MySQL to store our own tables, have to deal with variables/fields: IndexUnique, ColumnNullable
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -475,7 +475,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
                     l_cColumnName     := alltrim(ListOfFieldsForLoads->field_name)
-                    l_cColumnNullable := alltrim(ListOfFieldsForLoads->field_nullable)
+                    l_lColumnNullable := (alltrim(ListOfFieldsForLoads->field_nullable) == "1")
                     l_iFk_Enumeration := 0
 
 // if ListOfFieldsForLoads->field_type == "USER-DEFINED"
@@ -616,7 +616,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType     .and. ;
                            ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength   .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale    .and. ;
-                           allt(ListOfColumnsInDataDictionary->Column_Nullable)        == l_cColumnNullable .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_fk_Enumeration,0) == l_iFk_Enumeration
 
                         else
@@ -628,7 +628,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                     :Field("Column.Type"          ,l_cColumnType)
                                     :Field("Column.Length"        ,l_iColumnLength)
                                     :Field("Column.Scale"         ,l_iColumnScale)
-                                    :Field("Column.Nullable"      ,(l_cColumnNullable == "1"))
+                                    :Field("Column.Nullable"      ,l_lColumnNullable)
                                     :Field("Column.fk_Enumeration",l_iFk_Enumeration)
                                     if :Update(l_iColumnPk)
                                         l_iUpdatedColumns += 1
@@ -652,7 +652,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Field("Column.Type"          ,l_cColumnType)
                             :Field("Column.Length"        ,l_iColumnLength)
                             :Field("Column.Scale"         ,l_iColumnScale)
-                            :Field("Column.Nullable"      ,(l_cColumnNullable == "1"))
+                            :Field("Column.Nullable"      ,l_lColumnNullable)
                             :Field("Column.fk_Enumeration",l_iFk_Enumeration)
                             :Field("Column.UsedBy"        ,1)
                             if :Add()
@@ -770,7 +770,7 @@ endif
                     l_cIndexName       := ListOfIndexesForLoads->index_name
                     l_cIndexExpression := ListOfIndexesForLoads->index_definition
 
-                    l_cIndexUnique := iif(("CREATE UNIQUE INDEX" $ l_cIndexExpression),"1","0")
+                    l_lIndexUnique := ("CREATE UNIQUE INDEX" $ l_cIndexExpression)
                     if "USING btree" $ l_cIndexExpression
                         l_iIndexAlgo := 1
                     else
@@ -790,14 +790,14 @@ endif
                         l_iIndexPk := ListOfIndexesInDataDictionary->Pk
 
                         if !(trim(nvl(ListOfIndexesInDataDictionary->Index_Name,"")) == l_cIndexName) .or. ;
-                            Alltrim(ListOfIndexesInDataDictionary->Index_Unique) <> l_cIndexUnique    .or. ;
+                            ListOfIndexesInDataDictionary->Index_Unique <> l_lIndexUnique             .or. ;
                             ListOfIndexesInDataDictionary->Index_Algo <> l_iIndexAlgo                 .or. ;
                             ListOfIndexesInDataDictionary->Index_Expression <> l_cIndexExpression
 
                             with object l_oDB1
                                 :Table("200c26df-5127-4d07-b381-0d44ccd7aee7","Index")
                                 :Field("Index.Name"       , l_cIndexName)
-                                :Field("Index.Unique"     ,(l_cIndexUnique == "1"))
+                                :Field("Index.Unique"     ,l_lIndexUnique)
                                 :Field("Index.Algo"       ,l_iIndexAlgo)
                                 :Field("Index.Expression" ,l_cIndexExpression)
                                 if :Update(l_iIndexPk)
@@ -819,7 +819,7 @@ endif
                             :Field("Index.fk_Table"  ,l_iTablePk)
                             :Field("Index.UseStatus" ,1)
                             :Field("Index.UsedBy"    ,1)
-                            :Field("Index.Unique"    ,(l_cIndexUnique == "1"))
+                            :Field("Index.Unique"    ,l_lIndexUnique)
                             :Field("Index.Algo"      ,l_iIndexAlgo)
                             :Field("Index.Expression",l_cIndexExpression)
                             if :Add()

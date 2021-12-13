@@ -136,7 +136,7 @@ case l_cURLAction == "EditUser"
         endif
 
     else
-        l_cHtml += UserEditFormOnSubmit()
+        l_cHtml += UserEditFormOnSubmit(par_nUserPk)
     endif
 
 otherwise
@@ -198,7 +198,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">ID</th>]
                     // l_cHtml += [<th class="GridHeaderRowCells text-white">Password</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">AccessMode</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Access Mode</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
@@ -314,7 +314,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3" valign="top">AccessMode</td>]
+            l_cHtml += [<td class="pe-2 pb-3" valign="top">Access Mode</td>]
             l_cHtml += [<td class="pb-3" valign="top" style="vertical-align: top; ">]
 
                 l_cHtml += [<span class="pe-5">]
@@ -345,7 +345,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="5" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -403,7 +403,7 @@ l_cHtml += GetConfirmationModalForms()
 
 return l_cHtml
 //=================================================================================================================
-static function UserEditFormOnSubmit()
+static function UserEditFormOnSubmit(par_nCurrentUserPk)
 local l_cHtml := []
 local l_cActionOnSubmit
 
@@ -477,8 +477,10 @@ case l_cActionOnSubmit == "Save"
                 :Field("User.FirstName"   , l_cUserFirstName)
                 :Field("User.LastName"    , l_cUserLastName)
                 :Field("User.ID"          , l_cUserID)
-                :Field("User.AccessMode"  , l_iUserAccessMode)
-                :Field("User.Status"      , l_iUserStatus)
+                if l_iUserPk <> par_nCurrentUserPk  // May not change owns status or access mode (non admin user).
+                    :Field("User.AccessMode"  , l_iUserAccessMode)
+                    :Field("User.Status"      , l_iUserStatus)
+                endif
                 :Field("User.Description" , iif(empty(l_cUserDescription),NULL,l_cUserDescription))
                 if empty(l_iUserPk)
                     if :Add()
@@ -573,20 +575,24 @@ case l_cActionOnSubmit == "Cancel"
     endif
 
 case l_cActionOnSubmit == "Delete"   // User
-    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
- 
-    with object l_oDB1
-        :Table("839b7414-c220-49a4-ab7b-b3ca82373a14","UserAccessApplication")
-        :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
-        :SQL()
-        if :Tally == 0
-            :Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
-        else
-            l_cErrorMessage := "Related UserAccessApplication record on file"
-        endif
-    endwith
+    if l_iUserPk == par_nCurrentUserPk
+        l_cErrorMessage := "May not delete self."
+    else
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    
+        with object l_oDB1
+            :Table("839b7414-c220-49a4-ab7b-b3ca82373a14","UserAccessApplication")
+            :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
+            :SQL()
+            if :Tally == 0
+                :Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
+            else
+                l_cErrorMessage := "Related UserAccessApplication record on file"
+            endif
+        endwith
+    endif
 
 endcase
 

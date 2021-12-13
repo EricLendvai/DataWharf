@@ -51,6 +51,7 @@ With Object l_oDB2
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
+        :Column("Table.AKA"        ,"Table_AKA")
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
@@ -67,6 +68,7 @@ With Object l_oDB2
         :Column("Table.pk"         ,"pk")
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
+        :Column("Table.AKA"        ,"Table_AKA")
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
@@ -169,7 +171,7 @@ l_cHtml += [<td valign="top">]
 l_cHtml += [<div id="mynetwork"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
-l_cHtml += [<td valign="top">]
+l_cHtml += [<td valign="top">]  // width="100%"
 l_cHtml += [<div id="GraphInfo"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
@@ -194,6 +196,9 @@ scan all
         l_cNodeLabel := AllTrim(ListOfTables->NameSpace_Name)+"\n"+AllTrim(ListOfTables->Table_Name)
     else
         l_cNodeLabel := AllTrim(ListOfTables->Table_Name)
+    endif
+    if !hb_orm_isnull("ListOfTables","Table_AKA")
+        l_cNodeLabel += [\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
     endif
     l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+["]
 
@@ -251,7 +256,8 @@ l_cHtml += [  network = new vis.Network(container, data, options);]  //var
 
 l_cHtml += ' network.on("click", function (params) {'
 l_cHtml += '   params.event = "[original event]";'
-l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","info="+JSON.stringify(params) );'
+
+l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","diagrampk='+Trans(par_iDiagramPk)+'&info="+JSON.stringify(params) );'
 l_cHtml += '      });'
 
 l_cHtml += ' network.on("dragStart", function (params) {'
@@ -266,6 +272,8 @@ l_cHtml += [</script>]
 
 oFcgi:p_cjQueryScript += [MakeVis();]
 
+SendToClipboard(l_cHtml)
+
 return l_cHtml
 //=================================================================================================================
 function DataDictionaryVisualizeDesignOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
@@ -273,9 +281,17 @@ local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 local l_cNodePositions
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1
+local l_oDB2
+local l_oDB3
 local l_iDiagram_pk
 local l_cErrorMessage
+local l_cListOfRelatedTablePks
+local l_aListOfRelatedTablePks
+local l_nNumberOfCurrentTablesInDiagram
+local l_lSelected
+local l_cTablePk
+local l_iTablePk
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDesignOnSubmit")
 
@@ -291,8 +307,9 @@ case l_cActionOnSubmit == "Settings"
 case l_cActionOnSubmit == "NewDiagram"
     l_cHtml := DataDictionaryVisualizeSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
 
-case l_cActionOnSubmit == "SaveLayout"
+case "SaveLayout" $ l_cActionOnSubmit
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
     With Object l_oDB1
         :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
@@ -310,6 +327,162 @@ case l_cActionOnSubmit == "SaveLayout"
             :Update(l_iDiagram_pk)
         endif
     endwith
+
+    if "UpdateTableSelection" $ l_cActionOnSubmit
+        l_cListOfRelatedTablePks := SanitizeInput(oFcgi:GetInputValue("TextListOfRelatedTablePks"))
+        l_aListOfRelatedTablePks := hb_ATokens(l_cListOfRelatedTablePks,"*")
+        if len(l_aListOfRelatedTablePks) > 0
+            // Get the current list of tables
+
+            with Object l_oDB1
+                :Table("a702abbf-4c4e-44f7-a1fe-aefb3f99ff8b","DiagramTable")
+                :Distinct(.t.)
+                :Column("Table.pk","pk")
+                :Column("DiagramTable.pk","DiagramTable_pk")
+                :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+                :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+                :SQL("ListOfCurrentTablesInDiagram")
+                l_nNumberOfCurrentTablesInDiagram := :Tally
+                if l_nNumberOfCurrentTablesInDiagram > 0
+                    With Object :p_oCursor
+                        :Index("pk","pk")
+                        :CreateIndexes()
+                        :SetOrder("pk")
+                    endwith        
+                endif
+            endwith
+            if l_nNumberOfCurrentTablesInDiagram < 0
+                //Failed to get current list of tables in the diagram
+            else
+                if empty(l_nNumberOfCurrentTablesInDiagram)
+                    //Implicitly all tables are in the diagram. So should formally add all of them except the unselected ones.
+                    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB2
+                        :Table("24d7118f-c867-4f8e-ab1c-e1404766081b","Diagram")
+                        :Column("Table.pk" , "Table_pk")
+                        :Where("Diagram.pk = ^" , l_iDiagram_pk)
+                        :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
+                        :Join("Inner","Table","","Table.fk_NameSpace = NameSpace.pk")
+                        :SQL("ListOfAllApplicationTable")
+                        if :Tally > 0
+                            select ListOfAllApplicationTable
+                            scan all
+                                if "*"+Trans(ListOfAllApplicationTable->Table_pk)+"*" $ "*" +l_cListOfRelatedTablePks+ "*"  //One of the related tables
+                                    // "CheckTable"
+                                    l_lSelected := (oFcgi:GetInputValue("CheckTable"+Trans(ListOfAllApplicationTable->Table_pk)) == "1")
+                                else
+                                    l_lSelected := .t.
+                                endif
+                                if l_lSelected
+                                    with object l_oDB3
+                                        :Table("adee80f0-932a-40c2-92bd-91c4daad0ce7","DiagramTable")
+                                        :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                        :Field("DiagramTable.fk_Table"   , ListOfAllApplicationTable->Table_pk)
+                                        :Add()
+                                    endwith
+                                endif
+                            endscan
+                        endif
+                    endwith
+
+                else
+                    //Add or remove only the related tables that were listed.
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    for each l_cTablePk in l_aListOfRelatedTablePks
+                        l_lSelected := (oFcgi:GetInputValue("CheckTable"+l_cTablePk) == "1")
+
+                        if l_lSelected
+                            if !VFP_Seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
+                                //Add if not present
+                                with object l_oDB3
+                                    :Table("d653adf7-19bf-4c6a-b2d5-8c9043ce7061","DiagramTable")
+                                    :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                    :Field("DiagramTable.fk_Table"   , val(l_cTablePk))
+                                    :Add()
+                                endwith
+                            endif
+                        else
+                            if VFP_Seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
+                                //Remove if present
+                                l_oDB3:Delete("3ac82b2c-63eb-4604-8bf4-0271e17a5c6c","DiagramTable",ListOfCurrentTablesInDiagram->DiagramTable_pk)
+                            endif
+                        endif
+
+                    endfor
+                endif
+            endif
+
+        endif
+    endif
+
+    if "RemoveTable" $ l_cActionOnSubmit
+        l_iTablePk := val(oFcgi:GetInputValue("TextTablePkToRemove"))
+        if l_iTablePk > 0
+            // Get the current list of tables
+
+            with Object l_oDB1
+                :Table("1195f023-29b5-4fe9-9070-21eb078a8f90","DiagramTable")
+                :Distinct(.t.)
+                :Column("Table.pk","pk")
+                :Column("DiagramTable.pk","DiagramTable_pk")
+                :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+                :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+                :SQL("ListOfCurrentTablesInDiagram")
+                l_nNumberOfCurrentTablesInDiagram := :Tally
+                if l_nNumberOfCurrentTablesInDiagram > 0
+                    With Object :p_oCursor
+                        :Index("pk","pk")
+                        :CreateIndexes()
+                        :SetOrder("pk")
+                    endwith        
+                endif
+            endwith
+            if l_nNumberOfCurrentTablesInDiagram < 0
+                //Failed to get current list of tables in the diagram
+            else
+                if empty(l_nNumberOfCurrentTablesInDiagram)
+                    //Implicitly all tables are in the diagram. So should formally add all of them except the the current one.
+                    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB2
+                        :Table("e9e09007-67ad-4029-8187-050396590662","Diagram")
+                        :Column("Table.pk" , "Table_pk")
+                        :Where("Diagram.pk = ^" , l_iDiagram_pk)
+                        :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
+                        :Join("Inner","Table","","Table.fk_NameSpace = NameSpace.pk")
+                        :SQL("ListOfAllApplicationTable")
+                        if :Tally > 0
+                            select ListOfAllApplicationTable
+                            scan all
+                                if ListOfAllApplicationTable->Table_pk <> l_iTablePk
+                                    with object l_oDB3
+                                        :Table("4b80fd71-4d3f-4ae1-84bc-509391db42b7","DiagramTable")
+                                        :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                        :Field("DiagramTable.fk_Table"   , ListOfAllApplicationTable->Table_pk)
+                                        :Add()
+                                    endwith
+                                endif
+                            endscan
+                        endif
+                    endwith
+
+                else
+                    //Remove only the current tables.
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    if VFP_Seek(l_iTablePk,"ListOfCurrentTablesInDiagram","pk")
+                        //Remove if still present
+                        l_oDB3:Delete("a66d5243-995d-421e-9687-fb7fe1be895b","DiagramTable",ListOfCurrentTablesInDiagram->DiagramTable_pk)
+                    endif
+                endif
+            endif
+
+        endif
+    endif
+
+
     l_cHtml += DataDictionaryVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
 endcase
@@ -503,6 +676,7 @@ return l_cHtml
 function GetInfoDuringVisualization()
 local l_cHtml := []
 local l_cInfo := Strtran(oFcgi:GetQueryString("info"),[%22],["])
+local l_iDiagram_pk := val(oFcgi:GetQueryString("diagrampk"))
 local l_hOnClickInfo := {=>}
 local l_nLengthDecoded
 local l_aNodes
@@ -510,24 +684,40 @@ local l_aEdges
 local l_iTablePk
 local l_iColumnPk
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oData
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cApplicationLinkCode
 local l_cNameSpaceName
 local l_cTableName
+local l_cTableAKA
 local l_cTableDescription
+local l_cTableInformation
 local l_nTableUseStatus
 local l_nTableDocStatus
 local l_cColumnName
+local l_cColumnAKA
 local l_nColumnUseStatus
 local l_nColumnDocStatus
 local l_cFrom_NameSpace_Name
 local l_cFrom_Table_Name
+local l_cFrom_Table_AKA
 local l_cTo_NameSpace_Name
 local l_cTo_Table_Name
+local l_cTo_Table_AKA
+local l_nNumberOfRelatedTables
+local l_cRelatedTablesKey
+local l_hRelatedTables := {=>}
+local l_aRelatedTableInfo
+local l_CheckBoxId
+local l_nNumberOfTablesInDiagram
+local l_cListOfRelatedTablePks := ""
 
 oFcgi:TraceAdd("GetInfoDuringVisualization")
+
+hb_HKeepOrder(l_hRelatedTables,.f.) // Will order the hash by its key, with will be entered as upper case. For Keys stored as Strings they will need to be the same length
 
 // l_cHtml += [Hello World c2 - ]+hb_TtoS(hb_DateTime())+[  ]+l_cInfo
 
@@ -542,14 +732,114 @@ if len(l_aNodes) == 1
     l_iTablePk := l_aNodes[1]
 
     //Clicked on a table
+
+    // _M_ Refactor following code once orm supports unions and CTE (common Table Expressions)
+
+    //Current List of tables in diagram
+    with Object l_oDB3
+        :Table("c83a242a-622c-43c7-9e10-31316b16c7d4","DiagramTable")
+        :Distinct(.t.)
+        :Column("Table.pk","pk")
+        :Column("DiagramTable.pk","DiagramTable_pk")
+        :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+        :SQL("ListOfCurrentTablesInDiagram")
+        l_nNumberOfTablesInDiagram := :Tally
+        if l_nNumberOfTablesInDiagram > 0
+            With Object :p_oCursor
+                :Index("pk","pk")
+                :CreateIndexes()
+                :SetOrder("pk")
+            endwith
+        endif
+        // ExportTableToHtmlFile("ListOfCurrentTablesInDiagram","d:\PostgreSQL_ListOfCurrentTablesInDiagram.html","From PostgreSQL",,25,.t.)
+    endwith
+
+    //Get the list of related tables
+    with object l_oDB2
+        // Parent Of
+        :Table("c9f6365d-fa6e-496d-95f9-c0266c79df49","Column")
+        :Distinct(.t.)
+        :Column("Table.pk"       , "Table_pk")
+        :Column("NameSpace.Name" , "NameSpace_Name")
+        :Column("NameSpace.AKA"  , "NameSpace_AKA")
+        :Column("Table.Name"     , "Table_Name")
+        :Column("Table.AKA"      , "Table_AKA")
+        :Column("upper(NameSpace.Name)" , "tag1")
+        :Column("upper(Table.Name)"     , "tag2")
+        :Where("Column.fk_TableForeign = ^" , l_iTablePk)
+        :Join("inner","Table","","Column.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :SQL("ListOfRelatedTables")
+        if :Tally > 0
+            select ListOfRelatedTables
+            scan all
+                l_cRelatedTablesKey := padr(ListOfRelatedTables->tag1,200)+padr(ListOfRelatedTables->tag2,200)
+                l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
+                                                          ListOfRelatedTables->Table_pk,;
+                                                          ListOfRelatedTables->NameSpace_Name,;
+                                                          ListOfRelatedTables->NameSpace_AKA,;
+                                                          ListOfRelatedTables->Table_Name,;
+                                                          ListOfRelatedTables->Table_AKA,;
+                                                          .t.,.f.}   // Parent Of, Child Of
+            endscan
+        endif
+
+        // Child Of
+        :Table("6df92604-281c-4ec0-91fa-03074b4bf8dd","Column")
+        :Distinct(.t.)
+        :Column("Table.pk"       , "Table_pk")
+        :Column("NameSpace.Name" , "NameSpace_Name")
+        :Column("NameSpace.AKA"  , "NameSpace_AKA")
+        :Column("Table.Name"     , "Table_Name")
+        :Column("Table.AKA"      , "Table_AKA")
+        :Column("upper(NameSpace.Name)" , "tag1")
+        :Column("upper(Table.Name)"     , "tag2")
+        :Where("Column.fk_Table = ^" , l_iTablePk)
+        :Join("inner","Table","","Column.fk_TableForeign = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :SQL("ListOfRelatedTables")
+
+        if :Tally > 0
+            select ListOfRelatedTables
+            scan all
+                l_cRelatedTablesKey := padr(ListOfRelatedTables->tag1,200)+padr(ListOfRelatedTables->tag2,200)
+                l_aRelatedTableInfo := hb_HGetDef(l_hRelatedTables,l_cRelatedTablesKey,{})
+                if empty(len(l_aRelatedTableInfo))
+                    //The table was not already a "Parent Of"
+                    l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
+                                                              ListOfRelatedTables->Table_pk,;
+                                                              ListOfRelatedTables->NameSpace_Name,;
+                                                              ListOfRelatedTables->NameSpace_AKA,;
+                                                              ListOfRelatedTables->Table_Name,;
+                                                              ListOfRelatedTables->Table_AKA,;
+                                                              .f.,;    // Parent Of
+                                                              .t.  }   // Child Of    8th array element
+                else
+                    l_hRelatedTables[l_cRelatedTablesKey][8] := .t.
+                endif
+            endscan
+        endif
+
+        l_nNumberOfRelatedTables := len(l_hRelatedTables)
+        CloseAlias("ListOfRelatedTables")   // Not really needed since orm will auto-close cursors, but still added this for clarity.
+    endwith
+
     with object l_oDB1
         :Table("da9443c6-bffe-4ccd-bded-c3a7221bac9f","Table")
-        :Column("Application.LinkCode","Application_LinkCode")
-        :Column("NameSpace.name"      ,"NameSpace_Name")
-        :Column("Table.Name"          ,"Table_Name")
-        :Column("Table.Description"   ,"Table_Description")
-        :Column("Table.UseStatus"     ,"Table_UseStatus")
-        :Column("Table.DocStatus"     ,"Table_DocStatus")
+        :Column("Application.LinkCode","Application_LinkCode")  // 1
+        :Column("NameSpace.name"      ,"NameSpace_Name")        // 2
+        :Column("Table.Name"          ,"Table_Name")            // 3
+        :Column("Table.AKA"           ,"Table_AKA")             // 4
+        :Column("Table.Description"   ,"Table_Description")     // 5
+        :Column("Table.Information"   ,"Table_Information")     // 6
+        :Column("Table.UseStatus"     ,"Table_UseStatus")       // 7
+        :Column("Table.DocStatus"     ,"Table_DocStatus")       // 8
         :join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :join("inner","Application","","NameSpace.fk_Application = Application.pk")
         :Where("Table.pk = ^" , l_iTablePk)
@@ -559,13 +849,15 @@ if len(l_aNodes) == 1
             l_cApplicationLinkCode := AllTrim(l_aSQLResult[1,1])
             l_cNameSpaceName       := AllTrim(l_aSQLResult[1,2])
             l_cTableName           := AllTrim(l_aSQLResult[1,3])
-            l_cTableDescription    := nvl(l_aSQLResult[1,4],"")
-            l_nTableUseStatus      := l_aSQLResult[1,5]
-            l_nTableDocStatus      := l_aSQLResult[1,6]
+            l_cTableAKA            := AllTrim(nvl(l_aSQLResult[1,4],""))
+            l_cTableDescription    := nvl(l_aSQLResult[1,5],"")
+            l_cTableInformation    := nvl(l_aSQLResult[1,6],"")
+            l_nTableUseStatus      := l_aSQLResult[1,7]
+            l_nTableDocStatus      := l_aSQLResult[1,8]
 
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nTableUseStatus>=4,"feb4b4","d2e5ff")+[;">]
                 l_cHtml += [<div class="input-group">]
-                    l_cHtml += [<span class="navbar-brand ms-3">]+l_cNameSpaceName+[.]+l_cTableName+[</span>]
+                    l_cHtml += [<span class="navbar-brand ms-3">]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+[</span>]
                     if !empty(l_cTableDescription)
                         l_cHtml += [<div>]+TextToHTML(l_cTableDescription)+[</div>]
                     endif
@@ -574,38 +866,62 @@ if len(l_aNodes) == 1
 
             l_cHtml += [<div class="m-3"></div>]
 
-            :Table("4d84f290-c1f8-42f1-a2b0-e41244ccdfd2","Column")
-            :Column("Column.pk"             ,"pk")
-            :Column("Column.Name"           ,"Column_Name")
-            :Column("Column.UseStatus"      ,"Column_UseStatus")
-            :Column("Column.DocStatus"      ,"Column_DocStatus")
-            :Column("Column.Description"    ,"Column_Description")
-            :Column("Column.Order"          ,"Column_Order")
-            :Column("Column.Type"           ,"Column_Type")
-            :Column("Column.Length"         ,"Column_Length")
-            :Column("Column.Scale"          ,"Column_Scale")
-            :Column("Column.Nullable"       ,"Column_Nullable")
-            :Column("Column.UsedBy"         ,"Column_UsedBy")
-            :Column("Column.fk_TableForeign","Column_fk_TableForeign")
-            :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
 
-            :Column("NameSpace.Name"                ,"NameSpace_Name")
-            :Column("Table.Name"                    ,"Table_Name")
-            :Column("Enumeration.Name"              ,"Enumeration_Name")
-            :Column("Enumeration.ImplementAs"       ,"Enumeration_ImplementAs")
-            :Column("Enumeration.ImplementLength"   ,"Enumeration_ImplementLength")
-            
-            :Join("left","Table"      ,"","Column.fk_TableForeign = Table.pk")
-            :Join("left","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
-            :Join("left","Enumeration","","Column.fk_Enumeration  = Enumeration.pk")
-            :Where("Column.fk_Table = ^",l_iTablePk)
-            :OrderBy("Column_Order")
-            :SQL("ListOfColumns")
 
-            if :Tally > 0
-                l_cHtml += [<div class="m-3">]
+            l_cHtml += [<ul class="nav nav-tabs">]
+                l_cHtml += [<li class="nav-item">]
+                    l_cHtml += [<a id="TabDetail1" class="nav-link active" href="#"]+[ onclick="$('#DetailType1').show();$('#DetailType2').hide();$('#DetailType3').hide();$('#DetailType4').hide();$('#TabDetail1').addClass('active');$('#TabDetail2').removeClass('active');$('#TabDetail3').removeClass('active');$('#TabDetail4').removeClass('active');">Columns</a>]
+                l_cHtml += [</li>]
+                if l_nNumberOfRelatedTables > 0
+                    l_cHtml += [<li class="nav-item">]
+                        l_cHtml += [<a id="TabDetail2" class="nav-link" href="#"]+   [ onclick="$('#DetailType1').hide();$('#DetailType2').show();$('#DetailType3').hide();$('#DetailType4').hide();$('#TabDetail1').removeClass('active');$('#TabDetail2').addClass('active');$('#TabDetail3').removeClass('active');$('#TabDetail4').removeClass('active');">Related Tables In App</a>]
+                    l_cHtml += [</li>]
+                endif
+                l_cHtml += [<li class="nav-item">]
+                    l_cHtml += [<a id="TabDetail4" class="nav-link" href="#"]+       [ onclick="$('#DetailType1').hide();$('#DetailType2').hide();$('#DetailType3').hide();$('#DetailType4').show();$('#TabDetail1').removeClass('active');$('#TabDetail2').removeClass('active');$('#TabDetail3').removeClass('active');$('#TabDetail4').addClass('active');">Other Diagrams</a>]
+                l_cHtml += [</li>]
+                l_cHtml += [<li class="nav-item">]
+                    l_cHtml += [<a id="TabDetail3" class="nav-link" href="#"]+       [ onclick="$('#DetailType1').hide();$('#DetailType2').hide();$('#DetailType3').show();$('#DetailType4').hide();$('#TabDetail1').removeClass('active');$('#TabDetail2').removeClass('active');$('#TabDetail3').addClass('active');$('#TabDetail4').removeClass('active');">Table Info</a>]
+                l_cHtml += [</li>]
+            l_cHtml += [</ul>]
 
-                    l_cHtml += [<div class="row justify-content-center">]
+            l_cHtml += [<div class="m-3"></div>]
+
+            l_cHtml += [<div id="DetailType1" class="m-3">]
+
+                :Table("4d84f290-c1f8-42f1-a2b0-e41244ccdfd2","Column")
+                :Column("Column.pk"             ,"pk")
+                :Column("Column.Name"           ,"Column_Name")
+                :Column("Column.AKA"            ,"Column_AKA")
+                :Column("Column.UseStatus"      ,"Column_UseStatus")
+                :Column("Column.DocStatus"      ,"Column_DocStatus")
+                :Column("Column.Description"    ,"Column_Description")
+                :Column("Column.Order"          ,"Column_Order")
+                :Column("Column.Type"           ,"Column_Type")
+                :Column("Column.Length"         ,"Column_Length")
+                :Column("Column.Scale"          ,"Column_Scale")
+                :Column("Column.Nullable"       ,"Column_Nullable")
+                :Column("Column.UsedBy"         ,"Column_UsedBy")
+                :Column("Column.fk_TableForeign","Column_fk_TableForeign")
+                :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
+
+                :Column("NameSpace.Name"                ,"NameSpace_Name")
+                :Column("Table.Name"                    ,"Table_Name")
+                :Column("Table.AKA"                     ,"Table_AKA")
+                :Column("Enumeration.Name"              ,"Enumeration_Name")
+                :Column("Enumeration.AKA"               ,"Enumeration_AKA")
+                :Column("Enumeration.ImplementAs"       ,"Enumeration_ImplementAs")
+                :Column("Enumeration.ImplementLength"   ,"Enumeration_ImplementLength")
+                
+                :Join("left","Table"      ,"","Column.fk_TableForeign = Table.pk")
+                :Join("left","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
+                :Join("left","Enumeration","","Column.fk_Enumeration  = Enumeration.pk")
+                :Where("Column.fk_Table = ^",l_iTablePk)
+                :OrderBy("Column_Order")
+                :SQL("ListOfColumns")
+
+                if :Tally > 0
+                    l_cHtml += [<div class="row">]  //  justify-content-center
                         l_cHtml += [<div class="col-auto">]
 
                             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
@@ -627,7 +943,7 @@ if len(l_aNodes) == 1
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Applications/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+Allt(ListOfColumns->Column_Name)+[/">]+Allt(ListOfColumns->Column_Name)+[</a>]
+                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Applications/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</a>]
                                     l_cHtml += [</td>]
 
                                     // Type
@@ -636,6 +952,7 @@ if len(l_aNodes) == 1
                                                                         ListOfColumns->Column_Length,;
                                                                         ListOfColumns->Column_Scale,;
                                                                         ListOfColumns->Enumeration_Name,;
+                                                                        ListOfColumns->Enumeration_AKA,;
                                                                         ListOfColumns->Enumeration_ImplementAs,;
                                                                         ListOfColumns->Enumeration_ImplementLength,;
                                                                         l_cSitePath,;
@@ -645,14 +962,14 @@ if len(l_aNodes) == 1
 
                                     // Nullable
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                        l_cHtml += iif(alltrim(ListOfColumns->Column_Nullable) == "1",[<i class="fas fa-check"></i>],[&nbsp;])
+                                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="fas fa-check"></i>],[&nbsp;])
                                     l_cHtml += [</td>]
 
                                     // Foreign Key To
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         if !hb_isNil(ListOfColumns->Table_Name)
                                             l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[Applications/ListColumns/]+l_cApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
-                                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name
+                                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                                             l_cHtml += [</a>]
                                         endif
                                     l_cHtml += [</td>]
@@ -684,8 +1001,97 @@ if len(l_aNodes) == 1
                         l_cHtml += [</div>]
                     l_cHtml += [</div>]
 
+                endif
+
+            l_cHtml += [</div>]
+
+
+            if l_nNumberOfRelatedTables > 0
+
+                l_cHtml += [<div id="DetailType2" style="display: none;" class="m-3 form-check form-switch">]
+
+                    //---------------------------------------------------------------------------
+                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
+                    l_cHtml += [network.storePositions();]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                    l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
+                    l_cHtml += [">Update Table selection and Save Layout</button></div>]
+                    //---------------------------------------------------------------------------
+
+                    // l_cHtml += [<h1>Related Tables</h1>]
+
+                    // l_aRelatedTableInfo
+                    //     1 = In Diagram
+                    //     2 = table_pk
+                    //     3 = NameSpace_Name
+                    //     4 = NameSpace_AKA
+                    //     5 = Table_Name
+                    //     6 = Table_AKA
+                    //     7 = Parent Of
+                    //     8 = Child Of
+                    l_cHtml += [<table class="">]
+
+                    for each l_aRelatedTableInfo in l_hRelatedTables
+                        l_cHtml += [<tr><td>]
+                            l_CheckBoxId := "CheckTable"+Trans(l_aRelatedTableInfo[2])
+                            if !empty(l_cListOfRelatedTablePks)
+                                l_cListOfRelatedTablePks += "*"
+                            endif
+                            l_cListOfRelatedTablePks += Trans(l_aRelatedTableInfo[2])
+
+                            // l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
+                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
+
+                            l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
+
+                            l_cHtml += l_aRelatedTableInfo[3]+FormatAKAForDisplay(l_aRelatedTableInfo[4])+[.]+l_aRelatedTableInfo[5]+FormatAKAForDisplay(l_aRelatedTableInfo[6])
+                            if l_aRelatedTableInfo[8]
+                                l_cHtml += [<span class="fas fa-arrow-left ms-2">]
+                            endif
+                            if l_aRelatedTableInfo[7]
+                                l_cHtml += [<span class="fas fa-arrow-right ms-2">]
+                            endif
+
+                            l_cHtml += [</label>]
+
+                        l_cHtml += [</td></tr>]
+                    endfor
+
+                    l_cHtml += [</table>]
+
+                    l_cHtml += [<input type="hidden" name="TextListOfRelatedTablePks" value="]+l_cListOfRelatedTablePks+[">]
+
+                    // select ListOfRelatedTables
+                    // scan all
+                    //     l_cHtml += [<div>]+ListOfRelatedTables->NameSpace_Name+FormatAKAForDisplay(ListOfRelatedTables->NameSpace_AKA)+[.]+ListOfRelatedTables->Table_Name+FormatAKAForDisplay(ListOfRelatedTables->Table_AKA)+[</div>]
+                    // endscan
                 l_cHtml += [</div>]
             endif
+
+
+            l_cHtml += [<div id="DetailType3" style="display: none;" class="m-3">]
+                //---------------------------------------------------------------------------
+                l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
+                l_cHtml += [network.storePositions();]
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
+                l_cHtml += [">Remove Table and Save Layout</button></div>]
+                //---------------------------------------------------------------------------
+                l_cHtml += [<input type="hidden" name="TextTablePkToRemove" value="]+Trans(l_iTablePk)+[">]
+                
+                if !empty(l_cTableInformation)
+                    l_cHtml += [<div class="mt-3">]+TextToHTML(l_cTableInformation)+[<div>]
+                endif
+
+            l_cHtml += [</div>]
+
+
+            l_cHtml += [<div id="DetailType4" style="display: none;" class="m-3">]
+                l_cHtml += [<h1>Other Diagrams</h1>]
+            l_cHtml += [</div>]
+
+
+            
 
         endif
     endwith
@@ -698,18 +1104,21 @@ else
         with object l_oDB1
             :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Column")
 
-            :Column("Column.Name  "    ,"Column_Name")
-            :Column("Column.UseStatus" ,"Column_UseStatus")
-            :Column("Column.DocStatus" ,"Column_DocStatus")
+            :Column("Column.Name"      ,"Column_Name")          //  1
+            :Column("Column.AKA"       ,"Column_AKA")           //  2
+            :Column("Column.UseStatus" ,"Column_UseStatus")     //  3
+            :Column("Column.DocStatus" ,"Column_DocStatus")     //  4
             
-            :Column("NameSpace.Name"   ,"From_NameSpace_Name")
-            :Column("Table.Name"       ,"From_Table_Name")
+            :Column("NameSpace.Name"   ,"From_NameSpace_Name")  //  5
+            :Column("Table.Name"       ,"From_Table_Name")      //  6
+            :Column("Table.AKA"        ,"From_Table_AKA")       //  7
             :join("inner","Table"      ,"","Column.fk_Table = Table.pk")
             :join("inner","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
             :join("inner","Application","","NameSpace.fk_Application = Application.pk")
 
-            :Column("NameSpaceTo.name" , "To_NameSpace_Name")
-            :Column("TableTo.name"     , "To_Table_Name")
+            :Column("NameSpaceTo.name" , "To_NameSpace_Name")   //  8
+            :Column("TableTo.name"     , "To_Table_Name")       //  9
+            :Column("TableTo.AKA"      , "To_Table_AKA")        // 10
             :Join("inner","Table"    ,"TableTo"    ,"Column.fk_TableForeign = TableTo.pk")
             :Join("inner","NameSpace","NameSpaceTo","TableTo.fk_NameSpace = NameSpaceTo.pk")
             
@@ -718,20 +1127,23 @@ else
 
             if :Tally == 1
                 l_cColumnName          := Alltrim(l_aSQLResult[1,1])
-                l_nColumnUseStatus     := l_aSQLResult[1,2]
-                l_nColumnDocStatus     := l_aSQLResult[1,3]
+                l_cColumnAKA           := Alltrim(nvl(l_aSQLResult[1,2],""))
+                l_nColumnUseStatus     := l_aSQLResult[1,3]
+                l_nColumnDocStatus     := l_aSQLResult[1,4]
 
-                l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,4])
-                l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,5])
+                l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,5])
+                l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,6])
+                l_cFrom_Table_AKA      := Alltrim(nvl(l_aSQLResult[1,7],""))
 
-                l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,6])
-                l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,7])
+                l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,8])
+                l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,9])
+                l_cTo_Table_AKA        := Alltrim(nvl(l_aSQLResult[1,10],""))
 
                 l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]+iif(l_nColumnUseStatus>=4,"feb4b4","d2e5ff")+[;">]
                     l_cHtml += [<div class="input-group">]
-                        l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+[</span>]
-                        l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+[</span>]
-                        l_cHtml += [<span class="navbar-brand ms-3">Column: ]+l_cColumnName+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+FormatAKAForDisplay(l_cFrom_Table_AKA)+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+FormatAKAForDisplay(l_cTo_Table_AKA)+[</span>]
+                        l_cHtml += [<span class="navbar-brand ms-3">Column: ]+l_cColumnName+FormatAKAForDisplay(l_cColumnAKA)+[</span>]
                     l_cHtml += [</div>]
                 l_cHtml += [</nav>]
 
@@ -834,6 +1246,7 @@ with Object l_oDB1
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
+    :Column("Table.AKA"        ,"Table_AKA")
     :Column("Table.UseStatus"  ,"Table_UseStatus")
     :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
@@ -879,7 +1292,8 @@ scan all
     l_CheckBoxId := "CheckTable"+Trans(ListOfAllTablesInApplication->pk)
     l_cHtml += [<tr><td>]
         l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Table"+Trans(ListOfAllTablesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
-        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+iif(l_lShowNameSpace,ListOfAllTablesInApplication->NameSpace_Name+[.],[])+ListOfAllTablesInApplication->Table_Name+[</span></label>]
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+iif(l_lShowNameSpace,ListOfAllTablesInApplication->NameSpace_Name+[.],[])+ListOfAllTablesInApplication->Table_Name+FormatAKAForDisplay(ListOfAllTablesInApplication->Table_AKA)
+        l_cHtml += [</span></label>]
     l_cHtml += [</td></tr>]
 endscan
 l_cHtml += [</table>]
