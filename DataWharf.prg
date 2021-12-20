@@ -47,7 +47,10 @@ class MyFcgi from hb_Fcgi
     data p_o_SQLConnection
     data p_cHeader          init ""
     data p_cjQueryScript    init ""
-    data p_nUserAccessMode  init 0
+    data p_iUserPk          init 0   // Current "User.pk"
+    data p_cUserName        init ""  // Current logged in User Name
+    data p_nUserAccessMode  init 0   // User based access level. Comes from "User.AccessMode"
+    data p_nAccessLevel     init 0   // Current Application "UserAccessApplication.AccessLevel if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
     //In this app the first element of the URL is always a page name. 
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
@@ -73,7 +76,6 @@ class MyFcgi from hb_Fcgi
                                   {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
                                   {  "?","Other"                                        ,.f.,.f.,.f.,""                           ,""};
                                  }
-//12345
     method OnFirstRequest()
     method OnRequest()
     method OnShutdown()
@@ -183,8 +185,16 @@ local l_iLoop
 local l_cAjaxAction
 local l_cThisAppTitle
 local l_cSecuritySalt
+local l_lCyanAuditAware := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
 
 SendToDebugView("Request Counter",::RequestCount)
+
+//Reset transient properties
+
+::p_iUserPk         := 0
+::p_cUserName       := ""
+::p_nUserAccessMode := 0
+::p_nAccessLevel    := 0
 
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
 if (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
@@ -214,12 +224,17 @@ if ::p_o_SQLConnection == NIL
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
     l_cHtml += [</body>]
     l_cHtml += [</html>]
+
 else
+    if l_lCyanAuditAware
+        //Ensure no user specific cyanaudit is being identified
+        ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( 0 );")
+    endif
+
 // l_cSitePath := ::GetEnvironment("CONTEXT_PREFIX")
 // if len(l_cSitePath) == 0
 //     l_cSitePath := "/"
 // endif
-
 // ::GetQueryString("p")
 
     ::p_URLPathElements := {}
@@ -240,11 +255,8 @@ else
     if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
         l_cPageName := "home"
     endif
+
     ::p_PageName := l_cPageName
-
-
-    // AltD()
-
 
     // ::URLPathElements := {}
     //Following is Buggy
@@ -252,9 +264,9 @@ else
     //     ACopy(l_aPathElements,::URLPathElements,2,len(l_aPathElements)-1)
     // endif
 
-        // for l_iLoop := 1 to len(l_aPathElements)
-        //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
-        // endfor
+    // for l_iLoop := 1 to len(l_aPathElements)
+    //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
+    // endfor
 
     if l_cPageName <> "ajax"
 
@@ -289,13 +301,10 @@ else
         l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
 
-
         // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/Themes/smoothness/jQueryUI.css">]
         // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_4_6_0/js/bootstrap.bundle.min.js"></script>]
         // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_4_6_0/css/bootstrap.min.css">]
         // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/jquery-ui.min.js"></script>]
-
-
 
         ::p_cHeader := l_cPageHeaderHtml
     endif
@@ -351,7 +360,7 @@ else
             endif
             l_cSessionID := ""
             ::DeleteCookie("SessionID")
-            ::Redirect("home")
+            ::Redirect(::RequestSettings["SitePath"]+"home")
             return nil
         endif
     endif
@@ -397,7 +406,7 @@ else
         //If not a public page and not logged in, then request to log in.
         if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0 .and. !l_lLoggedIn
             if oFcgi:IsGet()
-                l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+                l_cBody += GetPageHeader(.f.,l_cPageName)
                 l_cBody += BuildPageLoginScreen()
             else
                 //Post
@@ -444,12 +453,12 @@ else
                             endif
                         else
                             //Invalid Password
-                            l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+                            l_cBody += GetPageHeader(.f.,l_cPageName)
                             l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.1")
                         endif
                     else
                         //Invalid Active ID
-                        l_cBody += GetPageHeader(.f.,l_cPageName,"",1)
+                        l_cBody += GetPageHeader(.f.,l_cPageName)
                         l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.2")
                     endif
 
@@ -460,8 +469,22 @@ else
     endif
 
     if l_lLoggedIn
+        ::p_iUserPk         := l_iUserPk
+        ::p_cUserName       := l_cUserName
         ::p_nUserAccessMode := l_nUserAccessMode
 
+        //Since we now know the current user access mode, will check if this would be an invalid access right.
+        if ((::p_nUserAccessMode < 4) .and. lower(l_cPageName) == "users")         .or. ;  // block from going to "Users" web page, unless "Root Admin" access right.
+           ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
+            ::Redirect(::RequestSettings["SitePath"]+"home")
+            return nil
+        endif
+
+        if l_lCyanAuditAware
+            //Tell Cyanaudit to log future entries as the current user.
+            ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
+        endif
+        
         if l_cPageName == "ajax"
             l_cBody := [UNBUFFERED]
             if len(::p_URLPathElements) >= 2 .and. !empty(::p_URLPathElements[2])
@@ -478,11 +501,9 @@ else
 
             endif
         else
-            l_cBody += GetPageHeader(.t.,l_cPageName,l_cUserName,::p_nUserAccessMode)
+            l_cBody += GetPageHeader(.t.,l_cPageName)
 
-            // l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),l_cUserName,l_iUserPk)
-            l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(l_cUserName,l_iUserPk)
-
+            l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec()
 
             if upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y"
                 l_cBody += [<div class="m-3">]   //Spacer
@@ -578,7 +599,7 @@ endif
 
 return nil
 //=================================================================================================================
-function GetPageHeader(par_LoggedIn,par_cCurrentPage,par_cUserName,par_nUserAccessMode)
+function GetPageHeader(par_LoggedIn,par_cCurrentPage)
 local l_cHtml := []
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
@@ -611,12 +632,16 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                    if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                    endif
+                    if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                    endif
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
-                    l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+par_cUserName+iif(par_nUserAccessMode < 1," / View Only","")+[)</a></li>]
+                    l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a></li>]
                 l_cHtml += [</ul>]
             l_cHtml += [</div>]
         endif
@@ -780,5 +805,70 @@ return left(par_cText,l_nPos)
 //=================================================================================================================
 function FormatAKAForDisplay(par_cAKA)
 return iif(!hb_isNil(par_cAKA) .and. !empty(par_cAKA),[&nbsp;(]+Strtran(par_cAKA,[ ],[&nbsp;])+[)],[])
+//=================================================================================================================
+function SaveUserSetting(par_cName,par_cValue)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+
+with object l_oDB1
+    :Table("0afe8937-b79b-4359-b630-dc58ef6aed78","UserSetting")
+    :Column("UserSetting.pk" , "pk")
+    :Column("UserSetting.ValueC" , "ValueC")
+    :Where("UserSetting.fk_User = ^" , oFcgi:p_iUserPk)
+    :Where("UserSetting.KeyC = ^" , par_cName)
+    :SQL(@l_aSQLResult)
+    
+    if empty(par_cValue)
+        //To delete the Setting
+        if :Tally == 1
+            :Delete("808518b2-81c6-460b-96ae-27c7cd550447","UserSetting",l_aSQLResult[1,1])
+        endif
+    else
+        do case
+        case :Tally  < 0
+        case :Tally == 0
+            :Table("cc66e1c9-cc6d-4442-812e-0711e02a5811","UserSetting")
+            :Field("UserSetting.fk_User",oFcgi:p_iUserPk)
+            :Field("UserSetting.KeyC"   ,par_cName)
+            :Field("UserSetting.ValueC" ,par_cValue)
+            :Add()
+        case :Tally == 1
+            if l_aSQLResult[1,2] <> par_cValue
+                :Table("a33aeb73-8c9c-42a4-aa1f-3584547f4ba8","UserSetting")
+                :Field("UserSetting.ValueC" , par_cValue)
+                :Update(l_aSQLResult[1,1])
+            endif
+        otherwise
+            // Bad data, more than 1 record.
+        endcase
+    endif
+endwith
+
+return NIL
+//=================================================================================================================
+function GetUserSetting(par_cName)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_cValue := ""
+
+with object l_oDB1
+    :Table("fbfc0172-e47a-4bce-b798-9eff0344c3a5","UserSetting")
+    :Column("UserSetting.ValueC" , "ValueC")
+    :Where("UserSetting.fk_User = ^" , oFcgi:p_iUserPk)
+    :Where("UserSetting.KeyC = ^" , par_cName)
+    :SQL(@l_aSQLResult)
+    
+    do case
+    case :Tally  < 0
+    case :Tally == 0
+    case :Tally == 1
+        l_cValue := l_aSQLResult[1,1]
+    otherwise
+        // Bad data, more than 1 record.
+    endcase
+endwith
+
+return l_cValue
+//=================================================================================================================
 //=================================================================================================================
  

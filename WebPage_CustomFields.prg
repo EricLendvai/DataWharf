@@ -6,7 +6,7 @@ memvar oFcgi
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())
 //=================================================================================================================
-function BuildPageCustomFields(par_cUserName,par_nUserPk)
+function BuildPageCustomFields()
 local l_cHtml := []
 local l_oDB1
 local l_oData
@@ -906,7 +906,7 @@ endwith
 select (l_select)
 return Nil
 //=================================================================================================================
-function CustomFieldsBuild(par_iApplicationPk,par_UsedOn,par_iPk,par_hValues)
+function CustomFieldsBuild(par_iApplicationPk,par_UsedOn,par_iPk,par_hValues,par_extra_property)
 local l_select := iif(used(),select(),0)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cHtml := []
@@ -959,7 +959,7 @@ with object l_oDB1
                     do case
                     case ListOfCustomFieldsToBuild->CustomField_Type == 1  // Logical
                         l_cHtml += [<div class="form-check form-switch">]
-                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="Check]+l_cObjectName+[" id="Check]+l_cObjectName+[" value="1"]+iif(hb_HGetDef(par_hValues,l_cObjectName,.f.)," checked","")+[ class="form-check-input">]
+                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="Check]+l_cObjectName+[" id="Check]+l_cObjectName+[" value="1"]+iif(hb_HGetDef(par_hValues,l_cObjectName,.f.)," checked","")+[ class="form-check-input" ]+par_extra_property+[>]
                         l_cHtml += [</div>]
 
                     case ListOfCustomFieldsToBuild->CustomField_Type == 2  // Multi Choice
@@ -967,7 +967,7 @@ with object l_oDB1
                         l_cOptionDefinition := ListOfCustomFieldsToBuild->CustomField_OptionDefinition
                         l_nOption           := hb_HGetDef(par_hValues,l_cObjectName,0)
 
-                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="Combo]+l_cObjectName+[" id="Combo]+l_cObjectName+[">]
+                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="Combo]+l_cObjectName+[" id="Combo]+l_cObjectName+[" ]+par_extra_property+[>]
                         l_cHtml += [<option value="0"]+iif(l_nOption==0,[ selected],[])+[></option>]
                         for l_nLineNumber := 1 to MLCount(l_cOptionDefinition,1024)
                             l_cLine := MemoLine(l_cOptionDefinition,1024,l_nLineNumber)
@@ -987,12 +987,12 @@ with object l_oDB1
                         
                     case ListOfCustomFieldsToBuild->CustomField_Type == 3  // String
                         l_nLength := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Length,0))
-                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[" maxlength="]+Trans(l_nLength)+[" size="]+Trans(Min(l_nLength,80))+[">]
+                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[" maxlength="]+Trans(l_nLength)+[" size="]+Trans(Min(l_nLength,80))+[" ]+par_extra_property+[>]
                         
                     case ListOfCustomFieldsToBuild->CustomField_Type == 4  // Text Area
                         l_nWidth  := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Width,0))
                         l_nHeight := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Height,0))
-                        l_cHtml += [<textarea]+UPDATESAVEBUTTON+[ name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" rows="]+Trans(l_nHeight)+[" cols="]+Trans(l_nWidth)+[">]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[</textarea>]
+                        l_cHtml += [<textarea]+UPDATESAVEBUTTON+[ name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" rows="]+Trans(l_nHeight)+[" cols="]+Trans(l_nWidth)+[" ]+par_extra_property+[>]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[</textarea>]
 
                     case ListOfCustomFieldsToBuild->CustomField_Type == 5  // Date
                         l_xValue := hb_HGetDef(par_hValues,l_cObjectName,nil)
@@ -1002,7 +1002,7 @@ with object l_oDB1
                             l_xValue := ""
                         endif
 
-                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(l_xValue)+[" maxlength="10" size="10">]
+                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(l_xValue)+[" maxlength="10" size="10" ]+par_extra_property+[>]
                         oFcgi:p_cjQueryScript += [$("#Text]+l_cObjectName+[").datepicker();]
 
                     endcase

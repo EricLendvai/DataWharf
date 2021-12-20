@@ -11,7 +11,7 @@ memvar oFcgi
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())
 //=================================================================================================================
-function BuildPageUsers(par_cUserName,par_nUserPk)
+function BuildPageUsers()
 local l_cHtml := []
 local l_oDB1
 local l_oData
@@ -119,12 +119,13 @@ case l_cURLAction == "EditUser"
                 with object l_oDB1
                     :Table("64841551-4f11-43cf-bfd8-b742150b8dc2","UserAccessApplication")
                     :Column("UserAccessApplication.fk_Application","fk_Application")
+                    :Column("UserAccessApplication.AccessLevel"   ,"AccessLevel")
                     :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
                     :SQL("ListOfSelectedApplications")
 
                     select ListOfSelectedApplications
                     scan all
-                        l_hValues["Application"+Trans(ListOfSelectedApplications->fk_Application)] := .t.
+                        l_hValues["AppSecLevel"+Trans(ListOfSelectedApplications->fk_Application)] := ListOfSelectedApplications->AccessLevel
                     endscan
                 endwith
 
@@ -136,7 +137,7 @@ case l_cURLAction == "EditUser"
         endif
 
     else
-        l_cHtml += UserEditFormOnSubmit(par_nUserPk)
+        l_cHtml += UserEditFormOnSubmit()
     endif
 
 otherwise
@@ -220,7 +221,7 @@ l_cHtml += [<div class="m-3">]
                         // l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application Specific","All Application Read Only","All Application Admin","Root Admin (User Control)"}[iif(vfp_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
+                            l_cHtml += {"Application Specific","All Application Read Only","All Application Full Access","Root Admin (User Control)"}[iif(vfp_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -251,7 +252,9 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 local l_iAccessMode
 local l_iStatus
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_CheckBoxId
+// local l_CheckBoxId
+local l_cObjectID
+local l_nAccessLevel
 
 oFcgi:TraceAdd("UserEditFormBuild")
 
@@ -260,6 +263,16 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [<script language="javascript">]
 l_cHtml += [function OnChangeAccessMode(par_Value) {]
+
+l_cHtml += [switch(par_Value) {]
+    l_cHtml += [  case '1':]
+    l_cHtml += [  $('#DivAppSecurity').show();]
+    l_cHtml += [    break;]
+l_cHtml += [  default:]
+    l_cHtml += [  $('#DivAppSecurity').hide();]
+l_cHtml += [};]
+
+
 l_cHtml += [};]
 l_cHtml += [</script>] 
 oFcgi:p_cjQueryScript += [OnChangeAccessMode($("#ComboAccessMode").val());]
@@ -323,11 +336,10 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange="OnChangeAccessMode(this.value);$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');">]
                         l_cHtml += [<option value="1"]+iif(l_iAccessMode==1,[ selected],[])+[>Application Specific</option>]
                         l_cHtml += [<option value="2"]+iif(l_iAccessMode==2,[ selected],[])+[>All Application Read Only</option>]
-                        l_cHtml += [<option value="3"]+iif(l_iAccessMode==3,[ selected],[])+[>All Application Admin</option>]
+                        l_cHtml += [<option value="3"]+iif(l_iAccessMode==3,[ selected],[])+[>All Application Full Access</option>]
                         l_cHtml += [<option value="4"]+iif(l_iAccessMode==4,[ selected],[])+[>Root Admin (User Control)</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</span>]
-
 
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -352,8 +364,6 @@ l_cHtml += [<div class="m-3">]
 
 l_cHtml += [</div>]
 
-l_cHtml += [<div class="m-3"></div>]
-
 with Object l_oDB1
     :Table("13ffc0a9-0997-4f09-af57-2fb218ab86a9","Application")
     :Column("Application.pk"         ,"pk")
@@ -361,41 +371,41 @@ with Object l_oDB1
     :Column("Upper(Application.Name)","tag1")
     :OrderBy("tag1")
     :SQL("ListOfAllApplications")
-
-    if :Tally > 0
-        l_cHtml += [<div>]
-            l_cHtml += [<span class="ms-3">Filter on Application Name</span><input type="text" id="ApplicationSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span>]
-        l_cHtml += [</div>]
-
-        l_cHtml += [<div class="m-3"></div>]
-
-    endif
 endwith
 
-//Add a case insensitive contains(), icontains()
-oFcgi:p_cjQueryScript += "jQuery.expr[':'].icontains = function(a, i, m) {"
-oFcgi:p_cjQueryScript += "  return jQuery(a).text().toUpperCase()"
-oFcgi:p_cjQueryScript += "      .indexOf(m[3].toUpperCase()) >= 0;"
-oFcgi:p_cjQueryScript += "};"
+l_cHtml += [<div id="DivAppSecurity">]
+    l_cHtml += [<div>]
+        l_cHtml += [<span class="ms-3">Application Level Access Right</span>]
+    l_cHtml += [</div>]
 
-oFcgi:p_cjQueryScript += [$("#ApplicationSearch").change(function() {]
-oFcgi:p_cjQueryScript += [$(".SPANTable:icontains('" + $(this).val() + "')").parent().parent().show();]
-oFcgi:p_cjQueryScript += [$(".SPANTable:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
-oFcgi:p_cjQueryScript += [});]
+    l_cHtml += [<div class="m-3"></div>]
 
-l_cHtml += [<div class="form-check form-switch">]
-l_cHtml += [<table class="ms-5">]
-select ListOfAllApplications
-scan all
-    l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
-    l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Application"+Trans(ListOfAllApplications->pk),.f.)," checked","")+[ class="form-check-input">]
-        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+ListOfAllApplications->Application_Name+[</span></label>]
-    l_cHtml += [</td></tr>]
-endscan
-l_cHtml += [</table>]
+    l_cHtml += [<table class="ms-4">]
+    select ListOfAllApplications
+    scan all
+        // l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
+        l_cObjectID := "ComboAppSecLevel"+Trans(ListOfAllApplications->pk)
+
+        l_nAccessLevel := hb_HGetDef(par_hValues,"AppSecLevel"+Trans(ListOfAllApplications->pk),1)
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td class="pb-2">]+ListOfAllApplications->Application_Name+[</td>]
+
+            l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectID+[" id="]+l_cObjectID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<option value="1"]+iif(l_nAccessLevel == 1,[ selected],[])+[>None</option>]
+                l_cHtml += [<option value="2"]+iif(l_nAccessLevel == 2,[ selected],[])+[>Read Only</option>]
+                l_cHtml += [<option value="3"]+iif(l_nAccessLevel == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
+                l_cHtml += [<option value="4"]+iif(l_nAccessLevel == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
+                l_cHtml += [<option value="5"]+iif(l_nAccessLevel == 5,[ selected],[])+[>Edit Anything</option>]
+                l_cHtml += [<option value="6"]+iif(l_nAccessLevel == 6,[ selected],[])+[>Edit Anything and Load/Sync Schema</option>]
+                l_cHtml += [<option value="7"]+iif(l_nAccessLevel == 7,[ selected],[])+[>Full Access</option>]
+            l_cHtml += [</select></td>]
+
+        l_cHtml += [</td></tr>]
+    endscan
+    l_cHtml += [</table>]
+
 l_cHtml += [</div>]
-
 
 l_cHtml += [</form>]
 
@@ -421,7 +431,7 @@ local l_cSecurityDefaultPassword
 
 local l_hValues := {=>}
 
-local l_lSelected
+local l_nAccessLevel
 
 local l_cErrorMessage := ""
 local l_oDB1
@@ -517,8 +527,9 @@ case l_cActionOnSubmit == "Save"
                     with Object l_oDB1
                         :Table("57992887-3dd6-4fad-b969-700820c5bd19","UserAccessApplication")
                         :Distinct(.t.)
-                        :Column("Application.pk","pk")
-                        :Column("UserAccessApplication.pk","UserAccessApplication_pk")
+                        :Column("Application.pk"                   ,"pk")
+                        :Column("UserAccessApplication.pk"         ,"UserAccessApplication_pk")
+                        :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
                         :Join("inner","Application","","UserAccessApplication.fk_Application = Application.pk")
                         :Where("UserAccessApplication.fk_User = ^" , l_iUserPk)
                         :SQL("ListOfCurrentApplicationForUser")
@@ -531,10 +542,9 @@ case l_cActionOnSubmit == "Save"
 
                     select ListOfApplications
                     scan all
-                        l_lSelected := (oFcgi:GetInputValue("CheckApplication"+Trans(ListOfApplications->pk)) == "1")
-
+                        l_nAccessLevel := max(1,val(oFcgi:GetInputValue("ComboAppSecLevel"+Trans(ListOfApplications->pk))))
                         if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForUser","pk")
-                            if !l_lSelected
+                            if l_nAccessLevel <= 1
                                 // Remove the Application
                                 with Object l_oDB3
                                     if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
@@ -542,14 +552,26 @@ case l_cActionOnSubmit == "Save"
                                         exit
                                     endif
                                 endwith
+                            else
+                                if ListOfCurrentApplicationForUser->UserAccessApplication_AccessLevel <> l_nAccessLevel
+                                    with Object l_oDB3
+                                        :Table("d6b0a424-ada8-4efd-a1e5-49821463d334","UserAccessApplication")
+                                        :Field("UserAccessApplication.AccessLevel",l_nAccessLevel)
+                                        if !:Update(ListOfCurrentApplicationForUser->UserAccessApplication_pk)
+                                            l_cErrorMessage := "Failed to Update Application selection."
+                                            exit
+                                        endif
+                                    endwith
+                                endif
                             endif
                         else
-                            if l_lSelected
-                                // Add the Application
+                            if l_nAccessLevel > 1
+                                // Add the Application only if more than "None"
                                 with Object l_oDB3
                                     :Table("b9fe0a47-878e-4122-8c97-da45982e2554","UserAccessApplication")
                                     :Field("UserAccessApplication.fk_Application",ListOfApplications->pk)
                                     :Field("UserAccessApplication.fk_User",l_iUserPk)
+                                    :Field("UserAccessApplication.AccessLevel",l_nAccessLevel)
                                     if !:Add()
                                         l_cErrorMessage := "Failed to Save Application selection."
                                         exit
@@ -575,21 +597,63 @@ case l_cActionOnSubmit == "Cancel"
     endif
 
 case l_cActionOnSubmit == "Delete"   // User
-    if l_iUserPk == par_nCurrentUserPk
+    if l_iUserPk == oFcgi:p_iUserPk
         l_cErrorMessage := "May not delete self."
     else
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
     
         with object l_oDB1
-            :Table("839b7414-c220-49a4-ab7b-b3ca82373a14","UserAccessApplication")
+            :Table("098bbc02-bf72-4838-b2ed-c3305486d69f","UserAccessApplication")
             :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
             :SQL()
             if :Tally == 0
-                :Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
+                //Delete any LoginLogs related records
+                :Table("39277ef9-6489-4a73-9184-2bbb9b0310c4","LoginLogs")
+                :Column("LoginLogs.pk" , "pk")
+                :Where("LoginLogs.fk_User = ^",l_iUserPk)
+                :SQL("ListOfRecordsToDelete")
+                if :Tally >= 0
+                    if :Tally > 0
+                        select ListOfRecordsToDelete
+                        scan
+                            l_oDB2:Delete("93945e52-a54b-432e-8375-be596eae8181","LoginLogs",ListOfRecordsToDelete->pk)
+                        endscan
+                    endif
+
+                    //Delete any UserSetting related records
+                    :Table("576e02a8-84d8-49b7-a693-59c84de3ef18","UserSetting")
+                    :Column("UserSetting.pk" , "pk")
+                    :Where("UserSetting.fk_User = ^",l_iUserPk)
+                    :SQL("ListOfRecordsToDelete")
+                    if :Tally >= 0
+                        if :Tally > 0
+                            select ListOfRecordsToDelete
+                            scan
+                                l_oDB2:Delete("d96ed10f-ed9f-41e8-af32-f47fa31cea1b","UserSetting",ListOfRecordsToDelete->pk)
+                            endscan
+                        endif
+                    else
+                        l_cErrorMessage := "Failed to clear related UserSetting records."
+                    endif
+
+                else
+                    l_cErrorMessage := "Failed to clear related LoginLogs records."
+                endif
             else
-                l_cErrorMessage := "Related UserAccessApplication record on file"
+                l_cErrorMessage := "Related Application security setup records."
+            endif
+
+            if empty(l_cErrorMessage)
+                :Table("839b7414-c220-49a4-ab7b-b3ca82373a14","UserAccessApplication")
+                :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
+                :SQL()
+                if :Tally == 0
+                    :Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
+                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
+                else
+                    l_cErrorMessage := "Related UserAccessApplication record on file"
+                endif
             endif
         endwith
     endif
@@ -616,8 +680,8 @@ if !empty(l_cErrorMessage)
 
     select ListOfApplications
     scan all
-        l_lSelected := (oFcgi:GetInputValue("CheckApplication"+Trans(ListOfApplications->pk)) == "1")
-        if l_lSelected  // No need to store the unselect references, since not having a reference will mean "not selected"
+        l_nAccessLevel := val(oFcgi:GetInputValue("ComboAppSecLevel"+Trans(ListOfApplications->pk)))
+        if l_nAccessLevel > 1  // No need to store the none, since not having a selection will mean "None"
             l_hValues["Application"+Trans(ListOfApplications->pk)] := .t.
         endif
     endscan

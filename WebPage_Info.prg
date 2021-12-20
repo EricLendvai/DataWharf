@@ -1,7 +1,7 @@
 #include "DataWharf.ch"
 memvar oFcgi
 //=================================================================================================================
-function BuildPageAppInfo(par_cUserName,par_nUserPk)
+function BuildPageAppInfo()
 local l_cHtml := []
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
