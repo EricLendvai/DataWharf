@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 12/22/2021
+* Support to Load MS SQL databases (except for indexes).
+
 ## 12/19/2021
 * Change "Usage Status" to have 6 possible values.
 * Enhancements in Diagrams: 

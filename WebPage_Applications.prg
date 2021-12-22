@@ -4608,6 +4608,7 @@ if !empty(par_iPk)
                     l_cHtml += [<option value="1"]+iif(l_iSyncBackendType==1,[ selected],[])+[>MariaDB</option>]
                     l_cHtml += [<option value="2"]+iif(l_iSyncBackendType==2,[ selected],[])+[>MySQL</option>]
                     l_cHtml += [<option value="3"]+iif(l_iSyncBackendType==3,[ selected],[])+[>PostgreSQL</option>]
+                    l_cHtml += [<option value="4"]+iif(l_iSyncBackendType==4,[ selected],[])+[>MS SQL</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -4757,6 +4758,11 @@ case l_cActionOnSubmit == "Load"
             l_iPort         := iif(empty(l_iSyncPort),5432,l_iSyncPort)
             l_cDriver       := "PostgreSQL Unicode"
             exit
+        case HB_ORM_BACKENDTYPE_MSSQL
+            l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
+            l_iPort         := iif(empty(l_iSyncPort),1433,l_iSyncPort)
+            l_cDriver       := "SQL Server"
+            exit
         otherwise
             l_iPort := -1
         endswitch
@@ -4772,6 +4778,8 @@ case l_cActionOnSubmit == "Load"
             l_cConnectionString := "SERVER="+l_cSyncServer+";Driver={"+l_cDriver+"};USER="+l_cSyncUser+";PASSWORD="+l_cSyncPassword+";DATABASE="+l_cSyncDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
         case l_iSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
             l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";"
+        case l_iSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
+            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";"
         otherwise
             l_cErrorMessage := "Invalid 'Backend Type'"
         endcase
@@ -4783,7 +4791,8 @@ case l_cActionOnSubmit == "Load"
                 l_cErrorMessage := "Unable connect to the server!"+Chr(13)+Chr(10)+Str(hb_RDDInfo( RDDI_ERRORNO ))+Chr(13)+Chr(10)+hb_RDDInfo( RDDI_ERROR )
 
             else
-                l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_iSyncSetForeignKey)
+// SendToDebugView(l_cConnectionString)
+               l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_iSyncSetForeignKey)
 
                 hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_SQLHandle)
                 // l_cErrorMessage := "Connected OK"

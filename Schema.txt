@@ -13,7 +13,7 @@ l_Schema := ;
    ,"PublishingUseStatus3"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Inactive (Read Only)"
    ,"PublishingUseStatus4"  =>{,  "L",   0,  0,};     // If should publish to the public elements with Use Status "Archived"
    ,"AllowDestructiveDelete"=>{,  "L",   0,  0,};     // If true can delete entire tables and even entire application. For now has to be set outside of UI.
-   ,"SyncBackendType"       =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL
+   ,"SyncBackendType"       =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  Backend Type. 1 = MariaDB, 2 = MySQL, 3 = PostgreSQL, 4 = MSSQL
    ,"SyncServer"            =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Server/Host URL/IP.
    ,"SyncPort"              =>{,  "I",   0,  0,"N"};  // Connection Info To Sync To.  Port if not default one for Backend Type.
    ,"SyncUser"              =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  User Account to use to connect.
