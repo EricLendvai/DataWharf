@@ -1912,7 +1912,7 @@ With Object l_oDB1
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
     if !empty(l_cSearchTableName)
-        :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
+        :KeywordCondition(l_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA)")
     endif
     if !empty(l_cSearchTableDescription)
         :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -1922,7 +1922,7 @@ With Object l_oDB1
         :Distinct(.t.)
         :Join("inner","Column","","Column.fk_Table = Table.pk")
         if !empty(l_cSearchColumnName)
-            :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
+            :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
         endif
         if !empty(l_cSearchColumnDescription)
             :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -1956,7 +1956,7 @@ if l_iNumberOfTablesInList > 0
         :Where("CustomField.Type = 2")   // Multi Choice
 
         if !empty(l_cSearchTableName)
-            :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
+            :KeywordCondition(l_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA)")
         endif
         if !empty(l_cSearchTableDescription)
             :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -1965,7 +1965,7 @@ if l_iNumberOfTablesInList > 0
             :Distinct(.t.)
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
+                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -1997,7 +1997,7 @@ if l_iNumberOfTablesInList > 0
         :Where("CustomField.Status <= 2")
 
         if !empty(l_cSearchTableName)
-            :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
+            :KeywordCondition(l_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA)")
         endif
         if !empty(l_cSearchTableDescription)
             :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -2006,7 +2006,7 @@ if l_iNumberOfTablesInList > 0
             :Distinct(.t.)
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
+                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
