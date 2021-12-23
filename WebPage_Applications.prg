@@ -1912,7 +1912,7 @@ With Object l_oDB1
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
     if !empty(l_cSearchTableName)
-        :KeywordCondition(l_cSearchTableName,"Table.Name")
+        :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
     endif
     if !empty(l_cSearchTableDescription)
         :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -1922,7 +1922,7 @@ With Object l_oDB1
         :Distinct(.t.)
         :Join("inner","Column","","Column.fk_Table = Table.pk")
         if !empty(l_cSearchColumnName)
-            :KeywordCondition(l_cSearchColumnName,"Column.Name")
+            :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
         endif
         if !empty(l_cSearchColumnDescription)
             :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -1933,6 +1933,8 @@ With Object l_oDB1
     :OrderBy("tag2")
     :SQL("ListOfTables")
     l_iNumberOfTablesInList := :Tally
+
+SendToClipboard(:LastSQL())
 
 endwith
 
@@ -1954,7 +1956,7 @@ if l_iNumberOfTablesInList > 0
         :Where("CustomField.Type = 2")   // Multi Choice
 
         if !empty(l_cSearchTableName)
-            :KeywordCondition(l_cSearchTableName,"Table.Name")
+            :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
         endif
         if !empty(l_cSearchTableDescription)
             :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -1963,7 +1965,7 @@ if l_iNumberOfTablesInList > 0
             :Distinct(.t.)
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"Column.Name")
+                :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -1995,7 +1997,7 @@ if l_iNumberOfTablesInList > 0
         :Where("CustomField.Status <= 2")
 
         if !empty(l_cSearchTableName)
-            :KeywordCondition(l_cSearchTableName,"Table.Name")
+            :KeywordCondition(l_cSearchTableName,"Table.Name || ' ' || Table.AKA")
         endif
         if !empty(l_cSearchTableDescription)
             :KeywordCondition(l_cSearchTableDescription,"Table.Description")
@@ -2004,7 +2006,7 @@ if l_iNumberOfTablesInList > 0
             :Distinct(.t.)
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"Column.Name")
+                :KeywordCondition(l_cSearchColumnName,"Column.Name || ' ' || Column.AKA")
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -5067,16 +5069,16 @@ with object l_oDB1
                             
                             if empty(l_cErrorMessage)
 
-                                :Table("a41abf4f-0bc9-4661-b363-0090cce6a903","UserAccess")
-                                :Column("UserAccess.pk","pk")
-                                :Where("UserAccess.fk_Application = ^" , par_iApplicationPk)
+                                :Table("a41abf4f-0bc9-4661-b363-0090cce6a903","UserAccessApplication")
+                                :Column("UserAccessApplication.pk","pk")
+                                :Where("UserAccessApplication.fk_Application = ^" , par_iApplicationPk)
                                 :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
                                 if :Tally < 0
                                     l_cErrorMessage := "Failed to delete Application. Error 8."
                                 else
                                     select ListOfRecordsToDeleteInCascadeDeleteApplication
                                     scan all
-                                        if !:Delete("27d200ff-c0d2-4126-8230-e15edf0e9202","UserAccess",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                                        if !:Delete("27d200ff-c0d2-4126-8230-e15edf0e9202","UserAccessApplication",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
                                             l_cErrorMessage := "Failed to delete Application. Error 9."
                                             exit
                                         endif

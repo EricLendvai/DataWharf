@@ -676,30 +676,28 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
-
     //MS SQL Does not support Enumeration
     l_SQLCommandEnums := []
 
 
-    l_SQLCommandFields  := [SELECT columns.table_schema             AS schema_name,]
-    l_SQLCommandFields  += [       columns.table_name               AS table_name,]
-    l_SQLCommandFields  += [       columns.ordinal_position         AS field_position,]
-    l_SQLCommandFields  += [       columns.column_name              AS field_name,]
-    l_SQLCommandFields  += [       columns.data_type                AS field_type,]
-    l_SQLCommandFields  += [       columns.character_maximum_length AS field_clength,]
-    l_SQLCommandFields  += [       columns.numeric_precision        AS field_nlength,]
-    l_SQLCommandFields  += [       columns.datetime_precision       AS field_tlength,]
-    l_SQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]
-    l_SQLCommandFields  += [	   CASE WHEN columns.is_nullable = 'YES' THEN 1 ELSE 0 END AS field_nullable,]
-    l_SQLCommandFields  += [       columns.column_default           AS field_default,]
-    l_SQLCommandFields  += [       columnproperty(object_id(columns.table_schema+'.'+columns.table_name),columns.column_name,'IsIdentity') AS field_identity_is,]
-    l_SQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
-    l_SQLCommandFields  += [       upper(columns.table_name)        AS tag2]
-    l_SQLCommandFields  += [ FROM information_schema.columns]
+    l_SQLCommandFields  := [SELECT columns.TABLE_SCHEMA             AS schema_name,]
+    l_SQLCommandFields  += [       columns.TABLE_NAME               AS table_name,]
+    l_SQLCommandFields  += [       columns.ORDINAL_POSITION         AS field_position,]
+    l_SQLCommandFields  += [       columns.COLUMN_NAME              AS field_name,]
+    l_SQLCommandFields  += [       columns.DATA_TYPE                AS field_type,]
+    l_SQLCommandFields  += [       columns.CHARACTER_MAXIMUM_LENGTH AS field_clength,]
+    l_SQLCommandFields  += [       columns.NUMERIC_PRECISION        AS field_nlength,]
+    l_SQLCommandFields  += [       columns.DATETIME_PRECISION       AS field_tlength,]
+    l_SQLCommandFields  += [       columns.NUMERIC_SCALE            AS field_decimals,]
+    l_SQLCommandFields  += [	   CASE WHEN columns.IS_NULLABLE = 'YES' THEN 1 ELSE 0 END AS field_nullable,]
+    l_SQLCommandFields  += [       columns.COLUMN_DEFAULT           AS field_default,]
+    l_SQLCommandFields  += [       columnproperty(object_id(columns.TABLE_SCHEMA+'.'+columns.TABLE_NAME),columns.COLUMN_NAME,'IsIdentity') AS field_identity_is,]
+    l_SQLCommandFields  += [       upper(columns.TABLE_SCHEMA)      AS tag1,]
+    l_SQLCommandFields  += [       upper(columns.TABLE_NAME)        AS tag2]
+    l_SQLCommandFields  += [ FROM INFORMATION_SCHEMA.COLUMNS as columns]
 
-    // l_SQLCommandFields  += [ WHERE lower(information_schema.columns.table_schema) in ('dba','dbo')]
     if !empty(par_cSyncNameSpaces)
-        l_SQLCommandFields  += [ WHERE lower(information_schema.columns.table_schema) in (]
+        l_SQLCommandFields  += [ WHERE lower(columns.TABLE_SCHEMA) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
         l_iFirstNameSpace := .t.
         for l_iPosition := 1 to len(l_aNameSpaces)

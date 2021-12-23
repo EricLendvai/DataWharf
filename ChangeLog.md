@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 12/23/2021
+* On Table and Column Name searches will also look into the AKA fields.
+
 ## 12/22/2021
 * Support to Load MS SQL databases (except for indexes).
 
