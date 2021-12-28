@@ -1366,7 +1366,7 @@ if len(l_aNodes) == 1
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
         l_oData_Application := :Get(l_iTablePk)
-        l_cApplicationSupportColumns := l_oData_Application:Application_SupportColumns
+        l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
     endwith
 
     //Clicked on a table
@@ -1747,10 +1747,10 @@ if len(l_aNodes) == 1
                                     do case
                                     case ListOfColumns->Column_Primary
                                         l_cHtml += [<i class="bi bi-key"></i>]
-                                    case !hb_isNil(ListOfColumns->Table_Name)
-                                        l_cHtml += [<i class="bi-arrow-left"></i>]
                                     case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
                                         l_cHtml += [<i class="bi bi-tools"></i>]
+                                    case !hb_isNil(ListOfColumns->Table_Name)
+                                        l_cHtml += [<i class="bi-arrow-left"></i>]
                                     endcase
                                 l_cHtml += [</td>]
 
@@ -1783,7 +1783,7 @@ if len(l_aNodes) == 1
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         l_cHtml += nvl(ListOfColumns->Column_Default,"")
                                     l_cHtml += [</td>]
-                                    
+
                                     // Foreign Key To
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         if !hb_isNil(ListOfColumns->Table_Name)

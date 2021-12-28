@@ -21,7 +21,6 @@ local l_cApplicationName
 local l_iApplicationUseStatus
 local l_iApplicationDocStatus
 local l_cApplicationDescription
-local l_cApplicationSupportColumns
 
 local l_iNameSpacePk
 local l_iTablePk
@@ -2699,7 +2698,7 @@ with object l_oDB_Application
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
     l_oData_Application := :Get(par_iTablePk)
-    l_cApplicationSupportColumns := l_oData_Application:Application_SupportColumns
+    l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
 endwith
 
 with object l_oDB_ListOfColumns
@@ -2921,10 +2920,10 @@ l_cHtml += [</form>]
                         do case
                         case ListOfColumns->Column_Primary
                             l_cHtml += [<i class="bi bi-key"></i>]
-                        case !hb_isNil(ListOfColumns->Table_Name)
-                            l_cHtml += [<i class="bi-arrow-left"></i>]
                         case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
                             l_cHtml += [<i class="bi bi-tools"></i>]
+                        case !hb_isNil(ListOfColumns->Table_Name)
+                            l_cHtml += [<i class="bi-arrow-left"></i>]
                         endcase
                     l_cHtml += [</td>]
 
