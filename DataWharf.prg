@@ -56,25 +56,25 @@ class MyFcgi from hb_Fcgi
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
     data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
 
-    data p_ColumnTypes      init {{  "I","Integer"                                      ,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
-                                  { "IB","Integer Big"                                  ,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
-                                  {  "N","Numeric"                                      ,.t.,.t.,.f.,"numeric"                    ,"DECIMAL"},;
-                                  {  "C","Character String"                             ,.t.,.f.,.f.,"character"                  ,"CHAR"},;
-                                  { "CV","Character String Varying"                     ,.t.,.f.,.f.,"character varying"          ,"VARCHAR"},;
-                                  {  "B","Binary String"                                ,.t.,.f.,.f.,"bit"                        ,"BINARY"},;
-                                  { "BV","Binary String Varying"                        ,.t.,.f.,.f.,"bit varying"                ,"VARBINARY"},;
-                                  {  "M","Memo / Long Text"                             ,.f.,.f.,.f.,"text"                       ,"LONGTEXT"},;
-                                  {  "R","Raw Binary"                                   ,.f.,.f.,.f.,"bytea"                      ,"LONGBLOB"},;
-                                  {  "L","Logical"                                      ,.f.,.f.,.f.,"boolean"                    ,"TINYINT(1)"},;
-                                  {  "D","Date"                                         ,.f.,.f.,.f.,"date"                       ,"DATE"},;
-                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'with timezone'"},;
-                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,"time without time zone"     ,"TIME"},;
-                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"},;
-                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
-                                  {  "Y","Money"                                        ,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'money'"},;
-                                  {  "E","Enumeration"                                  ,.f.,.f.,.t.,"enum"                       ,"ENUM"},;
-                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
-                                  {  "?","Other"                                        ,.f.,.f.,.f.,""                           ,""};
+    data p_ColumnTypes      init {{  "I","Integer"                                      ,.f.,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
+                                  { "IB","Integer Big"                                  ,.f.,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
+                                  {  "N","Numeric"                                      ,.t.,.t.,.f.,.f.,"numeric"                    ,"DECIMAL"},;
+                                  {  "C","Character String"                             ,.t.,.f.,.f.,.t.,"character"                  ,"CHAR"},;
+                                  { "CV","Character String Varying"                     ,.t.,.f.,.f.,.t.,"character varying"          ,"VARCHAR"},;
+                                  {  "B","Binary String"                                ,.t.,.f.,.f.,.f.,"bit"                        ,"BINARY"},;
+                                  { "BV","Binary String Varying"                        ,.t.,.f.,.f.,.f.,"bit varying"                ,"VARBINARY"},;
+                                  {  "M","Memo / Long Text"                             ,.f.,.f.,.f.,.t.,"text"                       ,"LONGTEXT"},;
+                                  {  "R","Raw Binary"                                   ,.f.,.f.,.f.,.f.,"bytea"                      ,"LONGBLOB"},;
+                                  {  "L","Logical"                                      ,.f.,.f.,.f.,.f.,"boolean"                    ,"TINYINT(1)"},;
+                                  {  "D","Date"                                         ,.f.,.f.,.f.,.f.,"date"                       ,"DATE"},;
+                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'with timezone'"},;
+                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,.f.,"time without time zone"     ,"TIME"},;
+                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"},;
+                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
+                                  {  "Y","Money"                                        ,.f.,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'money'"},;
+                                  {  "E","Enumeration"                                  ,.f.,.f.,.t.,.f.,"enum"                       ,"ENUM"},;
+                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,.f.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
+                                  {  "?","Other"                                        ,.f.,.f.,.f.,.f.,""                           ,""};
                                  }
     method OnFirstRequest()
     method OnRequest()
@@ -292,8 +292,11 @@ else
 
 
         l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
+
+        l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/icons/font/bootstrap-icons.css">]
+
         l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
-        l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
+        // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
 
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]

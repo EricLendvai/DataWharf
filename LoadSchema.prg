@@ -31,6 +31,10 @@ local l_cColumnType
 local l_iColumnLength
 local l_iColumnScale
 local l_lColumnNullable
+local l_lColumnPrimary
+local l_lColumnUnicode
+local l_cColumnDefault
+local l_cColumnLastNativeType
 local l_iFk_Enumeration
 
 local l_cIndexName
@@ -78,7 +82,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
     l_SQLCommandFields  += [       columns.numeric_scale              AS field_decimals,]
     l_SQLCommandFields  += [       (columns.is_nullable = 'YES')      AS field_nullable,]
     l_SQLCommandFields  += [       columns.column_default             AS field_default,]
-    l_SQLCommandFields  += [       (columns.extra = 'auto_increment') AS field_identity_is,]
+    l_SQLCommandFields  += [       (columns.extra = 'auto_increment') AS field_is_identity,]
     l_SQLCommandFields  += [       upper(columns.table_name)          AS tag1]
     l_SQLCommandFields  += [ FROM information_schema.columns]
     l_SQLCommandFields  += [ WHERE columns.table_schema = ']+par_cDatabase+[']
@@ -139,7 +143,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_SQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]
     l_SQLCommandFields  += [       (columns.is_nullable = 'YES')    AS field_nullable,]
     l_SQLCommandFields  += [       columns.column_default           AS field_default,]
-    l_SQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_identity_is,]
+    l_SQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_is_identity,]
     l_SQLCommandFields  += [       columns.udt_name                 AS enumeration_name,]
     l_SQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
     l_SQLCommandFields  += [       upper(columns.table_name)        AS tag2]
@@ -444,6 +448,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("Column.Length"         , "Column_Length")
                         :Column("Column.Scale"          , "Column_Scale")
                         :Column("Column.Nullable"       , "Column_Nullable")
+                        :Column("Column.Primary"        , "Column_Primary")              // field_is_identity
+                        :Column("Column.Unicode"        , "Column_Unicode")
+                        :Column("Column.Default"        , "Column_Default")
+                        :Column("Column.LastNativeType" , "Column_LastNativeType")
                         :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
@@ -474,13 +482,23 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if empty(l_cErrorMessage)
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
-                    l_cColumnName     := alltrim(ListOfFieldsForLoads->field_name)
-                    l_lColumnNullable := (alltrim(ListOfFieldsForLoads->field_nullable) == "1")
+                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable       := (alltrim(ListOfFieldsForLoads->field_nullable) == "1")      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnPrimary        := (alltrim(ListOfFieldsForLoads->field_is_identity) == "1")
+                    l_lColumnUnicode        := .f.
+                    l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
+
+                    l_cColumnDefault        := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
+                    if l_cColumnLastNativeType == "character"
+                        l_cColumnDefault        := strtran(l_cColumnDefault,"::bpchar","")
+                    endif
+
                     l_iFk_Enumeration := 0
 
-// if ListOfFieldsForLoads->field_type == "USER-DEFINED"
-//     altd()
-// endif
+                    // if ListOfFieldsForLoads->field_type == "USER-DEFINED"
+                    //     altd()
+                    // endif
 
                     switch ListOfFieldsForLoads->field_type
                     case "integer"
@@ -502,15 +520,17 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         exit
 
                     case "character"
-                        l_cColumnType   := "C"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_cColumnType     := "C"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "character varying"
-                        l_cColumnType   := "CV"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_cColumnType     := "CV"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "bit"
@@ -526,9 +546,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         exit
 
                     case "text"
-                        l_cColumnType   := "M"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_cColumnType     := "M"
+                        l_iColumnLength   := NIL
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "bytea"
@@ -613,10 +634,14 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
-                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType     .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength   .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale    .and. ;
-                           ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable .and. ;
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType           .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength         .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale          .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable       .and. ;
+                           ListOfColumnsInDataDictionary->Column_Primary               == l_lColumnPrimary        .and. ;
+                           ListOfColumnsInDataDictionary->Column_Unicode               == l_lColumnUnicode        .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Default,"")       == l_cColumnDefault        .and. ;
+                           ListOfColumnsInDataDictionary->Column_LastNativeType        == l_cColumnLastNativeType .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_fk_Enumeration,0) == l_iFk_Enumeration
 
                         else
@@ -629,6 +654,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                     :Field("Column.Length"        ,l_iColumnLength)
                                     :Field("Column.Scale"         ,l_iColumnScale)
                                     :Field("Column.Nullable"      ,l_lColumnNullable)
+                                    :Field("Column.Primary"       ,l_lColumnPrimary)
+                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
                                     :Field("Column.fk_Enumeration",l_iFk_Enumeration)
                                     if :Update(l_iColumnPk)
                                         l_iUpdatedColumns += 1
@@ -653,6 +682,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Field("Column.Length"        ,l_iColumnLength)
                             :Field("Column.Scale"         ,l_iColumnScale)
                             :Field("Column.Nullable"      ,l_lColumnNullable)
+                            :Field("Column.Primary"       ,l_lColumnPrimary)
+                            :Field("Column.Unicode"       ,l_lColumnUnicode)
+                            :Field("Column.Default"       ,,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
                             :Field("Column.fk_Enumeration",l_iFk_Enumeration)
                             :Field("Column.UsedBy"        ,1)
                             if :Add()
@@ -674,6 +707,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
     endif
 
+    //is_identity
+
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
     //MS SQL Does not support Enumeration
@@ -691,7 +726,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
     l_SQLCommandFields  += [       columns.NUMERIC_SCALE            AS field_decimals,]
     l_SQLCommandFields  += [	   CASE WHEN columns.IS_NULLABLE = 'YES' THEN 1 ELSE 0 END AS field_nullable,]
     l_SQLCommandFields  += [       columns.COLUMN_DEFAULT           AS field_default,]
-    l_SQLCommandFields  += [       columnproperty(object_id(columns.TABLE_SCHEMA+'.'+columns.TABLE_NAME),columns.COLUMN_NAME,'IsIdentity') AS field_identity_is,]
+    l_SQLCommandFields  += [       columnproperty(object_id(columns.TABLE_SCHEMA+'.'+columns.TABLE_NAME),columns.COLUMN_NAME,'IsIdentity') AS field_is_identity,]
     l_SQLCommandFields  += [       upper(columns.TABLE_SCHEMA)      AS tag1,]
     l_SQLCommandFields  += [       upper(columns.TABLE_NAME)        AS tag2]
     l_SQLCommandFields  += [ FROM INFORMATION_SCHEMA.COLUMNS as columns]
@@ -842,6 +877,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         :Column("Column.Length"         , "Column_Length")
                         :Column("Column.Scale"          , "Column_Scale")
                         :Column("Column.Nullable"       , "Column_Nullable")
+                        :Column("Column.Primary"        , "Column_Primary")
+                        :Column("Column.Unicode"        , "Column_Unicode")
+                        :Column("Column.Default"        , "Column_Default")
+                        :Column("Column.LastNativeType" , "Column_LastNativeType")
                         :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
@@ -872,8 +911,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                 if empty(l_cErrorMessage)
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
-                    l_cColumnName     := alltrim(ListOfFieldsForLoads->field_name)
-                    l_lColumnNullable := (ListOfFieldsForLoads->field_nullable == 1)
+                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable       := (ListOfFieldsForLoads->field_nullable == 1)
+                    l_lColumnPrimary        := (ListOfFieldsForLoads->field_is_identity == 1)
+                    l_lColumnUnicode        := .f.
+                    l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
                     l_iFk_Enumeration := 0
 
                     switch ListOfFieldsForLoads->field_type
@@ -902,9 +945,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         exit
 
                     case "nchar"
-                        l_cColumnType   := "C"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_cColumnType     := "C"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.
                         //_M_ mark as Unicode
                         exit
 
@@ -915,9 +959,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         exit
 
                     case "nvarchar"
-                        l_cColumnType   := "CV"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_cColumnType     := "CV"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.
                         //_M_ mark as Unicode
                         exit
 
@@ -943,6 +988,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         l_cColumnType   := "M"
                         l_iColumnLength := NIL
                         l_iColumnScale  := NIL
+                        exit
+
+                    case "ntext"
+                        l_cColumnType     := "M"
+                        l_iColumnLength   := NIL
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.
                         exit
 
                     case "bit"
@@ -1030,10 +1082,14 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
 // Altd()
-                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType     .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength   .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale    .and. ;
-                            ListOfColumnsInDataDictionary->Column_Nullable             == l_lColumnNullable
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == l_cColumnType     .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length             == l_iColumnLength   .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale              == l_iColumnScale    .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable           == l_lColumnNullable .and. ;
+                           ListOfColumnsInDataDictionary->Column_Primary            == l_lColumnPrimary  .and. ;
+                           ListOfColumnsInDataDictionary->Column_Unicode            == l_lColumnUnicode  .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Default,"")    == l_cColumnDefault  .and. ;
+                           ListOfColumnsInDataDictionary->Column_LastNativeType     == l_cColumnLastNativeType
 
                         else
 
@@ -1045,6 +1101,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                     :Field("Column.Length"        ,l_iColumnLength)
                                     :Field("Column.Scale"         ,l_iColumnScale)
                                     :Field("Column.Nullable"      ,l_lColumnNullable)
+                                    :Field("Column.Primary"       ,l_lColumnPrimary)
+                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
                                     if :Update(l_iColumnPk)
                                         l_iUpdatedColumns += 1
                                     else
@@ -1068,6 +1128,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             :Field("Column.Length"        ,l_iColumnLength)
                             :Field("Column.Scale"         ,l_iColumnScale)
                             :Field("Column.Nullable"      ,l_lColumnNullable)
+                            :Field("Column.Primary"       ,l_lColumnPrimary)
+                            :Field("Column.Unicode"       ,l_lColumnUnicode)
+                            :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
                             :Field("Column.UsedBy"        ,1)
                             if :Add()
                                 l_iNewColumns += 1

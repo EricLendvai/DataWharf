@@ -1,5 +1,13 @@
 # DataWharf - Change Log
 
+## 12/27/2021
+* On Table List screen, will remember search criteria, until "Reset" button is used.
+* On Table List screen, if the last search criteria included settings used on columns, those will be defaulted in the search criteria when viewing columns.
+* Using Bootstrap icons instead of fontawesome. Makes it easier to deal with license.
+* Added "Support Column Names" on "Application Settings". User may list column names, blank separated, of fields like: creation or last modified time, added by, last modified by ...
+* Added Primary, Unicode, Default and LastNativeType in Column
+* Added new "icon" column when listing a table's columns.
+
 ## 12/23/2021
 * On Table and Column Name searches will also look into the AKA fields.
 

@@ -1290,6 +1290,7 @@ local l_aEdges
 local l_aItems
 local l_iTablePk
 local l_iColumnPk
+local l_oDB_Application                  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_InArray                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelatedTables          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCurrentTablesInDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1335,7 +1336,8 @@ local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_TableCustomFields := ""
 local l_lUnknownInGray
-
+local l_oData_Application
+local l_cApplicationSupportColumns
 
 // SendToDebugView(Trans(l_nActiveTabNumber))
 
@@ -1357,6 +1359,15 @@ l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
     l_iTablePk := l_aNodes[1]
+
+    with object l_oDB_Application
+        :Table("51edf270-d3d3-4c8b-b530-c2d3b90c93c1","Table")
+        :Column("Application.SupportColumns" , "Application_SupportColumns")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+        l_oData_Application := :Get(l_iTablePk)
+        l_cApplicationSupportColumns := l_oData_Application:Application_SupportColumns
+    endwith
 
     //Clicked on a table
 
@@ -1397,6 +1408,9 @@ if len(l_aNodes) == 1
         :Column("Column.Length"         ,"Column_Length")
         :Column("Column.Scale"          ,"Column_Scale")
         :Column("Column.Nullable"       ,"Column_Nullable")
+        :Column("Column.Default"        ,"Column_Default")
+        :Column("Column.Unicode"        ,"Column_Unicode")
+        :Column("Column.Primary"        ,"Column_Primary")
         :Column("Column.UsedBy"         ,"Column_UsedBy")
         :Column("Column.fk_TableForeign","Column_fk_TableForeign")
         :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
@@ -1710,9 +1724,11 @@ if len(l_aNodes) == 1
                             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                             l_cHtml += [<tr class="bg-info">]
+                                l_cHtml += [<th></th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
@@ -1726,6 +1742,17 @@ if len(l_aNodes) == 1
                             select ListOfColumns
                             scan all
                                 l_cHtml += [<tr>]
+
+                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                    do case
+                                    case ListOfColumns->Column_Primary
+                                        l_cHtml += [<i class="bi bi-key"></i>]
+                                    case !hb_isNil(ListOfColumns->Table_Name)
+                                        l_cHtml += [<i class="bi-arrow-left"></i>]
+                                    case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
+                                        l_cHtml += [<i class="bi bi-tools"></i>]
+                                    endcase
+                                l_cHtml += [</td>]
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1741,6 +1768,7 @@ if len(l_aNodes) == 1
                                                                         ListOfColumns->Enumeration_AKA,;
                                                                         ListOfColumns->Enumeration_ImplementAs,;
                                                                         ListOfColumns->Enumeration_ImplementLength,;
+                                                                        ListOfColumns->Column_Unicode,;
                                                                         l_cSitePath,;
                                                                         l_cApplicationLinkCode,;
                                                                         l_cNameSpaceName)
@@ -1748,9 +1776,14 @@ if len(l_aNodes) == 1
 
                                     // Nullable
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="fas fa-check"></i>],[&nbsp;])
+                                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                                     l_cHtml += [</td>]
 
+                                    // Default
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        l_cHtml += nvl(ListOfColumns->Column_Default,"")
+                                    l_cHtml += [</td>]
+                                    
                                     // Foreign Key To
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         if !hb_isNil(ListOfColumns->Table_Name)
@@ -1839,10 +1872,10 @@ if len(l_aNodes) == 1
 
                             l_cHtml += l_aRelatedTableInfo[3]+FormatAKAForDisplay(l_aRelatedTableInfo[4])+[.]+l_aRelatedTableInfo[5]+FormatAKAForDisplay(l_aRelatedTableInfo[6])
                             if l_aRelatedTableInfo[8]
-                                l_cHtml += [<span class="fas fa-arrow-left ms-2">]
+                                l_cHtml += [<span class="bi bi-arrow-left ms-2">]
                             endif
                             if l_aRelatedTableInfo[7]
-                                l_cHtml += [<span class="fas fa-arrow-right ms-2">]
+                                l_cHtml += [<span class="bi bi-arrow-right ms-2">]
                             endif
 
                             l_cHtml += [</label>]
