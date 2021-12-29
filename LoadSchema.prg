@@ -341,8 +341,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     endif
 
 
-
-
 //--Load Tables-----------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_SQLCommandFields,"ListOfFieldsForLoads")
@@ -491,7 +489,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     l_cColumnDefault        := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
                     if l_cColumnLastNativeType == "character"
-                        l_cColumnDefault        := strtran(l_cColumnDefault,"::bpchar","")
+                        l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
+                    endif
+                    if !hb_orm_isnull("ListOfFieldsForLoads","enumeration_name")
+                        l_cColumnDefault := strtran(l_cColumnDefault,[::"]+ListOfFieldsForLoads->enumeration_name+["],"")
                     endif
 
                     l_iFk_Enumeration := 0
@@ -777,7 +778,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
         if !SQLExec(par_SQLHandle,l_SQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            ExportTableToHtmlFile("ListOfFieldsForLoads","d:\MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads","d:\MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
 
             l_cLastNameSpace  := ""
             l_cLastTableName  := ""
