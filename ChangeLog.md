@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 12/28/2021
+* Added Filter options on List of Columns being displayed when selecting a node in Visualize.
+
 ## 12/27/2021
 * On Table List screen, will remember search criteria, until "Reset" button is used.
 * On Table List screen, if the last search criteria included settings used on columns, those will be defaulted in the search criteria when viewing columns.

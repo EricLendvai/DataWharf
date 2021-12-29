@@ -30,7 +30,21 @@ local l_iCanvasHeight      := val(GetUserSetting("CanvasHeight"))
 local l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
 local l_lUnknownInGray     := (GetUserSetting("UnknownInGray") == "T")
 
+local l_cJS
+
 oFcgi:TraceAdd("DataDictionaryVisualizeDesignBuild")
+
+l_cHtml += [<script type="text/javascript">]
+l_cHtml += 'function KeywordSearch(par_cListOfWords, par_cString) {'
+l_cHtml += '  const l_aWords_upper = par_cListOfWords.toUpperCase().split(" ").filter(Boolean);'
+l_cHtml += '  const l_cString_upper = par_cString.toUpperCase();'
+l_cHtml += '  var l_lAllWordsIncluded = true;'
+l_cHtml += '  for (var i = 0; i < l_aWords_upper.length; i++) {'
+l_cHtml += '    if (!l_cString_upper.includes(l_aWords_upper[i])) {l_lAllWordsIncluded = false;break;};'
+l_cHtml += '  }'
+l_cHtml += '  return l_lAllWordsIncluded;'
+l_cHtml += '}'
+l_cHtml += [</script>]
 
 // See https://visjs.github.io/vis-network/examples/
 
@@ -142,7 +156,7 @@ l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
-        l_cHtml += [<button id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
+        l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
         l_cHtml += [network.storePositions();]
 
@@ -158,9 +172,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
         //Code used to debug the positions.
-        l_cHtml += [">Save Layout</button>]
+        l_cHtml += [">]
         //---------------------------------------------------------------------------
-        // l_cHtml += [<button class="btn btn-primary rounded me-3" onclick="]
+        // l_cHtml += [<input type="button" role="button" value="Reset Layout" class="btn btn-primary rounded me-3" onclick="]
         
         // // l_cHtml += [$.ajax({]
         // // l_cHtml += [  type: 'GET',]
@@ -173,9 +187,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         // l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
         // l_cHtml += [$('#ActionOnSubmit').val('ResetLayout');document.form.submit();]
 
-        // l_cHtml += [">Reset Layout</button>]
+        // l_cHtml += [">]
         //---------------------------------------------------------------------------
-         l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">Diagram Settings</button>]
+         l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
         //---------------------------------------------------------------------------
          l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3">]
 
@@ -185,12 +199,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             endscan
          l_cHtml += [</select>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">New Diagram</button>]
+         l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
         //---------------------------------------------------------------------------
-         l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">My Settings</button>]
+         l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
         //---------------------------------------------------------------------------
         if !l_lNavigationControl
-            l_cHtml += [<button class="btn btn-primary rounded ms-3" onclick="network.fit();return false;">Fit Diagram</button>]
+            l_cHtml += [<input type="button" role="button" value="Fit Diagram" class="btn btn-primary rounded ms-3" onclick="network.fit();return false;">]
         endif
         //---------------------------------------------------------------------------
 
@@ -205,7 +219,6 @@ l_cHtml += [<td valign="top">]
 l_cHtml += [<div id="mynetwork"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
-
 
 l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
 if empty(l_cDiagramInfoScale)
@@ -403,7 +416,29 @@ l_cHtml += [  network = new vis.Network(container, data, options);]  //var
 l_cHtml += ' network.on("click", function (params) {'
 l_cHtml += '   params.event = "[original event]";'
 
-l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) );'
+// Code to filter columns
+l_cJS := [$("#ColumnSearch").change(function() {]
+l_cJS +=    [var l_keywords =  $(this).val();]
+l_cJS +=    [$(".SpanColumnName").each(function (par_SpanTable){]+;
+                                                           [var l_cApplicationName = $(this).text();]+;
+                                                           [if (KeywordSearch(l_keywords,l_cApplicationName)) {$(this).parent().parent().parent().show();} else {$(this).parent().parent().parent().hide();}]+;
+                                                           [});]
+l_cJS += [});]
+
+// Code to prevent the enter key from submitting the form but still trigger the .change()
+l_cJS += [$("#ColumnSearch").keydown(function(e) {]
+l_cJS +=    [var key = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;]
+l_cJS +=    [if(e.keyCode == 13 && e.target.type !== 'submit') {]
+l_cJS +=      [e.preventDefault();]
+l_cJS +=      [return $(e.target).blur().focus();]
+l_cJS +=    [}]
+l_cJS += [});]
+
+// Code to enable the "All" and "Core Only" button
+l_cJS += [$("#ButtonShowAll").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").show(),$(".ColumnCore").show();});]
+l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
+
+l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
 l_cHtml += ' network.on("dragStart", function (params) {'
@@ -419,6 +454,8 @@ l_cHtml += [};]
 l_cHtml += [</script>]
 
 oFcgi:p_cjQueryScript += [MakeVis();]
+
+// oFcgi:p_cjQueryScript += [$(document).on("keydown", "form", function(event) { return event.key != "Enter";});] // To prevent enter key from submitting form
 
 return l_cHtml
 
@@ -770,9 +807,8 @@ with Object l_oDB1
     :SQL("ListOfAllTablesInApplication")
 
     if :Tally > 0
-        l_cHtml += [<div>]
-            l_cHtml += [<span class="ms-3">Filter on Table Name</span><input type="text" id="TableSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span>]
-        l_cHtml += [</div>]
+        
+        l_cHtml += [<div class="ms-3"><span>Filter on Table Name</span><input type="text" id="TableSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span></div>]
 
         l_cHtml += [<div class="m-3"></div>]
 
@@ -785,15 +821,33 @@ with Object l_oDB1
     endif
 endwith
 
-//Add a case insensitive contains(), icontains()
-oFcgi:p_cjQueryScript += "jQuery.expr[':'].icontains = function(a, i, m) {"
-oFcgi:p_cjQueryScript += "  return jQuery(a).text().toUpperCase()"
-oFcgi:p_cjQueryScript += "      .indexOf(m[3].toUpperCase()) >= 0;"
-oFcgi:p_cjQueryScript += "};"
+// //Add a case insensitive contains(), icontains()
+// oFcgi:p_cjQueryScript += "jQuery.expr[':'].icontains = function(a, i, m) {"
+// oFcgi:p_cjQueryScript += "  return jQuery(a).text().toUpperCase()"
+// oFcgi:p_cjQueryScript += "      .indexOf(m[3].toUpperCase()) >= 0;"
+// oFcgi:p_cjQueryScript += "};"
+
+// oFcgi:p_cjQueryScript += [$("#TableSearch").change(function() {]
+// oFcgi:p_cjQueryScript += [$(".SPANTable:icontains('" + $(this).val() + "')").parent().parent().show();]
+// oFcgi:p_cjQueryScript += [$(".SPANTable:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
+// oFcgi:p_cjQueryScript += [});]
+
+oFcgi:p_cjQueryScript += 'function KeywordSearch(par_cListOfWords, par_cString) {'
+oFcgi:p_cjQueryScript += '  const l_aWords_upper = par_cListOfWords.toUpperCase().split(" ").filter(Boolean);'
+oFcgi:p_cjQueryScript += '  const l_cString_upper = par_cString.toUpperCase();'
+oFcgi:p_cjQueryScript += '  var l_lAllWordsIncluded = true;'
+oFcgi:p_cjQueryScript += '  for (var i = 0; i < l_aWords_upper.length; i++) {'
+oFcgi:p_cjQueryScript += '    if (!l_cString_upper.includes(l_aWords_upper[i])) {l_lAllWordsIncluded = false;break;};'
+oFcgi:p_cjQueryScript += '  }'
+oFcgi:p_cjQueryScript += '  return l_lAllWordsIncluded;'
+oFcgi:p_cjQueryScript += '}'
 
 oFcgi:p_cjQueryScript += [$("#TableSearch").change(function() {]
-oFcgi:p_cjQueryScript += [$(".SPANTable:icontains('" + $(this).val() + "')").parent().parent().show();]
-oFcgi:p_cjQueryScript += [$(".SPANTable:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
+oFcgi:p_cjQueryScript +=    [var l_keywords =  $(this).val();]
+oFcgi:p_cjQueryScript +=    [$(".SPANTable").each(function (par_SpanTable){]+;
+                                                                           [var l_cApplicationName = $(this).text();]+;
+                                                                           [if (KeywordSearch(l_keywords,l_cApplicationName)) {$(this).parent().parent().show();} else {$(this).parent().parent().hide();}]+;
+                                                                           [});]
 oFcgi:p_cjQueryScript += [});]
 
 l_cHtml += [<div class="form-check form-switch">]
@@ -1011,26 +1065,6 @@ return l_cHtml
 // endwith
 
 // return ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//123456
-// #include "DataWharf.ch"
-// memvar oFcgi
-
 //=================================================================================================================
 //=================================================================================================================
 function DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk,par_hValues)
@@ -1272,12 +1306,6 @@ case l_cActionOnSubmit == "Cancel"
 endcase
 
 return l_cHtml
-
-
-
-
-
-
 //=================================================================================================================
 function GetInfoDuringVisualization()
 local l_cHtml := []
@@ -1338,8 +1366,8 @@ local l_cHtml_TableCustomFields := ""
 local l_lUnknownInGray
 local l_oData_Application
 local l_cApplicationSupportColumns
-
-// SendToDebugView(Trans(l_nActiveTabNumber))
+local l_cHtml_icon
+local l_cHtml_tr_class
 
 oFcgi:TraceAdd("GetInfoDuringVisualization")
 
@@ -1721,6 +1749,16 @@ if len(l_aNodes) == 1
                     l_cHtml += [<div class="row">]  //  justify-content-center
                         l_cHtml += [<div class="col-auto">]
 
+                            l_cHtml += [<div>]
+                            l_cHtml += [<span>Filter on Column Name</span>]
+                            l_cHtml += [<input type="text" id="ColumnSearch" value="" size="30" class="ms-2">]
+                            l_cHtml += [<span class="ms-1"> (Press Enter)</span>]
+                            l_cHtml += [<input type="button" id="ButtonShowAll" class="btn btn-primary rounded ms-3" value="All">]
+                            l_cHtml += [<input type="button" id="ButtonShowCoreOnly" class="btn btn-primary rounded ms-3" value="Core Only">]
+                            l_cHtml += [</div>]
+
+                            l_cHtml += [<div class="m-3"></div>]
+
                             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                             l_cHtml += [<tr class="bg-info">]
@@ -1741,22 +1779,29 @@ if len(l_aNodes) == 1
 
                             select ListOfColumns
                             scan all
-                                l_cHtml += [<tr>]
 
-                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                    do case
-                                    case ListOfColumns->Column_Primary
-                                        l_cHtml += [<i class="bi bi-key"></i>]
-                                    case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
-                                        l_cHtml += [<i class="bi bi-tools"></i>]
-                                    case !hb_isNil(ListOfColumns->Table_Name)
-                                        l_cHtml += [<i class="bi-arrow-left"></i>]
-                                    endcase
-                                l_cHtml += [</td>]
+                                do case
+                                case ListOfColumns->Column_Primary
+                                    l_cHtml_icon     := [<i class="bi bi-key"></i>]
+                                    l_cHtml_tr_class := "ColumnNotCore"
+                                case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
+                                    l_cHtml_icon     := [<i class="bi bi-tools"></i>]
+                                    l_cHtml_tr_class := "ColumnNotCore"
+                                case !hb_isNil(ListOfColumns->Table_Name)
+                                    l_cHtml_icon     := [<i class="bi-arrow-left"></i>]
+                                    l_cHtml_tr_class := "ColumnNotCore"
+                                otherwise
+                                    l_cHtml_icon     := []
+                                    l_cHtml_tr_class := "ColumnCore"
+                                endcase
+
+                                l_cHtml += [<tr class="]+l_cHtml_tr_class+[">]
+
+                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Applications/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</a>]
+                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Applications/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/"><span class="SpanColumnName">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></a>]
                                     l_cHtml += [</td>]
 
                                     // Type
@@ -1940,9 +1985,6 @@ if len(l_aNodes) == 1
                     l_cHtml += [</div>]
                 endif
 
-
-
-
             l_cHtml += [</div>]
 
             // -----------------------------------------------------------------------------------------------------------------------------------------
@@ -2041,5 +2083,3 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-
-

@@ -189,6 +189,8 @@ local l_lCyanAuditAware := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1))
 
 SendToDebugView("Request Counter",::RequestCount)
 
+::SetHeaderValue("X-Frame-Options","DENY")  // To help prevent clickhacking, meaning to place the web site into an frame of another site.
+
 //Reset transient properties
 
 ::p_iUserPk         := 0
