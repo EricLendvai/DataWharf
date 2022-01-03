@@ -233,6 +233,26 @@ l_Schema := ;
    ,;   //Index Definition
    {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
    ,"KeyC"          =>{,"KeyC"    ,.f.,"BTREE"}}};
+,"public.TableMapping"=>{;   //Field Definition
+   {"pk"             =>{,  "I",   0,  0,};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"fk_TableFrom"   =>{,  "I",   0,  0,};
+   ,"fk_TableTo"     =>{,  "I",   0,  0,};
+   ,"Description"    =>{,  "M",   0,  0,}};   // Text representation of the value
+   ,;   //Index Definition
+   {"fk_TableFrom"   =>{,"fk_TableFrom" ,.f.,"BTREE"};
+   ,"fk_TableTo"     =>{,"fk_TableTo"   ,.f.,"BTREE"}}};
+,"public.ColumnMapping"=>{;   //Field Definition
+   {"pk"             =>{,  "I",   0,  0,};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"fk_ColumnFrom"  =>{,  "I",   0,  0,};
+   ,"fk_ColumnTo"    =>{,  "I",   0,  0,};
+   ,"Description"    =>{,  "M",   0,  0,}};   // Text representation of the value
+   ,;   //Index Definition
+   {"fk_ColumnFrom"   =>{,"fk_ColumnFrom" ,.f.,"BTREE"};
+   ,"fk_ColumnTo"     =>{,"fk_ColumnTo"   ,.f.,"BTREE"}}};
 ,"public.LoginLogs"=>{;   //Field Definition
    {"pk"          =>{,  "I",   0,  0,};
    ,"sysc"        =>{, "DT",   0,  6,"N"};

@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/02/2022
+* New Inter-App Mapping option. Still under development, see notes at the top of the file WebPage_InterAppMapping.prg
+
 ## 12/28/2021
 * Added Filter options on List of Columns being displayed when selecting a node in Visualize.
 

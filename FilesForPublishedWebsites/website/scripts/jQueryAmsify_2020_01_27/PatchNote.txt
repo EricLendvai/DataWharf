@@ -1,0 +1,1 @@
+To handle the use of Bootstrap Icons instead for fontawsome: Change '"fa fa-times ' to '"bi bi-x ' in jquery.amsify.suggestags.js

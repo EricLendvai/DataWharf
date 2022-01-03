@@ -493,6 +493,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     endif
                     if !hb_orm_isnull("ListOfFieldsForLoads","enumeration_name")
                         l_cColumnDefault := strtran(l_cColumnDefault,[::"]+ListOfFieldsForLoads->enumeration_name+["],"")
+                        l_cColumnDefault := strtran(l_cColumnDefault,[::]+ListOfFieldsForLoads->enumeration_name,"")   // Some previous versions of Postgresql will or will not have double quotes around the entity name.
                     endif
 
                     l_iFk_Enumeration := 0

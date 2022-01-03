@@ -19,12 +19,13 @@ v_hPP := nil
 
 //The following Hash will have per web page name (url) an array that consists of {Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
-public v_hPageMapping := {"home"             => {"Home"           ,1,@BuildPageHome()},;
-                          "Info"             => {"Info"           ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
-                          "Applications"     => {"Applications"   ,1,@BuildPageApplications()},;
-                          "Application"      => {"Applications"   ,1,@BuildPageApplications()},;
-                          "CustomFields"     => {"Custom Fields"  ,1,@BuildPageCustomFields()},;
-                          "Users"            => {"Users"          ,1,@BuildPageUsers()} }
+public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
+                          "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
+                          "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
+                          "Application"      => {"Applications"             ,1,@BuildPageApplications()},;
+                          "InterAppMapping"  => {"Inter Application Mapping",1,@BuildPageInterAppMapping()},;
+                          "CustomFields"     => {"Custom Fields"            ,1,@BuildPageCustomFields()},;
+                          "Users"            => {"Users"                    ,1,@BuildPageUsers()} }
 
 hb_HCaseMatch(v_hPageMapping,.f.)
 
@@ -303,7 +304,7 @@ else
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
 
-        l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
+// l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
         l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
 
         // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/Themes/smoothness/jQueryUI.css">]
@@ -635,8 +636,9 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
                     endif

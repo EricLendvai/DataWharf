@@ -1,7 +1,7 @@
 # DataWharf - Upcoming fixes, changes and enhancements
 
 ## Short Term Fixes
-- Finish setup of User Security Global and Application Restrictions. Currently all users have full access.
+- Finish setup of User Security Global and Application Restrictions. Currently all users have full access. In progress.
 - Forbid to change CustomField.UsedOn once related values are present.
 
 ## Pending Development
@@ -12,7 +12,6 @@
 - Allow to compare only data structure during Load/Sync.
 - Custom fields for Enumerations and Enum Values.
 - After a Search on tables show in a different color what was found in Name and Description fields.
-- "Remember" last search criteria and even allow to view past search settings.
 - On Load/Sync process pseudo enum fields (Non native SQL Enums)
 
 ## Allow for an application to be viewable without user login
@@ -20,7 +19,7 @@
 - Implement public viewing.
 
 ## Linux Support (Via Ubuntu)
-- Update VSCode task and launch to support Linux. Will be tested in Ubuntu.
+- Update VSCode task and launch to support Linux. Will be tested in Ubuntu. In progress.
 
 ## Docker Support
 - Create docker file and documentation. Probably using Debian or Alpine.
@@ -34,7 +33,7 @@
 - Free form navigation diagram. Specify a starting table, then navigate throughout the network of tables.
 
 ## Intra Application Mapping
-- Allow to map tables and columns across application.
+- Allow to map tables and columns across application. In Progress.
 - Add support in Visualization for cross application mapping.
 
 ## Harbour Specific
@@ -58,7 +57,7 @@
 - Map to change logs if the request was implemented.
 
 ## Support for MSSQL
-- Allow to load/Sync from MSSQL.
+- Allow to load/Sync from MSSQL. In progress.
 - Find out if any additional field types are needed for MSSQL.
 
 ## Support for other database servers/engines
