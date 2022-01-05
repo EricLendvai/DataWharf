@@ -2328,13 +2328,13 @@ if l_nNumberOfUsedFlags > 0
     endwith
 
     oFcgi:p_cjQueryScript += [$(".TextSearchFlag").amsifySuggestags({]+;
-                                                            "suggestions :["+l_json_Flags+"],"+;
-                                                            "whiteList: true,"+;
-                                                            "tagLimit: 10,"+;
-                                                            "selectOnHover: true,"+;
-                                                            "showAllSuggestions: true,"+;
-                                                            "keepLastOnHoverTag: false"+;
-                                                            [});]
+                                                                    "suggestions :["+l_json_Flags+"],"+;
+                                                                    "whiteList: true,"+;
+                                                                    "tagLimit: 10,"+;
+                                                                    "selectOnHover: true,"+;
+                                                                    "showAllSuggestions: true,"+;
+                                                                    "keepLastOnHoverTag: false"+;
+                                                                    [});]
 
     l_cHtml += [<style>]
     l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
@@ -2569,23 +2569,24 @@ with object l_oDB_ListOfFlags
             l_cFlagInfo := ListOfFlags->Flag_Name + [ (]+ListOfFlags->Flag_Code+[)]
             l_json_Flags += "{tag:'"+l_cFlagInfo+"',value:"+trans(ListOfFlags->pk)+"}"
         endscan
+
+        oFcgi:p_cjQueryScript += [$("#TextFlags").amsifySuggestags({]+;
+                                                                "suggestions :["+l_json_Flags+"],"+;
+                                                                "whiteList: true,"+;
+                                                                "tagLimit: 10,"+;
+                                                                "selectOnHover: true,"+;
+                                                                "showAllSuggestions: true,"+;
+                                                                "keepLastOnHoverTag: false"+;
+                                                                [});]
+
+        l_cHtml += [<style>]
+        l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
+        l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 300px;} ]
+        l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
+        l_cHtml += [</style>]
+        
     endif
 endwith
-
-oFcgi:p_cjQueryScript += [$("#TextFlags").amsifySuggestags({]+;
-                                                           "suggestions :["+l_json_Flags+"],"+;
-                                                           "whiteList: true,"+;
-                                                           "tagLimit: 10,"+;
-                                                           "selectOnHover: true,"+;
-                                                           "showAllSuggestions: true,"+;
-                                                           "keepLastOnHoverTag: false"+;
-                                                           [});]
-
-l_cHtml += [<style>]
-l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
-l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 300px;} ]
-l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
-l_cHtml += [</style>]
 
 with object l_oDB1
     if !empty(par_iPk)
@@ -5700,7 +5701,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Table Use</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboTableUseStatus" id="ComboTableUseStatus">]
                 l_cHtml += [<option value="1"]+iif(l_iTableUseStatus==1,[ selected],[])+[>Do Not Use</option>]
@@ -5711,7 +5712,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+        l_cHtml += [<td class="pe-2 pb-3">Column Use</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboColumnUseStatus" id="ComboColumnUseStatus">]
                 l_cHtml += [<option value="1"]+iif(l_iColumnUseStatus==1,[ selected],[])+[>Do Not Use</option>]
@@ -5761,7 +5762,7 @@ oFcgi:TraceAdd("FlagEditFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iFlagPk              := Val(oFcgi:GetInputValue("TableKey"))
-l_cFlagName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cFlagName            := Alltrim(SanitizeInput(oFcgi:GetInputValue("TextName")))
 l_cFlagCode            := upper(SanitizeInput(Strtran(oFcgi:GetInputValue("TextCode")," ","")))
 l_iFlagTableUseStatus  := Val(oFcgi:GetInputValue("ComboTableUseStatus"))
 l_iFlagColumnUseStatus := Val(oFcgi:GetInputValue("ComboColumnUseStatus"))

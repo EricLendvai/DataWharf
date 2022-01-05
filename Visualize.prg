@@ -25,10 +25,11 @@ local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 local l_iDiagramPk
 
-local l_iCanvasWidth       := val(GetUserSetting("CanvasWidth"))
-local l_iCanvasHeight      := val(GetUserSetting("CanvasHeight"))
-local l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
-local l_lUnknownInGray     := (GetUserSetting("UnknownInGray") == "T")
+local l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
+local l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
+local l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
+local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
+local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
 local l_cJS
 
@@ -299,7 +300,11 @@ scan all
         if l_lNodeShowDescription
             l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
         else
-            l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
+            if l_lNeverShowDescriptionOnHover
+                l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+["]
+            else
+                l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
+            endif
         endif
     endif
 
@@ -1080,6 +1085,7 @@ local l_iCanvasHeight
 
 local l_lNavigationControl
 local l_lUnknownInGray
+local l_lNeverShowDescriptionOnHover
 
 oFcgi:TraceAdd("DataDictionaryVisualizeMyDiagramSettingsBuild")
 
@@ -1114,6 +1120,9 @@ if pcount() < 6
 
         l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
         l_hValues["UnknownInGray"]  := l_lUnknownInGray
+
+        l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+        l_hValues["NeverShowDescriptionOnHover"]  := l_lNeverShowDescriptionOnHover
 
     endif
 endif
@@ -1208,6 +1217,15 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
 
+        l_lNeverShowDescriptionOnHover := hb_HGetDef(l_hValues,"NeverShowDescriptionOnHover",.f.)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Never Show Description On Hover</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+
     l_cHtml += [</table>]
     
 l_cHtml += [</div>]
@@ -1233,6 +1251,7 @@ local l_iCanvasWidth
 local l_iCanvasHeight
 local l_lNavigationControl
 local l_lUnknownInGray
+local l_lNeverShowDescriptionOnHover
 
 local l_cErrorMessage := ""
 local l_lSelected
@@ -1256,8 +1275,9 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-l_lNavigationControl := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
-l_lUnknownInGray     := (oFcgi:GetInputValue("CheckUnknownInGray") == "1")
+l_lNavigationControl           := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
+l_lUnknownInGray               := (oFcgi:GetInputValue("CheckUnknownInGray") == "1")
+l_lNeverShowDescriptionOnHover := (oFcgi:GetInputValue("CheckNeverShowDescriptionOnHover") == "1")
 
 do case
 case l_cActionOnSubmit == "SaveMySettings"
@@ -1290,6 +1310,12 @@ case l_cActionOnSubmit == "SaveMySettings"
         SaveUserSetting("UnknownInGray","T")
     else
         SaveUserSetting("UnknownInGray","")
+    endif
+
+    if l_lNeverShowDescriptionOnHover
+        SaveUserSetting("NeverShowDescriptionOnHover","T")
+    else
+        SaveUserSetting("NeverShowDescriptionOnHover","")
     endif
 
     if empty(l_cErrorMessage)
@@ -1364,6 +1390,7 @@ local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_TableCustomFields := ""
 local l_lUnknownInGray
+local l_lNeverShowDescriptionOnHover
 local l_oData_Application
 local l_cApplicationSupportColumns
 local l_cHtml_icon
@@ -1382,7 +1409,8 @@ l_nLengthDecoded := hb_jsonDecode(l_cInfo,@l_hOnClickInfo)
 
 // SendToDebugView("TabCookie = "+oFcgi:GetCookieValue("DiagramDetailTab"))
 
-l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
+l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
+l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
