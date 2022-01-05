@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/04/2022
+* New Flags options at the levels of Applications. All Application can have their own flags and applied to Tables. (To Columns coming soon.
+* Table Search option now includes searches on flags, as long as at least one table has a linked flag.)
+
 ## 01/02/2022
 * New Inter-App Mapping option. Still under development, see notes at the top of the file WebPage_InterAppMapping.prg
 

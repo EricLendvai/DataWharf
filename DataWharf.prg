@@ -1,4 +1,4 @@
-//Copyright (c) 2021 Eric Lendvai MIT License
+//Copyright (c) 2021-2022 Eric Lendvai MIT License
 
 #include "hb_fcgi.ch"
 

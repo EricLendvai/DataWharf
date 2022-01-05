@@ -12,7 +12,8 @@
 - Allow to compare only data structure during Load/Sync.
 - Custom fields for Enumerations and Enum Values.
 - After a Search on tables show in a different color what was found in Name and Description fields.
-- On Load/Sync process pseudo enum fields (Non native SQL Enums)
+- On Load/Sync process pseudo enum fields (Non native SQL Enums).
+- Add support to Flags at the level of Columns.
 
 ## Allow for an application to be viewable without user login
 - Add support to flag type of information to be publish publicly.

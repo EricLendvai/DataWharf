@@ -182,7 +182,7 @@ local lcApplicationNameFrom
 local lcApplicationNameTo
 local l_iNumberOfTablesInList
 local l_ScriptFolder
-local l_info
+local l_cInfo
 local l_json_Categories
 local l_cInputObjectName
 local l_cInputValue
@@ -192,7 +192,6 @@ local l_nNumberOfNameSpacesInTablesTo
 oFcgi:TraceAdd("InterAppMappingMapTablesBuild")
 
 l_ScriptFolder:= l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
-
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
 
@@ -294,11 +293,11 @@ l_cHtml += [<div class="m-3">]
             l_json_Categories += [,]
         endif
         if l_nNumberOfNameSpacesInTablesTo > 1
-            l_info = strtran(strtran(ListOfTablesTo->NameSpace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
+            l_cInfo = strtran(strtran(ListOfTablesTo->NameSpace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
         else
-            l_info = strtran(strtran(ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
+            l_cInfo = strtran(strtran(ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
         endif
-        l_json_Categories += "{tag:'"+l_info+"',value:"+trans(ListOfTablesTo->pk)+"}"
+        l_json_Categories += "{tag:'"+l_cInfo+"',value:"+trans(ListOfTablesTo->pk)+"}"
     endscan
 
     if l_iNumberOfTablesInList > 0

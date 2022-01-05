@@ -23,6 +23,7 @@ local l_iApplicationDocStatus
 local l_cApplicationDescription
 
 local l_iNameSpacePk
+local l_iFlagPk
 local l_iTablePk
 local l_iColumnPk
 local l_iEnumerationPk
@@ -37,6 +38,7 @@ local l_aSQLResult := {}
 local l_cURLAction              := "ListApplications"
 local l_cURLApplicationLinkCode := ""
 local l_cURLNameSpaceName       := ""
+local l_cURLFlagCode            := ""
 local l_cURLTableName           := ""
 local l_cURLEnumerationName     := ""
 local l_cURLVersionCode         := ""
@@ -45,6 +47,11 @@ local l_cURLEnumValueName       := ""
 
 local l_cTableAKA
 local l_cEnumerationAKA
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_iInitialDiagramPk
+local l_nNumberOfPrimaryColumns
+local l_oDBListOfFlagsOnFile
+local l_cFlags
 
 local l_nAccessLevel := 1   // None by default
 // As per the info in Schema.txt
@@ -56,11 +63,6 @@ local l_nAccessLevel := 1   // None by default
 //     6 - Edit Anything and Load/Sync Schema
 //     7 - Full Access
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-
-local l_iInitialDiagramPk
-
-local l_nNumberOfPrimaryColumns
 
 oFcgi:TraceAdd("BuildPageApplications")
 
@@ -68,6 +70,7 @@ oFcgi:TraceAdd("BuildPageApplications")
 // l_cURLAction
 // l_cURLApplicationLinkCode
 // l_cURLNameSpaceName
+// l_cURLFlagCode
 // l_cURLTableName
 // l_cURLEnumerationName
 // l_cURLVersionCode
@@ -81,10 +84,13 @@ oFcgi:TraceAdd("BuildPageApplications")
 
 // Applications/ApplicationVisualize/<ApplicationLinkCode>/
 
-
 // Applications/ListNameSpaces/<ApplicationLinkCode>/
 // Applications/NewNameSpace/<ApplicationLinkCode>/
 // Applications/EditNameSpace/<ApplicationLinkCode>/<NameSpaceName>/
+
+// Applications/ListFlags/<ApplicationLinkCode>/
+// Applications/NewFlag/<ApplicationLinkCode>/
+// Applications/EditFlag/<ApplicationLinkCode>/<NameSpaceName>/
 
 // Applications/ListTables/<ApplicationLinkCode>/
 // Applications/NewTable/<ApplicationLinkCode>/
@@ -140,6 +146,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         endif
     endif
 
+    if vfp_Inlist(l_cURLAction,"EditFlag")
+        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+            l_cURLFlagCode := oFcgi:p_URLPathElements[4]
+        endif
+    endif
+
     if vfp_Inlist(l_cURLAction,"EditVersion")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
             l_cURLVersionCode := oFcgi:p_URLPathElements[4]
@@ -167,6 +179,9 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     case vfp_Inlist(l_cURLAction,"ListNameSpaces","NewNameSpace","EditNameSpace")
         l_cApplicationElement := "NAMESPACES"
+
+    case vfp_Inlist(l_cURLAction,"ListFlags","NewFlag","EditFlag")
+        l_cApplicationElement := "FLAGS"
 
     case vfp_Inlist(l_cURLAction,"ListVersions","NewVersion","EditVersion")
         l_cApplicationElement := "VERSIONS"
@@ -457,6 +472,27 @@ case l_cURLAction == "EditTable"
             l_hValues["Information"]  := l_aSQLResult[1,8]
  
             CustomFieldsLoad(l_iApplicationPk,USEDON_TABLE,l_iTablePk,@l_hValues)
+
+            //Load current Flags
+            l_cFlags := ""
+            l_oDBListOfFlagsOnFile := hb_SQLData(oFcgi:p_o_SQLConnection)
+            with object l_oDBListOfFlagsOnFile
+                :Table("f0a3ce88-c43c-49b0-9f95-8d6978a2db8f","FlagTable")
+                :Column("FlagTable.fk_Flag" , "FlagTable_fk_Flag")
+                :Where("FlagTable.fk_Table = ^" , l_iTablePk)
+                :Join("inner","Flag","","FlagTable.fk_Flag = Flag.pk")
+                :Where("Flag.fk_Application = ^",l_iApplicationPk)
+                :Where("Flag.TableUseStatus = 2")   // Only care about Active Flags
+                :SQL("ListOfFlagsOnFile")
+                select ListOfFlagsOnFile
+                scan all
+                    if !empty(l_cFlags)
+                        l_cFlags += [,]
+                    endif
+                    l_cFlags += Trans(ListOfFlagsOnFile->FlagTable_fk_Flag)
+                endscan
+            endwith
+            l_hValues["Flags"]  := l_cFlags
 
             l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iTablePk,l_hValues)
         else
@@ -905,6 +941,56 @@ case l_cURLAction == "EditNameSpace"
         endif
     endif
 
+case l_cURLAction == "ListFlags"
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += FlagListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
+
+case l_cURLAction == "NewFlag"
+    if oFcgi:p_nAccessLevel >= 5
+        l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+        
+        if oFcgi:isGet()
+            l_cHtml += FlagEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
+        else
+            l_cHtml += FlagEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+        endif
+    endif
+
+case l_cURLAction == "EditFlag"
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+    
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    with object l_oDB1
+        :Table("a5a2cd08-7783-4151-905d-da7c3cb3a2af","Flag")
+        :Column("Flag.pk"             , "Pk")                // 1
+        :Column("Flag.Name"           , "Name")              // 2
+        :Column("Flag.Code"           , "Code")              // 3
+        :Column("Flag.TableUseStatus" , "TableUseStatus")    // 4
+        :Column("Flag.ColumnUseStatus", "ColumnUseStatus")   // 5
+        :Column("Flag.Description"    , "Description")       // 6
+        :Where([upper(replace(Flag.Code,' ','')) = ^],upper(StrTran(l_cURLFlagCode," ","")))
+        :Where([Flag.fk_Application = ^],l_iApplicationPk)
+        :SQL(@l_aSQLResult)
+    endwith
+
+    if l_oDB1:Tally != 1
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListFlags/"+l_cURLApplicationLinkCode+"/")
+    else
+        if oFcgi:isGet()
+            l_iFlagPk    := l_aSQLResult[1,1]
+
+            l_hValues["Name"]            := AllTrim(l_aSQLResult[1,2])
+            l_hValues["Code"]            := AllTrim(l_aSQLResult[1,3])
+            l_hValues["TableUseStatus"]  := l_aSQLResult[1,4]
+            l_hValues["ColumnUseStatus"] := l_aSQLResult[1,5]
+            l_hValues["Description"]     := l_aSQLResult[1,6]
+
+            l_cHtml += FlagEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iFlagPk,l_hValues)
+        else
+            l_cHtml += FlagEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+        endif
+    endif
+
 case l_cURLAction == "ListVersions"
     l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
     //_M_
@@ -987,7 +1073,7 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
-
+ 
 oFcgi:TraceAdd("ApplicationHeaderBuild")
 
 l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
@@ -1026,13 +1112,18 @@ l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [<li class="nav-item">]
         with object l_oDB1
             :Table("757edb64-9f3a-4f63-ada7-dbedf3e09fa7","NameSpace")
-            :Column("Count(*)","Total")
             :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-            :SQL(@l_aSQLResult)
+            l_iReccount := :Count()
         endwith
-
-        l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "NAMESPACES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListNameSpaces/]+par_cURLApplicationLinkCode+[/">Name Spaces (]+Trans(l_iReccount)+[)</a>]
+    l_cHtml += [</li>]
+    l_cHtml += [<li class="nav-item">]
+        with object l_oDB1
+            :Table("65755ca3-5143-4556-8f3b-72912b2df865","Flag")
+            :Where("Flag.fk_Application = ^" , par_iApplicationPk)
+            l_iReccount := :Count()
+        endwith
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "FLAGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListFlags/]+par_cURLApplicationLinkCode+[/">Flags (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     if oFcgi:p_nAccessLevel >= 7
         l_cHtml += [<li class="nav-item">]
@@ -1647,7 +1738,7 @@ local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA         := hb_HGetDef(par_hValues,"AKA","")
+local l_cAKA         := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -1887,6 +1978,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_cTableName
 local l_cTableDescription
+local l_cTableFlags
 local l_cColumnName
 local l_cColumnDescription
 local l_cURL
@@ -1897,16 +1989,21 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_cTableName         := SanitizeInput(oFcgi:GetInputValue("TextTableName"))
 l_cTableDescription  := SanitizeInput(oFcgi:GetInputValue("TextTableDescription"))
+l_cTableFlags        := SanitizeInput(oFcgi:GetInputValue("TextTableFlags"))
 
 l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextColumnName"))
 l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextColumnDescription"))
+//_M_
 
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"        ,l_cTableName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription" ,l_cTableDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableFlags"       ,l_cTableFlags)
+
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName"       ,l_cColumnName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription",l_cColumnDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnFlags"      ,"")   // _M_
 
     // l_cURL += [Search?TableName=]+hb_StrToHex(l_cTableName)
     // l_cURL += [&TableDescription=]+hb_StrToHex(l_cTableDescription)
@@ -1920,8 +2017,10 @@ case l_cActionOnSubmit == "Search"
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"        ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription" ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableFlags"       ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName"       ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription","")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnFlags"      ,"")
 
     l_cURL := oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/"
     oFcgi:Redirect(l_cURL)
@@ -1935,45 +2034,74 @@ return l_cHtml
 //=================================================================================================================
 static function TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
-local l_oDB_ListOfTables
-local l_oDB_ListOfTablesColumnCounts
-local l_oDB_ListOfTablesIndexCounts
-local l_oDB_CustomField
+local l_oDB_ListOfTables             := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTablesColumnCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTablesIndexCounts  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomField              := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfFlags              := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_TableFlags               := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_AnyFlags                 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_oCursor
+local l_iTablePk
 local l_iColumnCount
 local l_iIndexCount
 
 local l_cSearchTableName
 local l_cSearchTableDescription
+local l_cSearchTableFlags
 
 local l_cSearchColumnName
 local l_cSearchColumnDescription
+local l_cSearchColumnFlags
 
 local l_iNumberOfTablesInList := 0
 local l_nNumberOfCustomFieldValues := 0
-
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cColumnSearchParameters
+local l_nNumberOfFlags
+local l_nColspan
+local l_cFlagsInfo
+local l_nNumberOfUsedFlags
+local l_json_Flags
+local l_cFlagInfo
+local l_ScriptFolder
 
 oFcgi:TraceAdd("TableListFormBuild")
 
 l_cSearchTableName         := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription  := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
+l_cSearchTableFlags        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableFlags")
+
 l_cSearchColumnName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
 l_cSearchColumnDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
+l_cSearchColumnFlags       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnFlags")
 
-if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnDescription)
+if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnDescription)  //_M_ on Column Flags
     l_cColumnSearchParameters := ""
 else
     l_cColumnSearchParameters := [Search?ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
 endif
 
+//Find out if any flags are linked to any tables, regardless of filter
+with object l_oDB_AnyFlags
+    :Table("1f510c4e-d637-4803-814b-6bae91676385","FlagTable")
+    :Join("inner","Table","","FlagTable.fk_Table = Table.pk")
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Flag","","FlagTable.fk_Flag = Flag.pk")
+    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Flag.fk_Application = ^",par_iApplicationPk)
+    :Where("Flag.TableUseStatus = 2")   // Only care about Active Flags
+    l_nNumberOfUsedFlags := :Count()
 
-l_oDB_ListOfTables := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfTablesColumnCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfTablesIndexCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_CustomField := hb_SQLData(oFcgi:p_o_SQLConnection)
+    if empty(l_nNumberOfUsedFlags)
+        l_cSearchTableFlags  := []
+        l_cSearchColumnFlags := []
+    else
+        //_M_ add extra code to ensure have ",0123456789" characters. in l_cSearchTableFlags and l_cSearchColumnFlags
+    endif
+
+endwith
 
 With Object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
@@ -1996,7 +2124,6 @@ With Object l_oDB_ListOfTables
     if !empty(l_cSearchTableDescription)
         :KeywordCondition(l_cSearchTableDescription,"Table.Description")
     endif
-
     if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
         :Distinct(.t.)
         :Join("inner","Column","","Column.fk_Table = Table.pk")
@@ -2006,6 +2133,12 @@ With Object l_oDB_ListOfTables
         if !empty(l_cSearchColumnDescription)
             :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
         endif
+    endif
+
+    if !empty(l_cSearchTableFlags)
+        :Distinct(.t.)
+        :Join("inner","FlagTable","","FlagTable.fk_Table = Table.pk")
+        :Where("FlagTable.fk_Flag in ("+l_cSearchTableFlags+")")
     endif
 
     :OrderBy("tag1")
@@ -2049,6 +2182,11 @@ if l_iNumberOfTablesInList > 0
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
             endif
+        endif
+        if !empty(l_cSearchTableFlags)
+            :Distinct(.t.)
+            :Join("inner","FlagTable","","FlagTable.fk_Table = Table.pk")
+            :Where("FlagTable.fk_Flag in ("+l_cSearchTableFlags+")")
         endif
         :SQL("ListOfCustomFieldOptionDefinition")
         if :Tally > 0
@@ -2096,6 +2234,24 @@ if l_iNumberOfTablesInList > 0
         l_nNumberOfCustomFieldValues := :Tally
 
     endwith
+
+    with object l_oDB_TableFlags
+        :Table("232681c2-68f1-4977-81dc-b96fb5779a13","Table")
+        :Column("Table.pk" ,"fk_entity")
+        :Column("Flag.Name","Flag_Name")
+        :Column("Flag.Code","Flag_Code")
+        :Column("upper(Flag.Name)","tag1")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","FlagTable","","FlagTable.fk_Table = Table.pk")
+        :Join("inner","Flag","","FlagTable.fk_Flag = Flag.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Flag.fk_Application = ^",par_iApplicationPk)
+        :Where("Flag.TableUseStatus = 2")   // Only care about Active Flags
+        :OrderBy("tag1")
+        :SQL("ListOfFlagTables")
+        l_nNumberOfFlags := :Tally
+    endif
+
 endif
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
@@ -2139,6 +2295,55 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
 l_cHtml += [<input type="hidden" name="formname" value="List">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 
+if l_nNumberOfUsedFlags > 0
+    //Multi Select Support for flags
+
+    l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
+
+    with object l_oDB_ListOfFlags
+        :Table("9af99d6b-dd79-4bfb-904d-08d48f687cb3","Flag")
+        :Column("Flag.pk"   , "pk")
+        :Column("Flag.Name" , "Flag_Name")
+        :Column("upper(Flag.Name)" , "tag1")
+        :Column("Flag.Code" , "Flag_Code")
+        :Where("Flag.fk_Application = ^" , par_iApplicationPk)
+        :Where("Flag.TableUseStatus = 2")
+        :OrderBy("Tag1")
+        :SQL("ListOfFlags")
+        l_nNumberOfFlags := :Tally
+
+        if l_nNumberOfFlags > 0
+            l_json_Flags := []
+            select ListOfFlags
+            scan all
+                if !empty(l_json_Flags)
+                    l_json_Flags += [,]
+                endif
+                l_cFlagInfo := ListOfFlags->Flag_Name + [ (]+ListOfFlags->Flag_Code+[)]
+                l_json_Flags += "{tag:'"+l_cFlagInfo+"',value:"+trans(ListOfFlags->pk)+"}"
+            endscan
+        endif
+    endwith
+
+    oFcgi:p_cjQueryScript += [$(".TextSearchFlag").amsifySuggestags({]+;
+                                                            "suggestions :["+l_json_Flags+"],"+;
+                                                            "whiteList: true,"+;
+                                                            "tagLimit: 10,"+;
+                                                            "selectOnHover: true,"+;
+                                                            "showAllSuggestions: true,"+;
+                                                            "keepLastOnHoverTag: false"+;
+                                                            [});]
+
+    l_cHtml += [<style>]
+    l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
+    l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 150px;} ]
+    l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
+    l_cHtml += [</style>]
+
+endif
+
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<table>]
@@ -2158,16 +2363,25 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [<td></td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
+                            if l_nNumberOfUsedFlags > 0
+                                l_cHtml += [<td class="justify-content-center" align="center">Flags</td>]
+                            endif
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td><span class="me-2">Table</span></td>]
-                            l_cHtml += [<td><input type="text" name="TextTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+["></td>]
-                            l_cHtml += [<td><input type="text" name="TextTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+["></td>]
+                            l_cHtml += [<td><input type="text" name="TextTableName" id="TextTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+[" class="form-control"></td>]
+                            l_cHtml += [<td><input type="text" name="TextTableDescription" id="TextTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+[" class="form-control"></td>]
+                            if l_nNumberOfUsedFlags > 0
+                                l_cHtml += [<td><input type="text" name="TextTableFlags" id="TextTableFlags" size="25" maxlength="10000" value="]+FcgiPrepFieldForValue(l_cSearchTableFlags)+[" class="form-control TextSearchFlag" placeholder=""></td>]   //  style="width:100px;"
+                            endif
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td><span class="me-2">Column</span></td>]
-                            l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
-                            l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                            l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+[" class="form-control"></td>]
+                            l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+[" class="form-control"></td>]
+                            if l_nNumberOfUsedFlags > 0
+                                l_cHtml += [<td></td>]  //_M_
+                            endif
                         l_cHtml += [</tr>]
                     l_cHtml += [</table>]
 
@@ -2199,8 +2413,16 @@ if !empty(l_iNumberOfTablesInList)
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
+            l_nColspan := 8
+            if l_nNumberOfCustomFieldValues > 0
+                l_nColspan += 1
+            endif
+            if l_nNumberOfFlags > 0
+                l_nColspan += 1
+            endif
+
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-info">]
@@ -2208,6 +2430,9 @@ if !empty(l_iNumberOfTablesInList)
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
+                if l_nNumberOfFlags > 0
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Flags</th>]
+                endif
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Info</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
@@ -2219,6 +2444,8 @@ if !empty(l_iNumberOfTablesInList)
 
             select ListOfTables
             scan all
+                l_iTablePk := ListOfTables->pk
+
                 l_cHtml += [<tr>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2230,14 +2457,28 @@ if !empty(l_iNumberOfTablesInList)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_iColumnCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
+                        l_iColumnCount := iif( VFP_Seek(l_iTablePk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
                         l_cHtml += [<a href="]+l_cSitePath+[Applications/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/]+l_cColumnSearchParameters+[">]+Trans(l_iColumnCount)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_iIndexCount := iif( VFP_Seek(ListOfTables->pk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
+                        l_iIndexCount := iif( VFP_Seek(l_iTablePk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
                         l_cHtml += [<a href="]+l_cSitePath+[Applications/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iIndexCount)+[</a>]
                     l_cHtml += [</td>]
+
+                    if l_nNumberOfFlags > 0
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cFlagsInfo := []
+                            select ListOfFlagTables
+                            scan all for ListOfFlagTables->fk_entity = l_iTablePk
+                                if !empty(l_cFlagsInfo)
+                                    l_cFlagsInfo += [<br>]
+                                endif
+                                l_cFlagsInfo += [<span style="white-space:nowrap;">]+ListOfFlagTables->Flag_Name+[ (]+ListOfFlagTables->Flag_Code+[)]+[</span>]
+                            endscan
+                            l_cHtml += l_cFlagsInfo
+                        l_cHtml += [</td>]
+                    endif
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
@@ -2258,7 +2499,7 @@ if !empty(l_iNumberOfTablesInList)
 
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(ListOfTables->pk,l_hOptionValueToDescriptionMapping)
+                            l_cHtml += CustomFieldsBuildGridOther(l_iTablePk,l_hOptionValueToDescriptionMapping)
                         l_cHtml += [</td>]
                     endif
                 l_cHtml += [</tr>]
@@ -2279,7 +2520,8 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_iNameSpacePk := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA         := hb_HGetDef(par_hValues,"AKA","")
+local l_cAKA         := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
+local l_cFlags       := nvl(hb_HGetDef(par_hValues,"Flags",""),"")
 local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -2287,12 +2529,64 @@ local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
 local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 
-local l_oDB1
+local l_oDB1            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfFlags := hb_SQLData(oFcgi:p_o_SQLConnection)
+
 local l_oDataTableInfo
+local l_ScriptFolder
+local l_json_Flags
+local l_cFlagInfo
+local l_nNumberOfFlags
 
 oFcgi:TraceAdd("TableEditFormBuild")
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_ScriptFolder:= l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
+
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
+
+// Altd()
+
+with object l_oDB_ListOfFlags
+    :Table("baf9f132-b515-41be-b809-def45b61f7d0","Flag")
+    :Column("Flag.pk"   , "pk")
+    :Column("Flag.Name" , "Flag_Name")
+    :Column("upper(Flag.Name)" , "tag1")
+    :Column("Flag.Code" , "Flag_Code")
+    :Where("Flag.fk_Application = ^" , par_iApplicationPk)
+    :Where("Flag.TableUseStatus = 2")
+    :OrderBy("Tag1")
+    :SQL("ListOfFlags")
+    l_nNumberOfFlags := :Tally
+
+    if l_nNumberOfFlags > 0
+        l_json_Flags := []
+        select ListOfFlags
+        scan all
+            if !empty(l_json_Flags)
+                l_json_Flags += [,]
+            endif
+            l_cFlagInfo := ListOfFlags->Flag_Name + [ (]+ListOfFlags->Flag_Code+[)]
+            l_json_Flags += "{tag:'"+l_cFlagInfo+"',value:"+trans(ListOfFlags->pk)+"}"
+        endscan
+    endif
+endwith
+
+oFcgi:p_cjQueryScript += [$("#TextFlags").amsifySuggestags({]+;
+                                                           "suggestions :["+l_json_Flags+"],"+;
+                                                           "whiteList: true,"+;
+                                                           "tagLimit: 10,"+;
+                                                           "selectOnHover: true,"+;
+                                                           "showAllSuggestions: true,"+;
+                                                           "keepLastOnHoverTag: false"+;
+                                                           [});]
+
+l_cHtml += [<style>]
+l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
+l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 300px;} ]
+l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
+l_cHtml += [</style>]
+
 with object l_oDB1
     if !empty(par_iPk)
         :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
@@ -2363,7 +2657,7 @@ else
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-select">]
                 select ListOfNameSpaces
                 scan all
                     l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
@@ -2374,18 +2668,25 @@ else
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Table Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-control"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">AKA</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-control"></td>]
         l_cHtml += [</tr>]
+
+        if l_nNumberOfFlags > 0
+            l_cHtml += [<tr class="pb-5">]
+                l_cHtml += [<td class="pe-2 pb-3">Flags</td>]
+                l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextFlags" id="TextFlags" value="]+FcgiPrepFieldForValue(l_cFlags)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-control" placeholder=""></td>]
+            l_cHtml += [</tr>]
+        endif
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-select">]
                     l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
                     l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
                     l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
@@ -2399,7 +2700,7 @@ else
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[ class="form-select">]
                     l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
                     l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
                     l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
@@ -2410,12 +2711,12 @@ else
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br><span class="small">Engineering Notes</span></td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_TABLE,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevel >= 5,[],[disabled]))
@@ -2426,7 +2727,7 @@ else
 
     oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
-    oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+    // oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
     oFcgi:p_cjQueryScript += [$('#TextInformation').resizable();]
 
     l_cHtml += [</form>]
@@ -2456,6 +2757,15 @@ local l_hValues := {=>}
 
 local l_oDB1
 local l_oDB2
+
+local l_oDBListOfFlagsOnFile
+local l_cListOfFlagPks
+local l_nNumberOfFlagTableOnFile
+local l_hFlagTableOnFile := {=>}
+local l_aFlagsSelected
+local l_cFlagSelected
+local l_iFlagSelectedPk
+local l_iFlagTablePk
 
 oFcgi:TraceAdd("TableEditFormOnSubmit")
 
@@ -2531,9 +2841,68 @@ case l_cActionOnSubmit == "Save"
                 endif
             endif
 
-            if empty(l_cErrorMessage)
+            if empty(l_cErrorMessage) .and. oFcgi:p_nAccessLevel >= 5
                 CustomFieldsSave(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
+
+                //Save Flags - Begin
+
+                //Get current list of flags assign to table
+                l_oDBListOfFlagsOnFile := hb_SQLData(oFcgi:p_o_SQLConnection)
+                with object l_oDBListOfFlagsOnFile
+                    :Table("65c615ce-9262-4f7c-b286-7730f44f8ce4","FlagTable")
+                    :Column("FlagTable.pk"      , "FlagTable_pk")
+                    :Column("FlagTable.fk_Flag" , "FlagTable_fk_Flag")
+                    :Where("FlagTable.fk_Table = ^" , l_iTablePk)
+
+                    :Join("inner","Flag","","FlagTable.fk_Flag = Flag.pk")
+                    :Where("Flag.fk_Application = ^",par_iApplicationPk)
+                    :Where("Flag.TableUseStatus = 2")   // Only care about Active Flags
+                    :SQL("ListOfFlagsOnFile")
+
+                    l_nNumberOfFlagTableOnFile := :Tally
+                    if l_nNumberOfFlagTableOnFile > 0
+                        hb_HAllocate(l_hFlagTableOnFile,l_nNumberOfFlagTableOnFile)
+                        select ListOfFlagsOnFile
+                        scan all
+                            l_hFlagTableOnFile[Trans(ListOfFlagsOnFile->FlagTable_fk_Flag)] := ListOfFlagsOnFile->FlagTable_pk
+                        endscan
+                    endif
+
+                endwith
+
+                l_cListOfFlagPks := SanitizeInput(oFcgi:GetInputValue("TextFlags"))
+                if !empty(l_cListOfFlagPks)
+                    l_aFlagsSelected := hb_aTokens(l_cListOfFlagPks,",",.f.)
+                    for each l_cFlagSelected in l_aFlagsSelected
+                        l_iFlagSelectedPk := val(l_cFlagSelected)
+
+                        l_iFlagTablePk := hb_HGetDef(l_hFlagTableOnFile,Trans(l_iFlagSelectedPk),0)
+                        if l_iFlagTablePk > 0
+                            //Already on file. Remove from l_hFlagTableOnFile
+                            hb_HDel(l_hFlagTableOnFile,Trans(l_iFlagSelectedPk))
+                            
+                        else
+                            // Not on file yet
+                            with object l_oDB1
+                                :Table("0fb176ac-4e6b-4a0e-9953-bd127f1c0065","FlagTable")
+                                :Field("FlagTable.fk_Flag"  ,l_iFlagSelectedPk)
+                                :Field("FlagTable.fk_Table" ,l_iTablePk)
+                                :Add()
+                            endwith
+                        endif
+
+                    endfor
+                endif
+
+                //To through what is left in l_hFlagTableOnFile and remove it, since was not keep as selected flag
+                for each l_iFlagTablePk in l_hFlagTableOnFile
+                    l_oDB1:Delete("dc72217d-50d8-4b80-84dd-59250678859b","FlagTable",l_iFlagTablePk)
+                endfor
+
+                //Save Flags - End
+
             endif
+
         endwith
     endif
 
@@ -2589,13 +2958,31 @@ case l_cActionOnSubmit == "Delete"   // Table
                                     endscan
                                 endif
 
-                                CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
-                                if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
-                                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
-                                    l_cFrom := "Redirect"
+                                //Delete any FlagTable related records
+                                :Table("daaa1d69-f529-47aa-87bb-0ab2233bc886","FlagTable")
+                                :Column("FlagTable.pk" , "pk")
+                                :Where("FlagTable.fk_Table = ^",l_iTablePk)
+                                :SQL("ListOfFlagTableRecordsToDelete")
+                                if :Tally >= 0
+                                    if :Tally > 0
+                                        select ListOfFlagTableRecordsToDelete
+                                        scan
+                                            l_oDB2:Delete("a9c2e2d2-e7ec-4345-9307-4033d7bb4fb3","FlagTable",ListOfFlagTableRecordsToDelete->pk)
+                                        endscan
+                                    endif
+
+                                    CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
+                                    if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
+                                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListTables/"+par_cURLApplicationLinkCode+"/")
+                                        l_cFrom := "Redirect"
+                                    else
+                                        l_cErrorMessage := "Failed to delete Table"
+                                    endif
+
                                 else
-                                    l_cErrorMessage := "Failed to delete Table"
+                                    l_cErrorMessage := "Failed to clear related FlagTable records."
                                 endif
+
                             else
                                 l_cErrorMessage := "Failed to clear related DiagramTable records."
                             endif
@@ -4031,7 +4418,7 @@ local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
 local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA             := hb_HGetDef(par_hValues,"AKA","")
+local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -4652,7 +5039,7 @@ local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA             := hb_HGetDef(par_hValues,"AKA","")
+local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",""))
 local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
@@ -5155,6 +5542,356 @@ endif
 
 return l_cHtml
 //=================================================================================================================
+//=================================================================================================================
+static function FlagListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+local l_cHtml := []
+local l_oDB1
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfFlags
+
+local l_hOptionValueToDescriptionMapping := {=>}
+
+oFcgi:TraceAdd("FlagListFormBuild")
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+with object l_oDB1
+    :Table("9b589450-e9b1-4ef7-adab-86f73e9cb35e","Flag")
+    :Column("Flag.pk"             ,"pk")
+    :Column("Flag.Name"           ,"Flag_Name")
+    :Column("Flag.Code"           ,"Flag_Code")
+    :Column("Flag.TableUseStatus" ,"Flag_TableUseStatus")
+    :Column("Flag.ColumnUseStatus","Flag_ColumnUseStatus")
+    :Column("Flag.Description","Flag_Description")
+    :Column("Upper(Flag.Name)","tag1")
+    :Where("Flag.fk_Application = ^",par_iApplicationPk)
+    :OrderBy("tag1")
+    :SQL("ListOfFlags")
+    l_nNumberOfFlags := :Tally
+endwith
+
+if empty(l_nNumberOfFlags)
+    if oFcgi:p_nAccessLevel >= 5
+        l_cHtml += [<nav class="navbar navbar-light bg-light">]
+            l_cHtml += [<div class="input-group">]
+                l_cHtml += [<span class="navbar-brand ms-3">No Flag on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/NewFlag/]+par_cURLApplicationLinkCode+[/">New Flag</a>]
+            l_cHtml += [</div>]
+        l_cHtml += [</nav>]
+    endif
+
+else
+    if oFcgi:p_nAccessLevel >= 5
+        l_cHtml += [<nav class="navbar navbar-light bg-light">]
+            l_cHtml += [<div class="input-group">]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewFlag/]+par_cURLApplicationLinkCode+[/">New Flag</a>]
+            l_cHtml += [</div>]
+        l_cHtml += [</nav>]
+
+        l_cHtml += [<div class="m-3"></div>]   //Spacer
+    endif
+
+    l_cHtml += [<div class="m-3">]
+        l_cHtml += [<div class="row justify-content-center">]
+            l_cHtml += [<div class="col-auto">]
+
+                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Flags (]+Trans(l_nNumberOfFlags)+[)</th>]
+                l_cHtml += [</tr>]
+
+                l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Code</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Table<br>Use<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Column<br>Use<br>Status</th>]
+                l_cHtml += [</tr>]
+
+                select ListOfFlags
+                scan all
+                    l_cHtml += [<tr>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/EditFlag/]+par_cURLApplicationLinkCode+[/]+ListOfFlags->Flag_Code+[/">]+ListOfFlags->Flag_Name+[</a>]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += ListOfFlags->Flag_Code
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfFlags->Flag_Description,""))
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"Do Not Use","Active","Discontinued"}[iif(vfp_between(ListOfFlags->Flag_TableUseStatus,1,3),ListOfFlags->Flag_TableUseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"Do Not Use","Active","Discontinued"}[iif(vfp_between(ListOfFlags->Flag_ColumnUseStatus,1,3),ListOfFlags->Flag_ColumnUseStatus,1)]
+                        l_cHtml += [</td>]
+
+                    l_cHtml += [</tr>]
+                endscan
+                l_cHtml += [</table>]
+                
+            l_cHtml += [</div>]
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
+
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+static function FlagEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
+
+local l_cHtml := ""
+local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
+
+local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_cCode            := hb_HGetDef(par_hValues,"Code","")
+local l_iTableUseStatus  := hb_HGetDef(par_hValues,"TableUseStatus",1)
+local l_iColumnUseStatus := hb_HGetDef(par_hValues,"ColumnUseStatus",1)
+local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+
+oFcgi:TraceAdd("FlagEditFormBuild")
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<input type="hidden" name="formname" value="Edit">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
+
+if !empty(l_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Flag</span>]   //navbar-text
+        if oFcgi:p_nAccessLevel >= 3
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        endif
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        if !empty(par_iPk)
+            if oFcgi:p_nAccessLevel >= 5
+                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            endif
+        endif
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+
+    l_cHtml += [<table>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Name</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="100" size="80"></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Code</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextCode" id="TextCode" value="]+FcgiPrepFieldForValue(l_cCode)+[" maxlength="10" size="10"></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboTableUseStatus" id="ComboTableUseStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iTableUseStatus==1,[ selected],[])+[>Do Not Use</option>]
+                l_cHtml += [<option value="2"]+iif(l_iTableUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_iTableUseStatus==3,[ selected],[])+[>Discontinued</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboColumnUseStatus" id="ComboColumnUseStatus">]
+                l_cHtml += [<option value="1"]+iif(l_iColumnUseStatus==1,[ selected],[])+[>Do Not Use</option>]
+                l_cHtml += [<option value="2"]+iif(l_iColumnUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_iColumnUseStatus==3,[ selected],[])+[>Discontinued</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalForms()
+
+return l_cHtml
+//=================================================================================================================
+static function FlagEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
+local l_cHtml := []
+
+local l_cActionOnSubmit
+local l_iFlagPk
+local l_cFlagName
+local l_cFlagCode
+local l_iFlagTableUseStatus
+local l_iFlagColumnUseStatus
+local l_cFlagDescription
+
+local l_cErrorMessage := ""
+local l_hValues := {=>}
+
+local l_oDB1
+
+oFcgi:TraceAdd("FlagEditFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_iFlagPk              := Val(oFcgi:GetInputValue("TableKey"))
+l_cFlagName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cFlagCode            := upper(SanitizeInput(Strtran(oFcgi:GetInputValue("TextCode")," ","")))
+l_iFlagTableUseStatus  := Val(oFcgi:GetInputValue("ComboTableUseStatus"))
+l_iFlagColumnUseStatus := Val(oFcgi:GetInputValue("ComboColumnUseStatus"))
+l_cFlagDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+
+do case
+case l_cActionOnSubmit == "Save"
+    if oFcgi:p_nAccessLevel >= 5
+        if empty(l_cFlagName)
+            l_cErrorMessage := "Missing Name"
+        else
+            if empty(l_cFlagCode)
+                l_cErrorMessage := "Missing Code"
+            else
+                l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                with object l_oDB1
+                    :Table("c671f7b2-b560-45da-a656-29cf252f508a","Flag")
+                    :Where([lower(replace(Flag.Name,' ','')) = ^],lower(StrTran(l_cFlagName," ","")))
+                    :Where([Flag.fk_Application = ^],par_iApplicationPk)
+                    if l_iFlagPk > 0
+                        :Where([Flag.pk != ^],l_iFlagPk)
+                    endif
+                    :SQL()
+                endwith
+
+                if l_oDB1:Tally <> 0
+                    l_cErrorMessage := "Duplicate Name"
+                else
+
+
+                    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB1
+                        :Table("cda585d1-a34b-4fcb-b595-bed6b9d6cf7b","Flag")
+                        :Where([lower(replace(Flag.Code,' ','')) = ^],lower(StrTran(l_cFlagCode," ","")))
+                        :Where([Flag.fk_Application = ^],par_iApplicationPk)
+                        if l_iFlagPk > 0
+                            :Where([Flag.pk != ^],l_iFlagPk)
+                        endif
+                        :SQL()
+                    endwith
+                    
+                    if l_oDB1:Tally <> 0
+                        l_cErrorMessage := "Duplicate Code"
+                    else
+
+                        //Save the Flag
+                        with object l_oDB1
+                            :Table("5a937a3e-c0e9-4b59-a678-c927419cd31f","Flag")
+                            :Field("Flag.Code"           ,l_cFlagCode)
+                            :Field("Flag.Name"           ,l_cFlagName)
+                            :Field("Flag.TableUseStatus" ,l_iFlagTableUseStatus)
+                            :Field("Flag.ColumnUseStatus",l_iFlagColumnUseStatus)
+                            :Field("Flag.Description"    ,iif(empty(l_cFlagDescription),NULL,l_cFlagDescription))
+                            if empty(l_iFlagPk)
+                                :Field("Flag.fk_Application" , par_iApplicationPk)
+                                if :Add()
+                                    l_iFlagPk := :Key()
+                                else
+                                    l_cErrorMessage := "Failed to add Flag."
+                                endif
+                            else
+                                if !:Update(l_iFlagPk)
+                                    l_cErrorMessage := "Failed to update Flag."
+                                endif
+                                // SendToClipboard(:LastSQL())
+                            endif
+
+                        endwith
+
+                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListFlags/"+par_cURLApplicationLinkCode+"/")  //+l_cFlagName+"/"
+                    endif
+                endif
+            endif
+        endif
+    endif
+
+case l_cActionOnSubmit == "Cancel"
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListFlags/"+par_cURLApplicationLinkCode+"/")
+
+case l_cActionOnSubmit == "Delete"   // Flag
+    if oFcgi:p_nAccessLevel >= 5
+        if CheckIfAllowDestructiveDelete(par_iApplicationPk)
+            l_cErrorMessage := CascadeDeleteFlag(par_iApplicationPk,l_iFlagPk)
+            if empty(l_cErrorMessage)
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListFlags/"+par_cURLApplicationLinkCode+"/")
+            endif
+        else
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+            with object l_oDB1
+                :Table("cff1bf6d-698a-4497-891e-4f435abca65c","FlagTable")
+                :Where("FlagTable.fk_Flag = ^",l_iFlagPk)
+                :SQL()
+            endwith
+
+            if l_oDB1:Tally == 0
+                with object l_oDB1
+                    :Table("cff1bf6d-698a-4497-891e-4f435abca65c","FlagColumn")
+                    :Where("FlagColumn.fk_Flag = ^",l_iFlagPk)
+                    :SQL()
+                endwith
+
+                if l_oDB1:Tally == 0
+
+                    l_oDB1:Delete("8b98caf8-3c1e-47f9-8f2e-975f2c5757a4","Flag",l_iFlagPk)
+                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListFlags/"+par_cURLApplicationLinkCode+"/")
+
+                else
+                    l_cErrorMessage := "Related Column Flag record on file"
+                endif
+            else
+                l_cErrorMessage := "Related Table Flag record on file"
+            endif
+        endif
+    endif
+
+endcase
+
+if !empty(l_cErrorMessage)
+    l_hValues["Name"]            := l_cFlagName
+    l_hValues["Code"]            := l_cFlagCode
+    l_hValues["TableUseStatus"]  := l_iFlagTableUseStatus
+    l_hValues["ColumnUseStatus"] := l_iFlagColumnUseStatus
+    l_hValues["Description"]     := l_cFlagDescription
+
+    l_cHtml += FlagEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iFlagPk,l_hValues)
+endif
+
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
 static function CheckIfAllowDestructiveDelete(par_iApplicationPk)
 local l_AllowDestructiveDelete := .f.
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -5244,9 +5981,30 @@ with object l_oDB1
                                 endscan
 
                                 if empty(l_cErrorMessage)
-                                    CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
-                                    if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+
+                                    :Table("6675a32d-34f0-4f4c-a913-19fbd2b980b1","FlagTable")
+                                    :Column("FlagTable.pk","pk")
+                                    :Where("FlagTable.fk_Table = ^" , par_iTablePk)
+                                    :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+                                    if :Tally < 0
                                         l_cErrorMessage := "Failed to delete Table. Error 9."
+                                    else
+                                        select ListOfRecordsToDeleteInCascadeDeleteTable
+                                        scan all
+                                            if !:Delete("ed839e1d-2ece-4525-b154-be06afbbc88d","FlagTable",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                                l_cErrorMessage := "Failed to delete Table. Error 10."
+                                                exit
+                                            endif
+                                        endscan
+
+                                        if empty(l_cErrorMessage)
+
+                                            CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
+                                            if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+                                                l_cErrorMessage := "Failed to delete Table. Error 11."
+                                            endif
+
+                                        endif
                                     endif
                                 endif
                             endif
@@ -5329,7 +6087,57 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
+static function CascadeDeleteFlag(par_iApplicationPk,par_iFlagPk)
+
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
+local l_cErrorMessage := ""
+
+with object l_oDB1
+    :Table("fc2f2aa6-527a-49c5-b834-28b4dca1a474","FlagTable")
+    :Column("FlagTable.pk","pk")
+    :Where("FlagTable.fk_Flag = ^" , par_iFlagPk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteFlag")
+    if :Tally < 0
+        l_cErrorMessage := "Failed to delete Flag. Error 1."
+    else
+        select ListOfRecordsToDeleteInCascadeDeleteFlag
+        scan all
+            if !:Delete("782c27b6-2502-4707-a571-1c714614347f","FlagTable",ListOfRecordsToDeleteInCascadeDeleteFlag->pk)
+                l_cErrorMessage := "Failed to delete Flag. Error 2."
+                exit
+            endif
+        endscan
+    endif
+
+    if empty(l_cErrorMessage)
+        :Table("4c4c70a7-8915-4485-884d-32c2ea580802","FlagColumn")
+        :Column("FlagColumn.pk","pk")
+        :Where("FlagColumn.fk_Flag = ^" , par_iFlagPk)
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteFlag")
+        if :Tally < 0
+            l_cErrorMessage := "Failed to delete Flag. Error 3."
+        else
+            select ListOfRecordsToDeleteInCascadeDeleteFlag
+            scan all
+                if !:Delete("8add12bf-862a-45a7-acd5-463ba1f2aa96","FlagColumn",ListOfRecordsToDeleteInCascadeDeleteFlag->pk)
+                    l_cErrorMessage := "Failed to delete Flag. Error 4."
+                    exit
+                endif
+            endscan
+        endif
+    endif
+
+    if empty(l_cErrorMessage)
+        if !:Delete("Flag",par_iFlagPk)
+            l_cErrorMessage := "Failed to delete Flag. Error 5."
+        endif
+    endif
+endwith
+
+return l_cErrorMessage
+//=================================================================================================================
 static function CascadeDeleteApplication(par_iApplicationPk)
+
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
 local l_cErrorMessage := ""
 
@@ -5416,11 +6224,31 @@ with object l_oDB1
                                             exit
                                         endif
                                     endscan
-                                    
+
                                     if empty(l_cErrorMessage)
-                                        CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
-                                        if !:Delete("7995ba50-8aa8-419c-8933-131cee5addc0","Application",par_iApplicationPk)
-                                            l_cErrorMessage := "Failed to delete Application. Error 10."
+
+                                        :Table("fe5a155c-64d2-4556-a6f8-675d5533c9f8","Flag")
+                                        :Column("Flag.pk","pk")
+                                        :Where("Flag.fk_Application = ^" , par_iApplicationPk)
+                                        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+                                        if :Tally < 0
+                                            l_cErrorMessage := "Failed to delete Application. Error 8."
+                                        else
+                                            select ListOfRecordsToDeleteInCascadeDeleteApplication
+                                            scan all
+                                                if !:Delete("4dcf5146-91ed-4c46-8f63-a22e3ff72a35","Flag",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                                                    l_cErrorMessage := "Failed to delete Application. Error 9."
+                                                    exit
+                                                endif
+                                            endscan
+                                            
+                                            if empty(l_cErrorMessage)
+                                                CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
+                                                if !:Delete("7995ba50-8aa8-419c-8933-131cee5addc0","Application",par_iApplicationPk)
+                                                    l_cErrorMessage := "Failed to delete Application. Error 10."
+                                                endif
+                                            endif
+
                                         endif
                                     endif
                                 endif
@@ -5434,7 +6262,3 @@ with object l_oDB1
 endwith
 return l_cErrorMessage
 //=================================================================================================================
-//=================================================================================================================
-//=================================================================================================================
-//=================================================================================================================
-
