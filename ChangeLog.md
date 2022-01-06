@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/05/2022
+* Rename the concept of Flags to Tags
+* Initial support of Tag for columns
+
 ## 01/04/2022
 * New Flags options at the levels of Applications. All Application can have their own flags and applied to Tables. (To Columns coming soon.
 * Table Search option now includes searches on flags, as long as at least one table has a linked flag.)

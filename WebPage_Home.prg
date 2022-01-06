@@ -12,7 +12,7 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [<div class="row justify-content-center">]
     l_cHtml += [<div class="col-auto">]
         l_cHtml += [<div><h3>User: ]+oFcgi:p_cUserName+[</h3></div>]
- 
+
         with object l_oDB1
             :Table("c5f56e48-2b2a-4f06-a951-f72238cfe7d7","LoginLogs")
             :Limit(10)

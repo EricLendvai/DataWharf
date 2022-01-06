@@ -253,7 +253,7 @@ l_Schema := ;
    ,;   //Index Definition
    {"fk_ColumnFrom"   =>{,"fk_ColumnFrom" ,.f.,"BTREE"};
    ,"fk_ColumnTo"     =>{,"fk_ColumnTo"   ,.f.,"BTREE"}}};
-,"public.Flag"=>{;   //Field Definition
+,"public.Tag"=>{;   //Field Definition
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
    ,"sysm"            =>{, "DT",   0,  6,"N"};
@@ -265,23 +265,23 @@ l_Schema := ;
    ,"Description"     =>{,  "M",   0,  0,"N"}};
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.FlagTable"=>{;   //Field Definition
+,"public.TagTable"=>{;   //Field Definition
    {"pk"       =>{,  "I",   0,  0,};
    ,"sysc"     =>{, "DT",   0,  6,"N"};
    ,"sysm"     =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag"  =>{,  "I",   0,  0,};
+   ,"fk_Tag"   =>{,  "I",   0,  0,};
    ,"fk_Table" =>{,  "I",   0,  0,}};
    ,;   //Index Definition
-   {"fk_Flag"  =>{,"fk_Flag" ,.f.,"BTREE"};
+   {"fk_Tag"   =>{,"fk_Tag"  ,.f.,"BTREE"};
    ,"fk_Table" =>{,"fk_Table",.f.,"BTREE"}}};
-,"public.FlagColumn"=>{;   //Field Definition
+,"public.TagColumn"=>{;   //Field Definition
    {"pk"        =>{,  "I",   0,  0,};
    ,"sysc"      =>{, "DT",   0,  6,"N"};
    ,"sysm"      =>{, "DT",   0,  6,"N"};
-   ,"fk_Flag"   =>{,  "I",   0,  0,};
+   ,"fk_Tag"    =>{,  "I",   0,  0,};
    ,"fk_Column" =>{,  "I",   0,  0,}};
    ,;   //Index Definition
-   {"fk_Flag"   =>{,"fk_Flag"  ,.f.,"BTREE"};
+   {"fk_Tag"    =>{,"fk_Tag"   ,.f.,"BTREE"};
    ,"fk_Column" =>{,"fk_Column",.f.,"BTREE"}}};
 ,"public.LoginLogs"=>{;   //Field Definition
    {"pk"          =>{,  "I",   0,  0,};
