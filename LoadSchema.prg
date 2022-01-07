@@ -69,9 +69,13 @@ local l_hColumns      := {=>}  // The key is <NameSpace>.<TableName>.<ColumnName
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+
+///////////////////////////////===========================================================================================================
+
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
-    l_SQLCommandFields  += [SELECT columns.table_name                 AS table_name,]
+    l_SQLCommandFields  += [SELECT "public"                           AS schema_name,]
+    l_SQLCommandFields  += [       columns.table_name                 AS table_name,]
     l_SQLCommandFields  += [       columns.ordinal_position           AS field_position,]
     l_SQLCommandFields  += [       columns.column_name                AS field_name,]
     l_SQLCommandFields  += [       columns.data_type                  AS field_type,]
@@ -89,8 +93,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
     l_SQLCommandFields  += [ AND   lower(left(columns.table_name,11)) != 'schemacache']
     l_SQLCommandFields  += [ ORDER BY tag1,field_position]
 
-
-    l_SQLCommandIndexes += [SELECT table_name,]
+//_M_ not as postgresql
+    l_SQLCommandIndexes += [SELECT "public" AS schema_name,]
+    l_SQLCommandIndexes += [       table_name,]
     l_SQLCommandIndexes += [       index_name,]
     l_SQLCommandIndexes += [       group_concat(column_name order by seq_in_index) AS index_columns,]
     l_SQLCommandIndexes += [       index_type,]
@@ -104,6 +109,348 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
     l_SQLCommandIndexes += [ AND   lower(left(table_name,11)) != 'schemacache']
     l_SQLCommandIndexes += [ GROUP BY table_name,index_name]
     l_SQLCommandIndexes += [ ORDER BY index_schema,table_name,index_name;]
+
+
+//--Load Tables-----------
+    if empty(l_cErrorMessage)
+        if !SQLExec(par_SQLHandle,l_SQLCommandFields,"ListOfFieldsForLoads")
+            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+        else
+            // ExportTableToHtmlFile("ListOfFieldsForLoads","d:\MySQL_ListOfFieldsForLoads.html","From MySQL",,200,.t.)
+
+            l_cLastNameSpace  := ""
+            l_cLastTableName  := ""
+            l_cColumnName     := ""
+
+            select ListOfFieldsForLoads
+            scan all while empty(l_cErrorMessage)
+                if !(ListOfFieldsForLoads->schema_name == l_cLastNameSpace .and. ListOfFieldsForLoads->table_name == l_cLastTableName)
+                    //New Table being defined
+                    //Check if the table already on file
+
+                    l_cLastNameSpace := ListOfFieldsForLoads->schema_name
+                    l_cLastTableName := ListOfFieldsForLoads->table_name
+                    l_iNameSpacePk   := -1
+                    l_iTablePk       := -1
+
+                    with object l_oDB1
+                        :Table("857facc8-c771-4829-bf6e-b5458e07fd16","Table")
+                        :Column("Table.fk_NameSpace", "fk_NameSpace")
+                        :Column("Table.pk"          , "Pk")
+                        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+                        :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
+                        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cLastNameSpace," ","")))
+                        :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cLastTableName," ","")))
+                        l_aSQLResult := {}
+                        :SQL(@l_aSQLResult)
+
+                        do case
+                        case :Tally == -1  //Failed to query
+                            l_cErrorMessage := "Failed to Query Meta database. Error 101."
+                            exit
+                        case empty(:Tally)
+                            //Tables is not in datadic, load it.
+                            //Find the Name Space
+                            :Table("ab2cf649-e4a5-4d3f-9174-f7a78f36b0f4","NameSpace")
+                            :Column("NameSpace.pk" , "Pk")
+                            :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
+                            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cLastNameSpace," ","")))
+                            l_aSQLResult := {}
+                            :SQL(@l_aSQLResult)
+
+                            do case
+                            case :Tally == -1  //Failed to query
+                                l_cErrorMessage := "Failed to Query Meta database. Error 102."
+                            case empty(:Tally)
+                                //Add the NameSpace
+                                :Table("1b1a174d-4717-4452-b346-fe29ca359c6d","NameSpace")
+                                :Field("NameSpace.Name"          ,l_cLastNameSpace)
+                                :Field("NameSpace.fk_Application",par_iApplicationPk)
+                                :Field("NameSpace.UseStatus"     ,1)
+                                if :Add()
+                                    l_iNewNameSpace += 1
+                                    l_iNameSpacePk := :Key()
+                                else
+                                    l_cErrorMessage := "Failed to add Name Space record."
+                                endif
+
+                            case :Tally == 1
+                                l_iNameSpacePk := l_aSQLResult[1,1]
+                            otherwise
+                                l_cErrorMessage := "Failed to Query Meta database. Error 103."
+                            endcase
+
+                            if l_iNameSpacePk > 0
+                                :Table("a59d51e5-fd44-44b9-9f0d-61b284fd96ff","Table")
+                                :Field("Table.Name"        ,l_cLastTableName)
+                                :Field("Table.fk_NameSpace",l_iNameSpacePk)
+                                :Field("Table.UseStatus"   ,1)
+                                if :Add()
+                                    l_iNewTables += 1
+                                    l_iTablePk := :Key()
+                                    l_hTables[l_cLastNameSpace+"."+l_cLastTableName] := l_iTablePk
+                                else
+                                    l_cErrorMessage := "Failed to add Table record."
+                                endif
+                            endif
+
+                        case :Tally == 1
+                            l_iNameSpacePk   := l_aSQLResult[1,1]
+                            l_iTablePk       := l_aSQLResult[1,2]
+                            l_hTables[l_cLastNameSpace+"."+l_cLastTableName] := l_iTablePk
+
+                        otherwise
+                            l_cErrorMessage := "Failed to Query Meta database. Error 104."
+                        endcase
+
+                    endwith
+
+                    // Load all the tables current columns
+                    with object l_oDB2
+                        :Table("a2a7bc00-d9d6-48df-90b1-ceb4f43cca28","Column")
+                        :Column("Column.Pk"             , "Pk")
+                        :Column("Column.Order"          , "Column_Order")
+                        :Column("Column.Name"           , "Column_Name")
+                        :Column("upper(Column.Name)"    , "tag1")
+                        :Column("Column.Type"           , "Column_Type")
+                        :Column("Column.Length"         , "Column_Length")
+                        :Column("Column.Scale"          , "Column_Scale")
+                        :Column("Column.Nullable"       , "Column_Nullable")
+                        :Column("Column.Primary"        , "Column_Primary")              // field_is_identity
+                        :Column("Column.Unicode"        , "Column_Unicode")
+                        :Column("Column.Default"        , "Column_Default")
+                        :Column("Column.LastNativeType" , "Column_LastNativeType")
+                        :Where("Column.fk_Table = ^" , l_iTablePk)
+                        :OrderBy("Column_Order","Desc")
+                        :SQL("ListOfColumnsInDataDictionary")
+                        // SendToClipboard(:LastSQL())
+
+                        if :Tally < 0
+                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 105."
+                        else
+                            if :Tally == 0
+                                l_LastColumnOrder := 0
+                            else
+                                l_LastColumnOrder := ListOfColumnsInDataDictionary->Column_Order
+                            endif
+
+                            With Object :p_oCursor
+                                :Index("tag1","tag1")
+                                :CreateIndexes()
+                                // :SetOrder("tag1")
+                            endwith
+
+                        endif
+
+                    endwith
+
+                endif
+
+                if empty(l_cErrorMessage)
+                    //Check existence of Column and add if needed
+                    //Get the column Name, Type, Length, Scale, Nullable
+                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable       := (ListOfFieldsForLoads->field_nullable == 1)      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnPrimary        := (ListOfFieldsForLoads->field_is_identity == 1)
+                    l_lColumnUnicode        := .f.
+                    l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
+
+                    // l_cColumnDefault        := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
+                    // if l_cColumnLastNativeType == "character"
+                    //     l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
+                    // endif
+
+                    if l_cColumnDefault == "NULL"
+                        l_cColumnDefault := ""
+                    endif
+
+                    // if ListOfFieldsForLoads->field_type == "USER-DEFINED"
+                    //     altd()
+                    // endif
+
+                    switch ListOfFieldsForLoads->field_type
+                    case "int"
+                        l_cColumnType   := "I"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "bigint"
+                        l_cColumnType   := "IB"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "decimal"
+                        l_cColumnType   := "N"
+                        l_iColumnLength := ListOfFieldsForLoads->field_nlength
+                        l_iColumnScale  := ListOfFieldsForLoads->field_decimals
+                        exit
+
+                    case "char"
+                        l_cColumnType     := "C"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
+                        exit
+
+                    case "varchar"
+                        l_cColumnType     := "CV"
+                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
+                        exit
+
+                    case "binary"
+                        l_cColumnType   := "B"
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "varbinary"
+                        l_cColumnType   := "BV"
+                        l_iColumnLength := ListOfFieldsForLoads->field_clength
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "longtext"
+                        l_cColumnType     := "M"
+                        l_iColumnLength   := NIL
+                        l_iColumnScale    := NIL
+                        l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
+                        exit
+
+                    case "longblob"
+                        l_cColumnType   := "R"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "tinyint"
+                        l_cColumnType   := "L"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "date"
+                        l_cColumnType   := "D"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        exit
+
+                    case "time"
+                        l_cColumnType   := "TO"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        exit
+
+                    case "timestamp"
+                        l_cColumnType   := "DTZ"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        exit
+
+                    case "datetime"
+                        l_cColumnType   := "DT"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        exit
+
+                    // case "xxxxxx"
+                    //     l_cColumnType   := "xxx"
+                    //     l_iColumnLength := 0
+                    //     l_iColumnScale  := 0
+                    //     exit
+
+                    otherwise
+                        l_cColumnType   := "?"
+                        l_iColumnLength := NIL
+                        l_iColumnScale  := NIL
+                        // Altd()
+                    endcase
+
+
+                    if vfp_Seek(upper(l_cColumnName),"ListOfColumnsInDataDictionary","tag1")
+                        l_iColumnPk := ListOfColumnsInDataDictionary->Pk
+                        l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+// altd()
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType           .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength         .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale          .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable       .and. ;
+                           ListOfColumnsInDataDictionary->Column_Primary               == l_lColumnPrimary        .and. ;
+                           ListOfColumnsInDataDictionary->Column_Unicode               == l_lColumnUnicode        .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Default,"")       == l_cColumnDefault        .and. ;
+                           ListOfColumnsInDataDictionary->Column_LastNativeType        == l_cColumnLastNativeType
+
+                        else
+
+                            if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
+                                with object l_oDB1
+                                    l_LastColumnOrder += 1
+                                    :Table("b6c0c818-cf30-4f08-aefc-c2c18d5bd35b","Column")
+                                    :Field("Column.Type"          ,l_cColumnType)
+                                    :Field("Column.Length"        ,l_iColumnLength)
+                                    :Field("Column.Scale"         ,l_iColumnScale)
+                                    :Field("Column.Nullable"      ,l_lColumnNullable)
+                                    :Field("Column.Primary"       ,l_lColumnPrimary)
+                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                    if :Update(l_iColumnPk)
+                                        l_iUpdatedColumns += 1
+                                    else
+                                        l_cErrorMessage := "Failed to update Column record."
+                                    endif
+                                endwith
+                            endif
+
+                        endif
+
+                    else
+                        //Missing Field, Add it
+                        with object l_oDB1
+                            l_LastColumnOrder += 1
+                            :Table("f697ccfd-86b3-4b9a-ab4c-acc9d626515e","Column")
+                            :Field("Column.Name"          ,l_cColumnName)
+                            :Field("Column.Order"         ,l_LastColumnOrder)
+                            :Field("Column.fk_Table"      ,l_iTablePk)
+                            :Field("Column.UseStatus"     ,1)
+                            :Field("Column.Type"          ,l_cColumnType)
+                            :Field("Column.Length"        ,l_iColumnLength)
+                            :Field("Column.Scale"         ,l_iColumnScale)
+                            :Field("Column.Nullable"      ,l_lColumnNullable)
+                            :Field("Column.Primary"       ,l_lColumnPrimary)
+                            :Field("Column.Unicode"       ,l_lColumnUnicode)
+                            :Field("Column.Default"       ,,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                            :Field("Column.UsedBy"        ,1)
+                            if :Add()
+                                l_iNewColumns += 1
+                                l_iColumnPk := :Key()
+                                l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+                            else
+                                l_cErrorMessage := "Failed to add Column record."
+                            endif
+                        endwith
+
+                    endif
+
+                endif
+
+            endscan
+
+        endif
+
+    endif
+
+///////////////////////////////===========================================================================================================
+
+
+
+
+
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_SQLCommandEnums := [SELECT namespaces.nspname as schema_name,]
@@ -487,6 +834,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
                     l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
 
+                    if l_cColumnDefault == "NULL"
+                        l_cColumnDefault := ""
+                    endif
                     l_cColumnDefault        := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
                     if l_cColumnLastNativeType == "character"
                         l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
@@ -920,6 +1270,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
                     l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
                     l_iFk_Enumeration := 0
+
+                    if l_cColumnDefault == "NULL"
+                        l_cColumnDefault := ""
+                    endif
 
                     switch ListOfFieldsForLoads->field_type
                     case "int"

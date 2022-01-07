@@ -5,6 +5,7 @@
 - Forbid to change CustomField.UsedOn once related values are present.
 
 ## Pending Development
+- In Table Search, if Tags are available add "And/Or" option to be used in case of multiple tags.
 - Load in table IndexColumn during structure imports.
 - Load/Sync support to MySQL.
 - During Load/Sync, only add entries or update entities with and "Usage Status" of "Unknown".
@@ -36,6 +37,7 @@
 ## Intra Application Mapping
 - Allow to map tables and columns across application. In Progress.
 - Add support in Visualization for cross application mapping.
+- Auto-Predict option on Table and Column name matching, with "Soundex" or "Edit Distance" logic. Option will require user approval.
 
 ## Harbour Specific
 - Generation of Hash Array code to be used by Harbour_ORM.

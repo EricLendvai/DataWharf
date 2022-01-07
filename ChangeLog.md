@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/07/2022
+* Initial support to load MariaDB/MySQL schema. Only Tables and Columns. Index in future update.
+
 ## 01/05/2022
 * Rename the concept of Flags to Tags
 * Initial support of Tag for columns
