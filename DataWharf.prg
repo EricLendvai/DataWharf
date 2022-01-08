@@ -97,10 +97,14 @@ set delete on
 ::SetOnErrorDetailLevel(2)
 ::SetOnErrorProgramInfo(hb_BuildInfo())
 
-::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",,,,;
+::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
+                                    ,;
+                                    ::GetAppConfig("POSTGRESHOST"),;
+                                    val(::GetAppConfig("POSTGRESPORT")),;
                                     ::GetAppConfig("POSTGRESID"),;
                                     ::GetAppConfig("POSTGRESPASSWORD"),;
-                                    "DataWharf","public";
+                                    ::GetAppConfig("POSTGRESDATABASE"),;
+                                    "public";
                                     )
 with object ::p_o_SQLConnection
     :PostgreSQLHBORMSchemaName  := "ORM"
@@ -202,10 +206,14 @@ SendToDebugView("Request Counter",::RequestCount)
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
 if (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
     SendToDebugView("Reconnecting to SQL Server")
-    ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",,,,;
+    ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
+                                        ,;
+                                        ::GetAppConfig("POSTGRESHOST"),;
+                                        val(::GetAppConfig("POSTGRESPORT")),;
                                         ::GetAppConfig("POSTGRESID"),;
                                         ::GetAppConfig("POSTGRESPASSWORD"),;
-                                        "DataWharf","public";
+                                        ::GetAppConfig("POSTGRESDATABASE"),;
+                                        "public";
                                         )
     with object ::p_o_SQLConnection
         :PostgreSQLHBORMSchemaName  := "ORM"

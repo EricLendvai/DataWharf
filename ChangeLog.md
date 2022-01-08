@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/08/2022
+* Added the use of additional config settings in backend/config.txt file: POSTGRESHOST,POSTGRESPORT,POSTGRESDATABASE
+
 ## 01/07/2022
 * Initial support to load MariaDB/MySQL schema. Only Tables and Columns. Index in future update.
 

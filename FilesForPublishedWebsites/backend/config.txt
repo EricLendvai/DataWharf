@@ -1,2 +1,18 @@
-ReloadConfigAtEveryRequest=true                               //"true" or "false"
-MaxRequestPerFCGIProcess=0                                    //0 for Unlimited
+ReloadConfigAtEveryRequest=true             //"true" or "false"
+MaxRequestPerFCGIProcess=0                  //0 for Unlimited
+
+POSTGRESHOST=localhost
+POSTGRESPORT=5432
+POSTGRESID=postgres
+POSTGRESPASSWORD=mypassord
+POSTGRESDATABASE=DataWharf
+
+ShowDevelopmentInfo=No                      //No or Yes
+--APPLICATION_TITLE=DataWharf
+--COLOR_HEADER_BACKGROUND=E3F2FD
+--COLOR_HEADER_TEXT_WHITE=.f.
+
+SECURITY_DEFAULT_PASSWORD=password
+SECURITY_SALT=0123456789ABCDEFG
+
+CYANAUDIT_TRAC_USER=No                      //No or Yes
