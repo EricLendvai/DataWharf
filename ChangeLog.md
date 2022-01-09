@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/09/2022
+* Fix issue on load/sync failing to get default values on initial load.
+* Intial table setup for upcoming Conceptual Modeling feature.
+
 ## 01/08/2022
 * Added the use of additional config settings in backend/config.txt file: POSTGRESHOST,POSTGRESPORT,POSTGRESDATABASE
 

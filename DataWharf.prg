@@ -527,6 +527,8 @@ else
                     l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
                     l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
                     l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+                    l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
+                    l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
                     l_cBody += ::TraceList(4)
                 l_cBody += [</div>]   //Spacer
             endif

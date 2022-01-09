@@ -16,6 +16,13 @@
 - On Load/Sync process pseudo enum fields (Non native SQL Enums).
 - Add support to Flags at the level of Columns.
 
+## Conceptual Modeling
+- Allow Models to be defined
+- Have a tree structure of packages under models
+- Manage Entities and Associations for a particular model
+- Visualization / Representation of a model
+- Mapping of Model Entities, Properties and Associations to actual Tables and Columns
+
 ## Allow for an application to be viewable without user login
 - Add support to flag type of information to be publish publicly.
 - Implement public viewing.
