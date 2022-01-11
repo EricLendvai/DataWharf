@@ -40,6 +40,7 @@ l_Schema := ;
    ,"Length"         =>{,  "I",   0,  0,"N"};
    ,"Scale"          =>{,  "I",   0,  0,"N"};
    ,"Nullable"       =>{,  "L",   0,  0,};
+   ,"Required"       =>{,  "N",   1,  0,};       // 0 or 1 - Unknown, 2 = Yes, 3 = No
    ,"Primary"        =>{,  "L",   0,  0,};
    ,"Unicode"        =>{,  "L",   0,  0,};     // Only Applicable to Character types,
    ,"Default"        =>{,  "M",   0,  0,"N"};  // Text version of the default value/expression
@@ -302,7 +303,7 @@ l_Schema := ;
    ,"fk_Association"=>{,  "I",   0,  0,};
    ,"Label"          =>{, "CV", 200,  0,};       // Showing near the entity in a representation
    ,"Type"          =>{,  "N",   1,  0,};       // 0 - Unknown, 1 = 1, 2 = Many   (At the Entity)
-   ,"Required"      =>{,  "N",   1,  0,};       // 0 - Unknown, 1 = Yes, 2 = No
+   ,"Required"      =>{,  "N",   1,  0,};       // 0 or 1 - Unknown, 2 = Yes, 3 = No
    ,"Description"   =>{,  "M",   0,  0,}};      // _M_ not certain if needed
    ,;   //Index Definition
    {"fk_Entity"     =>{,"fk_Entity"     ,.f.,"BTREE"};
@@ -314,7 +315,7 @@ l_Schema := ;
    ,"fk_Entity"  =>{,  "I",   0,  0,};
    ,"Order"      =>{,  "I",   0,  0,};      // Display Order
    ,"Name"       =>{, "CV", 200,  0,};
-   ,"Type"       =>{,  "C",   3,  0,};      //Numeric, Date, Bolean .... _M_   What about enum concept
+   ,"Type"       =>{,  "C",   3,  0,};      //Numeric, Date, Boolean .... _M_   What about enum concept
    ,"Length"     =>{,  "I",   0,  0,"N"};
    ,"Scale"      =>{,  "I",   0,  0,"N"};
    ,"Required"   =>{,  "N",   1,  0,};       // 0 - Unknown, 1 = Yes, 2 = No
@@ -348,6 +349,25 @@ l_Schema := ;
    ,;   //Index Definition
    {"fk_Property"=>{,"fk_Property",.f.,"BTREE"};
    ,"fk_Column"  =>{,"fk_Column"  ,.f.,"BTREE"}}};
+,"public.ConceptualDiagram"=>{;   //Field Definition
+   {"pk"                 =>{,  "I",   0,  0,"+"};
+   ,"sysc"               =>{, "DT",   0,  6,"N"};
+   ,"sysm"               =>{, "DT",   0,  6,"N"};
+   ,"fk_Model"           =>{,  "I",   0,  0,};
+   ,"Name"               =>{, "CV", 200,  0,};
+   ,"NodeShowDescription"=>{,  "L",   0,  0,};      // True If the node description should be included.
+   ,"VisPos"             =>{,  "M",   0,  0,"N"}};  // Last Visualization Positions
+   ,;   //Index Definition
+   {"fk_Model"=>{,"fk_Model",.f.,"BTREE"}}};
+,"public.DiagramEntity"=>{;   //Field Definition
+   {"pk"                  =>{,  "I",   0,  0,};
+   ,"sysc"                =>{, "DT",   0,  6,"N"};
+   ,"sysm"                =>{, "DT",   0,  6,"N"};
+   ,"fk_ConceptualDiagram"=>{,  "I",   0,  0,};
+   ,"fk_Entity"           =>{,  "I",   0,  0,}};
+   ,;   //Index Definition
+   {"fk_ConceptualDiagram"=>{,"fk_ConceptualDiagram",.f.,"BTREE"};
+   ,"fk_Entity"           =>{,"fk_Entity"           ,.f.,"BTREE"}}};
 ,"public.User"=>{;   //Field Definition
    {"pk"          =>{,  "I",   0,  0,};
    ,"sysc"        =>{, "DT",   0,  6,"N"};

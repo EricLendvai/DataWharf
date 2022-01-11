@@ -28,8 +28,8 @@ local l_LastColumnOrder
 local l_LastEnumValueOrder
 
 local l_cColumnType
-local l_iColumnLength
-local l_iColumnScale
+local l_nColumnLength
+local l_nColumnScale
 local l_lColumnNullable
 local l_lColumnPrimary
 local l_lColumnUnicode
@@ -220,6 +220,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         :Column("Column.Unicode"        , "Column_Unicode")
                         :Column("Column.Default"        , "Column_Default")
                         :Column("Column.LastNativeType" , "Column_LastNativeType")
+                        :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
                         :SQL("ListOfColumnsInDataDictionary")
@@ -272,101 +273,101 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                     switch ListOfFieldsForLoads->field_type
                     case "int"
                         l_cColumnType   := "I"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "bigint"
                         l_cColumnType   := "IB"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "decimal"
                         l_cColumnType   := "N"
-                        l_iColumnLength := ListOfFieldsForLoads->field_nlength
-                        l_iColumnScale  := ListOfFieldsForLoads->field_decimals
+                        l_nColumnLength := ListOfFieldsForLoads->field_nlength
+                        l_nColumnScale  := ListOfFieldsForLoads->field_decimals
                         exit
 
                     case "char"
                         l_cColumnType     := "C"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
                         exit
 
                     case "varchar"
                         l_cColumnType     := "CV"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
                         exit
 
                     case "binary"
                         l_cColumnType   := "B"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "varbinary"
                         l_cColumnType   := "BV"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "longtext"
                         l_cColumnType     := "M"
-                        l_iColumnLength   := NIL
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := NIL
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // Will default characters fields always support unicode
                         exit
 
                     case "longblob"
                         l_cColumnType   := "R"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "tinyint"
                         l_cColumnType   := "L"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "date"
                         l_cColumnType   := "D"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "time"
                         l_cColumnType   := "TO"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "timestamp"
                         l_cColumnType   := "DTZ"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "datetime"
                         l_cColumnType   := "DT"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     // case "xxxxxx"
                     //     l_cColumnType   := "xxx"
-                    //     l_iColumnLength := 0
-                    //     l_iColumnScale  := 0
+                    //     l_nColumnLength := 0
+                    //     l_nColumnScale  := 0
                     //     exit
 
                     otherwise
                         l_cColumnType   := "?"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         // Altd()
                     endcase
 
@@ -376,8 +377,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 // altd()
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType           .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength         .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale          .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                == l_nColumnLength         .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                 == l_nColumnScale          .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable       .and. ;
                            ListOfColumnsInDataDictionary->Column_Primary               == l_lColumnPrimary        .and. ;
                            ListOfColumnsInDataDictionary->Column_Unicode               == l_lColumnUnicode        .and. ;
@@ -385,27 +386,29 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                            ListOfColumnsInDataDictionary->Column_LastNativeType        == l_cColumnLastNativeType
 
                         else
-
-                            if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
-                                with object l_oDB1
-                                    l_LastColumnOrder += 1
-                                    :Table("b6c0c818-cf30-4f08-aefc-c2c18d5bd35b","Column")
-                                    :Field("Column.Type"          ,l_cColumnType)
-                                    :Field("Column.Length"        ,l_iColumnLength)
-                                    :Field("Column.Scale"         ,l_iColumnScale)
-                                    :Field("Column.Nullable"      ,l_lColumnNullable)
-                                    :Field("Column.Primary"       ,l_lColumnPrimary)
-                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
-                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
-                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                                    if :Update(l_iColumnPk)
-                                        l_iUpdatedColumns += 1
-                                    else
-                                        l_cErrorMessage := "Failed to update Column record."
-                                    endif
-                                endwith
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                                //_M_ report data was not updated
+                            else
+                                if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
+                                    with object l_oDB1
+                                        l_LastColumnOrder += 1
+                                        :Table("b6c0c818-cf30-4f08-aefc-c2c18d5bd35b","Column")
+                                        :Field("Column.Type"          ,l_cColumnType)
+                                        :Field("Column.Length"        ,l_nColumnLength)
+                                        :Field("Column.Scale"         ,l_nColumnScale)
+                                        :Field("Column.Nullable"      ,l_lColumnNullable)
+                                        :Field("Column.Primary"       ,l_lColumnPrimary)
+                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                        if :Update(l_iColumnPk)
+                                            l_iUpdatedColumns += 1
+                                        else
+                                            l_cErrorMessage := "Failed to update Column record."
+                                        endif
+                                    endwith
+                                endif
                             endif
-
                         endif
 
                     else
@@ -418,8 +421,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             :Field("Column.fk_Table"      ,l_iTablePk)
                             :Field("Column.UseStatus"     ,1)
                             :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Length"        ,l_iColumnLength)
-                            :Field("Column.Scale"         ,l_iColumnScale)
+                            :Field("Column.Length"        ,l_nColumnLength)
+                            :Field("Column.Scale"         ,l_nColumnScale)
                             :Field("Column.Nullable"      ,l_lColumnNullable)
                             :Field("Column.Primary"       ,l_lColumnPrimary)
                             :Field("Column.Unicode"       ,l_lColumnUnicode)
@@ -798,6 +801,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("Column.Default"        , "Column_Default")
                         :Column("Column.LastNativeType" , "Column_LastNativeType")
                         :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
                         :SQL("ListOfColumnsInDataDictionary")
@@ -855,129 +859,129 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     switch ListOfFieldsForLoads->field_type
                     case "integer"
                         l_cColumnType   := "I"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "bigint"
                         l_cColumnType   := "IB"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "numeric"
                         l_cColumnType   := "N"
-                        l_iColumnLength := ListOfFieldsForLoads->field_nlength
-                        l_iColumnScale  := ListOfFieldsForLoads->field_decimals
+                        l_nColumnLength := ListOfFieldsForLoads->field_nlength
+                        l_nColumnScale  := ListOfFieldsForLoads->field_decimals
                         exit
 
                     case "character"
                         l_cColumnType     := "C"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "character varying"
                         l_cColumnType     := "CV"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "bit"
                         l_cColumnType   := "B"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "bit varying"
                         l_cColumnType   := "BV"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "text"
                         l_cColumnType     := "M"
-                        l_iColumnLength   := NIL
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := NIL
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.  // In PostgreSQL character fields always support unicode
                         exit
 
                     case "bytea"
                         l_cColumnType   := "R"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "boolean"
                         l_cColumnType   := "L"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "date"
                         l_cColumnType   := "D"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "time"
                     case "time with time zone"
                         l_cColumnType   := "TOZ"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "time without time zone"
                         l_cColumnType   := "TO"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "timestamp"
                     case "timestamp with time zone"
                         l_cColumnType   := "DTZ"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "timestamp without time zone"
                         l_cColumnType   := "DT"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "money"
                         l_cColumnType   := "Y"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "uuid"
                         l_cColumnType   := "UUI"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "USER-DEFINED"
                         l_cColumnType   := "E"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
 
                         l_iFk_Enumeration := hb_HGetDef(l_hEnumerations,l_cLastNameSpace+"."+alltrim(ListOfFieldsForLoads->enumeration_name),0)
                         exit
 
                     // case "xxxxxx"
                     //     l_cColumnType   := "xxx"
-                    //     l_iColumnLength := 0
-                    //     l_iColumnScale  := 0
+                    //     l_nColumnLength := 0
+                    //     l_nColumnScale  := 0
                     //     exit
 
                     otherwise
                         l_cColumnType   := "?"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         // Altd()
                     endcase
 
@@ -987,8 +991,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType           .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                == l_iColumnLength         .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                 == l_iColumnScale          .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                == l_nColumnLength         .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                 == l_nColumnScale          .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable              == l_lColumnNullable       .and. ;
                            ListOfColumnsInDataDictionary->Column_Primary               == l_lColumnPrimary        .and. ;
                            ListOfColumnsInDataDictionary->Column_Unicode               == l_lColumnUnicode        .and. ;
@@ -997,28 +1001,30 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                            nvl(ListOfColumnsInDataDictionary->Column_fk_Enumeration,0) == l_iFk_Enumeration
 
                         else
-
-                            if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
-                                with object l_oDB1
-                                    l_LastColumnOrder += 1
-                                    :Table("288eca6a-be39-47cc-a70a-908d6b45059f","Column")
-                                    :Field("Column.Type"          ,l_cColumnType)
-                                    :Field("Column.Length"        ,l_iColumnLength)
-                                    :Field("Column.Scale"         ,l_iColumnScale)
-                                    :Field("Column.Nullable"      ,l_lColumnNullable)
-                                    :Field("Column.Primary"       ,l_lColumnPrimary)
-                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
-                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
-                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                                    :Field("Column.fk_Enumeration",l_iFk_Enumeration)
-                                    if :Update(l_iColumnPk)
-                                        l_iUpdatedColumns += 1
-                                    else
-                                        l_cErrorMessage := "Failed to update Column record."
-                                    endif
-                                endwith
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                                //_M_ report data was not updated
+                            else
+                                if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
+                                    with object l_oDB1
+                                        l_LastColumnOrder += 1
+                                        :Table("288eca6a-be39-47cc-a70a-908d6b45059f","Column")
+                                        :Field("Column.Type"          ,l_cColumnType)
+                                        :Field("Column.Length"        ,l_nColumnLength)
+                                        :Field("Column.Scale"         ,l_nColumnScale)
+                                        :Field("Column.Nullable"      ,l_lColumnNullable)
+                                        :Field("Column.Primary"       ,l_lColumnPrimary)
+                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                        :Field("Column.fk_Enumeration",l_iFk_Enumeration)
+                                        if :Update(l_iColumnPk)
+                                            l_iUpdatedColumns += 1
+                                        else
+                                            l_cErrorMessage := "Failed to update Column record."
+                                        endif
+                                    endwith
+                                endif
                             endif
-
                         endif
 
                     else
@@ -1031,8 +1037,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Field("Column.fk_Table"      ,l_iTablePk)
                             :Field("Column.UseStatus"     ,1)
                             :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Length"        ,l_iColumnLength)
-                            :Field("Column.Scale"         ,l_iColumnScale)
+                            :Field("Column.Length"        ,l_nColumnLength)
+                            :Field("Column.Scale"         ,l_nColumnScale)
                             :Field("Column.Nullable"      ,l_lColumnNullable)
                             :Field("Column.Primary"       ,l_lColumnPrimary)
                             :Field("Column.Unicode"       ,l_lColumnUnicode)
@@ -1233,7 +1239,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         :Column("Column.Unicode"        , "Column_Unicode")
                         :Column("Column.Default"        , "Column_Default")
                         :Column("Column.LastNativeType" , "Column_LastNativeType")
-                        :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
                         :SQL("ListOfColumnsInDataDictionary")
@@ -1278,157 +1284,157 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     switch ListOfFieldsForLoads->field_type
                     case "int"
                         l_cColumnType   := "I"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "bigint"
                         l_cColumnType   := "IB"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "numeric"
                         l_cColumnType   := "N"
-                        l_iColumnLength := ListOfFieldsForLoads->field_nlength
-                        l_iColumnScale  := ListOfFieldsForLoads->field_decimals
+                        l_nColumnLength := ListOfFieldsForLoads->field_nlength
+                        l_nColumnScale  := ListOfFieldsForLoads->field_decimals
                         exit
 
                     case "char"
                         l_cColumnType   := "C"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "nchar"
                         l_cColumnType     := "C"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.
                         //_M_ mark as Unicode
                         exit
 
                     case "varchar"
                         l_cColumnType   := "CV"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "nvarchar"
                         l_cColumnType     := "CV"
-                        l_iColumnLength   := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.
                         //_M_ mark as Unicode
                         exit
 
                     case "binary"
                         l_cColumnType   := "B"
-                        l_iColumnLength := ListOfFieldsForLoads->field_clength
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale  := NIL
                         exit
 
                     case "varbinary"
                         if ListOfFieldsForLoads->field_clength == -1
                             l_cColumnType   := "R"
-                            l_iColumnLength := NIL
-                            l_iColumnScale  := NIL
+                            l_nColumnLength := NIL
+                            l_nColumnScale  := NIL
                         else
                             l_cColumnType   := "BV"
-                            l_iColumnLength := ListOfFieldsForLoads->field_clength
-                            l_iColumnScale  := NIL
+                            l_nColumnLength := ListOfFieldsForLoads->field_clength
+                            l_nColumnScale  := NIL
                         endif
                         exit
 
                     case "text"
                         l_cColumnType   := "M"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "ntext"
                         l_cColumnType     := "M"
-                        l_iColumnLength   := NIL
-                        l_iColumnScale    := NIL
+                        l_nColumnLength   := NIL
+                        l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.
                         exit
 
                     case "bit"
                         l_cColumnType   := "L"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
 
                     // See https://docs.microsoft.com/en-us/sql/t-sql/functions/date-and-time-data-types-and-functions-transact-sql?view=sql-server-ver15
                     case "date"
                         l_cColumnType   := "D"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "datetime"   //timestamp without time zone
                         l_cColumnType   := "DT"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := 3
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := 3
                         exit
 
                     case "datetime2"   //timestamp without time zone and some precision
                         l_cColumnType   := "DT"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "datetimeoffset"   //timestamp with time zone
                         l_cColumnType   := "DTZ"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     case "smalldatetime"  //timestamp without time zone and no precision
                         l_cColumnType   := "DT"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := 0
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := 0
                         exit
 
                     case "time"   // time without time zone
                         l_cColumnType   := "TO"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := ListOfFieldsForLoads->field_tlength
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_tlength
                         exit
 
                     // It seems there is no time with time zone in MSSQL?
 
                     case "money"
                         l_cColumnType   := "Y"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "uniqueidentifier"
                         l_cColumnType   := "UUI"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     // case "USER-DEFINED"
                     //     l_cColumnType   := "E"
-                    //     l_iColumnLength := NIL
-                    //     l_iColumnScale  := NIL
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := NIL
 
                     //     l_iFk_Enumeration := hb_HGetDef(l_hEnumerations,l_cLastNameSpace+"."+alltrim(ListOfFieldsForLoads->enumeration_name),0)
                     //     exit
 
                     // case "xxxxxx"
                     //     l_cColumnType   := "xxx"
-                    //     l_iColumnLength := 0
-                    //     l_iColumnScale  := 0
+                    //     l_nColumnLength := 0
+                    //     l_nColumnScale  := 0
                     //     exit
 
                     otherwise
                         l_cColumnType   := "?"
-                        l_iColumnLength := NIL
-                        l_iColumnScale  := NIL
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         // Altd()
                     endcase
 
@@ -1439,8 +1445,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
 // Altd()
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == l_cColumnType     .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length             == l_iColumnLength   .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale              == l_iColumnScale    .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length             == l_nColumnLength   .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale              == l_nColumnScale    .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable           == l_lColumnNullable .and. ;
                            ListOfColumnsInDataDictionary->Column_Primary            == l_lColumnPrimary  .and. ;
                            ListOfColumnsInDataDictionary->Column_Unicode            == l_lColumnUnicode  .and. ;
@@ -1448,27 +1454,29 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                            ListOfColumnsInDataDictionary->Column_LastNativeType     == l_cColumnLastNativeType
 
                         else
-
-                            if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
-                                with object l_oDB1
-                                    l_LastColumnOrder += 1
-                                    :Table("9b7db810-3732-4f16-bd3d-05516388e5a2","Column")
-                                    :Field("Column.Type"          ,l_cColumnType)
-                                    :Field("Column.Length"        ,l_iColumnLength)
-                                    :Field("Column.Scale"         ,l_iColumnScale)
-                                    :Field("Column.Nullable"      ,l_lColumnNullable)
-                                    :Field("Column.Primary"       ,l_lColumnPrimary)
-                                    :Field("Column.Unicode"       ,l_lColumnUnicode)
-                                    :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
-                                    :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                                    if :Update(l_iColumnPk)
-                                        l_iUpdatedColumns += 1
-                                    else
-                                        l_cErrorMessage := "Failed to update Column record."
-                                    endif
-                                endwith
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                                //_M_ report data was not updated
+                            else
+                                if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
+                                    with object l_oDB1
+                                        l_LastColumnOrder += 1
+                                        :Table("9b7db810-3732-4f16-bd3d-05516388e5a2","Column")
+                                        :Field("Column.Type"          ,l_cColumnType)
+                                        :Field("Column.Length"        ,l_nColumnLength)
+                                        :Field("Column.Scale"         ,l_nColumnScale)
+                                        :Field("Column.Nullable"      ,l_lColumnNullable)
+                                        :Field("Column.Primary"       ,l_lColumnPrimary)
+                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
+                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                        if :Update(l_iColumnPk)
+                                            l_iUpdatedColumns += 1
+                                        else
+                                            l_cErrorMessage := "Failed to update Column record."
+                                        endif
+                                    endwith
+                                endif
                             endif
-
                         endif
 
                     else
@@ -1481,8 +1489,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             :Field("Column.fk_Table"      ,l_iTablePk)
                             :Field("Column.UseStatus"     ,1)
                             :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Length"        ,l_iColumnLength)
-                            :Field("Column.Scale"         ,l_iColumnScale)
+                            :Field("Column.Length"        ,l_nColumnLength)
+                            :Field("Column.Scale"         ,l_nColumnScale)
                             :Field("Column.Nullable"      ,l_lColumnNullable)
                             :Field("Column.Primary"       ,l_lColumnPrimary)
                             :Field("Column.Unicode"       ,l_lColumnUnicode)

@@ -1464,6 +1464,7 @@ if len(l_aNodes) == 1
         :Column("Column.Length"         ,"Column_Length")
         :Column("Column.Scale"          ,"Column_Scale")
         :Column("Column.Nullable"       ,"Column_Nullable")
+        :Column("Column.Required"       ,"Column_Required")
         :Column("Column.Default"        ,"Column_Default")
         :Column("Column.Unicode"        ,"Column_Unicode")
         :Column("Column.Primary"        ,"Column_Primary")
@@ -1703,9 +1704,10 @@ if len(l_aNodes) == 1
 
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">Table: ]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+;
-                               [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Applications/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="fal fa-edit"></i></a>]+;
+                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Applications/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]+;
                                [</span>]
                 l_cHtml += [</div>]
+
             l_cHtml += [</nav>]
 
             l_cHtml += [<div class="m-3"></div>]
@@ -1794,6 +1796,7 @@ if len(l_aNodes) == 1
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white">Required</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
@@ -1850,6 +1853,11 @@ if len(l_aNodes) == 1
                                     // Nullable
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                                         l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                                    l_cHtml += [</td>]
+
+                                    // Required
+                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                        l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
                                     l_cHtml += [</td>]
 
                                     // Default

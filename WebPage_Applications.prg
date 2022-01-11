@@ -18,8 +18,6 @@ local l_cActionOnSubmit
 
 local l_iApplicationPk
 local l_cApplicationName
-local l_iApplicationUseStatus
-local l_iApplicationDocStatus
 local l_cApplicationDescription
 
 local l_iNameSpacePk
@@ -614,13 +612,14 @@ case l_cURLAction == "EditColumn"
         :Column("Column.Length"          ,"Column_Length")          // 10
         :Column("Column.Scale"           ,"Column_Scale")           // 11
         :Column("Column.Nullable"        ,"Column_Nullable")        // 12
-        :Column("Column.Primary"         ,"Column_Primary")         // 13
-        :Column("Column.Unicode"         ,"Column_Unicode")         // 14
-        :Column("Column.Default"         ,"Column_Default")         // 15
-        :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 16
-        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 17
-        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 18
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 19
+        :Column("Column.Required"        ,"Column_Required")        // 13
+        :Column("Column.Primary"         ,"Column_Primary")         // 14
+        :Column("Column.Unicode"         ,"Column_Unicode")         // 15
+        :Column("Column.Default"         ,"Column_Default")         // 16
+        :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 17
+        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 18
+        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 19
+        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 20
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -659,13 +658,14 @@ case l_cURLAction == "EditColumn"
             l_hValues["Length"]          := l_aSQLResult[1,10]
             l_hValues["Scale"]           := l_aSQLResult[1,11]
             l_hValues["Nullable"]        := l_aSQLResult[1,12]
-            l_hValues["Primary"]         := l_aSQLResult[1,13]
-            l_hValues["Unicode"]         := l_aSQLResult[1,14]
-            l_hValues["Default"]         := l_aSQLResult[1,15]
-            l_hValues["LastNativeType"]  := l_aSQLResult[1,16]
-            l_hValues["UsedBy"]          := l_aSQLResult[1,17]
-            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,18]
-            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,19]
+            l_hValues["Required"]        := l_aSQLResult[1,13]
+            l_hValues["Primary"]         := l_aSQLResult[1,14]
+            l_hValues["Unicode"]         := l_aSQLResult[1,15]
+            l_hValues["Default"]         := l_aSQLResult[1,16]
+            l_hValues["LastNativeType"]  := l_aSQLResult[1,17]
+            l_hValues["UsedBy"]          := l_aSQLResult[1,18]
+            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,19]
+            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,20]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -1315,8 +1315,8 @@ local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName           := hb_HGetDef(par_hValues,"Name","")
 local l_cLinkCode       := hb_HGetDef(par_hValues,"LinkCode","")
-local l_iUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus      := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus      := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription    := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cSupportColumns := nvl(hb_HGetDef(par_hValues,"SupportColumns",""),"")
 
@@ -1369,12 +1369,12 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
-                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                    l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1383,10 +1383,10 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
-                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1427,8 +1427,8 @@ local l_cActionOnSubmit
 local l_iApplicationPk
 local l_cApplicationName
 local l_cApplicationLinkCode
-local l_iApplicationUseStatus
-local l_iApplicationDocStatus
+local l_nApplicationUseStatus
+local l_nApplicationDocStatus
 local l_cApplicationDescription
 local l_cApplicationSupportColumns
 
@@ -1445,8 +1445,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iApplicationPk             := Val(oFcgi:GetInputValue("TableKey"))
 l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_cApplicationLinkCode       := Upper(Strtran(SanitizeInput(oFcgi:GetInputValue("TextLinkCode"))," ",""))
-l_iApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_iApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_nApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cApplicationDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_cApplicationSupportColumns := SanitizeInput(oFcgi:GetInputValue("TextSupportColumns"))
@@ -1496,8 +1496,8 @@ case l_cActionOnSubmit == "Save"
                         :Table("3cbf7dbb-cdec-483d-9660-a9043820b170","Application")
                         :Field("Application.Name"           , l_cApplicationName)
                         :Field("Application.LinkCode"       , l_cApplicationLinkCode)
-                        :Field("Application.UseStatus"      , l_iApplicationUseStatus)
-                        :Field("Application.DocStatus"      , l_iApplicationDocStatus)
+                        :Field("Application.UseStatus"      , l_nApplicationUseStatus)
+                        :Field("Application.DocStatus"      , l_nApplicationDocStatus)
                         :Field("Application.Description"    , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
                         :Field("Application.SupportColumns" , iif(empty(l_cApplicationSupportColumns),NULL,l_cApplicationSupportColumns))
                         
@@ -1588,8 +1588,8 @@ endcase
 if !empty(l_cErrorMessage)
     l_hValues["Name"]           := l_cApplicationName
     l_hValues["LinkCode"]       := l_cApplicationLinkCode
-    l_hValues["UseStatus"]      := l_iApplicationUseStatus
-    l_hValues["DocStatus"]      := l_iApplicationDocStatus
+    l_hValues["UseStatus"]      := l_nApplicationUseStatus
+    l_hValues["DocStatus"]      := l_nApplicationDocStatus
     l_hValues["Description"]    := l_cApplicationDescription
     l_hValues["SupportColumns"] := l_cApplicationSupportColumns
 
@@ -1758,8 +1758,8 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA         := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 oFcgi:TraceAdd("NameSpaceEditFormBuild")
@@ -1808,12 +1808,12 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
-                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -1822,10 +1822,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
-                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -2541,8 +2541,8 @@ local l_iNameSpacePk := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA         := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cTags       := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
-local l_iUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
@@ -2707,12 +2707,12 @@ else
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[ class="form-select">]
-                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                    l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -2721,10 +2721,10 @@ else
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[ class="form-select">]
-                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -3125,6 +3125,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.Length"         ,"Column_Length")
     :Column("Column.Scale"          ,"Column_Scale")
     :Column("Column.Nullable"       ,"Column_Nullable")
+    :Column("Column.Required"       ,"Column_Required")
     :Column("Column.Default"        ,"Column_Default")
     :Column("Column.Unicode"        ,"Column_Unicode")
     :Column("Column.Primary"        ,"Column_Primary")
@@ -3293,7 +3294,7 @@ else
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"10","11")+[">]
+                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">]
                     if l_nNumberOfColumns == l_nNumberOfColumnsInSearch
                         l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                     else
@@ -3307,6 +3308,7 @@ else
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Required</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
@@ -3357,6 +3359,11 @@ else
                     // Nullable
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                         l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                    l_cHtml += [</td>]
+
+                    // Required
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
                     l_cHtml += [</td>]
 
                     // Default
@@ -3597,20 +3604,20 @@ local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cTags           := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
-local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
 local l_cLength          := Trans(hb_HGetDef(par_hValues,"Length",""))
 local l_cScale           := Trans(hb_HGetDef(par_hValues,"Scale",""))
 local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
+local l_nRequired        := max(1,hb_HGetDef(par_hValues,"Required",1))
 local l_cDefault         := nvl(hb_HGetDef(par_hValues,"Default",""),"")
 local l_lUnicode         := hb_HGetDef(par_hValues,"Unicode",.t.)
 local l_lPrimary         := hb_HGetDef(par_hValues,"Primary",.f.)
-local l_iUsedBy          := hb_HGetDef(par_hValues,"UsedBy",1)
+local l_nUsedBy          := hb_HGetDef(par_hValues,"UsedBy",1)
 local l_iFk_TableForeign := hb_HGetDef(par_hValues,"Fk_TableForeign",0)
 local l_iFk_Enumeration  := hb_HGetDef(par_hValues,"Fk_Enumeration",0)
-
 local l_cLastNativeType  := hb_HGetDef(par_hValues,"LastNativeType","")
 local l_lShowPrimary     := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
 
@@ -3821,6 +3828,18 @@ l_cHtml += [<div class="m-3">]
 
 
     l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Required</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRequired" id="ComboRequired"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nRequired==1,[ selected],[])+[>Unknown</option>]
+            l_cHtml += [<option value="2"]+iif(l_nRequired==2,[ selected],[])+[>Yes</option>]
+            l_cHtml += [<option value="3"]+iif(l_nRequired==3,[ selected],[])+[>No</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+
+    l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Default</td>]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDefault" id="TextDefault" value="]+FcgiPrepFieldForValue(l_cDefault)+[" size="80"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
@@ -3862,9 +3881,9 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_iUsedBy==1,[ selected],[])+[>All Servers</option>]
-            l_cHtml += [<option value="2"]+iif(l_iUsedBy==2,[ selected],[])+[>MySQL Only</option>]
-            l_cHtml += [<option value="3"]+iif(l_iUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
+            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -3873,12 +3892,12 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
-                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -3887,10 +3906,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]
-                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -3924,20 +3943,21 @@ local l_cActionOnSubmit
 local l_iColumnPk
 local l_cColumnName
 local l_cColumnAKA
-local l_iColumnUseStatus
-local l_iColumnDocStatus
+local l_nColumnUseStatus
+local l_nColumnDocStatus
 local l_cColumnDescription
 local l_cColumnType
 local l_cColumnLength
-local l_iColumnLength
+local l_nColumnLength
 local l_cColumnScale
-local l_iColumnScale
+local l_nColumnScale
 local l_cColumnLastNativeType
 local l_lColumnNullable
+local l_nColumnRequired
 local l_cColumnDefault
 local l_lColumnUnicode
 local l_lColumnPrimary
-local l_iColumnUsedBy
+local l_nColumnUsedBy
 local l_iColumnFk_TableForeign
 local l_iColumnFk_Enumeration
 local l_lShowPrimary
@@ -3976,19 +3996,21 @@ if empty(l_cColumnAKA)
     l_cColumnAKA := NIL
 endif
 
-l_iColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
 l_cColumnType            := SanitizeInput(Strtran(oFcgi:GetInputValue("ComboType")," ",""))
 
 l_cColumnLength          := SanitizeInput(oFcgi:GetInputValue("TextLength"))
-l_iColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
+l_nColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
 
 l_cColumnScale           := SanitizeInput(oFcgi:GetInputValue("TextScale"))
-l_iColumnScale           := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
+l_nColumnScale           := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
 
 l_cColumnLastNativeType  := SanitizeInput(oFcgi:GetInputValue("TextLastNativeType"))
 
 l_lColumnNullable        := (oFcgi:GetInputValue("CheckNullable") == "1")
+
+l_nColumnRequired        := Val(oFcgi:GetInputValue("ComboRequired"))
 
 l_cColumnDefault             := SanitizeInput(oFcgi:GetInputValue("TextDefault"))
 if empty(l_cColumnDefault)
@@ -4003,7 +4025,7 @@ else
     l_lColumnPrimary := .f.
 endif
 
-l_iColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
+l_nColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
 l_iColumnFk_TableForeign := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
 if empty(l_iColumnFk_TableForeign)
@@ -4015,7 +4037,7 @@ if empty(l_iColumnFk_Enumeration)
     l_iColumnFk_Enumeration := NIL
 endif
 
-l_iColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_nColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
@@ -4045,13 +4067,13 @@ case l_cActionOnSubmit == "Save"
                 else
                     
                     do case
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_isnil(l_iColumnLength)   // Length should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_isnil(l_nColumnLength)   // Length should be entered
                         l_cErrorMessage := "Length is required!"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_isnil(l_iColumnScale)   // Scale should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_isnil(l_nColumnScale)   // Scale should be entered
                         l_cErrorMessage := "Scale is required! Enter at the minimum 0"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_iColumnScale >= l_iColumnLength
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_nColumnScale >= l_nColumnLength
                         l_cErrorMessage := "Scale must be smaller than Length!"
 
                     case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. hb_isnil(l_iColumnFk_Enumeration)   // Enumeration should be entered
@@ -4107,10 +4129,10 @@ case l_cActionOnSubmit == "Save"
         //Blank out any unneeded variable values
         if l_iTypePos > 0  //Should always be the case unless version issue with browser page
             if !(oFcgi:p_ColumnTypes[l_iTypePos,3])
-                l_iColumnLength := NIL
+                l_nColumnLength := NIL
             endif
             if !(oFcgi:p_ColumnTypes[l_iTypePos,4])
-                l_iColumnScale := NIL
+                l_nColumnScale := NIL
             endif
             if !(oFcgi:p_ColumnTypes[l_iTypePos,5])
                 l_iColumnFk_Enumeration := NIL
@@ -4127,19 +4149,20 @@ case l_cActionOnSubmit == "Save"
             if oFcgi:p_nAccessLevel >= 5
                 :Field("Column.Name"            , l_cColumnName)
                 :Field("Column.AKA"             , l_cColumnAKA)
-                :Field("Column.UseStatus"       , l_iColumnUseStatus)
+                :Field("Column.UseStatus"       , l_nColumnUseStatus)
                 :Field("Column.Type"            , l_cColumnType)
-                :Field("Column.Length"          , l_iColumnLength)
-                :Field("Column.Scale"           , l_iColumnScale)
+                :Field("Column.Length"          , l_nColumnLength)
+                :Field("Column.Scale"           , l_nColumnScale)
                 :Field("Column.Nullable"        , l_lColumnNullable)
+                :Field("Column.Required"        , l_nColumnRequired)
                 :Field("Column.Default"         , l_cColumnDefault)
                 :Field("Column.Unicode"         , l_lColumnUnicode)
                 :Field("Column.Primary"         , l_lColumnPrimary)
-                :Field("Column.UsedBy"          , l_iColumnUsedBy)
+                :Field("Column.UsedBy"          , l_nColumnUsedBy)
                 :Field("Column.Fk_TableForeign" , l_iColumnFk_TableForeign)
                 :Field("Column.Fk_Enumeration"  , l_iColumnFk_Enumeration)
             endif
-            :Field("Column.DocStatus"       , l_iColumnDocStatus)
+            :Field("Column.DocStatus"       , l_nColumnDocStatus)
             :Field("Column.Description"     , iif(empty(l_cColumnDescription),NULL,l_cColumnDescription))
         
             if empty(l_iColumnPk)
@@ -4254,19 +4277,20 @@ endcase
 if !empty(l_cErrorMessage)
     l_hValues["Name"]            := l_cColumnName
     l_hValues["AKA"]             := l_cColumnAKA
-    l_hValues["UseStatus"]       := l_iColumnUseStatus
-    l_hValues["DocStatus"]       := l_iColumnDocStatus
+    l_hValues["UseStatus"]       := l_nColumnUseStatus
+    l_hValues["DocStatus"]       := l_nColumnDocStatus
     l_hValues["Description"]     := l_cColumnDescription
     l_hValues["Type"]            := l_cColumnType
-    l_hValues["Length"]          := l_iColumnLength
-    l_hValues["Scale"]           := l_iColumnScale
+    l_hValues["Length"]          := l_nColumnLength
+    l_hValues["Scale"]           := l_nColumnScale
     l_hValues["LastNativeType"]  := l_cColumnLastNativeType
     l_hValues["Nullable"]        := l_lColumnNullable
+    l_hValues["Required"]        := l_nColumnRequired
     l_hValues["Default"]         := l_cColumnDefault
     l_hValues["Unicode"]         := l_lColumnUnicode
     l_hValues["ShowPrimary"]     := l_lShowPrimary
     l_hValues["Primary"]         := l_lColumnPrimary
-    l_hValues["UsedBy"]          := l_iColumnUsedBy
+    l_hValues["UsedBy"]          := l_nColumnUsedBy
     l_hValues["Fk_TableForeign"] := l_iColumnFk_TableForeign
     l_hValues["Fk_Enumeration"]  := l_iColumnFk_Enumeration
 
@@ -4567,8 +4591,8 @@ local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_iImplementAs     := hb_HGetDef(par_hValues,"par_iImplementAs",1)
 local l_iImplementLength := hb_HGetDef(par_hValues,"par_iImplementLength",1)
@@ -4693,12 +4717,12 @@ else
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
-                    l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                    l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -4707,10 +4731,10 @@ else
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]
-                    l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -5181,7 +5205,7 @@ return l_cHtml
 //=================================================================================================================
 static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cErrorText,par_iPk,par_hValues)
 
-//par_cName,par_iNumber,par_iUseStatus,par_iDocStatus,par_cDescription
+//par_cName,par_iNumber,par_iUseStatus,par_nDocStatus,par_cDescription
 
 local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
@@ -5189,8 +5213,8 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",""))
-local l_iUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_iDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_aSQLResult   := {}
@@ -5252,12 +5276,12 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevel >= 5,[],[ disabled])+[>]
-                l_cHtml += [<option value="1"]+iif(l_iUseStatus==1,[ selected],[])+[>Unknown</option>]
-                l_cHtml += [<option value="2"]+iif(l_iUseStatus==2,[ selected],[])+[>Proposed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iUseStatus==3,[ selected],[])+[>Under Development</option>]
-                l_cHtml += [<option value="4"]+iif(l_iUseStatus==4,[ selected],[])+[>Active</option>]
-                l_cHtml += [<option value="5"]+iif(l_iUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
-                l_cHtml += [<option value="6"]+iif(l_iUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -5266,10 +5290,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus"]+iif(oFcgi:p_nAccessLevel >= 3,[],[ disabled])+[>]
-                l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -5802,7 +5826,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cCode            := hb_HGetDef(par_hValues,"Code","")
 local l_iTableUseStatus  := hb_HGetDef(par_hValues,"TableUseStatus",1)
-local l_iColumnUseStatus := hb_HGetDef(par_hValues,"ColumnUseStatus",1)
+local l_nColumnUseStatus := hb_HGetDef(par_hValues,"ColumnUseStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 oFcgi:TraceAdd("TagEditFormBuild")
@@ -5862,9 +5886,9 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Column Use</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboColumnUseStatus" id="ComboColumnUseStatus">]
-                l_cHtml += [<option value="1"]+iif(l_iColumnUseStatus==1,[ selected],[])+[>Do Not Use</option>]
-                l_cHtml += [<option value="2"]+iif(l_iColumnUseStatus==2,[ selected],[])+[>Active</option>]
-                l_cHtml += [<option value="3"]+iif(l_iColumnUseStatus==3,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [<option value="1"]+iif(l_nColumnUseStatus==1,[ selected],[])+[>Do Not Use</option>]
+                l_cHtml += [<option value="2"]+iif(l_nColumnUseStatus==2,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="3"]+iif(l_nColumnUseStatus==3,[ selected],[])+[>Discontinued</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]

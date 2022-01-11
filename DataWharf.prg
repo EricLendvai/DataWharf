@@ -191,6 +191,11 @@ local l_cAjaxAction
 local l_cThisAppTitle
 local l_cSecuritySalt
 local l_lCyanAuditAware := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
+local l_cPostgresHost           := ::GetAppConfig("POSTGRESHOST")
+local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
+local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
+local l_cPostgresId             := ::GetAppConfig("POSTGRESID")
+local l_lPostgresLostConnection := .f.
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -204,15 +209,25 @@ SendToDebugView("Request Counter",::RequestCount)
 ::p_nAccessLevel    := 0
 
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
-if (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
+l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
+if l_lPostgresLostConnection                                    .or.;
+   (::p_o_SQLConnection:GetServer()   <> l_cPostgresHost)     .or.;
+   (::p_o_SQLConnection:GetPort()     <> l_iPostgresPort)     .or.;
+   (::p_o_SQLConnection:GetDatabase() <> l_cPostgresDatabase) .or.;
+   (::p_o_SQLConnection:GetUser()     <> l_cPostgresId)
+
+    if !l_lPostgresLostConnection
+        ::p_o_SQLConnection:Disconnect()
+    endif
+
     SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                         ,;
-                                        ::GetAppConfig("POSTGRESHOST"),;
-                                        val(::GetAppConfig("POSTGRESPORT")),;
-                                        ::GetAppConfig("POSTGRESID"),;
+                                        l_cPostgresHost,;
+                                        l_iPostgresPort,;
+                                        l_cPostgresId,;
                                         ::GetAppConfig("POSTGRESPASSWORD"),;
-                                        ::GetAppConfig("POSTGRESDATABASE"),;
+                                        l_cPostgresDatabase,;
                                         "public";
                                         )
     with object ::p_o_SQLConnection

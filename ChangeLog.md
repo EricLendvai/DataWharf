@@ -1,5 +1,12 @@
 # DataWharf - Change Log
 
+## 01/10/2022
+* Fix missing edit table icon in visualize right panel (with access right)
+* New "Required" field for columns.
+* Load/Sync will not override column properties if the "Use Status" is "Under Development" or more.
+* If the database to use in config.txt is changed while the server running, it will automatically reconnect and most likely prompt for used login.
+* Added tables ConceptualDiagram, DiagramEntity (Under Development)
+
 ## 01/09/2022
 * Fix issue on load/sync failing to get default values on initial load.
 * Intial table setup for upcoming Conceptual Modeling feature.

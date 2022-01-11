@@ -1009,10 +1009,10 @@ with object l_oDB1
 
 
                     // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
-                    //     l_cHtml += [<option value="1"]+iif(l_iDocStatus==1,[ selected],[])+[>Missing</option>]
-                    //     l_cHtml += [<option value="2"]+iif(l_iDocStatus==2,[ selected],[])+[>Not Needed</option>]
-                    //     l_cHtml += [<option value="3"]+iif(l_iDocStatus==3,[ selected],[])+[>Composing</option>]
-                    //     l_cHtml += [<option value="4"]+iif(l_iDocStatus==4,[ selected],[])+[>Completed</option>]
+                    //     l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
+                    //     l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
+                    //     l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
+                    //     l_cHtml += [<option value="4"]+iif(l_nDocStatus==4,[ selected],[])+[>Completed</option>]
                     // l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
