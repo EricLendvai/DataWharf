@@ -1443,7 +1443,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
-// Altd()
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == l_cColumnType     .and. ;
                            ListOfColumnsInDataDictionary->Column_Length             == l_nColumnLength   .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale              == l_nColumnScale    .and. ;
@@ -1525,8 +1524,9 @@ endcase
 if par_iSyncSetForeignKey > 1
     with object l_oDB1
         :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")
-        :Column("Column.pk","Column_pk")
-        :Column("Table.pk" ,"Table_pk")
+        :Column("Column.pk"       ,"Column_pk")
+        :Column("Table.pk"        ,"Table_pk")
+        :Column("Column.UseStatus","Column_UseStatus")
 
         //Ensure we only check on the columns in the current application
         :Join("inner","Table"    ,"TableOfColumn"    ,"Column.fk_Table = TableOfColumn.pk")
@@ -1557,7 +1557,7 @@ if par_iSyncSetForeignKey > 1
         if :Tally > 0
             with object l_oDB2
                 select FieldToMarkAsForeignKeys
-                scan all
+                scan for FieldToMarkAsForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
                     :Table("606f3256-52c4-4e12-ada1-33a7f48d327c","Column")
                     :Field("Column.fk_TableForeign" , FieldToMarkAsForeignKeys->Table_pk)
                     if :Update(FieldToMarkAsForeignKeys->Column_pk)
