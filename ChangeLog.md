@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/11/2022
+* Updated Conceptual Modeling supporting files.
+
 ## 01/10/2022
 * Fix missing edit table icon in visualize right panel (with access right)
 * New "Required" field for columns.

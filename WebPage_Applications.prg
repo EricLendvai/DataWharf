@@ -4042,11 +4042,11 @@ l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("Tex
 
 do case
 case l_cActionOnSubmit == "Save"
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     if oFcgi:p_nAccessLevel >= 5
         if empty(l_cColumnName)
             l_cErrorMessage := "Missing Name"
         else
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("810f0a78-58e8-46d2-87a2-5e29b484d274","Column")
                 :Column("Column.pk","pk")
@@ -4126,22 +4126,23 @@ case l_cActionOnSubmit == "Save"
             endif
         endif
 
-        //Blank out any unneeded variable values
-        if l_iTypePos > 0  //Should always be the case unless version issue with browser page
-            if !(oFcgi:p_ColumnTypes[l_iTypePos,3])
-                l_nColumnLength := NIL
+        if oFcgi:p_nAccessLevel >= 5
+            //Blank out any unneeded variable values
+            if l_iTypePos > 0  //Should always be the case unless version issue with browser page
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,3])
+                    l_nColumnLength := NIL
+                endif
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,4])
+                    l_nColumnScale := NIL
+                endif
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,5])
+                    l_iColumnFk_Enumeration := NIL
+                endif
+                // if !(oFcgi:p_ColumnTypes[l_iTypePos,6])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
+                //     l_lColumnUnicode := .f.
+                // endif
             endif
-            if !(oFcgi:p_ColumnTypes[l_iTypePos,4])
-                l_nColumnScale := NIL
-            endif
-            if !(oFcgi:p_ColumnTypes[l_iTypePos,5])
-                l_iColumnFk_Enumeration := NIL
-            endif
-            // if !(oFcgi:p_ColumnTypes[l_iTypePos,6])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
-            //     l_lColumnUnicode := .f.
-            // endif
         endif
-
 
         //Save the Column
         with object l_oDB1
