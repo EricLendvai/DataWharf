@@ -20,7 +20,7 @@ l_Schema := ;
    ,"SyncUser"              =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  User Account to use to connect.
    ,"SyncDatabase"          =>{, "CV", 200,  0,"N"};  // Connection Info To Sync To.  Database to connect to.
    ,"SyncNameSpaces"        =>{, "CV", 400,  0,"N"};  // Connection Info To Sync To.  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
-   ,"SyncSetForeignKey"     =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  1 - Not, 2 - On p_<TableName>, 3 - on fk_<TableName>
+   ,"SyncSetForeignKey"     =>{,  "N",   1,  0,"N"};  // Connection Info To Sync To.  1 - Not, 2- Foreign Key Restrictions, 3 - On p_<TableName>, 4 - on fk_<TableName>
    };
    ,;   //Index Definition
    NIL};

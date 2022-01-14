@@ -4,10 +4,11 @@ memvar oFcgi
 #include "dbinfo.ch"
 #include "hb_orm.ch"
 
-function LoadSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces,par_iSyncSetForeignKey)
-local l_SQLCommandEnums := []
-local l_SQLCommandFields := []
-local l_SQLCommandIndexes := []
+function LoadSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey)
+local l_SQLCommandEnums       := []
+local l_SQLCommandFields      := []
+local l_SQLCommandIndexes     := []
+local l_SQLCommandForeignKeys := []
 local l_aNameSpaces
 local l_iPosition
 local l_iFirstNameSpace
@@ -44,6 +45,10 @@ local l_iIndexAlgo
 
 local l_oDB1
 local l_oDB2
+
+local l_oDB_AllTablesAsParentsForForeignKeys
+local l_oDB_AllTableColumnsChildrenForForeignKeys
+
 local l_aSQLResult := {}
 local l_cErrorMessage := ""
 
@@ -64,11 +69,14 @@ local l_hEnumerations := {=>}
 local l_hTables       := {=>}  // The key is <NameSpace>.<TableName>
 local l_hColumns      := {=>}  // The key is <NameSpace>.<TableName>.<ColumnName>
 
+local l_iParentTableKey
+local l_iChildColumnKey
+
+
 // If switching to MySQL to store our own tables, have to deal with variables/fields: IndexUnique, ColumnNullable
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
 
 ///////////////////////////////===========================================================================================================
 
@@ -92,7 +100,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
     l_SQLCommandFields  += [ WHERE columns.table_schema = ']+par_cDatabase+[']
     l_SQLCommandFields  += [ AND   lower(left(columns.table_name,11)) != 'schemacache']
     l_SQLCommandFields  += [ ORDER BY tag1,field_position]
-
+    
 //_M_ not as postgresql
     l_SQLCommandIndexes += [SELECT "public" AS schema_name,]
     l_SQLCommandIndexes += [       table_name,]
@@ -110,6 +118,21 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
     l_SQLCommandIndexes += [ GROUP BY table_name,index_name]
     l_SQLCommandIndexes += [ ORDER BY index_schema,table_name,index_name;]
 
+    // l_SQLCommandForeignKeys += [SELECT CONCAT('public.',lower(TABLE_NAME))  AS childtablename,]
+    // l_SQLCommandForeignKeys += [       lower(COLUMN_NAME) AS childcolumnname,]
+    // l_SQLCommandForeignKeys += [       CONCAT('public.',lower(REFERENCED_TABLE_NAME)) AS parenttablename]
+    // l_SQLCommandForeignKeys += [ FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE]
+    // l_SQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
+
+    // l_SQLCommandForeignKeys += [SELECT concat('*public*',lower(TABLE_NAME),'*',lower(COLUMN_NAME),'*')  AS childcolumn,]
+    // l_SQLCommandForeignKeys += [       concat(*public*',lower(REFERENCED_TABLE_NAME),'*') AS parenttable]
+    // l_SQLCommandForeignKeys += [ FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE]
+    // l_SQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
+
+    l_SQLCommandForeignKeys += [SELECT cast(concat('*public*',lower(TABLE_NAME),'*',lower(COLUMN_NAME),'*') AS CHAR(255)) AS childcolumn,]
+    l_SQLCommandForeignKeys += [       cast(concat('*public*',lower(REFERENCED_TABLE_NAME),'*')             AS CHAR(255)) AS parenttable]
+    l_SQLCommandForeignKeys += [ FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE]
+    l_SQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
 
 //--Load Tables-----------
     if empty(l_cErrorMessage)
@@ -1521,53 +1544,132 @@ endcase
 
 
 //--Try to setup Foreign Links----------------
-if par_iSyncSetForeignKey > 1
+if par_nSyncSetForeignKey > 1
     with object l_oDB1
-        :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")
-        :Column("Column.pk"       ,"Column_pk")
-        :Column("Table.pk"        ,"Table_pk")
-        :Column("Column.UseStatus","Column_UseStatus")
+        if par_nSyncSetForeignKey == 2
+            //l_SQLCommandForeignKeys
 
-        //Ensure we only check on the columns in the current application
-        :Join("inner","Table"    ,"TableOfColumn"    ,"Column.fk_Table = TableOfColumn.pk")
-        :Join("inner","NameSpace","NameSpaceOfColumn","TableOfColumn.fk_NameSpace = NameSpaceOfColumn.pk")
-        :Where("NameSpaceOfColumn.fk_Application = ^",par_iApplicationPk)
+    // l_SQLCommandForeignKeys += [SELECT cast(concat('*public*',lower(TABLE_NAME),'*',lower(COLUMN_NAME),'*') AS CHAR(255)) AS childcolumn,]
+    // l_SQLCommandForeignKeys += [       cast(concat('*public*',lower(REFERENCED_TABLE_NAME),'*')             AS CHAR(255)) AS parenttable]
+    // l_SQLCommandForeignKeys += [ FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE]
+    // l_SQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
 
-        do case
-        case par_iSyncSetForeignKey = 2
-            :Where("left(Column.Name,2) = ^" , "p_")
-            :Join("inner","Table","","lower(Column.Name) = lower(concat('p_',Table.Name))")
-        case par_iSyncSetForeignKey = 3
-            :Where("left(Column.Name,3) = ^" , "fk_")
-            :Join("inner","Table","","lower(Column.Name) = lower(concat('fk_',Table.Name))")
-        endcase
-            
-        :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
-        :Where("Column.DocStatus <= 1")
+            if !SQLExec(par_SQLHandle,l_SQLCommandForeignKeys,"ListOfFieldsForeignKeys")
+                l_cErrorMessage := "Failed to retrieve Fields Meta data."
+            else
+                l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
+                l_oDB_AllTableColumnsChildrenForForeignKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+                with object l_oDB_AllTablesAsParentsForForeignKeys
+                    :Table("8c90e531-cac1-4ee8-9d9c-722eec3fa47e","Table")
+                    :Column("Table.pk" , "Pk")
+                    :Column("cast(concat('*',lower(NameSpace.Name),'*',lower(Table.Name),'*') as char(255))", "tag1")
+                    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+                    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+                    :SQL("AllTablesAsParentsForForeignKeys")
 
-        :Where("Column.fk_TableForeign is null")
-        :SQL("FieldToMarkAsForeignKeys")
+                    With Object :p_oCursor
+                        :Index("tag1","tag1")
+                        :CreateIndexes()
+                        :SetOrder("tag1")
+                    endwith
 
-        // SendToClipboard(:LastSQL())
-        // ExportTableToHtmlFile("FieldToMarkAsForeignKeys","d:\PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
+                endwith
+ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys","d:\AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
 
-        if :Tally > 0
-            with object l_oDB2
-                select FieldToMarkAsForeignKeys
-                scan for FieldToMarkAsForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
-                    :Table("606f3256-52c4-4e12-ada1-33a7f48d327c","Column")
-                    :Field("Column.fk_TableForeign" , FieldToMarkAsForeignKeys->Table_pk)
-                    if :Update(FieldToMarkAsForeignKeys->Column_pk)
-                        l_iUpdatedColumns += 1
-                    else
-                        l_cErrorMessage := "Failed to update Column fk_TableForeign."
-                        exit
+                with object l_oDB_AllTableColumnsChildrenForForeignKeys
+                    :Table("0a3abf33-c882-4909-babf-8f917e326bca","Column")
+                    :Column("Column.pk"              , "Pk")
+                    :Column("Column.fk_TableForeign" , "Column_fk_TableForeign")
+                    :Column("Column.UseStatus"       , "Column_UseStatus")
+                    :Column("cast(concat('*',lower(NameSpace.Name),'*',lower(Table.Name),'*',lower(Column.Name),'*') as char(255))", "tag1")
+                    :Join("inner","Table","","Column.fk_Table = Table.pk")
+                    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+                    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+                    :SQL("AllTableColumnsChildrenForForeignKeys")
+
+                    With Object :p_oCursor
+                        :Index("tag1","tag1")
+                        :CreateIndexes()
+                        :SetOrder("tag1")
+                    endwith
+
+                endwith
+ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys","d:\AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
+
+
+                select ListOfFieldsForeignKeys
+                scan all
+                    // l_cTableName := ListOfFieldsForeignKeys->childtablename
+                    // l_cTableName := ListOfFieldsForeignKeys->childcolumnname
+
+                    l_iParentTableKey := iif( VFP_Seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
+                    l_iChildColumnKey := iif( VFP_Seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
+
+                    if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
+                        if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey
+                            if AllTableColumnsChildrenForForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
+                                :Table("088fd706-ec0f-445f-9c06-bfd6fe20a80d","Column")
+                                :Field("Column.fk_TableForeign",l_iParentTableKey)
+                                if :Update(l_iChildColumnKey)
+                                    l_iUpdatedColumns += 1
+                                else
+                                    //_M_ report error
+                                endif
+                            endif
+                        endif
                     endif
+
                 endscan
-            endwith
+            endif
+
+        else
+            :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")
+            :Column("Column.pk"       ,"Column_pk")
+            :Column("Table.pk"        ,"Table_pk")
+            :Column("Column.UseStatus","Column_UseStatus")
+
+            //Ensure we only check on the columns in the current application
+            :Join("inner","Table"    ,"TableOfColumn"    ,"Column.fk_Table = TableOfColumn.pk")
+            :Join("inner","NameSpace","NameSpaceOfColumn","TableOfColumn.fk_NameSpace = NameSpaceOfColumn.pk")
+            :Where("NameSpaceOfColumn.fk_Application = ^",par_iApplicationPk)
+
+            do case
+            case par_nSyncSetForeignKey == 3
+                :Where("left(Column.Name,2) = ^" , "p_")
+                :Join("inner","Table","","lower(Column.Name) = lower(concat('p_',Table.Name))")
+            case par_nSyncSetForeignKey == 4
+                :Where("left(Column.Name,3) = ^" , "fk_")
+                :Join("inner","Table","","lower(Column.Name) = lower(concat('fk_',Table.Name))")
+            endcase
+                
+            :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
+            :Where("Column.DocStatus <= 1")
+
+            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+            :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+
+            :Where("Column.fk_TableForeign is null")
+            :SQL("FieldToMarkAsForeignKeys")
+
+            // SendToClipboard(:LastSQL())
+            // ExportTableToHtmlFile("FieldToMarkAsForeignKeys","d:\PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
+
+            if :Tally > 0
+                with object l_oDB2
+                    select FieldToMarkAsForeignKeys
+                    scan for FieldToMarkAsForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
+                        :Table("606f3256-52c4-4e12-ada1-33a7f48d327c","Column")
+                        :Field("Column.fk_TableForeign" , FieldToMarkAsForeignKeys->Table_pk)
+                        if :Update(FieldToMarkAsForeignKeys->Column_pk)
+                            l_iUpdatedColumns += 1
+                        else
+                            l_cErrorMessage := "Failed to update Column fk_TableForeign."
+                            exit
+                        endif
+                    endscan
+                endwith
+            endif
         endif
     endwith
 endif
@@ -1732,6 +1834,13 @@ if empty(l_cErrorMessage)
         endif
     endif
 endif
+
+CloseAlias("ListOfFieldsForLoads")
+CloseAlias("ListOfEnumsForLoads")
+CloseAlias("ListOfIndexesForLoads")
+CloseAlias("ListOfFieldsForeignKeys")
+CloseAlias("AllTablesAsParentsForForeignKeys")
+CloseAlias("AllTableColumnsChildrenForForeignKeys")
 
 return l_cErrorMessage
 

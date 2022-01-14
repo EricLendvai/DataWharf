@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/14/2022
+* When using load/sync against MariaDB/MySQL, can auto-set foreign keys from actual foreign key restrictions in the database.
+
 ## 01/11/2022
 * Updated Conceptual Modeling supporting files.
 

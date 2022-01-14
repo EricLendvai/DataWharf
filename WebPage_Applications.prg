@@ -5326,8 +5326,8 @@ local l_iEnumValuePk
 local l_cEnumValueName
 local l_cEnumValueAKA
 local l_cEnumValueNumber,l_iEnumValueNumber
-local l_iEnumValueUseStatus
-local l_iEnumValueDocStatus
+local l_nEnumValueUseStatus
+local l_nEnumValueDocStatus
 local l_cEnumValueDescription
 local l_iEnumValueOrder
 local l_aSQLResult   := {}
@@ -5352,8 +5352,8 @@ endif
 l_cEnumValueNumber      := SanitizeInput(oFcgi:GetInputValue("TextNumber"))
 l_iEnumValueNumber      := iif(empty(l_cEnumValueNumber),NULL,val(l_cEnumValueNumber))
 
-l_iEnumValueUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_iEnumValueDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_nEnumValueUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nEnumValueDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cEnumValueDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
@@ -5405,9 +5405,9 @@ case l_cActionOnSubmit == "Save"
                 :Field("EnumValue.Name"       ,l_cEnumValueName)
                 :Field("EnumValue.AKA"        ,l_cEnumValueAKA)
                 :Field("EnumValue.Number"     ,l_iEnumValueNumber)
-                :Field("EnumValue.UseStatus"  ,l_iEnumValueUseStatus)
+                :Field("EnumValue.UseStatus"  ,l_nEnumValueUseStatus)
             endif
-            :Field("EnumValue.DocStatus"  ,l_iEnumValueDocStatus)
+            :Field("EnumValue.DocStatus"  ,l_nEnumValueDocStatus)
             :Field("EnumValue.Description",iif(empty(l_cEnumValueDescription),NULL,l_cEnumValueDescription))
             if empty(l_iEnumValuePk)
                 :Field("EnumValue.fk_Enumeration" , par_iEnumerationPk)
@@ -5443,8 +5443,8 @@ if !empty(l_cErrorMessage)
     l_hValues["Name"]            := l_cEnumValueName
     l_hValues["AKA"]             := l_cEnumValueAKA
     l_hValues["Number"]          := l_iEnumValueNumber
-    l_hValues["UseStatus"]       := l_iEnumValueUseStatus
-    l_hValues["DocStatus"]       := l_iEnumValueDocStatus
+    l_hValues["UseStatus"]       := l_nEnumValueUseStatus
+    l_hValues["DocStatus"]       := l_nEnumValueDocStatus
     l_hValues["Description"]     := l_cEnumValueDescription
 
     l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_cErrorMessage,l_iEnumValuePk,l_hValues)
@@ -5453,21 +5453,21 @@ endif
 return l_cHtml
 //=================================================================================================================
 static function ApplicationLoadSchemaStep1FormBuild(par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
-                                                    par_iSyncBackendType,par_cSyncServer,par_iSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_iSyncSetForeignKey)
+                                                    par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
 local l_cApplicationName   := hb_DefaultValue(par_cApplicationName,"")
 local l_cLinkCode          := hb_DefaultValue(par_cLinkCode,"")
 
-local l_iSyncBackendType   := hb_DefaultValue(par_iSyncBackendType,0)
+local l_nSyncBackendType   := hb_DefaultValue(par_nSyncBackendType,0)
 local l_cSyncServer        := hb_DefaultValue(par_cSyncServer,"")
-local l_iSyncPort          := hb_DefaultValue(par_iSyncPort,0)
+local l_nSyncPort          := hb_DefaultValue(par_nSyncPort,0)
 local l_cSyncUser          := hb_DefaultValue(par_cSyncUser,"")
 local l_cSyncPassword      := hb_DefaultValue(par_cSyncPassword,"")
 local l_cSyncDatabase      := hb_DefaultValue(par_cSyncDatabase,"")
 local l_cSyncNameSpaces    := hb_DefaultValue(par_cSyncNameSpaces,"")
-local l_iSyncSetForeignKey := hb_DefaultValue(par_iSyncSetForeignKey,1)
+local l_nSyncSetForeignKey := hb_DefaultValue(par_nSyncSetForeignKey,1)
 
 oFcgi:TraceAdd("ApplicationLoadSchemaStep1FormBuild")
 
@@ -5499,11 +5499,11 @@ if !empty(par_iPk)
                 l_cHtml += [<td class="pe-2 pb-3">Server Type</td>]
                 l_cHtml += [<td class="pb-3">]
                     l_cHtml += [<select name="ComboSyncBackendType" id="ComboSyncBackendType">]
-                    l_cHtml += [<option value="0"]+iif(l_iSyncBackendType==0,[ selected],[])+[>Unknown</option>]
-                    l_cHtml += [<option value="1"]+iif(l_iSyncBackendType==1,[ selected],[])+[>MariaDB</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iSyncBackendType==2,[ selected],[])+[>MySQL</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iSyncBackendType==3,[ selected],[])+[>PostgreSQL</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iSyncBackendType==4,[ selected],[])+[>MS SQL</option>]
+                    l_cHtml += [<option value="0"]+iif(l_nSyncBackendType==0,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nSyncBackendType==1,[ selected],[])+[>MariaDB</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nSyncBackendType==2,[ selected],[])+[>MySQL</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nSyncBackendType==3,[ selected],[])+[>PostgreSQL</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nSyncBackendType==4,[ selected],[])+[>MS SQL</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5515,7 +5515,7 @@ if !empty(par_iPk)
 
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">Port (If not default)</td>]
-                l_cHtml += [<td class="pb-3"><input type="text" name="SyncPort" id="SyncPort" value="]+iif(empty(l_iSyncPort),"",Trans(l_iSyncPort))+[" maxlength="10" size="10"></td>]
+                l_cHtml += [<td class="pb-3"><input type="text" name="SyncPort" id="SyncPort" value="]+iif(empty(l_nSyncPort),"",Trans(l_nSyncPort))+[" maxlength="10" size="10"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
@@ -5542,9 +5542,10 @@ if !empty(par_iPk)
                 l_cHtml += [<td class="pe-2 pb-3">Set Foreign Key</td>]
                 l_cHtml += [<td class="pb-3">]
                     l_cHtml += [<select name="ComboSyncSetForeignKey" id="ComboSyncSetForeignKey">]
-                    l_cHtml += [<option value="1"]+iif(l_iSyncSetForeignKey==1,[ selected],[])+[>Not</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iSyncSetForeignKey==2,[ selected],[])+[>On p_&lt;TableName&gt;</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iSyncSetForeignKey==3,[ selected],[])+[>On fk_&lt;TableName&gt;</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nSyncSetForeignKey==1,[ selected],[])+[>Not</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nSyncSetForeignKey==2,[ selected],[])+[>Foreign Key Restrictions</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nSyncSetForeignKey==3,[ selected],[])+[>On p_&lt;TableName&gt;</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nSyncSetForeignKey==4,[ selected],[])+[>On fk_&lt;TableName&gt;</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5568,14 +5569,14 @@ static function ApplicationLoadSchemaStep1FormOnSubmit(par_iApplicationPk,par_cA
 local l_cHtml := []
 local l_cActionOnSubmit
 
-local l_iSyncBackendType
+local l_nSyncBackendType
 local l_cSyncServer
-local l_iSyncPort
+local l_nSyncPort
 local l_cSyncUser
 local l_cSyncPassword
 local l_cSyncDatabase
 local l_cSyncNameSpaces
-local l_iSyncSetForeignKey
+local l_nSyncSetForeignKey
 
 
 local l_cErrorMessage := ""
@@ -5592,14 +5593,14 @@ oFcgi:TraceAdd("ApplicationLoadSchemaStep1FormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iSyncBackendType   := Val(oFcgi:GetInputValue("ComboSyncBackendType"))
+l_nSyncBackendType   := Val(oFcgi:GetInputValue("ComboSyncBackendType"))
 l_cSyncServer        := SanitizeInput(oFcgi:GetInputValue("TextSyncServer"))
-l_iSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
+l_nSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
 l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
 l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
 l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
 l_cSyncNameSpaces    := strtran(SanitizeInput(oFcgi:GetInputValue("TextSyncNameSpaces"))," ","")
-l_iSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
+l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
 
@@ -5607,7 +5608,7 @@ do case
 case l_cActionOnSubmit == "Load"
 
     do case
-    case empty(l_iSyncBackendType)
+    case empty(l_nSyncBackendType)
         l_cErrorMessage := "Missing Backend Type"
 
     case empty(l_cSyncServer)
@@ -5626,36 +5627,37 @@ case l_cActionOnSubmit == "Load"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c5","Application")
-            :Field("Application.SyncBackendType"  ,l_iSyncBackendType)
+            :Field("Application.SyncBackendType"  ,l_nSyncBackendType)
             :Field("Application.SyncServer"       ,l_cSyncServer)
-            :Field("Application.SyncPort"         ,l_iSyncPort)
+            :Field("Application.SyncPort"         ,l_nSyncPort)
             :Field("Application.SyncUser"         ,l_cSyncUser)
             :Field("Application.SyncDatabase"     ,l_cSyncDatabase)
             :Field("Application.SyncNameSpaces"   ,l_cSyncNameSpaces)
-            :Field("Application.SyncSetForeignKey",l_iSyncSetForeignKey)
+            :Field("Application.SyncSetForeignKey",l_nSyncSetForeignKey)
             :Update(par_iApplicationPk)
         endwith
 
 
-        switch l_iSyncBackendType
+        switch l_nSyncBackendType
         case HB_ORM_BACKENDTYPE_MARIADB
             l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-            l_iPort         := iif(empty(l_iSyncPort),3306,l_iSyncPort)
-            l_cDriver       := "MySQL ODBC 8.0 Unicode Driver" //"MariaDB ODBC 3.1 Driver"
+            l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
+            // l_cDriver       := "MySQL ODBC 8.0 Unicode Driver" //"MariaDB ODBC 3.1 Driver"
+            l_cDriver       := "MariaDB ODBC 3.1 Driver"
             exit
         case HB_ORM_BACKENDTYPE_MYSQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-            l_iPort         := iif(empty(l_iSyncPort),3306,l_iSyncPort)
+            l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
             l_cDriver       := "MySQL ODBC 8.0 Unicode Driver"
             exit
         case HB_ORM_BACKENDTYPE_POSTGRESQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_POSTGRESQL
-            l_iPort         := iif(empty(l_iSyncPort),5432,l_iSyncPort)
+            l_iPort         := iif(empty(l_nSyncPort),5432,l_nSyncPort)
             l_cDriver       := "PostgreSQL Unicode"
             exit
         case HB_ORM_BACKENDTYPE_MSSQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
-            l_iPort         := iif(empty(l_iSyncPort),1433,l_iSyncPort)
+            l_iPort         := iif(empty(l_nSyncPort),1433,l_nSyncPort)
             l_cDriver       := "SQL Server"
             exit
         otherwise
@@ -5667,13 +5669,13 @@ case l_cActionOnSubmit == "Load"
         case l_iPort == -1
             l_cErrorMessage := "Unknown Server Type"
 
-        case l_iSyncBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_iSyncBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
+        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_nSyncBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
             // To enable multi statements to be executed, meaning multiple SQL commands separated by ";", had to use the OPTION= setting.
             // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
             l_cConnectionString := "SERVER="+l_cSyncServer+";Driver={"+l_cDriver+"};USER="+l_cSyncUser+";PASSWORD="+l_cSyncPassword+";DATABASE="+l_cSyncDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
-        case l_iSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
+        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
             l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";"
-        case l_iSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
+        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
             l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";"
         otherwise
             l_cErrorMessage := "Invalid 'Backend Type'"
@@ -5687,7 +5689,7 @@ case l_cActionOnSubmit == "Load"
 
             else
 // SendToDebugView(l_cConnectionString)
-               l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_iSyncSetForeignKey)
+               l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
 
                 hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_SQLHandle)
                 // l_cErrorMessage := "Connected OK"
@@ -5703,14 +5705,14 @@ endcase
 
 if !empty(l_cErrorMessage)
     l_cHtml += ApplicationLoadSchemaStep1FormBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
-                                                   l_iSyncBackendType,;
+                                                   l_nSyncBackendType,;
                                                    l_cSyncServer,;
-                                                   l_iSyncPort,;
+                                                   l_nSyncPort,;
                                                    l_cSyncUser,;
                                                    l_cSyncPassword,;
                                                    l_cSyncDatabase,;
                                                    l_cSyncNameSpaces,;
-                                                   l_iSyncSetForeignKey)
+                                                   l_nSyncSetForeignKey)
 endif
 
 return l_cHtml
