@@ -1,10 +1,31 @@
-FROM elmarit/harbour:3.2 as builder
+#FROM elmarit/harbour:3.2 as builder
+FROM ubuntu
+
+## for apt to be noninteractive
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
 
 RUN apt-get update && apt-get install -y apt-utils
 RUN apt-get install -y \
         libfcgi-dev \
         libapache2-mod-fcgid \
-        git
+        git \
+        build-essential \
+        unixodbc-dev \
+        apache2 \
+        libapache2-mod-fcgid \
+        libfcgi-dev \
+        libgpm2 \
+        gnupg \
+        wget
+
+
+# install harbour from src
+RUN git clone --depth=10 https://github.com/harbour/core.git hb32
+WORKDIR /hb32
+RUN make -j 8 install
+
+# clone and make libs
 COPY . /src
 WORKDIR /src
 RUN git clone https://github.com/EricLendvai/Harbour_FastCGI/
@@ -15,9 +36,8 @@ ENV BuildMode release
 ENV HB_COMPILER gcc
 ENV HB_VFP_ROOT /src/Harbour_VFP/
 ENV HB_ORM_ROOT /src/Harbour_ORM/
-ENV FastCGIRootPath ./Harbour_FastCGI/
+ENV FastCGIRootPath /src/Harbour_FastCGI/
 
-# Build ORM and VFP libraries
 WORKDIR /src/Harbour_VFP
 RUN chmod +x ./BuildLIB.sh
 ENV LIBName hb_vfp
@@ -30,8 +50,43 @@ RUN ./BuildLIB.sh
 
 # Build DataWharf
 WORKDIR /src
-RUN mkdir -p build/lin64/clang/release/hbmk2
-ENV EXEName DataWharf
+RUN mkdir -p build/lin64/gcc/release/
+ENV EXEName FCGIDataWharf
 ENV SiteRootFolder /var/www/Harbour_websites/fcgi_DataWharf/
 RUN  hbmk2 DataWharf_linux.hbp -w3 -static
 
+# install Postgresql 
+RUN apt-get -y install postgresql \
+        odbc-postgresql
+
+# Run the rest of the commands as the ``postgres`` user when it was ``apt-get installed``
+USER postgres
+
+# Create a PostgreSQL role named ``datawharf`` with ``mypassord`` as the password and
+# then create a database `DataWharf` owned by the ``datawharf`` role.
+RUN    /etc/init.d/postgresql start &&\
+    psql --command "CREATE USER datawharf WITH SUPERUSER PASSWORD 'mypassord';" &&\
+    createdb -O datawharf DataWharf
+
+USER root
+
+RUN a2enmod rewrite
+RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/
+
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+ADD ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
+
+
+COPY ./FilesForPublishedWebsites/backend /var/www/Harbour_websites/fcgi_DataWharf/backend
+RUN cp /src/build/lin64/gcc/release/FCGIDataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/
+COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
+
+RUN chown -R www-data:www-data /var/www/Harbour_websites
+
+EXPOSE 80 
+CMD /etc/init.d/postgresql start && apache2ctl -D FOREGROUND
