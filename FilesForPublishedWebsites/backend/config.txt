@@ -3,7 +3,7 @@ MaxRequestPerFCGIProcess=0                  //0 for Unlimited
 
 POSTGRESHOST=localhost
 POSTGRESPORT=5432
-POSTGRESID=postgres
+POSTGRESID=datawharf
 POSTGRESPASSWORD=mypassord
 POSTGRESDATABASE=DataWharf
 

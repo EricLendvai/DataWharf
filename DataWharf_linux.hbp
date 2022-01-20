@@ -43,6 +43,5 @@ LoadSchema.prg
 Visualize.prg
 WebPages.hbm
 
-
-../../hb_fcgi/hb_fcgi_linux.hbm
-../debugger.hbm
+./Harbour_FastCGI/hb_fcgi/hb_fcgi_linux.hbm
+./debugger.hbm
