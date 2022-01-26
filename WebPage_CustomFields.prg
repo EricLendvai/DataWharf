@@ -228,7 +228,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application","Name Space","Table","Column"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,4),ListOfCustomFields->CustomField_UsedOn,1)]
+                            l_cHtml += {"Application","Name Space","Table","Column","Model","Entity","Association","Package","Data","Property"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -310,7 +310,7 @@ l_cHtml += [};]
 l_cHtml += [</script>] 
 oFcgi:p_cjQueryScript += [OnChangeType($("#ComboType").val());]
 
-l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
@@ -394,10 +394,16 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
                 l_iUsedOn := hb_HGetDef(par_hValues,"UsedOn",1)
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedOn" id="ComboUsedOn">]
-                    l_cHtml += [<option value="1"]+iif(l_iUsedOn==1,[ selected],[])+[>Application</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iUsedOn==2,[ selected],[])+[>Name Space</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iUsedOn==3,[ selected],[])+[>Table</option>]
-                    l_cHtml += [<option value="4"]+iif(l_iUsedOn==4,[ selected],[])+[>Column</option>]
+                    l_cHtml += [<option value="1"] +iif(l_iUsedOn== 1,[ selected],[])+[>Application</option>]
+                    l_cHtml += [<option value="2"] +iif(l_iUsedOn== 2,[ selected],[])+[>Name Space</option>]
+                    l_cHtml += [<option value="3"] +iif(l_iUsedOn== 3,[ selected],[])+[>Table</option>]
+                    l_cHtml += [<option value="4"] +iif(l_iUsedOn== 4,[ selected],[])+[>Column</option>]
+                    l_cHtml += [<option value="5"] +iif(l_iUsedOn== 5,[ selected],[])+[>Model</option>]
+                    l_cHtml += [<option value="6"] +iif(l_iUsedOn== 6,[ selected],[])+[>Entity</option>]
+                    l_cHtml += [<option value="7"] +iif(l_iUsedOn== 7,[ selected],[])+[>Association</option>]
+                    l_cHtml += [<option value="8"] +iif(l_iUsedOn== 8,[ selected],[])+[>Package</option>]
+                    l_cHtml += [<option value="9"] +iif(l_iUsedOn== 9,[ selected],[])+[>Data Type</option>]
+                    l_cHtml += [<option value="10"]+iif(l_iUsedOn==10,[ selected],[])+[>Property</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -863,8 +869,8 @@ local l_lSelected
 
 with object l_oDB1
     :Table("fd49bb5b-f1b1-4a02-b19d-77d00a5cf52c","ApplicationCustomField")
-    :Column("CustomField.pk" , "pk")
-    :Column("CustomField.Type"            ,"CustomField_Type")
+    :Column("CustomField.pk"  ,"pk")
+    :Column("CustomField.Type","CustomField_Type")
     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
     :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)

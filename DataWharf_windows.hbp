@@ -40,7 +40,8 @@ hbmisc.hbc
 
 DataWharf.prg
 LoadSchema.prg
-Visualize.prg
+DataDictionariesVisualize.prg
+FixNonNormalizedFields.prg
 WebPages.hbm
 
 ..\..\hb_fcgi\hb_fcgi_windows.hbm

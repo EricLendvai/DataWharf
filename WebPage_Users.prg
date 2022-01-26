@@ -119,13 +119,15 @@ case l_cURLAction == "EditUser"
                 with object l_oDB1
                     :Table("64841551-4f11-43cf-bfd8-b742150b8dc2","UserAccessApplication")
                     :Column("UserAccessApplication.fk_Application","fk_Application")
-                    :Column("UserAccessApplication.AccessLevel"   ,"AccessLevel")
+                    :Column("UserAccessApplication.AccessLevelML" ,"AccessLevelML")
+                    :Column("UserAccessApplication.AccessLevelDD" ,"AccessLevelDD")
                     :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
                     :SQL("ListOfSelectedApplications")
 
                     select ListOfSelectedApplications
                     scan all
-                        l_hValues["AppSecLevel"+Trans(ListOfSelectedApplications->fk_Application)] := ListOfSelectedApplications->AccessLevel
+                        l_hValues["AppSecLevelML"+Trans(ListOfSelectedApplications->fk_Application)] := ListOfSelectedApplications->AccessLevelML
+                        l_hValues["AppSecLevelDD"+Trans(ListOfSelectedApplications->fk_Application)] := ListOfSelectedApplications->AccessLevelDD
                     endscan
                 endwith
 
@@ -253,8 +255,12 @@ local l_iAccessMode
 local l_iStatus
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 // local l_CheckBoxId
-local l_cObjectID
-local l_nAccessLevel
+
+local l_cObjectMLID
+local l_cObjectDDID
+
+local l_nAccessLevelML
+local l_nAccessLevelDD
 
 oFcgi:TraceAdd("UserEditFormBuild")
 
@@ -277,7 +283,7 @@ l_cHtml += [};]
 l_cHtml += [</script>] 
 oFcgi:p_cjQueryScript += [OnChangeAccessMode($("#ComboAccessMode").val());]
 
-l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
@@ -380,29 +386,44 @@ l_cHtml += [<div id="DivAppSecurity">]
 
     l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<table class="ms-4">]
-    select ListOfAllApplications
-    scan all
-        // l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
-        l_cObjectID := "ComboAppSecLevel"+Trans(ListOfAllApplications->pk)
+    l_cHtml += [<table class="ms-4 table table-striped" style="width:auto;">]
+        l_cHtml += [<tr class="table-dark">]
+            l_cHtml += [<td class="pb-2">Application</td>]
+            l_cHtml += [<td class="pb-2">Modeling</td>]
+            l_cHtml += [<td class="pb-2">Data Dictionary</td>]
+        l_cHtml += [</tr>]
 
-        l_nAccessLevel := hb_HGetDef(par_hValues,"AppSecLevel"+Trans(ListOfAllApplications->pk),1)
+        select ListOfAllApplications
+        scan all
+            // l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
+            l_cObjectMLID := "ComboAppSecLevelML"+Trans(ListOfAllApplications->pk)
+            l_cObjectDDID := "ComboAppSecLevelDD"+Trans(ListOfAllApplications->pk)
 
-        l_cHtml += [<tr>]
-            l_cHtml += [<td class="pb-2">]+ListOfAllApplications->Application_Name+[</td>]
+            l_nAccessLevelML := hb_HGetDef(par_hValues,"AppSecLevelML"+Trans(ListOfAllApplications->pk),1)
+            l_nAccessLevelDD := hb_HGetDef(par_hValues,"AppSecLevelDD"+Trans(ListOfAllApplications->pk),1)
 
-            l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectID+[" id="]+l_cObjectID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
-                l_cHtml += [<option value="1"]+iif(l_nAccessLevel == 1,[ selected],[])+[>None</option>]
-                l_cHtml += [<option value="2"]+iif(l_nAccessLevel == 2,[ selected],[])+[>Read Only</option>]
-                l_cHtml += [<option value="3"]+iif(l_nAccessLevel == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
-                l_cHtml += [<option value="4"]+iif(l_nAccessLevel == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
-                l_cHtml += [<option value="5"]+iif(l_nAccessLevel == 5,[ selected],[])+[>Edit Anything</option>]
-                l_cHtml += [<option value="6"]+iif(l_nAccessLevel == 6,[ selected],[])+[>Edit Anything and Load/Sync Schema</option>]
-                l_cHtml += [<option value="7"]+iif(l_nAccessLevel == 7,[ selected],[])+[>Full Access</option>]
-            l_cHtml += [</select></td>]
+            l_cHtml += [<tr>]
+                l_cHtml += [<td class="pb-2">]+ListOfAllApplications->Application_Name+[</td>]
 
-        l_cHtml += [</td></tr>]
-    endscan
+                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectMLID+[" id="]+l_cObjectMLID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                    l_cHtml += [<option value="1"]+iif(l_nAccessLevelML == 1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nAccessLevelML == 2,[ selected],[])+[>Read Only</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nAccessLevelML == 5,[ selected],[])+[>Edit Anything</option>]
+                    l_cHtml += [<option value="7"]+iif(l_nAccessLevelML == 7,[ selected],[])+[>Full Access</option>]
+                l_cHtml += [</select></td>]
+
+                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                    l_cHtml += [<option value="1"]+iif(l_nAccessLevelDD == 1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nAccessLevelDD == 2,[ selected],[])+[>Read Only</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nAccessLevelDD == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nAccessLevelDD == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nAccessLevelDD == 5,[ selected],[])+[>Edit Anything</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nAccessLevelDD == 6,[ selected],[])+[>Edit Anything and Load/Sync Schema</option>]
+                    l_cHtml += [<option value="7"]+iif(l_nAccessLevelDD == 7,[ selected],[])+[>Full Access</option>]
+                l_cHtml += [</select></td>]
+
+            l_cHtml += [</td></tr>]
+        endscan
     l_cHtml += [</table>]
 
 l_cHtml += [</div>]
@@ -431,7 +452,8 @@ local l_cSecurityDefaultPassword
 
 local l_hValues := {=>}
 
-local l_nAccessLevel
+local l_nAccessLevelML
+local l_nAccessLevelDD
 
 local l_cErrorMessage := ""
 local l_oDB1
@@ -529,7 +551,7 @@ case l_cActionOnSubmit == "Save"
                         :Distinct(.t.)
                         :Column("Application.pk"                   ,"pk")
                         :Column("UserAccessApplication.pk"         ,"UserAccessApplication_pk")
-                        :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
+                        :Column("UserAccessApplication.AccessLevelDD","UserAccessApplication_AccessLevelDD")
                         :Join("inner","Application","","UserAccessApplication.fk_Application = Application.pk")
                         :Where("UserAccessApplication.fk_User = ^" , l_iUserPk)
                         :SQL("ListOfCurrentApplicationForUser")
@@ -542,9 +564,10 @@ case l_cActionOnSubmit == "Save"
 
                     select ListOfApplications
                     scan all
-                        l_nAccessLevel := max(1,val(oFcgi:GetInputValue("ComboAppSecLevel"+Trans(ListOfApplications->pk))))
+                        l_nAccessLevelML := max(1,val(oFcgi:GetInputValue("ComboAppSecLevelML"+Trans(ListOfApplications->pk))))
+                        l_nAccessLevelDD := max(1,val(oFcgi:GetInputValue("ComboAppSecLevelDD"+Trans(ListOfApplications->pk))))
                         if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForUser","pk")
-                            if l_nAccessLevel <= 1
+                            if l_nAccessLevelML <= 1 .and. l_nAccessLevelDD <= 1
                                 // Remove the Application
                                 with Object l_oDB3
                                     if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
@@ -553,10 +576,11 @@ case l_cActionOnSubmit == "Save"
                                     endif
                                 endwith
                             else
-                                if ListOfCurrentApplicationForUser->UserAccessApplication_AccessLevel <> l_nAccessLevel
+                                if ListOfCurrentApplicationForUser->UserAccessApplication_AccessLevelDD <> l_nAccessLevelDD
                                     with Object l_oDB3
                                         :Table("d6b0a424-ada8-4efd-a1e5-49821463d334","UserAccessApplication")
-                                        :Field("UserAccessApplication.AccessLevel",l_nAccessLevel)
+                                        :Field("UserAccessApplication.AccessLevelML",l_nAccessLevelML)
+                                        :Field("UserAccessApplication.AccessLevelDD",l_nAccessLevelDD)
                                         if !:Update(ListOfCurrentApplicationForUser->UserAccessApplication_pk)
                                             l_cErrorMessage := "Failed to Update Application selection."
                                             exit
@@ -565,13 +589,14 @@ case l_cActionOnSubmit == "Save"
                                 endif
                             endif
                         else
-                            if l_nAccessLevel > 1
+                            if l_nAccessLevelML > 1 .or. l_nAccessLevelDD > 1
                                 // Add the Application only if more than "None"
                                 with Object l_oDB3
                                     :Table("b9fe0a47-878e-4122-8c97-da45982e2554","UserAccessApplication")
                                     :Field("UserAccessApplication.fk_Application",ListOfApplications->pk)
-                                    :Field("UserAccessApplication.fk_User",l_iUserPk)
-                                    :Field("UserAccessApplication.AccessLevel",l_nAccessLevel)
+                                    :Field("UserAccessApplication.fk_User"       ,l_iUserPk)
+                                    :Field("UserAccessApplication.AccessLevelML" ,l_nAccessLevelML)
+                                    :Field("UserAccessApplication.AccessLevelDD" ,l_nAccessLevelDD)
                                     if !:Add()
                                         l_cErrorMessage := "Failed to Save Application selection."
                                         exit
@@ -680,10 +705,13 @@ if !empty(l_cErrorMessage)
 
     select ListOfApplications
     scan all
-        l_nAccessLevel := val(oFcgi:GetInputValue("ComboAppSecLevel"+Trans(ListOfApplications->pk)))
-        if l_nAccessLevel > 1  // No need to store the none, since not having a selection will mean "None"
+        l_nAccessLevelML := val(oFcgi:GetInputValue("ComboAppSecLevelML"+Trans(ListOfApplications->pk)))
+        l_nAccessLevelDD := val(oFcgi:GetInputValue("ComboAppSecLevelDD"+Trans(ListOfApplications->pk)))
+        
+        if l_nAccessLevelML > 1 .or. l_nAccessLevelDD > 1 // No need to store the none, since not having a selection will mean "None"
             l_hValues["Application"+Trans(ListOfApplications->pk)] := .t.
         endif
+        
     endscan
 
     l_cHtml += UserEditFormBuild(l_iUserPk,l_cErrorMessage,l_hValues)

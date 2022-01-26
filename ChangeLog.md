@@ -1,5 +1,17 @@
 # DataWharf - Change Log
 
+## 01/26/2022
+* New "Copy Diagram Link To Clipboard" to allow to provide a direct link to a particular diagram.
+* Added a "Data Dictionaries" top menu option and moved most of the "Applications" menu functionality to it.
+* Extended the Security setup for access rights of Users to deal with new "Modeling" feature.
+* New "Modeling" Menu with partial functionality
+  * Allow Models to be defined, with support to Custom Fields.
+  * Have a tree structure of Packages under Models, with support to Custom Fields.
+  * Have a tree structure of Data Types under Models, with support to Custom Fields.
+  * Basic Management of Entities (not properties yet), with support to Custom Fields.
+* Discontinued field Model.UseStatus and added Model.Stage.
+* Renamed field UserAccessApplication->AccessLevel to UserAccessApplication->AccessLevelDD
+
 ## 01/14/2022
 * When using load/sync against MariaDB/MySQL, can auto-set foreign keys from actual foreign key restrictions in the database.
 

@@ -7,7 +7,7 @@
 ## Pending Development
 - In Table Search, if Tags are available add "And/Or" option to be used in case of multiple tags.
 - Load in table IndexColumn during structure imports.
-- Load/Sync support to MySQL.
+- Load/Sync support to MySQL. In progress.
 - During Load/Sync, only add entries or update entities with and "Usage Status" of "Unknown".
 - During Load/Sync, report what changed.
 - Allow to compare only data structure during Load/Sync.
@@ -15,11 +15,13 @@
 - After a Search on tables show in a different color what was found in Name and Description fields.
 - On Load/Sync process pseudo enum fields (Non native SQL Enums).
 - Add support to Flags at the level of Columns.
+- Progress Bar for documentation level of completion.
+- In Data dictionaries have total counts of tables, name spaces, columns ...
 
 ## Conceptual Modeling
-- Allow Models to be defined
-- Have a tree structure of packages under models
-- Manage Entities and Associations for a particular model
+- Deletion of Models.
+- Manage Entity Properties.
+- Manage Associations for a particular model.
 - Visualization / Representation of a model
 - Mapping of Model Entities, Properties and Associations to actual Tables and Columns
 
@@ -31,7 +33,7 @@
 - Update VSCode task and launch to support Linux. Will be tested in Ubuntu. In progress.
 
 ## Docker Support
-- Create docker file and documentation. Probably using Debian or Alpine.
+- Create docker file and documentation. In progress.
 
 ## Documentation
 - Installation notes and how to setup initial users.

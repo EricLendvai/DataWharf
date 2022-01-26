@@ -17,12 +17,15 @@ public v_hPP
 public oFcgi
 v_hPP := nil
 
-//The following Hash will have per web page name (url) an array that consists of {Minimum User Access Level,PointerToFunctionToBuildThePage}
+//The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
 public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
                           "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
                           "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
                           "Application"      => {"Applications"             ,1,@BuildPageApplications()},;
+                          "Modeling"         => {"Modeling"                 ,1,@BuildPageModeling()},;
+                          "DataDictionaries" => {"DataDictionaries"         ,1,@BuildPageDataDictionaries()},;
+                          "DataDictionary"   => {"DataDictionaries"         ,1,@BuildPageDataDictionaries()},;
                           "InterAppMapping"  => {"Inter Application Mapping",1,@BuildPageInterAppMapping()},;
                           "CustomFields"     => {"Custom Fields"            ,1,@BuildPageCustomFields()},;
                           "Users"            => {"Users"                    ,1,@BuildPageUsers()} }
@@ -51,7 +54,8 @@ class MyFcgi from hb_Fcgi
     data p_iUserPk          init 0   // Current "User.pk"
     data p_cUserName        init ""  // Current logged in User Name
     data p_nUserAccessMode  init 0   // User based access level. Comes from "User.AccessMode"
-    data p_nAccessLevel     init 0   // Current Application "UserAccessApplication.AccessLevel if ::p_nUserAccessMode == 1 otherwise either 1 or 7
+    data p_nAccessLevelDD   init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
+    data p_nAccessLevelML   init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
     //In this app the first element of the URL is always a page name. 
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
@@ -87,8 +91,11 @@ endclass
 method OnFirstRequest() class MyFcgi
 local l_oDB1
 local l_oDB2
+// local l_oDB3
 local l_cSecuritySalt
 local l_cSecurityDefaultPassword
+local l_iCurrentDataVersion
+
 SendToDebugView("Called from method OnFirstRequest")
 
 set century on
@@ -114,11 +121,39 @@ with object ::p_o_SQLConnection
     if :Connect() >= 0
         UpdateSchema(::p_o_SQLConnection)
 
+        l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+        l_oDB2 := hb_SQLData(::p_o_SQLConnection)
+        // l_oDB3 := hb_SQLData(::p_o_SQLConnection)
+
+        l_iCurrentDataVersion := :GetSchemaDefinitionVersion("Core")
+
+        if l_iCurrentDataVersion <= 1
+            with object l_oDB1
+                :Table("58b648b9-ec53-40ba-8e29-a8b4e99beb36","Diagram")
+                :Column("Diagram.pk" , "pk")
+                :Where([Length(Trim(Diagram.LinkUID)) = 0])
+                :SQL("ListOfDiagramToUpdate")
+                select ListOfDiagramToUpdate
+                scan all
+                    with object l_oDB2
+                        :Table("c8e52a98-8b65-4632-8241-efc426025ca6","Diagram")
+                        :Field("Diagram.LinkUID" , ::p_o_SQLConnection:GetUUIDString())
+                        :Update(ListOfDiagramToUpdate->pk)
+                    endwith
+                endscan
+            endwith
+
+            l_iCurrentDataVersion := 1
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+
+
+
         l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
         l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
 
         //Setup first User if none exists
-        l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+        
         with object l_oDB1
             :Table("994ff6fd-0f5f-48eb-a882-2bab357885a1","User")
             :Where("User.Status = 1")
@@ -137,7 +172,6 @@ with object ::p_o_SQLConnection
             :Where("User.Password is null")
             :SQL("ListOfPasswordsToReset")
             if :Tally > 0
-                l_oDB2 := hb_SQLData(::p_o_SQLConnection)
                 With Object l_oDB2
                     select ListOfPasswordsToReset
                     scan all
@@ -182,7 +216,8 @@ local l_cAction
 local l_oData
 local l_cSignature
 local l_cIP := ::RequestSettings["ClientIP"]
-local l_cLastSQL,l_cLastError
+local l_cLastSQL
+local l_cLastError
 local l_nLoginOutUserPk
 local l_aWebPageHandle
 local l_aPathElements
@@ -190,12 +225,12 @@ local l_iLoop
 local l_cAjaxAction
 local l_cThisAppTitle
 local l_cSecuritySalt
-local l_lCyanAuditAware := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
+local l_lCyanAuditAware         := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
 local l_cPostgresHost           := ::GetAppConfig("POSTGRESHOST")
 local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
 local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
 local l_cPostgresId             := ::GetAppConfig("POSTGRESID")
-local l_lPostgresLostConnection := .f.
+local l_lPostgresLostConnection
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -206,7 +241,7 @@ SendToDebugView("Request Counter",::RequestCount)
 ::p_iUserPk         := 0
 ::p_cUserName       := ""
 ::p_nUserAccessMode := 0
-::p_nAccessLevel    := 0
+::p_nAccessLevelDD  := 0
 
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
 l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
@@ -298,7 +333,7 @@ else
 
         l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
         // #define WEBPAGEHANDLE_NAME            1
-        // #define WEBPAGEHANDLE_ACCESSLEVEL     2
+        // #define WEBPAGEHANDLE_ACCESSMODE      2
         // #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
 
         ::p_cHeader       := ""
@@ -433,7 +468,7 @@ else
     
     if l_cPageName <> "ajax"
         //If not a public page and not logged in, then request to log in.
-        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0 .and. !l_lLoggedIn
+        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
             if oFcgi:IsGet()
                 l_cBody += GetPageHeader(.f.,l_cPageName)
                 l_cBody += BuildPageLoginScreen()
@@ -536,7 +571,7 @@ else
 
             if upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y"
                 l_cBody += [<div class="m-3">]   //Spacer
-                    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] > 0  //Logged in page
+                    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
                         l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
                     endif
                     l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
@@ -553,7 +588,7 @@ else
             l_cBody := [UNBUFFERED Not Logged In]
         else
             ::p_nUserAccessMode := 0
-            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSLEVEL] == 0   //public page
+            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] == 0   //public page
                 l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),"",0)
             endif
         endif
@@ -661,16 +696,28 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
         if par_LoggedIn
             l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields",[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
                     endif
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+
+                    if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                    endif
+
                     if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                     endif
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"        ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+
                 l_cHtml += [</ul>]
                 l_cHtml += [<ul class="navbar-nav">]
                     l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a></li>]
@@ -758,7 +805,7 @@ local l_cID           := hb_DefaultValue(par_cId,"")
 local l_cPassword     := hb_DefaultValue(par_cPassword,"")
 local l_cErrorMessage := hb_DefaultValue(par_cErrorMessage,"")
 
-l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data" class="form-horizontal">]   //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data" class="form-horizontal">]
 
     if !empty(l_cErrorMessage)
         l_cHtml += [<div class="alert alert-danger" role="alert">]+l_cErrorMessage+[</div>]
@@ -903,4 +950,35 @@ endwith
 return l_cValue
 //=================================================================================================================
 //=================================================================================================================
- 
+//=================================================================================================================
+function CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
+local l_AllowDestructiveDelete := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+//Check if the application as AllowDestructiveDelete set to true
+with object l_oDB1
+    :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c91","Application")
+    :Column("Application.AllowDestructiveDelete" , "Application_AllowDestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        l_AllowDestructiveDelete := l_oData:Application_AllowDestructiveDelete
+    endif
+endwith
+return l_AllowDestructiveDelete
+//=================================================================================================================
+function CheckIfAllowDestructiveModelDelete(par_iModelPk)
+local l_AllowDestructiveDelete := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+//Check if the model as AllowDestructiveDelete set to true
+with object l_oDB1
+    :Table("4c418c2f-79a1-40cf-ac79-21d17a0edc57","Model")
+    :Column("Model.AllowDestructiveDelete" , "Model_AllowDestructiveDelete")
+    l_oData := :Get(par_iModelPk)
+    if :Tally == 1
+        l_AllowDestructiveDelete := l_oData:Model_AllowDestructiveDelete
+    endif
+endwith
+return l_AllowDestructiveDelete
+ //=================================================================================================================
+//=================================================================================================================
