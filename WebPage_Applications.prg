@@ -133,27 +133,36 @@ oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
 
 do case
 case l_cURLAction == "ListApplications"
-    l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-        // l_cHtml += [<div class="container-fluid">]
-        l_cHtml += [<div class="input-group">]
-            l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[Applications/">Applications</a>]
-            if oFcgi:p_nUserAccessMode >= 3
-                l_cHtml += [<a class="btn btn-primary rounded" ms-0 href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
-            endif
-        l_cHtml += [</div>]
-    l_cHtml += [</nav>]
+    // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
+    //     l_cHtml += [<div class="input-group">]
+    //         l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[Applications/">Applications</a>]
+    //         if oFcgi:p_nUserAccessMode >= 3
+    //             l_cHtml += [<a class="btn btn-primary rounded" ms-0 href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
+    //         endif
+    //     l_cHtml += [</div>]
+    // l_cHtml += [</nav>]
+
+    l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
+    l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Applications</span></div>]
+    if oFcgi:p_nUserAccessMode >= 3
+        l_cHtml += [<div class="px-3 py-2 align-middle"><a class="btn btn-primary rounded align-middle" href="]+l_cSitePath+[Applications/NewApplication">New Application</a></div>]
+    endif
+    l_cHtml += [</div>]
 
     l_cHtml += ApplicationListFormBuild()
 
 case l_cURLAction == "NewApplication"
     if oFcgi:p_nUserAccessMode >= 3
-        l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-        // l_cHtml +=     [<div class="container-fluid">]
-            l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand text-white ms-3">New Application</span>]
-            l_cHtml += [</div>]
-        l_cHtml += [</nav>]
-        
+        // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
+        //     l_cHtml += [<div class="input-group">]
+        //         l_cHtml += [<span class="navbar-brand text-white ms-3">New Application</span>]
+        //     l_cHtml += [</div>]
+        // l_cHtml += [</nav>]
+
+        l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
+        l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">New Application</span></div>]
+        l_cHtml += [</div>]
+
         if oFcgi:isGet()
             //Brand new request of add an application.
             l_cHtml += ApplicationEditFormBuild("",0,{=>})
@@ -209,14 +218,20 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
- 
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+
 oFcgi:TraceAdd("ApplicationHeaderBuild")
 
-l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
-    l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="ps-2 navbar-brand text-white">Manage Application - ]+par_cApplicationName+[</span>]
-    l_cHtml += [</div>]
-l_cHtml += [</nav>]
+// l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
+//     l_cHtml += [<div class="input-group">]
+//         l_cHtml += [<span class="ps-2 navbar-brand text-white">Manage Application - ]+par_cApplicationName+[</span>]
+//     l_cHtml += [</div>]
+// l_cHtml += [</nav>]
+
+l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
+l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Configure Application: ]+par_cApplicationName+[</span></div>]
+l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/">Other Applications</a></div>]
+l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
 
@@ -325,11 +340,12 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"5","6")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Link Code</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
@@ -344,6 +360,10 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationSettings/]+AllTrim(ListOfApplications->Application_LinkCode)+[/">]+Allt(ListOfApplications->Application_Name)+[</a>]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += Allt(ListOfApplications->Application_LinkCode)
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]

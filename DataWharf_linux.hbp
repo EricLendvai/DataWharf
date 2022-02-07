@@ -40,7 +40,9 @@ hbmisc.hbc
 
 DataWharf.prg
 LoadSchema.prg
-Visualize.prg
+VisualizeApplications.prg
+VisualizeProjects.prg
+FixNonNormalizedFields.prg
 WebPages.hbm
 
 ./Harbour_FastCGI/hb_fcgi/hb_fcgi_linux.hbm

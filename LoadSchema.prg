@@ -258,7 +258,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                                 l_LastColumnOrder := ListOfColumnsInDataDictionary->Column_Order
                             endif
 
-                            With Object :p_oCursor
+                            with object :p_oCursor
                                 :Index("tag1","tag1")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
@@ -670,7 +670,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_LastEnumValueOrder := ListOfEnumValuesInDataDictionary->EnumValue_Order
                         endif
 
-                        With Object :p_oCursor
+                        with object :p_oCursor
                             :Index("tag1","tag1")
                             :CreateIndexes()
                             // :SetOrder("tag1")
@@ -839,7 +839,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 l_LastColumnOrder := ListOfColumnsInDataDictionary->Column_Order
                             endif
 
-                            With Object :p_oCursor
+                            with object :p_oCursor
                                 :Index("tag1","tag1")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
@@ -1277,7 +1277,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                 l_LastColumnOrder := ListOfColumnsInDataDictionary->Column_Order
                             endif
 
-                            With Object :p_oCursor
+                            with object :p_oCursor
                                 :Index("tag1","tag1")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
@@ -1568,14 +1568,14 @@ if par_nSyncSetForeignKey > 1
                     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
                     :SQL("AllTablesAsParentsForForeignKeys")
 
-                    With Object :p_oCursor
+                    with object :p_oCursor
                         :Index("tag1","tag1")
                         :CreateIndexes()
                         :SetOrder("tag1")
                     endwith
 
                 endwith
-ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys","d:\AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys","d:\AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
 
                 with object l_oDB_AllTableColumnsChildrenForForeignKeys
                     :Table("0a3abf33-c882-4909-babf-8f917e326bca","Column")
@@ -1588,14 +1588,14 @@ ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys","d:\AllTablesAsParentsF
                     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
                     :SQL("AllTableColumnsChildrenForForeignKeys")
 
-                    With Object :p_oCursor
+                    with object :p_oCursor
                         :Index("tag1","tag1")
                         :CreateIndexes()
                         :SetOrder("tag1")
                     endwith
 
                 endwith
-ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys","d:\AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys","d:\AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
 
 
                 select ListOfFieldsForeignKeys
@@ -1711,7 +1711,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         if :Tally < 0
                             l_cErrorMessage := [Failed to Get index info.]
                         else
-                            With Object :p_oCursor
+                            with object :p_oCursor
                                 :Index("tag1","tag1")
                                 :CreateIndexes()
                             endwith

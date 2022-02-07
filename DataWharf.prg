@@ -7,6 +7,7 @@ request HB_CODEPAGE_UTF8
 #include "DataWharf.ch"
 
 memvar v_hPP
+memvar iFastCGIRunLogPk
 
 memvar v_hPageMapping
 // memvar oFcgi  Already declared as memvar in "hb_fcgi.ch"
@@ -17,10 +18,16 @@ public v_hPP
 public oFcgi
 v_hPP := nil
 
+public iFastCGIRunLogPk
+iFastCGIRunLogPk := 0
+
+
 //The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
 public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
                           "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
+                          "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
+                          "Project"          => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
                           "Application"      => {"Applications"             ,1,@BuildPageApplications()},;
                           "Modeling"         => {"Modeling"                 ,1,@BuildPageModeling()},;
@@ -57,6 +64,21 @@ class MyFcgi from hb_Fcgi
     data p_nAccessLevelDD   init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     data p_nAccessLevelML   init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
+    //Used in Modeling. ANF stands for "AlternateNameFor"
+    data p_ANFModel         init "Model"
+    data p_ANFModels        init "Models"
+    data p_ANFEntity        init "Entity"
+    data p_ANFEntities      init "Entities"
+    data p_ANFAssociation   init "Association"
+    data p_ANFAssociations  init "Associations"
+    data p_ANFAttribute     init "Attribute"
+    data p_ANFAttributes    init "Attributes"
+    data p_ANFDataType      init "DataType"
+    data p_ANFDataTypes     init "DataTypes"
+    data p_ANFPackage       init "Package"
+    data p_ANFPackages      init "Packages"
+
+
     //In this app the first element of the URL is always a page name. 
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
     data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
@@ -127,6 +149,19 @@ with object ::p_o_SQLConnection
 
         l_iCurrentDataVersion := :GetSchemaDefinitionVersion("Core")
 
+        with object l_oDB1
+            :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
+            :Field("FastCGIRunLog.dati"              ,{"S","now()"})
+            :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
+            :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
+            :Field("FastCGIRunLog.OSInfo"            ,OS())
+            :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
+            if :Add()
+                iFastCGIRunLogPk := :Key()
+            endif
+        endwith
+
+        //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion <= 1
             with object l_oDB1
                 :Table("58b648b9-ec53-40ba-8e29-a8b4e99beb36","Diagram")
@@ -142,12 +177,92 @@ with object ::p_o_SQLConnection
                     endwith
                 endscan
             endwith
-
             l_iCurrentDataVersion := 1
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 4
+            if ::p_o_SQLConnection:TableExists("public.Property")
+                ::p_o_SQLConnection:DeleteTable("public.Property")
+            endif
 
+            if ::p_o_SQLConnection:TableExists("public.PropertyColumnMapping")
+                ::p_o_SQLConnection:DeleteTable("public.PropertyColumnMapping")
+            endif
 
+            if ::p_o_SQLConnection:FieldExists("public.Model","fk_Application")
+                ::p_o_SQLConnection:DeleteField("public.Model","fk_Application")
+            endif
+
+            if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevelML")
+                ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevelML")
+            endif
+
+            with object l_oDB1
+                :Table("bcc58496-5077-47ee-a955-fa5d071dd576","UserAccessApplication")
+                :Column("UserAccessApplication.pk"         ,"pk")
+                :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
+                :SQL("ListOfRecordsToFix")
+                select ListOfRecordsToFix
+                scan all for ListOfRecordsToFix->UserAccessApplication_AccessLevel > 0
+                    with object l_oDB2
+                        :Table("d4a5eada-fd4c-4d6c-ae2e-446f45be2f19","UserAccessApplication")
+                        :Field("UserAccessApplication.AccessLevelDD" , ListOfRecordsToFix->UserAccessApplication_AccessLevel)
+                        :Field("UserAccessApplication.AccessLevel"   , 0)
+                        :Update(ListOfRecordsToFix->pk)
+                    endwith
+                endscan
+            endwith
+
+            if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
+                ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
+            endif
+
+            l_iCurrentDataVersion := 4
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 5
+            if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
+                ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
+            endif
+            l_iCurrentDataVersion := 5
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 6
+            if ::p_o_SQLConnection:TableExists("public.AssociationEnd")
+                ::p_o_SQLConnection:DeleteTable("public.AssociationEnd")
+            endif
+            l_iCurrentDataVersion := 6
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 7
+            if ::p_o_SQLConnection:FieldExists("public.Attribute","fk_Association")
+                ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
+            endif
+
+            if ::p_o_SQLConnection:FieldExists("public.Attribute","fk_Association")
+                ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
+            endif
+
+            l_iCurrentDataVersion := 7
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 8
+            if ::p_o_SQLConnection:TableExists("public.ConceptualDiagram")
+                ::p_o_SQLConnection:DeleteTable("public.ConceptualDiagram")
+            endif
+            if ::p_o_SQLConnection:FieldExists("public.DiagramEntity","fk_ConceptualDiagram")
+                ::p_o_SQLConnection:DeleteField("public.DiagramEntity","fk_ConceptualDiagram")
+            endif
+            l_iCurrentDataVersion := 8
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        
 
         l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
         l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
@@ -172,7 +287,7 @@ with object ::p_o_SQLConnection
             :Where("User.Password is null")
             :SQL("ListOfPasswordsToReset")
             if :Tally > 0
-                With Object l_oDB2
+                with object l_oDB2
                     select ListOfPasswordsToReset
                     scan all
                         :Table("7d6e5721-ec9b-46c1-9c5a-e8239a406e32","User")
@@ -231,6 +346,9 @@ local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
 local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
 local l_cPostgresId             := ::GetAppConfig("POSTGRESID")
 local l_lPostgresLostConnection
+local l_TimeStamp1 := hb_DateTime()
+local l_TimeStamp2
+local l_lShowDevelopmentInfo := .f.
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -379,7 +497,11 @@ else
     l_cSessionID := ::GetCookieValue("SessionID")
     l_cAction    := ::GetQueryString("action")
 
-    // Altd()
+    with object l_oDB1
+        :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
+        :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
+        :Update(iFastCGIRunLogPk)
+    endwith
 
     if l_cAction == "logout"
         if !empty(l_cSessionID)
@@ -558,8 +680,11 @@ else
                 // case "VisualizationPositions"
                 //     l_cBody += SaveVisualizationPositions()
                 //     exit
-                case "GetInfo"
-                    l_cBody += GetInfoDuringVisualization()
+                case "GetDDInfo"
+                    l_cBody += GetDDInfoDuringVisualization()
+                    exit
+                case "GetMLInfo"
+                    l_cBody += GetMLInfoDuringVisualization()
                     exit
                 endswitch
 
@@ -569,7 +694,8 @@ else
 
             l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec()
 
-            if upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y"
+            l_lShowDevelopmentInfo := (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+            if l_lShowDevelopmentInfo
                 l_cBody += [<div class="m-3">]   //Spacer
                     if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
                         l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
@@ -617,6 +743,12 @@ else
         l_cHtml += [</head>]
         l_cHtml += [<body>]
         l_cHtml += l_cBody
+
+        if l_lShowDevelopmentInfo
+            l_TimeStamp2  := hb_DateTime()
+            l_cHtml += [<div class="m-3">Run Time = ]+trans(int((l_TimeStamp2-l_TimeStamp1)*(24*3600*1000)))+[ (ms)</div>]
+        endif
+
         l_cHtml += [</body>]
         l_cHtml += [</html>]
 
@@ -629,21 +761,42 @@ endif
 return nil
 //=================================================================================================================
 method OnShutdown() class MyFcgi
-    SendToDebugView("Called from method OnShutdown")
-    if !IsNull(::p_o_SQLConnection)
-        ::p_o_SQLConnection:Disconnect()
-    endif
+SendToDebugView("Called from method OnShutdown")
+if !IsNull(::p_o_SQLConnection)
+    ::p_o_SQLConnection:Disconnect()
+endif
 return nil 
 //=================================================================================================================
 method OnError(par_oError) class MyFcgi
+local l_oDB1
+local l_lPostgresLostConnection
+local l_cErrorInfo := ""
+
     try
         SendToDebugView("Called from MyFcgi OnError")
         ::ClearOutputBuffer()
         ::Print("<h1>Error Occurred</h1>")
         ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
-        ::Print("<div>"+FcgiGetErrorInfo(par_oError)+"</div>")
+        l_cErrorInfo := FcgiGetErrorInfo(par_oError)
+        ::Print("<div>"+l_cErrorInfo+"</div>")
+        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(iFastCGIRunLogPk,0))+"</div>")
+        ::Print("<div>"+::TraceList(4)+"</div>")
+
         //  ::hb_Fcgi:OnError(par_oError)
         ::Finish()
+
+        if !empty(l_cErrorInfo)
+            l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
+            if !l_lPostgresLostConnection
+                l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+                with object l_oDB1
+                    :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIRunLog")
+                    :Field("FastCGIRunLog.ErrorInfo",l_cErrorInfo)
+                    :Update(iFastCGIRunLogPk)
+                endwith
+            endif
+        endif
+
     catch
     endtry
     
@@ -653,10 +806,20 @@ return nil
 function UpdateSchema(par_o_SQLConnection)
 local l_LastError := ""
 local l_Schema
+local l_nMigrateSchemaResult := 0
+local l_lCyanAuditAware
 
 #include "Schema.txt"
 
-if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),,,@l_LastError) > 0
+if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResult,,@l_LastError) > 0
+    if l_nMigrateSchemaResult == 1
+        l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
+        if l_lCyanAuditAware
+            //Ensure Cyanaudit is up to date
+            oFcgi:p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_update_audit_fields('public');")
+            SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
+        endif
+    endif
 else
     if !empty(l_LastError)
         SendToDebugView("PostgreSQL - Failed Migrate")
@@ -699,6 +862,7 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
                     endif
 

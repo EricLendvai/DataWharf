@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 02/07/2022
+* Completed the Create/Update/Delete functionalities in Modeling
+* Renamed ConceptualDiagram table to ModelingDiagram
+* First version of Modeling Visualization. Does not include text on the edges yet. Only an "All Entities" Diagram can be created.
+
 ## 01/26/2022
 * New "Copy Diagram Link To Clipboard" to allow to provide a direct link to a particular diagram.
 * Added a "Data Dictionaries" top menu option and moved most of the "Applications" menu functionality to it.

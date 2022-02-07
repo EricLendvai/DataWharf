@@ -8,7 +8,10 @@ memvar oFcgi
 //=================================================================================================================
 function BuildPageCustomFields()
 local l_cHtml := []
+
 local l_oDB1
+local l_oDB_ListOfSelectedApplications
+local l_oDB_ListOfSelectedProjects
 local l_oData
 
 local l_cFormName
@@ -120,15 +123,29 @@ case l_cURLAction == "EditCustomField"
                 l_hValues["Status"]           := l_aSQLResult[1,11]
                 l_hValues["Description"]      := l_aSQLResult[1,12]
 
-                with object l_oDB1
+                l_oDB_ListOfSelectedApplications := hb_SQLData(oFcgi:p_o_SQLConnection)
+                with object l_oDB_ListOfSelectedApplications
+                    //Applications
                     :Table("6a265223-a5ca-47c5-8469-5e0fc9282cfe","ApplicationCustomField")
                     :Column("ApplicationCustomField.fk_Application","fk_Application")
                     :Where("ApplicationCustomField.fk_CustomField = ^",l_iCustomFieldPk)
                     :SQL("ListOfSelectedApplications")
-
                     select ListOfSelectedApplications
                     scan all
                         l_hValues["Application"+Trans(ListOfSelectedApplications->fk_Application)] := .t.
+                    endscan
+                endwith
+
+                l_oDB_ListOfSelectedProjects     := hb_SQLData(oFcgi:p_o_SQLConnection)
+                with object l_oDB_ListOfSelectedProjects
+                    //Projects
+                    :Table("f35a6f84-f8ae-45c8-9977-836bc4a5bcc2","ProjectCustomField")
+                    :Column("ProjectCustomField.fk_Project","fk_Project")
+                    :Where("ProjectCustomField.fk_CustomField = ^",l_iCustomFieldPk)
+                    :SQL("ListOfSelectedProjects")
+                    select ListOfSelectedProjects
+                    scan all
+                        l_hValues["Project"+Trans(ListOfSelectedProjects->fk_Project)] := .t.
                     endscan
                 endwith
 
@@ -156,14 +173,13 @@ return l_cHtml
 //=================================================================================================================
 static function CustomFieldListFormBuild()
 local l_cHtml := []
-local l_oDB1
+local l_oDB_ListOfCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfCustomFields
 
 oFcgi:TraceAdd("CustomFieldListFormBuild")
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-with object l_oDB1
+with object l_oDB_ListOfCustomFields
     :Table("e885ab89-0f99-46d3-a4ea-63c7559ec331","CustomField")
     :Column("CustomField.pk"         ,"pk")
     :Column("CustomField.Name"       ,"CustomField_Name")
@@ -228,7 +244,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application","Name Space","Table","Column","Model","Entity","Association","Package","Data","Property"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
+                            l_cHtml += {"Application","Name Space","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -262,7 +278,8 @@ local l_iWidth
 local l_iHeight
 local l_iUsedOn
 local l_iStatus
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfApplications := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfProjects     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_CheckBoxId
 
 oFcgi:TraceAdd("CustomFieldEditFormBuild")
@@ -394,16 +411,17 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
                 l_iUsedOn := hb_HGetDef(par_hValues,"UsedOn",1)
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedOn" id="ComboUsedOn">]
-                    l_cHtml += [<option value="1"] +iif(l_iUsedOn== 1,[ selected],[])+[>Application</option>]
-                    l_cHtml += [<option value="2"] +iif(l_iUsedOn== 2,[ selected],[])+[>Name Space</option>]
-                    l_cHtml += [<option value="3"] +iif(l_iUsedOn== 3,[ selected],[])+[>Table</option>]
-                    l_cHtml += [<option value="4"] +iif(l_iUsedOn== 4,[ selected],[])+[>Column</option>]
-                    l_cHtml += [<option value="5"] +iif(l_iUsedOn== 5,[ selected],[])+[>Model</option>]
-                    l_cHtml += [<option value="6"] +iif(l_iUsedOn== 6,[ selected],[])+[>Entity</option>]
-                    l_cHtml += [<option value="7"] +iif(l_iUsedOn== 7,[ selected],[])+[>Association</option>]
-                    l_cHtml += [<option value="8"] +iif(l_iUsedOn== 8,[ selected],[])+[>Package</option>]
-                    l_cHtml += [<option value="9"] +iif(l_iUsedOn== 9,[ selected],[])+[>Data Type</option>]
-                    l_cHtml += [<option value="10"]+iif(l_iUsedOn==10,[ selected],[])+[>Property</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_APPLICATION)+["]+iif(l_iUsedOn==USEDON_APPLICATION,[ selected],[])+[>Application</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_NAMESPACE)  +["]+iif(l_iUsedOn==USEDON_NAMESPACE  ,[ selected],[])+[>Name Space</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_TABLE)      +["]+iif(l_iUsedOn==USEDON_TABLE      ,[ selected],[])+[>Table</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_COLUMN)     +["]+iif(l_iUsedOn==USEDON_COLUMN     ,[ selected],[])+[>Column</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_PROJECT)    +["]+iif(l_iUsedOn==USEDON_PROJECT    ,[ selected],[])+[>Project</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_MODEL)      +["]+iif(l_iUsedOn==USEDON_MODEL      ,[ selected],[])+[>Model</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_ENTITY)     +["]+iif(l_iUsedOn==USEDON_ENTITY     ,[ selected],[])+[>Entity</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_ASSOCIATION)+["]+iif(l_iUsedOn==USEDON_ASSOCIATION,[ selected],[])+[>Association</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_PACKAGE)    +["]+iif(l_iUsedOn==USEDON_PACKAGE    ,[ selected],[])+[>Package</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_DATATYPE)   +["]+iif(l_iUsedOn==USEDON_DATATYPE   ,[ selected],[])+[>Data Type</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_ATTRIBUTE)  +["]+iif(l_iUsedOn==USEDON_ATTRIBUTE  ,[ selected],[])+[>Attribute</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -429,9 +447,18 @@ l_cHtml += [<div class="m-3">]
 
 l_cHtml += [</div>]
 
+
+//Add a case insensitive contains(), icontains()
+oFcgi:p_cjQueryScript += "jQuery.expr[':'].icontains = function(a, i, m) {"
+oFcgi:p_cjQueryScript += "  return jQuery(a).text().toUpperCase()"
+oFcgi:p_cjQueryScript += "      .indexOf(m[3].toUpperCase()) >= 0;"
+oFcgi:p_cjQueryScript += "};"
+
+//-----------------------------------------------
+// Applications
 l_cHtml += [<div class="m-3"></div>]
 
-with Object l_oDB1
+with Object l_oDB_ListOfApplications
     :Table("f0da419f-03ed-4b93-b3e2-b33261d3d52e","Application")
     :Column("Application.pk"         ,"pk")
     :Column("Application.Name"       ,"Application_Name")
@@ -449,15 +476,9 @@ with Object l_oDB1
     endif
 endwith
 
-//Add a case insensitive contains(), icontains()
-oFcgi:p_cjQueryScript += "jQuery.expr[':'].icontains = function(a, i, m) {"
-oFcgi:p_cjQueryScript += "  return jQuery(a).text().toUpperCase()"
-oFcgi:p_cjQueryScript += "      .indexOf(m[3].toUpperCase()) >= 0;"
-oFcgi:p_cjQueryScript += "};"
-
 oFcgi:p_cjQueryScript += [$("#ApplicationSearch").change(function() {]
-oFcgi:p_cjQueryScript += [$(".SPANTable:icontains('" + $(this).val() + "')").parent().parent().show();]
-oFcgi:p_cjQueryScript += [$(".SPANTable:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
+oFcgi:p_cjQueryScript += [$(".SPANApplication:icontains('" + $(this).val() + "')").parent().parent().show();]
+oFcgi:p_cjQueryScript += [$(".SPANApplication:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
 oFcgi:p_cjQueryScript += [});]
 
 l_cHtml += [<div class="form-check form-switch">]
@@ -467,12 +488,53 @@ scan all
     l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
     l_cHtml += [<tr><td>]
         l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Application"+Trans(ListOfAllApplications->pk),.f.)," checked","")+[ class="form-check-input">]
-        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+ListOfAllApplications->Application_Name+[</span></label>]
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANApplication">]+ListOfAllApplications->Application_Name+[</span></label>]
     l_cHtml += [</td></tr>]
 endscan
 l_cHtml += [</table>]
 l_cHtml += [</div>]
 
+//-----------------------------------------------
+// Projects
+l_cHtml += [<div class="m-3"></div>]
+
+with Object l_oDB_ListOfProjects
+    :Table("7a92754e-a313-4ad7-84f9-7242f6c51b06","Project")
+    :Column("Project.pk"         ,"pk")
+    :Column("Project.Name"       ,"Project_Name")
+    :Column("Upper(Project.Name)","tag1")
+    :OrderBy("tag1")
+    :SQL("ListOfAllProjects")
+
+    if :Tally > 0
+        l_cHtml += [<div>]
+            l_cHtml += [<span class="ms-3">Filter on Project Name</span><input type="text" id="ProjectSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span>]
+        l_cHtml += [</div>]
+
+        l_cHtml += [<div class="m-3"></div>]
+
+    endif
+endwith
+
+oFcgi:p_cjQueryScript += [$("#ProjectSearch").change(function() {]
+oFcgi:p_cjQueryScript += [$(".SPANProject:icontains('" + $(this).val() + "')").parent().parent().show();]
+oFcgi:p_cjQueryScript += [$(".SPANProject:not(:icontains('" + $(this).val() + "'))").parent().parent().hide();]
+oFcgi:p_cjQueryScript += [});]
+
+l_cHtml += [<div class="form-check form-switch">]
+l_cHtml += [<table class="ms-5">]
+select ListOfAllProjects
+scan all
+    l_CheckBoxId := "CheckProject"+Trans(ListOfAllProjects->pk)
+    l_cHtml += [<tr><td>]
+        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANProject">]+ListOfAllProjects->Project_Name+[</span></label>]
+    l_cHtml += [</td></tr>]
+endscan
+l_cHtml += [</table>]
+l_cHtml += [</div>]
+
+//-----------------------------------------------
 
 l_cHtml += [</form>]
 
@@ -515,9 +577,13 @@ local l_cOptionText
 local l_lSelected
 
 local l_cErrorMessage := ""
-local l_oDB1
-local l_oDB2
-local l_oDB3
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_oDB_ListOfCurrentApplicationForCustomField := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCurrentProjectForCustomField     := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_oDB_ListOfApplications                     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfProjects                         := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 oFcgi:TraceAdd("CustomFieldEditFormOnSubmit")
 
@@ -608,7 +674,6 @@ case l_cActionOnSubmit == "Save"
                 
         endcase
 
-        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("e2b12b57-cc1a-4c5b-888b-89ad920d60be","CustomField")
             :Where([lower(replace(CustomField.Name,' ','')) = ^],lower(StrTran(l_cCustomFieldName," ","")))
@@ -621,7 +686,6 @@ case l_cActionOnSubmit == "Save"
         if l_oDB1:Tally <> 0
             l_cErrorMessage := "Duplicate Name"
         else
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("619fe53c-2abc-48c2-9e09-4e3ac04e668d","CustomField")
                 :Where([upper(replace(CustomField.Code,' ','')) = ^],l_cCustomFieldCode)
@@ -660,19 +724,18 @@ case l_cActionOnSubmit == "Save"
                         endif
                     endif
 
-                    if empty(l_cErrorMessage)
-                        //Update the list selected Applications
-                        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                        l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-                        with Object l_oDB2
+                    //Update the list selected Applications -----------------------------------------------
+                    if empty(l_cErrorMessage)
+
+                        with Object l_oDB_ListOfApplications
                             :Table("bd385c1d-35d9-4b1a-9f19-114adad22b51","Application")
-                            :Column("Application.pk"         ,"pk")
+                            :Column("Application.pk","pk")
                             :SQL("ListOfApplications")
                         endwith
 
                         //Get current list of CustomField Applications
-                        with Object l_oDB1
+                        with Object l_oDB_ListOfCurrentApplicationForCustomField
                             :Table("4c5d6934-6291-44ff-b515-9cca05d1441e","ApplicationCustomField")
                             :Distinct(.t.)
                             :Column("Application.pk","pk")
@@ -680,7 +743,7 @@ case l_cActionOnSubmit == "Save"
                             :Join("inner","Application","","ApplicationCustomField.fk_Application = Application.pk")
                             :Where("ApplicationCustomField.fk_CustomField = ^" , l_iCustomFieldPk)
                             :SQL("ListOfCurrentApplicationForCustomField")
-                            With Object :p_oCursor
+                            with object :p_oCursor
                                 :Index("pk","pk")
                                 :CreateIndexes()
                                 :SetOrder("pk")
@@ -694,7 +757,7 @@ case l_cActionOnSubmit == "Save"
                             if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForCustomField","pk")
                                 if !l_lSelected
                                     // Remove the Application
-                                    with Object l_oDB3
+                                    with Object l_oDB1
                                         if !:Delete("37ca7d0d-be50-4b44-9182-51ffca0156c9","ApplicationCustomField",ListOfCurrentApplicationForCustomField->ApplicationCustomField_pk)
                                             l_cErrorMessage := "Failed to Save Application selection."
                                             exit
@@ -704,7 +767,7 @@ case l_cActionOnSubmit == "Save"
                             else
                                 if l_lSelected
                                     // Add the Application
-                                    with Object l_oDB3
+                                    with Object l_oDB1
                                         :Table("dfa86e89-3f27-4f83-9089-ff2bba6f8321","ApplicationCustomField")
                                         :Field("ApplicationCustomField.fk_Application",ListOfApplications->pk)
                                         :Field("ApplicationCustomField.fk_CustomField",l_iCustomFieldPk)
@@ -717,6 +780,64 @@ case l_cActionOnSubmit == "Save"
                             endif
                         endscan
                     endif
+
+
+                    //Update the list selected Projects -----------------------------------------------
+                    if empty(l_cErrorMessage)
+
+                        with Object l_oDB_ListOfProjects
+                            :Table("e87ce28e-bb01-490e-92e4-30f340a2c15b","Project")
+                            :Column("Project.pk" ,"pk")
+                            :SQL("ListOfProjects")
+                        endwith
+
+                        //Get current list of CustomField Projects
+                        with Object l_oDB_ListOfCurrentProjectForCustomField
+                            :Table("2ea3ca41-a117-471e-a4a2-6a1e4d9ea268","ProjectCustomField")
+                            :Distinct(.t.)
+                            :Column("Project.pk","pk")
+                            :Column("ProjectCustomField.pk","ProjectCustomField_pk")
+                            :Join("inner","Project","","ProjectCustomField.fk_Project = Project.pk")
+                            :Where("ProjectCustomField.fk_CustomField = ^" , l_iCustomFieldPk)
+                            :SQL("ListOfCurrentProjectForCustomField")
+                            with object :p_oCursor
+                                :Index("pk","pk")
+                                :CreateIndexes()
+                                :SetOrder("pk")
+                            endwith        
+                        endwith
+
+                        select ListOfProjects
+                        scan all
+                            l_lSelected := (oFcgi:GetInputValue("CheckProject"+Trans(ListOfProjects->pk)) == "1")
+
+                            if VFP_Seek(ListOfProjects->pk,"ListOfCurrentProjectForCustomField","pk")
+                                if !l_lSelected
+                                    // Remove the Project
+                                    with Object l_oDB1
+                                        if !:Delete("0fb69865-114f-47f6-9041-47ce5b5ac208","ProjectCustomField",ListOfCurrentProjectForCustomField->ProjectCustomField_pk)
+                                            l_cErrorMessage := "Failed to Save Project selection."
+                                            exit
+                                        endif
+                                    endwith
+                                endif
+                            else
+                                if l_lSelected
+                                    // Add the Project
+                                    with Object l_oDB1
+                                        :Table("7be3f8ca-a11a-48d7-a625-7c87f7d63ea5","ProjectCustomField")
+                                        :Field("ProjectCustomField.fk_Project",ListOfProjects->pk)
+                                        :Field("ProjectCustomField.fk_CustomField",l_iCustomFieldPk)
+                                        if !:Add()
+                                            l_cErrorMessage := "Failed to Save Project selection."
+                                            exit
+                                        endif
+                                    endwith
+                                endif
+                            endif
+                        endscan
+                    endif
+                    //-----------------------------------------------
 
                     if empty(l_cErrorMessage)
                         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/ListCustomFields/")
@@ -734,23 +855,28 @@ case l_cActionOnSubmit == "Cancel"
     endif
 
 case l_cActionOnSubmit == "Delete"   // CustomField
-    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
     with object l_oDB1
         :Table("4b3623ff-d0a6-49aa-b304-d8fa7c3b4900","ApplicationCustomField")
         :Where("ApplicationCustomField.fk_CustomField = ^",l_iCustomFieldPk)
         :SQL()
         if :Tally == 0
 
-            :Table("bc249be0-9f7d-40e0-a10a-91f441b05a8c","CustomFieldValue")
-            :Where("CustomFieldValue.fk_CustomField = ^",l_iCustomFieldPk)
+            :Table("18fdd4c3-8d29-4b7c-9d66-2bfc4bdbac7d","ProjectCustomField")
+            :Where("ProjectCustomField.fk_CustomField = ^",l_iCustomFieldPk)
             :SQL()
             if :Tally == 0
-                :Delete("7245a056-83cb-4b8e-aed7-0b3cfa3cb458","CustomField",l_iCustomFieldPk)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/")
+
+                :Table("bc249be0-9f7d-40e0-a10a-91f441b05a8c","CustomFieldValue")
+                :Where("CustomFieldValue.fk_CustomField = ^",l_iCustomFieldPk)
+                :SQL()
+                if :Tally == 0
+                    :Delete("7245a056-83cb-4b8e-aed7-0b3cfa3cb458","CustomField",l_iCustomFieldPk)
+                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/")
+                else
+                    l_cErrorMessage := "Related CustomFieldValue record on file"
+                endif
             else
-                l_cErrorMessage := "Related CustomFieldValue record on file"
+                l_cErrorMessage := "Related ApplicationCustomField record on file"
             endif
         else
             l_cErrorMessage := "Related ApplicationCustomField record on file"
@@ -773,14 +899,12 @@ if !empty(l_cErrorMessage)
     l_hValues["Description"]      := l_cCustomFieldDescription
 
     if !used("ListOfApplications")
-        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-        with Object l_oDB2
+        with Object l_oDB_ListOfApplications
             :Table("ca27b8d5-605a-4f51-8e60-6eb4470cb94f","Application")
             :Column("Application.pk" ,"pk")
             :SQL("ListOfApplications")
         endwith
     endif
-
     select ListOfApplications
     scan all
         l_lSelected := (oFcgi:GetInputValue("CheckApplication"+Trans(ListOfApplications->pk)) == "1")
@@ -789,6 +913,23 @@ if !empty(l_cErrorMessage)
         endif
     endscan
 
+
+    if !used("ListOfProjects")
+        with Object l_oDB_ListOfProjects
+            :Table("34562847-7bc6-43ad-be3f-2b8fd4ca4c09","Project")
+            :Column("Project.pk" ,"pk")
+            :SQL("ListOfProjects")
+        endwith
+    endif
+    select ListOfProjects
+    scan all
+        l_lSelected := (oFcgi:GetInputValue("CheckProject"+Trans(ListOfProjects->pk)) == "1")
+        if l_lSelected  // No need to store the unselect references, since not having a reference will mean "not selected"
+            l_hValues["Project"+Trans(ListOfProjects->pk)] := .t.
+        endif
+    endscan
+
+
     l_cHtml += CustomFieldEditFormBuild(l_iCustomFieldPk,l_cErrorMessage,l_hValues)
 endif
 
@@ -796,24 +937,28 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-function CustomFieldsLoad(par_iApplicationPk,par_UsedOn,par_iPk,par_hValues)  // Will add to par_hValues
+function CustomFieldsLoad(par_iBasePk,par_UsedOn,par_iPk,par_hValues)  // Will add to par_hValues
+
+//par_iBasePk can be the Application.pk or Project.pk
+
 local l_select := iif(used(),select(),0)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldsToLoadValues := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cObjectName
 local l_lSelected
-local l_xValue 
+local l_xValue
+local l_cBaseTable := GetBaseNameForUsedOn(par_UsedOn)
 
-with object l_oDB1
-    :Table("9193f840-e45a-448e-8bef-4a5abf94ef57","ApplicationCustomField")
+with object l_oDB_ListOfCustomFieldsToLoadValues
+    :Table("9193f840-e45a-448e-8bef-4a5abf94ef57",l_cBaseTable+"CustomField")
     :Column("CustomField.pk" , "pk")
     :Column("CustomField.Type"            ,"CustomField_Type")
     :Column("CustomFieldValue.pk"         ,"CustomFieldValue_pk")
     :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
     :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
     :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
-    :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+    :Join("inner","CustomField","",l_cBaseTable+"CustomField.fk_CustomField = CustomField.pk")
     :join("left","CustomFieldValue","","CustomFieldValue.fk_CustomField = CustomField.pk and CustomFieldValue.fk_Entity = ^" , par_iPk)
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+    :Where(l_cBaseTable+"CustomField.fk_"+l_cBaseTable+" = ^" , par_iBasePk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     :Where("CustomField.Status <= 2")
     :SQL("ListOfCustomFieldsToLoadValues")
@@ -860,19 +1005,20 @@ endwith
 select (l_select)
 return Nil
 //=================================================================================================================
-function CustomFieldsFormToHash(par_iApplicationPk,par_UsedOn,par_hValues)  // Will add to par_hValues
+function CustomFieldsFormToHash(par_iBasePk,par_UsedOn,par_hValues)  // Will add to par_hValues
 
 local l_select := iif(used(),select(),0)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldsFormToHash := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cObjectName
 local l_lSelected
+local l_cBaseTable := GetBaseNameForUsedOn(par_UsedOn)
 
-with object l_oDB1
-    :Table("fd49bb5b-f1b1-4a02-b19d-77d00a5cf52c","ApplicationCustomField")
+with object l_oDB_ListOfCustomFieldsFormToHash
+    :Table("fd49bb5b-f1b1-4a02-b19d-77d00a5cf52c",l_cBaseTable+"CustomField")
     :Column("CustomField.pk"  ,"pk")
     :Column("CustomField.Type","CustomField_Type")
-    :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","CustomField","",l_cBaseTable+"CustomField.fk_CustomField = CustomField.pk")
+    :Where(l_cBaseTable+"CustomField.fk_"+l_cBaseTable+" = ^" , par_iBasePk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     :Where("CustomField.Status <= 2")
     :SQL("ListOfCustomFieldsFormToHash")
@@ -912,9 +1058,9 @@ endwith
 select (l_select)
 return Nil
 //=================================================================================================================
-function CustomFieldsBuild(par_iApplicationPk,par_UsedOn,par_iPk,par_hValues,par_extra_property)
+function CustomFieldsBuild(par_iBasePk,par_UsedOn,par_iPk,par_hValues,par_extra_property)
 local l_select := iif(used(),select(),0)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldsToBuild := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cHtml := []
 local l_lSelected
 local l_cObjectName
@@ -930,9 +1076,10 @@ local l_cOptionVal
 local l_nOptionVal
 local l_cOptionText
 local l_xValue
+local l_cBaseTable := GetBaseNameForUsedOn(par_UsedOn)
 
-with object l_oDB1
-    :Table("800b078f-1b00-48bb-97bb-ffd9deb1b6ab","ApplicationCustomField")
+with object l_oDB_ListOfCustomFieldsToBuild
+    :Table("800b078f-1b00-48bb-97bb-ffd9deb1b6ab",l_cBaseTable+"CustomField")
     :Column("CustomField.pk" , "pk")
     :Column("CustomField.Label"           ,"CustomField_Label")
     :Column("CustomField.Type"            ,"CustomField_Type")
@@ -946,9 +1093,9 @@ with object l_oDB1
     // :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
     // :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
     // :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
-    :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+    :Join("inner","CustomField","",l_cBaseTable+"CustomField.fk_CustomField = CustomField.pk")
     // :join("left","CustomFieldValue","","CustomFieldValue.fk_CustomField = CustomField.pk and CustomFieldValue.fk_Entity = ^" , par_iPk)
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+    :Where(l_cBaseTable+"CustomField.fk_"+l_cBaseTable+" = ^" , par_iBasePk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     :Where("CustomField.Status <= 2")
     :OrderBy("tag1")
@@ -1031,26 +1178,27 @@ endwith
 select (l_select)
 return l_cHtml
 //=================================================================================================================
-function CustomFieldsSave(par_iApplicationPk,par_UsedOn,par_iPk)
+function CustomFieldsSave(par_iBasePk,par_UsedOn,par_iPk)
 local l_select := iif(used(),select(),0)
+local l_oDB_ListOfCustomFieldsSave := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cObjectName
 local l_lSelectedOnForm
 local l_lOnFile
 local l_xValue
+local l_cBaseTable := GetBaseNameForUsedOn(par_UsedOn)
 
-with object l_oDB1
-    :Table("a88447b8-5ccc-461e-91db-fe6f2323e7f4","ApplicationCustomField")
+with object l_oDB_ListOfCustomFieldsSave
+    :Table("a88447b8-5ccc-461e-91db-fe6f2323e7f4",l_cBaseTable+"CustomField")
     :Column("CustomField.pk" , "pk")
     :Column("CustomField.Type"            ,"CustomField_Type")
     :Column("CustomFieldValue.pk"         ,"CustomFieldValue_pk")
     :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
     :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
     :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
-    :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+    :Join("inner","CustomField","",l_cBaseTable+"CustomField.fk_CustomField = CustomField.pk")
     :join("left","CustomFieldValue","","CustomFieldValue.fk_CustomField = CustomField.pk and CustomFieldValue.fk_Entity = ^" , par_iPk)
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+    :Where(l_cBaseTable+"CustomField.fk_"+l_cBaseTable+" = ^" , par_iBasePk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     :Where("CustomField.Status <= 2")
     :SQL("ListOfCustomFieldsSave")
@@ -1069,10 +1217,10 @@ with object l_oDB1
                 if l_lSelectedOnForm <> l_lOnFile
                     if l_lOnFile
                         // Delete record in CustomFieldValue
-                        :Delete("e3d306b8-0cc3-45f4-b101-5dcd3602a921","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
+                        l_oDB1:Delete("e3d306b8-0cc3-45f4-b101-5dcd3602a921","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
                     else
                         // Add Record in CustomFieldValue
-                        with object l_oDB2
+                        with object l_oDB1
                             :Table("50378b3c-3b1c-42db-bbab-0e8b0bd9a67f","CustomFieldValue")
                             :Field("CustomFieldValue.fk_CustomField" , ListOfCustomFieldsSave->pk)
                             :Field("CustomFieldValue.fk_Entity"      , par_iPk)
@@ -1087,14 +1235,14 @@ with object l_oDB1
                 if !empty(l_xValue) .and. !empty(val(l_xValue))
                     if l_lOnFile
                         if ListOfCustomFieldsSave->CustomFieldValue_ValueI <> Val(l_xValue)
-                            with object l_oDB2
+                            with object l_oDB1
                                 :Table("643ae636-41b7-43a3-bdf6-3d24c18db44a","CustomFieldValue")
                                 :Field("CustomFieldValue.ValueI"         , Val(l_xValue))
                                 :Update(ListOfCustomFieldsSave->CustomFieldValue_pk)
                             endwith
                         endif
                     else
-                        with object l_oDB2
+                        with object l_oDB1
                             :Table("ce3e092f-ac7f-4160-bfc0-add5a9b03bf0","CustomFieldValue")
                             :Field("CustomFieldValue.fk_CustomField" , ListOfCustomFieldsSave->pk)
                             :Field("CustomFieldValue.fk_Entity"      , par_iPk)
@@ -1105,7 +1253,7 @@ with object l_oDB1
                 else
                     //Delete if on file
                     if l_lOnFile
-                        l_oDB2:Delete("32ea223f-10a8-434d-a6c1-b42b4d38a6de","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
+                        l_oDB1:Delete("32ea223f-10a8-434d-a6c1-b42b4d38a6de","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
                     endif
                 endif
                 exit
@@ -1115,10 +1263,10 @@ with object l_oDB1
                 l_xValue := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("Text"+l_cObjectName)))
                 if empty(l_xValue)
                     if l_lOnFile
-                        l_oDB2:Delete("56b34f02-8eed-43e1-8524-e82916c1910b","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
+                        l_oDB1:Delete("56b34f02-8eed-43e1-8524-e82916c1910b","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
                     endif
                 else
-                    with object l_oDB2
+                    with object l_oDB1
                         :Table("25b1c8a9-c807-4ae6-a4a9-22970456ad85","CustomFieldValue")
                         :Field("CustomFieldValue.ValueM"             , l_xValue)
                         if l_lOnFile
@@ -1137,14 +1285,14 @@ with object l_oDB1
                 if !empty(l_xValue) .and. !empty(ctod(l_xValue))
                     if l_lOnFile
                         if ListOfCustomFieldsSave->CustomFieldValue_ValueD <> ctod(l_xValue)
-                            with object l_oDB2
+                            with object l_oDB1
                                 :Table("e51dcbc7-63d5-45ad-8da1-31023513640f","CustomFieldValue")
                                 :Field("CustomFieldValue.ValueD"         , ctod(l_xValue))
                                 :Update(ListOfCustomFieldsSave->CustomFieldValue_pk)
                             endwith
                         endif
                     else
-                        with object l_oDB2
+                        with object l_oDB1
                             :Table("efed91ca-7ad0-462a-9f6d-8f03a3c87404","CustomFieldValue")
                             :Field("CustomFieldValue.fk_CustomField" , ListOfCustomFieldsSave->pk)
                             :Field("CustomFieldValue.fk_Entity"      , par_iPk)
@@ -1155,7 +1303,7 @@ with object l_oDB1
                 else
                     //Delete if on file
                     if l_lOnFile
-                        l_oDB2:Delete("2e47e24f-bc06-4bb2-aa7a-9cf56166867e","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
+                        l_oDB1:Delete("2e47e24f-bc06-4bb2-aa7a-9cf56166867e","CustomFieldValue",ListOfCustomFieldsSave->CustomFieldValue_pk)
                     endif
                 endif
                 exit
@@ -1170,22 +1318,23 @@ endwith
 select (l_select)
 return Nil
 //=================================================================================================================
-function CustomFieldsDelete(par_iApplicationPk,par_UsedOn,par_iPk)
+function CustomFieldsDelete(par_iBasePk,par_UsedOn,par_iPk)
 local l_select := iif(used(),select(),0)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldsDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1                         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cBaseTable := GetBaseNameForUsedOn(par_UsedOn)
 
-with object l_oDB1
-    :Table("ae52ebe2-6583-4329-a6eb-ee21eefdff23","ApplicationCustomField")
+with object l_oDB_ListOfCustomFieldsDelete
+    :Table("ae52ebe2-6583-4329-a6eb-ee21eefdff23",l_cBaseTable+"CustomField")
     :Column("CustomField.pk" , "pk")
     :Column("CustomField.Type"            ,"CustomField_Type")
     :Column("CustomFieldValue.pk"         ,"CustomFieldValue_pk")
     :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
     :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
     :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
-    :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+    :Join("inner","CustomField","",l_cBaseTable+"CustomField.fk_CustomField = CustomField.pk")
     :join("inner","CustomFieldValue","","CustomFieldValue.fk_CustomField = CustomField.pk and CustomFieldValue.fk_Entity = ^" , par_iPk)
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+    :Where(l_cBaseTable+"CustomField.fk_"+l_cBaseTable+" = ^" , par_iBasePk)
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     // :Where("CustomField.Status <= 2")
     :SQL("ListOfCustomFieldsDelete")
@@ -1193,7 +1342,7 @@ with object l_oDB1
     if :Tally > 0
         select ListOfCustomFieldsDelete
         scan all
-            l_oDB2:Delete("f635b4d7-2027-4136-ba7e-cf495661c4f8","CustomFieldValue",ListOfCustomFieldsDelete->CustomFieldValue_pk)
+            l_oDB1:Delete("f635b4d7-2027-4136-ba7e-cf495661c4f8","CustomFieldValue",ListOfCustomFieldsDelete->CustomFieldValue_pk)
         endscan
     endif
 
@@ -1259,4 +1408,14 @@ scan all for ListOfCustomFieldValues->fk_entity = par_iPk
 endscan
 
 return l_cHtml
+//=================================================================================================================
+static function GetBaseNameForUsedOn(par_UsedOn)
+local l_cBaseTable
+do case
+case vfp_Inlist(par_UsedOn,USEDON_APPLICATION,USEDON_NAMESPACE,USEDON_TABLE,USEDON_COLUMN)
+    l_cBaseTable := "Application"
+case vfp_Inlist(par_UsedOn,USEDON_PROJECT,USEDON_MODEL,USEDON_ENTITY,USEDON_ASSOCIATION,USEDON_PACKAGE,USEDON_DATATYPE,USEDON_ATTRIBUTE)
+    l_cBaseTable := "Project"
+endcase
+return l_cBaseTable
 //=================================================================================================================

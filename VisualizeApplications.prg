@@ -30,6 +30,10 @@ local l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
 local l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
 local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
 local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+local l_cDiagram_LinkUID
+local l_cURL
+local l_cProtocol
+local l_nPort
 
 local l_cJS
 
@@ -61,7 +65,7 @@ with object l_oDB_ListOfDiagrams
     :SQL("ListOfDiagrams")
 endwith
 
-With Object l_oDB1
+with object l_oDB1
     if empty(par_iDiagramPk)
         l_iDiagramPk := ListOfDiagrams->Diagram_pk
     else
@@ -72,14 +76,16 @@ With Object l_oDB1
     :Column("Diagram.VisPos"              ,"Diagram_VisPos")
     :Column("Diagram.NodeDisplayMode"     ,"Diagram_NodeDisplayMode")
     :Column("Diagram.NodeShowDescription" ,"Diagram_NodeShowDescription")
+    :Column("Diagram.LinkUID"             ,"Diagram_LinkUID")
     l_oDataDiagram := :Get(l_iDiagramPk)
     l_cNodePositions       := l_oDataDiagram:Diagram_VisPos
     l_nNodeDisplayMode     := max(1,l_oDataDiagram:Diagram_NodeDisplayMode)
     l_lNodeShowDescription := l_oDataDiagram:Diagram_NodeShowDescription
+    l_cDiagram_LinkUID     := l_oDataDiagram:Diagram_LinkUID
 
 endwith
 
-With Object l_oDB_ListOfTables
+with object l_oDB_ListOfTables
     //Check if there is at least one record in DiagramTable for the current Diagram
     :Table("66daafd2-9566-43be-85e5-b663682ba88c","DiagramTable")
     :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
@@ -95,8 +101,8 @@ With Object l_oDB_ListOfTables
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
-        :Column("Upper(NameSpace.Name)","tag1")
-        :Column("Upper(Table.Name)","tag2")
+        // :Column("Upper(NameSpace.Name)","tag1")
+        // :Column("Upper(Table.Name)"    ,"tag2")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
         :SQL("ListOfTables")
@@ -112,8 +118,8 @@ With Object l_oDB_ListOfTables
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
-        :Column("Upper(NameSpace.Name)","tag1")
-        :Column("Upper(Table.Name)","tag2")
+        // :Column("Upper(NameSpace.Name)","tag1")
+        // :Column("Upper(Table.Name)"    ,"tag2")
         :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
@@ -207,6 +213,28 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if !l_lNavigationControl
             l_cHtml += [<input type="button" role="button" value="Fit Diagram" class="btn btn-primary rounded ms-3" onclick="network.fit();return false;">]
         endif
+        //---------------------------------------------------------------------------
+
+        //Get the current URL and add a reference to the current diagram LinkUID
+        l_cProtocol := oFcgi:RequestSettings["Protocol"]
+        l_nPort     := oFcgi:RequestSettings["Port"]
+        l_cURL := l_cProtocol+"://"+oFcgi:RequestSettings["Host"]
+        if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .and. l_nPort == 443))
+            l_cURL += ":"+Trans(l_nPort)
+        endif
+        l_cURL += oFcgi:RequestSettings["SitePath"]
+        l_cURL += oFcgi:RequestSettings["Path"]
+        l_cURL += [?InitialDiagram=]+l_cDiagram_LinkUID
+
+        l_cHtml += [<input type="button" role="button" value="Copy Diagram Link To Clipboard" class="btn btn-primary rounded ms-3" id="CopyLink" onclick="]
+        
+        l_cHtml += [navigator.clipboard.writeText(']+l_cURL+[').then(function() {]
+        l_cHtml += [$('#CopyLink').addClass('btn-success').removeClass('btn-primary');]
+        l_cHtml += [}, function() {]
+        l_cHtml += [$('#CopyLink').addClass('btn-danger').removeClass('btn-primary');]
+        l_cHtml += [});]
+
+        l_cHtml += [;return false;">]
         //---------------------------------------------------------------------------
 
     l_cHtml += [</div>]
@@ -353,7 +381,7 @@ endscan
 l_cHtml += ']);'
 
 // create an array with edges
-With Object l_oDB_ListOfLinks
+with object l_oDB_ListOfLinks
     :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
     :Column("Table.pk"              ,"pkFrom")
     :Column("Column.fk_TableForeign","pkTo")
@@ -443,7 +471,7 @@ l_cJS += [});]
 l_cJS += [$("#ButtonShowAll").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").show(),$(".ColumnCore").show();});]
 l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
 
-l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
+l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
 l_cHtml += ' network.on("dragStart", function (params) {'
@@ -505,7 +533,7 @@ case "SaveLayout" $ l_cActionOnSubmit
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-    With Object l_oDB1
+    with object l_oDB1
         :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
         :Field("Diagram.VisPos",l_cNodePositions)
         if empty(l_iDiagram_pk)
@@ -514,6 +542,7 @@ case "SaveLayout" $ l_cActionOnSubmit
             :Field("Diagram.Name"          ,"All Tables")
             :Field("Diagram.UseStatus"     ,1)
             :Field("Diagram.DocStatus"     ,1)
+            :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iDiagram_pk := :Key()
             endif
@@ -539,7 +568,7 @@ case "SaveLayout" $ l_cActionOnSubmit
                 :SQL("ListOfCurrentTablesInDiagram")
                 l_nNumberOfCurrentTablesInDiagram := :Tally
                 if l_nNumberOfCurrentTablesInDiagram > 0
-                    With Object :p_oCursor
+                    with object :p_oCursor
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
@@ -627,7 +656,7 @@ case "SaveLayout" $ l_cActionOnSubmit
                 :SQL("ListOfCurrentTablesInDiagram")
                 l_nNumberOfCurrentTablesInDiagram := :Tally
                 if l_nNumberOfCurrentTablesInDiagram > 0
-                    With Object :p_oCursor
+                    with object :p_oCursor
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
@@ -733,7 +762,7 @@ if pcount() < 6
     endif
 endif
 
-l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="DiagramSettings">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
@@ -931,7 +960,7 @@ case l_cActionOnSubmit == "SaveDiagram"
     endcase
 
     if empty(l_cErrorMessage)
-        With Object l_oDB1
+        with object l_oDB1
             :Table("d303eed8-944e-4a7c-8314-133eb13fca3d","Diagram")
             :Field("Diagram.Name"               ,l_cDiagram_Name)
             :Field("Diagram.NodeDisplayMode"    ,l_nDiagram_NodeDisplayMode)
@@ -940,6 +969,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Field("Diagram.fk_Application",par_iApplicationPk)
                 :Field("Diagram.UseStatus"     , 1)
                 :Field("Diagram.DocStatus"     , 1)
+                :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iDiagram_pk := :Key()
                 else
@@ -967,7 +997,7 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
             :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
             :SQL("ListOfCurrentTablesInDiagram")
-            With Object :p_oCursor
+            with object :p_oCursor
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
@@ -1028,7 +1058,7 @@ case l_cActionOnSubmit == "Cancel"
     l_cHtml += DataDictionaryVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
 case l_cActionOnSubmit == "Delete"
-    With Object l_oDB1
+    with object l_oDB1
         //Delete related records in DiagramTable
         :Table("c4d616b9-9f17-47f2-a536-42ec624b3d46","DiagramTable")
         :Column("DiagramTable.pk","pk")
@@ -1040,10 +1070,10 @@ case l_cActionOnSubmit == "Delete"
         endscan
         l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagram_pk)
     endwith
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ApplicationVisualize/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ApplicationVisualize/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
-    With Object l_oDB1
+    with object l_oDB1
         :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
         :Field("Diagram.VisPos",NIL)
         :Update(l_iDiagram_pk)
@@ -1063,7 +1093,7 @@ return l_cHtml
 
 // local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-// With Object l_oDB1
+// with object l_oDB1
 //     :Table("44111d36-963b-42f1-b4e5-4c4e4e5ffd13","Application")
 //     :Field("Application.VisPos",l_cNodePositions)
 //     :Update(l_iApplicationPk)
@@ -1127,7 +1157,7 @@ if pcount() < 6
     endif
 endif
 
-l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">] //Since there are text fields entry fields, encode as multipart/form-data
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="MyDiagramSettings">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
@@ -1333,7 +1363,7 @@ endcase
 
 return l_cHtml
 //=================================================================================================================
-function GetInfoDuringVisualization()
+function GetDDInfoDuringVisualization()
 local l_cHtml := []
 local l_cInfo := Strtran(oFcgi:GetQueryString("info"),[%22],["])
 local l_iDiagram_pk := val(oFcgi:GetQueryString("diagrampk"))
@@ -1396,7 +1426,7 @@ local l_cApplicationSupportColumns
 local l_cHtml_icon
 local l_cHtml_tr_class
 
-oFcgi:TraceAdd("GetInfoDuringVisualization")
+oFcgi:TraceAdd("GetDDInfoDuringVisualization")
 
 hb_HKeepOrder(l_hRelatedTables,.f.) // Will order the hash by its key, with will be entered as upper case. For Keys stored as Strings they will need to be the same length
 
@@ -1441,7 +1471,7 @@ if len(l_aNodes) == 1
         :SQL("ListOfCurrentTablesInDiagram")
         l_nNumberOfTablesInDiagram := :Tally
         if l_nNumberOfTablesInDiagram > 0
-            With Object :p_oCursor
+            with object :p_oCursor
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
@@ -1494,6 +1524,7 @@ if len(l_aNodes) == 1
         :Table("d7bf79b7-d7bf-435d-ab83-3d02fcbc6612","DiagramTable")
         :Column("Diagram.pk"         ,"Diagram_pk")
         :Column("Diagram.Name"       ,"Diagram_Name")
+        :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
         :Column("upper(Diagram.Name)","tag1")
         :Join("inner","Diagram","","DiagramTable.fk_Diagram = Diagram.pk")
         :Where("DiagramTable.fk_Table = ^",l_iTablePk)
@@ -1704,7 +1735,7 @@ if len(l_aNodes) == 1
 
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">Table: ]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+;
-                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Applications/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]+;
+                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]+;
                                [</span>]
                 l_cHtml += [</div>]
 
@@ -1832,7 +1863,7 @@ if len(l_aNodes) == 1
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Applications/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/"><span class="SpanColumnName">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></a>]
+                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/"><span class="SpanColumnName">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></a>]
                                     l_cHtml += [</td>]
 
                                     // Type
@@ -1868,7 +1899,7 @@ if len(l_aNodes) == 1
                                     // Foreign Key To
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         if !hb_isNil(ListOfColumns->Table_Name)
-                                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[Applications/ListColumns/]+l_cApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
+                                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
                                             l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                                             l_cHtml += [</a>]
                                         endif
@@ -1978,7 +2009,7 @@ if len(l_aNodes) == 1
                 else
                     select ListOfOtherDiagram
                     scan all
-                        l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagramPk=]+Trans(ListOfOtherDiagram->Diagram_pk)+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagram->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagram->Diagram_Name+[</a></div>]
+                        l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagram->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagram->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagram->Diagram_Name+[</a></div>]
                     endscan
                 endif
             l_cHtml += [</div>]

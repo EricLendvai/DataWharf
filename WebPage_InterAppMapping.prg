@@ -235,7 +235,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
     l_cHtml += [</div>]
 
-    With Object l_oDB_ListOfTablesFrom
+    with object l_oDB_ListOfTablesFrom
         //Determine if we have more than 1 name space
         :Table("1a4574df-d0df-4082-9fb6-52785057ade0","Table")
         :Distinct(.t.)
@@ -408,7 +408,7 @@ l_iApplicationToPk   := Val(oFcgi:GetInputValue("ApplicationToPk"))
 l_hValues["ApplicationFromPk"] := l_iApplicationFromPk
 l_hValues["ApplicationToPk"]   := l_iApplicationToPk
 
-With Object l_oDB_ListOfTablesFrom
+with object l_oDB_ListOfTablesFrom
     :Table("1b10a823-d84e-48d5-ba77-5d6f87d50385","Table")
     :Column("Table.pk"         ,"pk")
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -570,8 +570,7 @@ local l_cColumnToInfo
 
 oFcgi:TraceAdd("InterAppMappingMapColumnsBuild")
 
-l_ScriptFolder:= l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
-
+l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]
@@ -871,7 +870,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_iColumnToPk := hb_HGetDef(par_hValues,l_cInputObjectName,0)
                             l_cHtml += [<select name="]+l_cInputObjectName+[" id="]+l_cInputObjectName+[" class="ColumnsTos" style="width:400px">]
-                            if l_iColumnToPk = 0
+                            if l_iColumnToPk == 0
                                 oFcgi:p_cjQueryScript += [$("#]+l_cInputObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
                             else
                                 //select2 will place the current selected option at the top of the list of options, overriding the initial order.

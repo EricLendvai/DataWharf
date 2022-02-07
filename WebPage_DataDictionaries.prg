@@ -313,7 +313,7 @@ case l_cURLAction == "ApplicationVisualize"
     
     if oFcgi:isGet()
         l_iDiagramPk := 0
-        With Object l_oDB1
+        with object l_oDB1
             :Table("4ce05f54-56f4-4141-9d33-634c3a661d66","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
@@ -1046,14 +1046,14 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
  
 oFcgi:TraceAdd("DataDictionaryHeaderBuild")
 
-l_cHtml += [<nav class="navbar navbar-default bg-secondary bg-gradient">]
-    l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="ps-2 navbar-brand text-white">Data Dictionary for Application: ]+par_cApplicationName+[</span>]
-    l_cHtml += [</div>]
-l_cHtml += [</nav>]
+l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
+l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Application: ]+par_cApplicationName+[</span></div>]
+l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[DataDictionaries/">Other Applications</a></div>]
+l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
 
@@ -1217,7 +1217,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
@@ -1902,7 +1902,7 @@ with object l_oDB_AnyTags
 
 endwith
 
-With Object l_oDB_ListOfTables
+with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
     :Column("Table.pk"         ,"pk")
     :Column("NameSpace.Name"   ,"NameSpace_Name")
@@ -1950,7 +1950,7 @@ With Object l_oDB_ListOfTables
 endwith
 
 if l_nNumberOfTables > 0
-    With Object l_oDB_CustomField
+    with object l_oDB_CustomField
         :Table("9002a459-657d-428b-b5e2-665851c7f853","Table")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
@@ -2054,7 +2054,7 @@ if l_nNumberOfTables > 0
 endif
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
-With Object l_oDB_ListOfTablesColumnCounts
+with object l_oDB_ListOfTablesColumnCounts
     :Table("30c4a441-523c-40ca-85eb-e4b30f6358cc","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"ColumnCount")
@@ -2064,7 +2064,7 @@ With Object l_oDB_ListOfTablesColumnCounts
     :GroupBy("Table.pk")
     :SQL("ListOfTablesColumnCounts")
 
-    With Object :p_oCursor
+    with object :p_oCursor
         :Index("tag1","Table_pk")
         :CreateIndexes()
         :SetOrder("tag1")
@@ -2072,7 +2072,7 @@ With Object l_oDB_ListOfTablesColumnCounts
 
 endwith
 
-With Object l_oDB_ListOfTablesIndexCounts
+with object l_oDB_ListOfTablesIndexCounts
     :Table("8ed29bff-8f51-4140-a889-d22dcca7c313","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"IndexCount")
@@ -2082,7 +2082,7 @@ With Object l_oDB_ListOfTablesIndexCounts
     :GroupBy("Table.pk")
     :SQL("ListOfTablesIndexCounts")
 
-    With Object :p_oCursor
+    with object :p_oCursor
         :Index("tag1","Table_pk")
         :CreateIndexes()
         :SetOrder("tag1")
@@ -3349,7 +3349,7 @@ case l_cActionOnSubmit == "Save"
             :Where([Column.fk_Table = ^],l_iTablePk)
             :SQL("ListOfColumn")
     
-            With Object :p_oCursor
+            with object :p_oCursor
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
@@ -3381,7 +3381,7 @@ local l_cHtml := ""
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_cTags           := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
+local l_cTags            := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -4258,7 +4258,7 @@ with object l_oDB1
     l_nNumberOfEnumerations := :Tally
 endwith
 
-With Object l_oDB2
+with object l_oDB2
     :Table("0a20a86a-a519-451c-a01b-388f16a4c909","Enumeration")
     :Column("Enumeration.pk" ,"Enumeration_pk")
     :Column("Count(*)" ,"EnumValueCount")
@@ -4268,7 +4268,7 @@ With Object l_oDB2
     :GroupBy("Enumeration.pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
 
-    With Object :p_oCursor
+    with object :p_oCursor
         :Index("tag1","Enumeration_pk")
         :CreateIndexes()
         :SetOrder("tag1")
@@ -4957,7 +4957,7 @@ case l_cActionOnSubmit == "Save"
             :Where([EnumValue.fk_Enumeration = ^],l_iEnumerationPk)
             :SQL("ListOfEnumValue")
 
-            With Object :p_oCursor
+            with object :p_oCursor
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
@@ -5844,7 +5844,8 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-//=================================================================================================================//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
 function CascadeDeleteTable(par_iApplicationPk,par_iTablePk)

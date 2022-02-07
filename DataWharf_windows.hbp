@@ -40,7 +40,8 @@ hbmisc.hbc
 
 DataWharf.prg
 LoadSchema.prg
-DataDictionariesVisualize.prg
+VisualizeApplications.prg
+VisualizeProjects.prg
 FixNonNormalizedFields.prg
 WebPages.hbm
 
