@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/08/2022
+* Fixed read only mode in visualization.
+
 ## 02/07/2022
 * Completed the Create/Update/Delete functionalities in Modeling
 * Renamed ConceptualDiagram table to ModelingDiagram

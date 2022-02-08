@@ -186,8 +186,8 @@ with object l_oDB_ListOfUsers
     :Column("User.Status"     ,"User_Status")
     :Column("Upper(User.FirstName)","tag1")
     :Column("Upper(User.LastName)" ,"tag2")
-    :OrderBy("tag2")
     :OrderBy("tag1")
+    :OrderBy("tag2")
     :SQL("ListOfUsers")
     l_nNumberOfUsers := :Tally
 endwith

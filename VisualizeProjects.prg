@@ -7,6 +7,7 @@ memvar oFcgi
 function ModelVisualizeDesignBuild(par_iProjectPk,par_cErrorText,par_iModelPk,par_cModelName,par_cModelLinkUID,par_cModelingDiagramLinkUID,par_iModelingDiagramPk)
 local l_cHtml := []
 local l_oDB1
+local l_oDB_Project                          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntities                   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelingDiagrams           := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociationNodes           := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -288,18 +289,22 @@ l_cHtml += [<input type="hidden" id="TextModelingDiagramPk" name="TextModelingDi
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
-        l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
+        if oFcgi:p_nAccessLevelML >= 4
+            l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
-        l_cHtml += [network.storePositions();]
+            l_cHtml += [network.storePositions();]
 
-        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-        l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
+            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+            l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
-        //Code used to debug the positions.
-        l_cHtml += [">]
+            //Code used to debug the positions.
+            l_cHtml += [">]
+        endif
         //---------------------------------------------------------------------------
         //---------------------------------------------------------------------------
-         l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
+        if oFcgi:p_nAccessLevelML >= 4
+             l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
+        endif
         //---------------------------------------------------------------------------
          l_cHtml += [<select id="ComboModelingDiagramPk" name="ComboModelingDiagramPk" onchange="$('#TextModelingDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3">]
 
@@ -309,7 +314,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             endscan
          l_cHtml += [</select>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+        if oFcgi:p_nAccessLevelML >= 4
+             l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+        endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
         //---------------------------------------------------------------------------
@@ -428,6 +435,11 @@ scan all
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
         endif
     endif
+
+    if oFcgi:p_nAccessLevelML < 4
+        l_cHtml += [,fixed: {x:true,y:true}]
+    endif
+
     l_cHtml += [},]
 endscan
 
@@ -478,6 +490,11 @@ scan all
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
         endif
     endif
+
+    if oFcgi:p_nAccessLevelML < 4
+        l_cHtml += [,fixed: {x:true,y:true}]
+    endif
+
     l_cHtml += [},]
 endscan
 
@@ -510,7 +527,7 @@ scan all
         //Build the edge between 2 entities
         l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
 
-        l_cHtml += [{id:"L]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]  // ,arrows:"middle"
+        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]  // ,arrows:"middle"
         l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
         // l_cHtml += [, smooth: { type: "diagonalCross" }]
         l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
@@ -630,16 +647,16 @@ do case
 case l_cActionOnSubmit == "Show"
     l_cHtml += ModelVisualizeDesignBuild(par_iProjectPk,par_cErrorText,par_iModelPk,par_cModelName,par_cModelLinkUID,par_cModelingDiagramLinkUID,l_iModelingDiagram_pk)
 
-// case l_cActionOnSubmit == "DiagramSettings"
+// case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
 //     l_cHtml := ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
 
-// case l_cActionOnSubmit == "MyDiagramSettings"
+// case l_cActionOnSubmit == "MyDiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
 //     l_cHtml := ModelVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
 
-// case l_cActionOnSubmit == "NewDiagram"
+// case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelML >= 4
 //     l_cHtml := ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
 
-case "SaveLayout" $ l_cActionOnSubmit
+case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -1421,13 +1438,14 @@ local l_aEdges
 local l_aItems
 local l_iEntityPk
 local l_iAttributePk
-local l_oDB_Application                  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Project                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_InArray                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelatedEntities          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCurrentEntitiesInModelingDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAttribute                 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfOtherModelingDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_EntityCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_UserAccessProject
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cApplicationLinkCode
@@ -1459,10 +1477,12 @@ local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_EntityCustomFields := ""
 local l_lNeverShowDescriptionOnHover
-local l_oData_Application
+local l_oData_Project
 local l_cApplicationSupportAttributes
 local l_cHtml_icon
 local l_cHtml_tr_class
+local l_iProjectPk
+local l_nAccessLevelML
 
 oFcgi:TraceAdd("GetMLInfoDuringVisualization")
 
@@ -1483,14 +1503,39 @@ l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
     l_iEntityPk := l_aNodes[1]
 
-    with object l_oDB_Application
-        :Table("dfef5b3b-d522-42fa-97ea-63ee89ce1e59","Entity")
-        :Column("Application.SupportAttributes" , "Application_SupportAttributes")
-        :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
-        l_oData_Application := :Get(l_iEntityPk)
-        l_cApplicationSupportAttributes := nvl(l_oData_Application:Application_SupportAttributes,"")
+    with object l_oDB_Project
+        :Table("aabe8f6a-1c2c-4828-a56b-43c26bd06091","Entity")
+        :Column("Project.pk" , "Project_pk")
+        :Join("inner","Model","","Entity.fk_Model = Model.pk")
+        :Join("inner","Project","","Model.fk_Project = Project.pk")
+        l_oData_Project := :Get(l_iEntityPk)
     endwith
+
+    //Get the project l_nAccessLevelML
+    l_iProjectPk := l_oData_Project:Project_pk
+    do case
+    case oFcgi:p_nUserAccessMode <= 1  // Project access levels
+        l_oDB_UserAccessProject := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_UserAccessProject
+            :Table("UserAccessProject")
+            :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
+            :Where("UserAccessProject.fk_User = ^"    , oFcgi:p_iUserPk)
+            :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
+            :SQL(@l_aSQLResult)
+            if :Tally == 1
+                l_nAccessLevelML := l_aSQLResult[1,1]
+            else
+                l_nAccessLevelML := 0
+            endif
+        endwith
+    case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
+        l_nAccessLevelML := 2
+    case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
+        l_nAccessLevelML := 7
+    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+        l_nAccessLevelML := 7
+    endcase
+
 
     //Clicked on a Entity
 
@@ -1867,11 +1912,13 @@ if len(l_aNodes) == 1
                     l_cHtml += [<div class="mb-2">Entity has no related Entities</div>]
                 else
                     //---------------------------------------------------------------------------
-                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedEntities" class="btn btn-primary rounded" onclick="]
-                    l_cHtml += [network.storePositions();]
-                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-                    l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
-                    l_cHtml += [">Update Entity selection and Save Layout</button></div>]
+                    if l_nAccessLevelML >= 4
+                        l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedEntities" class="btn btn-primary rounded" onclick="]
+                        l_cHtml += [network.storePositions();]
+                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                        l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
+                        l_cHtml += [">Update Entity selection and Save Layout</button></div>]
+                    endif
                     //---------------------------------------------------------------------------
 
                     // l_cHtml += [<h1>Related Entities</h1>]

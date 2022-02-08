@@ -163,23 +163,25 @@ l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
-        l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
+        if oFcgi:p_nAccessLevelDD >= 4
+            l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
-        l_cHtml += [network.storePositions();]
+            l_cHtml += [network.storePositions();]
 
-        //Since the redraw() fails to make the edges straight, need to actually submit the entire form.
-        // l_cHtml += [$.ajax({]
-        // l_cHtml += [  type: 'GET',]
-        // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
-        // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos='+JSON.stringify(network.getPositions()),]
-        // l_cHtml += [  cache: false ]
-        // l_cHtml += [});]
+            //Since the redraw() fails to make the edges straight, need to actually submit the entire form.
+            // l_cHtml += [$.ajax({]
+            // l_cHtml += [  type: 'GET',]
+            // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
+            // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos='+JSON.stringify(network.getPositions()),]
+            // l_cHtml += [  cache: false ]
+            // l_cHtml += [});]
 
-        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-        l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
+            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+            l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
-        //Code used to debug the positions.
-        l_cHtml += [">]
+            //Code used to debug the positions.
+            l_cHtml += [">]
+        endif
         //---------------------------------------------------------------------------
         // l_cHtml += [<input type="button" role="button" value="Reset Layout" class="btn btn-primary rounded me-3" onclick="]
         
@@ -196,7 +198,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
         // l_cHtml += [">]
         //---------------------------------------------------------------------------
-         l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
+        if oFcgi:p_nAccessLevelDD >= 4
+             l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
+        endif
         //---------------------------------------------------------------------------
          l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3">]
 
@@ -206,7 +210,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             endscan
          l_cHtml += [</select>]
         //---------------------------------------------------------------------------
-         l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+        if oFcgi:p_nAccessLevelDD >= 4
+             l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+        endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
         //---------------------------------------------------------------------------
@@ -376,6 +382,11 @@ scan all
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
         endif
     endif
+
+    if oFcgi:p_nAccessLevelDD < 4
+        l_cHtml += [,fixed: {x:true,y:true}]
+    endif
+
     l_cHtml += [},]
 endscan
 l_cHtml += ']);'
@@ -520,16 +531,16 @@ do case
 case l_cActionOnSubmit == "Show"
     l_cHtml += DataDictionaryVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
-case l_cActionOnSubmit == "DiagramSettings"
+case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelDD >= 4
     l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
 case l_cActionOnSubmit == "MyDiagramSettings"
     l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
 
-case l_cActionOnSubmit == "NewDiagram"
+case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelDD >= 4
     l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
 
-case "SaveLayout" $ l_cActionOnSubmit
+case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -1381,6 +1392,7 @@ local l_oDB_ListOfCurrentTablesInDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumn                 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfOtherDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_TableCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_UserAccessApplication
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cApplicationLinkCode
@@ -1425,6 +1437,11 @@ local l_oData_Application
 local l_cApplicationSupportColumns
 local l_cHtml_icon
 local l_cHtml_tr_class
+local l_nAccessLevelDD := 1   // None by default
+local l_iApplicationPk
+local l_cDisabled
+
+//oFcgi:p_nAccessLevelDD
 
 oFcgi:TraceAdd("GetDDInfoDuringVisualization")
 
@@ -1448,12 +1465,38 @@ if len(l_aNodes) == 1
 
     with object l_oDB_Application
         :Table("51edf270-d3d3-4c8b-b530-c2d3b90c93c1","Table")
+        :Column("Application.pk"             , "Application_pk")
         :Column("Application.SupportColumns" , "Application_SupportColumns")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
         l_oData_Application := :Get(l_iTablePk)
         l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
     endwith
+
+    //Get the applicable l_nAccessLevelDD
+    l_iApplicationPk := l_oData_Application:Application_pk
+    do case
+    case oFcgi:p_nUserAccessMode <= 1  // Application access levels
+        l_oDB_UserAccessApplication := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_UserAccessApplication
+            :Table("296720ff-9cea-4b71-ba4c-05ba7a4212d0","UserAccessApplication")
+            :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
+            :Where("UserAccessApplication.fk_User = ^"    , oFcgi:p_iUserPk)
+            :Where("UserAccessApplication.fk_Application = ^" ,l_iApplicationPk)
+            :SQL(@l_aSQLResult)
+            if :Tally == 1
+                l_nAccessLevelDD := l_aSQLResult[1,1]
+            else
+                l_nAccessLevelDD := 0
+            endif
+        endwith
+    case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
+        l_nAccessLevelDD := 2
+    case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
+        l_nAccessLevelDD := 7
+    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+        l_nAccessLevelDD := 7
+    endcase
 
     //Clicked on a table
 
@@ -1949,11 +1992,16 @@ if len(l_aNodes) == 1
                     l_cHtml += [<div class="mb-2">Table has no related tables</div>]
                 else
                     //---------------------------------------------------------------------------
-                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
-                    l_cHtml += [network.storePositions();]
-                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-                    l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
-                    l_cHtml += [">Update Table selection and Save Layout</button></div>]
+                    if l_nAccessLevelDD >= 4
+                        l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
+                        l_cHtml += [network.storePositions();]
+                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                        l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
+                        l_cHtml += [">Update Table selection and Save Layout</button></div>]
+                        l_cDisabled := ""
+                    else
+                        l_cDisabled := " disabled"
+                    endif
                     //---------------------------------------------------------------------------
 
                     // l_cHtml += [<h1>Related Tables</h1>]
@@ -1978,7 +2026,7 @@ if len(l_aNodes) == 1
                             l_cListOfRelatedTablePks += Trans(l_aRelatedTableInfo[2])
 
                             // l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
-                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
+                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input"]+l_cDisabled+[>]
 
                             l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
 
@@ -2018,11 +2066,13 @@ if len(l_aNodes) == 1
 
             l_cHtml += [<div id="DetailType4"]+iif(l_nActiveTabNumber <> 4,[ style="display: none;"],[])+[ class="m-3">]
                 //---------------------------------------------------------------------------
-                l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
-                l_cHtml += [network.storePositions();]
-                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-                l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
-                l_cHtml += [">Remove Table and Save Layout</button></div>]
+                if l_nAccessLevelDD >= 4
+                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
+                    l_cHtml += [network.storePositions();]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                    l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
+                    l_cHtml += [">Remove Table and Save Layout</button></div>]
+                endif
                 //---------------------------------------------------------------------------
                 l_cHtml += [<input type="hidden" name="TextTablePkToRemove" value="]+Trans(l_iTablePk)+[">]
 

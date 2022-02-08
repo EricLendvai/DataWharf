@@ -34,7 +34,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cLinkUID
 local l_lFoundHeaderInfo := .f.
 
-local l_nAccessLevelML := 7   // None by default
+local l_nAccessLevelML := 1
 // As per the info in Schema.txt
 //     1 - None
 //     2 - Read Only
@@ -370,47 +370,33 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         :p_ANFPackages     := nvl(l_oDataHeader:ANFPackages    ,"Packages")
     endwith
 
-    // l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    // if !empty(l_cURLProjectLinkCode)
-    //     with object l_oDB1
-    //         :Table("695859f8-e429-4726-8685-33d13a7f7835","Project")
-    //         :Column("Project.pk"          , "pk")
-    //         :Column("Project.Name"        , "Project_Name")
-    //         :Where("Project.LinkCode = ^" ,l_cURLProjectLinkCode)
-    //         :SQL(@l_aSQLResult)
-    //     endwith
 
-    //     if l_oDB1:Tally == 1
-    //         l_iProjectPk          := l_aSQLResult[1,1]
-    //         l_cProjectName        := l_aSQLResult[1,2]
-    //     else
-    //         l_iProjectPk   := -1
-    //         l_cProjectName := "Unknown"
-    //     endif
-    // endif
+    if l_lFoundHeaderInfo
+        l_iProjectPk   := l_oDataHeader:Project_pk
+        l_cProjectName := l_oDataHeader:Project_Name
 
-    // do case
-    // case oFcgi:p_nUserAccessMode <= 1  // Project access levels
-    //     with object l_oDB1
-    //         :Table("UserAccessProject")
-    //         :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
-    //         :Where("UserAccessProject.fk_User = ^"        ,oFcgi:p_iUserPk)
-    //         :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
-    //         :SQL(@l_aSQLResult)
-    //         if l_oDB1:Tally == 1
-    //             l_nAccessLevelML := l_aSQLResult[1,1]
-    //         else
-    //             l_nAccessLevelML := 0
-    //         endif
-    //     endwith
-
-    // case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
-    //     l_nAccessLevelML := 2
-    // case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
-    //     l_nAccessLevelML := 7
-    // case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-    //     l_nAccessLevelML := 7
-    // endcase
+        do case
+        case oFcgi:p_nUserAccessMode <= 1  // Project access levels
+            with object l_oDB1
+                :Table("b64f780e-dd6a-4409-878a-dd3de257a440","UserAccessProject")
+                :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
+                :Where("UserAccessProject.fk_User = ^"    ,oFcgi:p_iUserPk)
+                :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
+                :SQL(@l_aSQLResult)
+                if l_oDB1:Tally == 1
+                    l_nAccessLevelML := l_aSQLResult[1,1]
+                else
+                    l_nAccessLevelML := 0
+                endif
+            endwith
+        case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
+            l_nAccessLevelML := 2
+        case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
+            l_nAccessLevelML := 7
+        case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+            l_nAccessLevelML := 7
+        endcase
+    endif
 
 else
     l_cURLAction := "SelectProject" // "ListModels"

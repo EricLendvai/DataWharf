@@ -198,23 +198,23 @@ with object ::p_o_SQLConnection
                 ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevelML")
             endif
 
-            with object l_oDB1
-                :Table("bcc58496-5077-47ee-a955-fa5d071dd576","UserAccessApplication")
-                :Column("UserAccessApplication.pk"         ,"pk")
-                :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
-                :SQL("ListOfRecordsToFix")
-                select ListOfRecordsToFix
-                scan all for ListOfRecordsToFix->UserAccessApplication_AccessLevel > 0
-                    with object l_oDB2
-                        :Table("d4a5eada-fd4c-4d6c-ae2e-446f45be2f19","UserAccessApplication")
-                        :Field("UserAccessApplication.AccessLevelDD" , ListOfRecordsToFix->UserAccessApplication_AccessLevel)
-                        :Field("UserAccessApplication.AccessLevel"   , 0)
-                        :Update(ListOfRecordsToFix->pk)
-                    endwith
-                endscan
-            endwith
-
             if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
+                with object l_oDB1
+                    :Table("bcc58496-5077-47ee-a955-fa5d071dd576","UserAccessApplication")
+                    :Column("UserAccessApplication.pk"         ,"pk")
+                    :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
+                    :SQL("ListOfRecordsToFix")
+                    select ListOfRecordsToFix
+                    scan all for ListOfRecordsToFix->UserAccessApplication_AccessLevel > 0
+                        with object l_oDB2
+                            :Table("d4a5eada-fd4c-4d6c-ae2e-446f45be2f19","UserAccessApplication")
+                            :Field("UserAccessApplication.AccessLevelDD" , ListOfRecordsToFix->UserAccessApplication_AccessLevel)
+                            :Field("UserAccessApplication.AccessLevel"   , 0)
+                            :Update(ListOfRecordsToFix->pk)
+                        endwith
+                    endscan
+                endwith
+
                 ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
             endif
 

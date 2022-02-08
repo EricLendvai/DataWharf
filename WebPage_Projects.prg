@@ -97,13 +97,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Where("UserAccessProject.fk_User = ^"    , oFcgi:p_iUserPk)
             :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
             :SQL(@l_aSQLResult)
-            if l_oDB1:Tally == 1
+            if :Tally == 1
                 l_nAccessLevelML := l_aSQLResult[1,1]
             else
                 l_nAccessLevelML := 0
             endif
         endwith
-
     case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
         l_nAccessLevelML := 2
     case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access

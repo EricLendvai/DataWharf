@@ -105,18 +105,17 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     do case
     case oFcgi:p_nUserAccessMode <= 1  // Application access levels
         with object l_oDB1
-            :Table("296720ff-9cea-4b71-ba4c-05ba7a4212d0","UserAccessApplication")
+            :Table("b8b5925d-a527-4b7e-b097-31690d4db74a","UserAccessApplication")
             :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
             :Where("UserAccessApplication.fk_User = ^"    , oFcgi:p_iUserPk)
             :Where("UserAccessApplication.fk_Application = ^" ,l_iApplicationPk)
             :SQL(@l_aSQLResult)
-            if l_oDB1:Tally == 1
+            if :Tally == 1
                 l_nAccessLevelDD := l_aSQLResult[1,1]
             else
                 l_nAccessLevelDD := 0
             endif
         endwith
-
     case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
         l_nAccessLevelDD := 2
     case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
