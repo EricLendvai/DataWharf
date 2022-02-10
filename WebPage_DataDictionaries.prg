@@ -1345,7 +1345,7 @@ enddo
 
 do case
 case l_cActionOnSubmit == "Save"
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelDD >= 7
         //Save the Application
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1

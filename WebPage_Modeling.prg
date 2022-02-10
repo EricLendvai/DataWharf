@@ -411,7 +411,7 @@ case l_cURLAction == "SelectProject"
 case l_cURLAction == "ListModels"
     l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
     l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project: ]+l_oDataHeader:Project_Name+[</span></div>]
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<div class="px-3 py-2 align-middle"><a class="btn btn-primary rounded align-middle" href="]+l_cSitePath+[Modeling/NewModel/]+l_oDataHeader:Project_LinkUID+[/">New ]+oFcgi:p_ANFModel+[</a></div>]
     endif
     l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Modeling/">Other Projects</a></div>]
@@ -420,7 +420,7 @@ case l_cURLAction == "ListModels"
     l_cHtml += ModelListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_Name)
 
 case l_cURLAction == "NewModel"
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
         // l_cHtml +=     [<div class="container-fluid">]
             l_cHtml += [<div class="input-group">]
@@ -1444,7 +1444,7 @@ l_cModelDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDesc
 
 do case
 case l_cActionOnSubmit == "Save"
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelML >= 7
         do case
         case empty(l_cModelName)
             l_cErrorMessage := "Missing Name"
@@ -1503,7 +1503,7 @@ case l_cActionOnSubmit == "Cancel"
     endif
 
 case l_cActionOnSubmit == "Delete"   // Model
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelML >= 7
         if CheckIfAllowDestructiveModelDelete(l_iModelPk)
             l_cErrorMessage := CascadeDeleteModel(par_iProjectPk,l_iModelPk)
             if empty(l_cErrorMessage)
