@@ -45,6 +45,9 @@ local l_nPort
 local l_iAssociationPk_Previous
 local l_iEntityPk_Previous
 local l_iEntityPk_Current
+local l_cEndPointLower_Previous
+local l_cEndPointUpper_Previous
+local l_cEndPointName_Previous
 
 local l_cLabel
 local l_cDescription
@@ -559,13 +562,18 @@ select ListOfEdgesEntityEntity
 l_iAssociationPk_Previous := 0
 l_iEntityPk_Previous      := 0
 l_iEntityPk_Current       := 0
+l_cEndPointLower_Previous := ""
+l_cEndPointUpper_Previous := ""
+l_cEndPointName_Previous := ""
 // Altd()
 scan all
     if ListOfEdgesEntityEntity->Association_pk == l_iAssociationPk_Previous
         //Build the edge between 2 entities
         l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
 
-        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]  // ,arrows:"middle"
+        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+[",label:"]+ListOfEdgesEntityEntity->Association_Name+["]
+        l_cHtml += [,labelTo:"]+ListOfEdgesEntityEntity->Endpoint_Name+[\n]+ListOfEdgesEntityEntity->Endpoint_BoundLower+[..]+ListOfEdgesEntityEntity->Endpoint_BoundUpper+["]  // ,arrows:"middle"
+        l_cHtml += [,labelFrom:"]+l_cEndPointName_Previous+[\n]+l_cEndPointLower_Previous+[..]+l_cEndPointUpper_Previous+["]  // ,arrows:"middle"
         l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
         // l_cHtml += [, smooth: { type: "diagonalCross" }]
         l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
@@ -574,6 +582,9 @@ scan all
     else
         l_iAssociationPk_Previous := ListOfEdgesEntityEntity->Association_pk
         l_iEntityPk_Previous      := ListOfEdgesEntityEntity->Entity_pk
+        l_cEndPointLower_Previous := ListOfEdgesEntityEntity->Endpoint_BoundLower
+        l_cEndPointUpper_Previous := ListOfEdgesEntityEntity->Endpoint_BoundUpper
+        l_cEndPointName_Previous := ListOfEdgesEntityEntity->Endpoint_Name
     endif
 endscan
 
