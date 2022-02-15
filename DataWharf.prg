@@ -73,8 +73,8 @@ class MyFcgi from hb_Fcgi
     data p_ANFAssociations  init "Associations"
     data p_ANFAttribute     init "Attribute"
     data p_ANFAttributes    init "Attributes"
-    data p_ANFDataType      init "DataType"
-    data p_ANFDataTypes     init "DataTypes"
+    data p_ANFDataType      init "Data Type"
+    data p_ANFDataTypes     init "Data Types"
     data p_ANFPackage       init "Package"
     data p_ANFPackages      init "Packages"
 
@@ -259,6 +259,25 @@ with object ::p_o_SQLConnection
                 ::p_o_SQLConnection:DeleteField("public.DiagramEntity","fk_ConceptualDiagram")
             endif
             l_iCurrentDataVersion := 8
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 9
+            with object l_oDB1
+                :Table("dcbb495b-7a14-4ba0-9d2b-eefc5a41fac3","ModelingDiagram")
+                :Column("ModelingDiagram.pk" , "pk")
+                :Where([Length(Trim(ModelingDiagram.LinkUID)) = 0])
+                :SQL("ListOfModelingDiagramToUpdate")
+                select ListOfModelingDiagramToUpdate
+                scan all
+                    with object l_oDB2
+                        :Table("214e97ca-df84-4b5a-bf7d-f4a1ba22b24e","ModelingDiagram")
+                        :Field("ModelingDiagram.LinkUID" , ::p_o_SQLConnection:GetUUIDString())
+                        :Update(ListOfModelingDiagramToUpdate->pk)
+                    endwith
+                endscan
+            endwith
+            l_iCurrentDataVersion := 9
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------

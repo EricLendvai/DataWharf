@@ -26,9 +26,9 @@ local l_cProjectElement := "SETTINGS"  //Default Element
 
 local l_aSQLResult := {}
 
-local l_cURLAction          := "ListProjects"
+local l_cURLAction         := "ListProjects"
 local l_cURLProjectLinkUID := ""
-local l_cURLVersionCode     := ""
+local l_cURLVersionCode    := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 

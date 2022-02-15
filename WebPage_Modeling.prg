@@ -25,8 +25,6 @@ local l_hValues := {=>}
 
 local l_cModelingElement := "ENTITIES"  //Default to Entities
 
-local l_aSQLResult := {}
-
 local l_cURLAction  := "SelectProject"
 local l_cURLLinkUID := ""
 
@@ -59,7 +57,7 @@ oFcgi:TraceAdd("BuildPageModeling")
 // Modeling/NewModel/<Project.LinkUID>/
 // Modeling/ModelSettings/<Model.LinkUID>/
 
-// Modeling/ModelVisualize/<Model.LinkUID>/
+// Modeling/Visualize/<Model.LinkUID>/
 
 // Modeling/ListEntities/Model.LinkUID>/
 // Modeling/NewEntity/<Model.LinkUID>/
@@ -112,7 +110,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
 
-    case vfp_Inlist(l_cURLAction,"ModelSettings","ListEntities","ListAssociations","ListPackages","ListDataTypes","NewEntity","NewAssociation","NewPackage","NewDataType","ModelVisualize")
+    case vfp_Inlist(l_cURLAction,"ModelSettings","ListEntities","ListAssociations","ListPackages","ListDataTypes","NewEntity","NewAssociation","NewPackage","NewDataType","Visualize")
         with object l_oDB1
             :Table("eaa6b925-b225-4fe2-8eeb-a0afcefc3848","Model")
             :Column("Model.pk"       , "Model_pk")
@@ -346,7 +344,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"ModelSettings")
         l_cModelingElement := "SETTINGS"
 
-    case vfp_Inlist(l_cURLAction,"ModelVisualize")
+    case vfp_Inlist(l_cURLAction,"Visualize")
         l_cModelingElement := "VISUALIZE"
 
     otherwise
@@ -354,48 +352,28 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     endcase
 
-    //Update the oFCGI.p_ANF properties
-    with object oFcgi
-        :p_ANFModel        := nvl(l_oDataHeader:ANFModel       ,"Model")
-        :p_ANFModels       := nvl(l_oDataHeader:ANFModels      ,"Models")
-        :p_ANFEntity       := nvl(l_oDataHeader:ANFEntity      ,"Entity")
-        :p_ANFEntities     := nvl(l_oDataHeader:ANFEntities    ,"Entities")
-        :p_ANFAssociation  := nvl(l_oDataHeader:ANFAssociation ,"Association")
-        :p_ANFAssociations := nvl(l_oDataHeader:ANFAssociations,"Associations")
-        :p_ANFAttribute    := nvl(l_oDataHeader:ANFAttribute   ,"Attribute")
-        :p_ANFAttributes   := nvl(l_oDataHeader:ANFAttributes  ,"Attributes")
-        :p_ANFDataType     := nvl(l_oDataHeader:ANFDataType    ,"DataType")
-        :p_ANFDataTypes    := nvl(l_oDataHeader:ANFDataTypes   ,"DataTypes")
-        :p_ANFPackage      := nvl(l_oDataHeader:ANFPackage     ,"Package")
-        :p_ANFPackages     := nvl(l_oDataHeader:ANFPackages    ,"Packages")
-    endwith
-
-
     if l_lFoundHeaderInfo
-        l_iProjectPk   := l_oDataHeader:Project_pk
-        l_cProjectName := l_oDataHeader:Project_Name
+        //Update the oFCGI.p_ANF properties
+        with object oFcgi
+            :p_ANFModel        := nvl(l_oDataHeader:ANFModel       ,"Model")
+            :p_ANFModels       := nvl(l_oDataHeader:ANFModels      ,"Models")
+            :p_ANFEntity       := nvl(l_oDataHeader:ANFEntity      ,"Entity")
+            :p_ANFEntities     := nvl(l_oDataHeader:ANFEntities    ,"Entities")
+            :p_ANFAssociation  := nvl(l_oDataHeader:ANFAssociation ,"Association")
+            :p_ANFAssociations := nvl(l_oDataHeader:ANFAssociations,"Associations")
+            :p_ANFAttribute    := nvl(l_oDataHeader:ANFAttribute   ,"Attribute")
+            :p_ANFAttributes   := nvl(l_oDataHeader:ANFAttributes  ,"Attributes")
+            :p_ANFDataType     := nvl(l_oDataHeader:ANFDataType    ,"Data Type")
+            :p_ANFDataTypes    := nvl(l_oDataHeader:ANFDataTypes   ,"Data Types")
+            :p_ANFPackage      := nvl(l_oDataHeader:ANFPackage     ,"Package")
+            :p_ANFPackages     := nvl(l_oDataHeader:ANFPackages    ,"Packages")
 
-        do case
-        case oFcgi:p_nUserAccessMode <= 1  // Project access levels
-            with object l_oDB1
-                :Table("b64f780e-dd6a-4409-878a-dd3de257a440","UserAccessProject")
-                :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
-                :Where("UserAccessProject.fk_User = ^"    ,oFcgi:p_iUserPk)
-                :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
-                :SQL(@l_aSQLResult)
-                if l_oDB1:Tally == 1
-                    l_nAccessLevelML := l_aSQLResult[1,1]
-                else
-                    l_nAccessLevelML := 0
-                endif
-            endwith
-        case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
-            l_nAccessLevelML := 2
-        case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
-            l_nAccessLevelML := 7
-        case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-            l_nAccessLevelML := 7
-        endcase
+        endwith
+
+        l_cProjectName := l_oDataHeader:Project_Name
+        l_iProjectPk   := l_oDataHeader:Project_pk
+
+        l_nAccessLevelML := GetAccessLevelMLForProject(l_iProjectPk)
     endif
 
 else
@@ -405,6 +383,9 @@ endif
 oFcgi:p_nAccessLevelML := l_nAccessLevelML
 
 do case
+case !l_lFoundHeaderInfo .and. l_cURLAction <> "SelectProject"
+    l_cHtml += [<div>Invalid UID</div>]
+
 case l_cURLAction == "SelectProject"
     l_cHtml += ProjectListFormBuild()
 
@@ -487,7 +468,7 @@ case l_cURLAction == "NewEntity"
     endif
 
 case l_cURLAction == "EditEntity"
-    if oFcgi:p_nAccessLevelML >= 5
+    if oFcgi:p_nAccessLevelML >= 2
         l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
 
         if oFcgi:isGet()
@@ -545,7 +526,7 @@ case l_cURLAction == "NewAttribute"
     endif
 
 case l_cURLAction == "EditAttribute"
-    if oFcgi:p_nAccessLevelML >= 5
+    if oFcgi:p_nAccessLevelML >= 2
         l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
 
         if oFcgi:isGet()
@@ -597,7 +578,7 @@ case l_cURLAction == "NewAssociation"
     endif
 
 case l_cURLAction == "EditAssociation"
-    if oFcgi:p_nAccessLevelML >= 5
+    if oFcgi:p_nAccessLevelML >= 2
         l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
 
         if oFcgi:isGet()
@@ -679,7 +660,7 @@ case l_cURLAction == "NewPackage"
     endif
 
 case l_cURLAction == "EditPackage"
-    if oFcgi:p_nAccessLevelML >= 5
+    if oFcgi:p_nAccessLevelML >= 2
         l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
 
         if oFcgi:isGet()
@@ -724,7 +705,7 @@ case l_cURLAction == "NewDataType"
     endif
 
 case l_cURLAction == "EditDataType"
-    if oFcgi:p_nAccessLevelML >= 5
+    if oFcgi:p_nAccessLevelML >= 2
         l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
 
         if oFcgi:isGet()
@@ -750,7 +731,7 @@ case l_cURLAction == "EditDataType"
 
     endif
 
-case l_cURLAction == "ModelVisualize"
+case l_cURLAction == "Visualize"
     l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
     
     if oFcgi:isGet()
@@ -766,7 +747,7 @@ case l_cURLAction == "ModelVisualize"
             if :Tally > 0
                 l_iModelingDiagramPk   := ListOfModelingDiagrams->ModelingDiagram_pk
 
-                l_cLinkUID = oFcgi:GetQueryString("InitialModelingDiagram")
+                l_cLinkUID = oFcgi:GetQueryString("InitialDiagram")
                 if !empty(l_cLinkUID)
                     select ListOfModelingDiagrams
                     locate for ListOfModelingDiagrams->ModelingDiagram_LinkUID == l_cLinkUID
@@ -778,6 +759,7 @@ case l_cURLAction == "ModelVisualize"
             else
                 //Add an initial Diagram File
                 :Table("bca28e8c-564b-4af2-9045-fd9845e6eedf","ModelingDiagram")
+                :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("ModelingDiagram.fk_Model",l_oDataHeader:Model_pk)
                 :Field("ModelingDiagram.Name","All Entities")
                 if :Add()
@@ -787,36 +769,27 @@ case l_cURLAction == "ModelVisualize"
         endwith
 
         if l_iModelingDiagramPk > 0
-            // l_cHtml += ModelingVisualizeDesignBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iModelingDiagramPk)
-            l_cHtml += ModelVisualizeDesignBuild(l_oDataHeader:Project_pk,;
-                                                 "",;
-                                                 l_oDataHeader:Model_pk,;
-                                                 l_oDataHeader:Model_Name,;
-                                                 l_oDataHeader:Model_LinkUID,;
-                                                 "",;                              //l_oDataHeader:par_cModelingDiagramLinkUID
-                                                 0)                                //l_oDataHeader:par_iModelingDiagramPk
+            l_cHtml += ModelingVisualizeDiagramBuild(l_oDataHeader,"",l_iModelingDiagramPk)
+
         endif
     else
         l_cFormName := oFcgi:GetInputValue("formname")
         do case
         case l_cFormName == "Design"
-            l_cHtml += ModelVisualizeDesignOnSubmit(l_oDataHeader:Project_pk,;
-                                                 "",;
-                                                 l_oDataHeader:Model_pk,;
-                                                 l_oDataHeader:Model_Name,;
-                                                 l_oDataHeader:Model_LinkUID,;
-                                                 "")                              //l_oDataHeader:par_cModelingDiagramLinkUID
+            l_cHtml += ModelingVisualizeDiagramOnSubmit(l_oDataHeader,"")
+
         case l_cFormName == "DiagramSettings"
-        //_M_
-        //  l_cHtml += ModelingVisualizeDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += ModelingVisualizeDiagramSettingsOnSubmit(l_oDataHeader,"")
+
         case l_cFormName == "MyDiagramSettings"
-        //_M_
-        //  l_cHtml += ModelingVisualizeMyDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += ModelingVisualizeMyDiagramSettingsOnSubmit(l_oDataHeader,"")
+
         endcase
     endif
 
 otherwise
-
+    l_cHtml += [<div>Bad URL</div>]
+    
 endcase
 
 return l_cHtml
@@ -897,7 +870,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
     //--------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ModelVisualize/]+par_cModelLinkUID+[/">Visualize</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/Visualize/]+par_cModelLinkUID+[/">Visualize</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
 l_cHtml += [</ul>]
@@ -3610,7 +3583,7 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<tr class="bg-secondary">]
                 // l_cHtml += [<tr class="table-dark">]
-                    l_cHtml += [<td class="ps-2 text-white">Entity (to Associate with)]
+                    l_cHtml += [<td class="ps-2 text-white">]+oFcgi:p_ANFEntity
                         l_cObjectName := "TextEndpoint_pk"+l_nCounterC
                         l_cHtml += [<input type="hidden" name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="]+Trans(l_iEndpoint_pk)+[">]
                     l_cHtml += [</td>]
@@ -4290,7 +4263,6 @@ local l_cBoundUpper   := nvl(hb_HGetDef(par_hValues,"BoundUpper",""),"")
 local l_cDescription  := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_iTypeCount
-local l_aSQLResult   := {}
 
 local l_oDB_ListOfDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -4902,4 +4874,32 @@ endif
 
 return l_cErrorMessage
 //=================================================================================================================
+function GetAccessLevelMLForProject(par_iProjectPk)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_nAccessLevelML := 0
+
+do case
+case oFcgi:p_nUserAccessMode <= 1  // Project access levels
+    with object l_oDB1
+        :Table("b64f780e-dd6a-4409-878a-dd3de257a440","UserAccessProject")
+        :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
+        :Where("UserAccessProject.fk_User = ^"    ,oFcgi:p_iUserPk)
+        :Where("UserAccessProject.fk_Project = ^" ,par_iProjectPk)
+        :SQL(@l_aSQLResult)
+        if l_oDB1:Tally == 1
+            l_nAccessLevelML := l_aSQLResult[1,1]
+        else
+            l_nAccessLevelML := 0
+        endif
+    endwith
+case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
+    l_nAccessLevelML := 2
+case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
+    l_nAccessLevelML := 7
+case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+    l_nAccessLevelML := 7
+endcase
+
+return l_nAccessLevelML
 //=================================================================================================================

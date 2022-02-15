@@ -77,7 +77,7 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/DataDictionarySettings/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryLoadSchema/<ApplicationLinkCode>/
 
-// DataDictionaries/ApplicationVisualize/<ApplicationLinkCode>/
+// DataDictionaries/Visualize/<ApplicationLinkCode>/
 
 // DataDictionaries/ListNameSpaces/<ApplicationLinkCode>/
 // DataDictionaries/NewNameSpace/<ApplicationLinkCode>/
@@ -174,7 +174,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionaryLoadSchema")
         l_cApplicationElement := "LOADSCHEMA"
 
-    case vfp_Inlist(l_cURLAction,"ApplicationVisualize")
+    case vfp_Inlist(l_cURLAction,"Visualize")
         l_cApplicationElement := "VISUALIZE"
 
     otherwise
@@ -201,28 +201,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         endif
     endif
 
-    do case
-    case oFcgi:p_nUserAccessMode <= 1  // Application access levels
-        with object l_oDB1
-            :Table("b5c9e3b7-9363-40d6-9831-d98a010425af","UserAccessApplication")
-            :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
-            :Where("UserAccessApplication.fk_User = ^"        ,oFcgi:p_iUserPk)
-            :Where("UserAccessApplication.fk_Application = ^" ,l_iApplicationPk)
-            :SQL(@l_aSQLResult)
-            if l_oDB1:Tally == 1
-                l_nAccessLevelDD := l_aSQLResult[1,1]
-            else
-                l_nAccessLevelDD := 0
-            endif
-        endwith
-
-    case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
-        l_nAccessLevelDD := 2
-    case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
-        l_nAccessLevelDD := 7
-    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-        l_nAccessLevelDD := 7
-    endcase
+    if l_iApplicationPk <= 0
+        l_cHtml += [<div>Bad Application</div>]
+        return l_cHtml
+    else
+        l_nAccessLevelDD := GetAccessLevelDDForApplication(l_iApplicationPk)
+    endif
 
 else
     l_cURLAction := "ListDataDictionaries"
@@ -308,7 +292,7 @@ case l_cURLAction == "DataDictionaryLoadSchema"
         l_cHtml += l_cHtmlUnderHeader
     endif
 
-case l_cURLAction == "ApplicationVisualize"
+case l_cURLAction == "Visualize"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
     
     if oFcgi:isGet()
@@ -347,13 +331,13 @@ case l_cURLAction == "ApplicationVisualize"
         endwith
 
         if l_iDiagramPk > 0
-            l_cHtml += DataDictionaryVisualizeDesignBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iDiagramPk)
+            l_cHtml += DataDictionaryVisualizeDiagramBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,l_iDiagramPk)
         endif
     else
         l_cFormName := oFcgi:GetInputValue("formname")
         do case
         case l_cFormName == "Design"
-            l_cHtml += DataDictionaryVisualizeDesignOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += DataDictionaryVisualizeDiagramOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "DiagramSettings"
          l_cHtml += DataDictionaryVisualizeDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "MyDiagramSettings"
@@ -969,6 +953,7 @@ case l_cURLAction == "EditTag"
     endif
 
 otherwise
+    l_cHtml += [<div>Bad URL</div>]
 
 endcase
 
@@ -1116,7 +1101,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
     endif
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/ApplicationVisualize/]+par_cURLApplicationLinkCode+[/">Visualize</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/">Visualize</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
 l_cHtml += [</ul>]
@@ -4996,8 +4981,6 @@ local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_aSQLResult   := {}
-
 oFcgi:TraceAdd("EnumValueEditFormBuild")
 
 // local l_ipcount := pcount()
@@ -6075,4 +6058,31 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
+function GetAccessLevelDDForApplication(par_iApplicationPk)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_nAccessLevelDD := 0
+do case
+case oFcgi:p_nUserAccessMode <= 1  // Application access levels
+    with object l_oDB1
+        :Table("b5c9e3b7-9363-40d6-9831-d98a010425af","UserAccessApplication")
+        :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
+        :Where("UserAccessApplication.fk_User = ^"        ,oFcgi:p_iUserPk)
+        :Where("UserAccessApplication.fk_Application = ^" ,par_iApplicationPk)
+        :SQL(@l_aSQLResult)
+        if l_oDB1:Tally == 1
+            l_nAccessLevelDD := l_aSQLResult[1,1]
+        else
+            l_nAccessLevelDD := 0
+        endif
+    endwith
+
+case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
+    l_nAccessLevelDD := 2
+case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
+    l_nAccessLevelDD := 7
+case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+    l_nAccessLevelDD := 7
+endcase
+return l_nAccessLevelDD
 //=================================================================================================================

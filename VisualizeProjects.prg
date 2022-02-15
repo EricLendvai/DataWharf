@@ -4,7 +4,7 @@ memvar oFcgi
 //This File is STILL UNDER DEVELOPMENT!!!
 
 //=================================================================================================================
-function ModelVisualizeDesignBuild(par_iProjectPk,par_cErrorText,par_iModelPk,par_cModelName,par_cModelLinkUID,par_cModelingDiagramLinkUID,par_iModelingDiagramPk)
+function ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk)
 local l_cHtml := []
 local l_oDB1
 local l_oDB_Project                          := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -30,6 +30,9 @@ local l_iModelingDiagramPk
 local l_cPackage_FullName
 local l_lShowPackage
 
+local l_cLabelLower
+local l_cLabelUpper
+
 local l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
 local l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
 local l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
@@ -43,9 +46,12 @@ local l_iAssociationPk_Previous
 local l_iEntityPk_Previous
 local l_iEntityPk_Current
 
+local l_cLabel
+local l_cDescription
+
 local l_cJS
 
-oFcgi:TraceAdd("ModelVisualizeDesignBuild")
+oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
 
 l_cHtml += [<script type="text/javascript">]
 l_cHtml += 'function KeywordSearch(par_cListOfWords, par_cString) {'
@@ -68,7 +74,7 @@ with object l_oDB_ListOfModelingDiagrams
     :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
     :Column("ModelingDiagram.Name"       ,"ModelingDiagram_Name")
     :Column("Upper(ModelingDiagram.Name)","Tag1")
-    :Where("ModelingDiagram.fk_Model = ^" ,par_iModelPk)
+    :Where("ModelingDiagram.fk_Model = ^" ,par_oDataHeader:Model_pk)
     :OrderBy("Tag1")
     :SQL("ListOfModelingDiagrams")
 endwith
@@ -88,7 +94,6 @@ with object l_oDB1
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
     l_cModelingDiagram_LinkUID := l_oDataModelingDiagram:ModelingDiagram_LinkUID
-
 endwith
 
 with object l_oDB_ListOfEntities
@@ -105,7 +110,7 @@ with object l_oDB_ListOfEntities
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
-        :Where("Entity.fk_Model = ^",par_iModelPk)
+        :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :SQL("ListOfEntities")
 
     else
@@ -142,7 +147,7 @@ with object l_oDB_ListOfAssociationNodes
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
         :Join("left","Package","","Association.fk_Package = Package.pk")
-        :Where("Entity.fk_Model = ^",par_iModelPk)
+        :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :Where("Association.NumberOfEndpoints > 2")
         :SQL("ListOfAssociationNodes")
 
@@ -173,7 +178,6 @@ with object l_oDB_ListOfAssociationNodes
 
 endwith
 
-
 with object l_oDB_ListOfEdgesEntityAssociationNode
     if l_nNumberOfEntityInModelingDiagram == 0
         // All Entities in Model
@@ -188,7 +192,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
-        :Where("Entity.fk_Model = ^",par_iModelPk)
+        :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :Where("Association.NumberOfEndpoints > 2")
         :SQL("ListOfEdgesEntityAssociationNode")
 
@@ -228,37 +232,38 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
         :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
-        :Where("Association.fk_Model = ^",par_iModelPk)
+        :Where("Association.fk_Model = ^",par_oDataHeader:Model_pk)
         :Where("Association.NumberOfEndpoints = 2")
         :OrderBy("Association_pk")
-        // :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityEntity")
         //Pairs of records should be created
 
  //ExportTableToHtmlFile("ListOfEdgesEntityEntity","d:\PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     else
-        //_M_
-
         // A subset of Entities
-        // :Table("DiagramEntity")
-        // :Distinct(.t.)
-        // :Column("Entity.pk"           ,"Entity_pk")
-        // :Column("Association.pk"      ,"Association_pk")
-        // :Column("Endpoint.pk"         ,"Endpoint_pk")
-        // :Column("Endpoint.Name"       ,"Endpoint_Name")
-        // :Column("Endpoint.Description","Endpoint_Description")
-        // :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
-        // :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
-        // :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
-        // :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
-        // :Where("Association.NumberOfEndpoints = 2")
-        // :SQL("ListOfEdgesEntityAssociationNode")
+        :Table("1be77b22-bda4-4138-bce0-88ae38bd76c4","DiagramEntity")
+        :Distinct(.t.)
+        :Column("Association.pk"         ,"Association_pk")
+        :Column("Association.Name"       ,"Association_Name")
+        :Column("Association.Description","Association_Description")
+        :Column("Endpoint.pk"            ,"Endpoint_pk")
+        :Column("Endpoint.Name"          ,"Endpoint_Name")
+        :Column("Endpoint.Description"   ,"Endpoint_Description")
+        :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
+        :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
+        :Column("Entity.pk"              ,"Entity_pk")
+        :Join("inner","Entity"     ,"","DiagramEntity.fk_Entity = Entity.pk")
+        :Join("inner","Endpoint"   ,"","Endpoint.fk_Entity = Entity.pk")
+        :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
+        :Where("DiagramEntity.fk_ModelingDiagram = ^",l_iModelingDiagramPk)
+        :Where("Association.NumberOfEndpoints = 2")
+        :OrderBy("Association_pk")
+        :SQL("ListOfEdgesEntityEntity")
+        //It is possible that some non pairs are created.
 
     endif
 endwith
-
-
 
 // l_cHtml += '<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>'
 
@@ -270,7 +275,7 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2021_11_11_001/vis-network.min.js"></script>]
+l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -333,6 +338,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cURL += ":"+Trans(l_nPort)
         endif
         l_cURL += oFcgi:RequestSettings["SitePath"]
+        // l_cURL += [Modeling/Visualize/]+par_cModelLinkUID+[/]
         l_cURL += oFcgi:RequestSettings["Path"]
         l_cURL += [?InitialDiagram=]+l_cModelingDiagram_LinkUID
 
@@ -368,7 +374,6 @@ else
         l_nDiagramInfoScale := 1
     endif
 endif
-
 
 l_cHtml += [<td valign="top">]  // width="100%"
 if l_nDiagramInfoScale == 1
@@ -407,10 +412,10 @@ scan all
         l_cEntityDescription := ""
     else
         l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[\]     => [\\],;
-                                                                              chr(10) => [],;
-                                                                              chr(13) => [\n],;
-                                                                              ["]     => [\"],;
-                                                                              [']     => [\']} )
+                                                                                  chr(10) => [],;
+                                                                                  chr(13) => [\n],;
+                                                                                  ["]     => [\"],;
+                                                                                  [']     => [\']} )
     endif
 
     if empty(l_cEntityDescription)
@@ -462,10 +467,10 @@ scan all
         l_cAssociationDescription := ""
     else
         l_cAssociationDescription := hb_StrReplace(ListOfAssociationNodes->Association_Description,{[\]     => [\\],;
-                                                                              chr(10) => [],;
-                                                                              chr(13) => [\n],;
-                                                                              ["]     => [\"],;
-                                                                              [']     => [\']} )
+                                                                                                    chr(10) => [],;
+                                                                                                    chr(13) => [\n],;
+                                                                                                    ["]     => [\"],;
+                                                                                                    [']     => [\']} )
     endif
 
     if empty(l_cAssociationDescription)
@@ -502,17 +507,50 @@ l_cHtml += ']);'
 
 //SendToClipboard(l_cHtml)
 
-//_M_
+
 // create an array with edges
 
 l_cHtml += 'var edges = new vis.DataSet(['
 
-//_M_
 select ListOfEdgesEntityAssociationNode
 scan all
     l_cHtml += [{id:"L]+Trans(ListOfEdgesEntityAssociationNode->Endpoint_pk)+[",from:"A]+Trans(ListOfEdgesEntityAssociationNode->Association_pk)+[",to:"E]+Trans(ListOfEdgesEntityAssociationNode->Entity_pk)+["]  // ,arrows:"middle"
     l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
     // l_cHtml += [, smooth: { type: "diagonalCross" }]
+    l_cLabel := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Name,"")
+    if !empty(l_cLabel)
+        l_cHtml += [,label:"]
+        l_cHtml += hb_StrReplace(l_cLabel,{[\]     => [\\],;
+                                           ["]     => [\"],;
+                                           [']     => [\']} )
+        l_cHtml += ["]
+    endif
+
+    l_cLabelLower := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundLower,"")
+    l_cLabelUpper := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundUpper,"")
+    if !empty(l_cLabelLower) .and. !empty(l_cLabelUpper)
+        l_cHtml += [,labelTo:"to\n]
+        l_cHtml += hb_StrReplace(l_cLabelLower+".."+l_cLabelUpper,{[\]     => [\\],;
+                                                                   ["]     => [\"],;
+                                                                   [']     => [\']} )
+        l_cHtml += ["]
+    endif
+
+    l_cDescription := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Description,"")
+    if !empty(l_cDescription)
+        l_cHtml += [,title:"]
+        l_cHtml += hb_StrReplace(l_cDescription,{[\]     => [\\],;
+                                                 chr(10) => [],;
+                                                 chr(13) => [\n],;
+                                                 ["]     => [\"],;
+                                                 [']     => [\']} )
+        l_cHtml += ["]
+    endif
+
+// l_cHtml += [,arrows:{from:{enabled: true,type:"circle"}}]
+// l_cHtml += [,arrows:{from:{enabled: true,type:"image",src: "https://visjs.org/images/visjs_logo.png"}}]
+// https://harbour.wiki/images/harbour.svg
+
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 endscan
 
@@ -539,23 +577,6 @@ scan all
     endif
 endscan
 
-        // :Table("Association")
-        // :Column("Association.pk"         ,"Association_pk")
-        // :Column("Association.Name"       ,"Association_Name")
-        // :Column("Association.Description","Association_Description")
-        // :Column("Endpoint.pk"            ,"Endpoint_pk")
-        // :Column("Endpoint.Name"          ,"Endpoint_Name")
-        // :Column("Endpoint.Description"   ,"Endpoint_Description")
-        // :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
-        // :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        // :Column("Entity.pk"              ,"Entity_pk")
-        // :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
-        // :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
-        // :Where("Association.fk_Model = ^",par_iModelPk)
-        // :Where("Association.NumberOfEndpoints = 2")
-        // :OrderBy("Association.pk")
-        // :SQL("ListOfEdgesEntityEntity")
-
 l_cHtml += ']);'
 
 // create a network
@@ -578,13 +599,12 @@ l_cHtml += [  network = new vis.Network(container, data, options);]  //var
 l_cHtml += ' network.on("click", function (params) {'
 l_cHtml += '   params.event = "[original event]";'
 
-//_M_
 // Code to filter Attributes
 l_cJS := [$("#AttributeSearch").change(function() {]
 l_cJS +=    [var l_keywords =  $(this).val();]
 l_cJS +=    [$(".SpanAttributeName").each(function (par_SpanEntity){]+;
-                                                           [var l_cApplicationName = $(this).text();]+;
-                                                           [if (KeywordSearch(l_keywords,l_cApplicationName)) {$(this).parent().parent().parent().show();} else {$(this).parent().parent().parent().hide();}]+;
+                                                           [var l_cAttributeName = $(this).text();]+;
+                                                           [if (KeywordSearch(l_keywords,l_cAttributeName)) {$(this).parent().parent().parent().show();} else {$(this).parent().parent().parent().hide();}]+;
                                                            [});]
 l_cJS += [});]
 
@@ -598,8 +618,7 @@ l_cJS +=    [}]
 l_cJS += [});]
 
 // Code to enable the "All" and "Core Only" button
-l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");$(".AttributeNotCore").show(),$(".AttributeCore").show();});]
-l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#AttributeSearch").val("");$(".AttributeNotCore").hide(),$(".AttributeCore").show();});]
+l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");});]
 
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetMLInfo","modelingdiagrampk='+Trans(l_iModelingDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
@@ -621,9 +640,8 @@ oFcgi:p_cjQueryScript += [MakeVis();]
 // oFcgi:p_cjQueryScript += [$(document).on("keydown", "form", function(event) { return event.key != "Enter";});] // To prevent enter key from submitting form
 
 return l_cHtml
-
 //=================================================================================================================
-function ModelVisualizeDesignOnSubmit(par_iProjectPk,par_cErrorText,par_iModelPk,par_cModelName,par_cModelLinkUID,par_cModelingDiagramLinkUID)
+function ModelingVisualizeDiagramOnSubmit(par_oDataHeader,par_cErrorText)
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
@@ -639,22 +657,23 @@ local l_lSelected
 local l_cEntityPk
 local l_iEntityPk
 
-oFcgi:TraceAdd("ModelVisualizeDesignOnSubmit")
+oFcgi:TraceAdd("ModelingVisualizeDiagramOnSubmit")
 
 l_iModelingDiagram_pk := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 
 do case
 case l_cActionOnSubmit == "Show"
-    l_cHtml += ModelVisualizeDesignBuild(par_iProjectPk,par_cErrorText,par_iModelPk,par_cModelName,par_cModelLinkUID,par_cModelingDiagramLinkUID,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+                                            
+//Stopped below.
+case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
+    l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
 
-// case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
-//     l_cHtml := ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+case l_cActionOnSubmit == "MyDiagramSettings"
+    l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
 
-// case l_cActionOnSubmit == "MyDiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
-//     l_cHtml := ModelVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
-
-// case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelML >= 4
-//     l_cHtml := ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
+case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelML >= 4
+   l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,0)
 
 case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
@@ -665,7 +684,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
         :Field("ModelingDiagram.VisPos",l_cNodePositions)
         if empty(l_iModelingDiagram_pk)
             //Add an initial Diagram File this should not happen, since record was already added
-            :Field("ModelingDiagram.fk_Model",par_iModelPk)
+            :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
             :Field("ModelingDiagram.Name"    ,[All ]+oFcgi:p_ANFEntities)
             :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
@@ -676,210 +695,213 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
         endif
     endwith
 
-    // if "UpdateEntitySelection" $ l_cActionOnSubmit
-    //     l_cListOfRelatedEntityPks := SanitizeInput(oFcgi:GetInputValue("TextListOfRelatedEntityPks"))
-    //     l_aListOfRelatedEntityPks := hb_ATokens(l_cListOfRelatedEntityPks,"*")
-    //     if len(l_aListOfRelatedEntityPks) > 0
-    //         // Get the current list of Entities
+    if "UpdateEntitySelection" $ l_cActionOnSubmit
+        l_cListOfRelatedEntityPks := SanitizeInput(oFcgi:GetInputValue("TextListOfRelatedEntityPks"))
+        l_aListOfRelatedEntityPks := hb_ATokens(l_cListOfRelatedEntityPks,"*")
+        if len(l_aListOfRelatedEntityPks) > 0
+            // Get the current list of Entities
 
-    //         with Object l_oDB1
-    //             :Table("DiagramEntity")
-    //             :Distinct(.t.)
-    //             :Column("Entity.pk","pk")
-    //             :Column("DiagramEntity.pk","DiagramEntity_pk")
-    //             :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-    //             :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-    //             :Where("DiagramEntity.fk_Diagram = ^" , l_iModelingDiagram_pk)
-    //             :SQL("ListOfCurrentEntitiesInModelingDiagram")
-    //             l_nNumberOfCurrentEntitiesInDiagram := :Tally
-    //             if l_nNumberOfCurrentEntitiesInDiagram > 0
-    //                 with object :p_oCursor
-    //                     :Index("pk","pk")
-    //                     :CreateIndexes()
-    //                     :SetOrder("pk")
-    //                 endwith        
-    //             endif
-    //         endwith
-    //         if l_nNumberOfCurrentEntitiesInDiagram < 0
-    //             //Failed to get current list of Entities in the diagram
-    //         else
-    //             if empty(l_nNumberOfCurrentEntitiesInDiagram)
-    //                 //Implicitly all Entities are in the diagram. So should formally add all of them except the unselected ones.
-    //                 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 with object l_oDB2
-    //                     :Table("Diagram")
-    //                     :Column("Entity.pk" , "Entity_pk")
-    //                     :Where("Diagram.pk = ^" , l_iModelingDiagram_pk)
-    //                     :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
-    //                     :Join("Inner","Entity","","Entity.fk_NameSpace = NameSpace.pk")
-    //                     :SQL("ListOfAllApplicationEntity")
-    //                     if :Tally > 0
-    //                         select ListOfAllApplicationEntity
-    //                         scan all
-    //                             if "*"+Trans(ListOfAllApplicationEntity->Entity_pk)+"*" $ "*" +l_cListOfRelatedEntityPks+ "*"  //One of the related Entities
-    //                                 // "CheckEntity"
-    //                                 l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllApplicationEntity->Entity_pk)) == "1")
-    //                             else
-    //                                 l_lSelected := .t.
-    //                             endif
-    //                             if l_lSelected
-    //                                 with object l_oDB3
-    //                                     :Table("DiagramEntity")
-    //                                     :Field("DiagramEntity.fk_Diagram" , l_iModelingDiagram_pk)
-    //                                     :Field("DiagramEntity.fk_Entity"   , ListOfAllApplicationEntity->Entity_pk)
-    //                                     :Add()
-    //                                 endwith
-    //                             endif
-    //                         endscan
-    //                     endif
-    //                 endwith
+            with Object l_oDB1
+                :Table("780204b4-f2d0-4981-a6d2-f37d14adf479","DiagramEntity")
+                :Distinct(.t.)
+                :Column("Entity.pk","pk")
+                :Column("DiagramEntity.pk","DiagramEntity_pk")
+                :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
+                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+                :SQL("ListOfCurrentEntitiesInModelingDiagram")
+                l_nNumberOfCurrentEntitiesInDiagram := :Tally
+                if l_nNumberOfCurrentEntitiesInDiagram > 0
+                    with object :p_oCursor
+                        :Index("pk","pk")
+                        :CreateIndexes()
+                        :SetOrder("pk")
+                    endwith        
+                endif
+            endwith
+            if l_nNumberOfCurrentEntitiesInDiagram < 0
+                //Failed to get current list of Entities in the diagram
+            else
+                if empty(l_nNumberOfCurrentEntitiesInDiagram)
+                    //Implicitly all Entities are in the diagram. So should formally add all of them except the unselected ones.
+                    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB2
+                        // :Table("1d6f5c96-a2c3-4623-a91b-60b1243a3a00","ModelingDiagram")
+                        // :Column("Entity.pk" , "Entity_pk")
+                        // :Join("Inner","Entity","","ModelingDiagram.fk_Entity = Entity.pk")
+                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagram_pk)
+                        // :SQL("ListOfAllModelEntity")
 
-    //             else
-    //                 //Add or remove only the related Entities that were listed.
-    //                 l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 for each l_cEntityPk in l_aListOfRelatedEntityPks
-    //                     l_lSelected := (oFcgi:GetInputValue("CheckEntity"+l_cEntityPk) == "1")
+                        :Table("1d6f5c96-a2c3-4623-a91b-60b1243a3a00","Entity")
+                        :Column("Entity.pk" , "Entity_pk")
+                        :Where("Entity.fk_Model = ^" , par_oDataHeader:Model_pk)
+                        :SQL("ListOfAllModelEntity")
 
-    //                     if l_lSelected
-    //                         if !VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
-    //                             //Add if not present
-    //                             with object l_oDB3
-    //                                 :Table("DiagramEntity")
-    //                                 :Field("DiagramEntity.fk_Diagram" , l_iModelingDiagram_pk)
-    //                                 :Field("DiagramEntity.fk_Entity"   , val(l_cEntityPk))
-    //                                 :Add()
-    //                             endwith
-    //                         endif
-    //                     else
-    //                         if VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
-    //                             //Remove if present
-    //                             l_oDB3:Delete("DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->ModelingDiagramEntity_pk)
-    //                         endif
-    //                     endif
+                        if :Tally > 0
+                            select ListOfAllModelEntity
+                            scan all
+                                if "*"+Trans(ListOfAllModelEntity->Entity_pk)+"*" $ "*" +l_cListOfRelatedEntityPks+ "*"  //One of the related Entities
+                                    // "CheckEntity"
+                                    l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllModelEntity->Entity_pk)) == "1")
+                                else
+                                    l_lSelected := .t.
+                                endif
+                                if l_lSelected
+                                    with object l_oDB3
+                                        :Table("5f908e53-e3ec-402e-acb2-973fad4f9888","DiagramEntity")
+                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                        :Field("DiagramEntity.fk_Entity"          , ListOfAllModelEntity->Entity_pk)
+                                        :Add()
+                                    endwith
+                                endif
+                            endscan
+                        endif
+                    endwith
 
-    //                 endfor
-    //             endif
-    //         endif
+                else
+                    //Add or remove only the related Entities that were listed.
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    for each l_cEntityPk in l_aListOfRelatedEntityPks
+                        l_lSelected := (oFcgi:GetInputValue("CheckEntity"+l_cEntityPk) == "1")
 
-    //     endif
-    // endif
+                        if l_lSelected
+                            if !VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
+                                //Add if not present
+                                with object l_oDB3
+                                    :Table("5c2c3a2c-349b-4949-aba7-cb00875263d6","DiagramEntity")
+                                    :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                    :Field("DiagramEntity.fk_Entity"          , val(l_cEntityPk))
+                                    :Add()
+                                endwith
+                            endif
+                        else
+                            if VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
+                                //Remove if present
+                                l_oDB3:Delete("8b24f8d0-c79b-43be-aeb3-339bc4b53dc3","DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->DiagramEntity_pk)
+                            endif
+                        endif
 
-    // if "RemoveEntity" $ l_cActionOnSubmit
-    //     l_iEntityPk := val(oFcgi:GetInputValue("TextEntityPkToRemove"))
-    //     if l_iEntityPk > 0
-    //         // Get the current list of Entities
+                    endfor
+                endif
+            endif
 
-    //         with Object l_oDB1
-    //             :Table("DiagramEntity")
-    //             :Distinct(.t.)
-    //             :Column("Entity.pk","pk")
-    //             :Column("DiagramEntity.pk","DiagramEntity_pk")
-    //             :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-    //             :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-    //             :Where("DiagramEntity.fk_Diagram = ^" , l_iModelingDiagram_pk)
-    //             :SQL("ListOfCurrentEntitiesInModelingDiagram")
-    //             l_nNumberOfCurrentEntitiesInDiagram := :Tally
-    //             if l_nNumberOfCurrentEntitiesInDiagram > 0
-    //                 with object :p_oCursor
-    //                     :Index("pk","pk")
-    //                     :CreateIndexes()
-    //                     :SetOrder("pk")
-    //                 endwith        
-    //             endif
-    //         endwith
-    //         if l_nNumberOfCurrentEntitiesInDiagram < 0
-    //             //Failed to get current list of Entities in the diagram
-    //         else
-    //             if empty(l_nNumberOfCurrentEntitiesInDiagram)
-    //                 //Implicitly all Entities are in the diagram. So should formally add all of them except the the current one.
-    //                 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 with object l_oDB2
-    //                     :Table("Diagram")
-    //                     :Column("Entity.pk" , "Entity_pk")
-    //                     :Where("Diagram.pk = ^" , l_iModelingDiagram_pk)
-    //                     :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
-    //                     :Join("Inner","Entity","","Entity.fk_NameSpace = NameSpace.pk")
-    //                     :SQL("ListOfAllApplicationEntity")
-    //                     if :Tally > 0
-    //                         select ListOfAllApplicationEntity
-    //                         scan all
-    //                             if ListOfAllApplicationEntity->Entity_pk <> l_iEntityPk
-    //                                 with object l_oDB3
-    //                                     :Table("DiagramEntity")
-    //                                     :Field("DiagramEntity.fk_Diagram" , l_iModelingDiagram_pk)
-    //                                     :Field("DiagramEntity.fk_Entity"   , ListOfAllApplicationEntity->Entity_pk)
-    //                                     :Add()
-    //                                 endwith
-    //                             endif
-    //                         endscan
-    //                     endif
-    //                 endwith
+        endif
+    endif
 
-    //             else
-    //                 //Remove only the current Entities.
-    //                 l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    //                 if VFP_Seek(l_iEntityPk,"ListOfCurrentEntitiesInModelingDiagram","pk")
-    //                     //Remove if still present
-    //                     l_oDB3:Delete("DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->ModelingDiagramEntity_pk)
-    //                 endif
-    //             endif
-    //         endif
+    if "RemoveEntity" $ l_cActionOnSubmit
+        l_iEntityPk := val(oFcgi:GetInputValue("TextEntityPkToRemove"))
+        if l_iEntityPk > 0
+            // Get the current list of Entities
 
-    //     endif
-    // endif
+            with Object l_oDB1
+                :Table("75568640-b583-4623-beb8-86fe74d1126f","DiagramEntity")
+                :Distinct(.t.)
+                :Column("Entity.pk","pk")
+                :Column("DiagramEntity.pk","DiagramEntity_pk")
+                :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
+                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+                :SQL("ListOfCurrentEntitiesInModelingDiagram")
+                l_nNumberOfCurrentEntitiesInDiagram := :Tally
+                if l_nNumberOfCurrentEntitiesInDiagram > 0
+                    with object :p_oCursor
+                        :Index("pk","pk")
+                        :CreateIndexes()
+                        :SetOrder("pk")
+                    endwith        
+                endif
+            endwith
+            if l_nNumberOfCurrentEntitiesInDiagram < 0
+                //Failed to get current list of Entities in the diagram
+            else
+                if empty(l_nNumberOfCurrentEntitiesInDiagram)
+                    //Implicitly all Entities are in the diagram. So should formally add all of them except the the current one.
+                    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB2
+                        // :Table("0830f12f-bcdc-4057-8907-d615771e4b4b","ModelingDiagram")
+                        // :Column("Entity.pk" , "Entity_pk")
+                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagram_pk)
+                        // :Join("Inner","Entity","","ModelingDiagram.fk_Entity = Entity.pk")
+                        // :SQL("ListOfAllModelEntity")
 
-    l_cHtml += ModelVisualizeDesignBuild(par_iProjectPk,;
-                                            "",;
-                                            par_iModelPk,;
-                                            par_cModelName,;
-                                            par_cModelLinkUID,;
-                                            par_cModelingDiagramLinkUID,;                              //l_oDataHeader:par_cModelingDiagramLinkUID
-                                            l_iModelingDiagram_pk)                                //l_oDataHeader:par_iModelingDiagramPk
+                        :Table("0830f12f-bcdc-4057-8907-d615771e4b4b","Entity")
+                        :Column("Entity.pk" , "Entity_pk")
+                        :Where("Entity.fk_Model = ^" , par_oDataHeader:Model_pk)
+                        :SQL("ListOfAllModelEntity")
 
+                        if :Tally > 0
+                            select ListOfAllModelEntity
+                            scan all
+                                if ListOfAllModelEntity->Entity_pk <> l_iEntityPk
+                                    with object l_oDB3
+                                        :Table("0ea9ad9d-b3b4-41f1-ac73-e1a9b06002d9","DiagramEntity")
+                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                        :Field("DiagramEntity.fk_Entity"          , ListOfAllModelEntity->Entity_pk)
+                                        :Add()
+                                    endwith
+                                endif
+                            endscan
+                        endif
+                    endwith
+
+                else
+                    //Remove only the current Entities.
+                    l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    if VFP_Seek(l_iEntityPk,"ListOfCurrentEntitiesInModelingDiagram","pk")
+                        //Remove if still present
+                        l_oDB3:Delete("d17d6980-88a1-46b1-8b64-1d1c93697d94","DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->DiagramEntity_pk)
+                    endif
+                endif
+            endif
+
+        endif
+    endif
+
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,"",l_iModelingDiagram_pk)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-function ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iModelingDiagramPk,par_hValues)
+function ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk,par_hValues)
+
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_hValues      := hb_DefaultValue(par_hValues,{=>})
 local l_CheckBoxId
 local l_lShowPackage
-local l_cNameSpace_Name
+local l_cPackage_FullName
 local l_lNodeShowDescription
 
 local l_oDB1
 local l_oData
 
-oFcgi:TraceAdd("ModelVisualizeDiagramSettingsBuild")
+oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-if pcount() < 6
+if pcount() < 8
     if par_iModelingDiagramPk > 0
         // Initial Build, meaning not from a failing editing
         with object l_oDB1
             //Get current Diagram Name
-            :Table("a9d0a31d-e5ca-44a4-979f-7c6f1f1cf395","Diagram")
-            :Column("Diagram.name"               ,"Diagram_name")
-            :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
+            :Table("a9d0a31d-e5ca-44a4-979f-7c6f1f1cf395","ModelingDiagram")
+            :Column("ModelingDiagram.name"               ,"ModelingDiagram_name")
+            :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
             l_oData := :Get(par_iModelingDiagramPk)
             if :Tally == 1
-                l_hValues["Name"]                := l_oData:Diagram_name
-                l_hValues["NodeShowDescription"] := l_oData:Diagram_NodeShowDescription
+                l_hValues["Name"]                := l_oData:ModelingDiagram_name
+                l_hValues["NodeShowDescription"] := l_oData:ModelingDiagram_NodeShowDescription
             endif
 
             //Get the current list of selected Entities
             :Table("cdd3a770-d3b0-4a00-8531-324ee83accc7","DiagramEntity")
             :Distinct(.t.)
             :Column("Entity.pk","pk")
-            :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-            :Where("DiagramEntity.fk_Diagram = ^" , par_iModelingDiagramPk)
+            :Column("DiagramEntity.pk","DiagramEntity_pk")
+            :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")        //Extra Join to filter out possible orphan records
+            :Where("DiagramEntity.fk_ModelingDiagram = ^" , par_iModelingDiagramPk)
             :SQL("ListOfCurrentEntitiesInModelingDiagram")            
             if :Tally > 0
                 select ListOfCurrentEntitiesInModelingDiagram
@@ -943,16 +965,16 @@ l_lShowPackage := .f.
 with Object l_oDB1
     :Table("3b7ac84f-ceef-4a2a-b5a6-1acb2ab480e6","Entity")
     :Column("Entity.pk"         ,"pk")
-    :Column("NameSpace.Name"   ,"NameSpace_Name")
+    :Column("Package.FullName"  ,"Package_FullName")
     :Column("Entity.Name"       ,"Entity_Name")
     :Column("Entity.Description","Entity_Description")
-    :Column("Upper(NameSpace.Name)","tag1")
-    :Column("Upper(Entity.Name)","tag2")
-    :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
+    :Column("upper(Entity.Name)"             , "tag2")
+    :Join("left","Package","","Entity.fk_Package = Package.pk")
+    :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
     :OrderBy("tag1")
     :OrderBy("tag2")
-    :SQL("ListOfAllEntitiesInApplication")
+    :SQL("ListOfAllEntitiesInModel")
 
     if :Tally > 0
         
@@ -960,10 +982,10 @@ with Object l_oDB1
 
         l_cHtml += [<div class="m-3"></div>]
 
-        if :Tally > 1  //Will only display NameSpace names if there are more than 1 name space used
-            select ListOfAllEntitiesInApplication
-            l_cNameSpace_Name := ListOfAllEntitiesInApplication->NameSpace_Name  //Get name from first record
-            locate for ListOfAllEntitiesInApplication->NameSpace_Name <> l_cNameSpace_Name
+        if :Tally > 1  //Will only display Package FullName if there are more than 1 name space used
+            select ListOfAllEntitiesInModel
+            l_cPackage_FullName := ListOfAllEntitiesInModel->Package_FullName
+            locate for ListOfAllEntitiesInModel->Package_FullName <> l_cPackage_FullName
             l_lShowPackage := Found()
         endif
     endif
@@ -982,19 +1004,19 @@ oFcgi:p_cjQueryScript += '}'
 oFcgi:p_cjQueryScript += [$("#EntitySearch").change(function() {]
 oFcgi:p_cjQueryScript +=    [var l_keywords =  $(this).val();]
 oFcgi:p_cjQueryScript +=    [$(".SPANEntity").each(function (par_SpanEntity){]+;
-                                                                           [var l_cApplicationName = $(this).text();]+;
-                                                                           [if (KeywordSearch(l_keywords,l_cApplicationName)) {$(this).parent().parent().show();} else {$(this).parent().parent().hide();}]+;
+                                                                           [var l_cProjectName = $(this).text();]+;
+                                                                           [if (KeywordSearch(l_keywords,l_cProjectName)) {$(this).parent().parent().show();} else {$(this).parent().parent().hide();}]+;
                                                                            [});]
 oFcgi:p_cjQueryScript += [});]
 
 l_cHtml += [<div class="form-check form-switch">]
 l_cHtml += [<table class="ms-5">]
-select ListOfAllEntitiesInApplication
+select ListOfAllEntitiesInModel
 scan all
-    l_CheckBoxId := "CheckEntity"+Trans(ListOfAllEntitiesInApplication->pk)
+    l_CheckBoxId := "CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Entity"+Trans(ListOfAllEntitiesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
-        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANEntity">]+iif(l_lShowPackage,ListOfAllEntitiesInApplication->NameSpace_Name+[.],[])+ListOfAllEntitiesInApplication->Entity_Name
+        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Entity"+Trans(ListOfAllEntitiesInModel->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANEntity">]+iif(l_lShowPackage,ListOfAllEntitiesInModel->Package_FullName+[ ],[])+ListOfAllEntitiesInModel->Entity_Name
         l_cHtml += [</span></label>]
     l_cHtml += [</td></tr>]
 endscan
@@ -1009,7 +1031,7 @@ l_cHtml += GetConfirmationModalForms()
 
 return l_cHtml
 //=================================================================================================================
-function ModelVisualizeDiagramSettingsOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+function ModelingVisualizeDiagramSettingsOnSubmit(par_oDataHeader,par_cErrorText)
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
@@ -1018,18 +1040,18 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_iModelingDiagram_pk
-local l_cDiagram_Name
-local l_lDiagram_NodeShowDescription
+local l_cModelingDiagram_Name
+local l_lModelingDiagram_NodeShowDescription
 local l_cErrorMessage
 local l_lSelected
 local l_cValue
 local l_hValues := {=>}
 
-oFcgi:TraceAdd("ModelVisualizeDiagramSettingsOnSubmit")
+oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsOnSubmit")
 
 l_iModelingDiagram_pk                  := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
-l_cDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_lDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
+l_cModelingDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_lModelingDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
 
 do case
 case l_cActionOnSubmit == "SaveDiagram"
@@ -1037,21 +1059,20 @@ case l_cActionOnSubmit == "SaveDiagram"
     with Object l_oDB2
         :Table("67cfa8ab-7675-451d-9a68-09f7bd3654da","Entity")
         :Column("Entity.pk"         ,"pk")
-        :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-        :SQL("ListOfAllEntitiesInApplication")
+        :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
+        :SQL("ListOfAllEntitiesInModel")
     endwith
 
     do case
-    case empty(l_cDiagram_Name)
+    case empty(l_cModelingDiagram_Name)
         l_cErrorMessage := "Missing Name"
     otherwise
         with object l_oDB1
-            :Table("60dafbab-0b7a-48cc-a49f-237ef6f34cee","Diagram")
-            :Where([lower(replace(Diagram.Name,' ','')) = ^],lower(StrTran(l_cDiagram_Name," ","")))
-            :Where([Diagram.fk_Application = ^],par_iApplicationPk)
+            :Table("60dafbab-0b7a-48cc-a49f-237ef6f34cee","ModelingDiagram")
+            :Where([lower(replace(ModelingDiagram.Name,' ','')) = ^],lower(StrTran(l_cModelingDiagram_Name," ","")))
+            :Where([ModelingDiagram.fk_Model = ^],par_oDataHeader:Model_pk)
             if l_iModelingDiagram_pk > 0
-                :Where([Diagram.pk != ^],l_iModelingDiagram_pk)
+                :Where([ModelingDiagram.pk != ^],l_iModelingDiagram_pk)
             endif
             :SQL()
         endwith
@@ -1062,14 +1083,14 @@ case l_cActionOnSubmit == "SaveDiagram"
 
     if empty(l_cErrorMessage)
         with object l_oDB1
-            :Table("78f6236c-9017-4098-8ad1-038e2643f343","Diagram")
-            :Field("Diagram.Name"               ,l_cDiagram_Name)
-            :Field("Diagram.NodeShowDescription",l_lDiagram_NodeShowDescription)
+            :Table("78f6236c-9017-4098-8ad1-038e2643f343","ModelingDiagram")
+            :Field("ModelingDiagram.Name"               ,l_cModelingDiagram_Name)
+            :Field("ModelingDiagram.NodeShowDescription",l_lModelingDiagram_NodeShowDescription)
             if empty(l_iModelingDiagram_pk)
-                :Field("Diagram.fk_Application",par_iApplicationPk)
-                :Field("Diagram.UseStatus"     , 1)
-                :Field("Diagram.DocStatus"     , 1)
-                :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
+                :Field("ModelingDiagram.UseStatus"     , 1)
+                :Field("ModelingDiagram.DocStatus"     , 1)
+                :Field("ModelingDiagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iModelingDiagram_pk := :Key()
                 else
@@ -1094,8 +1115,7 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Column("Entity.pk","pk")
             :Column("DiagramEntity.pk","DiagramEntity_pk")
             :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-            :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-            :Where("DiagramEntity.fk_Diagram = ^" , l_iModelingDiagram_pk)
+            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
             :SQL("ListOfCurrentEntitiesInModelingDiagram")
             with object :p_oCursor
                 :Index("pk","pk")
@@ -1104,11 +1124,11 @@ case l_cActionOnSubmit == "SaveDiagram"
             endwith        
         endwith
 
-        select ListOfAllEntitiesInApplication
+        select ListOfAllEntitiesInModel
         scan all
-            l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInApplication->pk)) == "1")
+            l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)) == "1")
 
-            if VFP_Seek(ListOfAllEntitiesInApplication->pk,"ListOfCurrentEntitiesInModelingDiagram","pk")
+            if VFP_Seek(ListOfAllEntitiesInModel->pk,"ListOfCurrentEntitiesInModelingDiagram","pk")
                 if !l_lSelected
                     // Remove the Entity
                     with Object l_oDB3
@@ -1123,8 +1143,8 @@ case l_cActionOnSubmit == "SaveDiagram"
                     // Add the Entity
                     with Object l_oDB3
                         :Table("af4e7487-6a13-4fa2-b1ea-14f5a0651039","DiagramEntity")
-                        :Field("DiagramEntity.fk_Entity"   ,ListOfAllEntitiesInApplication->pk)
-                        :Field("DiagramEntity.fk_Diagram" ,l_iModelingDiagram_pk)
+                        :Field("DiagramEntity.fk_Entity"          , ListOfAllEntitiesInModel->pk)
+                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
                         if !:Add()
                             l_cErrorMessage := "Failed to Save Entity selection."
                             exit
@@ -1138,30 +1158,33 @@ case l_cActionOnSubmit == "SaveDiagram"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += ModelVisualizeDesignBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk)
+
     else
-        l_hValues["Name"]                := l_cDiagram_Name
-        l_hValues["NodeShowDescription"] := l_lDiagram_NodeShowDescription
+        l_hValues["Name"]                := l_cModelingDiagram_Name
+        l_hValues["NodeShowDescription"] := l_lModelingDiagram_NodeShowDescription
         
-        select ListOfAllEntitiesInApplication
+        select ListOfAllEntitiesInModel
         scan all
-            l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInApplication->pk)) == "1")
+            l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)) == "1")
             if l_lSelected  // No need to store the unselect references, since not having a reference will mean "not selected"
-                l_hValues["Entity"+Trans(ListOfAllEntitiesInApplication->pk)] := .t.
+                l_hValues["Entity"+Trans(ListOfAllEntitiesInModel->pk)] := .t.
             endif
         endscan
-        l_cHtml := ModelVisualizeDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk,l_hValues)
+        l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk,l_hValues)
+        
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += ModelVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+
 
 case l_cActionOnSubmit == "Delete"
     with object l_oDB1
         //Delete related records in DiagramEntity
         :Table("a317b1a2-0cad-48f9-8f0f-892af023c9d4","DiagramEntity")
         :Column("DiagramEntity.pk","pk")
-        :Where("DiagramEntity.fk_Diagram = ^" , l_iModelingDiagram_pk)
+        :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
         :SQL("ListOfDiagramEntityToDelete")
         select ListOfDiagramEntityToDelete
         scan all
@@ -1169,22 +1192,22 @@ case l_cActionOnSubmit == "Delete"
         endscan
         l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagram_pk)
     endwith
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ApplicationVisualize/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
     with object l_oDB1
         :Table("c8ef687c-a39b-4c4d-80e7-fa737a844832","ModelingDiagram")
-        :Field("Diagram.VisPos",NIL)
+        :Field("ModelingDiagram.VisPos",NIL)
         :Update(l_iModelingDiagram_pk)
     endwith
-    l_cHtml += ModelVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-function ModelVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iModelingDiagramPk,par_hValues)
+function ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk,par_hValues)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_hValues      := hb_DefaultValue(par_hValues,{=>})
@@ -1198,9 +1221,9 @@ local l_iCanvasHeight
 local l_lNavigationControl
 local l_lNeverShowDescriptionOnHover
 
-oFcgi:TraceAdd("ModelVisualizeMyDiagramSettingsBuild")
+oFcgi:TraceAdd("ModelingVisualizeMyDiagramSettingsBuild")
 
-if pcount() < 6
+if pcount() < 4
     if par_iModelingDiagramPk > 0
 
         l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
@@ -1339,7 +1362,8 @@ l_cHtml += GetConfirmationModalForms()
 
 return l_cHtml
 //=================================================================================================================
-function ModelVisualizeMyDiagramSettingsOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+function ModelingVisualizeMyDiagramSettingsOnSubmit(par_oDataHeader,par_cErrorText)
+
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
@@ -1355,7 +1379,7 @@ local l_cErrorMessage := ""
 local l_lSelected
 local l_hValues := {=>}
 
-oFcgi:TraceAdd("ModelVisualizeMyDiagramSettingsOnSubmit")
+oFcgi:TraceAdd("ModelingVisualizeMyDiagramSettingsOnSubmit")
 
 l_iModelingDiagram_pk       := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 l_nDiagramInfoScale := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
@@ -1410,24 +1434,20 @@ case l_cActionOnSubmit == "SaveMySettings"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += ModelVisualizeDesignBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk)
     else
         l_hValues["DiagramInfoScale"] := l_nDiagramInfoScale
-
-        l_cHtml := ModelVisualizeMyDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk,l_hValues)
+        l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk,l_hValues)
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += ModelVisualizeDesignBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 function GetMLInfoDuringVisualization()
-return ""
-//=================================================================================================================
-function UNDER_DEVELOPMENT_GetMLInfoDuringVisualization()
 local l_cHtml := []
 local l_cInfo := Strtran(oFcgi:GetQueryString("info"),[%22],["])
 local l_iModelingDiagram_pk := val(oFcgi:GetQueryString("modelingdiagrampk"))
@@ -1436,32 +1456,34 @@ local l_nLengthDecoded
 local l_aNodes
 local l_aEdges
 local l_aItems
+local l_cNode
+local l_cGraphItemType      // "E" = Entity, "A" = Association as a Node, "L" = Edge Entity - Association, "D" = Edge Entity - Entity
 local l_iEntityPk
-local l_iAttributePk
-local l_oDB_Project                      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_InArray                      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfRelatedEntities          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfCurrentEntitiesInModelingDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfAttribute                 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfOtherModelingDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_EntityCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_iAssociationPk
+local l_iEndpointPk
+local l_oDB_Project := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_InArray
+local l_oDB_ListOfRelatedEntities
+local l_oDB_ListOfCurrentEntitiesInModelingDiagram
+local l_oDB_ListOfAttribute
+local l_oDB_ListOfOtherModelingDiagrams
+local l_oDB_EntityCustomFields
 local l_oDB_UserAccessProject
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_cApplicationLinkCode
-local l_cNameSpaceName
+local l_cEntityLinkUID
+local l_cPackageFullName
+
 local l_cEntityName
 local l_cEntityDescription
-local l_cEntityInformation
+local l_cEntityScope
+
 local l_cAttributeName
 local l_cAttributeDescription
 local l_cFrom_NameSpace_Name
 local l_cFrom_Entity_Name
 local l_cTo_NameSpace_Name
 local l_cTo_Entity_Name
-local l_cRelatedEntitiesKey
-local l_hRelatedEntities := {=>}
-local l_aRelatedEntityInfo
 local l_CheckBoxId
 local l_nNumberOfEntitiesInDiagram
 local l_cListOfRelatedEntityPks := ""
@@ -1480,294 +1502,257 @@ local l_lNeverShowDescriptionOnHover
 local l_oData_Project
 local l_cApplicationSupportAttributes
 local l_cHtml_icon
-local l_cHtml_tr_class
-local l_iProjectPk
 local l_nAccessLevelML
+local l_cZoomInfo
 
 oFcgi:TraceAdd("GetMLInfoDuringVisualization")
 
-hb_HKeepOrder(l_hRelatedEntities,.f.) // Will order the hash by its key, with will be entered as upper case. For Keys stored as Strings they will need to be the same length
-
-// l_cHtml += [Hello World c2 - ]+hb_TtoS(hb_DateTime())+[  ]+l_cInfo
-
 l_nLengthDecoded := hb_jsonDecode(l_cInfo,@l_hOnClickInfo)
-
-// if l_hOnClickInfo["nodes"]  is an array. if len is 1 we have the Entity.pk
-// if l_hOnClickInfo["nodes"] is a 0 size array and l_hOnClickInfo["edges"] array of len 1   will be Attribute.pk
-
-// SendToDebugView("TabCookie = "+oFcgi:GetCookieValue("DiagramDetailTab"))
 
 l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
-    l_iEntityPk := l_aNodes[1]
+    l_cNode := l_aNodes[1]
 
-    with object l_oDB_Project
-        :Table("aabe8f6a-1c2c-4828-a56b-43c26bd06091","Entity")
-        :Column("Project.pk" , "Project_pk")
-        :Join("inner","Model","","Entity.fk_Model = Model.pk")
-        :Join("inner","Project","","Model.fk_Project = Project.pk")
-        l_oData_Project := :Get(l_iEntityPk)
-    endwith
+    switch left(l_cNode,1)
+    case "E"
+        l_cGraphItemType := "E"
+        l_iEntityPk      := val(substr(l_cNode,2))
 
-    //Get the project l_nAccessLevelML
-    l_iProjectPk := l_oData_Project:Project_pk
-    do case
-    case oFcgi:p_nUserAccessMode <= 1  // Project access levels
-        l_oDB_UserAccessProject := hb_SQLData(oFcgi:p_o_SQLConnection)
-        with object l_oDB_UserAccessProject
-            :Table("UserAccessProject")
-            :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
-            :Where("UserAccessProject.fk_User = ^"    , oFcgi:p_iUserPk)
-            :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
-            :SQL(@l_aSQLResult)
-            if :Tally == 1
-                l_nAccessLevelML := l_aSQLResult[1,1]
-            else
-                l_nAccessLevelML := 0
+        with object l_oDB_Project
+            :Table("aabe8f6a-1c2c-4828-a56b-43c26bd06091","Entity")
+            :Column("Project.pk" , "Project_pk")
+            :Join("inner","Model","","Entity.fk_Model = Model.pk")
+            :Join("inner","Project","","Model.fk_Project = Project.pk")
+            l_oData_Project := :Get(l_iEntityPk)
+            if :Tally <> 1
+                l_cGraphItemType := ""
             endif
         endwith
-    case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
-        l_nAccessLevelML := 2
-    case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
-        l_nAccessLevelML := 7
-    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-        l_nAccessLevelML := 7
+
+        exit
+
+    case "A"
+        l_cGraphItemType := "A"
+        l_iAssociationPk := val(substr(l_cNode,2))
+
+        with object l_oDB_Project
+            :Table("ea57507d-b56f-43a6-a808-e820ce14794d","Association")
+            :Column("Project.pk" , "Project_pk")
+            :Join("inner","Model","","Association.fk_Model = Model.pk")
+            :Join("inner","Project","","Model.fk_Project = Project.pk")
+            l_oData_Project := :Get(l_iAssociationPk)
+            if :Tally <> 1
+                l_cGraphItemType := ""
+            endif
+        endwith
+        
+        exit
+
+    otherwise
+        l_cGraphItemType := ""
+
     endcase
 
+    do case
+    case l_cGraphItemType == "E"
+        //Clicked on a Entity
 
-    //Clicked on a Entity
+        //Get the project l_nAccessLevelML
+        l_nAccessLevelML := GetAccessLevelMLForProject(l_oData_Project:Project_pk)
 
-    // _M_ Refactor following code once orm supports unions and CTE (common Entity Expressions)
+        //Current List of Entities in diagram
+        l_oDB_ListOfCurrentEntitiesInModelingDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with Object l_oDB_ListOfCurrentEntitiesInModelingDiagram
+            :Table("8ce66c2d-e24a-44af-962b-0db5d5fc2f1c","DiagramEntity")
+            :Distinct(.t.)
+            :Column("Entity.pk","pk")
+            :Column("DiagramEntity.pk","DiagramEntity_pk")
+            :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")    // Extra inner join to ensure we don't pick up orphan records
+            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+            :SQL("ListOfCurrentEntitiesInModelingDiagram")
+            l_nNumberOfEntitiesInDiagram := :Tally
+            if l_nNumberOfEntitiesInDiagram > 0
+                with object :p_oCursor
+                    :Index("pk","pk")
+                    :CreateIndexes()
+                    :SetOrder("pk")
+                endwith
+            endif
+        endwith
 
-    //Current List of Entities in diagram
-    with Object l_oDB_ListOfCurrentEntitiesInModelingDiagram
-        :Table("8ce66c2d-e24a-44af-962b-0db5d5fc2f1c","DiagramEntity")
-        :Distinct(.t.)
-        :Column("Entity.pk","pk")
-        :Column("DiagramEntity.pk","DiagramEntity_pk")
-        :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-        :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :Where("DiagramEntity.fk_Diagram = ^" , l_iModelingDiagram_pk)
-        :SQL("ListOfCurrentEntitiesInModelingDiagram")
-        l_nNumberOfEntitiesInDiagram := :Tally
-        if l_nNumberOfEntitiesInDiagram > 0
-            with object :p_oCursor
-                :Index("pk","pk")
-                :CreateIndexes()
-                :SetOrder("pk")
-            endwith
-        endif
-        // ExportTableToHtmlFile("ListOfCurrentEntitiesInModelingDiagram","d:\PostgreSQL_ListOfCurrentEntitiesInModelingDiagram.html","From PostgreSQL",,25,.t.)
-    endwith
+        l_oDB_ListOfAttribute := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfAttribute
+            :Table("aaf1a8ab-c0aa-46d7-b691-3448f203ca8c","Attribute")
+            :Column("Attribute.pk"             ,"pk")
+            :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
+            :Column("DataType.FullName"        ,"DataType_FullName")
+            :Column("Attribute.Order"          ,"Attribute_Order")
+            :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
+            :Column("Attribute.Name"           ,"Attribute_Name")
+            :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
+            :Column("Attribute.BoundUpper"     ,"Attribute_BoundUpper")
+            :Column("Attribute.Description"    ,"Attribute_Description")
+            :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
+            :Where("Attribute.fk_Entity = ^",l_iEntityPk)
+            :OrderBy("Attribute_Order")
+            :SQL("ListOfAttributes")
+            l_nNumberOfAttributes := :Tally
+        endwith
 
-
-    with object l_oDB_ListOfAttribute
-        :Table("aaf1a8ab-c0aa-46d7-b691-3448f203ca8c","Attribute")
-        :Column("Attribute.pk"             ,"pk")
-        :Column("Attribute.Name"           ,"Attribute_Name")
-        :Column("Attribute.Description"    ,"Attribute_Description")
-        :Column("Attribute.Order"          ,"Attribute_Order")
-        :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
-        
-        :Column("NameSpace.Name"                ,"NameSpace_Name")
-        :Column("Entity.Name"                    ,"Entity_Name")
-        :Column("DataType.Name"              ,"DataType_Name")
-        
-        :Join("left","Entity"      ,"","Attribute.fk_EntityForeign = Entity.pk")
-        :Join("left","NameSpace"  ,"","Entity.fk_NameSpace = NameSpace.pk")
-        :Join("left","Enumeration","","Attribute.fk_Enumeration  = Enumeration.pk")
-        :Where("Attribute.fk_Entity = ^",l_iEntityPk)
-        :OrderBy("Attribute_Order")
-        :SQL("ListOfAttributes")
-        l_nNumberOfAttributes := :Tally
-    endwith
-
-
-    with object l_oDB_ListOfOtherModelingDiagrams
-        :Table("6205145d-e049-434f-8fbe-8b900873e196","DiagramEntity")
-        :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
-        :Column("ModelingDiagram.Name"       ,"ModelingDiagram_Name")
-        :Column("ModelingDiagram.LinkUID"    ,"ModelingDiagram_LinkUID")
-        :Column("upper(ModelingDiagram.Name)","tag1")
-        :Join("inner","ModelingDiagram","","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
-        :Where("DiagramEntity.fk_Entity = ^",l_iEntityPk)
-        :Where("ModelingDiagram.pk <> ^",l_iModelingDiagram_pk)
-        :OrderBy("tag1")
-        :SQL("ListOfOtherModelingDiagram")
-        l_nNumberOfOtherModelingDiagram := :Tally
-    endwith
+        l_oDB_ListOfOtherModelingDiagrams := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfOtherModelingDiagrams
+            :Table("6205145d-e049-434f-8fbe-8b900873e196","DiagramEntity")
+            :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
+            :Column("ModelingDiagram.Name"       ,"ModelingDiagram_Name")
+            :Column("ModelingDiagram.LinkUID"    ,"ModelingDiagram_LinkUID")
+            :Column("upper(ModelingDiagram.Name)","tag1")
+            :Join("inner","ModelingDiagram","","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
+            :Where("DiagramEntity.fk_Entity = ^",l_iEntityPk)
+            :Where("ModelingDiagram.pk <> ^",l_iModelingDiagram_pk)
+            :OrderBy("tag1")
+            :SQL("ListOfOtherModelingDiagram")
+            l_nNumberOfOtherModelingDiagram := :Tally
+        endwith
 
 
-    //Get the list of related Entities
-    with object l_oDB_ListOfRelatedEntities
-        // Parent Of
-        :Table("69cff617-c3c9-4a51-a167-bb9f68cc99f9","Attribute")
-        :Distinct(.t.)
-        :Column("Entity.pk"       , "Entity_pk")
-        :Column("NameSpace.Name" , "NameSpace_Name")
-        :Column("Entity.Name"     , "Entity_Name")
-        :Column("upper(NameSpace.Name)" , "tag1")
-        :Column("upper(Entity.Name)"     , "tag2")
-        :Where("Attribute.fk_EntityForeign = ^" , l_iEntityPk)
-        :Join("inner","Entity","","Attribute.fk_Entity = Entity.pk")
-        :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :OrderBy("tag1")
-        :OrderBy("tag2")
-        :SQL("ListOfRelatedEntities")
-        if :Tally > 0
-            select ListOfRelatedEntities
-            scan all
-                l_cRelatedEntitiesKey := padr(ListOfRelatedEntities->tag1,200)+padr(ListOfRelatedEntities->tag2,200)
-                l_hRelatedEntities[l_cRelatedEntitiesKey] := {(l_nNumberOfEntitiesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedEntities->Entity_pk,"ListOfCurrentEntitiesInModelingDiagram","pk"),;  // If Entity already included in diagram
-                                                          ListOfRelatedEntities->Entity_pk,;
-                                                          ListOfRelatedEntities->NameSpace_Name,;
-                                                          ListOfRelatedEntities->Entity_Name,;
-                                                          .t.,.f.}   // Parent Of, Child Of
-            endscan
-        endif
+        //Get the list of related Entities
+        l_oDB_ListOfRelatedEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfRelatedEntities
+            :Table("69cff617-c3c9-4a51-a167-bb9f68cc99f9","Endpoint")
+            :Distinct(.t.)
+            :Column("Entity.pk"        , "Entity_pk")
+            :Column("Package.FullName" , "Package_FullName")
+            :Column("Entity.Name"      , "Entity_Name")
+            :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
+            :Column("upper(Entity.Name)"             , "tag2")
+            :Where("Endpoint.fk_Entity  = ^" , l_iEntityPk)
+            :Where("Entity.pk != ^" , l_iEntityPk)
+            :Join("inner","Association",""         ,"Endpoint.fk_Association = Association.pk")
+            :Join("inner","Endpoint"   ,"Endpoint2","Endpoint2.fk_Association = Association.pk AND Endpoint.pk != Endpoint2.pk")
+            :Join("inner","Entity"     ,"","Endpoint2.fk_Entity = Entity.pk")
+            :Join("left","Package","","Entity.fk_Package = Package.pk") 
+            :OrderBy("tag1")
+            :OrderBy("tag2")
+            :SQL("ListOfRelatedEntities")
+            l_nNumberOfRelatedEntities := :Tally
 
-        // Child Of
-        :Table("e9f08335-df25-47dd-abbc-2bf04f9306f1","Attribute")
-        :Distinct(.t.)
-        :Column("Entity.pk"       , "Entity_pk")
-        :Column("NameSpace.Name" , "NameSpace_Name")
-        :Column("Entity.Name"     , "Entity_Name")
-        :Column("upper(NameSpace.Name)" , "tag1")
-        :Column("upper(Entity.Name)"     , "tag2")
-        :Where("Attribute.fk_Entity = ^" , l_iEntityPk)
-        :Join("inner","Entity","","Attribute.fk_EntityForeign = Entity.pk")
-        :Join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :OrderBy("tag1")
-        :OrderBy("tag2")
-        :SQL("ListOfRelatedEntities")
+        endwith
 
-        if :Tally > 0
-            select ListOfRelatedEntities
-            scan all
-                l_cRelatedEntitiesKey := padr(ListOfRelatedEntities->tag1,200)+padr(ListOfRelatedEntities->tag2,200)
-                l_aRelatedEntityInfo := hb_HGetDef(l_hRelatedEntities,l_cRelatedEntitiesKey,{})
-                if empty(len(l_aRelatedEntityInfo))
-                    //The Entity was not already a "Parent Of"
-                    l_hRelatedEntities[l_cRelatedEntitiesKey] := {(l_nNumberOfEntitiesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedEntities->Entity_pk,"ListOfCurrentEntitiesInModelingDiagram","pk"),;  // If Entity already included in diagram
-                                                              ListOfRelatedEntities->Entity_pk,;
-                                                              ListOfRelatedEntities->NameSpace_Name,;
-                                                              ListOfRelatedEntities->Entity_Name,;
-                                                              .f.,;    // Parent Of
-                                                              .t.  }   // Child Of    8th array element
-                else
-                    l_hRelatedEntities[l_cRelatedEntitiesKey][8] := .t.
-                endif
-            endscan
-        endif
+        l_oDB_EntityCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_EntityCustomFields
+            // Get the Entity Custom Fields
+            :Table("24d38337-8b1c-4bfe-88e6-869ab00f4b68","CustomFieldValue")
+            :Distinct(.t.)
+            :Column("CustomField.pk"              ,"CustomField_pk")
+            :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+            :Join("inner","CustomField","","CustomFieldValue.fk_CustomField = CustomField.pk")
+            :Where("CustomFieldValue.fk_Entity = ^",l_iEntityPk)
+            :Where("CustomField.UsedOn = ^",USEDON_ENTITY)
+            :Where("CustomField.Status <= 2")
+            :Where("CustomField.Type = 2")   // Multi Choice
+            :SQL("ListOfCustomFieldOptionDefinition")
+            if :Tally > 0
+                CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+            endif
 
-        l_nNumberOfRelatedEntities := len(l_hRelatedEntities)
-        CloseAlias("ListOfRelatedEntities")   // Not really needed since orm will auto-close cursors, but still added this for clarity.
-    endwith
+            :Table("21bed905-bcae-4c80-a6a5-56897cdc3fba","CustomFieldValue")
+            :Column("CustomFieldValue.fk_Entity","fk_entity")
+            :Column("CustomField.pk"            ,"CustomField_pk")
+            :Column("CustomField.Label"         ,"CustomField_Label")
+            :Column("CustomField.Type"          ,"CustomField_Type")
+            :Column("CustomFieldValue.ValueI"   ,"CustomFieldValue_ValueI")
+            :Column("CustomFieldValue.ValueM"   ,"CustomFieldValue_ValueM")
+            :Column("CustomFieldValue.ValueD"   ,"CustomFieldValue_ValueD")
+            :Column("upper(CustomField.Name)"   ,"tag1")
+            :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+            :Where("CustomFieldValue.fk_Entity = ^",l_iEntityPk)
+            :Where("CustomField.UsedOn = ^",USEDON_ENTITY)
+            :Where("CustomField.Status <= 2")
+            :OrderBy("tag1")
+            :SQL("ListOfCustomFieldValues")
+            l_nNumberOfCustomFieldValues := :Tally
+            
+            if l_nNumberOfCustomFieldValues > 0
+                l_cHtml_EntityCustomFields := CustomFieldsBuildGridOther(l_iEntityPk,l_hOptionValueToDescriptionMapping)
+            endif
 
-    with object l_oDB_EntityCustomFields
+            // Get the Attribute Custom Fields
+            // l_hOptionValueToDescriptionMapping := {=>}
+            hb_HClear(l_hOptionValueToDescriptionMapping)
 
-        // Get the Entity Custom Fields
-        :Table("24d38337-8b1c-4bfe-88e6-869ab00f4b68","CustomFieldValue")
-        :Distinct(.t.)
-        :Column("CustomField.pk"              ,"CustomField_pk")
-        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
-        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("CustomFieldValue.fk_Entity = ^",l_iEntityPk)
-        :Where("CustomField.UsedOn = ^",USEDON_ENTITY)
-        :Where("CustomField.Status <= 2")
-        :Where("CustomField.Type = 2")   // Multi Choice
-        :SQL("ListOfCustomFieldOptionDefinition")
-        if :Tally > 0
-            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
-        endif
+            :Table("55b6deaa-26ce-4434-9119-a76a634bf337","Attribute")
+            :Distinct(.t.)
+            :Column("CustomField.pk"              ,"CustomField_pk")
+            :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+            :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Attribute.pk")
+            :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+            :Where("Attribute.fk_Entity = ^",l_iEntityPk)
+            :Where("CustomField.UsedOn = ^",USEDON_ATTRIBUTE)
+            :Where("CustomField.Status <= 2")
+            :Where("CustomField.Type = 2")   // Multi Choice
+            :SQL("ListOfCustomFieldOptionDefinition")
+            if :Tally > 0
+                CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+            endif
 
-        :Table("21bed905-bcae-4c80-a6a5-56897cdc3fba","CustomFieldValue")
-        :Column("CustomFieldValue.fk_Entity","fk_entity")
-        :Column("CustomField.pk"            ,"CustomField_pk")
-        :Column("CustomField.Label"         ,"CustomField_Label")
-        :Column("CustomField.Type"          ,"CustomField_Type")
-        :Column("CustomFieldValue.ValueI"   ,"CustomFieldValue_ValueI")
-        :Column("CustomFieldValue.ValueM"   ,"CustomFieldValue_ValueM")
-        :Column("CustomFieldValue.ValueD"   ,"CustomFieldValue_ValueD")
-        :Column("upper(CustomField.Name)"   ,"tag1")
-        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("CustomFieldValue.fk_Entity = ^",l_iEntityPk)
-        :Where("CustomField.UsedOn = ^",USEDON_ENTITY)
-        :Where("CustomField.Status <= 2")
-        :OrderBy("tag1")
-        :SQL("ListOfCustomFieldValues")
-        l_nNumberOfCustomFieldValues := :Tally
-        
-        if l_nNumberOfCustomFieldValues > 0
-            l_cHtml_EntityCustomFields := CustomFieldsBuildGridOther(l_iEntityPk,l_hOptionValueToDescriptionMapping)
-        endif
+            :Table("4472cd37-4212-4075-92ea-ea868cb79339","Attribute")
+            :Column("Attribute.pk"           ,"fk_entity")
+            :Column("CustomField.pk"         ,"CustomField_pk")
+            :Column("CustomField.Label"      ,"CustomField_Label")
+            :Column("CustomField.Type"       ,"CustomField_Type")
+            :Column("CustomFieldValue.ValueI","CustomFieldValue_ValueI")
+            :Column("CustomFieldValue.ValueM","CustomFieldValue_ValueM")
+            :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
+            :Column("upper(CustomField.Name)","tag1")
+            :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Attribute.pk")
+            :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+            :Where("Attribute.fk_Entity = ^",l_iEntityPk)
+            :Where("CustomField.UsedOn = ^",USEDON_ATTRIBUTE)
+            :Where("CustomField.Status <= 2")
+            // :OrderBy("Attribute_pk")
+            :OrderBy("tag1")
+            :SQL("ListOfCustomFieldValues")
+            l_nNumberOfCustomFieldValues := :Tally
 
-        // Get the Attribute Custom Fields
-        // l_hOptionValueToDescriptionMapping := {=>}
-        hb_HClear(l_hOptionValueToDescriptionMapping)
+        endwith
 
-        :Table("55b6deaa-26ce-4434-9119-a76a634bf337","Attribute")
-        :Distinct(.t.)
-        :Column("CustomField.pk"              ,"CustomField_pk")
-        :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
-        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Attribute.pk")
-        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("Attribute.fk_Entity = ^",l_iEntityPk)
-        :Where("CustomField.UsedOn = ^",USEDON_ATTRIBUTE)
-        :Where("CustomField.Status <= 2")
-        :Where("CustomField.Type = 2")   // Multi Choice
-        :SQL("ListOfCustomFieldOptionDefinition")
-        if :Tally > 0
-            CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
-        endif
+        l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_InArray
+            :Table("eaca66a4-e311-4e3e-a3c4-8ee000f15df4","Entity")
+            :Column("Entity.LinkUID"       ,"Entity_LinkUID")         // 1
+            :Column("Package.FullName"     ,"Package_FullName")       // 2
+            :Column("Entity.Name"          ,"Entity_Name")            // 3
+            :Column("Entity.Description"   ,"Entity_Description")     // 4
+            :Column("Entity.Scope"         ,"Entity_Scope")           // 5
+            // :join("inner","Model"  ,"","Entity.fk_Model = Model.pk")
+            // :join("inner","Project","","Model.fk_Project = Project.pk")
+            :Join("left" ,"Package","","Entity.fk_Package = Package.pk") 
+            :Where("Entity.pk = ^" , l_iEntityPk)
+            :SQL(@l_aSQLResult)
+        endwith
 
-        :Table("4472cd37-4212-4075-92ea-ea868cb79339","Attribute")
-        :Column("Attribute.pk"              ,"fk_entity")
-        :Column("CustomField.pk"         ,"CustomField_pk")
-        :Column("CustomField.Label"      ,"CustomField_Label")
-        :Column("CustomField.Type"       ,"CustomField_Type")
-        :Column("CustomFieldValue.ValueI","CustomFieldValue_ValueI")
-        :Column("CustomFieldValue.ValueM","CustomFieldValue_ValueM")
-        :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
-        :Column("upper(CustomField.Name)","tag1")
-        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Attribute.pk")
-        :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("Attribute.fk_Entity = ^",l_iEntityPk)
-        :Where("CustomField.UsedOn = ^",USEDON_ATTRIBUTE)
-        :Where("CustomField.Status <= 2")
-        // :OrderBy("Attribute_pk")
-        :OrderBy("tag1")
-        :SQL("ListOfCustomFieldValues")
-        l_nNumberOfCustomFieldValues := :Tally
+        if l_oDB_InArray:Tally == 1
+            l_cEntityLinkUID        := AllTrim(l_aSQLResult[1,1])
+            l_cPackageFullName      := nvl(l_aSQLResult[1,2],"")
+            l_cEntityName           := l_aSQLResult[1,3]
+            l_cEntityDescription    := nvl(l_aSQLResult[1,4],"")
+            l_cEntityScope          := nvl(l_aSQLResult[1,5],"")
 
-    endwith
-
-    with object l_oDB_InArray
-        :Table("eaca66a4-e311-4e3e-a3c4-8ee000f15df4","Entity")
-        :Column("Application.LinkCode","Application_LinkCode")  // 1
-        :Column("NameSpace.name"      ,"NameSpace_Name")        // 2
-        :Column("Entity.Name"          ,"Entity_Name")            // 3
-        :Column("Entity.Description"   ,"Entity_Description")     // 5
-        :join("inner","NameSpace","","Entity.fk_NameSpace = NameSpace.pk")
-        :join("inner","Application","","NameSpace.fk_Application = Application.pk")
-        :Where("Entity.pk = ^" , l_iEntityPk)
-        :SQL(@l_aSQLResult)
-
-        if :Tally == 1
-            l_cApplicationLinkCode := AllTrim(l_aSQLResult[1,1])
-            l_cNameSpaceName       := AllTrim(l_aSQLResult[1,2])
-            l_cEntityName           := AllTrim(l_aSQLResult[1,3])
-            l_cEntityDescription    := nvl(l_aSQLResult[1,5],"")
+            if !empty(l_cPackageFullName)
+                l_cZoomInfo := l_cPackageFullName+" / "+l_cEntityName
+            else
+                l_cZoomInfo := l_cEntityName
+            endif
 
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
-            l_cHtml += MODELING_ENTITY_NODE_HIGHLIGHT
+            l_cHtml += MODELING_ENTITY_NODE_BACKGROUND
             l_cHtml += [;">]
 
                 l_cHtml += [<div class="input-group">]
-                    l_cHtml += [<span class="navbar-brand ms-3">Entity: ]+l_cNameSpaceName+;
-                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditEntity/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cEntityName+[/"><i class="bi bi-pencil-square"></i></a>]+;
+                    l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFEntity+[: ]+l_cZoomInfo+;
+                                   [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditEntity/]+l_cEntityLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]+;
                                [</span>]
                 l_cHtml += [</div>]
 
@@ -1778,7 +1763,7 @@ if len(l_aNodes) == 1
             l_cHtml += [<ul class="nav nav-tabs">]
                 l_cHtml += [<li class="nav-item">]
                     l_cHtml += [<a id="TabDetail1" class="nav-link]+iif(l_nActiveTabNumber == 1,[ active],[])+["]+;
-                                   [ onclick="document.cookie = 'DiagramDetailTab=1; path=/';]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=1; path=/';]+;
                                                                 [$('#DetailType1').show();]+;
                                                                 [$('#DetailType2').hide();]+;
                                                                 [$('#DetailType3').hide();]+;
@@ -1804,7 +1789,7 @@ if len(l_aNodes) == 1
                 l_cHtml += [</li>]
                 l_cHtml += [<li class="nav-item">]
                     l_cHtml += [<a id="TabDetail3" class="nav-link]+iif(l_nActiveTabNumber == 3,[ active],[])+["]+;
-                                   [ onclick="document.cookie = 'DiagramDetailTab=3; path=/';]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=3; path=/';]+;
                                                                 [$('#DetailType1').hide();]+;
                                                                 [$('#DetailType2').hide();]+;
                                                                 [$('#DetailType3').show();]+;
@@ -1817,7 +1802,7 @@ if len(l_aNodes) == 1
                 l_cHtml += [</li>]
                 l_cHtml += [<li class="nav-item">]
                     l_cHtml += [<a id="TabDetail4" class="nav-link]+iif(l_nActiveTabNumber == 4,[ active],[])+["]+;
-                                   [ onclick="document.cookie = 'DiagramDetailTab=4; path=/';]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=4; path=/';]+;
                                                                 [$('#DetailType1').hide();]+;
                                                                 [$('#DetailType2').hide();]+;
                                                                 [$('#DetailType3').hide();]+;
@@ -1833,30 +1818,31 @@ if len(l_aNodes) == 1
             l_cHtml += [<div class="m-3"></div>]
 
             // -----------------------------------------------------------------------------------------------------------------------------------------
+
             l_cHtml += [<div id="DetailType1"]+iif(l_nActiveTabNumber <> 1,[ style="display: none;"],[])+[ class="m-3">]
 
-
                 if l_nNumberOfAttributes <= 0
-                    l_cHtml += [<div class="mb-2">Entity has no Attributes</div>]
+                    l_cHtml += [<div class="mb-2">]+oFcgi:p_ANFEntity+[ has no ]+oFcgi:p_ANFAttributes+[</div>]
                 else
                     l_cHtml += [<div class="row">]  //  justify-content-center
                         l_cHtml += [<div class="col-auto">]
 
                             l_cHtml += [<div>]
-                            l_cHtml += [<span>Filter on Attribute Name</span>]
+                            l_cHtml += [<span>Filter on ]+oFcgi:p_ANFAttributes+[ Name</span>]
                             l_cHtml += [<input type="text" id="AttributeSearch" value="" size="30" class="ms-2">]
                             l_cHtml += [<span class="ms-1"> (Press Enter)</span>]
                             l_cHtml += [<input type="button" id="ButtonShowAll" class="btn btn-primary rounded ms-3" value="All">]
-                            l_cHtml += [<input type="button" id="ButtonShowCoreOnly" class="btn btn-primary rounded ms-3" value="Core Only">]
                             l_cHtml += [</div>]
 
                             l_cHtml += [<div class="m-3"></div>]
 
-                            l_cHtml += [<table class="Entity Entity-sm Entity-bordered Entity-striped">]
+                            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                             l_cHtml += [<tr class="bg-info">]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                                 if l_nNumberOfCustomFieldValues > 0
                                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
@@ -1867,19 +1853,27 @@ if len(l_aNodes) == 1
                             scan all
                                 l_cHtml += [<tr>]
 
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
-
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditAttribute/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cEntityName+[/]+ListOfAttributes->Attribute_Name+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
+                                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
                                     l_cHtml += [</td>]
 
-                                    // Foreign Key To
+                                    // Data Type
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        if !hb_isNil(ListOfAttributes->Entity_Name)
-                                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListAttributes/]+l_cApplicationLinkCode+"/"+ListOfAttributes->NameSpace_Name+"/"+ListOfAttributes->Entity_Name+[/">]
-                                            l_cHtml += ListOfAttributes->NameSpace_Name+[.]+ListOfAttributes->Entity_Name
-                                            l_cHtml += [</a>]
+                                        l_cHtml += ListOfAttributes->DataType_FullName
+                                    l_cHtml += [</td>]
+
+                                    // Bound<br>Lower
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundLower")
+                                            l_cHtml += ListOfAttributes->Attribute_BoundLower
+                                        endif
+                                    l_cHtml += [</td>]
+
+                                    // Bound<br>Upper
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundUpper")
+                                            l_cHtml += ListOfAttributes->Attribute_BoundUpper
                                         endif
                                     l_cHtml += [</td>]
 
@@ -1909,7 +1903,7 @@ if len(l_aNodes) == 1
 
             l_cHtml += [<div id="DetailType2"]+iif(l_nActiveTabNumber <> 2,[ style="display: none;"],[])+[ class="m-3]+iif(l_nNumberOfRelatedEntities > 0,[ form-check form-switch],[])+[">]
                 if l_nNumberOfRelatedEntities <= 0
-                    l_cHtml += [<div class="mb-2">Entity has no related Entities</div>]
+                    l_cHtml += [<div class="mb-2">]+oFcgi:p_ANFEntity+[ has no related ]+oFcgi:p_ANFEntities+[</div>]
                 else
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelML >= 4
@@ -1917,39 +1911,38 @@ if len(l_aNodes) == 1
                         l_cHtml += [network.storePositions();]
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
-                        l_cHtml += [">Update Entity selection and Save Layout</button></div>]
+                        l_cHtml += [">Update ]+oFcgi:p_ANFEntity+[ selection and Save Layout</button></div>]
                     endif
+
                     //---------------------------------------------------------------------------
-
-                    // l_cHtml += [<h1>Related Entities</h1>]
-
                     l_cHtml += [<table class="">]
-
-                    for each l_aRelatedEntityInfo in l_hRelatedEntities
+                    select ListOfRelatedEntities
+                    scan all
                         l_cHtml += [<tr><td>]
-                            l_CheckBoxId := "CheckEntity"+Trans(l_aRelatedEntityInfo[2])
+                            l_CheckBoxId := "CheckEntity"+Trans(ListOfRelatedEntities->Entity_pk)
                             if !empty(l_cListOfRelatedEntityPks)
                                 l_cListOfRelatedEntityPks += "*"
                             endif
-                            l_cListOfRelatedEntityPks += Trans(l_aRelatedEntityInfo[2])
+                            l_cListOfRelatedEntityPks += Trans(ListOfRelatedEntities->Entity_pk)
 
-                            // l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedEntityInfo[1]," checked","")+[ class="form-check-input">]
-                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedEntityInfo[1]," checked","")+[ class="form-check-input">]
+                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+;
+                                      iif( ((l_nNumberOfEntitiesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedEntities->Entity_pk,"ListOfCurrentEntitiesInModelingDiagram","pk")) ," checked","");
+                                      +[ class="form-check-input">]
 
                             l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
 
-                            l_cHtml += l_aRelatedEntityInfo[3]+[.]+l_aRelatedEntityInfo[5]
-                            if l_aRelatedEntityInfo[8]
-                                l_cHtml += [<span class="bi bi-arrow-left ms-2">]
-                            endif
-                            if l_aRelatedEntityInfo[7]
-                                l_cHtml += [<span class="bi bi-arrow-right ms-2">]
+                            l_cPackageFullName := ListOfRelatedEntities->Package_FullName
+                            l_cEntityName      := ListOfRelatedEntities->Entity_Name
+                            if !empty(l_cPackageFullName)
+                                l_cHtml += l_cPackageFullName+" / "+l_cEntityName
+                            else
+                                l_cHtml += l_cEntityName
                             endif
 
                             l_cHtml += [</label>]
 
                         l_cHtml += [</td></tr>]
-                    endfor
+                    endscan
 
                     l_cHtml += [</table>]
 
@@ -1978,7 +1971,7 @@ if len(l_aNodes) == 1
                 l_cHtml += [network.storePositions();]
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                 l_cHtml += [$('#ActionOnSubmit').val('RemoveEntityAndSaveLayout');document.form.submit();]
-                l_cHtml += [">Remove Entity and Save Layout</button></div>]
+                l_cHtml += [">Remove ]+oFcgi:p_ANFEntity+[ and Save Layout</button></div>]
                 //---------------------------------------------------------------------------
                 l_cHtml += [<input type="hidden" name="TextEntityPkToRemove" value="]+Trans(l_iEntityPk)+[">]
 
@@ -1986,10 +1979,9 @@ if len(l_aNodes) == 1
                     l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cEntityDescription)+[</div>]
                 endif
 
-                if !empty(l_cEntityInformation)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cEntityInformation)+[</div>]
+                if !empty(l_cEntityScope)
+                    l_cHtml += [<div class="mt-3"><div class="fs-5">Scope:</div>]+TextToHTML(l_cEntityScope)+[</div>]
                 endif
-
 
                 if !empty(l_cHtml_EntityCustomFields)
                     l_cHtml += [<div class="mt-3">]
@@ -2002,7 +1994,16 @@ if len(l_aNodes) == 1
             // -----------------------------------------------------------------------------------------------------------------------------------------
 
         endif
-    endwith
+
+    case l_cGraphItemType == "A"
+        //Clicked on an Association
+
+        // //Get the project l_nAccessLevelML
+        // l_nAccessLevelML := GetAccessLevelMLForProject(l_oData_Project:Project_pk)
+
+        l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,0)
+
+    endcase
 
 else
     l_aEdges := hb_HGetDef(l_hOnClickInfo,"edges",{})
@@ -2012,61 +2013,55 @@ else
         l_aItems := hb_HGetDef(l_hOnClickInfo,"items",{})
         l_nEdgeNumber := len(l_aItems)
 
+        l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB_InArray
 
             for l_nEdgeCounter := 1 to l_nEdgeNumber
-                l_iAttributePk := val(hb_HGetDef(l_aItems[l_nEdgeCounter],"edgeId","0"))
-                if l_iAttributePk > 0
 
-                    :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Attribute")
+                l_cNode := hb_HGetDef(l_aItems[l_nEdgeCounter],"edgeId","")
 
-                    :Column("Attribute.Name"       ,"Attribute_Name")          //  1
-                    :Column("Attribute.Description","Attribute_Description")   //  5
-                    
-                    :Column("NameSpace.Name"   ,"From_NameSpace_Name")   //  6
-                    :Column("Entity.Name"       ,"From_Entity_Name")       //  7
-                    :join("inner","Entity"      ,"","Attribute.fk_Entity = Entity.pk")
-                    :join("inner","NameSpace"  ,"","Entity.fk_NameSpace = NameSpace.pk")
-                    :join("inner","Application","","NameSpace.fk_Application = Application.pk")
+                switch left(l_cNode,1)
+                case "L"  // (Endpoint Key) with more than 2 Endpoints
+                    l_cGraphItemType := "L"
+                    l_iEndpointPk    := val(substr(l_cNode,2))
 
-                    :Column("NameSpaceTo.name" , "To_NameSpace_Name")    //  9
-                    :Column("EntityTo.name"     , "To_Entity_Name")        // 10
-                    :Join("inner","Entity"    ,"EntityTo"    ,"Attribute.fk_EntityForeign = EntityTo.pk")
-                    :Join("inner","NameSpace","NameSpaceTo","EntityTo.fk_NameSpace = NameSpaceTo.pk")
-                    
-                    :Where("Attribute.pk = ^" , l_iAttributePk)
-                    :SQL(@l_aSQLResult)
+                    with object l_oDB_Project
+                        :Table("12c4ced7-4057-43df-b829-f66235d80dfa","Endpoint")
+                        :Column("Project.pk"              , "Project_pk")
+                        :Column("Endpoint.fk_Association" , "Association_pk")
+                        :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
+                        :Join("inner","Model","","Entity.fk_Model = Model.pk")
+                        :Join("inner","Project","","Model.fk_Project = Project.pk")
+                        l_oData_Project := :Get(l_iEndpointPk)
+                        if :Tally == 1
+                            l_iAssociationPk := l_oData_Project:Association_pk
 
-                    if :Tally == 1
-                        l_cAttributeName          := Alltrim(l_aSQLResult[1,1])
-                        l_cAttributeDescription   := Alltrim(nvl(l_aSQLResult[1,5],""))
-
-                        l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,6])
-                        l_cFrom_Entity_Name     := Alltrim(l_aSQLResult[1,7])
-
-                        l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,9])
-                        l_cTo_Entity_Name       := Alltrim(l_aSQLResult[1,10])
-
-                        l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
-
-                        l_cHtml += MODELING_ENTITY_NODE_HIGHLIGHT 
-                        l_cHtml += [;">]
-
-                            l_cHtml += [<div class="input-group">]
-                                l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Entity_Name+[</span>]
-                                l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Entity_Name+[</span>]
-                                l_cHtml += [<span class="navbar-brand ms-3">Attribute: ]+l_cAttributeName+[</span>]
-                            l_cHtml += [</div>]
-                        l_cHtml += [</nav>]
-
-                        if !empty(l_cAttributeDescription)
-                            l_cHtml += [<div class="m-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cAttributeDescription)+[</div>]
+                            l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,l_iEndpointPk)
+                            l_cHtml += [<div class="m-3"></div>]
                         endif
+                    endwith
+                    exit
 
-                        l_cHtml += [<div class="m-3"></div>]
+                case "D"  // (Association Key) Build the edge between 2 entities
+                    l_cGraphItemType := "D"
+                    l_iEndpointPk    := 0
+                    l_iAssociationPk := val(substr(l_cNode,2))
 
-                    endif
-                endif
+                    with object l_oDB_Project
+                        :Table("b3161e35-02b4-4298-a214-4cc5a8bf121a","Association")
+                        :Column("Project.pk" , "Project_pk")
+                        :Join("inner","Model","","Association.fk_Model = Model.pk")
+                        :Join("inner","Project","","Model.fk_Project = Project.pk")
+                        l_oData_Project := :Get(l_iAssociationPk)
+                        if :Tally == 1
+                            l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,l_iEndpointPk)
+                            l_cHtml += [<div class="m-3"></div>]
+                        endif
+                    endwith
+                    exit
+
+                endcase
+
             endfor
         endwith
     endif
@@ -2074,3 +2069,216 @@ endif
 
 return l_cHtml
 //=================================================================================================================
+static function GetMLInfoDuringVisualization_AssociationInfo(par_iAssociationPk,par_iEndpointPk)
+local l_cHtml := []
+local l_nNumberOfEndpoints
+
+local l_cAssociationLinkUID
+local l_cAssociationName
+local l_cAssociationDescription
+local l_nAssociationNumberOfEndpoints
+
+local l_nNumberOfCustomFieldValues
+local l_hOptionValueToDescriptionMapping := {=>}
+local l_cHtml_AssociationCustomFields := ""
+local l_aSQLResult := {}
+
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cPackageFullName
+local l_cZoomInfo
+
+local l_oDB_ListOfEndpoints
+local l_oDB_AssociationCustomFields
+local l_oDB_InArray
+
+//Get the list of Endpoints
+l_oDB_ListOfEndpoints := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB_ListOfEndpoints
+    :Table("775ba9b5-c96e-457f-bd74-b1c67a4d2ab8","Endpoint")
+    :Column("Endpoint.pk"                    , "Endpoint_pk")
+    :Column("Endpoint.Fk_Entity"             , "Endpoint_fk_Entity")
+    :Column("Endpoint.Name"                  , "Endpoint_Name")
+    :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
+    :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
+    :Column("Endpoint.Description"           , "Endpoint_Description")
+    :Column("Package.FullName"               , "Package_FullName")
+    :Column("Entity.Name"                    , "Entity_Name")
+    :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
+    :Column("upper(Entity.Name)"             , "tag2")
+    :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
+    :Join("left","Package","","Entity.fk_Package = Package.pk") 
+    :Where("Endpoint.fk_Association = ^" , par_iAssociationPk)
+    if !empty(par_iEndpointPk)
+        :Where("Endpoint.pk = ^" , par_iEndpointPk)
+    endif
+    :OrderBy("tag1")
+    :OrderBy("tag2")
+    :SQL("ListOfEndpoints")
+    l_nNumberOfEndpoints := :Tally
+
+endwith
+
+l_oDB_AssociationCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB_AssociationCustomFields
+    // Get the Association Custom Fields
+    :Table("808c060e-bc43-4533-bb87-a989d272e93b","CustomFieldValue")
+    :Distinct(.t.)
+    :Column("CustomField.pk"              ,"CustomField_pk")
+    :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
+    :Join("inner","CustomField","","CustomFieldValue.fk_CustomField = CustomField.pk")
+    :Where("CustomFieldValue.fk_Entity = ^",par_iAssociationPk)
+    :Where("CustomField.UsedOn = ^",USEDON_ASSOCIATION)
+    :Where("CustomField.Status <= 2")
+    :Where("CustomField.Type = 2")   // Multi Choice
+    :SQL("ListOfCustomFieldOptionDefinition")
+    if :Tally > 0
+        CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
+    endif
+
+    :Table("821df2b3-d34c-42a4-af27-1afd25959614","CustomFieldValue")
+    :Column("CustomFieldValue.fk_Entity","fk_entity")
+    :Column("CustomField.pk"            ,"CustomField_pk")
+    :Column("CustomField.Label"         ,"CustomField_Label")
+    :Column("CustomField.Type"          ,"CustomField_Type")
+    :Column("CustomFieldValue.ValueI"   ,"CustomFieldValue_ValueI")
+    :Column("CustomFieldValue.ValueM"   ,"CustomFieldValue_ValueM")
+    :Column("CustomFieldValue.ValueD"   ,"CustomFieldValue_ValueD")
+    :Column("upper(CustomField.Name)"   ,"tag1")
+    :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
+    :Where("CustomFieldValue.fk_Entity = ^",par_iAssociationPk)
+    :Where("CustomField.UsedOn = ^",USEDON_ASSOCIATION)
+    :Where("CustomField.Status <= 2")
+    :OrderBy("tag1")
+    :SQL("ListOfCustomFieldValues")
+    l_nNumberOfCustomFieldValues := :Tally
+    
+    if l_nNumberOfCustomFieldValues > 0
+        l_cHtml_AssociationCustomFields := CustomFieldsBuildGridOther(par_iAssociationPk,l_hOptionValueToDescriptionMapping)
+    endif
+
+endwith
+
+l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB_InArray
+    :Table("82763b38-3f40-43f2-aa32-72939f867a95","Association")
+    :Column("Association.LinkUID"           ,"Association_LinkUID")             // 1
+    :Column("Package.FullName"              ,"Package_FullName")                // 2
+    :Column("Association.Name"              ,"Association_Name")                // 3
+    :Column("Association.Description"       ,"Association_Description")         // 4
+    :Column("Association.NumberOfEndpoints" ,"Association_NumberOfEndpoints")   // 5
+    // :join("inner","Model"  ,"","Association.fk_Model = Model.pk")
+    // :join("inner","Project","","Model.fk_Project = Project.pk")
+    :Join("left" ,"Package","","Association.fk_Package = Package.pk") 
+    :Where("Association.pk = ^" , par_iAssociationPk)
+    :SQL(@l_aSQLResult)
+endwith
+
+if l_oDB_InArray:Tally == 1
+    l_cAssociationLinkUID           := AllTrim(l_aSQLResult[1,1])
+    l_cPackageFullName              := nvl(l_aSQLResult[1,2],"")
+    l_cAssociationName              := nvl(l_aSQLResult[1,3],"")
+    l_cAssociationDescription       := nvl(l_aSQLResult[1,4],"")
+    l_nAssociationNumberOfEndpoints := l_aSQLResult[1,5]
+
+    if !empty(l_cPackageFullName)
+        l_cZoomInfo := l_cPackageFullName+" / "+l_cAssociationName
+    else
+        l_cZoomInfo := l_cAssociationName
+    endif
+
+    l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
+    l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND
+    l_cHtml += [;">]
+
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFAssociation+[: ]+l_cZoomInfo+;
+                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditAssociation/]+l_cAssociationLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]+;
+                        [</span>]
+        l_cHtml += [</div>]
+
+    l_cHtml += [</nav>]
+
+    l_cHtml += [<div class="m-3"></div>]
+
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+
+    l_cHtml += [<div class="m-3">]
+
+        if !empty(l_cAssociationDescription)
+            l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cAssociationDescription)+[</div>]
+        endif
+
+        if !empty(l_cHtml_AssociationCustomFields)
+            l_cHtml += [<div class="mt-3">]
+                l_cHtml += l_cHtml_AssociationCustomFields
+            l_cHtml += [</div>]
+        endif
+
+    l_cHtml += [</div>]
+
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+    l_cHtml += [<div class="m-3"></div>]
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+    l_cHtml += [<div class="m-3">]
+
+        if l_nNumberOfEndpoints > 0 // Should always be the case since the node is visible.
+            l_cHtml += [<div class="row">]  //  justify-content-center
+                l_cHtml += [<div class="col-auto">]
+
+                    l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+                    l_cHtml += [<tr class="bg-info">]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[</th>]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [</tr>]
+
+                    select ListOfEndpoints
+                    scan all
+                        l_cHtml += [<tr>]
+                            // Entity
+                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                l_cHtml += ListOfEndpoints->Entity_Name
+                            l_cHtml += [</td>]
+
+                            // Bound<br>Lower
+                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                l_cHtml += nvl(ListOfEndpoints->Endpoint_BoundLower,"")
+                            l_cHtml += [</td>]
+
+                            // Bound<br>Upper
+                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                l_cHtml += nvl(ListOfEndpoints->Endpoint_BoundUpper,"")
+                            l_cHtml += [</td>]
+
+                            // Name
+                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                l_cHtml += nvl(ListOfEndpoints->Endpoint_Name,"")
+                            l_cHtml += [</td>]
+
+                            // Description
+                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfEndpoints->Endpoint_Description,""))
+                            l_cHtml += [</td>]
+
+                        l_cHtml += [</tr>]
+                    endscan
+                    l_cHtml += [</table>]
+                    
+                l_cHtml += [</div>]
+            l_cHtml += [</div>]
+
+        endif
+
+    l_cHtml += [</div>]
+
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------------------------------
+
+endif
+
+return l_cHtml
+//=================================================================================================================
+

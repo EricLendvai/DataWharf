@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/15/2022
+* Modeling Visualization.
+
 ## 02/08/2022
 * Fixed read only mode in visualization.
 
