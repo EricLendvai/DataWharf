@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/17/2022
+* New "Aspect Of" in modeling.
+
 ## 02/15/2022
 * Modeling Visualization.
 

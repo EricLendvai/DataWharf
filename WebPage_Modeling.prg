@@ -604,6 +604,7 @@ case l_cURLAction == "EditAssociation"
                     :Column("Endpoint.Name"                  , "Endpoint_Name")
                     :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
                     :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
+                    :Column("Endpoint.AspectOf"              , "Endpoint_AspectOf")
                     :Column("Endpoint.Description"           , "Endpoint_Description")
                     :Column("Package.FullName"               , "Package_FullName")
                     :Column("Entity.Name"                    , "Entity_Name")
@@ -626,6 +627,7 @@ case l_cURLAction == "EditAssociation"
                         l_hValues["EndpointName"+l_nCounterC]        := ListOfEndpoints->Endpoint_Name
                         l_hValues["EndpointBoundLower"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundLower
                         l_hValues["EndpointBoundUpper"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundUpper
+                        l_hValues["EndpointAspectOf"+l_nCounterC]    := ListOfEndpoints->Endpoint_AspectOf
                         l_hValues["EndpointDescription"+l_nCounterC] := ListOfEndpoints->Endpoint_Description
                     endscan
                     l_hValues["NumberOfPossibleEndpoints"] := max(3,l_nCounter+1)
@@ -3431,6 +3433,7 @@ local l_iEndpoint_Fk_Entity
 local l_cEndpoint_Name
 local l_cEndpoint_BoundLower
 local l_cEndpoint_BoundUpper
+local l_lEndpoint_AspectOf
 local l_cEndpoint_Description
 
 oFcgi:TraceAdd("AssociationEditFormBuild")
@@ -3579,6 +3582,7 @@ l_cHtml += [<div class="m-3">]
                 l_cEndpoint_Name        := nvl(hb_HGetDef(par_hValues,"EndpointName"+l_nCounterC,""),"")
                 l_cEndpoint_BoundLower  := nvl(hb_HGetDef(par_hValues,"EndpointBoundLower"+l_nCounterC,""),"")
                 l_cEndpoint_BoundUpper  := nvl(hb_HGetDef(par_hValues,"EndpointBoundUpper"+l_nCounterC,""),"")
+                l_lEndpoint_AspectOf    := nvl(hb_HGetDef(par_hValues,"EndpointAspectOf"+l_nCounterC,.f.),.f.)
                 l_cEndpoint_Description := nvl(hb_HGetDef(par_hValues,"EndpointDescription"+l_nCounterC,""),"")
 
                 l_cHtml += [<tr class="bg-secondary">]
@@ -3587,8 +3591,9 @@ l_cHtml += [<div class="m-3">]
                         l_cObjectName := "TextEndpoint_pk"+l_nCounterC
                         l_cHtml += [<input type="hidden" name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="]+Trans(l_iEndpoint_pk)+[">]
                     l_cHtml += [</td>]
-                    l_cHtml += [<td class="ps-2 text-white">Bound<br>Lower</td>]
-                    l_cHtml += [<td class="ps-2 text-white">Bound<br>Upper</td>]
+                    l_cHtml += [<td class="ps-2 text-white text-center">Bound<br>Lower</td>]
+                    l_cHtml += [<td class="ps-2 text-white text-center">Bound<br>Upper</td>]
+                    l_cHtml += [<td class="ps-2 text-white text-center">Aspect<br>Of</td>]
                     l_cHtml += [<td class="ps-2 text-white">Name (of ]+oFcgi:p_ANFAssociation+[ to the ]+oFcgi:p_ANFEntity+[)</td>]
                 l_cHtml += [</tr>]
 
@@ -3621,6 +3626,13 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<input type="text" value="]+FcgiPrepFieldForValue(l_cEndpoint_BoundUpper)+[" id="]+l_cObjectName+[" name="]+l_cObjectName+[" maxlength="4" size="2">]
                     l_cHtml += [</td>]
 
+                    //Aspect Of
+                    l_cHtml += [<td class="ps-2 pt-2" valign="top">]
+                        l_cObjectName := "CheckAspectOf"+l_nCounterC
+                        l_cHtml += [<div class="form-check form-switch">]
+                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="1"]+iif(l_lEndpoint_AspectOf," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
+                        l_cHtml += [</div>]
+                    l_cHtml += [</td>]
 
                     //Name
                     l_cObjectName := "TextName"+l_nCounterC
@@ -3632,7 +3644,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<tr class="pb-5">]
                     //Description
                     l_cObjectName := "TextDescription"+l_nCounterC
-                    l_cHtml += [<td colspan="4" class="pt-1 pb-3">Description <textarea]+UPDATESAVEBUTTON+[ name="]+l_cObjectName+[" id="]+l_cObjectName+[" rows="2" cols="40"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cEndpoint_Description)+[</textarea></td>]
+                    l_cHtml += [<td colspan="5" class="pt-1 pb-3">Description <textarea]+UPDATESAVEBUTTON+[ name="]+l_cObjectName+[" id="]+l_cObjectName+[" rows="2" cols="40"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cEndpoint_Description)+[</textarea></td>]
 
                 l_cHtml += [</tr>]
 
@@ -3681,6 +3693,7 @@ local l_iEndpoint_fk_Entity
 local l_cEndpoint_Name
 local l_cEndpoint_BoundLower
 local l_cEndpoint_BoundUpper
+local l_lEndpoint_AspectOf
 local l_cEndpoint_Description
 local l_nEndpoint_NumberOfEndpoints
 local l_nEndpoint_NumberOfEndpoints_OnFile
@@ -3747,7 +3760,7 @@ case l_cActionOnSubmit == "Save"
 
                 if empty(l_iAssociationPk) .or. l_oData:Association_Name <> l_cAssociationName
                     l_lChanged := .t.
-                    :Field("Association.Name"      ,l_cAssociationName)
+                    :Field("Association.Name"      ,iif(empty(l_cAssociationName),NULL,l_cAssociationName))
                 endif
             endif
 
@@ -3793,6 +3806,7 @@ case l_cActionOnSubmit == "Save"
                 :Column("Endpoint.Name"        , "Endpoint_Name")
                 :Column("Endpoint.BoundLower"  , "Endpoint_BoundLower")
                 :Column("Endpoint.BoundUpper"  , "Endpoint_BoundUpper")
+                :Column("Endpoint.AspectOf"    , "Endpoint_AspectOf")
                 :Column("Endpoint.Description" , "Endpoint_Description")
                 :Where("Endpoint.fk_Association = ^" , l_iAssociationPk)
                 :SQL("ListOfEndpoints")
@@ -3811,6 +3825,7 @@ case l_cActionOnSubmit == "Save"
                     l_cEndpoint_Name        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
                     l_cEndpoint_BoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
                     l_cEndpoint_BoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
+                    l_lEndpoint_AspectOf    := (oFcgi:GetInputValue("CheckAspectOf"+l_nCounterC) == "1")
                     l_cEndpoint_Description := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
                     if empty(l_iEndpoint_pk)
@@ -3823,6 +3838,7 @@ case l_cActionOnSubmit == "Save"
                                 :Field("Endpoint.Name"           , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
                                 :Field("Endpoint.BoundLower"     , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
                                 :Field("Endpoint.BoundUpper"     , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
+                                :Field("Endpoint.AspectOf"       , l_lEndpoint_AspectOf)
                                 :Field("Endpoint.Description"    , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                 :Add()
                             endwith
@@ -3832,11 +3848,13 @@ case l_cActionOnSubmit == "Save"
                         if l_iEndpoint_fk_Entity > 0
                             l_nEndpoint_NumberOfEndpoints += 1
                             // Check in ListOfEndpoints if should record update.
+
                             if !( VFP_Seek(l_iEndpoint_pk,"ListOfEndpoints","pk") ;
                                    .and. ListOfEndpoints->Endpoint_Fk_Entity           == l_iEndpoint_fk_Entity ;
-                                   .and. ListOfEndpoints->Endpoint_Name                == l_cEndpoint_Name ;
+                                   .and. nvl(ListOfEndpoints->Endpoint_Name,"")        == nvl(l_cEndpoint_Name,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundLower,"")  == nvl(l_cEndpoint_BoundLower,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundUpper,"")  == nvl(l_cEndpoint_BoundUpper,"") ;
+                                   .and. ListOfEndpoints->Endpoint_AspectOf            == l_lEndpoint_AspectOf ;
                                    .and. nvl(ListOfEndpoints->Endpoint_Description,"") == nvl(l_cEndpoint_Description,"") )
 
                                 with object l_oDB2
@@ -3845,8 +3863,13 @@ case l_cActionOnSubmit == "Save"
                                     :Field("Endpoint.Name"        , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
                                     :Field("Endpoint.BoundLower"  , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
                                     :Field("Endpoint.BoundUpper"  , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
+                                    :Field("Endpoint.AspectOf"    , l_lEndpoint_AspectOf)
                                     :Field("Endpoint.Description" , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                     :Update(l_iEndpoint_pk)
+// SendToClipboard(l_oDB1:LastSQL())
+// altd()
+//12345
+
                                 endwith
                             endif
 

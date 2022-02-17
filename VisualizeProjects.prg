@@ -45,9 +45,11 @@ local l_nPort
 local l_iAssociationPk_Previous
 local l_iEntityPk_Previous
 local l_iEntityPk_Current
-local l_cEndPointLower_Previous
-local l_cEndPointUpper_Previous
-local l_cEndPointName_Previous
+local l_cEndpointBoundLower_Previous
+local l_cEndpointBoundUpper_Previous
+local l_lEndpointAspectOf_Previous
+local l_cEndpointName_Previous
+local l_cEndpointDescription_Previous
 
 local l_cLabel
 local l_cDescription
@@ -192,6 +194,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Column("Endpoint.Name"       ,"Endpoint_Name")
         :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
+        :Column("Endpoint.AspectOf"   ,"Endpoint_AspectOf")
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
@@ -209,6 +212,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Column("Endpoint.Name"       ,"Endpoint_Name")
         :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
+        :Column("Endpoint.AspectOf"   ,"Endpoint_AspectOf")
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
@@ -232,6 +236,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
+        :Column("Endpoint.AspectOf"      ,"Endpoint_AspectOf")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
         :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
@@ -255,6 +260,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
+        :Column("Endpoint.AspectOf"      ,"Endpoint_AspectOf")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Entity"     ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint"   ,"","Endpoint.fk_Entity = Entity.pk")
@@ -427,10 +433,9 @@ scan all
         if l_lNodeShowDescription
             l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cEntityDescription+["]
         else
-            if l_lNeverShowDescriptionOnHover
-                l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
-            else
-                l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+[",title:"]+l_cEntityDescription+["]
+            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
+            if !l_lNeverShowDescriptionOnHover
+                l_cHtml += [,title:"]+l_cEntityDescription+["]
             endif
         endif
     endif
@@ -482,10 +487,9 @@ scan all
         if l_lNodeShowDescription
             l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cAssociationDescription+["]
         else
-            if l_lNeverShowDescriptionOnHover
-                l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
-            else
-                l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+[",title:"]+l_cAssociationDescription+["]
+            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
+            if !l_lNeverShowDescriptionOnHover
+                l_cHtml += [,title:"]+l_cAssociationDescription+["]
             endif
         endif
     endif
@@ -522,32 +526,24 @@ scan all
     // l_cHtml += [, smooth: { type: "diagonalCross" }]
     l_cLabel := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Name,"")
     if !empty(l_cLabel)
-        l_cHtml += [,label:"]
-        l_cHtml += hb_StrReplace(l_cLabel,{[\]     => [\\],;
-                                           ["]     => [\"],;
-                                           [']     => [\']} )
-        l_cHtml += ["]
+        l_cHtml += [,label:"]+FormatForVisualizeLabels(l_cLabel)+["]
     endif
 
     l_cLabelLower := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundLower,"")
     l_cLabelUpper := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundUpper,"")
     if !empty(l_cLabelLower) .and. !empty(l_cLabelUpper)
-        l_cHtml += [,labelTo:"to\n]
-        l_cHtml += hb_StrReplace(l_cLabelLower+".."+l_cLabelUpper,{[\]     => [\\],;
-                                                                   ["]     => [\"],;
-                                                                   [']     => [\']} )
-        l_cHtml += ["]
+        l_cHtml += [,labelTo:"]+FormatForVisualizeLabels(chr(13)+l_cLabelLower+".."+l_cLabelUpper)+["]
     endif
 
-    l_cDescription := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Description,"")
-    if !empty(l_cDescription)
-        l_cHtml += [,title:"]
-        l_cHtml += hb_StrReplace(l_cDescription,{[\]     => [\\],;
-                                                 chr(10) => [],;
-                                                 chr(13) => [\n],;
-                                                 ["]     => [\"],;
-                                                 [']     => [\']} )
-        l_cHtml += ["]
+    if !l_lNeverShowDescriptionOnHover
+        l_cDescription := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Description,"")
+        if !empty(l_cDescription)
+            l_cHtml += [,title:"]+FormatForVisualizeLabels(l_cDescription)+["]
+        endif
+    endif
+
+    if ListOfEdgesEntityAssociationNode->Endpoint_AspectOf
+        l_cHtml += [,arrows:{to:{enabled: true,type:"diamond"}}]
     endif
 
 // l_cHtml += [,arrows:{from:{enabled: true,type:"circle"}}]
@@ -559,32 +555,97 @@ endscan
 
 select ListOfEdgesEntityEntity
 //Pairs of records should have been created
-l_iAssociationPk_Previous := 0
-l_iEntityPk_Previous      := 0
-l_iEntityPk_Current       := 0
-l_cEndPointLower_Previous := ""
-l_cEndPointUpper_Previous := ""
-l_cEndPointName_Previous := ""
+l_iAssociationPk_Previous       := 0
+l_iEntityPk_Previous            := 0
+l_iEntityPk_Current             := 0
+l_cEndpointBoundLower_Previous  := ""
+l_cEndpointBoundUpper_Previous  := ""
+l_lEndpointAspectOf_Previous    := .f.
+l_cEndpointName_Previous        := ""
+l_cEndpointDescription_Previous := ""
 // Altd()
 scan all
     if ListOfEdgesEntityEntity->Association_pk == l_iAssociationPk_Previous
         //Build the edge between 2 entities
         l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
 
-        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+[",label:"]+ListOfEdgesEntityEntity->Association_Name+["]
-        l_cHtml += [,labelTo:"]+ListOfEdgesEntityEntity->Endpoint_Name+[\n]+ListOfEdgesEntityEntity->Endpoint_BoundLower+[..]+ListOfEdgesEntityEntity->Endpoint_BoundUpper+["]  // ,arrows:"middle"
-        l_cHtml += [,labelFrom:"]+l_cEndPointName_Previous+[\n]+l_cEndPointLower_Previous+[..]+l_cEndPointUpper_Previous+["]  // ,arrows:"middle"
+        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )
+        
+        l_cHtml += [",label:"]+ListOfEdgesEntityEntity->Association_Name+["]
+
+
+        l_cLabel      := nvl(ListOfEdgesEntityEntity->Endpoint_Name,"")
+        l_cLabelLower := nvl(ListOfEdgesEntityEntity->Endpoint_BoundLower,"")
+        l_cLabelUpper := nvl(ListOfEdgesEntityEntity->Endpoint_BoundUpper,"")
+        if (!empty(l_cLabelLower) .and. !empty(l_cLabelUpper))
+            if !empty(l_cLabel)
+                l_cLabel += chr(13)
+            endif
+            l_cLabel += l_cLabelLower+".."+l_cLabelUpper
+        endif
+        if !empty(l_cLabel)
+            l_cHtml += [,labelTo:"]+FormatForVisualizeLabels(l_cLabel)+["]
+        endif
+
+
+        l_cLabel      := nvl(l_cEndpointName_Previous,"")
+        l_cLabelLower := nvl(l_cEndpointBoundLower_Previous,"")
+        l_cLabelUpper := nvl(l_cEndpointBoundUpper_Previous,"")
+        if (!empty(l_cLabelLower) .and. !empty(l_cLabelUpper))
+            if !empty(l_cLabel)
+                l_cLabel += chr(13)
+            endif
+            l_cLabel += l_cLabelLower+".."+l_cLabelUpper
+        endif
+        if !empty(l_cLabel)
+            l_cHtml += [,labelFrom:"]+FormatForVisualizeLabels(l_cLabel)+["]
+        endif
+
+        if !l_lNeverShowDescriptionOnHover
+            l_cDescription := nvl(ListOfEdgesEntityEntity->Association_Description,"")
+
+            if !empty(nvl(ListOfEdgesEntityEntity->Endpoint_Description,""))
+                if !empty(l_cDescription)
+                    l_cDescription += chr(13)+chr(13)
+                endif
+                l_cDescription += ListOfEdgesEntityEntity->Endpoint_Description
+            endif
+
+            if !empty(nvl(l_cEndpointDescription_Previous,""))
+                if !empty(l_cDescription)
+                    l_cDescription += chr(13)+chr(13)
+                endif
+                l_cDescription += l_cEndpointDescription_Previous
+            endif
+
+            if !empty(l_cDescription)
+                l_cHtml += [,title:"]+FormatForVisualizeLabels(l_cDescription)+["]
+            endif
+        endif
+
+        do case
+        case !l_lEndpointAspectOf_Previous .and. !ListOfEdgesEntityEntity->Endpoint_AspectOf
+        case  l_lEndpointAspectOf_Previous .and.  ListOfEdgesEntityEntity->Endpoint_AspectOf
+            l_cHtml += [,arrows:{from:{enabled: true,type:"diamond"},to:{enabled: true,type:"diamond"}}]
+        case !l_lEndpointAspectOf_Previous .and.  ListOfEdgesEntityEntity->Endpoint_AspectOf
+            l_cHtml += [,arrows:{to:{enabled: true,type:"diamond"}}]
+        case  l_lEndpointAspectOf_Previous .and. !ListOfEdgesEntityEntity->Endpoint_AspectOf
+            l_cHtml += [,arrows:{from:{enabled: true,type:"diamond"}}]
+        endcase
+
         l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
         // l_cHtml += [, smooth: { type: "diagonalCross" }]
         l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 
         l_iAssociationPk_Previous := 0
     else
-        l_iAssociationPk_Previous := ListOfEdgesEntityEntity->Association_pk
-        l_iEntityPk_Previous      := ListOfEdgesEntityEntity->Entity_pk
-        l_cEndPointLower_Previous := ListOfEdgesEntityEntity->Endpoint_BoundLower
-        l_cEndPointUpper_Previous := ListOfEdgesEntityEntity->Endpoint_BoundUpper
-        l_cEndPointName_Previous := ListOfEdgesEntityEntity->Endpoint_Name
+        l_iAssociationPk_Previous       := ListOfEdgesEntityEntity->Association_pk
+        l_iEntityPk_Previous            := ListOfEdgesEntityEntity->Entity_pk
+        l_cEndpointBoundLower_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundLower
+        l_cEndpointBoundUpper_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundUpper
+        l_lEndpointAspectOf_Previous    := ListOfEdgesEntityEntity->Endpoint_AspectOf
+        l_cEndpointName_Previous        := ListOfEdgesEntityEntity->Endpoint_Name
+        l_cEndpointDescription_Previous := ListOfEdgesEntityEntity->Endpoint_Description
     endif
 endscan
 
@@ -2111,6 +2172,7 @@ with object l_oDB_ListOfEndpoints
     :Column("Endpoint.Name"                  , "Endpoint_Name")
     :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
     :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
+    :Column("Endpoint.AspectOf"              , "Endpoint_AspectOf")
     :Column("Endpoint.Description"           , "Endpoint_Description")
     :Column("Package.FullName"               , "Package_FullName")
     :Column("Entity.Name"                    , "Entity_Name")
@@ -2242,6 +2304,7 @@ if l_oDB_InArray:Tally == 1
                         l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
+                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Aspect<br>Of</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [</tr>]
@@ -2262,6 +2325,11 @@ if l_oDB_InArray:Tally == 1
                             // Bound<br>Upper
                             l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                                 l_cHtml += nvl(ListOfEndpoints->Endpoint_BoundUpper,"")
+                            l_cHtml += [</td>]
+
+                            // Aspect Of
+                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                l_cHtml += iif(ListOfEndpoints->Endpoint_AspectOf,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                             l_cHtml += [</td>]
 
                             // Name
@@ -2292,4 +2360,6 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-
+function FormatForVisualizeLabels(par_cText)
+return hb_StrReplace(par_cText,{[\]=>[\\],["]=>[\"],[']=>[\'],chr(10)=>[],chr(13)=>[\n]})
+//=================================================================================================================
