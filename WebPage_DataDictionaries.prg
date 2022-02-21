@@ -561,7 +561,8 @@ case l_cURLAction == "EditColumn"
         :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 17
         :Column("Column.UsedBy"          ,"Column_UsedBy")          // 18
         :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 19
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 20
+        :Column("Column.ForeignKeyUse"   ,"Column_ForeignKeyUse")   // 20
+        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 21
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -607,7 +608,8 @@ case l_cURLAction == "EditColumn"
             l_hValues["LastNativeType"]  := l_aSQLResult[1,17]
             l_hValues["UsedBy"]          := l_aSQLResult[1,18]
             l_hValues["Fk_TableForeign"] := l_aSQLResult[1,19]
-            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,20]
+            l_hValues["ForeignKeyUse"]   := l_aSQLResult[1,20]
+            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,21]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -2894,6 +2896,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.Primary"        ,"Column_Primary")
     :Column("Column.UsedBy"         ,"Column_UsedBy")
     :Column("Column.fk_TableForeign","Column_fk_TableForeign")
+    :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
     :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
 
     :Column("NameSpace.Name"                ,"NameSpace_Name")
@@ -3073,7 +3076,7 @@ else
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Required</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To<br>And Use</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
@@ -3134,12 +3137,15 @@ else
                         l_cHtml += nvl(ListOfColumns->Column_Default,"")
                     l_cHtml += [</td>]
 
-                    // Foreign Key To
+                    // Foreign Key To and Use
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         if !hb_isNil(ListOfColumns->Table_Name)
                             l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
                             l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                             l_cHtml += [</a>]
+                            if !hb_isNil(ListOfColumns->Column_ForeignKeyUse)
+                                l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
+                            endif
                         endif
                     l_cHtml += [</td>]
 
@@ -3380,6 +3386,7 @@ local l_lUnicode         := hb_HGetDef(par_hValues,"Unicode",.t.)
 local l_lPrimary         := hb_HGetDef(par_hValues,"Primary",.f.)
 local l_nUsedBy          := hb_HGetDef(par_hValues,"UsedBy",1)
 local l_iFk_TableForeign := hb_HGetDef(par_hValues,"Fk_TableForeign",0)
+local l_cForeignKeyUse   := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
 local l_iFk_Enumeration  := hb_HGetDef(par_hValues,"Fk_Enumeration",0)
 local l_cLastNativeType  := hb_HGetDef(par_hValues,"LastNativeType","")
 local l_lShowPrimary     := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
@@ -3396,6 +3403,11 @@ local l_ScriptFolder
 local l_json_Tags
 local l_cTagInfo
 local l_nNumberOfTags
+
+local l_json_Entities
+local l_hEntityNames := {=>}
+local l_cEntityInfo
+local l_cObjectName
 
 oFcgi:TraceAdd("ColumnEditFormBuild")
 
@@ -3490,7 +3502,7 @@ l_cHtml += [};]
 l_cHtml += [</script>] 
 oFcgi:p_cjQueryScript += [OnChangeType($("#ComboType").val());]
 
-
+SetSelect2Support()
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -3625,20 +3637,74 @@ l_cHtml += [<div class="m-3">]
 
 
 
+
+    // l_cHtml += [<tr class="pb-5">]
+    //     l_cHtml += [<td class="pe-2 pb-3">Foreign Key To</td>]
+    //     l_cHtml += [<td class="pb-3">]
+    //         //fk_TableForeign
+    //         l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboFk_TableForeign" id="ComboFk_TableForeign"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+    //             l_cHtml += [<option value="0"]+iif(l_iFk_TableForeign==0,[ selected],[])+[></option>]
+    //             select ListOfTable
+    //             scan all
+    //                 l_cHtml += [<option value="]+Trans(ListOfTable->Table_pk)+["]+iif(ListOfTable->Table_pk == l_iFk_TableForeign,[ selected],[])+[>]+Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)+[</option>]
+    //             endscan
+    //         l_cHtml += [</select>]
+    //     l_cHtml += [</td>]
+    // l_cHtml += [</tr>]
+
+
+
+
+
+    l_json_Entities := []
+    select ListOfTable
+    scan all
+        if !empty(l_json_Entities)
+            l_json_Entities += [,]
+        endif
+        l_cEntityInfo := Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)
+        l_json_Entities += "{id:"+trans(ListOfTable->Table_pk)+",text:'"+l_cEntityInfo+"'}"
+        l_hEntityNames[ListOfTable->Table_pk] := l_cEntityInfo
+    endscan
+    l_json_Entities := "["+l_json_Entities+"]"
+    oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+
+
+    l_cObjectName := "ComboFk_TableForeign"
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Foreign Key To</td>]
         l_cHtml += [<td class="pb-3">]
-            //fk_TableForeign
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboFk_TableForeign" id="ComboFk_TableForeign"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-                l_cHtml += [<option value="0"]+iif(l_iFk_TableForeign==0,[ selected],[])+[></option>]
-                select ListOfTable
-                scan all
-                    l_cHtml += [<option value="]+Trans(ListOfTable->Table_pk)+["]+iif(ListOfTable->Table_pk == l_iFk_TableForeign,[ selected],[])+[>]+Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)+[</option>]
-                endscan
+
+            l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity" style="width:600px">]
+                if l_iFk_TableForeign == 0
+                    oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
+                else
+                    l_cHtml += [<option value="]+Trans(l_iFk_TableForeign)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iFk_TableForeign,"")+[</option>]
+                endif
             l_cHtml += [</select>]
+
+            //fk_TableForeign
+            // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="]+l_cObjectName+[" id="]+l_cObjectName+["]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                // l_cHtml += [<option value="0"]+iif(l_iFk_TableForeign==0,[ selected],[])+[></option>]
+                // select ListOfTable
+                // scan all
+                //     l_cHtml += [<option value="]+Trans(ListOfTable->Table_pk)+["]+iif(ListOfTable->Table_pk == l_iFk_TableForeign,[ selected],[])+[>]+Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)+[</option>]
+                // endscan
+            // l_cHtml += [</select>]
+
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
+
+
+
+
+
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Foreign Key Use</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextForeignKeyUse" id="TextForeignKeyUse" value="]+FcgiPrepFieldForValue(l_cForeignKeyUse)+[" maxlength="120" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
+    l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
@@ -3722,6 +3788,7 @@ local l_lColumnUnicode
 local l_lColumnPrimary
 local l_nColumnUsedBy
 local l_iColumnFk_TableForeign
+local l_cColumnForeignKeyUse
 local l_iColumnFk_Enumeration
 local l_lShowPrimary
 
@@ -3794,6 +3861,8 @@ l_iColumnFk_TableForeign := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
 if empty(l_iColumnFk_TableForeign)
     l_iColumnFk_TableForeign := NIL
 endif
+
+l_cColumnForeignKeyUse  := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
 
 l_iColumnFk_Enumeration  := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
 if empty(l_iColumnFk_Enumeration)
@@ -3924,6 +3993,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Column.Primary"         , l_lColumnPrimary)
                 :Field("Column.UsedBy"          , l_nColumnUsedBy)
                 :Field("Column.Fk_TableForeign" , l_iColumnFk_TableForeign)
+                :Field("Column.ForeignKeyUse"   , iif(empty(l_cColumnForeignKeyUse),NULL,l_cColumnForeignKeyUse))
                 :Field("Column.Fk_Enumeration"  , l_iColumnFk_Enumeration)
             endif
             :Field("Column.DocStatus"       , l_nColumnDocStatus)
@@ -4056,6 +4126,7 @@ if !empty(l_cErrorMessage)
     l_hValues["Primary"]         := l_lColumnPrimary
     l_hValues["UsedBy"]          := l_nColumnUsedBy
     l_hValues["Fk_TableForeign"] := l_iColumnFk_TableForeign
+    l_hValues["ForeignKeyUse"]   := l_cColumnForeignKeyUse
     l_hValues["Fk_Enumeration"]  := l_iColumnFk_Enumeration
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_COLUMN,@l_hValues)

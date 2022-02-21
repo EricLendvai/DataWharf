@@ -29,7 +29,7 @@ l_Schema := ;
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_Table"       =>{,  "I",   0,  0,};
-   ,"fk_TableForeign"=>{,  "I",   0,  0,"N"};
+   ,"fk_TableForeign"=>{,  "I",   0,  0,"N"};   // Parent Table if this is a foreign key.
    ,"fk_Enumeration" =>{,  "I",   0,  0,"N"};
    ,"Order"          =>{,  "I",   0,  0,};      // Display Order
    ,"Name"           =>{, "CV", 200,  0,};
@@ -45,6 +45,7 @@ l_Schema := ;
    ,"Unicode"        =>{,  "L",   0,  0,};     // Only Applicable to Character types,
    ,"Default"        =>{,  "M",   0,  0,"N"};  // Text version of the default value/expression
    ,"LastNativeType" =>{,  "M",   0,  0,"N"};  // Last Loaded/Synced Column Type from the backend Server
+   ,"ForeignKeyUse"  =>{, "CV", 120,  0,"N"};  // Short Description used during Visualization
    ,"Description"    =>{,  "M",   0,  0,"N"};
    ,"UsedBy"         =>{,  "N",   1,  0,}};     // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,;   //Index Definition

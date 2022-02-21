@@ -548,7 +548,7 @@ case l_cActionOnSubmit == "Save"
     otherwise
         with object l_oDB1
             :Table("85938e4d-553e-4e34-9d3e-0db1f42f6629","User")
-            :Where([upper(replace(User.ID,' ','')) = ^],l_cUserID)
+            :Where([upper(replace(User.ID,' ','')) = ^],upper(l_cUserID))
             if l_iUserPk > 0
                 :Where([User.pk != ^],l_iUserPk)
             endif
@@ -697,7 +697,7 @@ case l_cActionOnSubmit == "Save"
                                 endwith
                             else
                                 if ListOfCurrentProjectForUser->UserAccessProject_AccessLevelML <> l_nAccessLevelML
-                                    :Table("UserAccessProject")
+                                    :Table("f3d240d2-1df5-4de0-b7e5-f4be79b5f7f5","UserAccessProject")
                                     :Field("UserAccessProject.AccessLevelML",l_nAccessLevelML)
                                     if !:Update(ListOfCurrentProjectForUser->UserAccessProject_pk)
                                         l_cErrorMessage := "Failed to Update Project selection."

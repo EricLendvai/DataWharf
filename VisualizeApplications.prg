@@ -37,6 +37,12 @@ local l_nPort
 
 local l_cJS
 
+local l_hMultiEdgeCounters := {=>}
+local l_cMultiEdgeKeyPrevious
+local l_cMultiEdgeKey
+local l_nMultiEdgeTotalCount
+local l_nMultiEdgeCount
+
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
 
 l_cHtml += [<script type="text/javascript">]
@@ -396,20 +402,38 @@ with object l_oDB_ListOfLinks
     :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
     :Column("Table.pk"              ,"pkFrom")
     :Column("Column.fk_TableForeign","pkTo")
+    :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
     :Column("Column.UseStatus"      ,"Column_UseStatus")
-    :Column("Column.DocStatus"      ,"Column_DocStatus")
+    // :Column("Column.DocStatus"      ,"Column_DocStatus")
     :Column("Column.pk"             ,"Column_Pk")
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Where("Column.fk_TableForeign <> 0")
+    :OrderBy("pkFrom")
+    :OrderBy("pkTo")
     :SQL("ListOfLinks")
 endwith
 
+//Pre-Determine multi-links
+select ListOfLinks
+scan all
+    l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
+    l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
+endscan
+
 l_cHtml += 'var edges = new vis.DataSet(['
+
+// local l_hMultiEdgeCounters := {=>}
+// local l_cMultiEdgeKeyPrevious
+// local l_cMultiEdgeKey
+// local l_nMultiEdgeTotalCount
+// local l_nMultiEdgeCount
+l_cMultiEdgeKeyPrevious := ""
 
 select ListOfLinks
 scan all
+
     l_cHtml += [{id:"]+Trans(ListOfLinks->Column_Pk)+[",from:]+Trans(ListOfLinks->pkFrom)+[,to:]+Trans(ListOfLinks->pkTo)+[,arrows:"from"]
     // if ListOfLinks->Column_UseStatus >= 4
     //     l_cHtml += [,color:{color:'#ff6b6b',highlight:'#ff3e3e'}]
@@ -433,7 +457,55 @@ scan all
         l_cHtml += [,color:{color:'#]+USESTATUS_6_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_6_EDGE_HIGHLIGHT+['}]
     endcase
 
-    // l_cHtml += [, smooth: { type: "diagonalCross" }]
+
+    if !empty(nvl(ListOfLinks->Column_ForeignKeyUse,""))
+        l_cHtml += [,label:"]+FormatForVisualizeLabels(ListOfLinks->Column_ForeignKeyUse)+["]
+    endif
+
+
+    // l_cHtml += [, smooth: { type: "curvedCW",roundness: 0.2 }]
+
+
+    l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
+    l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
+    if l_nMultiEdgeTotalCount > 1
+        if l_cMultiEdgeKey == l_cMultiEdgeKeyPrevious
+            l_nMultiEdgeCount += 1
+        else
+            l_nMultiEdgeCount := 1
+            l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
+        endif
+
+        do case
+        case l_nMultiEdgeTotalCount == 2
+            do case
+            case l_nMultiEdgeCount == 1
+                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.15}]
+            case l_nMultiEdgeCount == 2
+                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.15}]
+            endcase
+        case l_nMultiEdgeTotalCount == 3
+            do case
+            case l_nMultiEdgeCount == 1
+            case l_nMultiEdgeCount == 2
+                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.2}]
+            case l_nMultiEdgeCount == 3
+                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.2}]
+            endcase
+        case l_nMultiEdgeTotalCount == 4
+            do case
+            case l_nMultiEdgeCount == 1
+                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.11}]
+            case l_nMultiEdgeCount == 2
+                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.3}]
+            case l_nMultiEdgeCount == 3
+                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.11}]
+            case l_nMultiEdgeCount == 4
+                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.3}]
+            endcase
+        endcase
+
+    endif
 
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 endscan
@@ -1408,6 +1480,7 @@ local l_cColumnAKA
 local l_nColumnUseStatus
 local l_nColumnDocStatus
 local l_cColumnDescription
+local l_cColumnForeignKeyUse
 local l_cFrom_NameSpace_Name
 local l_cFrom_Table_Name
 local l_cFrom_Table_AKA
@@ -2103,22 +2176,23 @@ else
 
                     :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Column")
 
-                    :Column("Column.Name"       ,"Column_Name")          //  1
-                    :Column("Column.AKA"        ,"Column_AKA")           //  2
-                    :Column("Column.UseStatus"  ,"Column_UseStatus")     //  3
-                    :Column("Column.DocStatus"  ,"Column_DocStatus")     //  4
-                    :Column("Column.Description","Column_Description")   //  5
+                    :Column("Column.Name"         ,"Column_Name")            //  1
+                    :Column("Column.AKA"          ,"Column_AKA")             //  2
+                    :Column("Column.UseStatus"    ,"Column_UseStatus")       //  3
+                    :Column("Column.DocStatus"    ,"Column_DocStatus")       //  4
+                    :Column("Column.Description"  ,"Column_Description")     //  5
+                    :Column("Column.ForeignKeyUse","Column_ForeignKeyUse")   //  6
                     
-                    :Column("NameSpace.Name"   ,"From_NameSpace_Name")   //  6
-                    :Column("Table.Name"       ,"From_Table_Name")       //  7
-                    :Column("Table.AKA"        ,"From_Table_AKA")        //  8
+                    :Column("NameSpace.Name"   ,"From_NameSpace_Name")   //  7
+                    :Column("Table.Name"       ,"From_Table_Name")       //  8
+                    :Column("Table.AKA"        ,"From_Table_AKA")        //  9
                     :join("inner","Table"      ,"","Column.fk_Table = Table.pk")
                     :join("inner","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
                     :join("inner","Application","","NameSpace.fk_Application = Application.pk")
 
-                    :Column("NameSpaceTo.name" , "To_NameSpace_Name")    //  9
-                    :Column("TableTo.name"     , "To_Table_Name")        // 10
-                    :Column("TableTo.AKA"      , "To_Table_AKA")         // 11
+                    :Column("NameSpaceTo.name" , "To_NameSpace_Name")    // 10
+                    :Column("TableTo.name"     , "To_Table_Name")        // 11
+                    :Column("TableTo.AKA"      , "To_Table_AKA")         // 12
                     :Join("inner","Table"    ,"TableTo"    ,"Column.fk_TableForeign = TableTo.pk")
                     :Join("inner","NameSpace","NameSpaceTo","TableTo.fk_NameSpace = NameSpaceTo.pk")
                     
@@ -2131,14 +2205,15 @@ else
                         l_nColumnUseStatus     := l_aSQLResult[1,3]
                         l_nColumnDocStatus     := l_aSQLResult[1,4]
                         l_cColumnDescription   := Alltrim(nvl(l_aSQLResult[1,5],""))
+                        l_cColumnForeignKeyUse := Alltrim(nvl(l_aSQLResult[1,6],""))
 
-                        l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,6])
-                        l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,7])
-                        l_cFrom_Table_AKA      := Alltrim(nvl(l_aSQLResult[1,8],""))
+                        l_cFrom_NameSpace_Name := Alltrim(l_aSQLResult[1,7])
+                        l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,8])
+                        l_cFrom_Table_AKA      := Alltrim(nvl(l_aSQLResult[1,9],""))
 
-                        l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,9])
-                        l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,10])
-                        l_cTo_Table_AKA        := Alltrim(nvl(l_aSQLResult[1,11],""))
+                        l_cTo_NameSpace_Name   := Alltrim(l_aSQLResult[1,10])
+                        l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,11])
+                        l_cTo_Table_AKA        := Alltrim(nvl(l_aSQLResult[1,12],""))
 
                         l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
                         do case
@@ -2162,6 +2237,10 @@ else
                                 l_cHtml += [<span class="navbar-brand ms-3">Column: ]+l_cColumnName+FormatAKAForDisplay(l_cColumnAKA)+[</span>]
                             l_cHtml += [</div>]
                         l_cHtml += [</nav>]
+
+                        if !empty(l_cColumnForeignKeyUse)
+                            l_cHtml += [<div class="m-3"><div class="fs-5">Use:</div>]+l_cColumnForeignKeyUse+[</div>]
+                        endif
 
                         if !empty(l_cColumnDescription)
                             l_cHtml += [<div class="m-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cColumnDescription)+[</div>]

@@ -570,10 +570,7 @@ local l_cColumnToInfo
 
 oFcgi:TraceAdd("InterAppMappingMapColumnsBuild")
 
-l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
-oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
-oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]
+SetSelect2Support()
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="MapColumns">]

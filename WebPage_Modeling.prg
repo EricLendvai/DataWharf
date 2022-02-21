@@ -3417,8 +3417,6 @@ local l_nNumberOfAllEntities
 local l_oDataAssociationInfo
 local l_nNumberOfPackages
 
-local l_ScriptFolder
-
 local l_nCounter
 local l_nCounterC
 
@@ -3518,15 +3516,8 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_ASSOCIATION,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
 
     l_cHtml += [</table>]
-    
 
-
-
-//Code in progress see WebPage_InterAppMapping.prg
-    l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]
+    SetSelect2Support()
 
     with object l_oDB_ListOfAllEntities
         :Table("8c4054d1-6f50-427e-aa41-2b53f8ebad2b","Entity")
@@ -3569,6 +3560,11 @@ l_cHtml += [<div class="m-3">]
 
     //Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
     oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+
+
+// oFcgi:p_cjQueryScript += [$(document).on('select2:open', () => { document.querySelector('.select2-search__field').focus();  });]
+
+
 
     l_cHtml += [<div>]
         // l_cHtml += [<table class="ms-0 table" style="width:auto;">]  //table-striped
@@ -3945,6 +3941,7 @@ case !empty(l_cErrorMessage)
         l_hValues["EndpointName"+l_nCounterC]        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
         l_hValues["EndpointBoundLower"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
         l_hValues["EndpointBoundUpper"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
+        l_hValues["EndpointAspectOf"+l_nCounterC]    := (oFcgi:GetInputValue("CheckAspectOf"+l_nCounterC) == "1")
         l_hValues["EndpointDescription"+l_nCounterC] := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
     endfor
@@ -4291,7 +4288,6 @@ local l_oDB_ListOfDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_ScriptFolder
 local l_nNumberOfAllDataTypes
 local l_json_DataTypes
 local l_cInfo
@@ -4306,14 +4302,12 @@ with object l_oDB_ListOfDataType
     :Column("DataType.TreeOrder1" , "tag1")
     :OrderBy("tag1")
     :Where("DataType.fk_Model = ^" , par_iModelPk)
+    :Where("DataType.TreeLevel = 1")
     :SQL("ListOfDataTypes")
     l_nNumberOfAllDataTypes := :Tally
 endwith
 
-l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
-oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
-oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]
+SetSelect2Support()
 
 l_json_DataTypes := []
 select ListOfDataTypes

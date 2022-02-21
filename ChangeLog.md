@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 02/20/2022
+* Data Dictionaries Visualization now will display multiple foreign keys to the same table as multiple edges (arrows).
+* New "Foreign Key Use" entry field for columns, when used as foreign key. This is being used in the visualize feature.
+* Enhanced selecting of tables in Foreign Key columns.
+* All Enhanced Selections drop downs will now auto focus keyboard entries.
+
 ## 02/17/2022
 * New "Aspect Of" in modeling.
 

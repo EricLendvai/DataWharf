@@ -1163,5 +1163,22 @@ with object l_oDB1
     endif
 endwith
 return l_AllowDestructiveDelete
- //=================================================================================================================
+//=================================================================================================================
+function SetSelect2Support()
+
+//Code in progress see WebPage_InterAppMapping.prg
+
+local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
+local l_ScriptFolder
+
+l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_2022_01_01/]
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]
+
+// See https://stackoverflow.com/questions/25882999/set-focus-to-search-text-field-when-we-click-on-select-2-drop-down
+oFcgi:p_cjQueryScript += [$(document).on('select2:open', () => { document.querySelector('.select2-search__field').focus();  });]
+
+return NIL
+//=================================================================================================================
 //=================================================================================================================
