@@ -1836,7 +1836,7 @@ if !empty(l_nNumberOfEntities)
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
                     l_cHtml += [</td>]
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Scope,""))
                     l_cHtml += [</td>]
 

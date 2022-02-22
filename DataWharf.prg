@@ -368,6 +368,7 @@ local l_lPostgresLostConnection
 local l_TimeStamp1 := hb_DateTime()
 local l_TimeStamp2
 local l_lShowDevelopmentInfo := .f.
+static l_lGetUUIDSupported := .f.  // Used to ensure the PostgreSQL database has the "pgcrypto" extension installed.
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -424,353 +425,368 @@ if ::p_o_SQLConnection == NIL
     l_cHtml += [</html>]
 
 else
-    if l_lCyanAuditAware
-        //Ensure no user specific cyanaudit is being identified
-        ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( 0 );")
+    //Test GetUUIDString is Supported
+    if !l_lGetUUIDSupported
+        if !empty(::p_o_SQLConnection:GetUUIDString())
+            l_lGetUUIDSupported := .t.
+        endif
     endif
 
-// l_cSitePath := ::GetEnvironment("CONTEXT_PREFIX")
-// if len(l_cSitePath) == 0
-//     l_cSitePath := "/"
-// endif
-// ::GetQueryString("p")
+    if !l_lGetUUIDSupported
+        l_cHtml := [<html>]
+        l_cHtml += [<body>]
+        l_cHtml += [<h1>Data Server is missing the "pgcrypto" extension</h1>]
+        l_cHtml += [<p>Execute the "CREATE EXTENSION pgcrypto;" command on the database.</p>]
+        l_cHtml += [</body>]
+        l_cHtml += [</html>]
 
-    ::p_URLPathElements := {}
-    l_cSitePath := ::RequestSettings["SitePath"]
-
-    l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
-    l_aPathElements := hb_ATokens(l_cPageName,"/",.f.)
-    if len(l_aPathElements) > 1
-        l_cPageName := l_aPathElements[1]
-        // ::p_URLPathElements := AClone(l_aPathElements)    Not supported in Harbour
-        for l_iLoop := 1 to len(l_aPathElements)
-            AAdd(::p_URLPathElements,l_aPathElements[l_iLoop])
-        endfor
     else
-        AAdd(::p_URLPathElements,l_cPageName)
-    endif
 
-    if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
-        l_cPageName := "home"
-    endif
-
-    ::p_PageName := l_cPageName
-
-    // ::URLPathElements := {}
-    //Following is Buggy
-    // if len(l_aPathElements) > 1
-    //     ACopy(l_aPathElements,::URLPathElements,2,len(l_aPathElements)-1)
-    // endif
-
-    // for l_iLoop := 1 to len(l_aPathElements)
-    //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
-    // endfor
-
-    if l_cPageName <> "ajax"
-
-        l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
-        // #define WEBPAGEHANDLE_NAME            1
-        // #define WEBPAGEHANDLE_ACCESSMODE      2
-        // #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
-
-        ::p_cHeader       := ""
-        ::p_cjQueryScript := ""
-
-
-        // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
-
-        l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
-        if empty(l_cThisAppTitle)
-            l_cThisAppTitle := APPLICATION_TITLE
+        if l_lCyanAuditAware
+            //Ensure no user specific cyanaudit is being identified
+            ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( 0 );")
         endif
 
-        l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
-        l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-        l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
+        // l_cSitePath := ::GetEnvironment("CONTEXT_PREFIX")
+        // if len(l_cSitePath) == 0
+        //     l_cSitePath := "/"
+        // endif
+        // ::GetQueryString("p")
+
+        ::p_URLPathElements := {}
+        l_cSitePath := ::RequestSettings["SitePath"]
+
+        l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
+        l_aPathElements := hb_ATokens(l_cPageName,"/",.f.)
+        if len(l_aPathElements) > 1
+            l_cPageName := l_aPathElements[1]
+            // ::p_URLPathElements := AClone(l_aPathElements)    Not supported in Harbour
+            for l_iLoop := 1 to len(l_aPathElements)
+                AAdd(::p_URLPathElements,l_aPathElements[l_iLoop])
+            endfor
+        else
+            AAdd(::p_URLPathElements,l_cPageName)
+        endif
+
+        if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
+            l_cPageName := "home"
+        endif
+
+        ::p_PageName := l_cPageName
+
+        // ::URLPathElements := {}
+        //Following is Buggy
+        // if len(l_aPathElements) > 1
+        //     ACopy(l_aPathElements,::URLPathElements,2,len(l_aPathElements)-1)
+        // endif
+
+        // for l_iLoop := 1 to len(l_aPathElements)
+        //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
+        // endfor
+
+        if l_cPageName <> "ajax"
+
+            l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
+            // #define WEBPAGEHANDLE_NAME            1
+            // #define WEBPAGEHANDLE_ACCESSMODE      2
+            // #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
+
+            ::p_cHeader       := ""
+            ::p_cjQueryScript := ""
 
 
-        l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
+            // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
-        l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/icons/font/bootstrap-icons.css">]
+            l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
+            if empty(l_cThisAppTitle)
+                l_cThisAppTitle := APPLICATION_TITLE
+            endif
 
-        l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
-        // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
+            l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
+            l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
+            l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
 
-        l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
-        l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
 
-// l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
-        l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
+            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
 
-        // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/Themes/smoothness/jQueryUI.css">]
-        // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_4_6_0/js/bootstrap.bundle.min.js"></script>]
-        // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_4_6_0/css/bootstrap.min.css">]
-        // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/jquery-ui.min.js"></script>]
+            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/icons/font/bootstrap-icons.css">]
 
-        ::p_cHeader := l_cPageHeaderHtml
-    endif
+            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/Themes/smoothness/jQueryUI.css">]
+            // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/FontAwesome_5_3_1/css/all.min.css">]
 
-    l_cPageHeaderHtml := NIL  //To free memory
+            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_3_6_0/jquery.min.js"></script>]
+            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_5_0_2/js/bootstrap.bundle.min.js"></script>]
 
-    l_oDB1       := hb_SQLData(::p_o_SQLConnection)
-    l_cSessionID := ::GetCookieValue("SessionID")
-    l_cAction    := ::GetQueryString("action")
+            // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
+            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_12_1_NoTooltip/jquery-ui.min.js"></script>]
 
-    with object l_oDB1
-        :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
-        :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
-        :Update(iFastCGIRunLogPk)
-    endwith
+            // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/Themes/smoothness/jQueryUI.css">]
+            // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_4_6_0/js/bootstrap.bundle.min.js"></script>]
+            // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_4_6_0/css/bootstrap.min.css">]
+            // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_1_13_0_NoTooltip/jquery-ui.min.js"></script>]
 
-    if l_cAction == "logout"
+            ::p_cHeader := l_cPageHeaderHtml
+        endif
+
+        l_cPageHeaderHtml := NIL  //To free memory
+
+        l_oDB1       := hb_SQLData(::p_o_SQLConnection)
+        l_cSessionID := ::GetCookieValue("SessionID")
+        l_cAction    := ::GetQueryString("action")
+
+        with object l_oDB1
+            :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
+            :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
+            :Update(iFastCGIRunLogPk)
+        endwith
+
+        if l_cAction == "logout"
+            if !empty(l_cSessionID)
+                l_nPos               := at("-",l_cSessionID)
+                l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
+                l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
+                if !empty(l_nLoggedInPk)
+                    l_oDB1:Table("f40ca9ad-ef2c-4628-af82-67c1a8102f11","public.LoginLogs")
+                    l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
+                    l_oDB1:Column("LoginLogs.Signature","LoginLogs_Signature")
+                    l_oDB1:Column("LoginLogs.fk_User","User_pk")
+                    l_oData := l_oDB1:Get(l_nLoggedInPk)
+
+                    if l_oDB1:Tally == 1
+                        l_nLoginOutUserPk := l_oData:User_pk
+                        if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
+                            l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
+                            l_oDB1:Field("LoginLogs.Status",2)
+                            l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
+                            l_oDB1:Update(l_nLoggedInPk)
+                        endif
+
+                        //Logout implicitly any other session for the same user
+                        l_oDB1:Table("dbe98b47-b5ce-4fbd-aedd-8f59fac60ec3","public.LoginLogs")
+                        l_oDB1:Column("LoginLogs.pk","pk")
+                        l_oDB1:Where("LoginLogs.fk_User = ^" , l_nLoginOutUserPk)
+                        l_oDB1:Where("LoginLogs.Status = 1")
+                        l_oDB1:SQL("ListOfResults")
+                        select ListOfResults
+                        scan all
+                            l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
+                            l_oDB1:Field("LoginLogs.Status",3)
+                            l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
+                            l_oDB1:Update(ListOfResults->pk)
+                        endscan
+                        CloseAlias("ListOfResults")
+                    else
+                        l_cLastSQL   := l_oDB1:LastSQL()
+                        l_cLastError := l_oDB1:ErrorMessage()
+                    endif
+                endif
+                l_cSessionID := ""
+                ::DeleteCookie("SessionID")
+                ::Redirect(::RequestSettings["SitePath"]+"home")
+                return nil
+            endif
+        endif
+
+        l_lLoggedIn       := .f.
+        l_cUserId         := ""
+        l_cUserName       := ""
+        l_nUserAccessMode := 0
+
         if !empty(l_cSessionID)
             l_nPos               := at("-",l_cSessionID)
             l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
             l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
             if !empty(l_nLoggedInPk)
-                l_oDB1:Table("f40ca9ad-ef2c-4628-af82-67c1a8102f11","public.LoginLogs")
-                l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
-                l_oDB1:Column("LoginLogs.Signature","LoginLogs_Signature")
-                l_oDB1:Column("LoginLogs.fk_User","User_pk")
-                l_oData := l_oDB1:Get(l_nLoggedInPk)
-
-                if l_oDB1:Tally == 1
-                    l_nLoginOutUserPk := l_oData:User_pk
-                    if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
-                        l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
-                        l_oDB1:Field("LoginLogs.Status",2)
-                        l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
-                        l_oDB1:Update(l_nLoggedInPk)
-                    endif
-
-                    //Logout implicitly any other session for the same user
-                    l_oDB1:Table("dbe98b47-b5ce-4fbd-aedd-8f59fac60ec3","public.LoginLogs")
-                    l_oDB1:Column("LoginLogs.pk","pk")
-                    l_oDB1:Where("LoginLogs.fk_User = ^" , l_nLoginOutUserPk)
-                    l_oDB1:Where("LoginLogs.Status = 1")
-                    l_oDB1:SQL("ListOfResults")
-                    select ListOfResults
-                    scan all
-                        l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
-                        l_oDB1:Field("LoginLogs.Status",3)
-                        l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
-                        l_oDB1:Update(ListOfResults->pk)
-    // SendToDebugView("1 "+l_oDB1:LastSQL())
-                    endscan
-                    CloseAlias("ListOfResults")
+                // Verify if valid loggin
+                l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
+                l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
+                l_oDB1:Column("User.pk"         ,"User_pk")
+                l_oDB1:Column("User.id"         ,"User_id")
+                l_oDB1:Column("User.FirstName"  ,"User_FirstName")
+                l_oDB1:Column("User.LastName"   ,"User_LastName")
+                l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
+                l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
+                l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
+                l_oDB1:Where("User.Status = 1")
+                l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
+                l_oDB1:SQL("ListOfResults")
+                if l_oDB1:Tally = 1
+                    l_lLoggedIn       := .t.
+                    l_iUserPk         := ListOfResults->User_pk
+                    l_cUserId         := AllTrim(ListOfResults->User_Id)
+                    l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                    l_nUserAccessMode := ListOfResults->User_AccessMode
                 else
-                    l_cLastSQL   := l_oDB1:LastSQL()
-                    l_cLastError := l_oDB1:ErrorMessage()
+                    // Clear the cookie
+                    ::DeleteCookie("SessionID")
                 endif
+                CloseAlias("ListOfResults")
             endif
-            l_cSessionID := ""
-            ::DeleteCookie("SessionID")
-            ::Redirect(::RequestSettings["SitePath"]+"home")
-            return nil
-        endif
-    endif
-
-    l_lLoggedIn       := .f.
-    l_cUserId         := ""
-    l_cUserName       := ""
-    l_nUserAccessMode := 0
-
-    if !empty(l_cSessionID)
-        l_nPos               := at("-",l_cSessionID)
-        l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
-        l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
-        if !empty(l_nLoggedInPk)
-            // Verify if valid loggin
-            l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
-            l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
-            l_oDB1:Column("User.pk"         ,"User_pk")
-            l_oDB1:Column("User.id"         ,"User_id")
-            l_oDB1:Column("User.FirstName"  ,"User_FirstName")
-            l_oDB1:Column("User.LastName"   ,"User_LastName")
-            l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
-            l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
-            l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
-            l_oDB1:Where("User.Status = 1")
-            l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
-            l_oDB1:SQL("ListOfResults")
-            if l_oDB1:Tally = 1
-                l_lLoggedIn       := .t.
-                l_iUserPk         := ListOfResults->User_pk
-                l_cUserId         := AllTrim(ListOfResults->User_Id)
-                l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
-                l_nUserAccessMode := ListOfResults->User_AccessMode
-            else
-                // Clear the cookie
-                ::DeleteCookie("SessionID")
-            endif
-            CloseAlias("ListOfResults")
-        endif
-    endif
-    
-    if l_cPageName <> "ajax"
-        //If not a public page and not logged in, then request to log in.
-        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
-            if oFcgi:IsGet()
-                l_cBody += GetPageHeader(.f.,l_cPageName)
-                l_cBody += BuildPageLoginScreen()
-            else
-                //Post
-                l_cFormName       := oFcgi:GetInputValue("formname")
-                l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
-                l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
-                l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
-
-                with object l_oDB1
-                    :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
-                    :Column("User.pk"        ,"User_pk")
-                    :Column("User.FirstName" ,"User_FirstName")
-                    :Column("User.LastName"  ,"User_LastName")
-                    :Column("User.Password"  ,"User_Password")
-                    :Column("User.AccessMode","User_AccessMode")
-                    :Where("trim(User.id) = ^",l_cID)
-                    // :Where("trim(User.Password) = ^",l_cPassword)
-                    :Where("User.Status = 1")
-                    :SQL("ListOfResults")
-
-                    if :Tally == 1
-                        l_iUserPk := ListOfResults->User_Pk
-
-                        //Check if valid Password
-                        l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
-
-                        if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
-                            l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
-                            l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-                            l_nUserAccessMode := ListOfResults->User_AccessMode
-
-                            :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
-                            :Field("LoginLogs.fk_User"  ,l_iUserPk)
-                            :Field("LoginLogs.TimeIn"   ,{"S","now()"})
-                            :Field("LoginLogs.IP"       ,l_cIP)
-                            :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
-                            :Field("LoginLogs.Status"   ,1)
-                            :Field("LoginLogs.Signature",l_cSignature)
-                            if :Add()
-                                l_nLoginLogsPk := :Key()
-                                l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
-                                ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
-                                l_lLoggedIn := .t.
-                            endif
-                        else
-                            //Invalid Password
-                            l_cBody += GetPageHeader(.f.,l_cPageName)
-                            l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.1")
-                        endif
-                    else
-                        //Invalid Active ID
-                        l_cBody += GetPageHeader(.f.,l_cPageName)
-                        l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.2")
-                    endif
-
-                endwith
-
-            endif
-        endif
-    endif
-
-    if l_lLoggedIn
-        ::p_iUserPk         := l_iUserPk
-        ::p_cUserName       := l_cUserName
-        ::p_nUserAccessMode := l_nUserAccessMode
-
-        //Since we now know the current user access mode, will check if this would be an invalid access right.
-        if ((::p_nUserAccessMode < 4) .and. lower(l_cPageName) == "users")         .or. ;  // block from going to "Users" web page, unless "Root Admin" access right.
-           ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
-            ::Redirect(::RequestSettings["SitePath"]+"home")
-            return nil
-        endif
-
-        if l_lCyanAuditAware
-            //Tell Cyanaudit to log future entries as the current user.
-            ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
         endif
         
-        if l_cPageName == "ajax"
-            l_cBody := [UNBUFFERED]
-            if len(::p_URLPathElements) >= 2 .and. !empty(::p_URLPathElements[2])
-                l_cAjaxAction := ::p_URLPathElements[2]
+        if l_cPageName <> "ajax"
+            //If not a public page and not logged in, then request to log in.
+            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
+                if oFcgi:IsGet()
+                    l_cBody += GetPageHeader(.f.,l_cPageName)
+                    l_cBody += BuildPageLoginScreen()
+                else
+                    //Post
+                    l_cFormName       := oFcgi:GetInputValue("formname")
+                    l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+                    l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
+                    l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 
-                switch l_cAjaxAction
-                // case "VisualizationPositions"
-                //     l_cBody += SaveVisualizationPositions()
-                //     exit
-                case "GetDDInfo"
-                    l_cBody += GetDDInfoDuringVisualization()
-                    exit
-                case "GetMLInfo"
-                    l_cBody += GetMLInfoDuringVisualization()
-                    exit
-                endswitch
+                    with object l_oDB1
+                        :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
+                        :Column("User.pk"        ,"User_pk")
+                        :Column("User.FirstName" ,"User_FirstName")
+                        :Column("User.LastName"  ,"User_LastName")
+                        :Column("User.Password"  ,"User_Password")
+                        :Column("User.AccessMode","User_AccessMode")
+                        :Where("trim(User.id) = ^",l_cID)
+                        // :Where("trim(User.Password) = ^",l_cPassword)
+                        :Where("User.Status = 1")
+                        :SQL("ListOfResults")
 
+                        if :Tally == 1
+                            l_iUserPk := ListOfResults->User_Pk
+
+                            //Check if valid Password
+                            l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
+
+                            if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
+                                l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                                l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+                                l_nUserAccessMode := ListOfResults->User_AccessMode
+
+                                :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
+                                :Field("LoginLogs.fk_User"  ,l_iUserPk)
+                                :Field("LoginLogs.TimeIn"   ,{"S","now()"})
+                                :Field("LoginLogs.IP"       ,l_cIP)
+                                :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
+                                :Field("LoginLogs.Status"   ,1)
+                                :Field("LoginLogs.Signature",l_cSignature)
+                                if :Add()
+                                    l_nLoginLogsPk := :Key()
+                                    l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
+                                    ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
+                                    l_lLoggedIn := .t.
+                                endif
+                            else
+                                //Invalid Password
+                                l_cBody += GetPageHeader(.f.,l_cPageName)
+                                l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.1")
+                            endif
+                        else
+                            //Invalid Active ID
+                            l_cBody += GetPageHeader(.f.,l_cPageName)
+                            l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.2")
+                        endif
+
+                    endwith
+
+                endif
+            endif
+        endif
+
+        if l_lLoggedIn
+            ::p_iUserPk         := l_iUserPk
+            ::p_cUserName       := l_cUserName
+            ::p_nUserAccessMode := l_nUserAccessMode
+
+            //Since we now know the current user access mode, will check if this would be an invalid access right.
+            if ((::p_nUserAccessMode < 4) .and. lower(l_cPageName) == "users")         .or. ;  // block from going to "Users" web page, unless "Root Admin" access right.
+            ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
+                ::Redirect(::RequestSettings["SitePath"]+"home")
+                return nil
+            endif
+
+            if l_lCyanAuditAware
+                //Tell Cyanaudit to log future entries as the current user.
+                ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
+            endif
+            
+            if l_cPageName == "ajax"
+                l_cBody := [UNBUFFERED]
+                if len(::p_URLPathElements) >= 2 .and. !empty(::p_URLPathElements[2])
+                    l_cAjaxAction := ::p_URLPathElements[2]
+
+                    switch l_cAjaxAction
+                    // case "VisualizationPositions"
+                    //     l_cBody += SaveVisualizationPositions()
+                    //     exit
+                    case "GetDDInfo"
+                        l_cBody += GetDDInfoDuringVisualization()
+                        exit
+                    case "GetMLInfo"
+                        l_cBody += GetMLInfoDuringVisualization()
+                        exit
+                    endswitch
+
+                endif
+            else
+                l_cBody += GetPageHeader(.t.,l_cPageName)
+
+                l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec()
+
+                l_lShowDevelopmentInfo := (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+                if l_lShowDevelopmentInfo
+                    l_cBody += [<div class="m-3">]   //Spacer
+                        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
+                            l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
+                        endif
+                        l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
+                        l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
+                        l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+                        l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
+                        l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
+                        l_cBody += ::TraceList(4)
+                    l_cBody += [</div>]   //Spacer
+                endif
             endif
         else
-            l_cBody += GetPageHeader(.t.,l_cPageName)
+            if l_cPageName == "ajax"
+                l_cBody := [UNBUFFERED Not Logged In]
+            else
+                ::p_nUserAccessMode := 0
+                if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] == 0   //public page
+                    l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),"",0)
+                endif
+            endif
+        endif
 
-            l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec()
+        if left(l_cBody,10) == [UNBUFFERED]
+            l_cHtml := substr(l_cBody,11)
+        else
+            l_cHtml := []
+            l_cHtml += [<!DOCTYPE html>]
+            l_cHtml += [<html>]
+            l_cHtml += [<head>]
+            l_cHtml += ::p_cHeader
 
-            l_lShowDevelopmentInfo := (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+            if !empty(::p_cjQueryScript)
+                l_cHtml += CRLF
+                l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
+                l_cHtml += [$(function() {]+CRLF
+                l_cHtml += ::p_cjQueryScript+CRLF
+                l_cHtml += [});]+CRLF
+                l_cHtml += [</script>]+CRLF
+            endif
+
+            l_cHtml += [</head>]
+            l_cHtml += [<body>]
+            l_cHtml += l_cBody
+
             if l_lShowDevelopmentInfo
-                l_cBody += [<div class="m-3">]   //Spacer
-                    if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
-                        l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
-                    endif
-                    l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
-                    l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
-                    l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
-                    l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
-                    l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
-                    l_cBody += ::TraceList(4)
-                l_cBody += [</div>]   //Spacer
+                l_TimeStamp2  := hb_DateTime()
+                l_cHtml += [<div class="m-3">Run Time = ]+trans(int((l_TimeStamp2-l_TimeStamp1)*(24*3600*1000)))+[ (ms)</div>]
             endif
+
+            l_cHtml += [</body>]
+            l_cHtml += [</html>]
+
         endif
-    else
-        if l_cPageName == "ajax"
-            l_cBody := [UNBUFFERED Not Logged In]
-        else
-            ::p_nUserAccessMode := 0
-            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] == 0   //public page
-                l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec(::Self(),"",0)
-            endif
-        endif
-    endif
-
-
-
-    if left(l_cBody,10) == [UNBUFFERED]
-        l_cHtml := substr(l_cBody,11)
-    else
-        l_cHtml := []
-        l_cHtml += [<!DOCTYPE html>]
-        l_cHtml += [<html>]
-        l_cHtml += [<head>]
-        l_cHtml += ::p_cHeader
-
-        if !empty(::p_cjQueryScript)
-            l_cHtml += CRLF
-            l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
-            l_cHtml += [$(function() {]+CRLF
-            l_cHtml += ::p_cjQueryScript+CRLF
-            l_cHtml += [});]+CRLF
-            l_cHtml += [</script>]+CRLF
-        endif
-
-        l_cHtml += [</head>]
-        l_cHtml += [<body>]
-        l_cHtml += l_cBody
-
-        if l_lShowDevelopmentInfo
-            l_TimeStamp2  := hb_DateTime()
-            l_cHtml += [<div class="m-3">Run Time = ]+trans(int((l_TimeStamp2-l_TimeStamp1)*(24*3600*1000)))+[ (ms)</div>]
-        endif
-
-        l_cHtml += [</body>]
-        l_cHtml += [</html>]
-
     endif
 endif
 // altd()

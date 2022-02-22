@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 02/22/2022
+* Modeling Visualization now will display multiple association edges separately.
+* Self Test and notification in case of failure for the presence of the "pgcrypto" extension.
+
 ## 02/20/2022
 * Data Dictionaries Visualization now will display multiple foreign keys to the same table as multiple edges (arrows).
 * New "Foreign Key Use" entry field for columns, when used as foreign key. This is being used in the visualize feature.

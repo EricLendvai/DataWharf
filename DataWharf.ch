@@ -1,7 +1,7 @@
 #include "hb_orm.ch"
 #include "hb_vfp.ch"
 
-#define BUILDVERSION "2.02"
+#define BUILDVERSION "2.04"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2

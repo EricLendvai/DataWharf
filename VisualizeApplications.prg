@@ -424,20 +424,13 @@ endscan
 
 l_cHtml += 'var edges = new vis.DataSet(['
 
-// local l_hMultiEdgeCounters := {=>}
-// local l_cMultiEdgeKeyPrevious
-// local l_cMultiEdgeKey
-// local l_nMultiEdgeTotalCount
-// local l_nMultiEdgeCount
 l_cMultiEdgeKeyPrevious := ""
 
 select ListOfLinks
 scan all
 
     l_cHtml += [{id:"]+Trans(ListOfLinks->Column_Pk)+[",from:]+Trans(ListOfLinks->pkFrom)+[,to:]+Trans(ListOfLinks->pkTo)+[,arrows:"from"]
-    // if ListOfLinks->Column_UseStatus >= 4
-    //     l_cHtml += [,color:{color:'#ff6b6b',highlight:'#ff3e3e'}]
-    // endif
+
     do case
     case ListOfLinks->Column_UseStatus <= 1
         if l_lUnknownInGray
@@ -457,14 +450,9 @@ scan all
         l_cHtml += [,color:{color:'#]+USESTATUS_6_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_6_EDGE_HIGHLIGHT+['}]
     endcase
 
-
     if !empty(nvl(ListOfLinks->Column_ForeignKeyUse,""))
         l_cHtml += [,label:"]+FormatForVisualizeLabels(ListOfLinks->Column_ForeignKeyUse)+["]
     endif
-
-
-    // l_cHtml += [, smooth: { type: "curvedCW",roundness: 0.2 }]
-
 
     l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
     l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
@@ -475,36 +463,7 @@ scan all
             l_nMultiEdgeCount := 1
             l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
         endif
-
-        do case
-        case l_nMultiEdgeTotalCount == 2
-            do case
-            case l_nMultiEdgeCount == 1
-                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.15}]
-            case l_nMultiEdgeCount == 2
-                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.15}]
-            endcase
-        case l_nMultiEdgeTotalCount == 3
-            do case
-            case l_nMultiEdgeCount == 1
-            case l_nMultiEdgeCount == 2
-                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.2}]
-            case l_nMultiEdgeCount == 3
-                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.2}]
-            endcase
-        case l_nMultiEdgeTotalCount == 4
-            do case
-            case l_nMultiEdgeCount == 1
-                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.11}]
-            case l_nMultiEdgeCount == 2
-                l_cHtml += [,smooth: {type: 'curvedCW', roundness: 0.3}]
-            case l_nMultiEdgeCount == 3
-                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.11}]
-            case l_nMultiEdgeCount == 4
-                l_cHtml += [,smooth: {type: 'curvedCCW', roundness: 0.3}]
-            endcase
-        endcase
-
+        l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
     endif
 
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
@@ -595,9 +554,6 @@ local l_iTablePk
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramOnSubmit")
 
 l_iDiagram_pk := Val(oFcgi:GetInputValue("TextDiagramPk"))
-
-//Cancel2
-// Altd()
 
 do case
 case l_cActionOnSubmit == "Show"

@@ -56,6 +56,12 @@ local l_cDescription
 
 local l_cJS
 
+local l_hMultiEdgeCounters := {=>}
+local l_cMultiEdgeKeyPrevious
+local l_cMultiEdgeKey
+local l_nMultiEdgeTotalCount
+local l_nMultiEdgeCount
+
 oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
 
 l_cHtml += [<script type="text/javascript">]
@@ -200,6 +206,8 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
         :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :Where("Association.NumberOfEndpoints > 2")
+        :OrderBy("Association_pk")
+        :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityAssociationNode")
 
     else
@@ -219,6 +227,8 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
         :Where("Association.NumberOfEndpoints > 2")
+        :OrderBy("Association_pk")
+        :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityAssociationNode")
 
     endif
@@ -243,6 +253,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Where("Association.fk_Model = ^",par_oDataHeader:Model_pk)
         :Where("Association.NumberOfEndpoints = 2")
         :OrderBy("Association_pk")
+        :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityEntity")
         //Pairs of records should be created
 
@@ -268,6 +279,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Where("DiagramEntity.fk_ModelingDiagram = ^",l_iModelingDiagramPk)
         :Where("Association.NumberOfEndpoints = 2")
         :OrderBy("Association_pk")
+        :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityEntity")
         //It is possible that some non pairs are created.
 
@@ -519,10 +531,23 @@ l_cHtml += ']);'
 
 l_cHtml += 'var edges = new vis.DataSet(['
 
+// Edges between Association Nodes and Entities
+
+l_cMultiEdgeKeyPrevious   := ""
+
+//Pre-Determine multi-links
+select ListOfEdgesEntityAssociationNode
+scan all
+    l_cMultiEdgeKey := Trans(ListOfEdgesEntityAssociationNode->Association_pk)+"-"+Trans(ListOfEdgesEntityAssociationNode->Entity_pk)
+    l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
+endscan
+
 select ListOfEdgesEntityAssociationNode
 scan all
     l_cHtml += [{id:"L]+Trans(ListOfEdgesEntityAssociationNode->Endpoint_pk)+[",from:"A]+Trans(ListOfEdgesEntityAssociationNode->Association_pk)+[",to:"E]+Trans(ListOfEdgesEntityAssociationNode->Entity_pk)+["]  // ,arrows:"middle"
+    
     l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
+    
     // l_cHtml += [, smooth: { type: "diagonalCross" }]
     l_cLabel := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Name,"")
     if !empty(l_cLabel)
@@ -546,11 +571,45 @@ scan all
         l_cHtml += [,arrows:{to:{enabled: true,type:"diamond"}}]
     endif
 
-// l_cHtml += [,arrows:{from:{enabled: true,type:"circle"}}]
-// l_cHtml += [,arrows:{from:{enabled: true,type:"image",src: "https://visjs.org/images/visjs_logo.png"}}]
-// https://harbour.wiki/images/harbour.svg
+    // l_cHtml += [,arrows:{from:{enabled: true,type:"circle"}}]
+    // l_cHtml += [,arrows:{from:{enabled: true,type:"image",src: "https://visjs.org/images/visjs_logo.png"}}]
+    // https://harbour.wiki/images/harbour.svg
+
+    l_cMultiEdgeKey := Trans(ListOfEdgesEntityAssociationNode->Association_pk)+"-"+Trans(ListOfEdgesEntityAssociationNode->Entity_pk)
+    l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
+    if l_nMultiEdgeTotalCount > 1
+        if l_cMultiEdgeKey == l_cMultiEdgeKeyPrevious
+            l_nMultiEdgeCount += 1
+        else
+            l_nMultiEdgeCount := 1
+            l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
+        endif
+        l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
+    endif
 
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
+endscan
+
+
+// Edges between Two Entities
+
+hb_HClear(l_hMultiEdgeCounters)
+l_iAssociationPk_Previous := 0
+l_iEntityPk_Previous      := 0
+l_iEntityPk_Current       := 0
+l_cMultiEdgeKeyPrevious   := ""
+
+//Pre-Determine multi-links
+select ListOfEdgesEntityEntity
+scan all
+    if ListOfEdgesEntityEntity->Association_pk == l_iAssociationPk_Previous
+        l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
+        l_cMultiEdgeKey := Trans(l_iEntityPk_Current)+"-"+Trans(l_iEntityPk_Previous)
+        l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
+    else
+        l_iAssociationPk_Previous       := ListOfEdgesEntityEntity->Association_pk
+        l_iEntityPk_Previous            := ListOfEdgesEntityEntity->Entity_pk
+    endif
 endscan
 
 select ListOfEdgesEntityEntity
@@ -569,10 +628,11 @@ scan all
         //Build the edge between 2 entities
         l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
 
-        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )
+        l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]
         
-        l_cHtml += [",label:"]+ListOfEdgesEntityEntity->Association_Name+["]
+        l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
 
+        l_cHtml += [,label:"]+ListOfEdgesEntityEntity->Association_Name+["]
 
         l_cLabel      := nvl(ListOfEdgesEntityEntity->Endpoint_Name,"")
         l_cLabelLower := nvl(ListOfEdgesEntityEntity->Endpoint_BoundLower,"")
@@ -586,7 +646,6 @@ scan all
         if !empty(l_cLabel)
             l_cHtml += [,labelTo:"]+FormatForVisualizeLabels(l_cLabel)+["]
         endif
-
 
         l_cLabel      := nvl(l_cEndpointName_Previous,"")
         l_cLabelLower := nvl(l_cEndpointBoundLower_Previous,"")
@@ -633,9 +692,19 @@ scan all
             l_cHtml += [,arrows:{from:{enabled: true,type:"diamond"}}]
         endcase
 
-        l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
-        // l_cHtml += [, smooth: { type: "diagonalCross" }]
-        l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
+        l_cMultiEdgeKey := Trans(l_iEntityPk_Current)+"-"+Trans(l_iEntityPk_Previous)
+        l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
+        if l_nMultiEdgeTotalCount > 1
+            if l_cMultiEdgeKey == l_cMultiEdgeKeyPrevious
+                l_nMultiEdgeCount += 1
+            else
+                l_nMultiEdgeCount := 1
+                l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
+            endif
+            l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
+        endif
+
+        l_cHtml += [},]
 
         l_iAssociationPk_Previous := 0
     else
@@ -2362,4 +2431,36 @@ return l_cHtml
 //=================================================================================================================
 function FormatForVisualizeLabels(par_cText)
 return hb_StrReplace(par_cText,{[\]=>[\\],["]=>[\"],[']=>[\'],chr(10)=>[],chr(13)=>[\n]})
+//=================================================================================================================
+function GetMultiEdgeCurvatureJSon(par_nMultiEdgeTotalCount,par_nMultiEdgeCount)
+local l_cJSon := ""
+do case
+case par_nMultiEdgeTotalCount == 2
+    do case
+    case par_nMultiEdgeCount == 1
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.15}]
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.15}]
+    endcase
+case par_nMultiEdgeTotalCount == 3
+    do case
+    case par_nMultiEdgeCount == 1
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.2}]
+    case par_nMultiEdgeCount == 3
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.2}]
+    endcase
+case par_nMultiEdgeTotalCount == 4
+    do case
+    case par_nMultiEdgeCount == 1
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.11}]
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.3}]
+    case par_nMultiEdgeCount == 3
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.11}]
+    case par_nMultiEdgeCount == 4
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.3}]
+    endcase
+endcase
+return l_cJSon
 //=================================================================================================================
