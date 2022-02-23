@@ -773,6 +773,7 @@ else
                 l_cHtml += [});]+CRLF
                 l_cHtml += [</script>]+CRLF
             endif
+            l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
             l_cHtml += [</head>]
             l_cHtml += [<body>]

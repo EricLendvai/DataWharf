@@ -57,6 +57,7 @@ RUN  hbmk2 DataWharf_linux.hbp -w3 -static
 
 # install Postgresql 
 RUN apt-get -y install postgresql \
+        postgresql-contrib \
         odbc-postgresql
 
 # Run the rest of the commands as the ``postgres`` user when it was ``apt-get installed``
@@ -66,7 +67,8 @@ USER postgres
 # then create a database `DataWharf` owned by the ``datawharf`` role.
 RUN    /etc/init.d/postgresql start &&\
     psql --command "CREATE USER datawharf WITH SUPERUSER PASSWORD 'mypassord';" &&\
-    createdb -O datawharf DataWharf
+    createdb -O datawharf DataWharf &&\
+    psql --dbname DataWharf --command "CREATE EXTENSION pgcrypto;"
 
 USER root
 
