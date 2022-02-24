@@ -47,7 +47,7 @@ local l_iEntityPk_Previous
 local l_iEntityPk_Current
 local l_cEndpointBoundLower_Previous
 local l_cEndpointBoundUpper_Previous
-local l_lEndpointAspectOf_Previous
+local l_lEndpointIsContainment_Previous
 local l_cEndpointName_Previous
 local l_cEndpointDescription_Previous
 
@@ -200,7 +200,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Column("Endpoint.Name"       ,"Endpoint_Name")
         :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
-        :Column("Endpoint.AspectOf"   ,"Endpoint_AspectOf")
+        :Column("Endpoint.IsContainment"   ,"Endpoint_IsContainment")
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
@@ -220,7 +220,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :Column("Endpoint.Name"       ,"Endpoint_Name")
         :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
-        :Column("Endpoint.AspectOf"   ,"Endpoint_AspectOf")
+        :Column("Endpoint.IsContainment"   ,"Endpoint_IsContainment")
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
@@ -246,7 +246,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        :Column("Endpoint.AspectOf"      ,"Endpoint_AspectOf")
+        :Column("Endpoint.IsContainment"      ,"Endpoint_IsContainment")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
         :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
@@ -271,7 +271,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        :Column("Endpoint.AspectOf"      ,"Endpoint_AspectOf")
+        :Column("Endpoint.IsContainment"      ,"Endpoint_IsContainment")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Entity"     ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint"   ,"","Endpoint.fk_Entity = Entity.pk")
@@ -432,20 +432,37 @@ scan all
     if hb_orm_isnull("ListOfEntities","Entity_Description")
         l_cEntityDescription := ""
     else
-        l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[\]     => [\\],;
+        // l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[\]     => [\\],;
+        //                                                                           chr(10) => [],;
+        //                                                                           chr(13) => [\n],;
+        //                                                                           ["]     => [\"],;
+        //                                                                           [']     => [\']} )
+
+        // l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
+        //                                                                           [\]     => [&#92;],;
+        //                                                                           chr(10) => [],;
+        //                                                                           chr(13) => [<br>],;
+        //                                                                           ["]     => [&#34;],;
+        //                                                                           [']     => [&#39;]} )
+
+        l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
+                                                                                  [\]     => [&#92;],;
                                                                                   chr(10) => [],;
                                                                                   chr(13) => [\n],;
-                                                                                  ["]     => [\"],;
-                                                                                  [']     => [\']} )
+                                                                                  ["]     => [&#34;],;
+                                                                                  [']     => [&#39;]} )
+
     endif
 
+    l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+["]
+    l_cHtml += [,font:{multi:"html"}]
     if empty(l_cEntityDescription)
-        l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
+        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
     else
         if l_lNodeShowDescription
-            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cEntityDescription+["]
+            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cEntityDescription+["]
         else
-            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
+            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
                 l_cHtml += [,title:"]+l_cEntityDescription+["]
             endif
@@ -493,13 +510,15 @@ scan all
                                                                                                     [']     => [\']} )
     endif
 
+    l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+["]
+    l_cHtml += [,font:{multi:"html"}]
     if empty(l_cAssociationDescription)
-        l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
+        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
     else
         if l_lNodeShowDescription
-            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cAssociationDescription+["]
+            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cAssociationDescription+["]
         else
-            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
+            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
                 l_cHtml += [,title:"]+l_cAssociationDescription+["]
             endif
@@ -567,7 +586,7 @@ scan all
         endif
     endif
 
-    if ListOfEdgesEntityAssociationNode->Endpoint_AspectOf
+    if ListOfEdgesEntityAssociationNode->Endpoint_IsContainment
         l_cHtml += [,arrows:{to:{enabled: true,type:"diamond"}}]
     endif
 
@@ -619,7 +638,7 @@ l_iEntityPk_Previous            := 0
 l_iEntityPk_Current             := 0
 l_cEndpointBoundLower_Previous  := ""
 l_cEndpointBoundUpper_Previous  := ""
-l_lEndpointAspectOf_Previous    := .f.
+l_lEndpointIsContainment_Previous    := .f.
 l_cEndpointName_Previous        := ""
 l_cEndpointDescription_Previous := ""
 // Altd()
@@ -629,9 +648,7 @@ scan all
         l_iEntityPk_Current := ListOfEdgesEntityEntity->Entity_pk
 
         l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]
-        
         l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
-
         l_cHtml += [,label:"]+ListOfEdgesEntityEntity->Association_Name+["]
 
         l_cLabel      := nvl(ListOfEdgesEntityEntity->Endpoint_Name,"")
@@ -683,12 +700,12 @@ scan all
         endif
 
         do case
-        case !l_lEndpointAspectOf_Previous .and. !ListOfEdgesEntityEntity->Endpoint_AspectOf
-        case  l_lEndpointAspectOf_Previous .and.  ListOfEdgesEntityEntity->Endpoint_AspectOf
+        case !l_lEndpointIsContainment_Previous .and. !ListOfEdgesEntityEntity->Endpoint_IsContainment
+        case  l_lEndpointIsContainment_Previous .and.  ListOfEdgesEntityEntity->Endpoint_IsContainment
             l_cHtml += [,arrows:{from:{enabled: true,type:"diamond"},to:{enabled: true,type:"diamond"}}]
-        case !l_lEndpointAspectOf_Previous .and.  ListOfEdgesEntityEntity->Endpoint_AspectOf
+        case !l_lEndpointIsContainment_Previous .and.  ListOfEdgesEntityEntity->Endpoint_IsContainment
             l_cHtml += [,arrows:{to:{enabled: true,type:"diamond"}}]
-        case  l_lEndpointAspectOf_Previous .and. !ListOfEdgesEntityEntity->Endpoint_AspectOf
+        case  l_lEndpointIsContainment_Previous .and. !ListOfEdgesEntityEntity->Endpoint_IsContainment
             l_cHtml += [,arrows:{from:{enabled: true,type:"diamond"}}]
         endcase
 
@@ -712,7 +729,7 @@ scan all
         l_iEntityPk_Previous            := ListOfEdgesEntityEntity->Entity_pk
         l_cEndpointBoundLower_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundLower
         l_cEndpointBoundUpper_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundUpper
-        l_lEndpointAspectOf_Previous    := ListOfEdgesEntityEntity->Endpoint_AspectOf
+        l_lEndpointIsContainment_Previous    := ListOfEdgesEntityEntity->Endpoint_IsContainment
         l_cEndpointName_Previous        := ListOfEdgesEntityEntity->Endpoint_Name
         l_cEndpointDescription_Previous := ListOfEdgesEntityEntity->Endpoint_Description
     endif
@@ -1617,7 +1634,7 @@ local l_cPackageFullName
 
 local l_cEntityName
 local l_cEntityDescription
-local l_cEntityScope
+local l_cEntityInformation
 
 local l_cAttributeName
 local l_cAttributeDescription
@@ -1866,7 +1883,7 @@ if len(l_aNodes) == 1
             :Column("Package.FullName"     ,"Package_FullName")       // 2
             :Column("Entity.Name"          ,"Entity_Name")            // 3
             :Column("Entity.Description"   ,"Entity_Description")     // 4
-            :Column("Entity.Scope"         ,"Entity_Scope")           // 5
+            :Column("Entity.Information"   ,"Entity_Information")     // 5
             // :join("inner","Model"  ,"","Entity.fk_Model = Model.pk")
             // :join("inner","Project","","Model.fk_Project = Project.pk")
             :Join("left" ,"Package","","Entity.fk_Package = Package.pk") 
@@ -1879,7 +1896,7 @@ if len(l_aNodes) == 1
             l_cPackageFullName      := nvl(l_aSQLResult[1,2],"")
             l_cEntityName           := l_aSQLResult[1,3]
             l_cEntityDescription    := nvl(l_aSQLResult[1,4],"")
-            l_cEntityScope          := nvl(l_aSQLResult[1,5],"")
+            l_cEntityInformation    := nvl(l_aSQLResult[1,5],"")
 
             if !empty(l_cPackageFullName)
                 l_cZoomInfo := l_cPackageFullName+" / "+l_cEntityName
@@ -1913,7 +1930,7 @@ if len(l_aNodes) == 1
                                                                 [$('#TabDetail2').removeClass('active');]+;
                                                                 [$('#TabDetail3').removeClass('active');]+;
                                                                 [$('#TabDetail4').removeClass('active');"]+;
-                                                                [>Attributes (]+Trans(l_nNumberOfAttributes)+[)</a>]
+                                                                [>]+oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributes)+[)</a>]
                 l_cHtml += [</li>]
                 l_cHtml += [<li class="nav-item">]
                     l_cHtml += [<a id="TabDetail2" class="nav-link]+iif(l_nActiveTabNumber == 2,[ active],[])+["]+;
@@ -1926,7 +1943,7 @@ if len(l_aNodes) == 1
                                                                 [$('#TabDetail2').addClass('active');]+;
                                                                 [$('#TabDetail3').removeClass('active');]+;
                                                                 [$('#TabDetail4').removeClass('active');"]+;
-                                                                [>Related Entities In App (]+Trans(l_nNumberOfRelatedEntities)+[)</a>]
+                                                                [>Related ]+oFcgi:p_ANFEntities+[ In App (]+Trans(l_nNumberOfRelatedEntities)+[)</a>]
                 l_cHtml += [</li>]
                 l_cHtml += [<li class="nav-item">]
                     l_cHtml += [<a id="TabDetail3" class="nav-link]+iif(l_nActiveTabNumber == 3,[ active],[])+["]+;
@@ -1952,7 +1969,7 @@ if len(l_aNodes) == 1
                                                                 [$('#TabDetail2').removeClass('active');]+;
                                                                 [$('#TabDetail3').removeClass('active');]+;
                                                                 [$('#TabDetail4').addClass('active');"]+;
-                                                                [>Entity Info</a>]
+                                                                [>]+oFcgi:p_ANFEntity+[ Info</a>]
                 l_cHtml += [</li>]
             l_cHtml += [</ul>]
 
@@ -2120,8 +2137,8 @@ if len(l_aNodes) == 1
                     l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cEntityDescription)+[</div>]
                 endif
 
-                if !empty(l_cEntityScope)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Scope:</div>]+TextToHTML(l_cEntityScope)+[</div>]
+                if !empty(l_cEntityInformation)
+                    l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cEntityInformation)+[</div>]
                 endif
 
                 if !empty(l_cHtml_EntityCustomFields)
@@ -2241,7 +2258,7 @@ with object l_oDB_ListOfEndpoints
     :Column("Endpoint.Name"                  , "Endpoint_Name")
     :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
     :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
-    :Column("Endpoint.AspectOf"              , "Endpoint_AspectOf")
+    :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
     :Column("Endpoint.Description"           , "Endpoint_Description")
     :Column("Package.FullName"               , "Package_FullName")
     :Column("Entity.Name"                    , "Entity_Name")
@@ -2398,7 +2415,7 @@ if l_oDB_InArray:Tally == 1
 
                             // Aspect Of
                             l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                l_cHtml += iif(ListOfEndpoints->Endpoint_AspectOf,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                                l_cHtml += iif(ListOfEndpoints->Endpoint_IsContainment,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                             l_cHtml += [</td>]
 
                             // Name

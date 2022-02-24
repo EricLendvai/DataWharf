@@ -477,7 +477,7 @@ case l_cURLAction == "EditEntity"
                 :Column("Entity.fk_Package"   , "Entity_fk_Package")
                 :Column("Entity.Name"         , "Entity_Name")
                 :Column("Entity.Description"  , "Entity_Description")
-                :Column("Entity.Scope"        , "Entity_Scope")
+                :Column("Entity.Information"  , "Entity_Information")
                 l_oData := :Get(l_oDataHeader:Entity_pk)
             endwith
 
@@ -485,7 +485,7 @@ case l_cURLAction == "EditEntity"
                 l_hValues["fk_Package"]     := l_oData:Entity_fk_Package
                 l_hValues["Name"]           := l_oData:Entity_Name
                 l_hValues["Description"]    := l_oData:Entity_Description
-                l_hValues["Scope"]          := l_oData:Entity_Scope
+                l_hValues["Information"]    := l_oData:Entity_Information
                 CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
 
                 l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
@@ -604,7 +604,7 @@ case l_cURLAction == "EditAssociation"
                     :Column("Endpoint.Name"                  , "Endpoint_Name")
                     :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
                     :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
-                    :Column("Endpoint.AspectOf"              , "Endpoint_AspectOf")
+                    :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
                     :Column("Endpoint.Description"           , "Endpoint_Description")
                     :Column("Package.FullName"               , "Package_FullName")
                     :Column("Entity.Name"                    , "Entity_Name")
@@ -627,7 +627,7 @@ case l_cURLAction == "EditAssociation"
                         l_hValues["EndpointName"+l_nCounterC]        := ListOfEndpoints->Endpoint_Name
                         l_hValues["EndpointBoundLower"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundLower
                         l_hValues["EndpointBoundUpper"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundUpper
-                        l_hValues["EndpointAspectOf"+l_nCounterC]    := ListOfEndpoints->Endpoint_AspectOf
+                        l_hValues["EndpointIsContainment"+l_nCounterC]    := ListOfEndpoints->Endpoint_IsContainment
                         l_hValues["EndpointDescription"+l_nCounterC] := ListOfEndpoints->Endpoint_Description
                     endscan
                     l_hValues["NumberOfPossibleEndpoints"] := max(3,l_nCounter+1)
@@ -1576,8 +1576,12 @@ local l_hOptionValueToDescriptionMapping := {=>}
 local l_cAttributeSearchParameters
 local l_nColspan
 local l_ScriptFolder
+local l_cObjectId
 
 oFcgi:TraceAdd("EntityListFormBuild")
+
+//See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 l_cSearchEntityName           := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityName")
 l_cSearchEntityDescription    := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityDescription")
@@ -1597,7 +1601,7 @@ with object l_oDB_ListOfEntities
     :Column("Entity.LinkUID"    ,"Entity_LinkUID")
     :Column("Entity.Name"       ,"Entity_Name")
     :Column("Entity.Description","Entity_Description")
-    :Column("Entity.Scope"      ,"Entity_Scope")
+    :Column("Entity.Information","Entity_Information")
     :Column("Upper(Entity.Name)","tag2")
     :Where("Entity.fk_Model = ^",par_iModelPk)
 
@@ -1807,7 +1811,7 @@ if !empty(l_nNumberOfEntities)
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[ Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAttributes+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Scope</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Information</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -1832,13 +1836,15 @@ if !empty(l_nNumberOfEntities)
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListAttributes/]+ListOfEntities->Entity_LinkUID+[/]+l_cAttributeSearchParameters+[">]+Trans(l_nAttributeCount)+[</a>]
                     l_cHtml += [</td>]
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" id="entity-description">]
-                        //l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
-                        l_cHtml += [<script> document.getElementById('entity-description').innerHTML = marked.parse(']+TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))+[');</script>]
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
                     l_cHtml += [</td>]
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Scope,""))
+                    l_cObjectId := "entity-description"+Trans(l_iEntityPk)
+                    l_cHtml += [<td class="GridDataControlCells" valign="top" id="]+l_cObjectId+[">]
+                        if !hb_orm_isnull("ListOfEntities","Entity_Information")
+                            l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+hb_StrReplace(ListOfEntities->Entity_Information,{chr(10)=>[],chr(13)=>[\n]})+[');</script>]
+                        endif
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -1910,7 +1916,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cScope       := nvl(hb_HGetDef(par_hValues,"Scope",""),"")
+local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
 local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 
@@ -2000,8 +2006,8 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pe-2 pb-3">Scope</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextScope" id="TextScope" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cScope)+[</textarea></td>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Information</td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_ENTITY,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
@@ -2012,7 +2018,7 @@ l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
-oFcgi:p_cjQueryScript += [$('#TextScope').resizable();]
+oFcgi:p_cjQueryScript += [$('#TextInformation').resizable();]
 
 l_cHtml += [</form>]
 
@@ -2030,7 +2036,7 @@ local l_iEntityPk
 local l_iEntityFk_Package
 local l_cEntityName
 local l_cEntityDescription
-local l_cEntityScope
+local l_cEntityInformation
 local l_cFrom := ""
 local l_oData
 local l_cErrorMessage := ""
@@ -2049,7 +2055,7 @@ l_iEntityPk          := Val(oFcgi:GetInputValue("EntityKey"))
 l_iEntityFk_Package  := Val(oFcgi:GetInputValue("ComboPackagePk"))
 l_cEntityName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_cEntityDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
-l_cEntityScope       := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextScope")))
+l_cEntityInformation := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextInformation")))
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -2086,7 +2092,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Entity.Name"      ,l_cEntityName)
             endif
             :Field("Entity.Description" ,iif(empty(l_cEntityDescription),NULL,l_cEntityDescription))
-            :Field("Entity.Scope" ,iif(empty(l_cEntityScope),NULL,l_cEntityScope))
+            :Field("Entity.Information" ,iif(empty(l_cEntityInformation),NULL,l_cEntityInformation))
             if empty(l_iEntityPk)
                 :Field("Entity.LinkUID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("Entity.fk_Model" , par_iModelPk)
@@ -2188,7 +2194,7 @@ case !empty(l_cErrorMessage)
     l_hValues["fk_package"]  := l_iEntityFk_Package
     l_hValues["Name"]        := l_cEntityName
     l_hValues["Description"] := l_cEntityDescription
-    l_hValues["Scope"]       := l_cEntityScope
+    l_hValues["Information"] := l_cEntityInformation
     CustomFieldsFormToHash(par_iProjectPk,USEDON_ENTITY,@l_hValues)
 
     l_cHtml += EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_iEntityPk,l_hValues)
@@ -3432,7 +3438,7 @@ local l_iEndpoint_Fk_Entity
 local l_cEndpoint_Name
 local l_cEndpoint_BoundLower
 local l_cEndpoint_BoundUpper
-local l_lEndpoint_AspectOf
+local l_lEndpoint_IsContainment
 local l_cEndpoint_Description
 
 oFcgi:TraceAdd("AssociationEditFormBuild")
@@ -3579,7 +3585,7 @@ l_cHtml += [<div class="m-3">]
                 l_cEndpoint_Name        := nvl(hb_HGetDef(par_hValues,"EndpointName"+l_nCounterC,""),"")
                 l_cEndpoint_BoundLower  := nvl(hb_HGetDef(par_hValues,"EndpointBoundLower"+l_nCounterC,""),"")
                 l_cEndpoint_BoundUpper  := nvl(hb_HGetDef(par_hValues,"EndpointBoundUpper"+l_nCounterC,""),"")
-                l_lEndpoint_AspectOf    := nvl(hb_HGetDef(par_hValues,"EndpointAspectOf"+l_nCounterC,.f.),.f.)
+                l_lEndpoint_IsContainment    := nvl(hb_HGetDef(par_hValues,"EndpointIsContainment"+l_nCounterC,.f.),.f.)
                 l_cEndpoint_Description := nvl(hb_HGetDef(par_hValues,"EndpointDescription"+l_nCounterC,""),"")
 
                 l_cHtml += [<tr class="bg-secondary">]
@@ -3625,9 +3631,9 @@ l_cHtml += [<div class="m-3">]
 
                     //Aspect Of
                     l_cHtml += [<td class="ps-2 pt-2" valign="top">]
-                        l_cObjectName := "CheckAspectOf"+l_nCounterC
+                        l_cObjectName := "CheckIsContainment"+l_nCounterC
                         l_cHtml += [<div class="form-check form-switch">]
-                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="1"]+iif(l_lEndpoint_AspectOf," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
+                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="1"]+iif(l_lEndpoint_IsContainment," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
                         l_cHtml += [</div>]
                     l_cHtml += [</td>]
 
@@ -3690,7 +3696,7 @@ local l_iEndpoint_fk_Entity
 local l_cEndpoint_Name
 local l_cEndpoint_BoundLower
 local l_cEndpoint_BoundUpper
-local l_lEndpoint_AspectOf
+local l_lEndpoint_IsContainment
 local l_cEndpoint_Description
 local l_nEndpoint_NumberOfEndpoints
 local l_nEndpoint_NumberOfEndpoints_OnFile
@@ -3803,7 +3809,7 @@ case l_cActionOnSubmit == "Save"
                 :Column("Endpoint.Name"        , "Endpoint_Name")
                 :Column("Endpoint.BoundLower"  , "Endpoint_BoundLower")
                 :Column("Endpoint.BoundUpper"  , "Endpoint_BoundUpper")
-                :Column("Endpoint.AspectOf"    , "Endpoint_AspectOf")
+                :Column("Endpoint.IsContainment"    , "Endpoint_IsContainment")
                 :Column("Endpoint.Description" , "Endpoint_Description")
                 :Where("Endpoint.fk_Association = ^" , l_iAssociationPk)
                 :SQL("ListOfEndpoints")
@@ -3822,7 +3828,7 @@ case l_cActionOnSubmit == "Save"
                     l_cEndpoint_Name        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
                     l_cEndpoint_BoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
                     l_cEndpoint_BoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
-                    l_lEndpoint_AspectOf    := (oFcgi:GetInputValue("CheckAspectOf"+l_nCounterC) == "1")
+                    l_lEndpoint_IsContainment    := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
                     l_cEndpoint_Description := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
                     if empty(l_iEndpoint_pk)
@@ -3835,7 +3841,7 @@ case l_cActionOnSubmit == "Save"
                                 :Field("Endpoint.Name"           , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
                                 :Field("Endpoint.BoundLower"     , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
                                 :Field("Endpoint.BoundUpper"     , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
-                                :Field("Endpoint.AspectOf"       , l_lEndpoint_AspectOf)
+                                :Field("Endpoint.IsContainment"       , l_lEndpoint_IsContainment)
                                 :Field("Endpoint.Description"    , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                 :Add()
                             endwith
@@ -3851,7 +3857,7 @@ case l_cActionOnSubmit == "Save"
                                    .and. nvl(ListOfEndpoints->Endpoint_Name,"")        == nvl(l_cEndpoint_Name,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundLower,"")  == nvl(l_cEndpoint_BoundLower,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundUpper,"")  == nvl(l_cEndpoint_BoundUpper,"") ;
-                                   .and. ListOfEndpoints->Endpoint_AspectOf            == l_lEndpoint_AspectOf ;
+                                   .and. ListOfEndpoints->Endpoint_IsContainment            == l_lEndpoint_IsContainment ;
                                    .and. nvl(ListOfEndpoints->Endpoint_Description,"") == nvl(l_cEndpoint_Description,"") )
 
                                 with object l_oDB2
@@ -3860,7 +3866,7 @@ case l_cActionOnSubmit == "Save"
                                     :Field("Endpoint.Name"        , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
                                     :Field("Endpoint.BoundLower"  , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
                                     :Field("Endpoint.BoundUpper"  , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
-                                    :Field("Endpoint.AspectOf"    , l_lEndpoint_AspectOf)
+                                    :Field("Endpoint.IsContainment"    , l_lEndpoint_IsContainment)
                                     :Field("Endpoint.Description" , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                     :Update(l_iEndpoint_pk)
 // SendToClipboard(l_oDB1:LastSQL())
@@ -3942,7 +3948,7 @@ case !empty(l_cErrorMessage)
         l_hValues["EndpointName"+l_nCounterC]        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
         l_hValues["EndpointBoundLower"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
         l_hValues["EndpointBoundUpper"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
-        l_hValues["EndpointAspectOf"+l_nCounterC]    := (oFcgi:GetInputValue("CheckAspectOf"+l_nCounterC) == "1")
+        l_hValues["EndpointIsContainment"+l_nCounterC]    := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
         l_hValues["EndpointDescription"+l_nCounterC] := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
     endfor

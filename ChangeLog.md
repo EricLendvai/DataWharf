@@ -1,5 +1,13 @@
 # DataWharf - Change Log
 
+## 02/24/2022
+* Renamed AspectOf to IsContainment
+* Fix renaming of labels of tabs of right panel in visualization
+* Made Label of Entities and Associations in Project Visualization bold, except for additional descriptions.
+* New PrimitiveType table (Under Development)
+* Renamed Entity.Scope to Entity.Information. Will be adding an option at the level of the project to rename Description and Information Fields.
+* Using merged code by tgold, added support to markdown to the Entity.Information field (In the grid only). Will also be added to Visualization and Applications features.
+
 ## 02/22/2022
 * Modeling Visualization now will display multiple association edges separately.
 * Self Test and notification in case of failure for the presence of the "pgcrypto" extension.

@@ -334,16 +334,17 @@ scan all
                                                                               [']     => [\']} )
     endif
 
+    l_cHtml += [{id:]+Trans(ListOfTables->pk)
     if empty(l_cTableDescription)
-        l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+["]
+        l_cHtml += [,label:"]+l_cNodeLabel+["]
     else
         if l_lNodeShowDescription
-            l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
+            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
         else
             if l_lNeverShowDescriptionOnHover
-                l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+["]
+                l_cHtml += [,label:"]+l_cNodeLabel+["]
             else
-                l_cHtml += [{id:]+Trans(ListOfTables->pk)+[,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
+                l_cHtml += [,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
             endif
         endif
     endif
