@@ -1832,8 +1832,9 @@ if !empty(l_nNumberOfEntities)
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListAttributes/]+ListOfEntities->Entity_LinkUID+[/]+l_cAttributeSearchParameters+[">]+Trans(l_nAttributeCount)+[</a>]
                     l_cHtml += [</td>]
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
+                    l_cHtml += [<td class="GridDataControlCells" valign="top" id="entity-description">]
+                        //l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
+                        l_cHtml += [<script> document.getElementById('entity-description').innerHTML = marked.parse(']+TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))+[');</script>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
