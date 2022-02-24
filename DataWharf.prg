@@ -421,6 +421,7 @@ if ::p_o_SQLConnection == NIL
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
+    l_cHtml += [Host: ]+::GetAppConfig("POSTGRESHOST")+[:]+::GetAppConfig("POSTGRESPORT")
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
@@ -1066,6 +1067,21 @@ else
     l_Text := vfp_strtran(l_Text,[  ],[ &nbsp;])
     l_Text := vfp_strtran(l_Text,chr(10),[])
     l_Text := vfp_strtran(l_Text,chr(13),[<br>])
+endif
+
+return l_Text
+//=================================================================================================================
+function EscapeNewline(par_SourceText)
+local l_Text
+
+if hb_IsNull(par_SourceText)
+    l_Text := ""
+else
+    l_Text := hb_StrReplace(par_SourceText,{[\]     => [\\],;
+                                                        chr(10) => [],;
+                                                        chr(13) => [\n],;
+                                                        ["]     => [\"],;
+                                                        [']     => [\']} )
 endif
 
 return l_Text

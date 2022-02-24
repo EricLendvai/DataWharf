@@ -23,6 +23,7 @@ local l_nNumberOfEntityInModelingDiagram
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
 local l_cEntityDescription
+local l_cEntityScope
 local l_cAssociationDescription
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
@@ -120,6 +121,7 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
+        :Column("Entity.Scope","Entity_Scope")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :SQL("ListOfEntities")
@@ -132,6 +134,7 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
+        :Column("Entity.Scope","Entity_Scope")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
@@ -298,6 +301,14 @@ endif
 
 l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 
+l_cHtml += [<script type="text/javascript">]
+l_cHtml += 'function htmlTitle(html) {'
+l_cHtml += '    const container = document.createElement("div");'
+l_cHtml += '    container.innerHTML = html;'
+l_cHtml += '    return container;'
+l_cHtml += '}'
+l_cHtml += [</script>]
+
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
 l_cHtml += [    width: ]+Trans(l_iCanvasWidth)+[px;]
@@ -439,20 +450,44 @@ scan all
                                                                                   [']     => [\']} )
     endif
 
+    if hb_orm_isnull("ListOfEntities","Entity_Scope")
+        l_cEntityScope := ""
+    else
+        l_cEntityScope := hb_StrReplace(ListOfEntities->Entity_Scope,{[\]     => [\\],;
+                                                                        chr(10) => [],;
+                                                                        chr(13) => [\n],;
+                                                                        ["]     => [\"],;
+                                                                        [']     => [\']} )
+    endif
+
     if empty(l_cEntityDescription)
-        l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
+        l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>"]
+        if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityScope)
+            //If it has only a description show it here.
+            l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityScope+["))]
+        endif
     else
         if l_lNodeShowDescription
-            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cEntityDescription+["]
+            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cEntityDescription+["]
+            if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityScope)
+                //if summary is already shown it node, do not repeat it here.
+                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityScope+["))]
+            endif
         else
-            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",label:"]+l_cNodeLabel+["]
+            l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                l_cHtml += [,title:"]+l_cEntityDescription+["]
+                //if summary is not shown it node, add it here.
+                l_cHtml += [,title:htmlTitle("]+l_cEntityDescription
+                if !empty(l_cEntityScope)
+                    l_cHtml += [<br>" + marked.parse("]+l_cEntityScope+["))]
+                else
+                    l_cHtml += [")]
+                endif
             endif
         endif
     endif
 
-    l_cHtml += [,color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+    l_cHtml += [,widthConstraint: { maximum: 150 }, heightConstraint: { minimum: 50 }, color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"E"+Trans(ListOfEntities->pk),{=>})
@@ -494,14 +529,14 @@ scan all
     endif
 
     if empty(l_cAssociationDescription)
-        l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
+        l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>"]
     else
         if l_lNodeShowDescription
-            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+[\n]+l_cAssociationDescription+["]
+            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cAssociationDescription+["]
         else
-            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",label:"]+l_cNodeLabel+["]
+            l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+[",font: { multi: true } ,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                l_cHtml += [,title:"]+l_cAssociationDescription+["]
+                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cAssociationDescription+["))]
             endif
         endif
     endif
@@ -2121,7 +2156,7 @@ if len(l_aNodes) == 1
                 endif
 
                 if !empty(l_cEntityScope)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Scope:</div>]+TextToHTML(l_cEntityScope)+[</div>]
+                    l_cHtml += [<div class="mt-3"><div class="fs-5">Scope:</div><div id='entity-description-]+Trans(l_iEntityPk)+['><script> document.getElementById('entity-description-]+Trans(l_iEntityPk)+[').innerHTML = marked.parse(']+EscapeNewline(hb_DefaultValue(l_cEntityScope,""))+[');</script></div></div>]
                 endif
 
                 if !empty(l_cHtml_EntityCustomFields)
