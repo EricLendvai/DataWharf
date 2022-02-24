@@ -447,7 +447,6 @@ if ::p_o_SQLConnection == NIL
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
-    l_cHtml += [Host: ]+::GetAppConfig("POSTGRESHOST")+[:]+::GetAppConfig("POSTGRESPORT")
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
