@@ -281,6 +281,32 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 10
+            if ::p_o_SQLConnection:FieldExists("public.Entity","Scope") .and. ::p_o_SQLConnection:FieldExists("public.Entity","Information")
+
+                with object l_oDB1
+
+                    :Table("bcc58496-5077-47ee-a955-fa5d071dd576","Entity")
+                    :Column("Entity.pk"   ,"pk")
+                    :Column("Entity.Scope","Entity_Scope")
+                    :SQL("ListOfRecordsToFix")
+                    select ListOfRecordsToFix
+                    scan all for len(nvl(ListOfRecordsToFix->Entity_Scope,"")) > 0
+                        with object l_oDB2
+                            :Table("12140112-62ef-49c7-84db-c79c859d31f8","Entity")
+                            :Field("Entity.Information" , ListOfRecordsToFix->Entity_Scope)
+                            :Update(ListOfRecordsToFix->pk)
+                        endwith
+                    endscan
+
+                endwith
+
+                ::p_o_SQLConnection:DeleteField("public.Entity","Scope")
+            endif
+            l_iCurrentDataVersion := 10
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
         
 
         l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
@@ -774,7 +800,6 @@ else
                 l_cHtml += [});]+CRLF
                 l_cHtml += [</script>]+CRLF
             endif
-            l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
             l_cHtml += [</head>]
             l_cHtml += [<body>]
@@ -1071,7 +1096,7 @@ endif
 
 return l_Text
 //=================================================================================================================
-function EscapeNewline(par_SourceText)
+function EscapeNewlineAndQuotes(par_SourceText)
 local l_Text
 
 if hb_IsNull(par_SourceText)
