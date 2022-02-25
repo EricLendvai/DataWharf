@@ -1095,6 +1095,21 @@ endif
 
 return l_Text
 //=================================================================================================================
+function EscapeNewlineAndQuotes(par_SourceText)
+local l_Text
+
+if hb_IsNull(par_SourceText)
+    l_Text := ""
+else
+    l_Text := hb_StrReplace(par_SourceText,{[\]     => [\\],;
+                                                        chr(10) => [],;
+                                                        chr(13) => [\n],;
+                                                        ["]     => [\"],;
+                                                        [']     => [\']} )
+endif
+
+return l_Text
+//=================================================================================================================
 function GetItemInListAtPosition(par_iPos,par_aValues,par_xDefault)
 return iif(!hb_isnil(par_iPos) .and. par_iPos > 0 .and. par_iPos <= Len(par_aValues), par_aValues[par_iPos], par_xDefault)
 //=================================================================================================================

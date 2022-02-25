@@ -1843,7 +1843,7 @@ if !empty(l_nNumberOfEntities)
                     l_cObjectId := "entity-description"+Trans(l_iEntityPk)
                     l_cHtml += [<td class="GridDataControlCells" valign="top" id="]+l_cObjectId+[">]
                         if !hb_orm_isnull("ListOfEntities","Entity_Information")
-                            l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+hb_StrReplace(ListOfEntities->Entity_Information,{chr(10)=>[],chr(13)=>[\n]})+[');</script>]
+                            l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(ListOfEntities->Entity_Information)+[');</script>]
                         endif
                     l_cHtml += [</td>]
 

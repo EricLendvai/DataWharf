@@ -23,6 +23,7 @@ local l_nNumberOfEntityInModelingDiagram
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
 local l_cEntityDescription
+local l_cEntityInformation
 local l_cAssociationDescription
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
@@ -63,6 +64,8 @@ local l_nMultiEdgeTotalCount
 local l_nMultiEdgeCount
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
+//See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 l_cHtml += [<script type="text/javascript">]
 l_cHtml += 'function KeywordSearch(par_cListOfWords, par_cString) {'
@@ -120,6 +123,7 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
+        :Column("Entity.Information","Entity_Information")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :SQL("ListOfEntities")
@@ -132,6 +136,7 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
+        :Column("Entity.Information","Entity_Information")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
@@ -298,6 +303,14 @@ endif
 
 l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 
+l_cHtml += [<script type="text/javascript">]
+l_cHtml += 'function htmlTitle(html) {'
+l_cHtml += '    const container = document.createElement("div");'
+l_cHtml += '    container.innerHTML = html;'
+l_cHtml += '    return container;'
+l_cHtml += '}'
+l_cHtml += [</script>]
+
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
 l_cHtml += [    width: ]+Trans(l_iCanvasWidth)+[px;]
@@ -454,22 +467,46 @@ scan all
 
     endif
 
+    if hb_orm_isnull("ListOfEntities","Entity_Information")
+        l_cEntityInformation := ""
+    else
+        l_cEntityInformation := hb_StrReplace(ListOfEntities->Entity_Information,{[\]     => [\\],;
+                                                                        chr(10) => [],;
+                                                                        chr(13) => [\n],;
+                                                                        ["]     => [\"],;
+                                                                        [']     => [\']} )
+    endif
+
     l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+["]
     l_cHtml += [,font:{multi:"html"}]
     if empty(l_cEntityDescription)
         l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+        if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityInformation)
+            //If it has only a information show it here.
+            l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityInformation+["))]
+        endif
     else
         if l_lNodeShowDescription
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cEntityDescription+["]
+            if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityInformation)
+                //if description is already shown it node, do not repeat it here.
+                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityInformation+["))]
+            endif
         else
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                l_cHtml += [,title:"]+l_cEntityDescription+["]
+                //if description is not shown in node, add it here.
+                l_cHtml += [,title:htmlTitle("]+l_cEntityDescription
+                if !empty(l_cEntityInformation)
+                    l_cHtml += [<br>" + marked.parse("]+l_cEntityInformation+["))]
+                else
+                    l_cHtml += [")]
+                endif
             endif
         endif
     endif
 
-    l_cHtml += [,color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+    l_cHtml += [,widthConstraint: { maximum: 150 }, heightConstraint: { minimum: 50 }, color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"E"+Trans(ListOfEntities->pk),{=>})
@@ -520,7 +557,7 @@ scan all
         else
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                l_cHtml += [,title:"]+l_cAssociationDescription+["]
+                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cAssociationDescription+["))]
             endif
         endif
     endif
@@ -2138,7 +2175,7 @@ if len(l_aNodes) == 1
                 endif
 
                 if !empty(l_cEntityInformation)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cEntityInformation)+[</div>]
+                    l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div><div id='entity-description-]+Trans(l_iEntityPk)+['><script> document.getElementById('entity-description-]+Trans(l_iEntityPk)+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(hb_DefaultValue(l_cEntityInformation,""))+[');</script></div></div>]
                 endif
 
                 if !empty(l_cHtml_EntityCustomFields)

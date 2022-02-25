@@ -1,0 +1,27 @@
+FROM ubuntu
+
+## for apt to be noninteractive
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+
+RUN apt-get update && apt-get install -y apt-utils
+
+# install Postgresql 
+RUN apt-get -y install postgresql \
+        postgresql-contrib \
+        odbc-postgresql
+
+# Run the rest of the commands as the ``postgres`` user when it was ``apt-get installed``
+USER postgres
+
+# Create a PostgreSQL role named ``datawharf`` with ``mypassord`` as the password and
+# then create a database `DataWharf` owned by the ``datawharf`` role.
+RUN    /etc/init.d/postgresql start &&\
+    psql --command "CREATE USER datawharf WITH SUPERUSER PASSWORD 'mypassord';" &&\
+    createdb -O datawharf DataWharf &&\
+    psql --dbname DataWharf --command "CREATE EXTENSION pgcrypto;"
+
+USER root
+
+EXPOSE 5432 
+CMD /etc/init.d/postgresql start && /bin/bash
