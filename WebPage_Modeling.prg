@@ -8,24 +8,20 @@ memvar oFcgi
 //=================================================================================================================
 function BuildPageModeling()
 local l_cHtml := []
-local l_cHtmlUnderHeader
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDataHeader
 local l_oData
 
 local l_cFormName
-local l_cActionOnSubmit
 
 local l_iProjectPk
-local l_cProjectName
-local l_cProjectDescription
 
 local l_hValues := {=>}
 
 local l_cModelingElement := "ENTITIES"  //Default to Entities
 
-local l_cURLAction  := "SelectProject"
+local l_cURLAction
 local l_cURLLinkUID := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
@@ -370,7 +366,6 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
         endwith
 
-        l_cProjectName := l_oDataHeader:Project_Name
         l_iProjectPk   := l_oDataHeader:Project_pk
 
         l_nAccessLevelML := GetAccessLevelMLForProject(l_iProjectPk)
@@ -713,16 +708,18 @@ case l_cURLAction == "EditDataType"
         if oFcgi:isGet()
             with object l_oDB1
                 :Table("5429f4d0-7679-419f-a7b2-c0899fb2d1da","DataType")
-                :Column("DataType.fk_DataType" , "DataType_fk_DataType")
-                :Column("DataType.Name"        , "DataType_Name")
-                :Column("DataType.Description" , "DataType_Description")
+                :Column("DataType.fk_DataType"      , "DataType_fk_DataType")
+                :Column("DataType.fk_PrimitiveType" , "DataType_fk_PrimitiveType")
+                :Column("DataType.Name"             , "DataType_Name")
+                :Column("DataType.Description"      , "DataType_Description")
                 l_oData := :Get(l_oDataHeader:DataType_pk)
             endwith
 
             if l_oDB1:Tally == 1
-                l_hValues["fk_DataType"] := l_oData:DataType_fk_DataType
-                l_hValues["Name"]        := l_oData:DataType_Name
-                l_hValues["Description"] := l_oData:DataType_Description
+                l_hValues["fk_DataType"]      := l_oData:DataType_fk_DataType
+                l_hValues["fk_PrimitiveType"] := l_oData:DataType_fk_PrimitiveType
+                l_hValues["Name"]             := l_oData:DataType_Name
+                l_hValues["Description"]      := l_oData:DataType_Description
                 CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_DATATYPE,l_oDataHeader:DataType_pk,@l_hValues)
 
                 l_cHtml += DataTypeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID,"",l_oDataHeader:DataType_pk,l_hValues)
@@ -1404,7 +1401,6 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
 
 oFcgi:TraceAdd("ModelEditFormOnSubmit")
 
@@ -1556,11 +1552,10 @@ return l_cHtml
 //=================================================================================================================
 static function EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
 local l_cHtml := []
-local l_oDB_ListOfEntities               := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntities                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntitiesAttributeCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_CustomFields                 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomFields                  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_oCursor
 local l_iEntityPk
 local l_nAttributeCount
 
@@ -1570,12 +1565,11 @@ local l_cSearchEntityDescription
 local l_cSearchAttributeName
 local l_cSearchAttributeDescription
 
-local l_nNumberOfEntities := 0
+local l_nNumberOfEntities
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cAttributeSearchParameters
 local l_nColspan
-local l_ScriptFolder
 local l_cObjectId
 
 oFcgi:TraceAdd("EntityListFormBuild")
@@ -2006,7 +2000,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pe-2 pb-3">Information</td>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br>]
+            l_cHtml += [<a href="https://marked.js.org/" target="_blank"><span class="small">Markdown</span></a>]
+            l_cHtml += [</td>]
+
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
         l_cHtml += [</tr>]
 
@@ -2038,7 +2035,6 @@ local l_cEntityName
 local l_cEntityDescription
 local l_cEntityInformation
 local l_cFrom := ""
-local l_oData
 local l_cErrorMessage := ""
 
 local l_hValues := {=>}
@@ -2206,7 +2202,7 @@ otherwise
     with object l_oDB1
         :Table("830269a7-e544-4527-b8ee-151990def7ce","Entity")
         :Column("Entity.Name","Entity_Name")
-        l_oData := :Get(l_iEntityPk)
+        :Get(l_iEntityPk)
         if :Tally <> 1
             l_cFrom := ""
         endif
@@ -2242,14 +2238,10 @@ local l_cHtml := []
 local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_oCursor
-local l_iPackagePk
 
-local l_nNumberOfPackages := 0
+local l_nNumberOfPackages
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
-local l_nColspan
-local l_ScriptFolder
 
 oFcgi:TraceAdd("PackageListFormBuild")
 
@@ -2352,8 +2344,6 @@ if !empty(l_nNumberOfPackages)
 
             select ListOfPackages
             scan all
-                l_iPackagePk := ListOfPackages->pk
-
                 l_cHtml += [<tr>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2383,20 +2373,12 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName       := hb_HGetDef(par_hValues,"Name","")
 local l_ifk_Package := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
-local l_cSitePath   := oFcgi:RequestSettings["SitePath"]
 local l_oDB1        := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDataPackageInfo
 local l_nNumberOfOtherPackages
 
 oFcgi:TraceAdd("PackageEditFormBuild")
 
 with object l_oDB1
-    if !empty(par_iPk)
-        :Table("e65933a7-df13-4922-a3ca-c5b04569f131","Package")
-        :Column("Package.LinkUID","Package_LinkUID")
-        l_oDataPackageInfo := :Get(par_iPk)
-    endif
-
     //Build the list of Other Packages
     :Table("95cf41eb-a959-4330-803c-eb08af66425d","Package")
     :Column("Package.pk"         , "pk")
@@ -2490,13 +2472,11 @@ local l_iPackagePk
 local l_iPackageFk_Package
 local l_cPackageName
 local l_cFrom := ""
-local l_oData
 local l_cErrorMessage := ""
 
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
 
 oFcgi:TraceAdd("PackageEditFormOnSubmit")
 
@@ -2568,7 +2548,6 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Package
     if oFcgi:p_nAccessLevelML >= 5
-        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("e27542d9-44ab-43df-8738-2e2d61fc87cd","Entity")
             :Where("Entity.fk_Package = ^",l_iPackagePk)
@@ -2634,14 +2613,10 @@ local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields    := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_oCursor
-local l_iDataTypePk
 
-local l_nNumberOfDataTypes := 0
+local l_nNumberOfDataTypes
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
-local l_nColspan
-local l_ScriptFolder
 
 oFcgi:TraceAdd("DataTypeListFormBuild")
 
@@ -2651,7 +2626,9 @@ with object l_oDB_ListOfDataTypes
     :Column("DataType.LinkUID"    ,"DataType_LinkUID")
     :Column("DataType.FullName"   ,"DataType_FullName")
     :Column("DataType.Description","DataType_Description")
+    :Column("PrimitiveType.Name"  ,"PrimitiveType_Name")
     :Column("DataType.TreeOrder1","tag1")
+    :Join("left","PrimitiveType","","DataType.fk_PrimitiveType = PrimitiveType.pk")
     :Where("DataType.fk_Model = ^",par_iModelPk)
     :OrderBy("tag1")
     :SQL("ListOfDataTypes")
@@ -2733,11 +2710,12 @@ if !empty(l_nNumberOfDataTypes)
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-info">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Primitive Type</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
@@ -2746,12 +2724,15 @@ if !empty(l_nNumberOfDataTypes)
 
             select ListOfDataTypes
             scan all
-                l_iDataTypePk := ListOfDataTypes->pk
 
                 l_cHtml += [<tr>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/">]+ListOfDataTypes->DataType_FullName+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += nvl(ListOfDataTypes->PrimitiveType_Name,"")
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2779,24 +2760,19 @@ static function DataTypeEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLink
 local l_cHtml := ""
 local l_cErrorText    := hb_DefaultValue(par_cErrorText,"")
 
-local l_ifk_DataType := nvl(hb_HGetDef(par_hValues,"fk_DataType",0),0)
-local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_ifk_DataType      := nvl(hb_HGetDef(par_hValues,"fk_DataType",0),0)
+local l_ifk_PrimitiveType := nvl(hb_HGetDef(par_hValues,"fk_PrimitiveType",0),0)
+local l_cName             := hb_HGetDef(par_hValues,"Name","")
+local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_cSitePath     := oFcgi:RequestSettings["SitePath"]
-local l_oDB1          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDataDataTypeInfo
+local l_oDB_ListOfOtherDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfPrimitiveTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfOtherDataTypes
+local l_nNumberOfPrimitiveTypes
 
 oFcgi:TraceAdd("DataTypeEditFormBuild")
 
-with object l_oDB1
-    if !empty(par_iPk)
-        :Table("ca3eddb8-ac0e-4051-afd0-28e6bca92fa2","DataType")
-        :Column("DataType.LinkUID","DataType_LinkUID")
-        l_oDataDataTypeInfo := :Get(par_iPk)
-    endif
-
+with object l_oDB_ListOfOtherDataTypes
     //Build the list of Other DataTypes
     :Table("c6c1c8e3-b91c-4660-b4be-10ee25a6124e","DataType")
     :Column("DataType.pk"         , "pk")
@@ -2810,10 +2786,19 @@ with object l_oDB1
     :OrderBy("Tag1")
     :SQL("ListOfOtherDataTypes")
     l_nNumberOfOtherDataTypes := :Tally
-    // SendToClipboard(l_oDB1:LastSQL())
-
 endwith
 
+with object l_oDB_ListOfPrimitiveTypes
+    //Build the list of Other DataTypes
+    :Table("0dcb51f1-0606-4e9b-8426-e1d9e55969d6","PrimitiveType")
+    :Column("PrimitiveType.pk"          , "pk")
+    :Column("PrimitiveType.Name"        , "PrimitiveType_Name")
+    :Column("upper(PrimitiveType.Name)" , "tag1")
+    :Where("PrimitiveType.fk_Project = ^" , par_iProjectPk)
+    :OrderBy("tag1")
+    :SQL("ListOfPrimitiveTypes")
+    l_nNumberOfPrimitiveTypes := :Tally
+endwith
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -2862,6 +2847,21 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</tr>]
         endif
 
+        if l_nNumberOfPrimitiveTypes > 0
+            l_cHtml += [<tr class="pb-5">]
+                l_cHtml += [<td class="pe-2 pb-3">Primitive Type</td>]
+                l_cHtml += [<td class="pb-3">]
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboPrimitiveTypePk" id="ComboPrimitiveTypePk"]+iif(oFcgi:p_nAccessLevelML >= 7,[],[ disabled])+[ class="form-select">]
+                    l_cHtml += [<option value="0"]+iif(0 = l_ifk_PrimitiveType,[ selected],[])+[></option>]
+                    select ListOfPrimitiveTypes
+                    scan all
+                        l_cHtml += [<option value="]+Trans(ListOfPrimitiveTypes->pk)+["]+iif(ListOfPrimitiveTypes->pk = l_ifk_PrimitiveType,[ selected],[])+[>]+AllTrim(ListOfPrimitiveTypes->PrimitiveType_Name)+[</option>]
+                    endscan
+                    l_cHtml += [</select>]
+                l_cHtml += [</td>]
+            l_cHtml += [</tr>]
+        endif
+
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
@@ -2885,7 +2885,6 @@ l_cHtml += [</form>]
 
 l_cHtml += GetConfirmationModalForms()
 
-
 return l_cHtml
 //=================================================================================================================
 static function DataTypeEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cDataTypeLinkUID)
@@ -2895,16 +2894,15 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iDataTypePk
 local l_iDataTypeFk_DataType
+local l_iDataTypeFk_PrimitiveType
 local l_cDataTypeName
 local l_cDataTypeDescription
 local l_cFrom := ""
-local l_oData
 local l_cErrorMessage := ""
 
 local l_hValues := {=>}
 
-local l_oDB1
-local l_oDB2
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 oFcgi:TraceAdd("DataTypeEditFormOnSubmit")
 
@@ -2912,11 +2910,10 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iDataTypePk   := Val(oFcgi:GetInputValue("DataTypeKey"))
 
-l_iDataTypeFk_DataType := Val(oFcgi:GetInputValue("ComboDataTypePk"))
-l_cDataTypeName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_cDataTypeDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
-
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_iDataTypeFk_DataType      := Val(oFcgi:GetInputValue("ComboDataTypePk"))
+l_iDataTypeFk_PrimitiveType := Val(oFcgi:GetInputValue("ComboPrimitiveTypePk"))
+l_cDataTypeName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cDataTypeDescription      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -2947,9 +2944,10 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("14c5f95d-d6d9-4382-98b2-788de3f9d2b5","DataType")
             if oFcgi:p_nAccessLevelML >= 5
-                :Field("DataType.fk_DataType",l_iDataTypeFk_DataType)
-                :Field("DataType.Name"       ,l_cDataTypeName)
-                :Field("DataType.Description",iif(empty(l_cDataTypeDescription),NULL,l_cDataTypeDescription))
+                :Field("DataType.fk_DataType"     ,l_iDataTypeFk_DataType)
+                :Field("DataType.fk_PrimitiveType",l_iDataTypeFk_PrimitiveType)
+                :Field("DataType.Name"            ,l_cDataTypeName)
+                :Field("DataType.Description"     ,iif(empty(l_cDataTypeDescription),NULL,l_cDataTypeDescription))
             endif
             if empty(l_iDataTypePk)
                 :Field("DataType.LinkUID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
@@ -2979,7 +2977,6 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // DataType
     if oFcgi:p_nAccessLevelML >= 5
-        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("7bd8406b-6477-47ef-b7f9-8a3712c87950","Attribute")
             :Where("Attribute.fk_DataType = ^",l_iDataTypePk)
@@ -3013,9 +3010,10 @@ endcase
 do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
-    l_hValues["fk_DataType"] := l_iDataTypeFk_DataType
-    l_hValues["Name"]        := l_cDataTypeName
-    l_hValues["Description"] := l_cDataTypeDescription
+    l_hValues["fk_DataType"]      := l_iDataTypeFk_DataType
+    l_hValues["fk_PrimitiveType"] := l_iDataTypeFk_PrimitiveType
+    l_hValues["Name"]             := l_cDataTypeName
+    l_hValues["Description"]      := l_cDataTypeDescription
     CustomFieldsFormToHash(par_iProjectPk,USEDON_DATATYPE,@l_hValues)
 
     l_cHtml += DataTypeEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cDataTypeLinkUID,l_cErrorMessage,l_iDataTypePk,l_hValues)
@@ -3040,9 +3038,7 @@ local l_oDB_ListOfAssociationsEndpoints      := hb_SQLData(oFcgi:p_o_SQLConnecti
 // local l_oDB_ListOfAssociationsEndpointCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields                     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_oCursor
 local l_iAssociationPk
-local l_nEndpointCount
 
 local l_cSearchAssociationName
 local l_cSearchAssociationDescription
@@ -3050,12 +3046,10 @@ local l_cSearchAssociationDescription
 local l_cSearchEndpointName
 local l_cSearchEndpointDescription
 
-local l_nNumberOfAssociations := 0
+local l_nNumberOfAssociations
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
-local l_cEndpointSearchParameters
 local l_nColspan
-local l_ScriptFolder
 
 oFcgi:TraceAdd("AssociationListFormBuild")
 
@@ -3064,12 +3058,6 @@ l_cSearchAssociationDescription    := GetUserSetting("Model_"+Trans(par_iModelPk
 
 l_cSearchEndpointName        := GetUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointName")
 l_cSearchEndpointDescription := GetUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointDescription")
-
-if empty(l_cSearchEndpointName) .and. empty(l_cSearchEndpointDescription)
-    l_cEndpointSearchParameters := ""
-else
-    l_cEndpointSearchParameters := [Search?EndpointName=]+hb_StrToHex(l_cSearchEndpointName)+[&EndpointDescription=]+hb_StrToHex(l_cSearchEndpointDescription)   //strtolhex
-endif
 
 with object l_oDB_ListOfAssociations
     :Table("32746fc3-3116-497f-becc-f51b1213849c","Association")
@@ -3331,8 +3319,6 @@ if !empty(l_nNumberOfAssociations)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        // l_nEndpointCount := iif( VFP_Seek(l_iAssociationPk,"ListOfAssociationsEndpointCounts","tag1") , ListOfAssociationsEndpointCounts->EndpointCount , 0)
-                        // l_cHtml += Trans(l_nEndpointCount)
                         select ListOfAssociationsEndpoints
                         scan all for ListOfAssociationsEndpoints->Association_pk == l_iAssociationPk
                             l_cHtml += [<div>]+ListOfAssociationsEndpoints->Entity_name+[</div>]
@@ -3414,21 +3400,15 @@ local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
-
 local l_oDB_ListOfPackages    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB1                  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAllEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_nNumberOfAllEntities
-local l_oDataAssociationInfo
 local l_nNumberOfPackages
 
 local l_nCounter
 local l_nCounterC
 
 local l_json_Entities
-local l_iEntityPk
 local l_hEntityNames := {=>}
 local l_cInfo
 local l_cObjectName
@@ -3456,14 +3436,6 @@ with object l_oDB_ListOfPackages
     l_nNumberOfPackages := :Tally
 endwith
 
-with object l_oDB1
-    if !empty(par_iPk)
-        :Table("feaecfcd-74c9-4a86-8354-fb487ecae2aa","Association")
-        :Column("Association.LinkUID","Association_LinkUID")
-        l_oDataAssociationInfo := :Get(par_iPk)
-    endif
-endwith
-
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
@@ -3484,7 +3456,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
-            // l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Modeling/ListEndpoints/]+l_oDataAssociationInfo:Association_LinkUID+[/">Endpoints</a>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -3538,7 +3509,6 @@ l_cHtml += [<div class="m-3">]
         :OrderBy("tag1")
         :OrderBy("tag2")
         :SQL("ListOfAllEntities")
-        l_nNumberOfAllEntities := :Tally
 
     endwith
 
@@ -3567,11 +3537,6 @@ l_cHtml += [<div class="m-3">]
 
     //Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
     oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
-
-
-// oFcgi:p_cjQueryScript += [$(document).on('select2:open', () => { document.querySelector('.select2-search__field').focus();  });]
-
-
 
     l_cHtml += [<div>]
         // l_cHtml += [<table class="ms-0 table" style="width:auto;">]  //table-striped
@@ -3682,6 +3647,9 @@ local l_cFrom := ""
 local l_oData
 local l_cErrorMessage := ""
 
+local l_cProjectValidEndpointBoundLowerValues
+local l_cProjectValidEndpointBoundUpperValues
+
 local l_hValues := {=>}
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3700,7 +3668,6 @@ local l_lEndpoint_IsContainment
 local l_cEndpoint_Description
 local l_nEndpoint_NumberOfEndpoints
 local l_nEndpoint_NumberOfEndpoints_OnFile
-local l_xValue
 local l_lChanged := .f.
 
 oFcgi:TraceAdd("AssociationEditFormOnSubmit")
@@ -3720,6 +3687,13 @@ case l_cActionOnSubmit == "Save"
             l_cErrorMessage := "Missing Name"
         else
             with object l_oDB1
+                :Table("0a40d5d8-0ec9-462d-a863-7bc961a8dfca","Project")
+                :Column("Project.ValidEndpointBoundLowerValues" , "Project_ValidEndpointBoundLowerValues")
+                :Column("Project.ValidEndpointBoundUpperValues" , "Project_ValidEndpointBoundUpperValues")
+                l_oData := :Get(par_iProjectPk)
+                l_cProjectValidEndpointBoundLowerValues := nvl(l_oData:Project_ValidEndpointBoundLowerValues,"")
+                l_cProjectValidEndpointBoundUpperValues := nvl(l_oData:Project_ValidEndpointBoundUpperValues,"")
+
                 :Table("0d2e0837-c4c3-47a5-ba92-6f3ee856bb5e","Association")
                 :Column("Association.pk","pk")
                 :Where([Association.fk_Model = ^],par_iModelPk)
@@ -3735,6 +3709,33 @@ case l_cActionOnSubmit == "Save"
             endif
 
         endif
+    endif
+
+    if empty(l_cErrorMessage) .and. (!empty(l_cProjectValidEndpointBoundLowerValues) .or. !empty(l_cProjectValidEndpointBoundUpperValues))
+        for l_nCounter := 1 to Val(oFcgi:GetInputValue("NumberOfPossibleEndpoints"))
+            l_nCounterC := Trans(l_nCounter)
+
+            l_iEndpoint_fk_Entity   := Val(oFcgi:GetInputValue("ComboEndpoint_Fk_Entity"+l_nCounterC))
+            if l_iEndpoint_fk_Entity > 0
+                if !empty(l_cProjectValidEndpointBoundLowerValues)
+                    l_cEndpoint_BoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
+                    if !(","+l_cEndpoint_BoundLower+"," $ ","+l_cProjectValidEndpointBoundLowerValues+",")
+                        l_cErrorMessage := [Bound Lower must be in "]+l_cProjectValidEndpointBoundLowerValues+["]
+                        exit
+                    endif
+                endif
+
+                if !empty(l_cProjectValidEndpointBoundUpperValues)
+                    l_cEndpoint_BoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
+                    if !(","+l_cEndpoint_BoundUpper+"," $ ","+l_cProjectValidEndpointBoundUpperValues+",")
+                        l_cErrorMessage := [Bound Upper must be in "]+l_cProjectValidEndpointBoundUpperValues+["]
+                        exit
+                    endif
+                endif
+
+            endif
+
+        endfor
     endif
 
     if empty(l_cErrorMessage)
@@ -3869,9 +3870,6 @@ case l_cActionOnSubmit == "Save"
                                     :Field("Endpoint.IsContainment"    , l_lEndpoint_IsContainment)
                                     :Field("Endpoint.Description" , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                     :Update(l_iEndpoint_pk)
-// SendToClipboard(l_oDB1:LastSQL())
-// altd()
-//12345
 
                                 endwith
                             endif
@@ -3959,20 +3957,8 @@ case empty(l_cFrom) .or. empty(l_iAssociationPk)
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
 
 otherwise
-    with object l_oDB1
-        :Table("21e12705-83fa-4196-9bdf-0ed82dfb84c5","Association")
-        :Column("Association.Name","Association_Name")
-        l_oData := :Get(l_iAssociationPk)
-        if :Tally <> 1
-            l_cFrom := ""
-        endif
-    endwith
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
 
-    switch l_cFrom
-    otherwise
-        //Should not happen. Failed :Get.
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
-    endswitch
 endcase
 
 return l_cHtml
@@ -3984,15 +3970,12 @@ return l_cHtml
 //=================================================================================================================
 static function AttributeListFormBuild(par_iEntityPk,par_cEntityLinkUID,par_cEntityInfo,par_cModelLinkUID)
 local l_cHtml := []
-local l_oDB_Project          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomField      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_nNumberOfAttributes := 0
-local l_nNumberOfAttributesInSearch := 0
-local l_nNumberOfCustomFieldValues := 0
-local l_iAttributePk
-local l_oData_Project
+local l_nNumberOfAttributes
+local l_nNumberOfAttributesInSearch
+local l_nNumberOfCustomFieldValues  := 0
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -4244,8 +4227,6 @@ static function AttributeListFormOnSubmit(par_iEntityPk,par_cEntityLinkUID,par_c
 local l_cHtml := []
 
 local l_cActionOnSubmit
-local l_cEntityName
-local l_cEntityDescription
 local l_cAttributeName
 local l_cAttributeDescription
 local l_cURL
@@ -4289,13 +4270,8 @@ local l_cBoundLower   := nvl(hb_HGetDef(par_hValues,"BoundLower",""),"")
 local l_cBoundUpper   := nvl(hb_HGetDef(par_hValues,"BoundUpper",""),"")
 local l_cDescription  := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_iTypeCount
-
 local l_oDB_ListOfDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_nNumberOfAllDataTypes
 local l_json_DataTypes
 local l_cInfo
 local l_hDataTypes := {=>}
@@ -4311,7 +4287,6 @@ with object l_oDB_ListOfDataType
     :Where("DataType.fk_Model = ^" , par_iModelPk)
     :Where("DataType.TreeLevel = 1")
     :SQL("ListOfDataTypes")
-    l_nNumberOfAllDataTypes := :Tally
 endwith
 
 SetSelect2Support()
@@ -4897,33 +4872,4 @@ if empty(l_cErrorMessage)
 endif
 
 return l_cErrorMessage
-//=================================================================================================================
-function GetAccessLevelMLForProject(par_iProjectPk)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_aSQLResult := {}
-local l_nAccessLevelML := 0
-
-do case
-case oFcgi:p_nUserAccessMode <= 1  // Project access levels
-    with object l_oDB1
-        :Table("b64f780e-dd6a-4409-878a-dd3de257a440","UserAccessProject")
-        :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
-        :Where("UserAccessProject.fk_User = ^"    ,oFcgi:p_iUserPk)
-        :Where("UserAccessProject.fk_Project = ^" ,par_iProjectPk)
-        :SQL(@l_aSQLResult)
-        if l_oDB1:Tally == 1
-            l_nAccessLevelML := l_aSQLResult[1,1]
-        else
-            l_nAccessLevelML := 0
-        endif
-    endwith
-case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
-    l_nAccessLevelML := 2
-case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
-    l_nAccessLevelML := 7
-case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-    l_nAccessLevelML := 7
-endcase
-
-return l_nAccessLevelML
 //=================================================================================================================

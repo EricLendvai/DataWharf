@@ -988,16 +988,16 @@ if l_iTypePos > 0
     l_cResult := par_cColumnType+" "+oFcgi:p_ColumnTypes[l_iTypePos,2]
     do case
     case oFcgi:p_ColumnTypes[l_iTypePos,4] .and. oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length and Scale
-        l_cResult += [&nbsp;(]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[,]+iif(hb_isnil(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
+        l_cResult += [&nbsp;(]+iif(hb_IsNIL(par_iColumnLength),"",Trans(par_iColumnLength))+[,]+iif(hb_IsNIL(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
 
     case oFcgi:p_ColumnTypes[l_iTypePos,4]  // Scale
-        l_cResult += [ (Scale: ]+iif(hb_isnil(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
+        l_cResult += [ (Scale: ]+iif(hb_IsNIL(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
         
     case oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length
-        l_cResult += [&nbsp;(]+iif(hb_isnil(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
+        l_cResult += [&nbsp;(]+iif(hb_IsNIL(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
         
     case oFcgi:p_ColumnTypes[l_iTypePos,5]  // Enumeration
-        if !hb_isnil(par_cEnumerationName) .and. !hb_isnil(par_iEnumerationImplementAs) //.and. !hb_isnil(par_iEnumerationImplementLength)
+        if !hb_IsNIL(par_cEnumerationName) .and. !hb_IsNIL(par_iEnumerationImplementAs) //.and. !hb_IsNIL(par_iEnumerationImplementLength)
             l_cResult += [&nbsp;(]
             l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
             l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
@@ -2500,7 +2500,9 @@ else
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr>]
-                l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br><span class="small">Engineering Notes</span></td>]
+                l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br><span class="small">Engineering Notes</span><br>]
+                l_cHtml += [<a href="https://marked.js.org/" target="_blank"><span class="small">Markdown</span></a>]
+                l_cHtml += [</td>]
                 l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
             l_cHtml += [</tr>]
 
@@ -3096,7 +3098,7 @@ else
                             l_cHtml += [<i class="bi bi-key"></i>]
                         case " "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" "
                             l_cHtml += [<i class="bi bi-tools"></i>]
-                        case !hb_isNil(ListOfColumns->Table_Name)
+                        case !hb_IsNIL(ListOfColumns->Table_Name)
                             l_cHtml += [<i class="bi-arrow-left"></i>]
                         endcase
                     l_cHtml += [</td>]
@@ -3139,11 +3141,11 @@ else
 
                     // Foreign Key To and Use
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        if !hb_isNil(ListOfColumns->Table_Name)
+                        if !hb_IsNIL(ListOfColumns->Table_Name)
                             l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
                             l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                             l_cHtml += [</a>]
-                            if !hb_isNil(ListOfColumns->Column_ForeignKeyUse)
+                            if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
                                 l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
                             endif
                         endif
@@ -3899,16 +3901,16 @@ case l_cActionOnSubmit == "Save"
                 else
                     
                     do case
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_isnil(l_nColumnLength)   // Length should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_IsNIL(l_nColumnLength)   // Length should be entered
                         l_cErrorMessage := "Length is required!"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_isnil(l_nColumnScale)   // Scale should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_IsNIL(l_nColumnScale)   // Scale should be entered
                         l_cErrorMessage := "Scale is required! Enter at the minimum 0"
                         
                     case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_nColumnScale >= l_nColumnLength
                         l_cErrorMessage := "Scale must be smaller than Length!"
 
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. hb_isnil(l_iColumnFk_Enumeration)   // Enumeration should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. hb_IsNIL(l_iColumnFk_Enumeration)   // Enumeration should be entered
                         l_cErrorMessage := "Select an Enumeration!"
 
                     otherwise
@@ -5057,8 +5059,8 @@ oFcgi:TraceAdd("EnumValueEditFormBuild")
 // local l_ipcount := pcount()
 // local l_test
 // altd()
-// l_test := HB_ISNIL(par_iNumber)
-// l_cNumber      := iif(pcount() > 6 .and. !hb_IsNil(par_iNumber),Trans(par_iNumber),"")
+// l_test := hb_IsNIL(par_iNumber)
+// l_cNumber      := iif(pcount() > 6 .and. !hb_IsNIL(par_iNumber),Trans(par_iNumber),"")
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -6128,32 +6130,4 @@ with object l_oDB1
 endwith
 
 return l_cErrorMessage
-//=================================================================================================================
-function GetAccessLevelDDForApplication(par_iApplicationPk)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_aSQLResult := {}
-local l_nAccessLevelDD := 0
-do case
-case oFcgi:p_nUserAccessMode <= 1  // Application access levels
-    with object l_oDB1
-        :Table("b5c9e3b7-9363-40d6-9831-d98a010425af","UserAccessApplication")
-        :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
-        :Where("UserAccessApplication.fk_User = ^"        ,oFcgi:p_iUserPk)
-        :Where("UserAccessApplication.fk_Application = ^" ,par_iApplicationPk)
-        :SQL(@l_aSQLResult)
-        if l_oDB1:Tally == 1
-            l_nAccessLevelDD := l_aSQLResult[1,1]
-        else
-            l_nAccessLevelDD := 0
-        endif
-    endwith
-
-case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
-    l_nAccessLevelDD := 2
-case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
-    l_nAccessLevelDD := 7
-case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-    l_nAccessLevelDD := 7
-endcase
-return l_nAccessLevelDD
 //=================================================================================================================

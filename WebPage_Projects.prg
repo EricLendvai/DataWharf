@@ -10,7 +10,8 @@ function BuildPageProjects()
 local l_cHtml := []
 local l_cHtmlUnderHeader
 
-local l_oDB1
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDataHeader
 local l_oData
 
 local l_cFormName
@@ -26,11 +27,12 @@ local l_cProjectElement := "SETTINGS"  //Default Element
 
 local l_aSQLResult := {}
 
-local l_cURLAction         := "ListProjects"
-local l_cURLProjectLinkUID := ""
-local l_cURLVersionCode    := ""
+local l_cURLAction      := "ListProjects"
+local l_cURLLinkUID     := ""
+local l_cURLVersionCode := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_lFoundHeaderInfo := .f.
 
 local l_nAccessLevelML := 1   // None by default
 // As per the info in Schema.txt
@@ -46,70 +48,71 @@ oFcgi:TraceAdd("BuildPageProjects")
 
 // Variables
 // l_cURLAction
-// l_cURLProjectLinkUID
 // l_cURLVersionCode
 
 //Improved and new way:
 // Projects/                      Same as Projects/ListProjects/
 // Projects/NewProject/
 // Projects/ProjectSettings/<ProjectLinkUID>/
+// Projects/ListPrimitiveTypes/<ProjectLinkUID>/
+// Projects/NewPrimitiveType/<ProjectLinkUID>/
+// Projects/EditPrimitiveType/<PrimitiveTypeLinkUID>
 
 if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     l_cURLAction := oFcgi:p_URLPathElements[2]
 
     if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLProjectLinkUID := oFcgi:p_URLPathElements[3]
+        l_cURLLinkUID := oFcgi:p_URLPathElements[3]
     endif
+
+    do case
+    case vfp_Inlist(l_cURLAction,"ProjectSettings","ListPrimitiveTypes","NewPrimitiveType")
+        with object l_oDB1
+            :Table("a2907501-52d2-43c2-a711-e72dceb91b2b","Project")
+            :Column("Project.LinkUID", "Project_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
+            :Column("Project.pk"     , "Project_pk")
+            :Column("Project.Name"   , "Project_Name")
+            :Where("Project.LinkUID = ^" , l_cURLLinkUID)
+            l_oDataHeader := :SQL()
+            l_lFoundHeaderInfo := (:Tally == 1)
+        endwith
+
+    case vfp_Inlist(l_cURLAction,"EditPrimitiveType")
+        with object l_oDB1
+            :Table("3cb1f9a9-9324-4f2b-962d-7bcc676ede5d","PrimitiveType")
+            :Column("PrimitiveType.LinkUID" , "PrimitiveType_LinkUID")    // Redundant but makes it clearer than to use l_cURLLinkUID
+            :Column("PrimitiveType.pk"      , "PrimitiveType_pk")
+            :Column("Project.LinkUID"       , "Project_LinkUID")
+            :Column("Project.pk"            , "Project_pk")
+            :Column("Project.Name"          , "Project_Name")
+            :Where("PrimitiveType.LinkUID = ^" , l_cURLLinkUID)
+            :Join("inner","Project","","PrimitiveType.fk_Project = Project.pk")
+            l_oDataHeader := :SQL()
+            l_lFoundHeaderInfo := (:Tally == 1)
+        endwith
+
+    endcase
+
 
     do case
     case vfp_Inlist(l_cURLAction,"ProjectSettings")
         l_cProjectElement := "SETTINGS"
+
+    case vfp_Inlist(l_cURLAction,"ListPrimitiveTypes","NewPrimitiveType","EditPrimitiveType")
+        l_cProjectElement := "PRIMITIVETYPES"
 
     otherwise
         l_cProjectElement := "SETTINGS"
 
     endcase
 
-    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    if !empty(l_cURLProjectLinkUID)
-        with object l_oDB1
-            :Table("95246374-84bd-44a0-877f-c4bc6baca44a","Project")
-            :Column("Project.pk"          , "pk")
-            :Column("Project.Name"        , "Project_Name")
-            :Where("Project.LinkUID = ^" ,l_cURLProjectLinkUID)
-            :SQL(@l_aSQLResult)
-        endwith
 
-        if l_oDB1:Tally == 1
-            l_iProjectPk          := l_aSQLResult[1,1]
-            l_cProjectName        := l_aSQLResult[1,2]
-        else
-            l_iProjectPk   := -1
-            l_cProjectName := "Unknown"
-        endif
+    if l_lFoundHeaderInfo
+        l_cProjectName := l_oDataHeader:Project_Name
+        l_iProjectPk   := l_oDataHeader:Project_pk
+
+        l_nAccessLevelML := GetAccessLevelMLForProject(l_iProjectPk)
     endif
-
-    do case
-    case oFcgi:p_nUserAccessMode <= 1  // Project access levels
-        with object l_oDB1
-            :Table("143efed2-f4dc-41b9-9543-cf2a52fb1194","UserAccessProject")
-            :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
-            :Where("UserAccessProject.fk_User = ^"    , oFcgi:p_iUserPk)
-            :Where("UserAccessProject.fk_Project = ^" ,l_iProjectPk)
-            :SQL(@l_aSQLResult)
-            if :Tally == 1
-                l_nAccessLevelML := l_aSQLResult[1,1]
-            else
-                l_nAccessLevelML := 0
-            endif
-        endwith
-    case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
-        l_nAccessLevelML := 2
-    case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
-        l_nAccessLevelML := 7
-    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-        l_nAccessLevelML := 7
-    endcase
 
 else
     l_cURLAction := "ListProjects"
@@ -119,15 +122,6 @@ oFcgi:p_nAccessLevelML := l_nAccessLevelML
 
 do case
 case l_cURLAction == "ListProjects"
-    // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-    //     l_cHtml += [<div class="input-group">]
-    //         l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[Projects/">Projects</a>]
-    //         if oFcgi:p_nUserAccessMode >= 3
-    //             l_cHtml += [<a class="btn btn-primary rounded" ms-0 href="]+l_cSitePath+[Projects/NewProject">New Project</a>]
-    //         endif
-    //     l_cHtml += [</div>]
-    // l_cHtml += [</nav>]
-
     l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
     l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Projects</span></div>]
     if oFcgi:p_nUserAccessMode >= 3
@@ -135,17 +129,10 @@ case l_cURLAction == "ListProjects"
     endif
     l_cHtml += [</div>]
 
-
     l_cHtml += ProjectListFormBuild()
 
 case l_cURLAction == "NewProject"
     if oFcgi:p_nUserAccessMode >= 3
-        // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-        //     l_cHtml += [<div class="input-group">]
-        //         l_cHtml += [<span class="navbar-brand text-white ms-3">New Project</span>]
-        //     l_cHtml += [</div>]
-        // l_cHtml += [</nav>]
-
         l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
         l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">New Project</span></div>]
         l_cHtml += [</div>]
@@ -160,45 +147,50 @@ case l_cURLAction == "NewProject"
 
 case l_cURLAction == "ProjectSettings"
     if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_cURLProjectLinkUID,.f.)
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
         
         if oFcgi:isGet()
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("a11b7e98-4717-40e1-8c81-451656153c5a","public.Project")
-                :Column("Project.UseStatus"                    , "Project_UseStatus")
-                :Column("Project.Description"                  , "Project_Description")
-                :Column("Project.AlternateNameForModel"        , "Project_AlternateNameForModel")
-                :Column("Project.AlternateNameForModels"       , "Project_AlternateNameForModels")
-                :Column("Project.AlternateNameForEntity"       , "Project_AlternateNameForEntity")
-                :Column("Project.AlternateNameForEntities"     , "Project_AlternateNameForEntities")
-                :Column("Project.AlternateNameForAssociation"  , "Project_AlternateNameForAssociation")
-                :Column("Project.AlternateNameForAssociations" , "Project_AlternateNameForAssociations")
-                :Column("Project.AlternateNameForAttribute"    , "Project_AlternateNameForAttribute")
-                :Column("Project.AlternateNameForAttributes"   , "Project_AlternateNameForAttributes")
-                :Column("Project.AlternateNameForDataType"     , "Project_AlternateNameForDataType")
-                :Column("Project.AlternateNameForDataTypes"    , "Project_AlternateNameForDataTypes")
-                :Column("Project.AlternateNameForPackage"      , "Project_AlternateNameForPackage")
-                :Column("Project.AlternateNameForPackages"     , "Project_AlternateNameForPackages")
+                :Column("Project.UseStatus"                     , "Project_UseStatus")
+                :Column("Project.Description"                   , "Project_Description")
+                :Column("Project.AlternateNameForModel"         , "Project_AlternateNameForModel")
+                :Column("Project.AlternateNameForModels"        , "Project_AlternateNameForModels")
+                :Column("Project.AlternateNameForEntity"        , "Project_AlternateNameForEntity")
+                :Column("Project.AlternateNameForEntities"      , "Project_AlternateNameForEntities")
+                :Column("Project.AlternateNameForAssociation"   , "Project_AlternateNameForAssociation")
+                :Column("Project.AlternateNameForAssociations"  , "Project_AlternateNameForAssociations")
+                :Column("Project.AlternateNameForAttribute"     , "Project_AlternateNameForAttribute")
+                :Column("Project.AlternateNameForAttributes"    , "Project_AlternateNameForAttributes")
+                :Column("Project.AlternateNameForDataType"      , "Project_AlternateNameForDataType")
+                :Column("Project.AlternateNameForDataTypes"     , "Project_AlternateNameForDataTypes")
+                :Column("Project.AlternateNameForPackage"       , "Project_AlternateNameForPackage")
+                :Column("Project.AlternateNameForPackages"      , "Project_AlternateNameForPackages")
+                :Column("Project.ValidEndpointBoundLowerValues" , "Project_ValidEndpointBoundLowerValues")
+                :Column("Project.ValidEndpointBoundUpperValues" , "Project_ValidEndpointBoundUpperValues")
+
                 l_oData := :Get(l_iProjectPk)
             endwith
 
             if l_oDB1:Tally == 1
-                l_hValues["Name"]                         := l_cProjectName
-                l_hValues["UseStatus"]                    := l_oData:Project_UseStatus
-                l_hValues["Description"]                  := l_oData:Project_Description
-                l_hValues["AlternateNameForModel"]        := l_oData:Project_AlternateNameForModel
-                l_hValues["AlternateNameForModels"]       := l_oData:Project_AlternateNameForModels
-                l_hValues["AlternateNameForEntity"]       := l_oData:Project_AlternateNameForEntity
-                l_hValues["AlternateNameForEntities"]     := l_oData:Project_AlternateNameForEntities
-                l_hValues["AlternateNameForAssociation"]  := l_oData:Project_AlternateNameForAssociation
-                l_hValues["AlternateNameForAssociations"] := l_oData:Project_AlternateNameForAssociations
-                l_hValues["AlternateNameForAttribute"]    := l_oData:Project_AlternateNameForAttribute
-                l_hValues["AlternateNameForAttributes"]   := l_oData:Project_AlternateNameForAttributes
-                l_hValues["AlternateNameForDataType"]     := l_oData:Project_AlternateNameForDataType
-                l_hValues["AlternateNameForDataTypes"]    := l_oData:Project_AlternateNameForDataTypes
-                l_hValues["AlternateNameForPackage"]      := l_oData:Project_AlternateNameForPackage
-                l_hValues["AlternateNameForPackages"]     := l_oData:Project_AlternateNameForPackages
+                l_hValues["Name"]                          := l_cProjectName
+                l_hValues["UseStatus"]                     := l_oData:Project_UseStatus
+                l_hValues["Description"]                   := l_oData:Project_Description
+                l_hValues["AlternateNameForModel"]         := l_oData:Project_AlternateNameForModel
+                l_hValues["AlternateNameForModels"]        := l_oData:Project_AlternateNameForModels
+                l_hValues["AlternateNameForEntity"]        := l_oData:Project_AlternateNameForEntity
+                l_hValues["AlternateNameForEntities"]      := l_oData:Project_AlternateNameForEntities
+                l_hValues["AlternateNameForAssociation"]   := l_oData:Project_AlternateNameForAssociation
+                l_hValues["AlternateNameForAssociations"]  := l_oData:Project_AlternateNameForAssociations
+                l_hValues["AlternateNameForAttribute"]     := l_oData:Project_AlternateNameForAttribute
+                l_hValues["AlternateNameForAttributes"]    := l_oData:Project_AlternateNameForAttributes
+                l_hValues["AlternateNameForDataType"]      := l_oData:Project_AlternateNameForDataType
+                l_hValues["AlternateNameForDataTypes"]     := l_oData:Project_AlternateNameForDataTypes
+                l_hValues["AlternateNameForPackage"]       := l_oData:Project_AlternateNameForPackage
+                l_hValues["AlternateNameForPackages"]      := l_oData:Project_AlternateNameForPackages
+                l_hValues["ValidEndpointBoundLowerValues"] := l_oData:Project_ValidEndpointBoundLowerValues
+                l_hValues["ValidEndpointBoundUpperValues"] := l_oData:Project_ValidEndpointBoundUpperValues
 
                 CustomFieldsLoad(l_iProjectPk,USEDON_PROJECT,l_iProjectPk,@l_hValues)
 
@@ -206,9 +198,54 @@ case l_cURLAction == "ProjectSettings"
             endif
         else
             if l_iProjectPk > 0
-                l_cHtml += ProjectEditFormOnSubmit(l_cURLProjectLinkUID)
+                l_cHtml += ProjectEditFormOnSubmit(l_oDataHeader:Project_LinkUID)
             endif
         endif
+    endif
+
+case l_cURLAction == "ListPrimitiveTypes"
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+
+        if oFcgi:isGet()
+            l_cHtml += PrimitiveTypesListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+        else
+        endif
+
+    endif
+
+case l_cURLAction == "NewPrimitiveType"
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+
+        if oFcgi:isGet()
+            l_cHtml += PrimitiveTypeEditFormBuild(l_oDataHeader:Project_pk,"",0,{=>})
+        else
+            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+        endif
+
+    endif
+
+case l_cURLAction == "EditPrimitiveType"
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+
+        if oFcgi:isGet()
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+            with object l_oDB1
+                :Table("837b2a1b-4338-4a75-8eb4-3438a00f7f81","PrimitiveType")
+                :Column("PrimitiveType.Name"        , "PrimitiveType_Name")
+                :Column("PrimitiveType.Description" , "PrimitiveType_Description")
+                l_oData := :Get(l_oDataHeader:PrimitiveType_pk)
+            endwith
+
+            l_hValues["Name"]        := l_oData:PrimitiveType_Name
+            l_hValues["Description"] := l_oData:PrimitiveType_Description
+            l_cHtml += PrimitiveTypeEditFormBuild(l_oDataHeader:Project_pk,"",l_oDataHeader:PrimitiveType_pk,@l_hValues)
+        else
+            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+        endif
+
     endif
 
 otherwise
@@ -240,11 +277,21 @@ l_cHtml += [</div>]
 l_cHtml += [<div class="m-3"></div>]
 
 l_cHtml += [<ul class="nav nav-tabs">]
+
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
+            // l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
+            l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
         l_cHtml += [</li>]
     endif
+
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += [<li class="nav-item">]
+            // l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+            l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+        l_cHtml += [</li>]
+    endif
+
 l_cHtml += [</ul>]
 
 l_cHtml += [<div class="m-3"></div>]  // Spacer
@@ -390,21 +437,23 @@ static function ProjectEditFormBuild(par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
 local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 
-local l_cName                         := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus                    := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_cDescription                  := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cAlternateNameForModel        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"       ,""),"")
-local l_cAlternateNameForModels       := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"      ,""),"")
-local l_cAlternateNameForEntity       := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"      ,""),"")
-local l_cAlternateNameForEntities     := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntities"    ,""),"")
-local l_cAlternateNameForAssociation  := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociation" ,""),"")
-local l_cAlternateNameForAssociations := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociations",""),"")
-local l_cAlternateNameForAttribute    := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttribute"   ,""),"")
-local l_cAlternateNameForAttributes   := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttributes"  ,""),"")
-local l_cAlternateNameForDataType     := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataType"    ,""),"")
-local l_cAlternateNameForDataTypes    := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataTypes"   ,""),"")
-local l_cAlternateNameForPackage      := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackage"     ,""),"")
-local l_cAlternateNameForPackages     := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackages"    ,""),"")
+local l_cName                          := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_cDescription                   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cAlternateNameForModel         := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"        ,""),"")
+local l_cAlternateNameForModels        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"       ,""),"")
+local l_cAlternateNameForEntity        := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"       ,""),"")
+local l_cAlternateNameForEntities      := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntities"     ,""),"")
+local l_cAlternateNameForAssociation   := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociation"  ,""),"")
+local l_cAlternateNameForAssociations  := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociations" ,""),"")
+local l_cAlternateNameForAttribute     := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttribute"    ,""),"")
+local l_cAlternateNameForAttributes    := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttributes"   ,""),"")
+local l_cAlternateNameForDataType      := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataType"     ,""),"")
+local l_cAlternateNameForDataTypes     := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataTypes"    ,""),"")
+local l_cAlternateNameForPackage       := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackage"      ,""),"")
+local l_cAlternateNameForPackages      := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackages"     ,""),"")
+local l_cValidEndpointBoundLowerValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundLowerValues",""),"")
+local l_cValidEndpointBoundUpperValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundUpperValues",""),"")
 
 oFcgi:TraceAdd("ProjectEditFormBuild")
 
@@ -520,6 +569,16 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Association End<br><span class="small">Lower Bound Values</span><br><span class="small">Comma-Separated</span></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextValidEndpointBoundLowerValues" id="TextValidEndpointBoundLowerValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundLowerValues)+[" maxlength="500" size="80"></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Association End<br><span class="small">Upper Bound Values</span><br><span class="small">Comma-Separated</span></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextValidEndpointBoundUpperValues" id="TextValidEndpointBoundUpperValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundUpperValues)+[" maxlength="500" size="80"></td>]
+        l_cHtml += [</tr>]
+
         if !empty(par_iPk)
             l_cHtml += CustomFieldsBuild(par_iPk,USEDON_PROJECT,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
         endif
@@ -560,9 +619,16 @@ local l_cProjectAlternateNameForDataType
 local l_cProjectAlternateNameForDataTypes
 local l_cProjectAlternateNameForPackage
 local l_cProjectAlternateNameForPackages
+local l_cProjectValidEndpointBoundLowerValues
+local l_cProjectValidEndpointBoundUpperValues
+
+local l_cProjectValidEndpointBoundLowerValuesFixed
+local l_cProjectValidEndpointBoundUpperValuesFixed
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
+
+local l_nAccessLevelML
 
 local l_oDB1
 local l_oDB2
@@ -571,29 +637,38 @@ oFcgi:TraceAdd("ProjectEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iProjectPk                           := Val(oFcgi:GetInputValue("TableKey"))
-l_cProjectName                         := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_nProjectUseStatus                    := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_cProjectDescription                  := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
-l_cProjectAlternateNameForModel        := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModel"))
-l_cProjectAlternateNameForModels       := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModels"))
-l_cProjectAlternateNameForEntity       := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForEntity"))
-l_cProjectAlternateNameForEntities     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForEntities"))
-l_cProjectAlternateNameForAssociation  := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAssociation"))
-l_cProjectAlternateNameForAssociations := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAssociations"))
-l_cProjectAlternateNameForAttribute    := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAttribute"))
-l_cProjectAlternateNameForAttributes   := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAttributes"))
-l_cProjectAlternateNameForDataType     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForDataType"))
-l_cProjectAlternateNameForDataTypes    := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForDataTypes"))
-l_cProjectAlternateNameForPackage      := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackage"))
-l_cProjectAlternateNameForPackages     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackages"))
+l_iProjectPk                            := Val(oFcgi:GetInputValue("TableKey"))
+l_cProjectName                          := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nProjectUseStatus                     := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_cProjectDescription                   := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_cProjectAlternateNameForModel         := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModel"))
+l_cProjectAlternateNameForModels        := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModels"))
+l_cProjectAlternateNameForEntity        := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForEntity"))
+l_cProjectAlternateNameForEntities      := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForEntities"))
+l_cProjectAlternateNameForAssociation   := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAssociation"))
+l_cProjectAlternateNameForAssociations  := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAssociations"))
+l_cProjectAlternateNameForAttribute     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAttribute"))
+l_cProjectAlternateNameForAttributes    := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForAttributes"))
+l_cProjectAlternateNameForDataType      := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForDataType"))
+l_cProjectAlternateNameForDataTypes     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForDataTypes"))
+l_cProjectAlternateNameForPackage       := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackage"))
+l_cProjectAlternateNameForPackages      := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackages"))
+l_cProjectValidEndpointBoundLowerValues := SanitizeInput(oFCGI:GetInputValue("TextValidEndpointBoundLowerValues"))
+l_cProjectValidEndpointBoundUpperValues := SanitizeInput(oFCGI:GetInputValue("TextValidEndpointBoundUpperValues"))
+
+l_cProjectValidEndpointBoundLowerValuesFixed := CleanUpBoundValues(l_cProjectValidEndpointBoundLowerValues)
+l_cProjectValidEndpointBoundUpperValuesFixed := CleanUpBoundValues(l_cProjectValidEndpointBoundUpperValues)
 
 do case
 case l_cActionOnSubmit == "Save"
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelML >= 7
         do case
         case empty(l_cProjectName)
             l_cErrorMessage := "Missing Name"
+        
+        case (l_cProjectValidEndpointBoundLowerValuesFixed <> l_cProjectValidEndpointBoundLowerValues) .or. (l_cProjectValidEndpointBoundUpperValuesFixed <> l_cProjectValidEndpointBoundUpperValues)
+            l_cErrorMessage := "Fixed Bound Values, please review first."
+
         otherwise
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
@@ -614,18 +689,20 @@ case l_cActionOnSubmit == "Save"
                     :Field("Project.Name"                         , l_cProjectName)
                     :Field("Project.UseStatus"                    , l_nProjectUseStatus)
                     :Field("Project.Description"                  , iif(empty(l_cProjectDescription),NULL,l_cProjectDescription))
-                    :Field("Project.AlternateNameForModel"        , iif(empty(l_cProjectAlternateNameForModel)       ,NULL,l_cProjectAlternateNameForModel))
-                    :Field("Project.AlternateNameForModels"       , iif(empty(l_cProjectAlternateNameForModels)      ,NULL,l_cProjectAlternateNameForModels))
-                    :Field("Project.AlternateNameForEntity"       , iif(empty(l_cProjectAlternateNameForEntity)      ,NULL,l_cProjectAlternateNameForEntity))
-                    :Field("Project.AlternateNameForEntities"     , iif(empty(l_cProjectAlternateNameForEntities)    ,NULL,l_cProjectAlternateNameForEntities))
-                    :Field("Project.AlternateNameForAssociation"  , iif(empty(l_cProjectAlternateNameForAssociation) ,NULL,l_cProjectAlternateNameForAssociation))
-                    :Field("Project.AlternateNameForAssociations" , iif(empty(l_cProjectAlternateNameForAssociations),NULL,l_cProjectAlternateNameForAssociations))
-                    :Field("Project.AlternateNameForAttribute"    , iif(empty(l_cProjectAlternateNameForAttribute)   ,NULL,l_cProjectAlternateNameForAttribute))
-                    :Field("Project.AlternateNameForAttributes"   , iif(empty(l_cProjectAlternateNameForAttributes)  ,NULL,l_cProjectAlternateNameForAttributes))
-                    :Field("Project.AlternateNameForDataType"     , iif(empty(l_cProjectAlternateNameForDataType)    ,NULL,l_cProjectAlternateNameForDataType))
-                    :Field("Project.AlternateNameForDataTypes"    , iif(empty(l_cProjectAlternateNameForDataTypes)   ,NULL,l_cProjectAlternateNameForDataTypes))
-                    :Field("Project.AlternateNameForPackage"      , iif(empty(l_cProjectAlternateNameForPackage)     ,NULL,l_cProjectAlternateNameForPackage))
-                    :Field("Project.AlternateNameForPackages"     , iif(empty(l_cProjectAlternateNameForPackages)    ,NULL,l_cProjectAlternateNameForPackages))
+                    :Field("Project.AlternateNameForModel"        , iif(empty(l_cProjectAlternateNameForModel)             ,NULL,l_cProjectAlternateNameForModel))
+                    :Field("Project.AlternateNameForModels"       , iif(empty(l_cProjectAlternateNameForModels)            ,NULL,l_cProjectAlternateNameForModels))
+                    :Field("Project.AlternateNameForEntity"       , iif(empty(l_cProjectAlternateNameForEntity)            ,NULL,l_cProjectAlternateNameForEntity))
+                    :Field("Project.AlternateNameForEntities"     , iif(empty(l_cProjectAlternateNameForEntities)          ,NULL,l_cProjectAlternateNameForEntities))
+                    :Field("Project.AlternateNameForAssociation"  , iif(empty(l_cProjectAlternateNameForAssociation)       ,NULL,l_cProjectAlternateNameForAssociation))
+                    :Field("Project.AlternateNameForAssociations" , iif(empty(l_cProjectAlternateNameForAssociations)      ,NULL,l_cProjectAlternateNameForAssociations))
+                    :Field("Project.AlternateNameForAttribute"    , iif(empty(l_cProjectAlternateNameForAttribute)         ,NULL,l_cProjectAlternateNameForAttribute))
+                    :Field("Project.AlternateNameForAttributes"   , iif(empty(l_cProjectAlternateNameForAttributes)        ,NULL,l_cProjectAlternateNameForAttributes))
+                    :Field("Project.AlternateNameForDataType"     , iif(empty(l_cProjectAlternateNameForDataType)          ,NULL,l_cProjectAlternateNameForDataType))
+                    :Field("Project.AlternateNameForDataTypes"    , iif(empty(l_cProjectAlternateNameForDataTypes)         ,NULL,l_cProjectAlternateNameForDataTypes))
+                    :Field("Project.AlternateNameForPackage"      , iif(empty(l_cProjectAlternateNameForPackage)           ,NULL,l_cProjectAlternateNameForPackage))
+                    :Field("Project.AlternateNameForPackages"     , iif(empty(l_cProjectAlternateNameForPackages)          ,NULL,l_cProjectAlternateNameForPackages))
+                    :Field("Project.ValidEndpointBoundLowerValues", iif(empty(l_cProjectValidEndpointBoundLowerValuesFixed),NULL,l_cProjectValidEndpointBoundLowerValuesFixed))
+                    :Field("Project.ValidEndpointBoundUpperValues", iif(empty(l_cProjectValidEndpointBoundUpperValuesFixed),NULL,l_cProjectValidEndpointBoundUpperValuesFixed))
 
                     if empty(l_iProjectPk)
                         l_cProjectLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
@@ -670,10 +747,18 @@ case l_cActionOnSubmit == "Delete"   // Project
             :SQL()
 
             if :Tally == 0
-                CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
-                :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
+                :Table("f9d28e3f-2f8d-409f-8711-1d0a4715c77d","PrimitiveType")
+                :Where("PrimitiveType.fk_Project = ^",l_iProjectPk)
+                :SQL()
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+                if :Tally == 0
+                    CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
+                    :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
+
+                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+                else
+                    l_cErrorMessage := "Related Primitive Type record on file"
+                endif
             else
                 l_cErrorMessage := "Related Model record on file"
             endif
@@ -683,21 +768,23 @@ case l_cActionOnSubmit == "Delete"   // Project
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["Name"]                         := l_cProjectName
-    l_hValues["UseStatus"]                    := l_nProjectUseStatus
-    l_hValues["Description"]                  := l_cProjectDescription
-    l_hValues["AlternateNameForModel"]        := l_cProjectAlternateNameForModel
-    l_hValues["AlternateNameForModels"]       := l_cProjectAlternateNameForModels
-    l_hValues["AlternateNameForEntity"]       := l_cProjectAlternateNameForEntity
-    l_hValues["AlternateNameForEntities"]     := l_cProjectAlternateNameForEntities
-    l_hValues["AlternateNameForAssociation"]  := l_cProjectAlternateNameForAssociation
-    l_hValues["AlternateNameForAssociations"] := l_cProjectAlternateNameForAssociations
-    l_hValues["AlternateNameForAttribute"]    := l_cProjectAlternateNameForAttribute
-    l_hValues["AlternateNameForAttributes"]   := l_cProjectAlternateNameForAttributes
-    l_hValues["AlternateNameForDataType"]     := l_cProjectAlternateNameForDataType
-    l_hValues["AlternateNameForDataTypes"]    := l_cProjectAlternateNameForDataTypes
-    l_hValues["AlternateNameForPackage"]      := l_cProjectAlternateNameForPackage
-    l_hValues["AlternateNameForPackages"]     := l_cProjectAlternateNameForPackages
+    l_hValues["Name"]                          := l_cProjectName
+    l_hValues["UseStatus"]                     := l_nProjectUseStatus
+    l_hValues["Description"]                   := l_cProjectDescription
+    l_hValues["AlternateNameForModel"]         := l_cProjectAlternateNameForModel
+    l_hValues["AlternateNameForModels"]        := l_cProjectAlternateNameForModels
+    l_hValues["AlternateNameForEntity"]        := l_cProjectAlternateNameForEntity
+    l_hValues["AlternateNameForEntities"]      := l_cProjectAlternateNameForEntities
+    l_hValues["AlternateNameForAssociation"]   := l_cProjectAlternateNameForAssociation
+    l_hValues["AlternateNameForAssociations"]  := l_cProjectAlternateNameForAssociations
+    l_hValues["AlternateNameForAttribute"]     := l_cProjectAlternateNameForAttribute
+    l_hValues["AlternateNameForAttributes"]    := l_cProjectAlternateNameForAttributes
+    l_hValues["AlternateNameForDataType"]      := l_cProjectAlternateNameForDataType
+    l_hValues["AlternateNameForDataTypes"]     := l_cProjectAlternateNameForDataTypes
+    l_hValues["AlternateNameForPackage"]       := l_cProjectAlternateNameForPackage
+    l_hValues["AlternateNameForPackages"]      := l_cProjectAlternateNameForPackages
+    l_hValues["ValidEndpointBoundLowerValues"] := l_cProjectValidEndpointBoundLowerValuesFixed
+    l_hValues["ValidEndpointBoundUpperValues"] := l_cProjectValidEndpointBoundUpperValuesFixed
 
     CustomFieldsFormToHash(l_iProjectPk,USEDON_PROJECT,@l_hValues)
 
@@ -706,4 +793,297 @@ endif
 
 return l_cHtml
 //=================================================================================================================
+//=================================================================================================================
+static function PrimitiveTypesListFormBuild(par_iProjectPk,par_Project_LinkUID)
+local l_cHtml := []
+local l_oDB_ListOfPrimitiveTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+// local l_oCursor
+local l_nNumberOfPrimitiveTypes
+local l_iPrimitiveTypePk
+
+oFcgi:TraceAdd("PrimitiveTypesListFormBuild")
+
+with object l_oDB_ListOfPrimitiveTypes
+    :Table("ade06ccd-1925-4c3c-bf48-dbbd33ede375","PrimitiveType")
+    :Column("PrimitiveType.pk"         ,"pk")
+    :Column("PrimitiveType.LinkUID"    ,"PrimitiveType_LinkUID")
+    :Column("PrimitiveType.Name"       ,"PrimitiveType_Name")
+    :Column("PrimitiveType.Description","PrimitiveType_Description")
+    :Column("upper(PrimitiveType.Name)","tag1")
+    :Where("PrimitiveType.fk_Project = ^",par_iProjectPk)
+    :OrderBy("tag1")
+    :SQL("ListOfPrimitiveTypes")
+    l_nNumberOfPrimitiveTypes := :Tally
+endwith
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="List">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<table>]
+            l_cHtml += [<tr>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    if oFcgi:p_nAccessLevelML >= 7
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Projects/NewPrimitiveType/]+par_Project_LinkUID+[/">New Primitive Type</a>]
+                    else
+                        l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
+                    endif
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                // ----------------------------------------
+                // ----------------------------------------
+            l_cHtml += [</tr>]
+        l_cHtml += [</table>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [</form>]
+
+if !empty(l_nNumberOfPrimitiveTypes)
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="2">Primitive Types (]+Trans(l_nNumberOfPrimitiveTypes)+[)</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+            l_cHtml += [</tr>]
+
+            select ListOfPrimitiveTypes
+            scan all
+                l_iPrimitiveTypePk := ListOfPrimitiveTypes->pk
+
+                l_cHtml += [<tr>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_LinkUID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfPrimitiveTypes->PrimitiveType_Description,""))
+                    l_cHtml += [</td>]
+
+                l_cHtml += [</tr>]
+            endscan
+            l_cHtml += [</table>]
+            
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+static function PrimitiveTypeEditFormBuild(par_iProjectPk,par_cErrorText,par_iPk,par_hValues)
+local l_cHtml := ""
+local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
+
+local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+
+local l_cSitePath   := oFcgi:RequestSettings["SitePath"]
+local l_oDB1        := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+oFcgi:TraceAdd("PrimitiveTypeEditFormBuild")
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="Edit">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" name="PrimitiveTypeKey" value="]+trans(par_iPk)+[">]
+
+if !empty(l_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Primitive Type</span>]   //navbar-text
+        if oFcgi:p_nAccessLevelML >= 7
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        endif
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        if !empty(par_iPk)
+            if oFcgi:p_nAccessLevelML >= 7
+                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            endif
+        endif
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+
+    l_cHtml += [<table>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Name</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 7,[],[ disabled])+[ class="form-control"></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalForms()
+
+
+return l_cHtml
+//=================================================================================================================
+static function PrimitiveTypeEditFormOnSubmit(par_iProjectPk,par_cProjectLinkUID)
+
+local l_cHtml := []
+
+local l_cActionOnSubmit
+local l_iPrimitiveTypePk
+local l_cPrimitiveTypeName
+local l_cPrimitiveTypeDescription
+local l_oData
+local l_cErrorMessage := ""
+
+local l_hValues := {=>}
+
+local l_oDB1
+local l_oDB2
+
+oFcgi:TraceAdd("PrimitiveTypeEditFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_iPrimitiveTypePk          := Val(oFcgi:GetInputValue("PrimitiveTypeKey"))
+l_cPrimitiveTypeName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cPrimitiveTypeDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+do case
+case l_cActionOnSubmit == "Save"
+    if oFcgi:p_nAccessLevelML >= 7
+        if empty(l_cPrimitiveTypeName)
+            l_cErrorMessage := "Missing Name"
+        else
+            with object l_oDB1
+                :Table("047eea6b-c1e7-4b50-9e44-56df466cc239","PrimitiveType")
+                :Column("PrimitiveType.pk","pk")
+                :Where([PrimitiveType.fk_Project = ^],par_iProjectPk)
+                :Where([lower(replace(PrimitiveType.Name,' ','')) = ^],lower(StrTran(l_cPrimitiveTypeName," ","")))
+                if l_iPrimitiveTypePk > 0
+                    :Where([PrimitiveType.pk != ^],l_iPrimitiveTypePk)
+                endif
+                :SQL()
+            endwith
+
+            if l_oDB1:Tally <> 0
+                l_cErrorMessage := "Duplicate Name"
+            endif
+
+        endif
+    endif
+
+    if empty(l_cErrorMessage)
+        //Save the PrimitiveType
+        with object l_oDB1
+            :Table("26d3ff97-f5c5-4b34-9c15-01f34d11d320","PrimitiveType")
+            :Field("PrimitiveType.Name"        , l_cPrimitiveTypeName)
+            :Field("PrimitiveType.Description" , iif(empty(l_cPrimitiveTypeDescription),NULL,l_cPrimitiveTypeDescription))
+            if empty(l_iPrimitiveTypePk)
+                :Field("PrimitiveType.LinkUID"    , oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("PrimitiveType.fk_Project" , par_iProjectPk)
+                if :Add()
+                    l_iPrimitiveTypePk := :Key()
+                else
+                    l_cErrorMessage := "Failed to add PrimitiveType."
+                endif
+            else
+                if :Update(l_iPrimitiveTypePk)
+                else
+                    l_cErrorMessage := "Failed to update Primitive Type."
+                endif
+            endif
+
+        endwith
+    endif
+
+case l_cActionOnSubmit == "Cancel"
+
+case l_cActionOnSubmit == "Delete"   // PrimitiveType
+    if oFcgi:p_nAccessLevelML >= 7
+        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+            with object l_oDB1
+                :Table("6eac4014-651f-43cc-af7e-976a77a89e75","DataType")
+                :Where("DataType.fk_PrimitiveType = ^",l_iPrimitiveTypePk)
+                :SQL()
+            endwith
+
+            if l_oDB1:Tally == 0
+                l_oDB1:Delete("04faf037-bff8-461a-9d57-c3317b4e10b9","PrimitiveType",l_iPrimitiveTypePk)
+
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+            else
+                l_cErrorMessage := "Related Data Type record on file"
+            endif
+
+        endwith
+    endif
+
+otherwise
+    l_cErrorMessage := "Unknown Option"
+
+endcase
+
+do case
+case !empty(l_cErrorMessage)
+    l_hValues["Name"]        := l_cPrimitiveTypeName
+    l_hValues["Description"] := l_cPrimitiveTypeDescription
+
+    l_cHtml += PrimitiveTypeEditFormBuild(par_iProjectPk,l_cErrorMessage,l_iPrimitiveTypePk,l_hValues)
+
+otherwise
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+
+endcase
+
+return l_cHtml
+//=================================================================================================================
+static function CleanUpBoundValues(par_cValues)
+local l_cResult := ""
+local l_cValue
+local l_aValues := hb_ATokens(alltrim(nvl(par_cValues,"")),",")
+
+for each l_cValue in l_aValues
+    l_cValue := left(Alltrim(l_cValue),4)
+    if !empty(l_cValue)
+        if !empty(l_cResult)
+            l_cResult += ","
+        endif
+        l_cResult += l_cValue
+    endif
+endfor
+
+return l_cResult
 //=================================================================================================================

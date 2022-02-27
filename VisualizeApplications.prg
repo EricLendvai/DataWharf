@@ -20,6 +20,8 @@ local l_cNameSpace_Name
 local l_oDataDiagram
 local l_nNodeDisplayMode
 local l_lNodeShowDescription
+local l_nNodeMinHeight
+local l_nNodeMaxWidth
 local l_cTableDescription
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
@@ -44,6 +46,9 @@ local l_nMultiEdgeTotalCount
 local l_nMultiEdgeCount
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
+
+//See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 l_cHtml += [<script type="text/javascript">]
 l_cHtml += 'function KeywordSearch(par_cListOfWords, par_cString) {'
@@ -79,14 +84,18 @@ with object l_oDB1
     endif
 
     :Table("f8632e51-09a7-4ee7-bc76-517c490f505a","Diagram")
-    :Column("Diagram.VisPos"              ,"Diagram_VisPos")
-    :Column("Diagram.NodeDisplayMode"     ,"Diagram_NodeDisplayMode")
-    :Column("Diagram.NodeShowDescription" ,"Diagram_NodeShowDescription")
-    :Column("Diagram.LinkUID"             ,"Diagram_LinkUID")
+    :Column("Diagram.VisPos"             ,"Diagram_VisPos")
+    :Column("Diagram.NodeDisplayMode"    ,"Diagram_NodeDisplayMode")
+    :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
+    :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
+    :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
+    :Column("Diagram.LinkUID"            ,"Diagram_LinkUID")
     l_oDataDiagram := :Get(l_iDiagramPk)
     l_cNodePositions       := l_oDataDiagram:Diagram_VisPos
     l_nNodeDisplayMode     := max(1,l_oDataDiagram:Diagram_NodeDisplayMode)
     l_lNodeShowDescription := l_oDataDiagram:Diagram_NodeShowDescription
+    l_nNodeMinHeight       := l_oDataDiagram:Diagram_NodeMinHeight
+    l_nNodeMaxWidth        := l_oDataDiagram:Diagram_NodeMaxWidth
     l_cDiagram_LinkUID     := l_oDataDiagram:Diagram_LinkUID
 
 endwith
@@ -150,7 +159,7 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -324,31 +333,35 @@ scan all
         l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
     endcase
 
-    if hb_orm_isnull("ListOfTables","Table_Description")
-        l_cTableDescription := ""
-    else
-        l_cTableDescription := hb_StrReplace(ListOfTables->Table_Description,{[\]     => [\\],;
-                                                                              chr(10) => [],;
-                                                                              chr(13) => [\n],;
-                                                                              ["]     => [\"],;
-                                                                              [']     => [\']} )
-    endif
+    // if hb_orm_isnull("ListOfTables","Table_Description")
+    //     l_cTableDescription := ""
+    // else
+    //     l_cTableDescription := hb_StrReplace(ListOfTables->Table_Description,{[&]     => [&#38;],;
+    //                                                                           [\]     => [&#92;],;
+    //                                                                           chr(10) => [],;
+    //                                                                           chr(13) => [\n],;
+    //                                                                           ["]     => [&#34;],;
+    //                                                                           [']     => [&#39;]} )
+    // endif
+    l_cTableDescription := EscapeNewlineAndQuotes(ListOfTables->Table_Description)
 
     l_cHtml += [{id:]+Trans(ListOfTables->pk)
     if empty(l_cTableDescription)
-        l_cHtml += [,label:"]+l_cNodeLabel+["]
+        l_cHtml += [,font:{multi:"html"}]
+        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
     else
         if l_lNodeShowDescription
-            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
+            l_cHtml += [,font:{multi:"html",align:"left"}]
+            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cTableDescription+["]
         else
             if l_lNeverShowDescriptionOnHover
-                l_cHtml += [,label:"]+l_cNodeLabel+["]
+                l_cHtml += [,font:{multi:"html"}]
+                l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             else
                 l_cHtml += [,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
             endif
         endif
     endif
-
 
     // 1 Unknown
     // 2 Proposed
@@ -382,6 +395,12 @@ scan all
 
     endcase
 
+    if l_nNodeMaxWidth > 50
+        l_cHtml += [,widthConstraint: {maximum: ]+Trans(l_nNodeMaxWidth)+[}]
+    endif
+    if l_nNodeMinHeight > 20
+        l_cHtml += [,heightConstraint: {minimum: ]+Trans(l_nNodeMinHeight)+[}]
+    endif
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,Trans(ListOfTables->pk),{=>})
@@ -452,7 +471,7 @@ scan all
     endcase
 
     if !empty(nvl(ListOfLinks->Column_ForeignKeyUse,""))
-        l_cHtml += [,label:"]+FormatForVisualizeLabels(ListOfLinks->Column_ForeignKeyUse)+["]
+        l_cHtml += [,label:"]+EscapeNewlineAndQuotes(ListOfLinks->Column_ForeignKeyUse)+["]
     endif
 
     l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
@@ -480,7 +499,8 @@ l_cHtml += [    nodes: nodes,]
 l_cHtml += [    edges: edges,]
 l_cHtml += [  };]
 
-l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false},]
+l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
+
 l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
 if l_lNavigationControl
     l_cHtml +=              [interaction:{navigationButtons:true},]
@@ -762,6 +782,8 @@ local l_lShowNameSpace
 local l_cNameSpace_Name
 local l_iNodeDisplayMode
 local l_lNodeShowDescription
+local l_nNodeMinHeight
+local l_nNodeMaxWidth
 
 local l_oDB1
 local l_oData
@@ -779,11 +801,15 @@ if pcount() < 6
             :Column("Diagram.name"               ,"Diagram_name")
             :Column("Diagram.NodeDisplayMode"    ,"Diagram_NodeDisplayMode")
             :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
+            :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
+            :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
             l_oData := :Get(par_iDiagramPk)
             if :Tally == 1
                 l_hValues["Name"]                := l_oData:Diagram_name
                 l_hValues["NodeDisplayMode"]     := l_oData:Diagram_NodeDisplayMode
                 l_hValues["NodeShowDescription"] := l_oData:Diagram_NodeShowDescription
+                l_hValues["NodeMinHeight"]       := l_oData:Diagram_NodeMinHeight
+                l_hValues["NodeMaxWidth"]        := l_oData:Diagram_NodeMaxWidth
             endif
 
             //Get the current list of selected tables
@@ -853,6 +879,24 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+        l_nNodeMinHeight := hb_HGetDef(l_hValues,"NodeMinHeight",50)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Node Minimum Height</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
+                l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_nNodeMaxWidth := hb_HGetDef(l_hValues,"NodeMaxWidth",150)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Node Maximum Width</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
+                l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -959,6 +1003,8 @@ local l_iDiagram_pk
 local l_cDiagram_Name
 local l_nDiagram_NodeDisplayMode
 local l_lDiagram_NodeShowDescription
+local l_lDiagram_NodeMinHeight
+local l_lDiagram_NodeMaxWidth
 local l_cErrorMessage
 local l_lSelected
 local l_cValue
@@ -970,6 +1016,8 @@ l_iDiagram_pk                  := Val(oFcgi:GetInputValue("TextDiagramPk"))
 l_cDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_nDiagram_NodeDisplayMode     := val(oFcgi:GetInputValue("ComboNodeDisplayMode"))
 l_lDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
+l_lDiagram_NodeMinHeight       := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
+l_lDiagram_NodeMaxWidth        := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
 
 do case
 case l_cActionOnSubmit == "SaveDiagram"
@@ -1006,6 +1054,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Field("Diagram.Name"               ,l_cDiagram_Name)
             :Field("Diagram.NodeDisplayMode"    ,l_nDiagram_NodeDisplayMode)
             :Field("Diagram.NodeShowDescription",l_lDiagram_NodeShowDescription)
+            :Field("Diagram.NodeMinHeight"      ,l_lDiagram_NodeMinHeight)
+            :Field("Diagram.NodeMaxWidth"       ,l_lDiagram_NodeMaxWidth)
             if empty(l_iDiagram_pk)
                 :Field("Diagram.fk_Application",par_iApplicationPk)
                 :Field("Diagram.UseStatus"     , 1)
@@ -1084,6 +1134,8 @@ case l_cActionOnSubmit == "SaveDiagram"
         l_hValues["Name"]                := l_cDiagram_Name
         l_hValues["NodeDisplayMode"]     := l_nDiagram_NodeDisplayMode
         l_hValues["NodeShowDescription"] := l_lDiagram_NodeShowDescription
+        l_hValues["NodeMinHeight"]       := l_lDiagram_NodeMinHeight
+        l_hValues["NodeMaxWidth"]        := l_lDiagram_NodeMaxWidth
         
         select ListOfAllTablesInApplication
         scan all
@@ -1470,6 +1522,7 @@ local l_cHtml_tr_class
 local l_nAccessLevelDD := 1   // None by default
 local l_iApplicationPk
 local l_cDisabled
+local l_cObjectId
 
 //oFcgi:p_nAccessLevelDD
 
@@ -1903,7 +1956,7 @@ if len(l_aNodes) == 1
                             case " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
                                 l_cHtml_icon     := [<i class="bi bi-tools"></i>]
                                 l_cHtml_tr_class := "ColumnNotCore"
-                            case !hb_isNil(ListOfColumns->Table_Name)
+                            case !hb_IsNIL(ListOfColumns->Table_Name)
                                 l_cHtml_icon     := [<i class="bi-arrow-left"></i>]
                                 l_cHtml_tr_class := "ColumnNotCore"
                             otherwise
@@ -1952,7 +2005,7 @@ if len(l_aNodes) == 1
 
                                 // Foreign Key To
                                 l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    if !hb_isNil(ListOfColumns->Table_Name)
+                                    if !hb_IsNIL(ListOfColumns->Table_Name)
                                         l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
                                         l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                                         l_cHtml += [</a>]
@@ -2101,7 +2154,17 @@ if len(l_aNodes) == 1
             endif
 
             if !empty(l_cTableInformation)
-                l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cTableInformation)+[</div>]
+                // l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cTableInformation)+[</div>]
+
+                l_cHtml += [<div class="mt-3">]
+                    l_cHtml += [<div class="fs-5">Information:</div>]
+
+                    l_cObjectId := "table-description"+Trans(l_iTablePk)
+                    l_cHtml += [<div id="]+l_cObjectId+[">]
+                    l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(l_cTableInformation)+[');</script>]
+                    l_cHtml += [</div>]
+                l_cHtml += [</div>]
+
             endif
 
 

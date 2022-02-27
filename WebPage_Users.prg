@@ -168,9 +168,12 @@ return l_cHtml
 //=================================================================================================================
 static function UserListFormBuild()
 local l_cHtml := []
-local l_oDB_ListOfUsers := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfUsers             := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfProjectAccess     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfApplicationAccess := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfUsers
+local l_iUserPk
 
 oFcgi:TraceAdd("UserListFormBuild")
 
@@ -192,6 +195,46 @@ with object l_oDB_ListOfUsers
     l_nNumberOfUsers := :Tally
 endwith
 
+with object l_oDB_ListOfProjectAccess
+    :Table("93f84319-c117-4182-ae76-ce67c3726032","User")
+    :Column("User.pk"                         , "User_Pk")
+    :Column("Project.Name"                    , "Project_Name")
+    :Column("UserAccessProject.AccessLevelML" , "AccessLevel")
+    :Column("upper(Project.Name)"             , "tag1")
+    :Join("inner","UserAccessProject","","UserAccessProject.fk_User = User.pk")
+    :Join("inner","Project"          ,"","UserAccessProject.fk_Project = Project.pk")
+    :OrderBy("User_Pk")
+    :OrderBy("tag1")
+    :SQL("ListOfProjectAccess")
+
+    with object :p_oCursor
+        :Index("User_Pk","User_Pk")
+        :CreateIndexes()
+        :SetOrder("User_Pk")
+    endwith
+endwith
+
+with object l_oDB_ListOfApplicationAccess
+    :Table("3d303af1-8a81-4982-af6a-a5e7605b8124","User")
+    :Column("User.pk"                             , "User_Pk")
+    :Column("Application.Name"                    , "Application_Name")
+    :Column("UserAccessApplication.AccessLevelDD" , "AccessLevel")
+    :Column("upper(Application.Name)"             , "tag1")
+    :Join("inner","UserAccessApplication","","UserAccessApplication.fk_User = User.pk")
+    :Join("inner","Application"          ,"","UserAccessApplication.fk_Application = Application.pk")
+    :OrderBy("User_Pk")
+    :OrderBy("tag1")
+    :SQL("ListOfApplicationAccess")
+
+    with object :p_oCursor
+        :Index("User_Pk","User_Pk")
+        :CreateIndexes()
+        :SetOrder("User_Pk")
+    endwith
+endwith
+
+
+
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfUsers)
@@ -206,7 +249,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Users (]+Trans(l_nNumberOfUsers)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Users (]+Trans(l_nNumberOfUsers)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
@@ -214,12 +257,16 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">ID</th>]
                     // l_cHtml += [<th class="GridHeaderRowCells text-white">Password</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Access Mode</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Projects</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Applications</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfUsers
                 scan all
+                    l_iUserPk := ListOfUsers->pk
+
                     l_cHtml += [<tr>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -236,6 +283,24 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access","Root Admin (User Control)"}[iif(vfp_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Projects
+                            select ListOfProjectAccess
+                            scan all for ListOfProjectAccess->User_Pk == l_iUserPk
+                                l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
+                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","","Full Access"}[iif(vfp_between(ListOfProjectAccess->AccessLevel,1,7),ListOfProjectAccess->AccessLevel,1)]
+                                l_cHtml += [</div>]
+                            endscan
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Applications
+                            select ListOfApplicationAccess
+                            scan all for ListOfApplicationAccess->User_Pk == l_iUserPk
+                                l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
+                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","Edit Anything and Load/Sync Schema","Full Access"}[iif(vfp_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
+                                l_cHtml += [</div>]
+                            endscan
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]

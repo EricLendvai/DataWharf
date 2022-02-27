@@ -361,14 +361,11 @@ local l_cSessionID
 local l_nPos
 local l_lLoggedIn
 local l_nLoggedInPk,l_cLoggedInSignature
-local l_cFormName
-local l_cActionOnSubmit
 local l_cID
 local l_cPassword
 local l_oDB1
 local l_cSessionCookie
 local l_iUserPk
-local l_cUserId
 local l_cUserName
 local l_nUserAccessMode
 local l_nLoginLogsPk
@@ -376,8 +373,6 @@ local l_cAction
 local l_oData
 local l_cSignature
 local l_cIP := ::RequestSettings["ClientIP"]
-local l_cLastSQL
-local l_cLastError
 local l_nLoginOutUserPk
 local l_aWebPageHandle
 local l_aPathElements
@@ -601,12 +596,9 @@ else
                             l_oDB1:Update(ListOfResults->pk)
                         endscan
                         CloseAlias("ListOfResults")
-                    else
-                        l_cLastSQL   := l_oDB1:LastSQL()
-                        l_cLastError := l_oDB1:ErrorMessage()
+                    // else
                     endif
                 endif
-                l_cSessionID := ""
                 ::DeleteCookie("SessionID")
                 ::Redirect(::RequestSettings["SitePath"]+"home")
                 return nil
@@ -614,7 +606,6 @@ else
         endif
 
         l_lLoggedIn       := .f.
-        l_cUserId         := ""
         l_cUserName       := ""
         l_nUserAccessMode := 0
 
@@ -627,7 +618,6 @@ else
                 l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
                 l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
                 l_oDB1:Column("User.pk"         ,"User_pk")
-                l_oDB1:Column("User.id"         ,"User_id")
                 l_oDB1:Column("User.FirstName"  ,"User_FirstName")
                 l_oDB1:Column("User.LastName"   ,"User_LastName")
                 l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
@@ -639,7 +629,6 @@ else
                 if l_oDB1:Tally = 1
                     l_lLoggedIn       := .t.
                     l_iUserPk         := ListOfResults->User_pk
-                    l_cUserId         := AllTrim(ListOfResults->User_Id)
                     l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
                     l_nUserAccessMode := ListOfResults->User_AccessMode
                 else
@@ -658,8 +647,6 @@ else
                     l_cBody += BuildPageLoginScreen()
                 else
                     //Post
-                    l_cFormName       := oFcgi:GetInputValue("formname")
-                    l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
                     l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
                     l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 
@@ -831,7 +818,7 @@ return nil
 method OnError(par_oError) class MyFcgi
 local l_oDB1
 local l_lPostgresLostConnection
-local l_cErrorInfo := ""
+local l_cErrorInfo
 
     try
         SendToDebugView("Called from MyFcgi OnError")
@@ -898,6 +885,14 @@ local l_cThisAppColorHeaderBackground := oFcgi:GetAppConfig("COLOR_HEADER_BACKGR
 local l_cThisAppColorHeaderTextWhite  := oFcgi:GetAppConfig("COLOR_HEADER_TEXT_WHITE")
 local l_lThisAppColorHeaderTextWhite
 
+local l_lShowMenuProjects         := par_LoggedIn .and. (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+local l_lShowMenuApplications     := par_LoggedIn .and. (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+local l_lShowMenuModeling         := l_lShowMenuProjects
+local l_lShowMenuDataDictionaries := l_lShowMenuApplications
+
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
 local l_cExtraClass
 
 if empty(l_cThisAppTitle)
@@ -912,6 +907,36 @@ else
     l_lThisAppColorHeaderTextWhite := ("T" $ upper(l_cThisAppColorHeaderTextWhite))
 endif
 
+if par_LoggedIn
+    if !l_lShowMenuProjects
+        with object l_oDB1
+            :Table("859d058d-4207-41d2-840c-7e294326f84e","UserAccessProject")
+            :Column("SUM(CASE WHEN (UserAccessProject.AccessLevelML >= 7) THEN 1 ELSE 0 END)" , "NumberOfFullAccess")
+            :Column("SUM(CASE WHEN (UserAccessProject.AccessLevelML >= 1) THEN 1 ELSE 0 END)" , "NumberOfAnyAccess")
+            :Where("UserAccessProject.fk_User = ^" , oFcgi:p_iUserPk)
+            l_oData := :SQL()
+            if :Tally == 1
+                l_lShowMenuProjects := (nvl(l_oData:NumberOfFullAccess,0) > 0)
+                l_lShowMenuModeling := (nvl(l_oData:NumberOfAnyAccess,0)  > 0)
+            endif
+        endwith
+    endif
+
+    if !l_lShowMenuApplications
+        with object l_oDB1
+            :Table("6de8102c-3f35-45bd-9a29-6b4875edd24a","UserAccessApplication")
+            :Column("SUM(CASE WHEN (UserAccessApplication.AccessLevelDD >= 7) THEN 1 ELSE 0 END)" , "NumberOfFullAccess")
+            :Column("SUM(CASE WHEN (UserAccessApplication.AccessLevelDD >= 1) THEN 1 ELSE 0 END)" , "NumberOfAnyAccess")
+            :Where("UserAccessApplication.fk_User = ^" , oFcgi:p_iUserPk)
+            l_oData := :SQL()
+            if :Tally == 1
+                l_lShowMenuApplications     := (nvl(l_oData:NumberOfFullAccess,0) > 0)
+                l_lShowMenuDataDictionaries := (nvl(l_oData:NumberOfAnyAccess,0)  > 0)
+            endif
+        endwith
+    endif
+endif
+
 l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
 
 l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
@@ -922,18 +947,27 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
                 l_cHtml += [<ul class="navbar-nav mr-auto">]
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
-                    if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
+                    if l_lShowMenuProjects
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                    endif
+
+                    if l_lShowMenuApplications
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
                     endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+                    if l_lShowMenuModeling
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+                    endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+                    if l_lShowMenuDataDictionaries
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+                    endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                    if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                    endif
 
-                    if (oFcgi:p_nUserAccessMode >= 3) // "All Application Full Access" access right.
+                    if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
                     endif
 
@@ -1095,23 +1129,8 @@ endif
 
 return l_Text
 //=================================================================================================================
-function EscapeNewlineAndQuotes(par_SourceText)
-local l_Text
-
-if hb_IsNull(par_SourceText)
-    l_Text := ""
-else
-    l_Text := hb_StrReplace(par_SourceText,{[\]     => [\\],;
-                                                        chr(10) => [],;
-                                                        chr(13) => [\n],;
-                                                        ["]     => [\"],;
-                                                        [']     => [\']} )
-endif
-
-return l_Text
-//=================================================================================================================
 function GetItemInListAtPosition(par_iPos,par_aValues,par_xDefault)
-return iif(!hb_isnil(par_iPos) .and. par_iPos > 0 .and. par_iPos <= Len(par_aValues), par_aValues[par_iPos], par_xDefault)
+return iif(!hb_IsNIL(par_iPos) .and. par_iPos > 0 .and. par_iPos <= Len(par_aValues), par_aValues[par_iPos], par_xDefault)
 //=================================================================================================================
 function MultiLineTrim(par_cText)
 local l_nPos := len(par_cText)
@@ -1123,7 +1142,7 @@ enddo
 return left(par_cText,l_nPos)
 //=================================================================================================================
 function FormatAKAForDisplay(par_cAKA)
-return iif(!hb_isNil(par_cAKA) .and. !empty(par_cAKA),[&nbsp;(]+Strtran(par_cAKA,[ ],[&nbsp;])+[)],[])
+return iif(!hb_IsNIL(par_cAKA) .and. !empty(par_cAKA),[&nbsp;(]+Strtran(par_cAKA,[ ],[&nbsp;])+[)],[])
 //=================================================================================================================
 function SaveUserSetting(par_cName,par_cValue)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1237,5 +1256,101 @@ oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+
 oFcgi:p_cjQueryScript += [$(document).on('select2:open', () => { document.querySelector('.select2-search__field').focus();  });]
 
 return NIL
+//=================================================================================================================
+function EscapeNewlineAndQuotes(par_cText)
+local l_cText
+if hb_IsNIL(par_cText)
+    l_cText := ""
+else
+    l_cText := hb_StrReplace(par_cText,{[\]=>[\\],["]=>[\"],[']=>[\'],chr(10)=>[],chr(13)=>[\n]})
+endif
+return l_cText
+//=================================================================================================================
+function GetMultiEdgeCurvatureJSon(par_nMultiEdgeTotalCount,par_nMultiEdgeCount)
+local l_cJSon := ""
+do case
+case par_nMultiEdgeTotalCount == 2
+    do case
+    case par_nMultiEdgeCount == 1
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.15}]
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.15}]
+    endcase
+case par_nMultiEdgeTotalCount == 3
+    do case
+    case par_nMultiEdgeCount == 1
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.2}]
+    case par_nMultiEdgeCount == 3
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.2}]
+    endcase
+case par_nMultiEdgeTotalCount == 4
+    do case
+    case par_nMultiEdgeCount == 1
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.11}]
+    case par_nMultiEdgeCount == 2
+        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.3}]
+    case par_nMultiEdgeCount == 3
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.11}]
+    case par_nMultiEdgeCount == 4
+        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.3}]
+    endcase
+endcase
+return l_cJSon
+//=================================================================================================================
+function GetAccessLevelMLForProject(par_iProjectPk)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_nAccessLevelML := 0
+do case
+case oFcgi:p_nUserAccessMode <= 1  // Project access levels
+    with object l_oDB1
+        :Table("b64f780e-dd6a-4409-878a-dd3de257a440","UserAccessProject")
+        :Column("UserAccessProject.AccessLevelML" , "AccessLevelML")
+        :Where("UserAccessProject.fk_User = ^"    ,oFcgi:p_iUserPk)
+        :Where("UserAccessProject.fk_Project = ^" ,par_iProjectPk)
+        :SQL(@l_aSQLResult)
+        if l_oDB1:Tally == 1
+            l_nAccessLevelML := l_aSQLResult[1,1]
+        else
+            l_nAccessLevelML := 0
+        endif
+    endwith
+case oFcgi:p_nUserAccessMode  = 2  // All Project Read Only
+    l_nAccessLevelML := 2
+case oFcgi:p_nUserAccessMode  = 3  // All Project Full Access
+    l_nAccessLevelML := 7
+case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+    l_nAccessLevelML := 7
+endcase
+return l_nAccessLevelML
+//=================================================================================================================
+function GetAccessLevelDDForApplication(par_iApplicationPk)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_nAccessLevelDD := 0
+do case
+case oFcgi:p_nUserAccessMode <= 1  // Application access levels
+    with object l_oDB1
+        :Table("b5c9e3b7-9363-40d6-9831-d98a010425af","UserAccessApplication")
+        :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
+        :Where("UserAccessApplication.fk_User = ^"        ,oFcgi:p_iUserPk)
+        :Where("UserAccessApplication.fk_Application = ^" ,par_iApplicationPk)
+        :SQL(@l_aSQLResult)
+        if l_oDB1:Tally == 1
+            l_nAccessLevelDD := l_aSQLResult[1,1]
+        else
+            l_nAccessLevelDD := 0
+        endif
+    endwith
+
+case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
+    l_nAccessLevelDD := 2
+case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
+    l_nAccessLevelDD := 7
+case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
+    l_nAccessLevelDD := 7
+endcase
+return l_nAccessLevelDD
 //=================================================================================================================
 //=================================================================================================================

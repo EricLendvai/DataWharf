@@ -1,7 +1,7 @@
 #include "hb_orm.ch"
 #include "hb_vfp.ch"
 
-#define BUILDVERSION "2.05"
+#define BUILDVERSION "2.07"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2
@@ -81,4 +81,3 @@
 
 #define USESTATUS_6_EDGE_BACKGROUND "ff9696"
 #define USESTATUS_6_EDGE_HIGHLIGHT  SELECTED_NODE_BORDER
-

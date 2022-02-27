@@ -818,7 +818,7 @@ l_cHtml += [<div class="m-3">]
                                 l_cHtml += [<i class="bi bi-key"></i>]
                             case " "+ListColumnsFrom->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
                                 l_cHtml += [<i class="bi bi-tools"></i>]
-                            case !hb_isNil(ListColumnsFrom->Table_Name)
+                            case !hb_IsNIL(ListColumnsFrom->Table_Name)
                                 l_cHtml += [<i class="bi-arrow-left"></i>]
                             endcase
                         l_cHtml += [</td>]
@@ -851,7 +851,7 @@ l_cHtml += [<div class="m-3">]
 
                         // Foreign Key To
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            if !hb_isNil(ListColumnsFrom->Table_Name)
+                            if !hb_IsNIL(ListColumnsFrom->Table_Name)
                                 l_cHtml += ListColumnsFrom->NameSpace_Name+[.]+ListColumnsFrom->Table_Name+FormatAKAForDisplay(ListColumnsFrom->Table_AKA)
                             endif
                         l_cHtml += [</td>]

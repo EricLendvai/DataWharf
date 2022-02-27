@@ -1,5 +1,15 @@
 # DataWharf - Change Log
 
+## 02/26/2022
+* Added support to markdown to the Table and Entity Information field, in grids and right panel in Visualize.
+* New "Node Minimum Height" and "Node Maximum Width" options in diagram setups.
+* Added "Markdown" documentation link where markdown entry is supported.
+* Added Project level definition of Primitive Types.
+* Data Types can be mapped to a Primitive Type.
+* In Project Setups, new Bound Lower and Upper list of valid values. If has values Will be used during validation of Association Ends entry.
+* Full Access Users on a particular Project or Application can edit their settings.
+* Grid on Users admin page now displays projects and Applications access level.
+
 ## 02/24/2022
 * Renamed AspectOf to IsContainment
 * Fix renaming of labels of tabs of right panel in visualization

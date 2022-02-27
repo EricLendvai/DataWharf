@@ -102,27 +102,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         endif
     endif
 
-    do case
-    case oFcgi:p_nUserAccessMode <= 1  // Application access levels
-        with object l_oDB1
-            :Table("b8b5925d-a527-4b7e-b097-31690d4db74a","UserAccessApplication")
-            :Column("UserAccessApplication.AccessLevelDD" , "AccessLevelDD")
-            :Where("UserAccessApplication.fk_User = ^"    , oFcgi:p_iUserPk)
-            :Where("UserAccessApplication.fk_Application = ^" ,l_iApplicationPk)
-            :SQL(@l_aSQLResult)
-            if :Tally == 1
-                l_nAccessLevelDD := l_aSQLResult[1,1]
-            else
-                l_nAccessLevelDD := 0
-            endif
-        endwith
-    case oFcgi:p_nUserAccessMode  = 2  // All Application Read Only
-        l_nAccessLevelDD := 2
-    case oFcgi:p_nUserAccessMode  = 3  // All Application Full Access
-        l_nAccessLevelDD := 7
-    case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
-        l_nAccessLevelDD := 7
-    endcase
+    l_nAccessLevelDD := GetAccessLevelDDForApplication(l_iApplicationPk)
 
 else
     l_cURLAction := "ListApplications"
@@ -132,15 +112,6 @@ oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
 
 do case
 case l_cURLAction == "ListApplications"
-    // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-    //     l_cHtml += [<div class="input-group">]
-    //         l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[Applications/">Applications</a>]
-    //         if oFcgi:p_nUserAccessMode >= 3
-    //             l_cHtml += [<a class="btn btn-primary rounded" ms-0 href="]+l_cSitePath+[Applications/NewApplication">New Application</a>]
-    //         endif
-    //     l_cHtml += [</div>]
-    // l_cHtml += [</nav>]
-
     l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
     l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Applications</span></div>]
     if oFcgi:p_nUserAccessMode >= 3
@@ -152,12 +123,6 @@ case l_cURLAction == "ListApplications"
 
 case l_cURLAction == "NewApplication"
     if oFcgi:p_nUserAccessMode >= 3
-        // l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
-        //     l_cHtml += [<div class="input-group">]
-        //         l_cHtml += [<span class="navbar-brand text-white ms-3">New Application</span>]
-        //     l_cHtml += [</div>]
-        // l_cHtml += [</nav>]
-
         l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
         l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">New Application</span></div>]
         l_cHtml += [</div>]
@@ -531,7 +496,7 @@ l_cApplicationDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue(
 
 do case
 case l_cActionOnSubmit == "Save"
-    if oFcgi:p_nUserAccessMode >= 3
+    if oFcgi:p_nAccessLevelDD >= 7
         do case
         case empty(l_cApplicationName)
             l_cErrorMessage := "Missing Name"

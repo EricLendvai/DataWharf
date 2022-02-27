@@ -1,8 +1,6 @@
 #include "DataWharf.ch"
 memvar oFcgi
 
-//This File is STILL UNDER DEVELOPMENT!!!
-
 //=================================================================================================================
 function ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk)
 local l_cHtml := []
@@ -22,8 +20,9 @@ local l_cNodeLabel
 local l_nNumberOfEntityInModelingDiagram
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
+local l_nNodeMinHeight
+local l_nNodeMaxWidth
 local l_cEntityDescription
-local l_cEntityInformation
 local l_cAssociationDescription
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
@@ -64,6 +63,7 @@ local l_nMultiEdgeTotalCount
 local l_nMultiEdgeCount
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
+
 //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
@@ -103,10 +103,14 @@ with object l_oDB1
     :Table("5b855361-eb92-45cd-b4e0-ca6b6bea5dd2","ModelingDiagram")
     :Column("ModelingDiagram.VisPos"             ,"ModelingDiagram_VisPos")
     :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
+    :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
+    :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
     :Column("ModelingDiagram.LinkUID"            ,"ModelingDiagram_LinkUID")
     l_oDataModelingDiagram     := :Get(l_iModelingDiagramPk)
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
+    l_nNodeMinHeight           := l_oDataModelingDiagram:ModelingDiagram_NodeMinHeight
+    l_nNodeMaxWidth            := l_oDataModelingDiagram:ModelingDiagram_NodeMaxWidth
     l_cModelingDiagram_LinkUID := l_oDataModelingDiagram:ModelingDiagram_LinkUID
 endwith
 
@@ -123,7 +127,6 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
-        :Column("Entity.Information","Entity_Information")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
         :SQL("ListOfEntities")
@@ -136,7 +139,6 @@ with object l_oDB_ListOfEntities
         :Column("Package.FullName"  ,"Package_FullName")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.Description","Entity_Description")
-        :Column("Entity.Information","Entity_Information")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
@@ -301,15 +303,15 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-l_cHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 
-l_cHtml += [<script type="text/javascript">]
-l_cHtml += 'function htmlTitle(html) {'
-l_cHtml += '    const container = document.createElement("div");'
-l_cHtml += '    container.innerHTML = html;'
-l_cHtml += '    return container;'
-l_cHtml += '}'
-l_cHtml += [</script>]
+// oFcgi:p_cHeader += [<script type="text/javascript">]
+// oFcgi:p_cHeader += 'function htmlTitle(html) {'
+// oFcgi:p_cHeader += '    const container = document.createElement("div");'
+// oFcgi:p_cHeader += '    container.innerHTML = html;'
+// oFcgi:p_cHeader += '    return container;'
+// oFcgi:p_cHeader += '}'
+// oFcgi:p_cHeader += [</script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -442,71 +444,44 @@ scan all
 
     l_cNodeLabel += AllTrim(ListOfEntities->Entity_Name)
 
-    if hb_orm_isnull("ListOfEntities","Entity_Description")
-        l_cEntityDescription := ""
-    else
-        // l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[\]     => [\\],;
-        //                                                                           chr(10) => [],;
-        //                                                                           chr(13) => [\n],;
-        //                                                                           ["]     => [\"],;
-        //                                                                           [']     => [\']} )
-
-        // l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
-        //                                                                           [\]     => [&#92;],;
-        //                                                                           chr(10) => [],;
-        //                                                                           chr(13) => [<br>],;
-        //                                                                           ["]     => [&#34;],;
-        //                                                                           [']     => [&#39;]} )
-
-        l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
-                                                                                  [\]     => [&#92;],;
-                                                                                  chr(10) => [],;
-                                                                                  chr(13) => [\n],;
-                                                                                  ["]     => [&#34;],;
-                                                                                  [']     => [&#39;]} )
-
-    endif
-
-    if hb_orm_isnull("ListOfEntities","Entity_Information")
-        l_cEntityInformation := ""
-    else
-        l_cEntityInformation := hb_StrReplace(ListOfEntities->Entity_Information,{[\]     => [\\],;
-                                                                        chr(10) => [],;
-                                                                        chr(13) => [\n],;
-                                                                        ["]     => [\"],;
-                                                                        [']     => [\']} )
-    endif
-
+    // if hb_orm_isnull("ListOfEntities","Entity_Description")
+    //     l_cEntityDescription := ""
+    // else
+    //     l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
+    //                                                                               [\]     => [&#92;],;
+    //                                                                               chr(10) => [],;
+    //                                                                               chr(13) => [\n],;
+    //                                                                               ["]     => [&#34;],;
+    //                                                                               [']     => [&#39;]} )
+    // endif
+    l_cEntityDescription := EscapeNewlineAndQuotes(ListOfEntities->Entity_Description)
+    
     l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+["]
-    l_cHtml += [,font:{multi:"html"}]
+    
     if empty(l_cEntityDescription)
+        l_cHtml += [,font:{multi:"html"}]
         l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
-        if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityInformation)
-            //If it has only a information show it here.
-            l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityInformation+["))]
-        endif
     else
         if l_lNodeShowDescription
+            l_cHtml += [,font:{multi:"html",align:"left"}]
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cEntityDescription+["]
-            if !l_lNeverShowDescriptionOnHover .and. !empty(l_cEntityInformation)
-                //if description is already shown it node, do not repeat it here.
-                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cEntityInformation+["))]
-            endif
         else
+            l_cHtml += [,font:{multi:"html"}]
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                //if description is not shown in node, add it here.
-                l_cHtml += [,title:htmlTitle("]+l_cEntityDescription
-                if !empty(l_cEntityInformation)
-                    l_cHtml += [<br>" + marked.parse("]+l_cEntityInformation+["))]
-                else
-                    l_cHtml += [")]
-                endif
+                l_cHtml += [,title:"]+l_cEntityDescription+["]
             endif
         endif
     endif
 
-    l_cHtml += [,widthConstraint: { maximum: 150 }, heightConstraint: { minimum: 50 }, color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+    l_cHtml += [,color:{background:'#]+MODELING_ENTITY_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ENTITY_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+    if l_nNodeMaxWidth > 50
+        l_cHtml += [,widthConstraint: {maximum: ]+Trans(l_nNodeMaxWidth)+[}]
+    endif
+    if l_nNodeMinHeight > 20
+        l_cHtml += [,heightConstraint: {minimum: ]+Trans(l_nNodeMinHeight)+[}]
+    endif
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"E"+Trans(ListOfEntities->pk),{=>})
@@ -537,15 +512,17 @@ scan all
 
     l_cNodeLabel += AllTrim(ListOfAssociationNodes->Association_Name)
 
-    if hb_orm_isnull("ListOfAssociationNodes","Association_Description")
-        l_cAssociationDescription := ""
-    else
-        l_cAssociationDescription := hb_StrReplace(ListOfAssociationNodes->Association_Description,{[\]     => [\\],;
-                                                                                                    chr(10) => [],;
-                                                                                                    chr(13) => [\n],;
-                                                                                                    ["]     => [\"],;
-                                                                                                    [']     => [\']} )
-    endif
+    // if hb_orm_isnull("ListOfAssociationNodes","Association_Description")
+    //     l_cAssociationDescription := ""
+    // else
+    //     l_cAssociationDescription := hb_StrReplace(ListOfAssociationNodes->Association_Description,{[&]     => [&#38;],;
+    //                                                                                                 [\]     => [&#92;],;
+    //                                                                                                 chr(10) => [],;
+    //                                                                                                 chr(13) => [\n],;
+    //                                                                                                 ["]     => [&#34;],;
+    //                                                                                                 [']     => [&#39;]} )
+    // endif
+    l_cAssociationDescription := EscapeNewlineAndQuotes(ListOfAssociationNodes->Association_Description)
 
     l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+["]
     l_cHtml += [,font:{multi:"html"}]
@@ -557,7 +534,8 @@ scan all
         else
             l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
             if !l_lNeverShowDescriptionOnHover
-                l_cHtml += [,title:htmlTitle(marked.parse("]+l_cAssociationDescription+["))]
+               l_cHtml += [,title:"]+l_cAssociationDescription+["]
+                // l_cHtml += [,title:htmlTitle(marked.parse("]+l_cAssociationDescription+["))]
             endif
         endif
     endif
@@ -607,19 +585,19 @@ scan all
     // l_cHtml += [, smooth: { type: "diagonalCross" }]
     l_cLabel := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Name,"")
     if !empty(l_cLabel)
-        l_cHtml += [,label:"]+FormatForVisualizeLabels(l_cLabel)+["]
+        l_cHtml += [,label:"]+EscapeNewlineAndQuotes(l_cLabel)+["]
     endif
 
     l_cLabelLower := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundLower,"")
     l_cLabelUpper := nvl(ListOfEdgesEntityAssociationNode->Endpoint_BoundUpper,"")
     if !empty(l_cLabelLower) .and. !empty(l_cLabelUpper)
-        l_cHtml += [,labelTo:"]+FormatForVisualizeLabels(chr(13)+l_cLabelLower+".."+l_cLabelUpper)+["]
+        l_cHtml += [,labelTo:"]+EscapeNewlineAndQuotes(chr(13)+l_cLabelLower+".."+l_cLabelUpper)+["]
     endif
 
     if !l_lNeverShowDescriptionOnHover
         l_cDescription := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Description,"")
         if !empty(l_cDescription)
-            l_cHtml += [,title:"]+FormatForVisualizeLabels(l_cDescription)+["]
+            l_cHtml += [,title:"]+EscapeNewlineAndQuotes(l_cDescription)+["]
         endif
     endif
 
@@ -670,14 +648,14 @@ endscan
 
 select ListOfEdgesEntityEntity
 //Pairs of records should have been created
-l_iAssociationPk_Previous       := 0
-l_iEntityPk_Previous            := 0
-l_iEntityPk_Current             := 0
-l_cEndpointBoundLower_Previous  := ""
-l_cEndpointBoundUpper_Previous  := ""
-l_lEndpointIsContainment_Previous    := .f.
-l_cEndpointName_Previous        := ""
-l_cEndpointDescription_Previous := ""
+l_iAssociationPk_Previous         := 0
+l_iEntityPk_Previous              := 0
+l_iEntityPk_Current               := 0
+l_cEndpointBoundLower_Previous    := ""
+l_cEndpointBoundUpper_Previous    := ""
+l_lEndpointIsContainment_Previous := .f.
+l_cEndpointName_Previous          := ""
+l_cEndpointDescription_Previous   := ""
 // Altd()
 scan all
     if ListOfEdgesEntityEntity->Association_pk == l_iAssociationPk_Previous
@@ -698,7 +676,7 @@ scan all
             l_cLabel += l_cLabelLower+".."+l_cLabelUpper
         endif
         if !empty(l_cLabel)
-            l_cHtml += [,labelTo:"]+FormatForVisualizeLabels(l_cLabel)+["]
+            l_cHtml += [,labelTo:"]+EscapeNewlineAndQuotes(l_cLabel)+["]
         endif
 
         l_cLabel      := nvl(l_cEndpointName_Previous,"")
@@ -711,7 +689,7 @@ scan all
             l_cLabel += l_cLabelLower+".."+l_cLabelUpper
         endif
         if !empty(l_cLabel)
-            l_cHtml += [,labelFrom:"]+FormatForVisualizeLabels(l_cLabel)+["]
+            l_cHtml += [,labelFrom:"]+EscapeNewlineAndQuotes(l_cLabel)+["]
         endif
 
         if !l_lNeverShowDescriptionOnHover
@@ -732,7 +710,7 @@ scan all
             endif
 
             if !empty(l_cDescription)
-                l_cHtml += [,title:"]+FormatForVisualizeLabels(l_cDescription)+["]
+                l_cHtml += [,title:"]+EscapeNewlineAndQuotes(l_cDescription)+["]
             endif
         endif
 
@@ -782,7 +760,7 @@ l_cHtml += [    nodes: nodes,]
 l_cHtml += [    edges: edges,]
 l_cHtml += [  };]
 
-l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false},]
+l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
 l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
 if l_lNavigationControl
     l_cHtml +=              [interaction:{navigationButtons:true},]
@@ -1068,6 +1046,8 @@ local l_CheckBoxId
 local l_lShowPackage
 local l_cPackage_FullName
 local l_lNodeShowDescription
+local l_nNodeMinHeight
+local l_nNodeMaxWidth
 
 local l_oDB1
 local l_oData
@@ -1084,10 +1064,14 @@ if pcount() < 8
             :Table("a9d0a31d-e5ca-44a4-979f-7c6f1f1cf395","ModelingDiagram")
             :Column("ModelingDiagram.name"               ,"ModelingDiagram_name")
             :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
+            :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
+            :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
             l_oData := :Get(par_iModelingDiagramPk)
             if :Tally == 1
                 l_hValues["Name"]                := l_oData:ModelingDiagram_name
                 l_hValues["NodeShowDescription"] := l_oData:ModelingDiagram_NodeShowDescription
+                l_hValues["NodeMinHeight"]       := l_oData:ModelingDiagram_NodeMinHeight
+                l_hValues["NodeMaxWidth"]        := l_oData:ModelingDiagram_NodeMaxWidth
             endif
 
             //Get the current list of selected Entities
@@ -1146,6 +1130,24 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+        l_nNodeMinHeight := hb_HGetDef(l_hValues,"NodeMinHeight",50)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Node Minimum Height</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
+                l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_nNodeMaxWidth := hb_HGetDef(l_hValues,"NodeMaxWidth",150)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Node Maximum Width</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
+                l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -1237,6 +1239,8 @@ local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_iModelingDiagram_pk
 local l_cModelingDiagram_Name
 local l_lModelingDiagram_NodeShowDescription
+local l_lModelingDiagram_NodeMinHeight
+local l_lModelingDiagram_NodeMaxWidth
 local l_cErrorMessage
 local l_lSelected
 local l_cValue
@@ -1247,6 +1251,8 @@ oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsOnSubmit")
 l_iModelingDiagram_pk                  := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 l_cModelingDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_lModelingDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
+l_lModelingDiagram_NodeMinHeight       := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
+l_lModelingDiagram_NodeMaxWidth        := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
 
 do case
 case l_cActionOnSubmit == "SaveDiagram"
@@ -1281,6 +1287,9 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Table("78f6236c-9017-4098-8ad1-038e2643f343","ModelingDiagram")
             :Field("ModelingDiagram.Name"               ,l_cModelingDiagram_Name)
             :Field("ModelingDiagram.NodeShowDescription",l_lModelingDiagram_NodeShowDescription)
+            :Field("ModelingDiagram.NodeMinHeight"      ,l_lModelingDiagram_NodeMinHeight)
+            :Field("ModelingDiagram.NodeMaxWidth"       ,l_lModelingDiagram_NodeMaxWidth)
+            
             if empty(l_iModelingDiagram_pk)
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
                 :Field("ModelingDiagram.UseStatus"     , 1)
@@ -1358,7 +1367,9 @@ case l_cActionOnSubmit == "SaveDiagram"
     else
         l_hValues["Name"]                := l_cModelingDiagram_Name
         l_hValues["NodeShowDescription"] := l_lModelingDiagram_NodeShowDescription
-        
+        l_hValues["NodeMinHeight"]       := l_lModelingDiagram_NodeMinHeight
+        l_hValues["NodeMaxWidth"]        := l_lModelingDiagram_NodeMaxWidth
+                
         select ListOfAllEntitiesInModel
         scan all
             l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)) == "1")
@@ -1699,6 +1710,7 @@ local l_cApplicationSupportAttributes
 local l_cHtml_icon
 local l_nAccessLevelML
 local l_cZoomInfo
+local l_cObjectId
 
 oFcgi:TraceAdd("GetMLInfoDuringVisualization")
 
@@ -2175,7 +2187,14 @@ if len(l_aNodes) == 1
                 endif
 
                 if !empty(l_cEntityInformation)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div><div id='entity-description-]+Trans(l_iEntityPk)+['><script> document.getElementById('entity-description-]+Trans(l_iEntityPk)+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(hb_DefaultValue(l_cEntityInformation,""))+[');</script></div></div>]
+                    l_cHtml += [<div class="mt-3">]
+                        l_cHtml += [<div class="fs-5">Information:</div>]
+
+                        l_cObjectId := "entity-description"+Trans(l_iEntityPk)
+                        l_cHtml += [<div id="]+l_cObjectId+[">]
+                        l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(l_cEntityInformation)+[');</script>]
+                        l_cHtml += [</div>]
+                    l_cHtml += [</div>]
                 endif
 
                 if !empty(l_cHtml_EntityCustomFields)
@@ -2192,10 +2211,6 @@ if len(l_aNodes) == 1
 
     case l_cGraphItemType == "A"
         //Clicked on an Association
-
-        // //Get the project l_nAccessLevelML
-        // l_nAccessLevelML := GetAccessLevelMLForProject(l_oData_Project:Project_pk)
-
         l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,0)
 
     endcase
@@ -2295,7 +2310,7 @@ with object l_oDB_ListOfEndpoints
     :Column("Endpoint.Name"                  , "Endpoint_Name")
     :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
     :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
-    :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
+    :Column("Endpoint.IsContainment"         , "Endpoint_IsContainment")
     :Column("Endpoint.Description"           , "Endpoint_Description")
     :Column("Package.FullName"               , "Package_FullName")
     :Column("Entity.Name"                    , "Entity_Name")
@@ -2482,39 +2497,4 @@ if l_oDB_InArray:Tally == 1
 endif
 
 return l_cHtml
-//=================================================================================================================
-function FormatForVisualizeLabels(par_cText)
-return hb_StrReplace(par_cText,{[\]=>[\\],["]=>[\"],[']=>[\'],chr(10)=>[],chr(13)=>[\n]})
-//=================================================================================================================
-function GetMultiEdgeCurvatureJSon(par_nMultiEdgeTotalCount,par_nMultiEdgeCount)
-local l_cJSon := ""
-do case
-case par_nMultiEdgeTotalCount == 2
-    do case
-    case par_nMultiEdgeCount == 1
-        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.15}]
-    case par_nMultiEdgeCount == 2
-        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.15}]
-    endcase
-case par_nMultiEdgeTotalCount == 3
-    do case
-    case par_nMultiEdgeCount == 1
-    case par_nMultiEdgeCount == 2
-        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.2}]
-    case par_nMultiEdgeCount == 3
-        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.2}]
-    endcase
-case par_nMultiEdgeTotalCount == 4
-    do case
-    case par_nMultiEdgeCount == 1
-        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.11}]
-    case par_nMultiEdgeCount == 2
-        l_cJSon += [,smooth: {type: 'curvedCW', roundness: 0.3}]
-    case par_nMultiEdgeCount == 3
-        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.11}]
-    case par_nMultiEdgeCount == 4
-        l_cJSon += [,smooth: {type: 'curvedCCW', roundness: 0.3}]
-    endcase
-endcase
-return l_cJSon
 //=================================================================================================================
