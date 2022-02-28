@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/28/2022
+* Modeling Entity grid will only show a check mark in case the entity as some information. The entire content of the information will not be displayed on the grid.
+
 ## 02/26/2022
 * Added support to markdown to the Table and Entity Information field, in grids and right panel in Visualize.
 * New "Node Minimum Height" and "Node Maximum Width" options in diagram setups.

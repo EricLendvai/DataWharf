@@ -1574,8 +1574,9 @@ local l_cObjectId
 
 oFcgi:TraceAdd("EntityListFormBuild")
 
-//See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
+//Left code below in case would like to make this a user optional feature 
+    //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
+    //Left code below in case would like to make this a user optional feature oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 l_cSearchEntityName           := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityName")
 l_cSearchEntityDescription    := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityDescription")
@@ -1836,9 +1837,11 @@ if !empty(l_nNumberOfEntities)
 
                     l_cObjectId := "entity-description"+Trans(l_iEntityPk)
                     l_cHtml += [<td class="GridDataControlCells" valign="top" id="]+l_cObjectId+[">]
-                        if !hb_orm_isnull("ListOfEntities","Entity_Information")
-                            l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(ListOfEntities->Entity_Information)+[');</script>]
-                        endif
+                        //Left code below in case would like to make this a user optional feature 
+                        // if !hb_orm_isnull("ListOfEntities","Entity_Information")
+                        //     l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(ListOfEntities->Entity_Information)+[');</script>]
+                        // endif
+                        l_cHtml += iif(len(nvl(ListOfEntities->Entity_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
