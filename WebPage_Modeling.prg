@@ -2612,16 +2612,83 @@ return l_cHtml
 //=================================================================================================================
 static function DataTypeListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
 local l_cHtml := []
-local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_CustomFields    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfPrimitiveTypesWithMissingDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDataTypes                         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomFields                            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 local l_nNumberOfDataTypes
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_nNumberOfPrimitiveTypesWithMissingDataType
+local l_lShowActionButton := .f.
+
+local l_cAction := oFcgi:GetQueryString("action")
 
 oFcgi:TraceAdd("DataTypeListFormBuild")
+
+with object l_oDB_ListOfPrimitiveTypesWithMissingDataType
+    :Table("f7dd3558-0c7a-46f6-aae5-f2a2ba476d9e","PrimitiveType")
+    :Column("PrimitiveType.pk"  , "PrimitiveType_pk")
+    :Column("DataType.pk"       , "datatype_pk")
+    :Column("PrimitiveType.Name", "PrimitiveType_Name")
+    :Join("left","DataType","","DataType.fk_PrimitiveType = PrimitiveType.pk and DataType.fk_Model = ^ and DataType.Name = PrimitiveType.Name" , par_iModelPk)
+    :Where("PrimitiveType.fk_Project = ^" , par_iProjectPk)
+    // :Having("datatype_pk is null")  PostgreSQL does not support Having on result field names.
+    :SQL("ListOfPrimitiveTypesWithMissingDataType")
+    l_nNumberOfPrimitiveTypesWithMissingDataType := :Tally
+
+endwith
+
+
+if l_cAction == "LoadAllPrimitives"
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+    if l_nNumberOfPrimitiveTypesWithMissingDataType > 0
+        select ListOfPrimitiveTypesWithMissingDataType
+
+        scan all for hb_orm_isnull("ListOfPrimitiveTypesWithMissingDataType","datatype_pk")
+            with object l_oDB1
+                :Table("08400f2e-4f92-4bd4-8029-e282642aeef2","DataType")
+                :Column("DataType.pk" , "DataType_pk")
+                :Where("DataType.fk_Model = ^",par_iModelPk)
+                :Where([lower(replace(DataType.Name,' ','')) = ^],lower(StrTran(ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name," ","")))
+                :SQL("ListOfDataTypeWithMatchingPrimitiveName")
+                do case
+                case :Tally < 0
+                    //Ignore Error
+                case :Tally == 0
+                    //Add the Primitive Type as a new DataType
+                    :Table("a584ae40-ded9-4848-aee6-3aecd314aec5","DataType")
+                    :Field("DataType.LinkUID"          , oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("DataType.fk_Model"         , par_iModelPk)
+                    :Field("DataType.fk_PrimitiveType" , ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_pk)
+                    :Field("DataType.name"             , ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name)
+                    :Add()
+                otherwise  // Only update the first record, show should be the only one
+                    :Table("3796b625-e83f-4717-a2c3-43503d394e83","DataType")
+                    :Field("DataType.fk_PrimitiveType" , ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_pk)
+                    :Update(ListOfDataTypeWithMatchingPrimitiveName->datatype_pk)
+                endcase
+            endwith
+            SendToDebugView("Will Add "+ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name)
+        endscan
+
+        FixNonNormalizeFieldsInDataType(par_iModelPk)
+
+    endif
+else
+    if l_nNumberOfPrimitiveTypesWithMissingDataType > 0
+        select ListOfPrimitiveTypesWithMissingDataType
+        scan all for hb_orm_isnull("ListOfPrimitiveTypesWithMissingDataType","datatype_pk")
+            l_lShowActionButton := .t.
+            exit
+        endscan
+    endif
+
+endif
 
 with object l_oDB_ListOfDataTypes
     :Table("96013fec-eb2d-4a2c-ad59-080501e21fd2","DataType")
@@ -2688,6 +2755,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 l_cHtml += [<td>]  // valign="top"
                     if oFcgi:p_nAccessLevelML >= 5
                         l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewDataType/]+par_cModelLinkUID+[/">New ]+oFcgi:p_ANFDataType+[</a>]
+                        if l_lShowActionButton
+                            l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/?action=LoadAllPrimitives">Load All Primitives</a>]
+                        endif
                     else
                         l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
                     endif

@@ -1,6 +1,10 @@
 # DataWharf - Change Log
 
-## 02/28/2022
+## 03/01/2022  v 2.08
+* Fix bug in Modelling Visualize when displaying a node including a package name.
+* New "Load All Primitives" button in modeling / Data Types. Will only be present if at least one Primitive Type does not have a matching Data Type.
+
+## 02/28/2022  v 2.07
 * Modeling Entity grid will only show a check mark in case the entity as some information. The entire content of the information will not be displayed on the grid.
 
 ## 02/26/2022

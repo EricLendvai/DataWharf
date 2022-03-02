@@ -180,7 +180,7 @@ with object l_oDB_ListOfAssociationNodes
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
-        :Join("left","Package","","Entity.fk_Package = Package.pk")
+        :Join("left","Package","","Association.fk_Package = Package.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
         :Where("Association.NumberOfEndpoints > 2")
         :SQL("ListOfAssociationNodes")
@@ -278,7 +278,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        :Column("Endpoint.IsContainment"      ,"Endpoint_IsContainment")
+        :Column("Endpoint.IsContainment" ,"Endpoint_IsContainment")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Entity"     ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint"   ,"","Endpoint.fk_Entity = Entity.pk")
@@ -433,41 +433,25 @@ l_cHtml += [function MakeVis(){]
 l_cHtml += 'var nodes = new vis.DataSet(['
 select ListOfEntities
 scan all
-    if l_lShowPackage
-        l_cNodeLabel := nvl(ListOfEntities->Package_FullName,"")
-        if !empty(l_cNodeLabel)
-            l_cNodeLabel += "\n"
-        endif
-    else
-        l_cNodeLabel := ""
+    l_cNodeLabel := [<b>]+AllTrim(ListOfEntities->Entity_Name)+[</b>]
+    if l_lShowPackage .and. len(nvl(ListOfEntities->Package_FullName,"")) > 0
+        l_cNodeLabel += [\n (]+ListOfEntities->Package_FullName+[)]
     endif
 
-    l_cNodeLabel += AllTrim(ListOfEntities->Entity_Name)
-
-    // if hb_orm_isnull("ListOfEntities","Entity_Description")
-    //     l_cEntityDescription := ""
-    // else
-    //     l_cEntityDescription := hb_StrReplace(ListOfEntities->Entity_Description,{[&]     => [&#38;],;
-    //                                                                               [\]     => [&#92;],;
-    //                                                                               chr(10) => [],;
-    //                                                                               chr(13) => [\n],;
-    //                                                                               ["]     => [&#34;],;
-    //                                                                               [']     => [&#39;]} )
-    // endif
     l_cEntityDescription := EscapeNewlineAndQuotes(ListOfEntities->Entity_Description)
     
     l_cHtml += [{id:"E]+Trans(ListOfEntities->pk)+["]
     
     if empty(l_cEntityDescription)
         l_cHtml += [,font:{multi:"html"}]
-        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+        l_cHtml += [,label:"]+l_cNodeLabel+["]
     else
         if l_lNodeShowDescription
             l_cHtml += [,font:{multi:"html",align:"left"}]
-            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cEntityDescription+["]
+            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cEntityDescription+["]
         else
             l_cHtml += [,font:{multi:"html"}]
-            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+            l_cHtml += [,label:"]+l_cNodeLabel+["]
             if !l_lNeverShowDescriptionOnHover
                 l_cHtml += [,title:"]+l_cEntityDescription+["]
             endif
@@ -501,16 +485,10 @@ endscan
 //All Nodes for all Association with more than 2 Entity
 select ListOfAssociationNodes
 scan all
-    if l_lShowPackage
-        l_cNodeLabel := nvl(ListOfAssociationNodes->Package_FullName,"")
-        if !empty(l_cNodeLabel)
-            l_cNodeLabel += "\n"
-        endif
-    else
-        l_cNodeLabel := ""
+    l_cNodeLabel := [<b>]+AllTrim(ListOfAssociationNodes->Association_Name)+[</b>]
+    if l_lShowPackage .and. len(nvl(ListOfAssociationNodes->Package_FullName,"")) > 0
+        l_cNodeLabel += [\n (]+ListOfAssociationNodes->Package_FullName+[)]
     endif
-
-    l_cNodeLabel += AllTrim(ListOfAssociationNodes->Association_Name)
 
     // if hb_orm_isnull("ListOfAssociationNodes","Association_Description")
     //     l_cAssociationDescription := ""
@@ -522,17 +500,18 @@ scan all
     //                                                                                                 ["]     => [&#34;],;
     //                                                                                                 [']     => [&#39;]} )
     // endif
+    
     l_cAssociationDescription := EscapeNewlineAndQuotes(ListOfAssociationNodes->Association_Description)
 
     l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+["]
     l_cHtml += [,font:{multi:"html"}]
     if empty(l_cAssociationDescription)
-        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+        l_cHtml += [,label:"]+l_cNodeLabel+["]
     else
         if l_lNodeShowDescription
-            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cAssociationDescription+["]
+            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cAssociationDescription+["]
         else
-            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+            l_cHtml += [,label:"]+l_cNodeLabel+["]
             if !l_lNeverShowDescriptionOnHover
                l_cHtml += [,title:"]+l_cAssociationDescription+["]
                 // l_cHtml += [,title:htmlTitle(marked.parse("]+l_cAssociationDescription+["))]
@@ -558,8 +537,7 @@ endscan
 
 l_cHtml += ']);'
 
-//SendToClipboard(l_cHtml)
-
+// SendToClipboard(l_cHtml)
 
 // create an array with edges
 
