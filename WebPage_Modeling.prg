@@ -43,6 +43,7 @@ local l_nCounterC
 local l_iModelingDiagramPk
 
 oFcgi:TraceAdd("BuildPageModeling")
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 // Variables
 // l_cURLAction
@@ -1973,47 +1974,62 @@ l_cHtml += [</nav>]
 
 l_cHtml += [<div class="m-3"></div>]
 
-l_cHtml += [<div class="m-3">]
+l_cHtml += [<div class="m-3 card-group">]
 
-    l_cHtml += [<table>]
+    l_cHtml += [<div class="card">]
 
-        if l_nNumberOfPackages > 0
-            l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pe-2 pb-3">Parent ]+oFcgi:p_ANFPackage+[</td>]
-                l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboPackagePk" id="ComboPackagePk"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-select">]
-                    l_cHtml += [<option value="0"]+iif(0 = l_ifk_Package,[ selected],[])+[></option>]
-                    select ListOfPackages
-                    scan all
-                        l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
-                    endscan
-                    l_cHtml += [</select>]
-                l_cHtml += [</td>]
-            l_cHtml += [</tr>]
-        endif
+        l_cHtml += [<div class="m-3" class="card">]
 
-        l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">]+oFcgi:p_ANFEntity+[ Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
-        l_cHtml += [</tr>]
+            l_cHtml += [<table>]
 
-        l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
-        l_cHtml += [</tr>]
+                if l_nNumberOfPackages > 0
+                    l_cHtml += [<tr class="pb-5">]
+                        l_cHtml += [<td class="pe-2 pb-3">Parent ]+oFcgi:p_ANFPackage+[</td>]
+                        l_cHtml += [<td class="pb-3">]
+                            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboPackagePk" id="ComboPackagePk"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-select">]
+                            l_cHtml += [<option value="0"]+iif(0 = l_ifk_Package,[ selected],[])+[></option>]
+                            select ListOfPackages
+                            scan all
+                                l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                            endscan
+                            l_cHtml += [</select>]
+                        l_cHtml += [</td>]
+                    l_cHtml += [</tr>]
+                endif
 
-        l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br>]
-            l_cHtml += [<a href="https://marked.js.org/" target="_blank"><span class="small">Markdown</span></a>]
-            l_cHtml += [</td>]
+                l_cHtml += [<tr class="pb-5">]
+                    l_cHtml += [<td class="pe-2 pb-3">]+oFcgi:p_ANFEntity+[ Name</td>]
+                    l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
+                l_cHtml += [</tr>]
 
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
-        l_cHtml += [</tr>]
+                l_cHtml += [<tr>]
+                    l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+                    l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+                l_cHtml += [</tr>]
 
-        l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_ENTITY,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
+                l_cHtml += [<tr>]
+                    l_cHtml += [<td valign="top" class="pe-2 pb-3">Information<br>]
+                    l_cHtml += [<a href="https://www.markdownguide.org/basic-syntax/" target="_blank"><span class="small">Markdown</span></a>]
+                    l_cHtml += [</td>]
 
-    l_cHtml += [</table>]
+                    l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
+                l_cHtml += [</tr>]
+
+                l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_ENTITY,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
+
+            l_cHtml += [</table>]
+        
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+    l_cHtml += [<div class="card">]
     
+        l_cHtml += [<div class="m-3" class="card-body">]
+            l_cHtml += [<span class="navbar-brand ms-3">Preview</span>]
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Preview MarkDown" onclick="document.getElementById('preview-right-content').innerHTML = marked.parse(document.getElementById('TextInformation').value);" role="button">]
+                l_cHtml += [<div id="preview-right-content" class="card-text overflow-scroll"></div>]
+                l_cHtml += [<script> document.getElementById('preview-right-content').innerHTML = marked.parse(document.getElementById('TextInformation').value);</script>] 
+            l_cHtml += [</div>]
+        l_cHtml += [</div>]
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
