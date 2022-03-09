@@ -44,6 +44,8 @@ local l_iModelingDiagramPk
 
 oFcgi:TraceAdd("BuildPageModeling")
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+
 
 // Variables
 // l_cURLAction
@@ -1978,7 +1980,7 @@ l_cHtml += [<div class="m-3 card-group">]
 
     l_cHtml += [<div class="card">]
 
-        l_cHtml += [<div class="m-3" class="card">]
+        l_cHtml += [<div class="m-3" class="card-body">]
 
             l_cHtml += [<table>]
 
@@ -2268,8 +2270,10 @@ with object l_oDB_ListOfPackages
     :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
     :Column("Package.pk"        ,"pk")
     :Column("Package.LinkUID"   ,"Package_LinkUID")
+    :Column("Package.Name"  ,"Package_Name")
     :Column("Package.FullName"  ,"Package_FullName")
     :Column("Package.TreeOrder1","tag1")
+    :Column("Package.fk_Package","Package_Parent")
     :Where("Package.fk_Model = ^",par_iModelPk)
     :OrderBy("tag1")
     :SQL("ListOfPackages")
@@ -2347,8 +2351,55 @@ if !empty(l_nNumberOfPackages)
 
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
+            l_cHtml += [<div id="tree"></div>]
+            l_cHtml += [<script>]
+            l_cHtml += [function getTree() {]
+            l_cHtml += '  var data = ['
+            select ListOfPackages
+            scan all
+                l_cHtml += [{id:"]+trans(ListOfPackages->pk)+[",]
+                if !empty(ListOfPackages->Package_Parent)
+                    l_cHtml += [parentId:"]+trans(ListOfPackages->Package_Parent)+[",]
+                endif
+                l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
+                l_cHtml += 'nodes: [{ text: "Model 2", icon: "bi bi-app" } ]'
+                l_cHtml += [},]
+            endscan
+            l_cHtml += '  ];'
+            l_cHtml += '  var buildTree = function(tree, item) {'
+            l_cHtml += '   if (tree) {'
+            l_cHtml += '    if (item) { '
+            l_cHtml += '        for (var i=0; i<tree.length; i++) { '
+            l_cHtml += '            if (String(tree[i].id) === String(item.parentId)) { '
+            l_cHtml += '                tree[i].nodes.push(item); '
+            l_cHtml += '                break;'
+            l_cHtml += '            }'
+            l_cHtml += '            else  { buildTree(tree[i].nodes, item); }'
+            l_cHtml += '        }'
+            l_cHtml += '      }'
+            l_cHtml += '      else { '
+            l_cHtml += '        var idx = 0;'
+            l_cHtml += '        while (idx < tree.length) { '
+            l_cHtml += '            if (tree[idx].parentId) { buildTree(tree, tree.splice(idx, 1)[0]) } '
+            l_cHtml += '            else { idx++; }'
+            l_cHtml += '        }'
+            l_cHtml += '      }'
+            l_cHtml += '    }'
+            l_cHtml += '};'
+            l_cHtml += 'for (var i=0; i<data.length; i++) { '
+            l_cHtml += '    if (data[i].nodes == null) {'
+            l_cHtml += '       data[i].nodes = [];'
+            l_cHtml += '    }'
+            l_cHtml += '}'
+            l_cHtml += 'buildTree(data);'
+            l_cHtml += [  return data;]
+            l_cHtml += [}]
+            l_cHtml += [$("#tree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right',});]
+            l_cHtml += [</script>]
+              
+              
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            /*l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
             l_cHtml += [<tr class="bg-info">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"1","2")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
@@ -2377,7 +2428,7 @@ if !empty(l_nNumberOfPackages)
 
                 l_cHtml += [</tr>]
             endscan
-            l_cHtml += [</table>]
+            l_cHtml += [</table>]*/
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
