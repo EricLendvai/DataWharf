@@ -3650,7 +3650,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [</td>]
                     l_cHtml += [<td class="ps-2 text-white text-center">Bound<br>Lower</td>]
                     l_cHtml += [<td class="ps-2 text-white text-center">Bound<br>Upper</td>]
-                    l_cHtml += [<td class="ps-2 text-white text-center">Aspect<br>Of</td>]
+                    l_cHtml += [<td class="ps-2 text-white text-center">Is<br>Containment</td>]
                     l_cHtml += [<td class="ps-2 text-white">Name (of ]+oFcgi:p_ANFAssociation+[ to the ]+oFcgi:p_ANFEntity+[)</td>]
                 l_cHtml += [</tr>]
 

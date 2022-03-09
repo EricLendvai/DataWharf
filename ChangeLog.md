@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 03/09/2022 v 2.09
+* Markdown preview for modeling entities. (From GitHub Merge)
+* Fixed label in Association from "Aspect Of" to "Is Containment"
+
 ## 03/01/2022  v 2.08
 * Fix bug in Modelling Visualize when displaying a node including a package name.
 * New "Load All Primitives" button in modeling / Data Types. Will only be present if at least one Primitive Type does not have a matching Data Type.
