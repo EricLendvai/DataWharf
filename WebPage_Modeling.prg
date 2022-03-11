@@ -179,6 +179,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
             :Column("Project.LinkUID", "Project_LinkUID")
+            :Column("Package.LinkUID", "Package_LinkUID")
             :Column("Project.AlternateNameForModel"        , "ANFModel")
             :Column("Project.AlternateNameForModels"       , "ANFModels")
             :Column("Project.AlternateNameForEntity"       , "ANFEntity")
@@ -194,6 +195,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Where("Entity.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
+            :Join("left outer","Package","","Entity.fk_Package = Package.pk")
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
@@ -209,6 +211,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"         , "Project_pk")
             :Column("Project.Name"       , "Project_Name")
             :Column("Project.LinkUID"    , "Project_LinkUID")
+            :Column("Package.LinkUID"    , "Package_LinkUID")
             :Column("Project.AlternateNameForModel"        , "ANFModel")
             :Column("Project.AlternateNameForModels"       , "ANFModels")
             :Column("Project.AlternateNameForEntity"       , "ANFEntity")
@@ -224,6 +227,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Where("Association.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model","","Association.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
+            :Join("inner","Package","","Association.fk_Package = Package.pk")
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
@@ -386,18 +390,6 @@ case !l_lFoundHeaderInfo .and. l_cURLAction <> "SelectProject"
 
 case l_cURLAction == "SelectProject"
     l_cHtml += ProjectListFormBuild()
-
-case l_cURLAction == "ListModels"
-    l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
-    l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project: ]+l_oDataHeader:Project_Name+[</span></div>]
-    if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += [<div class="px-3 py-2 align-middle"><a class="btn btn-primary rounded align-middle" href="]+l_cSitePath+[Modeling/NewModel/]+l_oDataHeader:Project_LinkUID+[/">New ]+oFcgi:p_ANFModel+[</a></div>]
-    endif
-    l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Modeling/">Other Projects</a></div>]
-    l_cHtml += [</div>]
-
-    l_cHtml += ModelListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_Name)
-
 case l_cURLAction == "NewModel"
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
@@ -415,385 +407,387 @@ case l_cURLAction == "NewModel"
             l_cHtml += ModelEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID,"")
         endif
     endif
+case l_cURLAction == "ListModels"
+    l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
+    l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project: ]+l_oDataHeader:Project_Name+[</span></div>]
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += [<div class="px-3 py-2 align-middle"><a class="btn btn-primary rounded align-middle" href="]+l_cSitePath+[Modeling/NewModel/]+l_oDataHeader:Project_LinkUID+[/">New ]+oFcgi:p_ANFModel+[</a></div>]
+    endif
+    l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Modeling/">Other Projects</a></div>]
+    l_cHtml += [</div>]
 
-case l_cURLAction == "ModelSettings"
-    if oFcgi:p_nAccessLevelML >= 7 .and. l_lFoundHeaderInfo
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.f.,l_cSitePath)
-        //par_iModelPk,par_cModelLinkUID,par_cProjectName,par_cModelName,par_lActiveHeader
+    l_cHtml += ModelListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_Name)
+otherwise
+    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
+    l_cHtml += [<div class="container-fluid">]
+    l_cHtml += [<div class="row">]
+        l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID)
+        l_cHtml += [<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">]
 
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("d093409c-3fa3-4afb-95e6-ca55d0ba96b6","Model")
-                :Column("Model.fk_Project"  , "Model_fk_Project")
-                :Column("Model.Name"        , "Model_Name")
-                :Column("Model.Stage"       , "Model_Stage")
-                :Column("Model.Description" , "Model_Description")
-                l_oData := :Get(l_oDataHeader:Model_pk)
-            endwith
+        do case
+        case l_cURLAction == "ModelSettings"
+            if oFcgi:p_nAccessLevelML >= 7 .and. l_lFoundHeaderInfo
+                //par_iModelPk,par_cModelLinkUID,par_cProjectName,par_cModelName,par_lActiveHeader
 
-            if l_oDB1:Tally == 1
-                l_hValues["Fk_Project"]  := l_oData:Model_fk_Project
-                l_hValues["Name"]        := l_oData:Model_Name
-                l_hValues["Stage"]       := l_oData:Model_Stage
-                l_hValues["Description"] := l_oData:Model_Description
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_MODEL,l_oDataHeader:Model_pk,@l_hValues)
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("d093409c-3fa3-4afb-95e6-ca55d0ba96b6","Model")
+                        :Column("Model.fk_Project"  , "Model_fk_Project")
+                        :Column("Model.Name"        , "Model_Name")
+                        :Column("Model.Stage"       , "Model_Stage")
+                        :Column("Model.Description" , "Model_Description")
+                        l_oData := :Get(l_oDataHeader:Model_pk)
+                    endwith
 
-                l_cHtml += ModelEditFormBuild(l_oDataHeader:Project_pk,"",l_oDataHeader:Model_pk,l_hValues,l_oDataHeader:Model_LinkUID)
+                    if l_oDB1:Tally == 1
+                        l_hValues["Fk_Project"]  := l_oData:Model_fk_Project
+                        l_hValues["Name"]        := l_oData:Model_Name
+                        l_hValues["Stage"]       := l_oData:Model_Stage
+                        l_hValues["Description"] := l_oData:Model_Description
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_MODEL,l_oDataHeader:Model_pk,@l_hValues)
+
+                        l_cHtml += ModelEditFormBuild(l_oDataHeader:Project_pk,"",l_oDataHeader:Model_pk,l_hValues,l_oDataHeader:Model_LinkUID)
+                    endif
+                else
+                    l_cHtml += ModelEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID)
+                endif
             endif
-        else
-            l_cHtml += ModelEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID)
-        endif
-    endif
 
-case l_cURLAction == "ListEntities"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
+        case l_cURLAction == "ListEntities"
 
-    if oFcgi:isGet()
-        l_cHtml += EntityListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    else
-        l_cHtml += EntityListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    endif
-
-case l_cURLAction == "NewEntity"
-    if oFcgi:p_nAccessLevelML >= 5
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-        
-        if oFcgi:isGet()
-            l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
-        else
-            l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
-        endif
-    endif
-
-case l_cURLAction == "EditEntity"
-    if oFcgi:p_nAccessLevelML >= 2
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("e9c40921-bd84-4c03-bc86-c805f20b78ef","Entity")
-                :Column("Entity.fk_Package"   , "Entity_fk_Package")
-                :Column("Entity.Name"         , "Entity_Name")
-                :Column("Entity.Description"  , "Entity_Description")
-                :Column("Entity.Information"  , "Entity_Information")
-                l_oData := :Get(l_oDataHeader:Entity_pk)
-            endwith
-
-            if l_oDB1:Tally == 1
-                l_hValues["fk_Package"]     := l_oData:Entity_fk_Package
-                l_hValues["Name"]           := l_oData:Entity_Name
-                l_hValues["Description"]    := l_oData:Entity_Description
-                l_hValues["Information"]    := l_oData:Entity_Information
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
-
-                l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
+            if oFcgi:isGet()
+                l_cHtml += EntityListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+            else
+                l_cHtml += EntityListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
             endif
-        else
-            l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
-        endif
 
-    endif
 
-case l_cURLAction == "ListAttributes"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-    if oFcgi:isGet()
-        l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
-    else
-        l_cHtml += AttributeListFormOnSubmit(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
-    endif
-
-case l_cURLAction == "OrderAttributes"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-    if oFcgi:isGet()
-        l_cHtml += AttributeOrderFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name)
-    else
-        l_cHtml += AttributeOrderFormOnSubmit(l_oDataHeader:Entity_LinkUID)
-    endif
-
-case l_cURLAction == "NewAttribute"
-    if oFcgi:p_nAccessLevelML >= 5
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-        
-        if oFcgi:isGet()
-            l_cHtml += AttributeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"",0,{=>})
-        else
-            l_cHtml += AttributeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-        endif
-    endif
-
-case l_cURLAction == "EditAttribute"
-    if oFcgi:p_nAccessLevelML >= 2
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("974f878e-4772-4a6f-9f62-04b5dd3f276c","Attribute")
-                :Column("Attribute.Name"        , "Attribute_Name")
-                :Column("Attribute.fk_DataType" , "Attribute_fk_DataType")
-                :Column("Attribute.BoundLower"  , "Attribute_BoundLower")
-                :Column("Attribute.BoundUpper"  , "Attribute_BoundUpper")
-                :Column("Attribute.Description" , "Attribute_Description")
-                l_oData := :Get(l_oDataHeader:Attribute_pk)
-            endwith
-
-            if l_oDB1:Tally == 1
-                l_hValues["Name"]        := l_oData:Attribute_Name
-                l_hValues["fk_DataType"] := l_oData:Attribute_fk_DataType
-                l_hValues["BoundLower"]  := l_oData:Attribute_BoundLower
-                l_hValues["BoundUpper"]  := l_oData:Attribute_BoundUpper
-                l_hValues["Description"] := l_oData:Attribute_Description
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ATTRIBUTE,l_oDataHeader:Attribute_pk,@l_hValues)
-
-                l_cHtml += AttributeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"",l_oDataHeader:Attribute_pk,l_hValues)
+        case l_cURLAction == "NewEntity"
+            if oFcgi:p_nAccessLevelML >= 5
+                
+                if oFcgi:isGet()
+                    l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                else
+                    l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                endif
             endif
-        else
-            l_cHtml += AttributeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-        endif
 
-    endif
+        case l_cURLAction == "EditEntity"
+            if oFcgi:p_nAccessLevelML >= 2
 
-case l_cURLAction == "ListAssociations"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("e9c40921-bd84-4c03-bc86-c805f20b78ef","Entity")
+                        :Column("Entity.fk_Package"   , "Entity_fk_Package")
+                        :Column("Entity.Name"         , "Entity_Name")
+                        :Column("Entity.Description"  , "Entity_Description")
+                        :Column("Entity.Information"  , "Entity_Information")
+                        l_oData := :Get(l_oDataHeader:Entity_pk)
+                    endwith
 
-    if oFcgi:isGet()
-        l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    else
-        l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    endif
+                    if l_oDB1:Tally == 1
+                        l_hValues["fk_Package"]     := l_oData:Entity_fk_Package
+                        l_hValues["Name"]           := l_oData:Entity_Name
+                        l_hValues["Description"]    := l_oData:Entity_Description
+                        l_hValues["Information"]    := l_oData:Entity_Information
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
 
+                        l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
+                    endif
+                else
+                    l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                endif
 
-case l_cURLAction == "NewAssociation"
-    if oFcgi:p_nAccessLevelML >= 5
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-        
-        if oFcgi:isGet()
-            l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
-        else
-            l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID)
-        endif
-    endif
+            endif
 
-case l_cURLAction == "EditAssociation"
-    if oFcgi:p_nAccessLevelML >= 2
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
+        case l_cURLAction == "ListAttributes"
 
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("e399d44f-9bd6-451f-8806-d5128fcd09ab","Association")
-                :Column("Association.fk_Package"   , "Association_fk_Package")
-                :Column("Association.Name"         , "Association_Name")
-                :Column("Association.Description"  , "Association_Description")
-                l_oData := :Get(l_oDataHeader:Association_pk)
-            endwith
+            if oFcgi:isGet()
+                l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
+            else
+                l_cHtml += AttributeListFormOnSubmit(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
+            endif
 
-            if l_oDB1:Tally == 1
-                l_hValues["fk_Package"]     := l_oData:Association_fk_Package
-                l_hValues["Name"]           := l_oData:Association_Name
-                l_hValues["Description"]    := l_oData:Association_Description
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ASSOCIATION,l_oDataHeader:Association_pk,@l_hValues)
+        case l_cURLAction == "OrderAttributes"
 
-                //Load the endpoints
+            if oFcgi:isGet()
+                l_cHtml += AttributeOrderFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name)
+            else
+                l_cHtml += AttributeOrderFormOnSubmit(l_oDataHeader:Entity_LinkUID)
+            endif
+
+        case l_cURLAction == "NewAttribute"
+            if oFcgi:p_nAccessLevelML >= 5
+                
+                if oFcgi:isGet()
+                    l_cHtml += AttributeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"",0,{=>})
+                else
+                    l_cHtml += AttributeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+                endif
+            endif
+
+        case l_cURLAction == "EditAttribute"
+            if oFcgi:p_nAccessLevelML >= 2
+
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("974f878e-4772-4a6f-9f62-04b5dd3f276c","Attribute")
+                        :Column("Attribute.Name"        , "Attribute_Name")
+                        :Column("Attribute.fk_DataType" , "Attribute_fk_DataType")
+                        :Column("Attribute.BoundLower"  , "Attribute_BoundLower")
+                        :Column("Attribute.BoundUpper"  , "Attribute_BoundUpper")
+                        :Column("Attribute.Description" , "Attribute_Description")
+                        l_oData := :Get(l_oDataHeader:Attribute_pk)
+                    endwith
+
+                    if l_oDB1:Tally == 1
+                        l_hValues["Name"]        := l_oData:Attribute_Name
+                        l_hValues["fk_DataType"] := l_oData:Attribute_fk_DataType
+                        l_hValues["BoundLower"]  := l_oData:Attribute_BoundLower
+                        l_hValues["BoundUpper"]  := l_oData:Attribute_BoundUpper
+                        l_hValues["Description"] := l_oData:Attribute_Description
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ATTRIBUTE,l_oDataHeader:Attribute_pk,@l_hValues)
+
+                        l_cHtml += AttributeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"",l_oDataHeader:Attribute_pk,l_hValues)
+                    endif
+                else
+                    l_cHtml += AttributeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+                endif
+
+            endif
+
+        case l_cURLAction == "ListAssociations"
+            if oFcgi:isGet()
+                l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+            else
+                l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+            endif
+
+        case l_cURLAction == "NewAssociation"
+            if oFcgi:p_nAccessLevelML >= 5
+                
+                if oFcgi:isGet()
+                    l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                else
+                    l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID)
+                endif
+            endif
+
+        case l_cURLAction == "EditAssociation"
+            if oFcgi:p_nAccessLevelML >= 2
+
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("e399d44f-9bd6-451f-8806-d5128fcd09ab","Association")
+                        :Column("Association.fk_Package"   , "Association_fk_Package")
+                        :Column("Association.Name"         , "Association_Name")
+                        :Column("Association.Description"  , "Association_Description")
+                        l_oData := :Get(l_oDataHeader:Association_pk)
+                    endwith
+
+                    if l_oDB1:Tally == 1
+                        l_hValues["fk_Package"]     := l_oData:Association_fk_Package
+                        l_hValues["Name"]           := l_oData:Association_Name
+                        l_hValues["Description"]    := l_oData:Association_Description
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ASSOCIATION,l_oDataHeader:Association_pk,@l_hValues)
+
+                        //Load the endpoints
+                        with object l_oDB1
+                            :Table("f0688b5a-5cec-4262-9cda-9b66747ae5a8","Endpoint")
+                            :Column("Endpoint.pk"                    , "Endpoint_pk")
+                            :Column("Endpoint.Fk_Entity"             , "Endpoint_fk_Entity")
+                            :Column("Endpoint.Name"                  , "Endpoint_Name")
+                            :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
+                            :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
+                            :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
+                            :Column("Endpoint.Description"           , "Endpoint_Description")
+                            :Column("Package.FullName"               , "Package_FullName")
+                            :Column("Entity.Name"                    , "Entity_Name")
+                            :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
+                            :Column("upper(Entity.Name)"             , "tag2")
+                            :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
+                            :Join("left","Package","","Entity.fk_Package = Package.pk") 
+                            :Where("Endpoint.fk_Association = ^" , l_oDataHeader:Association_pk)
+                            :OrderBy("tag1")
+                            :OrderBy("tag2")
+                            :SQL("ListOfEndpoints")
+
+                            select ListOfEndpoints
+                            l_nCounter := 0
+                            scan all
+                                l_nCounter += 1
+                                l_nCounterC := Trans(l_nCounter)
+                                l_hValues["EndpointPk"+l_nCounterC]          := ListOfEndpoints->Endpoint_pk
+                                l_hValues["EndpointFk_Entity"+l_nCounterC]   := ListOfEndpoints->Endpoint_fk_Entity
+                                l_hValues["EndpointName"+l_nCounterC]        := ListOfEndpoints->Endpoint_Name
+                                l_hValues["EndpointBoundLower"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundLower
+                                l_hValues["EndpointBoundUpper"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundUpper
+                                l_hValues["EndpointIsContainment"+l_nCounterC]    := ListOfEndpoints->Endpoint_IsContainment
+                                l_hValues["EndpointDescription"+l_nCounterC] := ListOfEndpoints->Endpoint_Description
+                            endscan
+                            l_hValues["NumberOfPossibleEndpoints"] := max(3,l_nCounter+1)
+                        endwith
+
+                        l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID,"",l_oDataHeader:Association_pk,l_hValues)
+                    endif
+                else
+                    l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID)
+                endif
+
+            endif
+
+        case l_cURLAction == "ListPackages"
+
+            if oFcgi:isGet()
+                l_cHtml += PackageListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+            else
+                // Nothing for now. All buttons are GET
+            endif
+
+        case l_cURLAction == "NewPackage"
+            if oFcgi:p_nAccessLevelML >= 5
+                
+                if oFcgi:isGet()
+                    l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                else
+                    l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                endif
+            endif
+
+        case l_cURLAction == "EditPackage"
+            if oFcgi:p_nAccessLevelML >= 2
+
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("6689ff9b-9b8a-400c-abf8-d7146b805461","Package")
+                        :Column("Package.fk_Package" , "Package_fk_Package")
+                        :Column("Package.Name"       , "Package_Name")
+                        l_oData := :Get(l_oDataHeader:Package_pk)
+                    endwith
+
+                    if l_oDB1:Tally == 1
+                        l_hValues["fk_Package"] := l_oData:Package_fk_Package
+                        l_hValues["Name"]       := l_oData:Package_Name
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_PACKAGE,l_oDataHeader:Package_pk,@l_hValues)
+
+                        l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,"",l_oDataHeader:Package_pk,l_hValues)
+                    endif
+                else
+                    l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                endif
+
+            endif
+
+        case l_cURLAction == "ListDataTypes"
+
+            if oFcgi:isGet()
+                l_cHtml += DataTypeListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
+            else
+                // Nothing for now. All buttons are GET
+            endif
+
+        case l_cURLAction == "NewDataType"
+            if oFcgi:p_nAccessLevelML >= 5
+                
+                if oFcgi:isGet()
+                    l_cHtml += DataTypeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                else
+                    l_cHtml += DataTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID)
+                endif
+            endif
+
+        case l_cURLAction == "EditDataType"
+            if oFcgi:p_nAccessLevelML >= 2
+
+                if oFcgi:isGet()
+                    with object l_oDB1
+                        :Table("5429f4d0-7679-419f-a7b2-c0899fb2d1da","DataType")
+                        :Column("DataType.fk_DataType"      , "DataType_fk_DataType")
+                        :Column("DataType.fk_PrimitiveType" , "DataType_fk_PrimitiveType")
+                        :Column("DataType.Name"             , "DataType_Name")
+                        :Column("DataType.Description"      , "DataType_Description")
+                        l_oData := :Get(l_oDataHeader:DataType_pk)
+                    endwith
+
+                    if l_oDB1:Tally == 1
+                        l_hValues["fk_DataType"]      := l_oData:DataType_fk_DataType
+                        l_hValues["fk_PrimitiveType"] := l_oData:DataType_fk_PrimitiveType
+                        l_hValues["Name"]             := l_oData:DataType_Name
+                        l_hValues["Description"]      := l_oData:DataType_Description
+                        CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_DATATYPE,l_oDataHeader:DataType_pk,@l_hValues)
+
+                        l_cHtml += DataTypeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID,"",l_oDataHeader:DataType_pk,l_hValues)
+                    endif
+                else
+                    l_cHtml += DataTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID)
+                endif
+
+            endif
+
+        case l_cURLAction == "Visualize"
+            
+            if oFcgi:isGet()
+                l_iModelingDiagramPk := 0
                 with object l_oDB1
-                    :Table("f0688b5a-5cec-4262-9cda-9b66747ae5a8","Endpoint")
-                    :Column("Endpoint.pk"                    , "Endpoint_pk")
-                    :Column("Endpoint.Fk_Entity"             , "Endpoint_fk_Entity")
-                    :Column("Endpoint.Name"                  , "Endpoint_Name")
-                    :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
-                    :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
-                    :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
-                    :Column("Endpoint.Description"           , "Endpoint_Description")
-                    :Column("Package.FullName"               , "Package_FullName")
-                    :Column("Entity.Name"                    , "Entity_Name")
-                    :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
-                    :Column("upper(Entity.Name)"             , "tag2")
-                    :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
-                    :Join("left","Package","","Entity.fk_Package = Package.pk") 
-                    :Where("Endpoint.fk_Association = ^" , l_oDataHeader:Association_pk)
+                    :Table("87305d69-4c9f-4569-81e6-a96b075181f6","ModelingDiagram")
+                    :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
+                    :Column("ModelingDiagram.LinkUID"    ,"ModelingDiagram_LinkUID")
+                    :Column("upper(ModelingDiagram.Name)","Tag1")
+                    :Where("ModelingDiagram.fk_Model = ^" ,l_oDataHeader:Model_pk)
                     :OrderBy("tag1")
-                    :OrderBy("tag2")
-                    :SQL("ListOfEndpoints")
+                    :SQL("ListOfModelingDiagrams")
+                    if :Tally > 0
+                        l_iModelingDiagramPk   := ListOfModelingDiagrams->ModelingDiagram_pk
 
-                    select ListOfEndpoints
-                    l_nCounter := 0
-                    scan all
-                        l_nCounter += 1
-                        l_nCounterC := Trans(l_nCounter)
-                        l_hValues["EndpointPk"+l_nCounterC]          := ListOfEndpoints->Endpoint_pk
-                        l_hValues["EndpointFk_Entity"+l_nCounterC]   := ListOfEndpoints->Endpoint_fk_Entity
-                        l_hValues["EndpointName"+l_nCounterC]        := ListOfEndpoints->Endpoint_Name
-                        l_hValues["EndpointBoundLower"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundLower
-                        l_hValues["EndpointBoundUpper"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundUpper
-                        l_hValues["EndpointIsContainment"+l_nCounterC]    := ListOfEndpoints->Endpoint_IsContainment
-                        l_hValues["EndpointDescription"+l_nCounterC] := ListOfEndpoints->Endpoint_Description
-                    endscan
-                    l_hValues["NumberOfPossibleEndpoints"] := max(3,l_nCounter+1)
+                        l_cLinkUID = oFcgi:GetQueryString("InitialDiagram")
+                        if !empty(l_cLinkUID)
+                            select ListOfModelingDiagrams
+                            locate for ListOfModelingDiagrams->ModelingDiagram_LinkUID == l_cLinkUID
+                            if found()
+                                l_iModelingDiagramPk := ListOfModelingDiagrams->ModelingDiagram_pk
+                            endif
+                        endif
+
+                    else
+                        //Add an initial Diagram File
+                        :Table("bca28e8c-564b-4af2-9045-fd9845e6eedf","ModelingDiagram")
+                        :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("ModelingDiagram.fk_Model",l_oDataHeader:Model_pk)
+                        :Field("ModelingDiagram.Name","All Entities")
+                        if :Add()
+                            l_iModelingDiagramPk := :Key()
+                        endif
+                    endif
                 endwith
 
-                l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID,"",l_oDataHeader:Association_pk,l_hValues)
-            endif
-        else
-            l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID)
-        endif
+                if l_iModelingDiagramPk > 0
+                    l_cHtml += ModelingVisualizeDiagramBuild(l_oDataHeader,"",l_iModelingDiagramPk)
 
-    endif
-
-case l_cURLAction == "ListPackages"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-    if oFcgi:isGet()
-        l_cHtml += PackageListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    else
-        // Nothing for now. All buttons are GET
-    endif
-
-case l_cURLAction == "NewPackage"
-    if oFcgi:p_nAccessLevelML >= 5
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-        
-        if oFcgi:isGet()
-            l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
-        else
-            l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
-        endif
-    endif
-
-case l_cURLAction == "EditPackage"
-    if oFcgi:p_nAccessLevelML >= 2
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("6689ff9b-9b8a-400c-abf8-d7146b805461","Package")
-                :Column("Package.fk_Package" , "Package_fk_Package")
-                :Column("Package.Name"       , "Package_Name")
-                l_oData := :Get(l_oDataHeader:Package_pk)
-            endwith
-
-            if l_oDB1:Tally == 1
-                l_hValues["fk_Package"] := l_oData:Package_fk_Package
-                l_hValues["Name"]       := l_oData:Package_Name
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_PACKAGE,l_oDataHeader:Package_pk,@l_hValues)
-
-                l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,"",l_oDataHeader:Package_pk,l_hValues)
-            endif
-        else
-            l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
-        endif
-
-    endif
-
-case l_cURLAction == "ListDataTypes"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-    if oFcgi:isGet()
-        l_cHtml += DataTypeListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
-    else
-        // Nothing for now. All buttons are GET
-    endif
-
-case l_cURLAction == "NewDataType"
-    if oFcgi:p_nAccessLevelML >= 5
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-        
-        if oFcgi:isGet()
-            l_cHtml += DataTypeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
-        else
-            l_cHtml += DataTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID)
-        endif
-    endif
-
-case l_cURLAction == "EditDataType"
-    if oFcgi:p_nAccessLevelML >= 2
-        l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-
-        if oFcgi:isGet()
-            with object l_oDB1
-                :Table("5429f4d0-7679-419f-a7b2-c0899fb2d1da","DataType")
-                :Column("DataType.fk_DataType"      , "DataType_fk_DataType")
-                :Column("DataType.fk_PrimitiveType" , "DataType_fk_PrimitiveType")
-                :Column("DataType.Name"             , "DataType_Name")
-                :Column("DataType.Description"      , "DataType_Description")
-                l_oData := :Get(l_oDataHeader:DataType_pk)
-            endwith
-
-            if l_oDB1:Tally == 1
-                l_hValues["fk_DataType"]      := l_oData:DataType_fk_DataType
-                l_hValues["fk_PrimitiveType"] := l_oData:DataType_fk_PrimitiveType
-                l_hValues["Name"]             := l_oData:DataType_Name
-                l_hValues["Description"]      := l_oData:DataType_Description
-                CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_DATATYPE,l_oDataHeader:DataType_pk,@l_hValues)
-
-                l_cHtml += DataTypeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID,"",l_oDataHeader:DataType_pk,l_hValues)
-            endif
-        else
-            l_cHtml += DataTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:DataType_LinkUID)
-        endif
-
-    endif
-
-case l_cURLAction == "Visualize"
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
-    
-    if oFcgi:isGet()
-        l_iModelingDiagramPk := 0
-        with object l_oDB1
-            :Table("87305d69-4c9f-4569-81e6-a96b075181f6","ModelingDiagram")
-            :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
-            :Column("ModelingDiagram.LinkUID"    ,"ModelingDiagram_LinkUID")
-            :Column("upper(ModelingDiagram.Name)","Tag1")
-            :Where("ModelingDiagram.fk_Model = ^" ,l_oDataHeader:Model_pk)
-            :OrderBy("tag1")
-            :SQL("ListOfModelingDiagrams")
-            if :Tally > 0
-                l_iModelingDiagramPk   := ListOfModelingDiagrams->ModelingDiagram_pk
-
-                l_cLinkUID = oFcgi:GetQueryString("InitialDiagram")
-                if !empty(l_cLinkUID)
-                    select ListOfModelingDiagrams
-                    locate for ListOfModelingDiagrams->ModelingDiagram_LinkUID == l_cLinkUID
-                    if found()
-                        l_iModelingDiagramPk := ListOfModelingDiagrams->ModelingDiagram_pk
-                    endif
                 endif
-
             else
-                //Add an initial Diagram File
-                :Table("bca28e8c-564b-4af2-9045-fd9845e6eedf","ModelingDiagram")
-                :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("ModelingDiagram.fk_Model",l_oDataHeader:Model_pk)
-                :Field("ModelingDiagram.Name","All Entities")
-                if :Add()
-                    l_iModelingDiagramPk := :Key()
-                endif
+                l_cFormName := oFcgi:GetInputValue("formname")
+                do case
+                case l_cFormName == "Design"
+                    l_cHtml += ModelingVisualizeDiagramOnSubmit(l_oDataHeader,"")
+
+                case l_cFormName == "DiagramSettings"
+                    l_cHtml += ModelingVisualizeDiagramSettingsOnSubmit(l_oDataHeader,"")
+
+                case l_cFormName == "MyDiagramSettings"
+                    l_cHtml += ModelingVisualizeMyDiagramSettingsOnSubmit(l_oDataHeader,"")
+
+                endcase
             endif
-        endwith
 
-        if l_iModelingDiagramPk > 0
-            l_cHtml += ModelingVisualizeDiagramBuild(l_oDataHeader,"",l_iModelingDiagramPk)
-
-        endif
-    else
-        l_cFormName := oFcgi:GetInputValue("formname")
-        do case
-        case l_cFormName == "Design"
-            l_cHtml += ModelingVisualizeDiagramOnSubmit(l_oDataHeader,"")
-
-        case l_cFormName == "DiagramSettings"
-            l_cHtml += ModelingVisualizeDiagramSettingsOnSubmit(l_oDataHeader,"")
-
-        case l_cFormName == "MyDiagramSettings"
-            l_cHtml += ModelingVisualizeMyDiagramSettingsOnSubmit(l_oDataHeader,"")
-
+        otherwise
+            l_cHtml += [<div>Bad URL</div>]
+            
         endcase
-    endif
-
-otherwise
-    l_cHtml += [<div>Bad URL</div>]
-    
-endcase
-
+        l_cHtml += [</main>]
+        l_cHtml += [</div>]
+        l_cHtml += [</div>]
+        
+    endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
@@ -805,16 +799,44 @@ local l_aSQLResult := {}
 local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
-oFcgi:TraceAdd("ModelingHeaderBuild")
-
-l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
-l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project / ]+oFcgi:p_ANFModel+[: ]+par_cProjectName+[ / ]+par_cModelName+[</span></div>]
-l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Modeling/ListModels/]+par_cProjectLinkUID+[/">Other ]+oFcgi:p_ANFModels+[</a></div>]
+l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
+l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project / ]+oFcgi:p_ANFModel+[: ]+par_cProjectName
+                if !empty(par_cModelName)
+                    l_cHtml += [ / ]+par_cModelName
+                endif
+l_cHtml +=      [</span></div>]
+if !empty(par_cModelName)
+    l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Modeling/ListModels/]+par_cProjectLinkUID+[/">Other ]+oFcgi:p_ANFModels+[</a></div>]
+endif
 l_cHtml += [</div>]
 
-l_cHtml += [<div class="m-3"></div>]
+return l_cHtml
 
-l_cHtml += [<ul class="nav nav-tabs">]
+//=================================================================================================================
+//=================================================================================================================
+static function SideBarBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath, par_cSelectedPackageLinkUID)
+
+local l_cHtml := ""
+local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult := {}
+local l_iReccount
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+
+l_cHtml += [<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">]
+l_cHtml += [<div class="position-sticky pt-3">]
+l_cHtml += [<ul class="nav flex-column">]
+    //--------------------------------------------------------------------------------------
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ModelSettings/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-gear"></i>]+oFcgi:p_ANFModel+[ Settings</a>]
+        l_cHtml += [</li>]
+    endif
+    //--------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------
+        l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/Visualize/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-diagram-3"></i>Visualize</a>]
+    l_cHtml += [</li>]
+    //--------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
         with object l_oDB1
@@ -825,7 +847,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ENTITIES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">]+oFcgi:p_ANFEntities+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ENTITIES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-boxes"></i>]+oFcgi:p_ANFEntities+[ (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -837,7 +859,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ASSOCIATIONS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListAssociations/]+par_cModelLinkUID+[/">]+oFcgi:p_ANFAssociations+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ASSOCIATIONS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListAssociations/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-box-arrow-in-up-right"></i>]+oFcgi:p_ANFAssociations+[ (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -849,7 +871,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-code-slash"></i>]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -861,23 +883,16 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "PACKAGES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListPackages/]+par_cModelLinkUID+[/">]+oFcgi:p_ANFPackages+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "PACKAGES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListPackages/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-folder"></i>]+oFcgi:p_ANFPackages+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
     l_cHtml += [</li>]
-    //--------------------------------------------------------------------------------------
-    if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ModelSettings/]+par_cModelLinkUID+[/">]+oFcgi:p_ANFModel+[ Settings</a>]
-        l_cHtml += [</li>]
-    endif
-    //--------------------------------------------------------------------------------------
-    //--------------------------------------------------------------------------------------
-    l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/Visualize/]+par_cModelLinkUID+[/">Visualize</a>]
-    l_cHtml += [</li>]
-    //--------------------------------------------------------------------------------------
+
+
 l_cHtml += [</ul>]
 
 l_cHtml += [<div class="m-3"></div>]  // Spacer
+
+l_cHtml += [</nav>]
 
 return l_cHtml
 //=================================================================================================================
@@ -964,7 +979,7 @@ l_cHtml += [<div class="m-3">]
 
     else
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
+            l_cHtml += [<div class="col">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -1172,7 +1187,7 @@ l_cHtml += [<div class="m-3">]
 
     else
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
+            l_cHtml += [<div class="col">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -1315,7 +1330,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 7
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -1730,7 +1745,7 @@ with object l_oDB_ListOfEntitiesAttributeCounts
     endwith
 
 endwith
-
+l_cHtml += [<div class="card">]
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="List">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
@@ -1790,8 +1805,8 @@ l_cHtml += [</form>]
 if !empty(l_nNumberOfEntities)
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-    l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
+    l_cHtml += [<div class="row justify-content-left">]
+        l_cHtml += [<div class="col">]
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -1858,8 +1873,8 @@ if !empty(l_nNumberOfEntities)
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
-
 endif
+l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
@@ -1967,7 +1982,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Modeling/ListAttributes/]+l_oDataEntityInfo:Entity_LinkUID+[/">]+oFcgi:p_ANFAttributes+[</a>]
         endif
@@ -2248,6 +2263,123 @@ return l_cHtml
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
+    local l_cHtml := []
+    local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
+    
+    local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+    local l_cSelectedPackageFullPk := []
+    
+    local l_nNumberOfPackages
+    local l_nNumberOfEntities
+    
+    oFcgi:TraceAdd("PackageTreeBuild")
+    
+    with object l_oDB_ListOfPackages
+        :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
+        :Column("Package.pk"        ,"pk")
+        :Column("Package.LinkUID"   ,"Package_LinkUID")
+        :Column("Package.Name"  ,"Package_Name")
+        :Column("Package.FullName"  ,"Package_FullName")
+        :Column("Package.FullPk"  ,"Package_FullPk")
+        :Column("Package.TreeOrder1","tag1")
+        :Column("Package.fk_Package","Package_Parent")
+        :Where("Package.fk_Model = ^",par_iModelPk)
+        :OrderBy("tag1")
+        :SQL("ListOfPackages")
+        l_nNumberOfPackages := :Tally
+    endwith
+
+
+    with object l_oDB_ListOfEntities
+        :Table("1FB3D5FB-B8F3-4515-B091-55ED9CB4AB3B","Entity")
+        :Column("Entity.pk"        ,"pk")
+        :Column("Entity.LinkUID"   ,"Entity_LinkUID")
+        :Column("Entity.Name"  ,"Entity_Name")
+        :Column("Entity.fk_Package","Entity_Parent")
+        :Where("Entity.fk_Model = ^",par_iModelPk)
+        //:Join("left outer","Package","","Entity.fk_Package = Package.pk")
+        :OrderBy("Entity_Name")
+        :SQL("ListOfEntities")
+        l_nNumberOfEntities := :Tally
+    endwith
+    
+    
+    //This is using https://github.com/chrisv2/bs5treeview
+    if !empty(l_nNumberOfPackages)
+        
+        l_cHtml += [<div id="tree"></div>]
+        l_cHtml += [<script>]
+        l_cHtml += [function getTree() {]
+        l_cHtml += '  var data = ['
+        select ListOfPackages
+        scan all
+            l_cHtml += [{id:"]+trans(ListOfPackages->pk)+[",]
+            if !empty(ListOfPackages->Package_Parent)
+                l_cHtml += [parentId:"]+trans(ListOfPackages->Package_Parent)+[",]
+            endif
+            if !empty(par_cSelectedPackageLinkUID) .and. par_cSelectedPackageLinkUID == ListOfPackages->Package_LinkUID
+                l_cSelectedPackageFullPk = ListOfPackages->Package_FullPk
+                l_cHtml += [expanded: true,]
+            endif
+            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
+            l_cHtml += 'nodes: [ ]'
+            l_cHtml += [},]
+        endscan
+        select ListOfEntities
+        scan all
+            l_cHtml += [{id:"]+trans(ListOfEntities->pk)+[",]
+            if !empty(ListOfEntities->Entity_Parent)
+                l_cHtml += [parentId:"]+trans(ListOfEntities->Entity_Parent)+[",]
+            endif
+            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_LinkUID+[/", text:"]+ListOfEntities->Entity_Name+[", icon: "bi bi-box",]
+            l_cHtml += [},]
+        endscan
+        l_cHtml += '  ];'
+        //code to move packages to the nodes[] of their parent
+        l_cHtml += '  var buildTree = function(tree, item) {'
+        l_cHtml += '   if (tree) {'
+        l_cHtml += '    if (item) { '
+        l_cHtml += '        for (var i=0; i<tree.length; i++) { '
+        l_cHtml += '            if (String(tree[i].id) === String(item.parentId)) { '
+        l_cHtml += '                tree[i].nodes.push(item); '
+        l_cHtml += '                break;'
+        l_cHtml += '            }'
+        l_cHtml += '            else  { buildTree(tree[i].nodes, item); }'
+        l_cHtml += '        }'
+        l_cHtml += '      }'
+        l_cHtml += '      else { '
+        l_cHtml += '        var idx = 0;'
+        l_cHtml += '        while (idx < tree.length) { '
+        l_cHtml += '            if (tree[idx].parentId) { buildTree(tree, tree.splice(idx, 1)[0]) } '
+        l_cHtml += '            else { idx++; }'
+        l_cHtml += '        }'
+        l_cHtml += '      }'
+        l_cHtml += '    }'
+        l_cHtml += '};'
+        l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
+        l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
+        l_cHtml += 'for (var i=0; i<data.length; i++) { '
+        l_cHtml += '    if(splitSelectedPKs.includes(data[i].id)) {'
+        l_cHtml += '       data[i].expanded = true;'
+        l_cHtml += '    }'
+        l_cHtml += '}'
+        l_cHtml += 'buildTree(data);'
+        l_cHtml += [  return data;]
+        l_cHtml += [}]
+        l_cHtml += [$("#tree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+        l_cHtml += [</script>]
+    
+    endif
+    
+    return l_cHtml
+
 
 //=================================================================================================================
 //=================================================================================================================
@@ -2349,57 +2481,9 @@ l_cHtml += [</form>]
 if !empty(l_nNumberOfPackages)
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-    l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
-            l_cHtml += [<div id="tree"></div>]
-            l_cHtml += [<script>]
-            l_cHtml += [function getTree() {]
-            l_cHtml += '  var data = ['
-            select ListOfPackages
-            scan all
-                l_cHtml += [{id:"]+trans(ListOfPackages->pk)+[",]
-                if !empty(ListOfPackages->Package_Parent)
-                    l_cHtml += [parentId:"]+trans(ListOfPackages->Package_Parent)+[",]
-                endif
-                l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
-                l_cHtml += 'nodes: [{ text: "Model 2", icon: "bi bi-app" } ]'
-                l_cHtml += [},]
-            endscan
-            l_cHtml += '  ];'
-            l_cHtml += '  var buildTree = function(tree, item) {'
-            l_cHtml += '   if (tree) {'
-            l_cHtml += '    if (item) { '
-            l_cHtml += '        for (var i=0; i<tree.length; i++) { '
-            l_cHtml += '            if (String(tree[i].id) === String(item.parentId)) { '
-            l_cHtml += '                tree[i].nodes.push(item); '
-            l_cHtml += '                break;'
-            l_cHtml += '            }'
-            l_cHtml += '            else  { buildTree(tree[i].nodes, item); }'
-            l_cHtml += '        }'
-            l_cHtml += '      }'
-            l_cHtml += '      else { '
-            l_cHtml += '        var idx = 0;'
-            l_cHtml += '        while (idx < tree.length) { '
-            l_cHtml += '            if (tree[idx].parentId) { buildTree(tree, tree.splice(idx, 1)[0]) } '
-            l_cHtml += '            else { idx++; }'
-            l_cHtml += '        }'
-            l_cHtml += '      }'
-            l_cHtml += '    }'
-            l_cHtml += '};'
-            l_cHtml += 'for (var i=0; i<data.length; i++) { '
-            l_cHtml += '    if (data[i].nodes == null) {'
-            l_cHtml += '       data[i].nodes = [];'
-            l_cHtml += '    }'
-            l_cHtml += '}'
-            l_cHtml += 'buildTree(data);'
-            l_cHtml += [  return data;]
-            l_cHtml += [}]
-            l_cHtml += [$("#tree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right',});]
-            l_cHtml += [</script>]
-              
-              
-
-            /*l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+    l_cHtml += [<div class="row justify-content-left">]
+        l_cHtml += [<div class="col">]
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
             l_cHtml += [<tr class="bg-info">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"1","2")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
@@ -2428,7 +2512,7 @@ if !empty(l_nNumberOfPackages)
 
                 l_cHtml += [</tr>]
             endscan
-            l_cHtml += [</table>]*/
+            l_cHtml += [</table>]
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -2484,7 +2568,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -2844,8 +2928,8 @@ l_cHtml += [</form>]
 if !empty(l_nNumberOfDataTypes)
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-    l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
+    l_cHtml += [<div class="row justify-content-left">]
+        l_cHtml += [<div class="col">]
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
@@ -2958,7 +3042,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -3361,6 +3445,7 @@ with object l_oDB_ListOfAssociationsEndpoints
     endwith
 endwith
 
+l_cHtml += [<div class="card w-80">]
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="List">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
@@ -3420,8 +3505,8 @@ l_cHtml += [</form>]
 if !empty(l_nNumberOfAssociations)
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-    l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
+    l_cHtml += [<div class="row justify-content-left">]
+        l_cHtml += [<div class="col">]
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -3480,6 +3565,7 @@ if !empty(l_nNumberOfAssociations)
             l_cHtml += [</table>]
             
         l_cHtml += [</div>]
+    l_cHtml += [</div>]
     l_cHtml += [</div>]
 
 endif
@@ -3594,7 +3680,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -4223,6 +4309,7 @@ if l_nNumberOfAttributes > 0
     endwith
 endif
 
+
 if l_nNumberOfAttributes <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
@@ -4286,8 +4373,8 @@ else
 
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
-    l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
+    l_cHtml += [<div class="row justify-content-left">]
+        l_cHtml += [<div class="col">]
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -4469,7 +4556,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -4750,7 +4837,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
     l_cHtml += [<div class="row justify-content-center">]
-        l_cHtml += [<div class="col-auto">]
+        l_cHtml += [<div class="col">]
 
         l_cHtml += [<ul id="sortable">]
         scan all
