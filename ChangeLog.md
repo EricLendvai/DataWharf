@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 03/11/2022 v 2.10
+* Incorporated treeview in modeling. (From GitHub Merge)
+* Min CSS fixes for treeview.
+* Fixed Access issues for "Root Admin" user.
+
 ## 03/09/2022 v 2.09
 * Markdown preview for modeling entities. (From GitHub Merge)
 * Fixed label in Association from "Aspect Of" to "Is Containment"

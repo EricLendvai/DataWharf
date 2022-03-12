@@ -118,7 +118,12 @@ else
     l_cURLAction := "ListProjects"
 endif
 
-oFcgi:p_nAccessLevelML := l_nAccessLevelML
+if  oFcgi:p_nUserAccessMode >= 3
+    oFcgi:p_nAccessLevelML := 7
+else
+    oFcgi:p_nAccessLevelML := l_nAccessLevelML
+endif
+
 
 do case
 case l_cURLAction == "ListProjects"

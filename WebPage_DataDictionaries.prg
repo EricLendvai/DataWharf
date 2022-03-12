@@ -212,7 +212,11 @@ else
     l_cURLAction := "ListDataDictionaries"
 endif
 
-oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+if  oFcgi:p_nUserAccessMode >= 3
+    oFcgi:p_nAccessLevelDD := 7
+else
+    oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+endif
 
 do case
 case l_cURLAction == "ListDataDictionaries"
