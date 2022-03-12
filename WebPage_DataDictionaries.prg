@@ -1553,7 +1553,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -2429,7 +2429,7 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
@@ -3530,7 +3530,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -4498,7 +4498,7 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
@@ -5084,7 +5084,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -5690,7 +5690,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]

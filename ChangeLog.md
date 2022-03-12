@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/12/2022 v 2.11
+* Made all delete buttons red.
+
 ## 03/11/2022 v 2.10
 * Incorporated treeview in modeling. (From GitHub Merge)
 * Min CSS fixes for treeview.
