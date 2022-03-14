@@ -22,6 +22,7 @@ local l_hValues := {=>}
 local l_cModelingElement := "ENTITIES"  //Default to Entities
 
 local l_cURLAction
+local l_cURLSubAction
 local l_cURLLinkUID := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
@@ -86,6 +87,10 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
         l_cURLLinkUID := oFcgi:p_URLPathElements[3]
+    endif
+
+    if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+        l_cURLSubAction := oFcgi:p_URLPathElements[4]
     endif
 
     do case
@@ -497,7 +502,7 @@ otherwise
                         l_hValues["Description"]    := l_oData:Entity_Description
                         l_hValues["Information"]    := l_oData:Entity_Information
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
-                        l_cHtml += GetEntityEditHeader(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
+                        l_cHtml += GetEntityEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_cURLSubAction)
                         l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
                     endif
                 else
@@ -1931,20 +1936,20 @@ endcase
 
 return l_cHtml
 
-static function GetEntityEditHeader(par_cEntityLinkUID, par_cEntityElement, par_cEntityAlias)
+static function GetEntityEditHeader(par_cSitePath, par_cModelLinkUID, par_cEntityLinkUID, par_cEntityElement)
 local l_cHtml := ""
 l_cHtml += [<ul class="nav nav-tabs">]
 
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "EDITENTITY",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/">Edit ]+par_cEntityAlias+[</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "EDITENTITY",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/">Edit ]+oFcgi:p_ANFEntity+[</a>]
     l_cHtml += [</li>]
 
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ATTRIBUTES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ATTRIBUTES",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAttributes">]+oFcgi:p_ANFAttributes+[</a>]
     l_cHtml += [</li>]
 
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ASSOCIATIONS",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ASSOCIATIONS",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAssociations">]+oFcgi:p_ANFAssociations+[</a>]
     l_cHtml += [</li>]
 
 l_cHtml += [</ul>]
