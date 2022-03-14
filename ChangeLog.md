@@ -1,5 +1,18 @@
 # DataWharf - Change Log
 
+## 03/13/2022 v 2.12
+* New option to detect foreign keys where the column name is formatted as <TableName>_id
+* For consistency made all foreign keys default to 0 instead of null. YOU MUST GET LATEST version of the Harbour_ORM repo.
+* Fixed issue when editing Modeling Associations not belonging to a Package.
+
+## 03/12/2022 v 2.11
+* Made all delete buttons red.
+
+## 03/11/2022 v 2.10
+* Incorporated treeview in modeling. (From GitHub Merge)
+* Min CSS fixes for treeview.
+* Fixed Access issues for "Root Admin" user.
+
 ## 03/09/2022 v 2.09
 * Markdown preview for modeling entities. (From GitHub Merge)
 * Fixed label in Association from "Aspect Of" to "Is Containment"

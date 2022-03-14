@@ -212,7 +212,11 @@ else
     l_cURLAction := "ListDataDictionaries"
 endif
 
-oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+if  oFcgi:p_nUserAccessMode >= 3
+    oFcgi:p_nAccessLevelDD := 7
+else
+    oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+endif
 
 do case
 case l_cURLAction == "ListDataDictionaries"
@@ -1549,7 +1553,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -2425,7 +2429,7 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
@@ -3389,7 +3393,7 @@ local l_lPrimary         := hb_HGetDef(par_hValues,"Primary",.f.)
 local l_nUsedBy          := hb_HGetDef(par_hValues,"UsedBy",1)
 local l_iFk_TableForeign := nvl(hb_HGetDef(par_hValues,"Fk_TableForeign",0),0)
 local l_cForeignKeyUse   := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
-local l_iFk_Enumeration  := hb_HGetDef(par_hValues,"Fk_Enumeration",0)
+local l_iFk_Enumeration  := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
 local l_cLastNativeType  := hb_HGetDef(par_hValues,"LastNativeType","")
 local l_lShowPrimary     := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
 
@@ -3526,7 +3530,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -3860,16 +3864,10 @@ endif
 l_nColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
 l_iColumnFk_TableForeign := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
-if empty(l_iColumnFk_TableForeign)
-    l_iColumnFk_TableForeign := NIL
-endif
 
 l_cColumnForeignKeyUse  := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
 
 l_iColumnFk_Enumeration  := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
-if empty(l_iColumnFk_Enumeration)
-    l_iColumnFk_Enumeration := NIL
-endif
 
 l_nColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
@@ -3910,7 +3908,7 @@ case l_cActionOnSubmit == "Save"
                     case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_nColumnScale >= l_nColumnLength
                         l_cErrorMessage := "Scale must be smaller than Length!"
 
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. hb_IsNIL(l_iColumnFk_Enumeration)   // Enumeration should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. empty(l_iColumnFk_Enumeration)   // Enumeration should be entered
                         l_cErrorMessage := "Select an Enumeration!"
 
                     otherwise
@@ -3970,7 +3968,7 @@ case l_cActionOnSubmit == "Save"
                     l_nColumnScale := NIL
                 endif
                 if !(oFcgi:p_ColumnTypes[l_iTypePos,5])
-                    l_iColumnFk_Enumeration := NIL
+                    l_iColumnFk_Enumeration := 0
                 endif
                 // if !(oFcgi:p_ColumnTypes[l_iTypePos,6])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
                 //     l_lColumnUnicode := .f.
@@ -4494,7 +4492,7 @@ else
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
@@ -5080,7 +5078,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -5380,6 +5378,7 @@ if !empty(par_iPk)
                     l_cHtml += [<option value="2"]+iif(l_nSyncSetForeignKey==2,[ selected],[])+[>Foreign Key Restrictions</option>]
                     l_cHtml += [<option value="3"]+iif(l_nSyncSetForeignKey==3,[ selected],[])+[>On p_&lt;TableName&gt;</option>]
                     l_cHtml += [<option value="4"]+iif(l_nSyncSetForeignKey==4,[ selected],[])+[>On fk_&lt;TableName&gt;</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nSyncSetForeignKey==5,[ selected],[])+[>On &lt;TableName&gt;_id</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5686,7 +5685,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -5994,11 +5993,26 @@ with object l_oDB1
 
                                         if empty(l_cErrorMessage)
 
-                                            CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
-                                            if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+                                            // Clear our Column.fk_TableForeign   par_iTablePk
+                                            :Table("15a91705-fad2-42b9-8116-327b39b0d355","Column")
+                                            :Column("Column.pk","pk")
+                                            :Where("Column.fk_TableForeign = ^" , par_iTablePk)
+                                            :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+                                            if :Tally < 0
                                                 l_cErrorMessage := "Failed to delete Table. Error 11."
+                                            else
+                                                select ListOfRecordsToDeleteInCascadeDeleteTable
+                                                scan all
+                                                    :Table("978e4c66-259d-4a47-be46-89d7420728e8","Column")
+                                                    :Field("Column.fk_TableForeign" , 0)
+                                                    :Update(ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                                endscan
+                                                
+                                                CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
+                                                if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+                                                    l_cErrorMessage := "Failed to delete Table. Error 12."
+                                                endif
                                             endif
-
                                         endif
                                     endif
                                 endif

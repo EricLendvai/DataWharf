@@ -118,7 +118,12 @@ else
     l_cURLAction := "ListProjects"
 endif
 
-oFcgi:p_nAccessLevelML := l_nAccessLevelML
+if  oFcgi:p_nUserAccessMode >= 3
+    oFcgi:p_nAccessLevelML := 7
+else
+    oFcgi:p_nAccessLevelML := l_nAccessLevelML
+endif
+
 
 do case
 case l_cURLAction == "ListProjects"
@@ -479,7 +484,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 7
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
@@ -917,7 +922,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 7
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]

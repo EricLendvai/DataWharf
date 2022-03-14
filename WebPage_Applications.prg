@@ -108,7 +108,11 @@ else
     l_cURLAction := "ListApplications"
 endif
 
-oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+if  oFcgi:p_nUserAccessMode >= 3
+    oFcgi:p_nAccessLevelDD := 7
+else
+    oFcgi:p_nAccessLevelDD := l_nAccessLevelDD
+endif
 
 do case
 case l_cURLAction == "ListApplications"
@@ -396,7 +400,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 7
-                l_cHtml += [<button type="button" class="btn btn-primary rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
     l_cHtml += [</div>]
