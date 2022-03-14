@@ -527,7 +527,6 @@ else
             l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
             l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
 
-
             l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/css/bootstrap.min.css">]
 
             l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_5_0_2/icons/font/bootstrap-icons.css">]

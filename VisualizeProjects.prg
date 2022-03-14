@@ -2191,6 +2191,9 @@ if len(l_aNodes) == 1
         //Clicked on an Association
         l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,0)
 
+    otherwise
+        l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find information.</div>]
+
     endcase
 
 else
@@ -2225,8 +2228,10 @@ else
                             l_iAssociationPk := l_oData_Project:Association_pk
 
                             l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,l_iEndpointPk)
-                            l_cHtml += [<div class="m-3"></div>]
+                        else
+                            l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find association.</div>]
                         endif
+                        l_cHtml += [<div class="m-3"></div>]
                     endwith
                     exit
 
@@ -2243,8 +2248,10 @@ else
                         l_oData_Project := :Get(l_iAssociationPk)
                         if :Tally == 1
                             l_cHtml += GetMLInfoDuringVisualization_AssociationInfo(l_iAssociationPk,l_iEndpointPk)
-                            l_cHtml += [<div class="m-3"></div>]
+                        else
+                            l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find association.</div>]
                         endif
+                        l_cHtml += [<div class="m-3"></div>]
                     endwith
                     exit
 

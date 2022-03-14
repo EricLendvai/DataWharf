@@ -1021,7 +1021,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                            ListOfColumnsInDataDictionary->Column_Unicode               == l_lColumnUnicode        .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_Default,"")       == l_cColumnDefault        .and. ;
                            ListOfColumnsInDataDictionary->Column_LastNativeType        == l_cColumnLastNativeType .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_fk_Enumeration,0) == l_iFk_Enumeration
+                           ListOfColumnsInDataDictionary->Column_fk_Enumeration        == l_iFk_Enumeration
 
                         else
                             if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
@@ -1298,7 +1298,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     l_lColumnUnicode        := .f.
                     l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
                     l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
-                    l_iFk_Enumeration := 0
+                    l_iFk_Enumeration       := 0
 
                     if l_cColumnDefault == "NULL"
                         l_cColumnDefault := ""
@@ -1641,6 +1641,10 @@ if par_nSyncSetForeignKey > 1
             case par_nSyncSetForeignKey == 4
                 :Where("left(Column.Name,3) = ^" , "fk_")
                 :Join("inner","Table","","lower(Column.Name) = lower(concat('fk_',Table.Name))")
+            case par_nSyncSetForeignKey == 5
+                :Where("right(Column.Name,3) = ^" , "_id")
+                :Where("Column.Default is null")
+                :Join("inner","Table","","lower(Column.Name) = lower(concat(Table.Name,'_id'))")
             endcase
                 
             :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
@@ -1649,7 +1653,7 @@ if par_nSyncSetForeignKey > 1
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
             :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
-            :Where("Column.fk_TableForeign is null")
+            :Where("Column.fk_TableForeign = 0")
             :SQL("FieldToMarkAsForeignKeys")
 
             // SendToClipboard(:LastSQL())
