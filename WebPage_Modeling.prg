@@ -464,7 +464,6 @@ otherwise
 
         case l_cURLAction == "NewEntity"
             if oFcgi:p_nAccessLevelML >= 5
-                
                 if oFcgi:isGet()
                     l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
                 else
@@ -491,7 +490,7 @@ otherwise
                         l_hValues["Description"]    := l_oData:Entity_Description
                         l_hValues["Information"]    := l_oData:Entity_Information
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
-
+                        l_cHtml += GetEntityEditHeader(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
                         l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
                     endif
                 else
@@ -1923,6 +1922,27 @@ otherwise
 endcase
 
 return l_cHtml
+
+static function GetEntityEditHeader(par_cEntityLinkUID, par_cEntityElement, par_cEntityAlias)
+local l_cHtml := ""
+l_cHtml += [<ul class="nav nav-tabs">]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "EDITENTITY",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/">Edit ]+par_cEntityAlias+[</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ATTRIBUTES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ASSOCIATIONS",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+    l_cHtml += [</li>]
+
+l_cHtml += [</ul>]
+return l_cHtml
+
+
 //=================================================================================================================
 static function EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
@@ -1973,7 +1993,7 @@ if !empty(l_cErrorText)
     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
 endif
 
-l_cHtml += [<nav class="navbar navbar-light bg-light">]
+l_cHtml += [<nav class="nav nav-tabs bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ ]+oFcgi:p_ANFEntity+[</span>]   //navbar-text
         if oFcgi:p_nAccessLevelML >= 3
@@ -4309,6 +4329,13 @@ if l_nNumberOfAttributes > 0
     endwith
 endif
 
+l_cHtml += [<nav aria-label="breadcrumb">]
+l_cHtml += [<ol class="breadcrumb">]
+    l_cHtml += [<li class="breadcrumb-item"><a href="#">Home</a></li>]
+    l_cHtml += [<li class="breadcrumb-item"><a href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/?From=Attributes">]+par_cEntityInfo+[</a></li>]
+    l_cHtml += [<li class="breadcrumb-item active" aria-current="page">]+oFcgi:p_ANFAttributes+[</li>]
+l_cHtml += [</ol>]
+l_cHtml += [</nav>]
 
 if l_nNumberOfAttributes <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -4317,8 +4344,6 @@ if l_nNumberOfAttributes <= 0
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewAttribute/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFAttribute+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Back To ]+oFcgi:p_ANFEntities+[</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/?From=Attributes">Edit ]+oFcgi:p_ANFEntity+[</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -4328,11 +4353,9 @@ else
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/NewAttribute/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFAttribute+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Back To ]+oFcgi:p_ANFEntities+[</a>]
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/OrderAttributes/]+par_cEntityLinkUID+[/">Order ]+oFcgi:p_ANFAttributes+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/?From=Attributes">Edit ]+oFcgi:p_ANFEntity+[</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
