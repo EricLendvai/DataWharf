@@ -807,6 +807,7 @@ local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
+l_cHtml +=    [<button type="button" id="sidebarCollapse" class="btn btn-secondary"><i class="bi bi-list"></i></button>]
 l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project / ]+oFcgi:p_ANFModel+[: ]+par_cProjectName
                 if !empty(par_cModelName)
                     l_cHtml += [ / ]+par_cModelName

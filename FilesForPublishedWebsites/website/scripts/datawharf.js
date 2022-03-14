@@ -50,3 +50,9 @@ function buildDTTree(tree, item) {
       }
     }
 };
+
+$(document).ready(function () {
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebarMenu').toggleClass('active');
+    });
+});
