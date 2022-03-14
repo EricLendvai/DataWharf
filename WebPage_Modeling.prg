@@ -429,7 +429,7 @@ otherwise
     l_cHtml += [<div class="container-fluid">]
     l_cHtml += [<div class="row">]
         l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID,l_oDataHeader:DataType_LinkUID,l_oDataHeader:Association_LinkUID,l_oDataHeader:Entity_LinkUID)
-        l_cHtml += [<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">]
+        l_cHtml += [<main class="col-md ms-sm-auto col-lg px-md-4">]
 
         do case
         case l_cURLAction == "ModelSettings"
