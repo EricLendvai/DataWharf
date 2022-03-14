@@ -2389,9 +2389,11 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
             l_cHtml += 'var isAssocSelected = true;'
         endif
         l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
-        l_cHtml += 'if(selectedPKs == "") {'
-        l_cHtml += '    selectedPKs = "0"'
-        l_cHtml += '}'
+        if !empty(par_cSelectedEntityLinkUID) .or. !empty(par_cSelectedAssociationLinkUID)
+            l_cHtml += 'if(selectedPKs == "") {'
+            l_cHtml += '    selectedPKs = "0"'
+            l_cHtml += '}'
+        endif
         l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
         l_cHtml += 'for (var i=0; i<data.length; i++) { '
         l_cHtml += '    if(splitSelectedPKs.includes(data[i].id)) {'
