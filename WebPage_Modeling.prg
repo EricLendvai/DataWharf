@@ -830,7 +830,7 @@ local l_aSQLResult := {}
 local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
-l_cHtml += [<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">]
+l_cHtml += [<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">]
 l_cHtml += [<div class="position-sticky pt-3">]
 l_cHtml += [<ul class="nav flex-column">]
     //--------------------------------------------------------------------------------------
@@ -879,7 +879,10 @@ l_cHtml += [<ul class="nav flex-column">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-code-slash"></i>]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<div class="d-flex justify-content-between align-items-center">]
+        l_cHtml +=   [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-code-slash"></i>]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml +=   [<a data-bs-toggle="collapse" data-bs-target="#dataTypesTree" class="link-secondary" href="#"><i class="bi bi-list-nested"></i></a>]
+        l_cHtml += [</div>]
         if l_iReccount > 0
             l_cHtml += DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
         endif
@@ -894,7 +897,10 @@ l_cHtml += [<ul class="nav flex-column">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "PACKAGES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListPackages/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-folder"></i>]+oFcgi:p_ANFPackages+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<div class="d-flex justify-content-between align-items-center">]
+        l_cHtml +=    [<a class="nav-link]+iif(par_cModelElement == "PACKAGES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListPackages/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-folder"></i>]+oFcgi:p_ANFPackages+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml +=    [<a data-bs-toggle="collapse" data-bs-target="#packagesTree"  class="link-secondary" href="#"><i class="bi bi-list-nested"></i></a>]
+        l_cHtml += [</div>]
         l_cHtml += PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
     l_cHtml += [</li>]
 
@@ -2285,10 +2291,15 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
     
     local l_cSitePath := oFcgi:RequestSettings["SitePath"]
     local l_cSelectedPackageFullPk := []
+    local l_cSelectedPackagePk
+    local l_cSelectedEntityPk
+    local l_cSelectedAssociationPk
     
     local l_nNumberOfPackages
     local l_nNumberOfEntities
     local l_nNumberOfAssociations
+
+    local l_cTreeIdPrefix := [packagesTree-]
     
     oFcgi:TraceAdd("PackageTreeBuild")
     
@@ -2337,24 +2348,25 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
     //This is using https://github.com/chrisv2/bs5treeview
     if !empty(l_nNumberOfPackages)
         
-        l_cHtml += [<div id="tree"></div>]
-        l_cHtml += [<script>]
+        l_cHtml += [<div id="packagesTree" class="collapse show"></div>]
+        l_cHtml += [<script>]        
         l_cHtml += [function getTree() {]
         l_cHtml += '  var data = ['
-        l_cHtml += [{id:"0",text:"Uncontained ]+oFcgi:p_ANFEntities+[", icon: "bi bi-boxes",]+'nodes:['
-        l_cHtml += [{id:"A",text:"]+oFcgi:p_ANFAssociations+[", icon: "bi bi-box-arrow-in-up-right",]+'nodes:[]} ]},'
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"Uncontained ]+oFcgi:p_ANFEntities+[", icon: "bi bi-boxes",]+'nodes:['
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+[A",text:"]+oFcgi:p_ANFAssociations+[", icon: "bi bi-box-arrow-in-up-right",]+'nodes:[]} ]},'
         select ListOfPackages
         scan all
-            l_cHtml += [{id:"]+trans(ListOfPackages->pk)+[",]
+            l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfPackages->pk)+[",]
             if !empty(ListOfPackages->Package_Parent)
-                l_cHtml += [parentId:"]+trans(ListOfPackages->Package_Parent)+[",]
+                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfPackages->Package_Parent)+[",]
             endif
             if !empty(par_cSelectedPackageLinkUID) .and. par_cSelectedPackageLinkUID == ListOfPackages->Package_LinkUID
                 l_cSelectedPackageFullPk = ListOfPackages->Package_FullPk
+                l_cSelectedPackagePk = ListOfPackages->pk
                 l_cHtml += [expanded: true,]
             endif
             l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
-            l_cHtml += 'nodes: [ {id:"'+trans(ListOfPackages->pk)+'-A",text:"'+oFcgi:p_ANFAssociations+'", icon: "bi bi-box-arrow-in-up-right", nodes: []'
+            l_cHtml += 'nodes: [ {id:"'+l_cTreeIdPrefix+trans(ListOfPackages->pk)+'-A",text:"'+oFcgi:p_ANFAssociations+'", icon: "bi bi-box-arrow-in-up-right", nodes: []'
             if !empty(par_cSelectedAssociationLinkUID)
                 l_cHtml += [,expanded: true]
             endif
@@ -2363,31 +2375,37 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
         endscan
         select ListOfEntities
         scan all
-            l_cHtml += [{id:"]+trans(ListOfEntities->pk)+[",]
+            l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEntities->pk)+[",]
             if !empty(ListOfEntities->Entity_Parent)
-                l_cHtml += [parentId:"]+trans(ListOfEntities->Entity_Parent)+[",]
+                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfEntities->Entity_Parent)+[",]
             else
-                l_cHtml += [parentId:"0",]
+                l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
             endif
             l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_LinkUID+[/", text:"]+ListOfEntities->Entity_Name+[", icon: "bi bi-box",]
             l_cHtml += [},]
+            if !empty(par_cSelectedEntityLinkUID) .and. par_cSelectedEntityLinkUID == ListOfEntities->Entity_LinkUID
+                l_cSelectedEntityPk = ListOfEntities->pk
+            endif
         endscan
         select ListOfAssociations
         scan all
-            l_cHtml += [{id:"]+trans(ListOfAssociations->pk)+[",]
+            l_cHtml += [{id:"]+l_cTreeIdPrefix+[A]+trans(ListOfAssociations->pk)+[",]
             if !empty(ListOfAssociations->Association_Parent)
-                l_cHtml += [parentId:"]+trans(ListOfAssociations->Association_Parent)+[-A",]
+                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfAssociations->Association_Parent)+[-A",]
             else
-                l_cHtml += [parentId:"A",]
+                l_cHtml += [parentId:"]+l_cTreeIdPrefix +[A",]
             endif
             l_cHtml += [href:"]+l_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_LinkUID+[/", text:"]+ListOfAssociations->Association_Name+[", icon: "bi bi-box-arrow-in-up-right",]
             l_cHtml += [},]
+            if !empty(par_cSelectedAssociationLinkUID) .and. par_cSelectedAssociationLinkUID == ListOfAssociations->Association_LinkUID
+                l_cSelectedAssociationPk = ListOfAssociations->pk
+            endif
         endscan
         l_cHtml += '  ];'
         if !empty(l_cSelectedPackageFullPk) .and. !empty(par_cSelectedAssociationLinkUID)
             l_cHtml += 'var isAssocSelected = true;'
         else
-            l_cHtml += 'var isAssocSelected = true;'
+            l_cHtml += 'var isAssocSelected = false;'
         endif
         l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
         if !empty(par_cSelectedEntityLinkUID) .or. !empty(par_cSelectedAssociationLinkUID)
@@ -2397,21 +2415,31 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
         endif
         l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
         l_cHtml += 'for (var i=0; i<data.length; i++) { '
-        l_cHtml += '    if(splitSelectedPKs.includes(data[i].id)) {'
+        l_cHtml += '    if(splitSelectedPKs.includes(data[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
         l_cHtml += '       data[i].expanded = true;'
-        l_cHtml += '       if(isAssocSelected && splitSelectedPKs[splitSelectedPKs.length-1] == data[i].id) {'
+        l_cHtml += '       if(isAssocSelected && splitSelectedPKs[splitSelectedPKs.length-1] == data[i].id.substring("'+l_cTreeIdPrefix+'".length)) {'
         l_cHtml += '           data[i].nodes[0].expanded = true;'
         l_cHtml += '       }'
         l_cHtml += '    }'
         l_cHtml += '}'
         l_cHtml += 'buildTree(data);'
         l_cHtml += 'modifyLeafNodes(data);'
-
         l_cHtml += [  return data;]
         l_cHtml += [}]
-        l_cHtml += [$("#tree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+        l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+        if !empty(l_cSelectedEntityPk)
+            l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEntityPk)+[").toggleClass("active");]
+        else
+            if !empty(l_cSelectedAssociationPk)
+                l_cHtml += [$("#]+l_cTreeIdPrefix+[A]+trans(l_cSelectedAssociationPk)+[").toggleClass("active");]
+            else
+                if !empty(l_cSelectedPackagePk)
+                    l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedPackagePk)+[").toggleClass("active");]
+                endif
+            endif
+        endif
+        l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
         l_cHtml += [</script>]
-    
     endif
     
     return l_cHtml
@@ -2450,7 +2478,7 @@ static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
     //This is using https://github.com/chrisv2/bs5treeview
     if !empty(l_nNumberOfDataTypes)
         
-        l_cHtml += [<div id="datatype-tree"></div>]
+        l_cHtml += [<div id="dataTypesTree" class="collapse show"></div>]
         l_cHtml += [<script>]
         l_cHtml += [function getDTTree() {]
         l_cHtml += '  var dataDT = ['
@@ -2487,7 +2515,7 @@ static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
         l_cHtml += 'modifyLeafNodes(dataDT);'
         l_cHtml += [  return dataDT;]
         l_cHtml += [}]
-        l_cHtml += [$("#datatype-tree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+        l_cHtml += [$("#dataTypesTree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
         l_cHtml += [</script>]
     
     endif
