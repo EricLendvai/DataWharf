@@ -48,6 +48,8 @@ oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_1_2_0/css/bstreeview.min.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
 
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/datawharf.js"></script>]
+
 // Variables
 // l_cURLAction
 
@@ -426,8 +428,8 @@ otherwise
     l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
     l_cHtml += [<div class="container-fluid">]
     l_cHtml += [<div class="row">]
-        l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID)
-        l_cHtml += [<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">]
+        l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID,l_oDataHeader:DataType_LinkUID,l_oDataHeader:Association_LinkUID,l_oDataHeader:Entity_LinkUID)
+        l_cHtml += [<main class="col-md ms-sm-auto col-lg px-md-4">]
 
         do case
         case l_cURLAction == "ModelSettings"
@@ -805,6 +807,7 @@ local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
+l_cHtml +=    [<button type="button" id="sidebarCollapse" class="btn btn-secondary"><i class="bi bi-list"></i></button>]
 l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Project / ]+oFcgi:p_ANFModel+[: ]+par_cProjectName
                 if !empty(par_cModelName)
                     l_cHtml += [ / ]+par_cModelName
@@ -819,7 +822,7 @@ return l_cHtml
 
 //=================================================================================================================
 //=================================================================================================================
-static function SideBarBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath, par_cSelectedPackageLinkUID)
+static function SideBarBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath, par_cSelectedPackageLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
 
 local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -852,7 +855,7 @@ l_cHtml += [<ul class="nav flex-column">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ENTITIES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-boxes"></i>]+oFcgi:p_ANFEntities+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ENTITIES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-boxes"></i>All ]+oFcgi:p_ANFEntities+[ (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -864,7 +867,7 @@ l_cHtml += [<ul class="nav flex-column">]
         endwith
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
-        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ASSOCIATIONS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListAssociations/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-box-arrow-in-up-right"></i>]+oFcgi:p_ANFAssociations+[ (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "ASSOCIATIONS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListAssociations/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-box-arrow-in-up-right"></i>All ]+oFcgi:p_ANFAssociations+[ (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -877,6 +880,9 @@ l_cHtml += [<ul class="nav flex-column">]
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
         l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-code-slash"></i>]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
+        if l_iReccount > 0
+            l_cHtml += DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
+        endif
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -889,7 +895,7 @@ l_cHtml += [<ul class="nav flex-column">]
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
         l_cHtml += [<a class="nav-link]+iif(par_cModelElement == "PACKAGES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListPackages/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-folder"></i>]+oFcgi:p_ANFPackages+[ (]+Trans(l_iReccount)+[)</a>]
-        l_cHtml += PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
+        l_cHtml += PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
     l_cHtml += [</li>]
 
 
@@ -984,7 +990,7 @@ l_cHtml += [<div class="m-3">]
 
     else
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col">]
+            l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -1192,7 +1198,7 @@ l_cHtml += [<div class="m-3">]
 
     else
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col">]
+            l_cHtml += [<div class="col-auto">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -1750,7 +1756,6 @@ with object l_oDB_ListOfEntitiesAttributeCounts
     endwith
 
 endwith
-l_cHtml += [<div class="card">]
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="List">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
@@ -1879,7 +1884,6 @@ if !empty(l_nNumberOfEntities)
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 endif
-l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
@@ -2273,16 +2277,18 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
+static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
     local l_cHtml := []
     local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
     local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_oDB_ListOfAssociations := hb_SQLData(oFcgi:p_o_SQLConnection)
     
     local l_cSitePath := oFcgi:RequestSettings["SitePath"]
     local l_cSelectedPackageFullPk := []
     
     local l_nNumberOfPackages
     local l_nNumberOfEntities
+    local l_nNumberOfAssociations
     
     oFcgi:TraceAdd("PackageTreeBuild")
     
@@ -2314,7 +2320,19 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
         :SQL("ListOfEntities")
         l_nNumberOfEntities := :Tally
     endwith
-    
+
+    with object l_oDB_ListOfAssociations
+        :Table("0C757B19-C062-4B1B-B97A-AF70A1974BDE","Association")
+        :Column("Association.pk"        ,"pk")
+        :Column("Association.LinkUID"   ,"Association_LinkUID")
+        :Column("Association.Name"  ,"Association_Name")
+        :Column("Association.fk_Package","Association_Parent")
+        :Where("Association.fk_Model = ^",par_iModelPk)
+        //:Join("left outer","Package","","Association.fk_Package = Package.pk")
+        :OrderBy("Association_Name")
+        :SQL("ListOfAssociations")
+        l_nNumberOfAssociations := :Tally
+    endwith
     
     //This is using https://github.com/chrisv2/bs5treeview
     if !empty(l_nNumberOfPackages)
@@ -2323,6 +2341,8 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
         l_cHtml += [<script>]
         l_cHtml += [function getTree() {]
         l_cHtml += '  var data = ['
+        l_cHtml += [{id:"0",text:"Uncontained ]+oFcgi:p_ANFEntities+[", icon: "bi bi-boxes",]+'nodes:['
+        l_cHtml += [{id:"A",text:"]+oFcgi:p_ANFAssociations+[", icon: "bi bi-box-arrow-in-up-right",]+'nodes:[]} ]},'
         select ListOfPackages
         scan all
             l_cHtml += [{id:"]+trans(ListOfPackages->pk)+[",]
@@ -2334,7 +2354,11 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
                 l_cHtml += [expanded: true,]
             endif
             l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
-            l_cHtml += 'nodes: [ ]'
+            l_cHtml += 'nodes: [ {id:"'+trans(ListOfPackages->pk)+'-A",text:"'+oFcgi:p_ANFAssociations+'", icon: "bi bi-box-arrow-in-up-right", nodes: []'
+            if !empty(par_cSelectedAssociationLinkUID)
+                l_cHtml += [,expanded: true]
+            endif
+            l_cHtml += '} ]'
             l_cHtml += [},]
         endscan
         select ListOfEntities
@@ -2342,43 +2366,128 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID)
             l_cHtml += [{id:"]+trans(ListOfEntities->pk)+[",]
             if !empty(ListOfEntities->Entity_Parent)
                 l_cHtml += [parentId:"]+trans(ListOfEntities->Entity_Parent)+[",]
+            else
+                l_cHtml += [parentId:"0",]
             endif
             l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_LinkUID+[/", text:"]+ListOfEntities->Entity_Name+[", icon: "bi bi-box",]
             l_cHtml += [},]
         endscan
+        select ListOfAssociations
+        scan all
+            l_cHtml += [{id:"]+trans(ListOfAssociations->pk)+[",]
+            if !empty(ListOfAssociations->Association_Parent)
+                l_cHtml += [parentId:"]+trans(ListOfAssociations->Association_Parent)+[-A",]
+            else
+                l_cHtml += [parentId:"A",]
+            endif
+            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_LinkUID+[/", text:"]+ListOfAssociations->Association_Name+[", icon: "bi bi-box-arrow-in-up-right",]
+            l_cHtml += [},]
+        endscan
         l_cHtml += '  ];'
-        //code to move packages to the nodes[] of their parent
-        l_cHtml += '  var buildTree = function(tree, item) {'
-        l_cHtml += '   if (tree) {'
-        l_cHtml += '    if (item) { '
-        l_cHtml += '        for (var i=0; i<tree.length; i++) { '
-        l_cHtml += '            if (String(tree[i].id) === String(item.parentId)) { '
-        l_cHtml += '                tree[i].nodes.push(item); '
-        l_cHtml += '                break;'
-        l_cHtml += '            }'
-        l_cHtml += '            else  { buildTree(tree[i].nodes, item); }'
-        l_cHtml += '        }'
-        l_cHtml += '      }'
-        l_cHtml += '      else { '
-        l_cHtml += '        var idx = 0;'
-        l_cHtml += '        while (idx < tree.length) { '
-        l_cHtml += '            if (tree[idx].parentId) { buildTree(tree, tree.splice(idx, 1)[0]) } '
-        l_cHtml += '            else { idx++; }'
-        l_cHtml += '        }'
-        l_cHtml += '      }'
-        l_cHtml += '    }'
-        l_cHtml += '};'
+        if !empty(l_cSelectedPackageFullPk) .and. !empty(par_cSelectedAssociationLinkUID)
+            l_cHtml += 'var isAssocSelected = true;'
+        else
+            l_cHtml += 'var isAssocSelected = true;'
+        endif
         l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
+        if !empty(par_cSelectedEntityLinkUID) .or. !empty(par_cSelectedAssociationLinkUID)
+            l_cHtml += 'if(selectedPKs == "") {'
+            l_cHtml += '    selectedPKs = "0"'
+            l_cHtml += '}'
+        endif
         l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
         l_cHtml += 'for (var i=0; i<data.length; i++) { '
         l_cHtml += '    if(splitSelectedPKs.includes(data[i].id)) {'
         l_cHtml += '       data[i].expanded = true;'
+        l_cHtml += '       if(isAssocSelected && splitSelectedPKs[splitSelectedPKs.length-1] == data[i].id) {'
+        l_cHtml += '           data[i].nodes[0].expanded = true;'
+        l_cHtml += '       }'
         l_cHtml += '    }'
         l_cHtml += '}'
         l_cHtml += 'buildTree(data);'
+        l_cHtml += 'modifyLeafNodes(data);'
+
         l_cHtml += [  return data;]
         l_cHtml += [}]
         l_cHtml += [$("#tree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+        l_cHtml += [</script>]
+    
+    endif
+    
+    return l_cHtml
+
+    //=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
+    local l_cHtml := []
+    local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
+    
+    local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+    local l_cSelectedDataTypeFullPk := []
+    
+    local l_nNumberOfDataTypes
+    
+    oFcgi:TraceAdd("DataTypeTreeBuild")
+
+    with object l_oDB_ListOfDataTypes
+        :Table("FDD6607E-63E7-4328-81AB-B85BFDBF6040","DataType")
+        :Column("DataType.pk"        ,"pk")
+        :Column("DataType.LinkUID"   ,"DataType_LinkUID")
+        :Column("DataType.Name"  ,"DataType_Name")
+        :Column("DataType.fk_DataType","DataType_Parent")
+        :Column("DataType.FullPk"  ,"DataType_FullPk")
+        :Where("DataType.fk_Model = ^",par_iModelPk)
+        //:Join("left outer","Package","","DataType.fk_Package = Package.pk")
+        :OrderBy("DataType_Name")
+        :SQL("ListOfDataTypes")
+        l_nNumberOfDataTypes := :Tally
+    endwith
+    
+    
+    //This is using https://github.com/chrisv2/bs5treeview
+    if !empty(l_nNumberOfDataTypes)
+        
+        l_cHtml += [<div id="datatype-tree"></div>]
+        l_cHtml += [<script>]
+        l_cHtml += [function getDTTree() {]
+        l_cHtml += '  var dataDT = ['
+        l_cHtml += [{id:"0",text:"]+oFcgi:p_ANFDataTypes+[", icon: "bi bi-code-slash",]+'nodes:[],'
+        if !empty(par_cSelectedDataTypeLinkUID)
+            l_cHtml += [expanded: true,]
+        endif
+        l_cHtml += '},'
+        select ListOfDataTypes
+        scan all
+            l_cHtml += [{id:"]+trans(ListOfDataTypes->pk)+[",]
+            if !empty(ListOfDataTypes->DataType_Parent)
+                l_cHtml += [parentId:"]+trans(ListOfDataTypes->DataType_Parent)+[",]
+            else
+                l_cHtml += [parentId:"0",]
+            endif
+            if !empty(par_cSelectedDataTypeLinkUID) .and. par_cSelectedDataTypeLinkUID == ListOfDataTypes->DataType_LinkUID
+                l_cSelectedDataTypeFullPk = ListOfDataTypes->DataType_FullPk
+                l_cHtml += [expanded: true,]
+            endif
+            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/", text:"]+ListOfDataTypes->DataType_Name+[", icon: "bi bi-code",]
+            l_cHtml += 'nodes: [ ]'
+            l_cHtml += [},]
+        endscan
+        l_cHtml += '  ];'
+        l_cHtml += 'var selectedPKs = "'+l_cSelectedDataTypeFullPk+'";'
+        l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
+        l_cHtml += 'for (var i=0; i<dataDT.length; i++) { '
+        l_cHtml += '    if(splitSelectedPKs.includes(dataDT[i].id)) {'
+        l_cHtml += '       dataDT[i].expanded = true;'
+        l_cHtml += '    }'
+        l_cHtml += '}'
+        l_cHtml += 'buildDTTree(dataDT);'
+        l_cHtml += 'modifyLeafNodes(dataDT);'
+        l_cHtml += [  return dataDT;]
+        l_cHtml += [}]
+        l_cHtml += [$("#datatype-tree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
         l_cHtml += [</script>]
     
     endif
@@ -3450,7 +3559,6 @@ with object l_oDB_ListOfAssociationsEndpoints
     endwith
 endwith
 
-l_cHtml += [<div class="card w-80">]
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="List">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
@@ -3570,7 +3678,6 @@ if !empty(l_nNumberOfAssociations)
             l_cHtml += [</table>]
             
         l_cHtml += [</div>]
-    l_cHtml += [</div>]
     l_cHtml += [</div>]
 
 endif
