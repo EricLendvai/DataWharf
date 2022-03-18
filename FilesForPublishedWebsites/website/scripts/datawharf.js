@@ -50,3 +50,30 @@ function buildDTTree(tree, item) {
       }
     }
 };
+
+$(document).ready(function () {
+    $('#sidebarCollapse').on('click', function () {
+        $('#sidebarMenu').toggleClass('active');
+    });
+});
+
+
+$(document).ready(function(){
+    $('.collapse.bstreeview').on('hidden.bs.collapse', function() {
+        if (this.id) {
+            localStorage[this.id] = 'true';
+        }
+    }).on('shown.bs.collapse', function() {
+        if (this.id) {
+            localStorage[this.id] = 'false';
+        }
+    }).each(function() {
+        if(this.id ){
+            if (localStorage[this.id] === 'true' ) {
+                $(this).collapse('hide');
+            } else {
+                $(this).collapse('show');
+            }
+        }
+    })
+});

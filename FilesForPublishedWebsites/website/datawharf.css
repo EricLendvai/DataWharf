@@ -9,7 +9,9 @@
  * Sidebar
  */
 
-.sidebar {
+ .sidebar {
+  min-width: 300px;
+  max-width: 300px;
   /* rtl:raw:
   right: 0;
   */
@@ -18,7 +20,10 @@
   left: 0;
   z-index: 100; /* Behind the navbar */
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  -webkit-transition: all 0.3s;
+  transition: all 0.3s;
 }
+
 
 @media (max-width: 767.98px) {
   .sidebar {
@@ -55,7 +60,6 @@
 }
 
 #sidebarMenu .list-group-item {
-  background-color: inherit;
   border: 0px;
   padding-bottom: .2rem;
   padding-top: .2rem;
@@ -64,6 +68,10 @@
 
 #sidebarMenu .item-icon {
   margin-right: 5px;
+}
+
+#sidebarMenu.active {
+  margin-left: -300px;
 }
 
 .sidebar-heading {

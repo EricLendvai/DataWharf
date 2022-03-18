@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/14/2022 v 2.13
+* Modeling Treeview Enhancements. (From GitHub Merge)
+
 ## 03/13/2022 v 2.12
 * New option to detect foreign keys where the column name is formatted as <TableName>_id
 * For consistency made all foreign keys default to 0 instead of null. YOU MUST GET LATEST version of the Harbour_ORM repo.
