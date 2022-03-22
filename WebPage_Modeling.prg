@@ -22,6 +22,7 @@ local l_hValues := {=>}
 local l_cModelingElement := "ENTITIES"  //Default to Entities
 
 local l_cURLAction
+local l_cURLSubAction
 local l_cURLLinkUID := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
@@ -64,6 +65,8 @@ oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+
 // Modeling/ListEntities/Model.LinkUID>/
 // Modeling/NewEntity/<Model.LinkUID>/
 // Modeling/EditEntity/<Entity.LinkUID>/
+// Modeling/EditEntity/<Entity.LinkUID>/ListAttributes
+// Modeling/EditEntity/<Entity.LinkUID>/ListAssociations
 
 // Modeling/ListAttributes/<Entity.LinkUID>/
 // Modeling/NewAttribute/<Entity.LinkUID>/
@@ -86,6 +89,10 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
         l_cURLLinkUID := oFcgi:p_URLPathElements[3]
+    endif
+
+    if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+        l_cURLSubAction := oFcgi:p_URLPathElements[4]
     endif
 
     do case
@@ -471,7 +478,6 @@ otherwise
 
         case l_cURLAction == "NewEntity"
             if oFcgi:p_nAccessLevelML >= 5
-                
                 if oFcgi:isGet()
                     l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
                 else
@@ -498,8 +504,15 @@ otherwise
                         l_hValues["Description"]    := l_oData:Entity_Description
                         l_hValues["Information"]    := l_oData:Entity_Information
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
-
-                        l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
+                        l_cHtml += GetEntityEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_cURLSubAction)
+                        do case
+                            case empty(l_cURLSubAction)
+                                l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
+                            case l_cURLSubAction == "ListAssociations"
+                                l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                            case l_cURLSubAction == "ListAttributes"
+                                l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID )
+                        endcase
                     endif
                 else
                     l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
@@ -1938,6 +1951,27 @@ otherwise
 endcase
 
 return l_cHtml
+
+static function GetEntityEditHeader(par_cSitePath, par_cModelLinkUID, par_cEntityLinkUID, par_cEntityElement)
+local l_cHtml := ""
+l_cHtml += [<ul class="nav nav-tabs">]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(empty(par_cEntityElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/">Edit ]+oFcgi:p_ANFEntity+[</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ListAttributes",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAttributes">]+oFcgi:p_ANFAttributes+[</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ListAssociations",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAssociations">]+oFcgi:p_ANFAssociations+[</a>]
+    l_cHtml += [</li>]
+
+l_cHtml += [</ul>]
+return l_cHtml
+
+
 //=================================================================================================================
 static function EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
@@ -1988,7 +2022,7 @@ if !empty(l_cErrorText)
     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
 endif
 
-l_cHtml += [<nav class="navbar navbar-light bg-light">]
+l_cHtml += [<nav class="navbar nav-tabs bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ ]+oFcgi:p_ANFEntity+[</span>]   //navbar-text
         if oFcgi:p_nAccessLevelML >= 3
@@ -1999,7 +2033,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Modeling/ListAttributes/]+l_oDataEntityInfo:Entity_LinkUID+[/">]+oFcgi:p_ANFAttributes+[</a>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -2348,7 +2381,7 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
     //This is using https://github.com/chrisv2/bs5treeview
     if !empty(l_nNumberOfPackages)
         
-        l_cHtml += [<div id="packagesTree" class="collapse show"></div>]
+        l_cHtml += [<div id="packagesTree" class="collapse hide"></div>]
         l_cHtml += [<script>]        
         l_cHtml += [function getTree() {]
         l_cHtml += '  var data = ['
@@ -2478,7 +2511,7 @@ static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
     //This is using https://github.com/chrisv2/bs5treeview
     if !empty(l_nNumberOfDataTypes)
         
-        l_cHtml += [<div id="dataTypesTree" class="collapse show"></div>]
+        l_cHtml += [<div id="dataTypesTree" class="collapse hide"></div>]
         l_cHtml += [<script>]
         l_cHtml += [function getDTTree() {]
         l_cHtml += '  var dataDT = ['
@@ -3397,7 +3430,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+static function AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_iAssociatedEntityLinkUID)
 local l_cHtml := []
 local l_oDB_ListOfAssociations               := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociationsEndpoints      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3450,6 +3483,13 @@ with object l_oDB_ListOfAssociations
         endif
         if !empty(l_cSearchEndpointDescription)
             :KeywordCondition(l_cSearchEndpointDescription,"Endpoint.Description")
+        endif
+    else
+        if !empty(par_iAssociatedEntityLinkUID)
+            :Distinct(.t.)
+            :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
+            :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
+            :Where("Entity.LinkUID = ^" , par_iAssociatedEntityLinkUID)
         endif
     endif
 
@@ -4449,7 +4489,6 @@ if l_nNumberOfAttributes > 0
     endwith
 endif
 
-
 if l_nNumberOfAttributes <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
@@ -4457,8 +4496,6 @@ if l_nNumberOfAttributes <= 0
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewAttribute/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFAttribute+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Back To ]+oFcgi:p_ANFEntities+[</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/?From=Attributes">Edit ]+oFcgi:p_ANFEntity+[</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -4468,11 +4505,9 @@ else
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/NewAttribute/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFAttribute+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Back To ]+oFcgi:p_ANFEntities+[</a>]
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/OrderAttributes/]+par_cEntityLinkUID+[/">Order ]+oFcgi:p_ANFAttributes+[</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/?From=Attributes">Edit ]+oFcgi:p_ANFEntity+[</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -4877,11 +4912,11 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 
 case l_cActionOnSubmit == "Delete"   // Attribute
     if oFcgi:p_nAccessLevelML >= 5
@@ -4889,7 +4924,7 @@ case l_cActionOnSubmit == "Delete"   // Attribute
         CustomFieldsDelete(par_iProjectPk,USEDON_ATTRIBUTE,l_iAttributePk)
         l_oDB1:Delete("f47695cf-ff12-4c3f-8e12-3b4a17bc306b","Attribute",l_iAttributePk)
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 
     endif
 
@@ -4970,7 +5005,7 @@ l_cHtml += [<div class="m-3">]
             if oFcgi:p_nAccessLevelML >= 3
                 l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListAttributes/]+par_cEntityLinkUID+[/">Cancel</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAttributes">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -5044,7 +5079,7 @@ case l_cActionOnSubmit == "Save"
         endfor
     endif
 
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 
 endcase
 

@@ -15,3 +15,5 @@ Thumbs.db
 *sdol*.*
 sdol
 hb_out.log
+.DS_Store
+*.dmp

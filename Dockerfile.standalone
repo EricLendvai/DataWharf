@@ -91,4 +91,4 @@ COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWhar
 RUN chown -R www-data:www-data /var/www/Harbour_websites
 
 EXPOSE 80 
-CMD /etc/init.d/postgresql start && apache2ctl -D FOREGROUND
+CMD /etc/init.d/postgresql start && apache2ctl start & sleep infinity
