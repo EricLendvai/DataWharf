@@ -108,6 +108,9 @@ class MyFcgi from hb_Fcgi
     method OnShutdown()
     method OnError(par_oError)
     method Self() inline Self
+
+    #include "api.txt"
+
 endclass
 //=================================================================================================================
 method OnFirstRequest() class MyFcgi
@@ -390,6 +393,8 @@ local l_TimeStamp1 := hb_DateTime()
 local l_TimeStamp2
 local l_lShowDevelopmentInfo := .f.
 static l_lGetUUIDSupported := .f.  // Used to ensure the PostgreSQL database has the "pgcrypto" extension installed.
+local l_cAccessToken
+local l_sAPIFunction
 
 SendToDebugView("Request Counter",::RequestCount)
 
@@ -505,7 +510,8 @@ else
         //     AAdd(::URLPathElements,l_aPathElements[l_iLoop])
         // endfor
 
-        if l_cPageName <> "ajax"
+        // if l_cPageName <> "ajax"
+        if !VFP_Inlist(lower(l_cPageName),"ajax","api")
 
             l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
             // #define WEBPAGEHANDLE_NAME            1
@@ -603,7 +609,7 @@ else
         l_cUserName       := ""
         l_nUserAccessMode := 0
 
-        if !empty(l_cSessionID)
+        if !empty(l_cSessionID) .and. !VFP_Inlist(lower(l_cPageName),"api")
             l_nPos               := at("-",l_cSessionID)
             l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
             l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
@@ -633,7 +639,8 @@ else
             endif
         endif
         
-        if l_cPageName <> "ajax"
+        // if l_cPageName <> "ajax"
+        if !VFP_Inlist(lower(l_cPageName),"ajax","api")
             //If not a public page and not logged in, then request to log in.
             if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
                 if oFcgi:IsGet()
@@ -753,8 +760,26 @@ else
                 endif
             endif
         else
+            //Not Logged In
             if l_cPageName == "ajax"
                 l_cBody := [UNBUFFERED Not Logged In]
+            elseif l_cPageName == "api"
+                // Check for tocken
+                l_cAccessToken := oFcgi:GetHeaderValue("AccessToken")
+                l_cBody := [UNBUFFERED]
+
+                if l_cAccessToken <> "0123456789"
+                    l_cBody += [Invalid Access Token]
+
+                else
+                    l_sAPIFunction := hb_HGetDef(oFcgi:p_APIs,GetAPIURIElement(1),NIL)   // Use the first URL element after /api/
+                    if hb_IsNIL(l_sAPIFunction)
+                        l_cBody += [Invalid API Call]
+                    else
+                        l_cBody += l_sAPIFunction:exec()
+                    endif
+
+                endif
             else
                 ::p_nUserAccessMode := 0
                 if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] == 0   //public page
@@ -1347,4 +1372,14 @@ case oFcgi:p_nUserAccessMode  = 4  // Root Admin (User Control)
 endcase
 return l_nAccessLevelDD
 //=================================================================================================================
+function GetAPIURIElement(par_nElementNumber) // After the API Name
+// Example:  /api/GetProjects
+local l_cResult
+altd()
+if len(oFcgi:p_URLPathElements) >= 1 + par_nElementNumber
+    l_cResult := oFcgi:p_URLPathElements[1 + par_nElementNumber]
+else
+    l_cResult := ""
+endif
+return l_cResult
 //=================================================================================================================

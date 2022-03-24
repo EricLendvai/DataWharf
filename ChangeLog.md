@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 03/23/2022 v 2.14
+* Modeling entities edition page now has tabs for easy access to properties and associations. (From GitHub Merge)
+* Initial support to /api/ framework.  (set AccessToken = 0123456789 in request header, temporary solution until formal Authorization system.)
+
 ## 03/14/2022 v 2.13
 * Modeling Treeview Enhancements. (From GitHub Merge)
 
@@ -15,7 +19,6 @@
 * Incorporated treeview in modeling. (From GitHub Merge)
 * Min CSS fixes for treeview.
 * Fixed Access issues for "Root Admin" user.
-
 ## 03/09/2022 v 2.09
 * Markdown preview for modeling entities. (From GitHub Merge)
 * Fixed label in Association from "Aspect Of" to "Is Containment"
