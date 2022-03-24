@@ -3,5 +3,10 @@
 // The function should be implemented in any if the API_*.prg, without using a STATIC prefix (making the functions reachable from anywhere inside the FastCGI exe, including DataWharf.prg)
 
 data p_APIs init ;
-{"GetApplicationInformation" => @GetApplicationInformation(),;
- "GetProjects"               => @APIGetListOfProjects() }
+{"applicationInformation" => @GetApplicationInformation(),;
+ "projects"               => @APIGetListOfProjects(),;
+ "models"               => @APIGetListOfModels(),;
+ "packages"               => @APIGetListOfPackages(),;
+ "associations"               => @APIGetListOfAssociations(),;
+ "datatypes"               => @APIGetListOfDataTypes(),;
+  "classes"               => @APIGetListOfEntities() }

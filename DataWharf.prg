@@ -776,7 +776,7 @@ else
                     if hb_IsNIL(l_sAPIFunction)
                         l_cBody += [Invalid API Call]
                     else
-                        l_cBody += l_sAPIFunction:exec()
+                        l_cBody += l_sAPIFunction:exec(GetAPIURIElement(2))
                     endif
 
                 endif
