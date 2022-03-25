@@ -776,6 +776,7 @@ else
                     if hb_IsNIL(l_sAPIFunction)
                         l_cBody += [Invalid API Call]
                     else
+                        oFcgi:SetContentType("application/json")
                         l_cBody += l_sAPIFunction:exec()
                     endif
 
@@ -1375,7 +1376,6 @@ return l_nAccessLevelDD
 function GetAPIURIElement(par_nElementNumber) // After the API Name
 // Example:  /api/GetProjects
 local l_cResult
-altd()
 if len(oFcgi:p_URLPathElements) >= 1 + par_nElementNumber
     l_cResult := oFcgi:p_URLPathElements[1 + par_nElementNumber]
 else

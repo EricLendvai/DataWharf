@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/24/2022 v 2.15
+* Basic API Support for modeling (Under Development).
+
 ## 03/23/2022 v 2.14
 * Modeling entities edition page now has tabs for easy access to properties and associations. (From GitHub Merge)
 * Initial support to /api/ framework.  (set AccessToken = 0123456789 in request header, temporary solution until formal Authorization system.)

@@ -2278,7 +2278,7 @@ else
                         endif
 
                     endif
-                    
+
                     l_cHtml += [<div class="m-3"></div>]
                 endif
             endfor
