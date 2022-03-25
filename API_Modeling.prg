@@ -206,8 +206,6 @@ local l_nNumberOfModels
 local l_aListOfModels := {}
 local l_hModelInfo    := {=>}
 
-oFcgi:SetContentType("application/json")
-
 with object l_oDB_ListOfModels
     :Table("d498c464-b815-43eb-8649-5b609219fdba","Model")
     :Column("Model.pk"         ,"pk")
@@ -264,8 +262,6 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfPackages
 local l_aListOfPackages := {}
 local l_hPackageInfo    := {=>}
-
-oFcgi:SetContentType("application/json")
 
 with object l_oDB1
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","Package")
@@ -330,8 +326,6 @@ local l_oDB_ListOfAssociationsAndEnds := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfAssociations
 local l_aListOfAssociations := {}
 local l_hAssociationInfo    := {=>}
-
-oFcgi:SetContentType("application/json")
 
 with object l_oDB_ListOfAssociations
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Association")
@@ -422,8 +416,6 @@ local l_aListOfDataTypes := {}
 local l_hDataTypeInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
 local l_xSubDataTypes
-
-oFcgi:SetContentType("application/json")
 
 with object l_oDB_ListOfTopDataTypes
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","DataType")
