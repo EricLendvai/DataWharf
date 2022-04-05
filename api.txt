@@ -5,8 +5,8 @@
 data p_APIs init ;
 {"applicationInformation" => @GetApplicationInformation(),;
  "projects"               => @APIGetListOfProjects(),;
- "models"               => @APIGetListOfModels(),;
+ "models"                 => @APIGetListOfModels(),;
  "packages"               => @APIGetListOfPackages(),;
- "associations"               => @APIGetListOfAssociations(),;
- "datatypes"               => @APIGetListOfDataTypes(),;
-  "classes"               => @APIGetListOfEntities() }
+ "associations"           => @APIGetListOfAssociations(),;
+ "datatypes"              => @APIGetListOfDataTypes(),;
+ "classes"                => @APIGetListOfEntities() }
