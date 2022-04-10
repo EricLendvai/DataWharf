@@ -1827,6 +1827,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
 l_cHtml += [</nav>]
 
+if !empty(oFcgi:GetAppConfig("SyncToStoplight_Command"))
+    l_cHtml += [<div>]  // class="m-3"
+    l_cHtml += [<input type="submit" class="btn btn-primary rounded me-3 mt-3" value="Sync to Stoplight" onclick="$('#ActionOnSubmit').val('SyncToStoplight');document.form.submit();" role="button">]
+    l_cHtml += [</div>]
+endif
+
 l_cHtml += [<div class="m-3"></div>]
 
 l_cHtml += [</form>]
@@ -1915,6 +1921,7 @@ local l_cEntityDescription
 local l_cAttributeName
 local l_cAttributeDescription
 local l_cURL
+local l_cSyncToStoplight_Command
 
 oFcgi:TraceAdd("EntityListFormOnSubmit")
 
@@ -1944,6 +1951,16 @@ case l_cActionOnSubmit == "Reset"
 
     l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/"
     oFcgi:Redirect(l_cURL)
+
+case l_cActionOnSubmit == "SyncToStoplight"
+    l_cSyncToStoplight_Command := oFcgi:GetAppConfig("SyncToStoplight_Command")
+    if !empty(l_cSyncToStoplight_Command)
+        // hb_ProcessRun(l_cSyncToStoplight_Command,,,,.t.)
+        // hb_ProcessRun(l_cSyncToStoplight_Command)
+        hb_run(l_cSyncToStoplight_Command+" "+par_cModelLinkUID)
+    endif
+    
+    l_cHtml += EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
 
 otherwise
     l_cHtml += EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)

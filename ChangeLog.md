@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 04/09/2022 v 2.16
+* Integrated API endpoints provided mainly during Hackathon
+* Fixed to ignore Unicode flag on non Character based column types.
+* Added support to iOS (Mac) Builds by allowing linux behavior to also apply to Mac.
+
 ## 03/24/2022 v 2.15
 * Basic API Support for modeling (Under Development).
 

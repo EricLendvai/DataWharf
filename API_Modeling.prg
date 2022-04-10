@@ -29,7 +29,7 @@ return hb_jsonEncode(l_cResponse)
 function APIGetListOfProjects()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cProjectId  := GetAPIURIElement(2)
 local l_oDB_ListOfProjects := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfProjects
 local l_aListOfProjects := {}
@@ -43,6 +43,9 @@ with object l_oDB_ListOfProjects
     :Column("Project.UseStatus"  ,"Project_UseStatus")
     :Column("Project.Description","Project_Description")
     :Column("Upper(Project.Name)","tag1")
+    if !empty(l_cProjectId)
+        :Where("Project.LinkUID = ^", l_cProjectId)
+    endif
     :OrderBy("tag1")
 
     //_M_ Add access right restrictions
@@ -56,8 +59,8 @@ with object l_oDB_ListOfProjects
 endwith
 
 if l_nNumberOfProjects < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error"})
-     oFcgi:SetHeaderValue("Status","500 Internal Server Error - Failed SQL 493f214c-aa5a-4d63-a465-9d5a4adeaa48")
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 493f214c-aa5a-4d63-a465-9d5a4adeaa48"})
+     oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfProjects
     scan all
@@ -68,7 +71,21 @@ else
         AAdd(l_aListOfProjects,hb_hClone(l_hProjectInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode(l_aListOfProjects)
+    if !empty(l_cProjectId)
+        if l_nNumberOfProjects == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfProjects == 1
+            l_cResponse := hb_jsonEncode(l_aListOfProjects[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
+            "@recordsetCount" => l_nNumberOfProjects,;
+            "items" => l_aListOfProjects;
+        })
+    endif
 endif
 
 return l_cResponse
@@ -79,7 +96,7 @@ return l_cResponse
 function APIGetListOfEntities()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cEntityId  := GetAPIURIElement(2)
 local l_oDB_ListOfEntities              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntitiesAndAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfEntities
@@ -87,6 +104,7 @@ local l_aListOfEntities   := {}
 local l_hEntityInfo       := {=>}
 local l_aListOfAttributes := {}
 local l_hAttributesInfo   := {=>}
+local l_cModelId         := oFcgi:GetQueryString("model")
 
 with object l_oDB_ListOfEntities
     :Table("9C052CE0-BD88-49B4-B5BD-A85C5A89B549","Entity")
@@ -100,6 +118,13 @@ with object l_oDB_ListOfEntities
     :Column("Upper(Entity.Name)","tag1")
     :Join("left outer","Package","","Entity.fk_Package = Package.pk")
     :Join("inner","Model","","Entity.fk_Model = Model.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
     :OrderBy("tag1")
 
     //_M_ Add access right restrictions
@@ -124,15 +149,18 @@ with object l_oDB_ListOfEntitiesAndAttributes
     :Column("DataType.Name"       ,"DataType_Name")
     :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
     :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    endif
     :OrderBy("Entity_pk")
     :OrderBy("tag1")
     :SQL("ListOfEntitiesAndAttributes")
 endwith
 
 if l_nNumberOfEntities < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"No Entities"})
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 9909c890-9078-419e-a6a8-71c778cea5f6"})
     //set error code to 500
-    oFcgi:SetHeaderValue("Status","500 Internal Server Error - Failed SQL 9909c890-9078-419e-a6a8-71c778cea5f6")
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfEntities
     scan all
@@ -186,10 +214,22 @@ else
         AAdd(l_aListOfEntities,hb_hClone(l_hEntityInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode({;
-        "@recordsetCount" => l_nNumberOfEntities,;
-        "items" => l_aListOfEntities;
-    })
+    if !empty(l_cEntityId)
+        if l_nNumberOfEntities == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfEntities == 1
+            l_cResponse := hb_jsonEncode(l_aListOfEntities[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
+            "@recordsetCount" => l_nNumberOfEntities,;
+            "items" => l_aListOfEntities;
+        })
+    endif
+
 endif
 
 return l_cResponse
@@ -200,7 +240,7 @@ return l_cResponse
 function APIGetListOfModels()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cModelId  := GetAPIURIElement(2)
 local l_oDB_ListOfModels := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfModels
 local l_aListOfModels := {}
@@ -215,6 +255,9 @@ with object l_oDB_ListOfModels
     :Column("Model.Description","Model_Description")
     :Column("Upper(Model.Name)","tag1")        
     :OrderBy("tag1")
+    if !empty(l_cModelId)
+        :Where("Model.LinkUID = ^", l_cModelId)
+    endif
 
     //_M_ Add access right restrictions
     // if oFcgi:p_nUserAccessMode <= 1
@@ -227,8 +270,8 @@ with object l_oDB_ListOfModels
 endwith
 
 if l_nNumberOfModels < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error"})
-    oFcgi:SetHeaderValue("Status","500 Internal Server Error - Failed SQL d498c464-b815-43eb-8649-5b609219fdba")
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL d498c464-b815-43eb-8649-5b609219fdba"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfModels
     scan all
@@ -243,10 +286,21 @@ else
         AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode({;
+    if !empty(l_cModelId)
+        if l_nNumberOfModels == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfModels == 1
+            l_cResponse := hb_jsonEncode(l_aListOfModels[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
                 "@recordsetCount" => l_nNumberOfModels,;
                 "items" => l_aListOfModels;
             })
+    endif
 endif
 
 return l_cResponse
@@ -257,11 +311,12 @@ return l_cResponse
 function APIGetListOfPackages()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cPackageId  := GetAPIURIElement(2)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfPackages
 local l_aListOfPackages := {}
 local l_hPackageInfo    := {=>}
+local l_cModelId         := oFcgi:GetQueryString("model")
 
 with object l_oDB1
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","Package")
@@ -275,6 +330,13 @@ with object l_oDB1
     //:Column("Package.Description","Package_Description")
     :Join("left outer","Package","parent","Package.fk_Package = parent.pk")
     :Join("inner","Model","","Package.fk_Model = Model.pk")
+    if !empty(l_cPackageId)
+        :Where("Package.LinkUID = ^", l_cPackageId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
     :Column("Upper(Package.Name)","tag1")
     :OrderBy("tag1")
 
@@ -289,8 +351,8 @@ with object l_oDB1
 endwith
 
 if l_nNumberOfPackages < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error"})
-    oFcgi:SetHeaderValue("Status","500 Internal Server Error - Failed SQL 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89")
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfPackages
     scan all
@@ -306,10 +368,21 @@ else
         AAdd(l_aListOfPackages,hb_hClone(l_hPackageInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode({;
+    if !empty(l_cPackageId)
+        if l_nNumberOfPackages == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfPackages == 1
+            l_cResponse := hb_jsonEncode(l_aListOfPackages[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
                 "@recordsetCount" => l_nNumberOfPackages,;
                 "items" => l_aListOfPackages;
             })
+    endif
 endif
 
 return l_cResponse
@@ -320,12 +393,16 @@ return l_cResponse
 function APIGetListOfAssociations()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cAssociationId  := GetAPIURIElement(2)
 local l_oDB_ListOfAssociations        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociationsAndEnds := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfAssociations
+local l_nNumberOfAssociationEnds
 local l_aListOfAssociations := {}
+local l_aListOfAssociationEnds := {}
 local l_hAssociationInfo    := {=>}
+local l_hAssociationEndsInfo    := {=>}
+local l_cModelId         := oFcgi:GetQueryString("model")
 
 with object l_oDB_ListOfAssociations
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Association")
@@ -339,6 +416,13 @@ with object l_oDB_ListOfAssociations
     //:Column("Association.Description","Association_Description")
     :Join("left outer","Package","","Association.fk_Package = Package.pk")
     :Join("inner","Model","","Association.fk_Model = Model.pk")
+    if !empty(l_cAssociationId)
+        :Where("Association.LinkUID = ^", l_cAssociationId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
     :Column("Upper(Association.Name)","tag1")
     :OrderBy("tag1")
 
@@ -357,29 +441,48 @@ if l_nNumberOfAssociations >= 0
         :Table("9909c890-9078-419e-a6a8-71c778cea5f7","Association")
         :Column("Endpoint.pk"         ,"pk")
         :Column("Association.pk"      ,"Association_pk")
-        :Column("Endpoint.Order"      ,"tag1")
-        :Column("Endpoint.Name"       ,"Attribute_Name")
-        :Column("Endpoint.Description","Attribute_Description")
-        :Column("Endpoint.BoundLower" ,"Attribute_BoundLower")
-        :Column("Attribute.BoundUpper","Attribute_BoundUpper")
-        :Column("DataType.Name"       ,"DataType_Name")
-        :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
-        :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
-        :OrderBy("Entity_pk")
+        :Column("Endpoint.IsContainment"      ,"Endpoint_IsContainment")
+        :Column("Endpoint.Name"       ,"Endpoint_Name")
+        :Column("Endpoint.Description","Endpoint_Description")
+        :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
+        :Column("Endpoint.BoundUpper","Endpoint_BoundUpper")
+        :Column("Entity.LinkUID","Entity_LinkUID")
+        :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
+        :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
+        :OrderBy("Endpoint.pk")
         :OrderBy("tag1")
         :SQL("ListOfAssociationsAndEnds")
         if :Tally < 0
-            l_nNumberOfAssociations := :Tally
+            l_nNumberOfAssociationEnds := :Tally
         endif
     endwith
 endif
 
 if l_nNumberOfAssociations < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error"})
-    oFcgi:SetHeaderValue("Status","500 Internal Server Error - 9909c890-9078-419e-a6a8-71c778cea5f6")
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error","Message"=>"SQL Error in query 9909c890-9078-419e-a6a8-71c778cea5f6"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfAssociations
     scan all
+        l_aListOfAssociationEnds := {}
+        select ListOfAssociationsAndEnds
+        scan all for ListOfAssociationsAndEnds->Association_pk == ListOfAssociations->pk
+            hb_HClear(l_hAssociationEndsInfo)
+            if !empty(ListOfAssociationsAndEnds->Endpoint_Name)
+                l_hAssociationEndsInfo["name"] := ListOfAssociationsAndEnds->Endpoint_Name
+            endif
+            l_hAssociationEndsInfo["type"] := ListOfAssociationsAndEnds->Entity_LinkUID
+            if !empty(ListOfAssociationsAndEnds->Endpoint_Description)
+                l_hAssociationEndsInfo["description"] := ListOfAssociationsAndEnds->Endpoint_Description
+            endif
+            if !empty(ListOfAssociationsAndEnds->Endpoint_BoundLower)
+                l_hAssociationEndsInfo["lower"] := ListOfAssociationsAndEnds->Endpoint_BoundLower
+            endif
+            if !empty(ListOfAssociationsAndEnds->Endpoint_BoundUpper)
+                l_hAssociationEndsInfo["upper"] := ListOfAssociationsAndEnds->Endpoint_BoundUpper
+            endif
+            AAdd(l_aListOfAssociationEnds,hb_hClone(l_hAssociationEndsInfo))
+        endscan
         hb_HClear(l_hAssociationInfo)
         l_hAssociationInfo["id"]  := ListOfAssociations->Association_LinkUID
         l_hAssociationInfo["name"] := ListOfAssociations->Association_Name
@@ -390,15 +493,29 @@ else
             l_hAssociationInfo["package"] := ListOfAssociations->Package_LinkUID
         endif
         l_hAssociationInfo["model"] := ListOfAssociations->Model_LinkUID
-        //l_hAssociationInfo["description"] := ListOfAssociations->Association_Description
+        l_hAssociationInfo["associationEnds"]  := l_aListOfAssociationEnds
+        if !empty(ListOfAssociations->Association_Description)
+            l_hAssociationInfo["description"] := ListOfAssociations->Association_Description
+        endif
 
         AAdd(l_aListOfAssociations,hb_hClone(l_hAssociationInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode({;
+    if !empty(l_cAssociationId)
+        if l_nNumberOfAssociations == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfAssociations == 1
+            l_cResponse := hb_jsonEncode(l_aListOfAssociations[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
                 "@recordsetCount" => l_nNumberOfAssociations,;
                 "items" => l_aListOfAssociations;
             })
+    endif
 endif
 
 return l_cResponse
@@ -409,7 +526,7 @@ return l_cResponse
 function APIGetListOfDataTypes()
 
 local l_cResponse := ""
-//local l_cVersion  := GetAPIURIElement(2)
+local l_cDataTypeId  := GetAPIURIElement(2)
 local l_oDB_ListOfTopDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfDataTypes
 local l_aListOfDataTypes := {}
@@ -430,7 +547,13 @@ with object l_oDB_ListOfTopDataTypes
     :Join("left outer","PrimitiveType","","DataType.fk_PrimitiveType = PrimitiveType.pk")
     :Join("inner","Model","","DataType.fk_Model = Model.pk")
     // :Column("Upper(DataType.Name)","tag1")
-    :Where("Model.LinkUID = ^", l_cModelId)
+    if !empty(l_cDataTypeId)
+        :Where("DataType.LinkUID = ^", l_cDataTypeId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
     :Where("DataType.TreeLevel = 1")
     :OrderBy("tag1")
 
@@ -445,8 +568,8 @@ with object l_oDB_ListOfTopDataTypes
 endwith
 
 if l_nNumberOfDataTypes < 0
-    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error"})
-    oFcgi:SetHeaderValue("Status","500 Internal Server Error - 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89")
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
 else
     select ListOfTopDataTypes
     scan all
@@ -469,10 +592,21 @@ else
         AAdd(l_aListOfDataTypes,hb_hClone(l_hDataTypeInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
-    l_cResponse := hb_jsonEncode({;
+    if !empty(l_cDataTypeId)
+        if l_nNumberOfDataTypes == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfDataTypes == 1
+            l_cResponse := hb_jsonEncode(l_aListOfDataTypes[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
                 "@recordsetCount" => l_nNumberOfDataTypes,;
                 "items" => l_aListOfDataTypes;
             })
+    endif
 endif
 
 return l_cResponse

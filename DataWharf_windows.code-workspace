@@ -4,17 +4,20 @@
             "path": "."
         }
         ,{
+            "path": "R:\\Harbour_websites\\fcgi_DataWharf\\backend"
+        }
+        ,{
             "path": "..\\..\\hb_fcgi"
         }
         ,{
             "path": "c:\\apache24-64\\conf"
         }
-        ,{
-            "path": "R:\\Harbour_ORM\\"
-        }
-        ,{
-            "path": "R:\\Harbour_VFP\\"
-        }
+        // ,{
+        //     "path": "R:\\Harbour_ORM\\"
+        // }
+        // ,{
+        //     "path": "R:\\Harbour_VFP\\"
+        // }
     ],
     "settings": {
         "files.autoSave": "onFocusChange",
@@ -31,7 +34,10 @@
         "local-history.daysLimit": 0,
         "local-history.maxDisplay": 5,
         "cSpell.words": [
-            "UPDATESAVEBUTTON"
+            "fontawesome",
+            "TRAC",
+            "UPDATESAVEBUTTON",
+            "USEDON"
         ]
     }
 }

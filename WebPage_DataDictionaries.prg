@@ -1022,7 +1022,7 @@ if l_iTypePos > 0
         endif
     endcase
 
-    if par_iColumnUnicode
+    if par_iColumnUnicode .and. oFcgi:p_ColumnTypes[l_iTypePos,6]
         l_cResult += " Unicode"
     endif
 
