@@ -11,7 +11,10 @@
 #-map
 
 #Temporary solution due to conflict of same definition in Harbour_FastCGI and Harbour_VFP
--ldflag=-Wl,--allow-multiple-definition
+#-ldflag=-Wl,--allow-multiple-definition
+#Instead now using the following 2 preprocessor variables, one for .prg files and other for .c files.
+-prgflag=-DUSING_HB_VFP
+-cflag=-DUSING_HB_VFP
 
 #To include the hb_vfp module, and even allow its debugging
 -incpath=${HB_VFP_ROOT}\

@@ -1022,7 +1022,7 @@ if l_iTypePos > 0
         endif
     endcase
 
-    if par_iColumnUnicode
+    if par_iColumnUnicode .and. oFcgi:p_ColumnTypes[l_iTypePos,6]
         l_cResult += " Unicode"
     endif
 
@@ -1643,7 +1643,7 @@ oFcgi:TraceAdd("NameSpaceEditFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iNameSpacePk          := Val(oFcgi:GetInputValue("TableKey"))
-l_cNameSpaceName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cNameSpaceName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 l_cNameSpaceAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cNameSpaceAKA)
     l_cNameSpaceAKA := NIL
@@ -2565,7 +2565,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
 
 l_iNameSpacePk      := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
-l_cTableName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cTableName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 l_cTableAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
     l_cTableAKA := NIL
@@ -3330,8 +3330,8 @@ local l_Counter
 oFcgi:TraceAdd("ColumnOrderFormOnSubmit")
 
 l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
-l_iTablePk    := Val(oFcgi:GetInputValue("TableKey"))
-l_cColumnPkOrder := SanitizeInput(Strtran(oFcgi:GetInputValue("ColumnOrder")," ",""))
+l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
+l_cColumnPkOrder    := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ColumnOrder"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -3825,7 +3825,7 @@ l_iColumnPk              := Val(oFcgi:GetInputValue("TableKey"))
 
 l_lShowPrimary           := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
-l_cColumnName            := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cColumnName            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
 l_cColumnAKA             := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cColumnAKA)
@@ -3834,7 +3834,7 @@ endif
 
 l_nColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
-l_cColumnType            := SanitizeInput(Strtran(oFcgi:GetInputValue("ComboType")," ",""))
+l_cColumnType            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
 
 l_cColumnLength          := SanitizeInput(oFcgi:GetInputValue("TextLength"))
 l_nColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
@@ -4622,7 +4622,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_iNameSpacePk                  := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
-l_cEnumerationName              := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cEnumerationName              := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
 l_cEnumerationAKA               := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumerationAKA)
@@ -4998,7 +4998,7 @@ oFcgi:TraceAdd("EnumValueOrderFormOnSubmit")
 
 l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk    := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_cEnumValuePkOrder := SanitizeInput(Strtran(oFcgi:GetInputValue("ValueOrder")," ",""))
+l_cEnumValuePkOrder := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ValueOrder"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -5172,7 +5172,7 @@ oFcgi:TraceAdd("EnumValueEditFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumValuePk          := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_cEnumValueName        := SanitizeInput(Strtran(oFcgi:GetInputValue("TextName")," ",""))
+l_cEnumValueName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
 l_cEnumValueAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumValueAKA)
@@ -5432,7 +5432,7 @@ l_nSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
 l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
 l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
 l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
-l_cSyncNameSpaces    := strtran(SanitizeInput(oFcgi:GetInputValue("TextSyncNameSpaces"))," ","")
+l_cSyncNameSpaces    := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextSyncNameSpaces"))
 l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
@@ -5770,7 +5770,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iTagPk              := Val(oFcgi:GetInputValue("TableKey"))
 l_cTagName            := Alltrim(SanitizeInput(oFcgi:GetInputValue("TextName")))
-l_cTagCode            := upper(SanitizeInput(Strtran(oFcgi:GetInputValue("TextCode")," ","")))
+l_cTagCode            := upper(SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextCode")))
 l_iTagTableUseStatus  := Val(oFcgi:GetInputValue("ComboTableUseStatus"))
 l_iTagColumnUseStatus := Val(oFcgi:GetInputValue("ComboColumnUseStatus"))
 l_cTagDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))

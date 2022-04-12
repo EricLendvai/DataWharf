@@ -1015,8 +1015,20 @@ function hb_buildinfo()
 return l_cBuildInfo
 //=================================================================================================================
 function SanitizeInput(par_text)
-local l_result := AllTrim(par_text)
+local l_result := AllTrim(vfp_StrReplace(par_text,{chr(9)=>" "}))
 l_result = vfp_StrReplace(l_result,{"<"="",">"=""})
+return l_result
+//=================================================================================================================
+function SanitizeInputAlphaNumeric(par_text)
+local l_result := []
+local l_nPos
+local l_cChar
+for l_nPos := 1 to len(par_text)
+    l_cChar := substr(par_text,l_nPos,1)
+    if l_cChar $ [_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]
+        l_result += l_cChar
+    endif
+endfor
 return l_result
 //=================================================================================================================
 function GetConfirmationModalForms()
