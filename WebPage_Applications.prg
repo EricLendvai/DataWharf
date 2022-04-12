@@ -493,7 +493,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iApplicationPk             := Val(oFcgi:GetInputValue("TableKey"))
 l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_cApplicationLinkCode       := Upper(Strtran(SanitizeInput(oFcgi:GetInputValue("TextLinkCode"))," ",""))
+l_cApplicationLinkCode       := Upper(SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextLinkCode")))
 l_nApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_nApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cApplicationDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))

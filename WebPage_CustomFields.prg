@@ -591,7 +591,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iCustomFieldPk               := Val(oFcgi:GetInputValue("TableKey"))
 l_cCustomFieldName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_cCustomFieldCode             := Upper(Strtran(SanitizeInput(oFcgi:GetInputValue("TextCode"))," ",""))
+l_cCustomFieldCode             := Upper(SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextCode")))
 l_cCustomFieldLabel            := SanitizeInput(oFcgi:GetInputValue("TextLabel"))
 l_iCustomFieldType             := Val(oFcgi:GetInputValue("ComboType"))
 l_cCustomFieldOptionDefinition := SanitizeInput(oFcgi:GetInputValue("TextOptionDefinition"))

@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 04/11/2022 v 2.17
+* Fix cleanup of invalid characters during entry of name space/table/column/enum ... fields. Only Alpha Numeric and "_" are allowed now.
+
 ## 04/09/2022 v 2.16
 * Integrated API endpoints provided mainly during Hackathon
 * Fixed to ignore Unicode flag on non Character based column types.
