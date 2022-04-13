@@ -521,7 +521,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_SQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
     l_SQLCommandFields  += [       upper(columns.table_name)        AS tag2]
     l_SQLCommandFields  += [ FROM information_schema.columns]
+    l_SQLCommandFields  += [ INNER JOIN information_schema.tables ON columns.table_catalog = columns.table_catalog AND columns.table_schema = tables.table_schema AND columns.table_name = tables.table_name]
     l_SQLCommandFields  += [ WHERE NOT (lower(left(columns.table_name,11)) = 'schemacache' OR lower(columns.table_schema) in ('information_schema','pg_catalog'))]
+    l_SQLCommandFields  += [ AND   tables.table_type = 'BASE TABLE']
     if !empty(par_cSyncNameSpaces)
         l_SQLCommandFields  += [ AND lower(columns.table_schema) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)

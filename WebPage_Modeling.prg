@@ -5062,7 +5062,7 @@ oFcgi:TraceAdd("AttributeOrderFormOnSubmit")
 
 l_cActionOnSubmit    := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEntityPk          := Val(oFcgi:GetInputValue("EntityKey"))
-l_cAttributePkOrder  := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("AttributeOrder"))
+l_cAttributePkOrder  := SanitizeInput(oFcgi:GetInputValue("AttributeOrder"))
 
 do case
 case l_cActionOnSubmit == "Save"

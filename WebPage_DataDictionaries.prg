@@ -3331,7 +3331,7 @@ oFcgi:TraceAdd("ColumnOrderFormOnSubmit")
 
 l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
-l_cColumnPkOrder    := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ColumnOrder"))
+l_cColumnPkOrder    := SanitizeInput(oFcgi:GetInputValue("ColumnOrder"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -4998,7 +4998,7 @@ oFcgi:TraceAdd("EnumValueOrderFormOnSubmit")
 
 l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk    := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_cEnumValuePkOrder := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ValueOrder"))
+l_cEnumValuePkOrder := SanitizeInput(oFcgi:GetInputValue("ValueOrder"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -5432,7 +5432,7 @@ l_nSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
 l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
 l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
 l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
-l_cSyncNameSpaces    := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextSyncNameSpaces"))
+l_cSyncNameSpaces    := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextSyncNameSpaces"),[,_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
 l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )

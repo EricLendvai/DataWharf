@@ -1019,13 +1019,16 @@ local l_result := AllTrim(vfp_StrReplace(par_text,{chr(9)=>" "}))
 l_result = vfp_StrReplace(l_result,{"<"="",">"=""})
 return l_result
 //=================================================================================================================
-function SanitizeInputAlphaNumeric(par_text)
+function SanitizeInputAlphaNumeric(par_cText)
+return SanitizeInputWithValidChars(par_cText,[_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+//=================================================================================================================
+function SanitizeInputWithValidChars(par_text,par_cValidChars)
 local l_result := []
 local l_nPos
 local l_cChar
 for l_nPos := 1 to len(par_text)
     l_cChar := substr(par_text,l_nPos,1)
-    if l_cChar $ [_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ]
+    if l_cChar $ par_cValidChars
         l_result += l_cChar
     endif
 endfor
