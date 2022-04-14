@@ -1191,7 +1191,7 @@ scan all
     l_CheckBoxId := "CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)
     l_cHtml += [<tr><td>]
         l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Entity"+Trans(ListOfAllEntitiesInModel->pk),.f.)," checked","")+[ class="form-check-input">]
-        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANEntity">]+iif(l_lShowPackage,ListOfAllEntitiesInModel->Package_FullName+[ ],[])+ListOfAllEntitiesInModel->Entity_Name
+        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANEntity">]+ListOfAllEntitiesInModel->Entity_Name+iif(l_lShowPackage .and. !hb_IsNil(ListOfAllEntitiesInModel->Package_FullName),[ (]+ListOfAllEntitiesInModel->Package_FullName+[)],[])
         l_cHtml += [</span></label>]
     l_cHtml += [</td></tr>]
 endscan

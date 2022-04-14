@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 04/12/2022 v 2.19
+* Fix error in "Settings" in "Diagrams" where some entities have packages and some don't.
+
 ## 04/12/2022 v 2.18
 * Fix load/sync for PostgreSQL to skip views.
 * Fix load/sync on multiple schemas separated with comma.
