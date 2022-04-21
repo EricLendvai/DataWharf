@@ -17,3 +17,5 @@ sdol
 hb_out.log
 .DS_Store
 *.dmp
+build/**
+Harbour_FastCGI
