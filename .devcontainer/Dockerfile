@@ -17,7 +17,8 @@ RUN apt-get install -y \
         libfcgi-dev \
         libgpm2 \
         gnupg \
-        wget
+        wget \
+        psmisc
 
 
 # install harbour from src
@@ -48,7 +49,21 @@ RUN chmod +x ./BuildLIB.sh
 ENV LIBName hb_orm
 RUN ./BuildLIB.sh
 
+#also build debug libraries
+ENV BuildMode debug
+
+WORKDIR /src/Harbour_VFP
+RUN chmod +x ./BuildLIB.sh
+ENV LIBName hb_vfp
+RUN ./BuildLIB.sh
+
+WORKDIR /src/Harbour_ORM
+RUN chmod +x ./BuildLIB.sh
+ENV LIBName hb_orm
+RUN ./BuildLIB.sh
+
 # Build DataWharf
+ENV BuildMode release
 WORKDIR /src
 RUN mkdir -p build/lin64/gcc/release/
 ENV EXEName FCGIDataWharf
@@ -90,5 +105,5 @@ COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWhar
 
 RUN chown -R www-data:www-data /var/www/Harbour_websites
 
-EXPOSE 80 
-CMD /etc/init.d/postgresql start && apache2ctl start & sleep infinity
+RUN update-rc.d apache2  defaults
+RUN update-rc.d postgresql  defaults

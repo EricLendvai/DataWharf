@@ -48,5 +48,5 @@ FixNonNormalizedFields.prg
 WebPages.hbm
 API.hbm
 
-./Harbour_FastCGI/hb_fcgi/hb_fcgi_linux.hbm
+/src/Harbour_FastCGI/hb_fcgi/hb_fcgi_linux.hbm
 ./debugger.hbm

@@ -2,19 +2,19 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+             "path": "/src/Harbour_FastCGI/hb_fcgi"
         }
-        // ,{
-        //     "path": "/etc/Harbour_FastCGI/hb_fcgi"
-        // }
     ],
     "settings": {
         "files.autoSave": "onFocusChange",
-        "harbour.compilerExecutable": "/etc/harbour/bin/linux/gcc/harbour",
-        "harbour.extraOptions": "-i/etc/harbour/include/",
-        "harbour.extraIncludePaths":["/etc/harbour/include/",
-                                     "/etc/Harbour_VFP/",
-                                     "/etc/Harbour_ORM/",
-                                     "/etc/Harbour_FastCGI/hb_fcgi/"],
+        "harbour.compilerExecutable": "/usr/local/bin/harbour",
+        "harbour.extraOptions": "-i/usr/local/include/harbour/",
+        "harbour.extraIncludePaths":["/usr/local/include/harbour/",
+                                     "/src/Harbour_VFP/",
+                                     "/src/Harbour_ORM/",
+                                     "/src/Harbour_FastCGI/hb_fcgi/"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
         "local-history.path": "/etc/VSCode_History/Harbour_FastCGI",
