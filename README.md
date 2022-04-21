@@ -73,3 +73,10 @@ docker context use lima
 - Go to `Ports` view and open the port that exposes port `80` on the host (e.g., http://localhost:60677)
 ![alt](doc/images/devcontainer-ports.png)
 
+## Database
+- The PostgreSQL DB is also accessible from the host via the exposed port `5432`.
+- Using e.g., PGAdmin you can connect using the following credentials:
+  - Host: `localhost`
+  - Port: `5432`
+  - Username: `datawharf`
+  - Password: `mypassord`

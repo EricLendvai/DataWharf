@@ -19,3 +19,4 @@ hb_out.log
 *.dmp
 build/**
 Harbour_FastCGI
+!examples/datawharf.dmp

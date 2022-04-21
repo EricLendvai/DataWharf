@@ -291,7 +291,18 @@
                 },
                 "presentation": {"reveal": "never"}
             }
-        }
+        },
+        {
+            "label": "LoadSampleData",
+            "linux":{
+                "type": "shell",
+                "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Load Sample Data>","hide" : false}
+                },
+            }
+        },
     ],
     "inputs": [
         {
