@@ -32,6 +32,10 @@ Configure lima for docker: https://georgik.rocks/how-to-develop-for-esp32-c3-wit
 
 ## Build and run project
 - Reopen the folder in the dev container: press `F1` and then do `>Remote-Containers: Open Folder in Container...`
-- Open the Terminal (e.g., Shift + control + ` on Mac) and run apache and postgres:
-`/etc/init.d/postgresql start && apache2ctl start & sleep infinity`
+- You can now use the following tasks defined by VS Code to compile/debug:
+  - `<Compile Debug>`: Compiles with debug settings and deployes the executable inside the backend part of the apache website: `/var/www/Harbour_websites/fcgi_DataWharf/backend/`. (Note: only the exe will be copied there for now, changes done to website parts such as `.js` or `.css` files need to be copied there manually).
+  - `<Compile Release>`: Build without debug settings.
+  - `<Debug>`: Attaches to the running executable inside Apache.
+- Go to `Ports` view and open the port that exposes port `80` on the host (e.g., http://localhost:60677)
+![alt](doc/images/devcontainer-ports.png)
 
