@@ -28,7 +28,41 @@ In order to develop in any environement you can use the VS Code devcontainer pro
 Install remote containers extension: https://aka.ms/vscode-remote/download/containers
 
 ## How to setup on a Mac with Lima instead of Docker Desktop
-Configure lima for docker: https://georgik.rocks/how-to-develop-for-esp32-c3-with-rust-on-macos-with-lima-using-dev-container-in-vs-code/
+Source: [here](https://georgik.rocks/how-to-develop-for-esp32-c3-with-rust-on-macos-with-lima-using-dev-container-in-vs-code/)
+
+Install Lima and Docker-CLI:
+```
+brew install lima docker
+```
+
+Create Linux VM with Dockerd:
+
+```
+curl https://raw.githubusercontent.com/lima-vm/lima/master/examples/docker.yaml -O
+limactl start ./docker.yaml
+limactl shell docker
+sudo systemctl enable ssh.service
+```
+There is one important tweak in the Lima configuration. It’s necessary to enable write operation otherwise, the workspace mounted from VS Code is read-only. Open file `~/.lima/docker/lima.yaml` and add writable flag to desired folder:
+```
+mounts:
+- location: "~"
+  writable: true
+```
+Restart Lima to apply changes.
+```
+limactl stop docker
+limactl start docker
+```
+
+Create context for Docker-CLI to connect to dockerd running in the VM:
+
+
+```
+docker context create lima --docker "host=unix://${HOME}/.lima/docker/sock/docker.sock"
+docker context use lima
+```
+
 
 ## Build and run project
 - Reopen the folder in the dev container: press `F1` and then do `>Remote-Containers: Open Folder in Container...`
