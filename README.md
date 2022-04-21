@@ -23,3 +23,15 @@ DataWharf can run on Windows, Linux or any platforms supported by the above list
 
 View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
 
+# VS Code Devcontainer
+In order to develop in any environement you can use the VS Code devcontainer provided in this repo.
+Install remote containers extension: https://aka.ms/vscode-remote/download/containers
+
+## How to setup on a Mac with Lima instead of Docker Desktop
+Configure lima for docker: https://georgik.rocks/how-to-develop-for-esp32-c3-with-rust-on-macos-with-lima-using-dev-container-in-vs-code/
+
+## Build and run project
+- Reopen the folder in the dev container: press `F1` and then do `>Remote-Containers: Open Folder in Container...`
+- Open the Terminal (e.g., Shift + control + ` on Mac) and run apache and postgres:
+`/etc/init.d/postgresql start && apache2ctl start & sleep infinity`
+
