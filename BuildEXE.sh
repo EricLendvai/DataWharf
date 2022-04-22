@@ -52,10 +52,10 @@ else
             #  -p        = Leave generated ppo files
 
             if [ "${BuildMode}" = "debug" ] ; then
-                cp Harbour_FastCGI/hb_fcgi/debugger_on.hbm Harbour_FastCGI/hb_fcgi/debugger.hbm
+                cp ./debugger_on.hbm ./debugger.hbm
                 hbmk2 "${EXEName}_linux.hbp" -b  -p -w3 -shared
             else
-                cp Harbour_FastCGI/hb_fcgi/debugger_off.hbm Harbour_FastCGI/hb_fcgi/hb_fcgi/debugger.hbm
+                cp ./debugger_off.hbm ./debugger.hbm
                 hbmk2 "${EXEName}_linux.hbp" -w3 -static
                 # -static
                 # -fullstatic

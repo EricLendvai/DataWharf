@@ -20,3 +20,4 @@ hb_out.log
 build/**
 Harbour_FastCGI
 !examples/datawharf.dmp
+debugger.hbm

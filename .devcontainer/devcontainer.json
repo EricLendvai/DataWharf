@@ -33,8 +33,6 @@
 	// },
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"initializeCommand":"rm Harbour_FastCGI", //remove symlink to FastCGI
-	"postCreateCommand": "ln -s /src/Harbour_FastCGI/ /workspaces/DataWharf/Harbour_FastCGI", //re-create the symlink
 	"postStartCommand": "service postgresql start; service apache2 start" //start services
 
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
