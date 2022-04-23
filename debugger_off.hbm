@@ -1,0 +1,2 @@
+#This file will be copied to debugger.hbm when release build was selected
+#No inclusion of the vscode_debugger.prg

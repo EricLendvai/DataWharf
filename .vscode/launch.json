@@ -18,11 +18,11 @@
                 ]
             },
             "linux":{
-                "program": "/etc/fcgi_DataWharf/backend/FCGIDataWharf.exe",
+                "program": "/var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe",
                 "sourcePaths": [
                     "${workspaceFolder}",
-                    "/etc/Harbour_ORM/",
-                    "/etc/Harbour_VFP/"
+                    "/src/Harbour_ORM/",
+                    "/src/Harbour_VFP/"
                 ]
             }
         }

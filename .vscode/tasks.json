@@ -52,18 +52,18 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/hb_fcgi/BuildEXE.sh",
+                "command": "sh ${workspaceFolder}/BuildEXE.sh",
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"/etc/Harbour_VFP",
-                        "HB_ORM_ROOT":"/etc/Harbour_ORM",
-                        "FastCGIRootPath":"/etc/Harbour_FastCGI/",
+                        "HB_VFP_ROOT":"/src/Harbour_VFP",
+                        "HB_ORM_ROOT":"/src/Harbour_ORM",
+                        "FastCGIRootPath":"/src/Harbour_FastCGI/",
                         "EXEName":"DataWharf",
                         "BuildMode":"debug",
                         "HB_COMPILER":"gcc",
                         "WebsiteDrive":"",
-                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_DataWharf/"
+                        "SiteRootFolder":"/var/www/Harbour_websites/fcgi_DataWharf/"
                     },
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
                 },
@@ -112,18 +112,18 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/hb_fcgi/BuildEXE.sh",
+                "command": "sh ${workspaceFolder}/BuildEXE.sh",
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"/etc/Harbour_VFP",
-                        "HB_ORM_ROOT":"/etc/Harbour_ORM",
-                        "FastCGIRootPath":"/etc/Harbour_FastCGI/",
+                        "HB_VFP_ROOT":"/src/Harbour_VFP",
+                        "HB_ORM_ROOT":"/src/Harbour_ORM",
+                        "FastCGIRootPath":"/src/Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"release",
                         "HB_COMPILER":"gcc",
                         "WebsiteDrive":"",
-                        "SiteRootFolder":"/etc/Harbour_websites/fcgi_DataWharf/"
+                        "SiteRootFolder":"/var/www/Harbour_websites/fcgi_DataWharf/"
                     },
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
                 },
@@ -151,8 +151,8 @@
             },
             "linux":{
                 "type": "shell",
-                "command":"taskkill",
-                "args": ["/IM","FCGIDataWharf.exe","/f","/t"],
+                "command":"killall",
+                "args": ["FCGIDataWharf.exe"],
                 "options": {
                     "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
                 }
@@ -170,8 +170,8 @@
             },
             "linux":{
                 "type": "shell",
-                "command":"/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe",
-                "args": ["kill","http","localhost","80","/fcgi_DataWharf/","/etc/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
+                "command":"/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe",
+                "args": ["kill","http","localhost","80","/fcgi_DataWharf/","/var/www/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
                 "options": {
                     "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
                 }
@@ -214,7 +214,7 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_DataWharf/ /var/www/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -260,7 +260,7 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_DataWharf/ /var/www/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -291,7 +291,18 @@
                 },
                 "presentation": {"reveal": "never"}
             }
-        }
+        },
+        {
+            "label": "LoadSampleData",
+            "linux":{
+                "type": "shell",
+                "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Load Sample Data>","hide" : false}
+                },
+            }
+        },
     ],
     "inputs": [
         {
