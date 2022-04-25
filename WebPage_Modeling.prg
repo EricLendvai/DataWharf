@@ -47,7 +47,8 @@ oFcgi:TraceAdd("BuildPageModeling")
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_1_2_0/css/bstreeview.min.css">]
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
 
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/datawharf.js"></script>]
 
@@ -2488,7 +2489,6 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
                 endif
             endif
         endif
-        l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
         l_cHtml += [</script>]
     endif
     
