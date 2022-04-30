@@ -29,6 +29,8 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cLinkUID
 local l_lFoundHeaderInfo := .f.
 
+local l_cParentPackage := oFcgi:GetQueryString("parentPackage")
+local l_cFromEntity := oFcgi:GetQueryString("fromEntity")
 local l_nAccessLevelML := 1
 // As per the info in Schema.txt
 //     1 - None
@@ -47,7 +49,8 @@ oFcgi:TraceAdd("BuildPageModeling")
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_1_2_0/css/bstreeview.min.css">]
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
 
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/datawharf.js"></script>]
 
@@ -479,9 +482,9 @@ otherwise
         case l_cURLAction == "NewEntity"
             if oFcgi:p_nAccessLevelML >= 5
                 if oFcgi:isGet()
-                    l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                    l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>},l_cParentPackage)
                 else
-                    l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_cParentPackage)
                 endif
             endif
 
@@ -495,6 +498,8 @@ otherwise
                         :Column("Entity.Name"         , "Entity_Name")
                         :Column("Entity.Description"  , "Entity_Description")
                         :Column("Entity.Information"  , "Entity_Information")
+                        :Column("Package.LinkUID"  , "Package_LinkUID")
+                        :Join("left","Package","","Entity.fk_Package = Package.pk") 
                         l_oData := :Get(l_oDataHeader:Entity_pk)
                     endwith
 
@@ -509,9 +514,9 @@ otherwise
                             case empty(l_cURLSubAction)
                                 l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
                             case l_cURLSubAction == "ListAssociations"
-                                l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                                l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_oData:Package_LinkUID)
                             case l_cURLSubAction == "ListAttributes"
-                                l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID )
+                                l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
                         endcase
                     endif
                 else
@@ -587,9 +592,9 @@ otherwise
             if oFcgi:p_nAccessLevelML >= 5
                 
                 if oFcgi:isGet()
-                    l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>})
+                    l_cHtml += AssociationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"","",0,{=>},l_cParentPackage,l_cFromEntity)
                 else
-                    l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID)
+                    l_cHtml += AssociationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Association_LinkUID,l_cParentPackage,l_cFromEntity)
                 endif
             endif
 
@@ -689,8 +694,17 @@ otherwise
                         l_hValues["fk_Package"] := l_oData:Package_fk_Package
                         l_hValues["Name"]       := l_oData:Package_Name
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_PACKAGE,l_oDataHeader:Package_pk,@l_hValues)
+                        l_cHtml += GetPackageEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,l_cURLSubAction)
+                        do case
+                            case empty(l_cURLSubAction)
+                                l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,"",l_oDataHeader:Package_pk,l_hValues)
+                            case l_cURLSubAction == "ListAssociations"
+                                l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Package_LinkUID)
+                            case l_cURLSubAction == "ListEntities"
+                                l_cHtml += EntityListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                        endcase
 
-                        l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,"",l_oDataHeader:Package_pk,l_hValues)
+                        
                     endif
                 else
                     l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
@@ -1598,7 +1612,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+static function EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cPackageLinkUID)
 local l_cHtml := []
 local l_oDB_ListOfEntities                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntitiesAttributeCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1668,6 +1682,9 @@ with object l_oDB_ListOfEntities
     :Join("left","Package","","Entity.fk_Package = Package.pk")
     :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
     :Column("Package.FullName"               , "Package_FullName")
+    if !empty(par_cPackageLinkUID)
+        :Where("Package.LinkUID = ^",par_cPackageLinkUID)
+    endif
 
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -1786,7 +1803,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
                     if oFcgi:p_nAccessLevelML >= 5
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewEntity/]+par_cModelLinkUID+[/">New ]+oFcgi:p_ANFEntity+[</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewEntity/]+par_cModelLinkUID+iif(!empty(par_cPackageLinkUID),[?parentPackage=]+par_cPackageLinkUID,"")+[">New ]+oFcgi:p_ANFEntity+[</a>]
                     else
                         l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
                     endif
@@ -1990,7 +2007,7 @@ return l_cHtml
 
 
 //=================================================================================================================
-static function EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cErrorText,par_iPk,par_hValues)
+static function EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cErrorText,par_iPk,par_hValues,par_cPackageLinkUID)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
@@ -2015,6 +2032,7 @@ with object l_oDB_ListOfPackages
     :Column("Package.pk"         , "pk")
     :Column("Package.FullName"   , "Package_FullName")
     :Column("Package.FullPk"     , "Package_FullPk")
+    :Column("Package.LinkUID"    , "Package_LinkUID")
     :Column("Package.TreeOrder1" , "Tag1")
     :Where("Package.fk_Model = ^" , par_iModelPk)
     :OrderBy("Tag1")
@@ -2072,7 +2090,11 @@ l_cHtml += [<div class="m-3 card-group">]
                             l_cHtml += [<option value="0"]+iif(0 = l_ifk_Package,[ selected],[])+[></option>]
                             select ListOfPackages
                             scan all
-                                l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                                if !empty(par_cPackageLinkUID)
+                                    l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->Package_LinkUID = par_cPackageLinkUID,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                                else
+                                    l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                                endif                                
                             endscan
                             l_cHtml += [</select>]
                         l_cHtml += [</td>]
@@ -2125,7 +2147,7 @@ l_cHtml += GetConfirmationModalForms()
 
 return l_cHtml
 //=================================================================================================================
-static function EntityEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID)
+static function EntityEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cPackageLinkUID)
 
 local l_cHtml := []
 
@@ -2297,7 +2319,11 @@ case !empty(l_cErrorMessage)
     l_cHtml += EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_iEntityPk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iEntityPk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+    if !empty(par_cPackageLinkUID)
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities")
+    else
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+    endif
 
 otherwise
     with object l_oDB1
@@ -2488,7 +2514,6 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
                 endif
             endif
         endif
-        l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
         l_cHtml += [</script>]
     endif
     
@@ -3447,7 +3472,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_iAssociatedEntityLinkUID)
+static function AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociatedEntityLinkUID,par_cPackageLinkUID)
 local l_cHtml := []
 local l_oDB_ListOfAssociations               := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociationsEndpoints      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3502,17 +3527,20 @@ with object l_oDB_ListOfAssociations
             :KeywordCondition(l_cSearchEndpointDescription,"Endpoint.Description")
         endif
     else
-        if !empty(par_iAssociatedEntityLinkUID)
+        if !empty(par_cAssociatedEntityLinkUID)
             :Distinct(.t.)
             :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
             :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
-            :Where("Entity.LinkUID = ^" , par_iAssociatedEntityLinkUID)
+            :Where("Entity.LinkUID = ^" , par_cAssociatedEntityLinkUID)
         endif
     endif
 
     :Join("left","Package","","Association.fk_Package = Package.pk")
     :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")
     :Column("Package.FullName"               , "Package_FullName")
+    if !empty(par_cPackageLinkUID)
+        :Where("Package.LinkUID = ^" , par_cPackageLinkUID)
+    endif
 
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -3564,6 +3592,7 @@ if l_nNumberOfAssociations > 0
 
         :Table("199bf026-c30e-4ab7-89f5-52b651fdd33f","Association")
         :Column("Association.pk"              ,"fk_Association")
+        :Column("Association.pk"              ,"fk_Entity") //this is required as CustomFieldsBuildGridOther relies on this key to exist
 
         :Column("CustomField.pk"         ,"CustomField_pk")
         :Column("CustomField.Label"      ,"CustomField_Label")
@@ -3654,11 +3683,25 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<tr>]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
-                    if oFcgi:p_nAccessLevelML >= 5
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewAssociation/]+par_cModelLinkUID+[/">New ]+oFcgi:p_ANFAssociation+[</a>]
-                    else
-                        l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
+                if oFcgi:p_nAccessLevelML >= 5
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewAssociation/]+par_cModelLinkUID
+                    if (!empty(par_cPackageLinkUID) .or. !empty(par_cAssociatedEntityLinkUID))
+                        l_cHtml += "?"
+                        if !empty(par_cPackageLinkUID)
+                            l_cHtml += [parentPackage=]+par_cPackageLinkUID
+                            if !empty(par_cAssociatedEntityLinkUID)
+                                l_cHtml += [&fromEntity=]+par_cAssociatedEntityLinkUID
+                            endif
+                        else
+                            if !empty(par_cAssociatedEntityLinkUID)
+                                l_cHtml += [fromEntity=]+par_cAssociatedEntityLinkUID
+                            endif
+                        endif
                     endif
+                    l_cHtml += [">New ]+oFcgi:p_ANFAssociation+[</a>]
+                else
+                    l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
+                endif
                 l_cHtml += [</td>]
                 // ----------------------------------------
                 l_cHtml += [<td valign="top">]
@@ -3700,7 +3743,7 @@ l_cHtml += [<div class="m-3"></div>]
 
 l_cHtml += [</form>]
 
-if !empty(l_nNumberOfAssociations)
+if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
     l_cHtml += [<div class="row justify-content-left">]
@@ -3813,9 +3856,29 @@ otherwise
 
 endcase
 
+static function GetPackageEditHeader(par_cSitePath, par_cModelLinkUID, par_cPackageLinkUID, par_cPackageElement)
+    local l_cHtml := ""
+    l_cHtml += [<ul class="nav nav-tabs">]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(empty(par_cPackageElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditPackage/]+par_cPackageLinkUID+[/">Edit ]+oFcgi:p_ANFPackage+[</a>]
+        l_cHtml += [</li>]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cPackageElement == "ListEntities",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditPackage/]+par_cPackageLinkUID+[/ListEntities">]+oFcgi:p_ANFEntities+[</a>]
+        l_cHtml += [</li>]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cPackageElement == "ListAssociations",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditPackage/]+par_cPackageLinkUID+[/ListAssociations">]+oFcgi:p_ANFAssociations+[</a>]
+        l_cHtml += [</li>]
+    
+    l_cHtml += [</ul>]
+    return l_cHtml
+
 return l_cHtml
+
 //=================================================================================================================
-static function AssociationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociationLinkUID,par_cErrorText,par_iPk,par_hValues)
+static function AssociationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociationLinkUID,par_cErrorText,par_iPk,par_hValues,par_cPackageLinkUID,par_cFromEntityLinkUID)
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
@@ -3844,6 +3907,10 @@ local l_cEndpoint_BoundUpper
 local l_lEndpoint_IsContainment
 local l_cEndpoint_Description
 
+local l_iPreselected_Entity_Pk
+local l_cPreselected_Entity_Name
+
+
 oFcgi:TraceAdd("AssociationEditFormBuild")
 
 with object l_oDB_ListOfPackages
@@ -3852,6 +3919,7 @@ with object l_oDB_ListOfPackages
     :Column("Package.pk"         , "pk")
     :Column("Package.FullName"   , "Package_FullName")
     :Column("Package.FullPk"     , "Package_FullPk")
+    :Column("Package.LinkUID"     , "Package_LinkUID")
     :Column("Package.TreeOrder1" , "Tag1")
     :Where("Package.fk_Model = ^" , par_iModelPk)
     :OrderBy("Tag1")
@@ -3897,7 +3965,11 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<option value="0"]+iif(0 = l_ifk_Package,[ selected],[])+[></option>]
                     select ListOfPackages
                     scan all
-                        l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                        if !empty(par_cPackageLinkUID)
+                            l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->Package_LinkUID = par_cPackageLinkUID,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                        else
+                            l_cHtml += [<option value="]+Trans(ListOfPackages->pk)+["]+iif(ListOfPackages->pk = l_ifk_Package,[ selected],[])+[>]+AllTrim(ListOfPackages->Package_FullName)+[</option>]
+                        endif
                     endscan
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
@@ -3925,6 +3997,7 @@ l_cHtml += [<div class="m-3">]
         :Column("Entity.pk"                      , "pk")
         :Column("Package.FullName"               , "Package_FullName")
         :Column("Entity.Name"                    , "Entity_Name")
+        :Column("Entity.LinkUID"                 , "Entity_LinkUID")
         :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")           // _M_ Cast as integer
         :Column("Upper(Entity.Name)"             , "tag2")
         :Where("Entity.fk_Model = ^" , par_iModelPk)
@@ -3955,6 +4028,10 @@ l_cHtml += [<div class="m-3">]
                                      },,1)
         l_json_Entities += "{id:"+trans(ListOfAllEntities->pk)+",text:'"+l_cInfo+"'}"
         l_hEntityNames[ListOfAllEntities->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
+        if ListOfAllEntities->Entity_LinkUID = par_cFromEntityLinkUID
+            l_iPreselected_Entity_Pk := ListOfAllEntities->Pk
+            l_cPreselected_Entity_Name := ListOfAllEntities->Entity_Name
+        endif
     endscan
     l_json_Entities := "["+l_json_Entities+"]"
 
@@ -3996,11 +4073,14 @@ l_cHtml += [<div class="m-3">]
                     
                         l_cObjectName := "ComboEndpoint_Fk_Entity"+l_nCounterC
                         l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity" style="width:600px">]
-                        if l_iEndpoint_Fk_Entity == 0
-                            oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
-                        else
+                        if l_iEndpoint_Fk_Entity != 0
                             //select2 will place the current selected option at the top of the list of options, overriding the initial order.
                             l_cHtml += [<option value="]+Trans(l_iEndpoint_Fk_Entity)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iEndpoint_Fk_Entity,"")+[</option>]
+                        elseif !empty(par_cFromEntityLinkUID) .and. l_nCounter = 1
+                            //we are coming from an entity so pereselct it as first end but only do this for the first Association End
+                            l_cHtml += [<option value="]+Trans(l_iPreselected_Entity_Pk)+[" selected="selected">]+l_cPreselected_Entity_Name+[</option>]
+                        else
+                            oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
                         endif
                         l_cHtml += [</select>]
                     l_cHtml += [</td>]
@@ -4057,7 +4137,7 @@ l_cHtml += GetConfirmationModalForms()
 
 return l_cHtml
 //=================================================================================================================
-static function AssociationEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociationLinkUID)
+static function AssociationEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociationLinkUID,par_cPackageLinkUID)
 
 local l_cHtml := []
 
@@ -4377,7 +4457,11 @@ case !empty(l_cErrorMessage)
     l_cHtml += AssociationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cAssociationLinkUID,l_cErrorMessage,l_iAssociationPk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iAssociationPk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+    if !empty(par_cPackageLinkUID)
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations")
+    else
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+    endif
 
 otherwise
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
