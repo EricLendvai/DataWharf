@@ -788,6 +788,8 @@ otherwise
                         :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("ModelingDiagram.fk_Model",l_oDataHeader:Model_pk)
                         :Field("ModelingDiagram.Name","All Entities")
+                        :Field("ModelingDiagram.AssociationShowName",.t.)
+                        :Field("ModelingDiagram.AssociationEndShowName",.t.)
                         if :Add()
                             l_iModelingDiagramPk := :Key()
                         endif
