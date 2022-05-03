@@ -20,6 +20,8 @@ local l_cNodeLabel
 local l_nNumberOfEntityInModelingDiagram
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
+local l_lAssociationShowName := .t.
+local l_lAssociationEndShowName := .t.
 local l_nNodeMinHeight
 local l_nNodeMaxWidth
 local l_cEntityDescription
@@ -103,12 +105,16 @@ with object l_oDB1
     :Table("5b855361-eb92-45cd-b4e0-ca6b6bea5dd2","ModelingDiagram")
     :Column("ModelingDiagram.VisPos"             ,"ModelingDiagram_VisPos")
     :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
+    :Column("ModelingDiagram.AssociationShowName","ModelingDiagram_AssociationShowName")
+    :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
     :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
     :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
     :Column("ModelingDiagram.LinkUID"            ,"ModelingDiagram_LinkUID")
     l_oDataModelingDiagram     := :Get(l_iModelingDiagramPk)
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
+    l_lAssociationShowName     := l_oDataModelingDiagram:ModelingDiagram_AssociationShowName
+    l_lAssociationEndShowName     := l_oDataModelingDiagram:ModelingDiagram_AssociationEndShowName
     l_nNodeMinHeight           := l_oDataModelingDiagram:ModelingDiagram_NodeMinHeight
     l_nNodeMaxWidth            := l_oDataModelingDiagram:ModelingDiagram_NodeMaxWidth
     l_cModelingDiagram_LinkUID := l_oDataModelingDiagram:ModelingDiagram_LinkUID
@@ -562,7 +568,7 @@ scan all
     
     // l_cHtml += [, smooth: { type: "diagonalCross" }]
     l_cLabel := nvl(ListOfEdgesEntityAssociationNode->Endpoint_Name,"")
-    if !empty(l_cLabel)
+    if !empty(l_cLabel) .and. l_lAssociationEndShowName
         l_cHtml += [,label:"]+EscapeNewlineAndQuotes(l_cLabel)+["]
     endif
 
@@ -642,14 +648,18 @@ scan all
 
         l_cHtml += [{id:"D]+Trans(l_iAssociationPk_Previous)+[",from:"E]+Trans(l_iEntityPk_Previous)+[",to:"E]+Trans(l_iEntityPk_Current )+["]
         l_cHtml += [,color:{color:'#]+MODELING_EDGE_BACKGROUND+[',highlight:'#]+MODELING_EDGE_HIGHLIGHT+['}]
-        l_cHtml += [,label:"]+ListOfEdgesEntityEntity->Association_Name+["]
+        if l_lAssociationShowName
+            l_cHtml += [,label:"]+ListOfEdgesEntityEntity->Association_Name+["]
+        endif
 
         l_cLabel      := nvl(ListOfEdgesEntityEntity->Endpoint_Name,"")
         l_cLabelLower := nvl(ListOfEdgesEntityEntity->Endpoint_BoundLower,"")
         l_cLabelUpper := nvl(ListOfEdgesEntityEntity->Endpoint_BoundUpper,"")
         if (!empty(l_cLabelLower) .and. !empty(l_cLabelUpper))
-            if !empty(l_cLabel)
+            if !empty(l_cLabel) .and. l_lAssociationEndShowName
                 l_cLabel += chr(13)
+            else
+                l_cLabel := ""
             endif
             l_cLabel += l_cLabelLower+".."+l_cLabelUpper
         endif
@@ -661,8 +671,10 @@ scan all
         l_cLabelLower := nvl(l_cEndpointBoundLower_Previous,"")
         l_cLabelUpper := nvl(l_cEndpointBoundUpper_Previous,"")
         if (!empty(l_cLabelLower) .and. !empty(l_cLabelUpper))
-            if !empty(l_cLabel)
+            if !empty(l_cLabel) .and. l_lAssociationEndShowName
                 l_cLabel += chr(13)
+            else
+                l_cLabel := ""
             endif
             l_cLabel += l_cLabelLower+".."+l_cLabelUpper
         endif
@@ -1024,6 +1036,8 @@ local l_CheckBoxId
 local l_lShowPackage
 local l_cPackage_FullName
 local l_lNodeShowDescription
+local l_lAssociationShowName
+local l_lAssociationEndShowName
 local l_nNodeMinHeight
 local l_nNodeMaxWidth
 
@@ -1042,12 +1056,16 @@ if pcount() < 8
             :Table("a9d0a31d-e5ca-44a4-979f-7c6f1f1cf395","ModelingDiagram")
             :Column("ModelingDiagram.name"               ,"ModelingDiagram_name")
             :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
+            :Column("ModelingDiagram.AssociationShowName","ModelingDiagram_AssociationShowName")
+            :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
             :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
             :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
             l_oData := :Get(par_iModelingDiagramPk)
             if :Tally == 1
                 l_hValues["Name"]                := l_oData:ModelingDiagram_name
                 l_hValues["NodeShowDescription"] := l_oData:ModelingDiagram_NodeShowDescription
+                l_hValues["AssociationShowName"] := l_oData:ModelingDiagram_AssociationShowName
+                l_hValues["AssociationEndShowName"] := l_oData:ModelingDiagram_AssociationEndShowName
                 l_hValues["NodeMinHeight"]       := l_oData:ModelingDiagram_NodeMinHeight
                 l_hValues["NodeMaxWidth"]        := l_oData:ModelingDiagram_NodeMaxWidth
             endif
@@ -1107,6 +1125,22 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Node Entity Description</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+        l_lAssociationShowName := hb_HGetDef(l_hValues,"AssociationShowName",.t.)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Show Association Names</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAssociationShowName" id="CheckAssociationShowName" value="1"]+iif(l_lAssociationShowName," checked","")+[ class="form-check-input">]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+        l_lAssociationEndShowName := hb_HGetDef(l_hValues,"AssociationEndShowName",.t.)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Show Association End Names</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAssociationEndShowName" id="CheckAssociationEndShowName" value="1"]+iif(l_lAssociationEndShowName," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1217,6 +1251,8 @@ local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_iModelingDiagram_pk
 local l_cModelingDiagram_Name
 local l_lModelingDiagram_NodeShowDescription
+local l_lModelingDiagram_AssociationShowName
+local l_lModelingDiagram_AssociationEndShowName
 local l_lModelingDiagram_NodeMinHeight
 local l_lModelingDiagram_NodeMaxWidth
 local l_cErrorMessage
@@ -1229,6 +1265,8 @@ oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsOnSubmit")
 l_iModelingDiagram_pk                  := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 l_cModelingDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_lModelingDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
+l_lModelingDiagram_AssociationShowName := (oFcgi:GetInputValue("CheckAssociationShowName") == "1")
+l_lModelingDiagram_AssociationEndShowName := (oFcgi:GetInputValue("CheckAssociationEndShowName") == "1")
 l_lModelingDiagram_NodeMinHeight       := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
 l_lModelingDiagram_NodeMaxWidth        := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
 
@@ -1265,6 +1303,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Table("78f6236c-9017-4098-8ad1-038e2643f343","ModelingDiagram")
             :Field("ModelingDiagram.Name"               ,l_cModelingDiagram_Name)
             :Field("ModelingDiagram.NodeShowDescription",l_lModelingDiagram_NodeShowDescription)
+            :Field("ModelingDiagram.AssociationShowName",l_lModelingDiagram_AssociationShowName)
+            :Field("ModelingDiagram.AssociationEndShowName",l_lModelingDiagram_AssociationEndShowName)
             :Field("ModelingDiagram.NodeMinHeight"      ,l_lModelingDiagram_NodeMinHeight)
             :Field("ModelingDiagram.NodeMaxWidth"       ,l_lModelingDiagram_NodeMaxWidth)
             
@@ -1345,6 +1385,8 @@ case l_cActionOnSubmit == "SaveDiagram"
     else
         l_hValues["Name"]                := l_cModelingDiagram_Name
         l_hValues["NodeShowDescription"] := l_lModelingDiagram_NodeShowDescription
+        l_hValues["AssociationShowName"] := l_lModelingDiagram_AssociationShowName
+        l_hValues["AssociationEndShowName"] := l_lModelingDiagram_AssociationEndShowName
         l_hValues["NodeMinHeight"]       := l_lModelingDiagram_NodeMinHeight
         l_hValues["NodeMaxWidth"]        := l_lModelingDiagram_NodeMaxWidth
                 
