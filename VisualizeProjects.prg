@@ -15,6 +15,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_nLengthDecoded
+local l_lAutoLayout := .t.
 local l_hCoordinate
 local l_cNodeLabel
 local l_nNumberOfEntityInModelingDiagram
@@ -309,7 +310,9 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript">mxBasePath = ']+l_cSitePath+[scripts/mxgraph';</script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
 
 // oFcgi:p_cHeader += [<script type="text/javascript">]
 // oFcgi:p_cHeader += 'function htmlTitle(html) {'
@@ -339,9 +342,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if oFcgi:p_nAccessLevelML >= 4
             l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
-            l_cHtml += [network.storePositions();]
+            //l_cHtml += [network.storePositions();]
 
-            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
             l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
             //Code used to debug the positions.
@@ -403,7 +406,7 @@ l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 l_cHtml += [<table><tr>]
 //-------------------------------------
 l_cHtml += [<td valign="top">]
-l_cHtml += [<div id="mynetwork"></div>]
+l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
 
@@ -436,10 +439,10 @@ l_cHtml += [var network;]
 l_cHtml += [function MakeVis(){]
 
 // create an array with nodes
-l_cHtml += 'var nodes = new vis.DataSet(['
+l_cHtml += 'var nodes = ['
 select ListOfEntities
 scan all
-    l_cNodeLabel := [<b>]+AllTrim(ListOfEntities->Entity_Name)+[</b>]
+    l_cNodeLabel := '<b>'+AllTrim(ListOfEntities->Entity_Name)+'</b>'
     if l_lShowPackage .and. len(nvl(ListOfEntities->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfEntities->Package_FullName+[)]
     endif
@@ -476,6 +479,7 @@ scan all
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"E"+Trans(ListOfEntities->pk),{=>})
         if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
         endif
     endif
@@ -491,7 +495,7 @@ endscan
 //All Nodes for all Association with more than 2 Entity
 select ListOfAssociationNodes
 scan all
-    l_cNodeLabel := [<b>]+AllTrim(ListOfAssociationNodes->Association_Name)+[</b>]
+    l_cNodeLabel := AllTrim(ListOfAssociationNodes->Association_Name)
     if l_lShowPackage .and. len(nvl(ListOfAssociationNodes->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfAssociationNodes->Package_FullName+[)]
     endif
@@ -525,7 +529,7 @@ scan all
         endif
     endif
 
-    l_cHtml += [,shape: "diamond",color:{background:'#]+MODELING_ASSOCIATION_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ASSOCIATION_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+    l_cHtml += [,shape: "rhombus",color:{background:'#]+MODELING_ASSOCIATION_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ASSOCIATION_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"A"+Trans(ListOfAssociationNodes->pk),{=>})
@@ -541,13 +545,13 @@ scan all
     l_cHtml += [},]
 endscan
 
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // SendToClipboard(l_cHtml)
 
 // create an array with edges
 
-l_cHtml += 'var edges = new vis.DataSet(['
+l_cHtml += 'var edges = ['
 
 // Edges between Association Nodes and Entities
 
@@ -740,7 +744,7 @@ scan all
     endif
 endscan
 
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // create a network
 l_cHtml += [  var container = document.getElementById("mynetwork");]
@@ -757,7 +761,7 @@ if l_lNavigationControl
 endif
 l_cHtml +=                  [};]
 
-l_cHtml += [  network = new vis.Network(container, data, options);]  //var
+l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
 
 l_cHtml += ' network.on("click", function (params) {'
 l_cHtml += '   params.event = "[original event]";'
@@ -2135,8 +2139,7 @@ if len(l_aNodes) == 1
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelML >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedEntities" class="btn btn-primary rounded" onclick="]
-                        l_cHtml += [network.storePositions();]
-                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network) );]
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
                         l_cHtml += [">Update ]+oFcgi:p_ANFEntity+[ selection and Save Layout</button></div>]
                     endif
