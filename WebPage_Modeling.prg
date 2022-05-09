@@ -1398,6 +1398,7 @@ local l_iProjectPk     := nvl(hb_HGetDef(par_hValues,"Fk_Project",0),0)
 local l_cName          := hb_HGetDef(par_hValues,"Name","")
 local l_nStage         := hb_HGetDef(par_hValues,"Stage",1)
 local l_cDescription   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cLinkedModels  := ""
 
 local l_oDB_ListOfProjects := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_LinkedModels   := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1428,12 +1429,24 @@ with object l_oDB_LinkedModels
     :Column("LinkedModel.pk"    ,"pk")
     :Column("Model1.Name"       ,"Model1_Name")
     :Column("Model2.Name"       ,"Model2_Name")
-    :SQL("LinkedModels")
-    :Join("inner","Model"    ,"Model1"    ,"LinkedModel.fk_Model1 = Model1.pk")
-    :Join("inner","Model"    ,"Model2"    ,"LinkedModel.fk_Model2 = Model2.pk")
+    :Column("Model1.pk"         ,"Model1_pk")
+    :Column("Model2.pk"         ,"Model2_pk")
+    :Join("inner","Model"       ,"Model1"    ,"LinkedModel.fk_Model1 = Model1.pk")
+    :Join("inner","Model"       ,"Model2"    ,"LinkedModel.fk_Model2 = Model2.pk")
     :Where("LinkedModel.fk_Model1 = ^ OR LinkedModel.fk_Model2 = ^", par_iPk, par_iPk)
+    :SQL("LinkedModels")
 // _M_  Access rights restrictions
-
+    select LinkedModels
+    scan all
+        if !empty(l_cLinkedModels)
+            l_cLinkedModels += [,]
+        endif
+        if LinkedModels->Model1_pk = par_iPk
+            l_cLinkedModels += trans(LinkedModels->Model2_pk)
+        else
+            l_cLinkedModels += trans(LinkedModels->Model1_pk)
+        endif
+    endscan
 endwith
 
 l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
@@ -1469,7 +1482,7 @@ with object l_oDB_ListOfModels
     endif
 endwith
 
-oFcgi:p_cjQueryScript += [$("#linkedModels").amsifySuggestags({]+;
+oFcgi:p_cjQueryScript += [$("#LinkedModels").amsifySuggestags({]+;
     "suggestions :["+l_json_Models+"],"+;
     "whiteList: true,"+;
     "tagLimit: 10,"+;
@@ -1565,8 +1578,8 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
-            l_cHtml += [<td valign="top" class="pe-2 pb-3">Linked Models</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ name="LinkedModels" id="LinkedModels" size="25" maxlength="10000" value=">]+FcgiPrepFieldForValue(l_cLinkedModels)+[" class="form-control TextSearchTag" placeholder=""</td>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Linked ]+oFcgi:p_ANFModels+[</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ name="LinkedModels" id="LinkedModels" size="25" maxlength="10000" value="]+FcgiPrepFieldForValue(l_cLinkedModels)+[" class="form-control TextSearchTag" placeholder=""</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_MODEL,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
@@ -1600,6 +1613,15 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
+local l_oDB_LinkedModels 
+local l_nNumberOfLinkedModelsOnFile
+local l_hLinkedModelsOnFile := {=>}
+local l_cListOfLinkedModelsPks
+local l_aLinkedModelsSelected
+local l_cLinkedModelsSelected
+local l_iLinkedModelsSelectedPk
+local l_iLinkedModelsPk
+local l_iLinkedModelsFk
 
 oFcgi:TraceAdd("ModelEditFormOnSubmit")
 
@@ -1659,6 +1681,66 @@ case l_cActionOnSubmit == "Save"
                     endif
                     if empty(l_cErrorMessage)
                         CustomFieldsSave(par_iProjectPk,USEDON_MODEL,l_iModelPk)
+
+                        //Save Linked models - Begin
+
+                        //Get current list of models assign to table
+                        l_oDB_LinkedModels := hb_SQLData(oFcgi:p_o_SQLConnection)
+                        with object l_oDB_LinkedModels
+                            :Table("A9FBDEE9-1C9B-4849-BC17-2C4464C0DE5A","LinkedModel")
+                            :Column("LinkedModel.pk"             , "LinkedModel_pk")
+                            :Column("LinkedModel.fk_Model1"      , "LinkedModel_fk_Model1")
+                            :Column("LinkedModel.fk_Model2"      , "LinkedModel_fk_Model2")
+                            :Where("LinkedModel.fk_Model1 = ^ OR LinkedModel.fk_Model2 = ^", l_iModelPk, l_iModelPk)
+                            :SQL("ListOfLinkedModelsOnFile")
+
+                            l_nNumberOfLinkedModelsOnFile := :Tally
+                            if l_nNumberOfLinkedModelsOnFile > 0
+                                hb_HAllocate(l_hLinkedModelsOnFile,l_nNumberOfLinkedModelsOnFile)
+                                select ListOfLinkedModelsOnFile
+                                scan all
+                                if ListOfLinkedModelsOnFile->LinkedModel_fk_Model1 = l_iModelPk
+                                    l_hLinkedModelsOnFile[Trans(ListOfLinkedModelsOnFile->LinkedModel_fk_Model2)] := ListOfLinkedModelsOnFile->LinkedModel_pk
+                                else
+                                    l_hLinkedModelsOnFile[Trans(ListOfLinkedModelsOnFile->LinkedModel_fk_Model1)] := ListOfLinkedModelsOnFile->LinkedModel_pk
+                                endif
+                                endscan
+                            endif
+
+                        endwith
+                        Altd()
+
+                        l_cListOfLinkedModelsPks := SanitizeInput(oFcgi:GetInputValue("LinkedModels"))
+
+                        if !empty(l_cListOfLinkedModelsPks)
+                            l_aLinkedModelsSelected := hb_aTokens(l_cListOfLinkedModelsPks,",",.f.)
+                            for each l_cLinkedModelsSelected in l_aLinkedModelsSelected
+                                l_iLinkedModelsSelectedPk := val(l_cLinkedModelsSelected)
+
+                                l_iLinkedModelsPk := hb_HGetDef(l_hLinkedModelsOnFile,Trans(l_iLinkedModelsSelectedPk),0)
+                                if l_iLinkedModelsPk > 0
+                                    //Already on file. Remove from l_hLinkedModelsOnFile
+                                    hb_HDel(l_hLinkedModelsOnFile,Trans(l_iLinkedModelsSelectedPk))
+                                    
+                                else
+                                    // Not on file yet
+                                    with object l_oDB1
+                                        :Table("FE7D2622-9278-4B64-BFB8-113B9F14471E","LinkedModel")
+                                        :Field("LinkedModel.fk_Model1"  ,l_iModelPk)
+                                        :Field("LinkedModel.fk_Model2" ,l_iLinkedModelsSelectedPk)
+                                        :Add()
+                                    endwith
+                                endif
+
+                            endfor
+                        endif
+
+                        //To through what is left in l_hLinkedModelsOnFile and remove it, since was not keep as selected linked model
+                        for each l_iLinkedModelsFk in l_hLinkedModelsOnFile
+                            l_oDB1:Delete("CD306E98-E1C7-4954-A226-C045F29731BB","LinkedModel",l_iLinkedModelsFk)
+                        endfor
+
+                        //Save Linked Models - End
                     endif
                 endwith
             endif
