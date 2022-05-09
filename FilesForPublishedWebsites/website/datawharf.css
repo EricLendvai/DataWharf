@@ -78,3 +78,5 @@
   font-size: .75rem;
   text-transform: uppercase;
 }
+
+.maTooltip { position : absolute }

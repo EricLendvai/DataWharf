@@ -754,13 +754,6 @@ l_cHtml += [    nodes: nodes,]
 l_cHtml += [    edges: edges,]
 l_cHtml += [  };]
 
-l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
-l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
-if l_lNavigationControl
-    l_cHtml +=              [interaction:{navigationButtons:true},]
-endif
-l_cHtml +=                  [};]
-
 l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
 
 l_cHtml += ' network.on("click", function (params) {'

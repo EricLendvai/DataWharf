@@ -4,6 +4,11 @@ function createGraph(container, nodes, edges, autoLayout) {
     graph.setHtmlLabels(true);
     graph.setAllowDanglingEdges(false);
     graph.setDisconnectOnMove(false);
+    graph.setTooltips(true);
+
+    graph.getTooltipForCell = function(cell) {
+            return cell.tooltip;
+        };
 
     var parent = graph.getDefaultParent();
 
@@ -41,6 +46,7 @@ function createGraph(container, nodes, edges, autoLayout) {
             if(!node.shape) {
                 graph.updateCellSize(mxNode,true);
             }
+            mxNode.tooltip = node.title;
             //ensure in size
             if(mxNode.geometry.width < 100) {
                 mxNode.geometry.width = 100;
