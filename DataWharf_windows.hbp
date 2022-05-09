@@ -35,19 +35,11 @@ ${HB_ORM_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_orm.hbx
 sddodbc.hbc
 xhb.hbc
 
-#To load additional contrib libraries
-hbct.hbc
-hbmisc.hbc
 
 -obuild\win64\${HB_COMPILER}\${BuildMode}\${EXEName}.exe
 
-DataWharf.prg
-LoadSchema.prg
-VisualizeApplications.prg
-VisualizeProjects.prg
-FixNonNormalizedFields.prg
-WebPages.hbm
-API.hbm
+DataWharf.hbm
 
-..\..\hb_fcgi\hb_fcgi_windows.hbm
-..\debugger.hbm
+#Since it is not possible to use a variable in the path of the .hbm, adding in in the BuildEXE.bat / .sh
+#${HB_FASTCGI_ROOT}\hb_fcgi\hb_fcgi_windows.hbm
+#r:\Harbour_FastCGI\hb_fcgi\hb_fcgi_windows.hbm

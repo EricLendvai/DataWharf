@@ -36,7 +36,7 @@ ENV BuildMode release
 ENV HB_COMPILER gcc
 ENV HB_VFP_ROOT /src/Harbour_VFP/
 ENV HB_ORM_ROOT /src/Harbour_ORM/
-ENV FastCGIRootPath /src/Harbour_FastCGI/
+ENV HB_FASTCGI_ROOT /src/Harbour_FastCGI/
 
 WORKDIR /src/Harbour_VFP
 RUN chmod +x ./BuildLIB.sh

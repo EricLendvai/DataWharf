@@ -3,7 +3,7 @@
 -trace
 
 #To enabled progressing recompilation uncomment the following line
--inc
+#-inc
 
 -workdir=build/lin64/${HB_COMPILER}/${BuildMode}/hbmk2/
 
@@ -34,19 +34,7 @@ ${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}/hb_orm.hbx
 sddodbc.hbc
 xhb.hbc
 
-#To load additional contrib libraries
-hbct.hbc
-hbmisc.hbc
 
 -obuild/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe
 
-DataWharf.prg
-LoadSchema.prg
-VisualizeApplications.prg
-VisualizeProjects.prg
-FixNonNormalizedFields.prg
-WebPages.hbm
-API.hbm
-
-/src/Harbour_FastCGI/hb_fcgi/hb_fcgi_linux.hbm
-./debugger.hbm
+DataWharf.hbm

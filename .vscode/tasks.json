@@ -23,13 +23,13 @@
             "label": "CompileDebug",
             "windows":{
                 "type": "shell",
-                "command": "${workspaceFolder}\\..\\BuildEXE.bat",
+                "command": "${workspaceFolder}\\BuildEXE.bat",
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
                         "HB_VFP_ROOT":"R:\\Harbour_VFP",
                         "HB_ORM_ROOT":"R:\\Harbour_ORM",
-                        "FastCGIRootPath":"..\\..\\",
+                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"debug",
 //                        "HB_COMPILER":"${input:CCompiler}",
@@ -58,7 +58,7 @@
                     "env": {
                         "HB_VFP_ROOT":"/src/Harbour_VFP",
                         "HB_ORM_ROOT":"/src/Harbour_ORM",
-                        "FastCGIRootPath":"/src/Harbour_FastCGI/",
+                        "HB_FASTCGI_ROOT":"/src/Harbour_FastCGI/",
                         "EXEName":"DataWharf",
                         "BuildMode":"debug",
                         "HB_COMPILER":"gcc",
@@ -83,13 +83,14 @@
             "label": "CompileRelease",
             "windows":{
                 "type": "shell",
-                "command": "${workspaceFolder}\\..\\BuildEXE.bat",
+                "command": "${workspaceFolder}\\BuildEXE.bat",
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
                         "HB_VFP_ROOT":"R:\\Harbour_VFP",
                         "HB_ORM_ROOT":"R:\\Harbour_ORM",
-                        "FastCGIRootPath":"..\\..\\",
+                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
+                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"release",
                         // "HB_COMPILER":"${input:CCompiler}",
@@ -118,7 +119,7 @@
                     "env": {
                         "HB_VFP_ROOT":"/src/Harbour_VFP",
                         "HB_ORM_ROOT":"/src/Harbour_ORM",
-                        "FastCGIRootPath":"/src/Harbour_FastCGI",
+                        "HB_FASTCGI_ROOT":"/src/Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"release",
                         "HB_COMPILER":"gcc",
@@ -201,6 +202,29 @@
             }
         },
         {
+            "label": "DelBuildCache",
+            "windows":{
+                "type": "shell",
+                "command": "rd ${workspaceFolder}\\build\\win64\\mingw64\\release\\hbmk2 /Q /S|rd ${workspaceFolder}\\build\\win64\\mingw64\\debug\\hbmk2 /Q /S",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "rm -rf ${workspaceFolder}/build/lin64/gcc/release/hbmk2 ${workspaceFolder}/build/lin64/gcc/debug/hbmk2",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
             "label": "Down",
             "windows":{
                 "type": "shell",
@@ -277,7 +301,7 @@
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Browse >","hide" : false}
+                    "statusbar": {"label" : "<Browse DataWharf>","hide" : false}
                 },
                 "presentation": {"reveal": "never"}
             },
@@ -291,18 +315,7 @@
                 },
                 "presentation": {"reveal": "never"}
             }
-        },
-        {
-            "label": "LoadSampleData",
-            "linux":{
-                "type": "shell",
-                "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Load Sample Data>","hide" : false}
-                },
-            }
-        },
+        }
     ],
     "inputs": [
         {

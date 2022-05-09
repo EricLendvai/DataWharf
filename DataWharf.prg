@@ -419,7 +419,7 @@ if l_lPostgresLostConnection                                    .or.;
         ::p_o_SQLConnection:Disconnect()
     endif
 
-    SendToDebugView("Reconnecting to SQL Server")
+////    SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                         ,;
                                         l_cPostgresHost,;
@@ -436,7 +436,7 @@ if l_lPostgresLostConnection                                    .or.;
 
         if :Connect() >= 0
             UpdateSchema(::p_o_SQLConnection)
-            SendToDebugView("Reconnected to SQL Server")
+////            SendToDebugView("Reconnected to SQL Server")
         else
             ::p_o_SQLConnection := NIL
         endif
@@ -841,7 +841,7 @@ local l_lPostgresLostConnection
 local l_cErrorInfo
 
     try
-        SendToDebugView("Called from MyFcgi OnError")
+////        SendToDebugView("Called from MyFcgi OnError")
         ::ClearOutputBuffer()
         ::Print("<h1>Error Occurred</h1>")
         ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
@@ -885,12 +885,12 @@ if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResul
         if l_lCyanAuditAware
             //Ensure Cyanaudit is up to date
             oFcgi:p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_update_audit_fields('public');")
-            SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
+////            SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
         endif
     endif
 else
     if !empty(l_LastError)
-        SendToDebugView("PostgreSQL - Failed Migrate")
+////        SendToDebugView("PostgreSQL - Failed Migrate")
     endif
 endif
 
@@ -1116,14 +1116,14 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
             l_cHtml += [<div class="form-group has-success">]
                 l_cHtml += [<label class="control-label" for="TextID">User ID</label>]
                 l_cHtml += [<div class="mt-2">]
-                    l_cHtml += [<input class="form-control" type="text" name="TextID" id="TextID" placeholder="Enter your User ID" maxlength="50" size="30" value="]+FcgiPrepFieldForValue(l_cID)+[" autocomplete="off">]
+                    l_cHtml += [<input class="form-control" type="text" name="TextID" id="TextID" placeholder="Enter your User ID" maxlength="100" size="30" value="]+FcgiPrepFieldForValue(l_cID)+[" autocomplete="off">]
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 
             l_cHtml += [<div class="form-group has-success mt-4">]
                 l_cHtml += [<label class="control-label" for="TextPassword">Password</label>]
                 l_cHtml += [<div class="mt-2">]
-                    l_cHtml += [<input class="form-control" type="password" name="TextPassword" id="TextPassword" placeholder="Enter your password" maxlength="50" size="30" value="]+FcgiPrepFieldForValue(l_cPassword)+[" autocomplete="off">]
+                    l_cHtml += [<input class="form-control" type="password" name="TextPassword" id="TextPassword" placeholder="Enter your password" maxlength="200" size="30" value="]+FcgiPrepFieldForValue(l_cPassword)+[" autocomplete="off">]
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 
@@ -1398,3 +1398,4 @@ else
 endif
 return l_cResult
 //=================================================================================================================
+

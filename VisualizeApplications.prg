@@ -312,7 +312,7 @@ l_cHtml += 'var nodes = new vis.DataSet(['
 select ListOfTables
 scan all
     if l_lShowNameSpace
-        l_cNodeLabel := AllTrim(ListOfTables->NameSpace_Name)+"\n"
+        l_cNodeLabel := AllTrim(ListOfTables->NameSpace_Name)+"."
     else
         l_cNodeLabel := ""
     endif
@@ -321,17 +321,20 @@ scan all
     case l_nNodeDisplayMode == 1 //Table Name and Alias
         l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
         if !hb_orm_isnull("ListOfTables","Table_AKA")
-            l_cNodeLabel += [\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
+            l_cNodeLabel += [</b>\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
+        else
+            l_cNodeLabel += [</b>]
         endif
     case l_nNodeDisplayMode == 2 //Table Alias or Name
         if !hb_orm_isnull("ListOfTables","Table_AKA")
-            l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)
+            l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[</b>]
         else
-            l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
+            l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
         endif
     case l_nNodeDisplayMode == 3 //Table Name
-        l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
+        l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
     endcase
+    l_cNodeLabel := [<b>]+l_cNodeLabel
 
     // if hb_orm_isnull("ListOfTables","Table_Description")
     //     l_cTableDescription := ""
@@ -345,18 +348,17 @@ scan all
     // endif
     l_cTableDescription := EscapeNewlineAndQuotes(ListOfTables->Table_Description)
 
+    //Due to some bugs in the js library, had to setup font before the label.
     l_cHtml += [{id:]+Trans(ListOfTables->pk)
+    l_cHtml += [,font:{multi:"html",align:"left"}]
     if empty(l_cTableDescription)
-        l_cHtml += [,font:{multi:"html"}]
-        l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+        l_cHtml += [,label:"]+l_cNodeLabel+["]
     else
         if l_lNodeShowDescription
-            l_cHtml += [,font:{multi:"html",align:"left"}]
-            l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>\n]+l_cTableDescription+["]
+            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
         else
             if l_lNeverShowDescriptionOnHover
-                l_cHtml += [,font:{multi:"html"}]
-                l_cHtml += [,label:"<b>]+l_cNodeLabel+[</b>"]
+                l_cHtml += [,label:"]+l_cNodeLabel+["]
             else
                 l_cHtml += [,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
             endif

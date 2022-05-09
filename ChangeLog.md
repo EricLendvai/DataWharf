@@ -1,5 +1,18 @@
 # DataWharf - Change Log
 
+## 05/07/2022 v 2.20
+* To allow to use email addresses for login id, expanded the user.id field to 100 characters long.
+* Renamed environment variable from FastCGIRootPath to HB_FASTCGI_ROOT to be consistent with other variables.
+* Fix bug in Sync/Load to add elements with similar root name. Re-Run load sync.
+* Fix bug in Application Visualize displaying nodes with table and schema names.
+* New config.txt files settings to specify alternate ODBC drivers to be used during "Load/Sync Schema":
+  * ODBC_DRIVER_MARIADB
+  * ODBC_DRIVER_MYSQL
+  * ODBC_DRIVER_POSTGRESQL
+  * ODBC_DRIVER_MSSQL
+
+
+
 ## 04/12/2022 v 2.19
 * Fix error in "Settings" in "Diagrams" where some entities have packages and some don't.
 
