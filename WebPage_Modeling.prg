@@ -1390,6 +1390,9 @@ static function ModelEditFormBuild(par_iProjectPk,par_cErrorText,par_iPk,par_hVa
 
 local l_cHtml := ""
 local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+
+local l_ScriptFolder
 
 local l_iProjectPk     := nvl(hb_HGetDef(par_hValues,"Fk_Project",0),0)
 local l_cName          := hb_HGetDef(par_hValues,"Name","")
@@ -1397,6 +1400,12 @@ local l_nStage         := hb_HGetDef(par_hValues,"Stage",1)
 local l_cDescription   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfProjects := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_LinkedModels   := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModels   := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_nNumberOfModels
+local l_json_Models
+local l_cModelInfo
 
 local l_lSelectableProject
 
@@ -1413,6 +1422,67 @@ with object l_oDB_ListOfProjects
 // _M_  Access rights restrictions
 
 endwith
+
+with object l_oDB_LinkedModels
+    :Table("6608FC78-A544-4EA3-B6F5-C6583E2F968E","LinkedModel")
+    :Column("LinkedModel.pk"    ,"pk")
+    :Column("Model1.Name"       ,"Model1_Name")
+    :Column("Model2.Name"       ,"Model2_Name")
+    :SQL("LinkedModels")
+    :Join("inner","Model"    ,"Model1"    ,"LinkedModel.fk_Model1 = Model1.pk")
+    :Join("inner","Model"    ,"Model2"    ,"LinkedModel.fk_Model2 = Model2.pk")
+    :Where("LinkedModel.fk_Model1 = ^ OR LinkedModel.fk_Model2 = ^", par_iPk, par_iPk)
+// _M_  Access rights restrictions
+
+endwith
+
+l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
+
+with object l_oDB_ListOfModels
+    :Table("5151E2E4-64BE-4C5D-85B1-99247F04A5C5","Model")
+    :Column("Model.pk"         ,"pk")
+    :Column("Model.Name"       ,"Model_Name")
+    :Column("Model.Stage"      ,"Model_Stage")
+    :Column("Model.Description","Model_Description")
+    :Column("Model.LinkUID"    ,"Model_LinkUID")
+    :Column("Upper(Model.Name)","tag1")
+    :Column("Project.Name"     ,"Project_Name")
+    :OrderBy("tag1")
+    :Join("inner","Project","","Project.pk = Model.fk_Project")
+    //:Where("Model.fk_Project = ^",par_Project_pk)
+    :SQL("ListOfModels")
+    l_nNumberOfModels := :Tally
+    // _M_  Access rights restrictions
+
+    if l_nNumberOfModels > 0
+        l_json_Models := []
+        select ListOfModels
+        scan all
+            if !empty(l_json_Models)
+                l_json_Models += [,]
+            endif
+            l_cModelInfo := ListOfModels->Model_Name + [ (]+ListOfModels->Project_Name+[)]
+            l_json_Models += "{tag:'"+l_cModelInfo+"',value:"+trans(ListOfModels->pk)+"}"
+        endscan
+    endif
+endwith
+
+oFcgi:p_cjQueryScript += [$("#linkedModels").amsifySuggestags({]+;
+    "suggestions :["+l_json_Models+"],"+;
+    "whiteList: true,"+;
+    "tagLimit: 10,"+;
+    "selectOnHover: true,"+;
+    "showAllSuggestions: true,"+;
+    "keepLastOnHoverTag: false"+;
+    [});]
+
+l_cHtml += [<style>]
+l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
+l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 150px;} ]
+l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
+l_cHtml += [</style>]
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -1492,6 +1562,11 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Linked Models</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ name="LinkedModels" id="LinkedModels" size="25" maxlength="10000" value=">]+FcgiPrepFieldForValue(l_cLinkedModels)+[" class="form-control TextSearchTag" placeholder=""</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_MODEL,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
