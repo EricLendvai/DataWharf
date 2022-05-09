@@ -5520,7 +5520,7 @@ case l_cActionOnSubmit == "Load"
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
             l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";"
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
-            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";"
+            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
         otherwise
             l_cErrorMessage := "Invalid 'Backend Type'"
         endcase
