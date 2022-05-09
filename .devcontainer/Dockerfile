@@ -37,7 +37,7 @@ ENV BuildMode release
 ENV HB_COMPILER gcc
 ENV HB_VFP_ROOT /src/Harbour_VFP/
 ENV HB_ORM_ROOT /src/Harbour_ORM/
-ENV FastCGIRootPath /src/Harbour_FastCGI/
+ENV HB_FASTCGI_ROOT /src/Harbour_FastCGI/
 
 WORKDIR /src/Harbour_VFP
 RUN chmod +x ./BuildLIB.sh
@@ -68,7 +68,7 @@ WORKDIR /src
 RUN mkdir -p build/lin64/gcc/release/
 ENV EXEName FCGIDataWharf
 ENV SiteRootFolder /var/www/Harbour_websites/fcgi_DataWharf/
-RUN  hbmk2 DataWharf_linux.hbp -w3 -static
+RUN  hbmk2 DataWharf_linux.hbp ${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm -w3 -static
 
 # install Postgresql 
 RUN apt-get -y install postgresql \
