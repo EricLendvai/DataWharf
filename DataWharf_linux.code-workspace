@@ -17,6 +17,7 @@
                                      "/src/Harbour_FastCGI/hb_fcgi/"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
+        "harbour.workspaceDepth": 1,
         "local-history.path": "/etc/VSCode_History/Harbour_FastCGI",
         "local-history.treeLocation": "localHistory",
         "local-history.daysLimit": 0,

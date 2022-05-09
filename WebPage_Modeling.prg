@@ -30,7 +30,7 @@ local l_cLinkUID
 local l_lFoundHeaderInfo := .f.
 
 local l_cParentPackage := oFcgi:GetQueryString("parentPackage")
-local l_cFromEntity := oFcgi:GetQueryString("fromEntity")
+local l_cFromEntity    := oFcgi:GetQueryString("fromEntity")
 local l_nAccessLevelML := 1
 // As per the info in Schema.txt
 //     1 - None
@@ -49,8 +49,10 @@ oFcgi:TraceAdd("BuildPageModeling")
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
 
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_1_2_0/css/bstreeview.min.css">]
-//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
+
+//Temp solution of using previous version  _M_
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
+//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
 
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/datawharf.js"></script>]
 
@@ -498,7 +500,7 @@ otherwise
                         :Column("Entity.Name"         , "Entity_Name")
                         :Column("Entity.Description"  , "Entity_Description")
                         :Column("Entity.Information"  , "Entity_Information")
-                        :Column("Package.LinkUID"  , "Package_LinkUID")
+                        :Column("Package.LinkUID"     , "Package_LinkUID")
                         :Join("left","Package","","Entity.fk_Package = Package.pk") 
                         l_oData := :Get(l_oDataHeader:Entity_pk)
                     endwith
@@ -785,10 +787,10 @@ otherwise
                     else
                         //Add an initial Diagram File
                         :Table("bca28e8c-564b-4af2-9045-fd9845e6eedf","ModelingDiagram")
-                        :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
-                        :Field("ModelingDiagram.fk_Model",l_oDataHeader:Model_pk)
-                        :Field("ModelingDiagram.Name","All Entities")
-                        :Field("ModelingDiagram.AssociationShowName",.t.)
+                        :Field("ModelingDiagram.LinkUID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("ModelingDiagram.fk_Model"              ,l_oDataHeader:Model_pk)
+                        :Field("ModelingDiagram.Name"                  ,"All Entities")
+                        :Field("ModelingDiagram.AssociationShowName"   ,.t.)
                         :Field("ModelingDiagram.AssociationEndShowName",.t.)
                         if :Add()
                             l_iModelingDiagramPk := :Key()
@@ -1085,11 +1087,14 @@ static function ModelListFormBuild(par_Project_pk,par_Project_Name)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_oDB_CustomFields                  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsEntityCounts      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsAssociationCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsPackageCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsDataTypeCounts    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomFields                      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsEntityCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsAssociationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsPackageCounts         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsDataTypeCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsLinkedModelCounts1    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsLinkedModelCounts2    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsModelingDiagramCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfModels
@@ -1101,6 +1106,8 @@ local l_nEntityCount
 local l_nAssociationCount
 local l_nPackageCount
 local l_nDataTypeCount
+local l_nLinkedModelCount
+local l_nModelingDiagramCount
 
 oFcgi:TraceAdd("ModelListFormBuild")
 
@@ -1222,6 +1229,51 @@ if l_nNumberOfModels > 0
         endwith
     endwith
 
+    with object l_oDB_ListOfModelsLinkedModelCounts1
+        :Table("c7f308dc-4cd3-44c5-a26a-f15938b035a5","Model")
+        :Column("Model.pk" ,"Model_pk")
+        :Column("Count(*)" ,"LinkedModelCount")
+        :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
+        :Where("Model.fk_Project = ^",par_Project_pk)
+        :GroupBy("Model.pk")
+        :SQL("ListOfModelsDataTypeCounts1")
+        with object :p_oCursor
+            :Index("tag1","Model_pk")
+            :CreateIndexes()
+            :SetOrder("tag1")
+        endwith
+    endwith
+
+    with object l_oDB_ListOfModelsLinkedModelCounts2
+        :Table("cddfeb45-7d28-4e07-8016-7137ab611a81","Model")
+        :Column("Model.pk" ,"Model_pk")
+        :Column("Count(*)" ,"LinkedModelCount")
+        :Join("inner","LinkedModel","","LinkedModel.fk_Model2 = Model.pk")
+        :Where("Model.fk_Project = ^",par_Project_pk)
+        :GroupBy("Model.pk")
+        :SQL("ListOfModelsDataTypeCounts2")
+        with object :p_oCursor
+            :Index("tag1","Model_pk")
+            :CreateIndexes()
+            :SetOrder("tag1")
+        endwith
+    endwith
+
+    with object l_oDB_ListOfModelsModelingDiagramCounts
+        :Table("0f4987c4-c0f7-4e7f-abda-bb07d7fd6bdb","Model")
+        :Column("Model.pk" ,"Model_pk")
+        :Column("Count(*)" ,"ModelingDiagramCount")
+        :Join("inner","ModelingDiagram","","ModelingDiagram.fk_Model = Model.pk")
+        :Where("Model.fk_Project = ^",par_Project_pk)
+        :GroupBy("Model.pk")
+        :SQL("ListOfModelsModelingDiagramCounts")
+        with object :p_oCursor
+            :Index("tag1","Model_pk")
+            :CreateIndexes()
+            :SetOrder("tag1")
+        endwith
+    endwith
+
 endif
 
 l_cHtml += [<div class="m-3">]
@@ -1238,7 +1290,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"10","11")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
@@ -1250,6 +1302,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAssociations+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataTypes+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackages+[</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">Linked ]+oFcgi:p_ANFModel+[</th>]
                     // l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Settings</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Visualize</th>]
                     if l_nNumberOfCustomFieldValues > 0
@@ -1299,12 +1352,19 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListPackages/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nPackageCount)+[</a>]
                         l_cHtml += [</td>]
                         
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Packages
+                            l_nLinkedModelCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsLinkedModelCounts1","tag1") , ListOfModelsLinkedModelCounts1->LinkedModelCount , 0)
+                            l_nLinkedModelCount += iif( VFP_Seek(l_iModelPk,"ListOfModelsLinkedModelCounts2","tag1") , ListOfModelsLinkedModelCounts2->LinkedModelCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListLinkedModels/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nLinkedModelCount)+[</a>]
+                        l_cHtml += [</td>]
+                        
                         // l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Settings
                         //     l_cHtml += []
                         // l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Visualize
-                            l_cHtml += []
+                            l_nModelingDiagramCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsModelingDiagramCounts","tag1") , ListOfModelsModelingDiagramCounts->ModelingDiagramCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nModelingDiagramCount)+[</a>]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -3593,8 +3653,8 @@ if l_nNumberOfAssociations > 0
         endif
 
         :Table("199bf026-c30e-4ab7-89f5-52b651fdd33f","Association")
-        :Column("Association.pk"              ,"fk_Association")
-        :Column("Association.pk"              ,"fk_Entity") //this is required as CustomFieldsBuildGridOther relies on this key to exist
+        :Column("Association.pk"         ,"fk_Association")
+        :Column("Association.pk"         ,"fk_Entity") //this is required as CustomFieldsBuildGridOther relies on this key to exist
 
         :Column("CustomField.pk"         ,"CustomField_pk")
         :Column("CustomField.Label"      ,"CustomField_Label")
@@ -3921,7 +3981,7 @@ with object l_oDB_ListOfPackages
     :Column("Package.pk"         , "pk")
     :Column("Package.FullName"   , "Package_FullName")
     :Column("Package.FullPk"     , "Package_FullPk")
-    :Column("Package.LinkUID"     , "Package_LinkUID")
+    :Column("Package.LinkUID"    , "Package_LinkUID")
     :Column("Package.TreeOrder1" , "Tag1")
     :Where("Package.fk_Model = ^" , par_iModelPk)
     :OrderBy("Tag1")
@@ -4031,7 +4091,7 @@ l_cHtml += [<div class="m-3">]
         l_json_Entities += "{id:"+trans(ListOfAllEntities->pk)+",text:'"+l_cInfo+"'}"
         l_hEntityNames[ListOfAllEntities->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
         if ListOfAllEntities->Entity_LinkUID = par_cFromEntityLinkUID
-            l_iPreselected_Entity_Pk := ListOfAllEntities->Pk
+            l_iPreselected_Entity_Pk   := ListOfAllEntities->Pk
             l_cPreselected_Entity_Name := ListOfAllEntities->Entity_Name
         endif
     endscan

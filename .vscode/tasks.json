@@ -201,6 +201,29 @@
             }
         },
         {
+            "label": "DelBuildCache",
+            "windows":{
+                "type": "shell",
+                "command": "rd ${workspaceFolder}\\build\\win64\\mingw64\\release\\hbmk2 /Q /S|rd ${workspaceFolder}\\build\\win64\\mingw64\\debug\\hbmk2 /Q /S",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            },
+            "linux":{
+                "type": "shell",
+                "command": "rm -rf ${workspaceFolder}/build/lin64/gcc/release/hbmk2 ${workspaceFolder}/build/lin64/gcc/debug/hbmk2",
+                "isBackground": true,
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
+                },
+                "presentation": {"reveal": "never"}
+            }
+        },
+        {
             "label": "Down",
             "windows":{
                 "type": "shell",

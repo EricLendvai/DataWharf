@@ -404,7 +404,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">ID</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextID" id="TextID" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"ID",""))+[" maxlength="20" size="20"></td>] // style="text-transform: uppercase;"
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextID" id="TextID" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"ID",""))+[" maxlength="100" size="80"></td>] // style="text-transform: uppercase;"
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -594,7 +594,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iUserPk          := Val(oFcgi:GetInputValue("TableKey"))
 l_cUserFirstName   := SanitizeInput(oFcgi:GetInputValue("TextFirstName"))
 l_cUserLastName    := SanitizeInput(oFcgi:GetInputValue("TextLastName"))
-l_cUserID          := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextID"),[.01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+l_cUserID          := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextID"),[.@01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
 l_cUserPassword    := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 l_iUserAccessMode  := Val(oFcgi:GetInputValue("ComboAccessMode"))
 l_iUserStatus      := Val(oFcgi:GetInputValue("ComboStatus"))

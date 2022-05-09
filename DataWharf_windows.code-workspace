@@ -7,7 +7,7 @@
             "path": "R:\\Harbour_websites\\fcgi_DataWharf\\backend"
         }
         ,{
-            "path": "..\\..\\hb_fcgi"
+            "path": "R:\\Harbour_FastCGI\\hb_fcgi"
         }
         ,{
             "path": "c:\\apache24-64\\conf"
@@ -29,6 +29,7 @@
                                      "R:\\Harbour_FastCGI\\hb_fcgi\\"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
+        "harbour.workspaceDepth": 1,
         "local-history.path": "R:\\VSCode_History\\Harbour_FastCGI",
         "local-history.treeLocation": "localHistory",
         "local-history.daysLimit": 0,

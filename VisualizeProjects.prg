@@ -20,7 +20,7 @@ local l_cNodeLabel
 local l_nNumberOfEntityInModelingDiagram
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
-local l_lAssociationShowName := .t.
+local l_lAssociationShowName    := .t.
 local l_lAssociationEndShowName := .t.
 local l_nNodeMinHeight
 local l_nNodeMaxWidth
@@ -102,19 +102,19 @@ with object l_oDB1
         l_iModelingDiagramPk := par_iModelingDiagramPk
     endif
 
-    :Table("5b855361-eb92-45cd-b4e0-ca6b6bea5dd2","ModelingDiagram")
-    :Column("ModelingDiagram.VisPos"             ,"ModelingDiagram_VisPos")
-    :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
-    :Column("ModelingDiagram.AssociationShowName","ModelingDiagram_AssociationShowName")
+    :Table("5b855361-eb92-45cd-b4e0-ca6b6bea5dd2"   ,"ModelingDiagram")
+    :Column("ModelingDiagram.VisPos"                ,"ModelingDiagram_VisPos")
+    :Column("ModelingDiagram.NodeShowDescription"   ,"ModelingDiagram_NodeShowDescription")
+    :Column("ModelingDiagram.AssociationShowName"   ,"ModelingDiagram_AssociationShowName")
     :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
-    :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
-    :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
-    :Column("ModelingDiagram.LinkUID"            ,"ModelingDiagram_LinkUID")
+    :Column("ModelingDiagram.NodeMinHeight"         ,"ModelingDiagram_NodeMinHeight")
+    :Column("ModelingDiagram.NodeMaxWidth"          ,"ModelingDiagram_NodeMaxWidth")
+    :Column("ModelingDiagram.LinkUID"               ,"ModelingDiagram_LinkUID")
     l_oDataModelingDiagram     := :Get(l_iModelingDiagramPk)
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
     l_lAssociationShowName     := l_oDataModelingDiagram:ModelingDiagram_AssociationShowName
-    l_lAssociationEndShowName     := l_oDataModelingDiagram:ModelingDiagram_AssociationEndShowName
+    l_lAssociationEndShowName  := l_oDataModelingDiagram:ModelingDiagram_AssociationEndShowName
     l_nNodeMinHeight           := l_oDataModelingDiagram:ModelingDiagram_NodeMinHeight
     l_nNodeMaxWidth            := l_oDataModelingDiagram:ModelingDiagram_NodeMaxWidth
     l_cModelingDiagram_LinkUID := l_oDataModelingDiagram:ModelingDiagram_LinkUID
@@ -509,6 +509,7 @@ scan all
     
     l_cAssociationDescription := EscapeNewlineAndQuotes(ListOfAssociationNodes->Association_Description)
 
+    //Due to some bugs in the js library, had to setup font before the label.
     l_cHtml += [{id:"A]+Trans(ListOfAssociationNodes->pk)+["]
     l_cHtml += [,font:{multi:"html"}]
     if empty(l_cAssociationDescription)
@@ -1054,20 +1055,20 @@ if pcount() < 8
         with object l_oDB1
             //Get current Diagram Name
             :Table("a9d0a31d-e5ca-44a4-979f-7c6f1f1cf395","ModelingDiagram")
-            :Column("ModelingDiagram.name"               ,"ModelingDiagram_name")
-            :Column("ModelingDiagram.NodeShowDescription","ModelingDiagram_NodeShowDescription")
-            :Column("ModelingDiagram.AssociationShowName","ModelingDiagram_AssociationShowName")
+            :Column("ModelingDiagram.name"                  ,"ModelingDiagram_name")
+            :Column("ModelingDiagram.NodeShowDescription"   ,"ModelingDiagram_NodeShowDescription")
+            :Column("ModelingDiagram.AssociationShowName"   ,"ModelingDiagram_AssociationShowName")
             :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
-            :Column("ModelingDiagram.NodeMinHeight"      ,"ModelingDiagram_NodeMinHeight")
-            :Column("ModelingDiagram.NodeMaxWidth"       ,"ModelingDiagram_NodeMaxWidth")
+            :Column("ModelingDiagram.NodeMinHeight"         ,"ModelingDiagram_NodeMinHeight")
+            :Column("ModelingDiagram.NodeMaxWidth"          ,"ModelingDiagram_NodeMaxWidth")
             l_oData := :Get(par_iModelingDiagramPk)
             if :Tally == 1
-                l_hValues["Name"]                := l_oData:ModelingDiagram_name
-                l_hValues["NodeShowDescription"] := l_oData:ModelingDiagram_NodeShowDescription
-                l_hValues["AssociationShowName"] := l_oData:ModelingDiagram_AssociationShowName
+                l_hValues["Name"]                   := l_oData:ModelingDiagram_name
+                l_hValues["NodeShowDescription"]    := l_oData:ModelingDiagram_NodeShowDescription
+                l_hValues["AssociationShowName"]    := l_oData:ModelingDiagram_AssociationShowName
                 l_hValues["AssociationEndShowName"] := l_oData:ModelingDiagram_AssociationEndShowName
-                l_hValues["NodeMinHeight"]       := l_oData:ModelingDiagram_NodeMinHeight
-                l_hValues["NodeMaxWidth"]        := l_oData:ModelingDiagram_NodeMaxWidth
+                l_hValues["NodeMinHeight"]          := l_oData:ModelingDiagram_NodeMinHeight
+                l_hValues["NodeMaxWidth"]           := l_oData:ModelingDiagram_NodeMaxWidth
             endif
 
             //Get the current list of selected Entities
@@ -1262,13 +1263,13 @@ local l_hValues := {=>}
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsOnSubmit")
 
-l_iModelingDiagram_pk                  := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
-l_cModelingDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_lModelingDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
-l_lModelingDiagram_AssociationShowName := (oFcgi:GetInputValue("CheckAssociationShowName") == "1")
+l_iModelingDiagram_pk                     := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
+l_cModelingDiagram_Name                   := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_lModelingDiagram_NodeShowDescription    := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
+l_lModelingDiagram_AssociationShowName    := (oFcgi:GetInputValue("CheckAssociationShowName") == "1")
 l_lModelingDiagram_AssociationEndShowName := (oFcgi:GetInputValue("CheckAssociationEndShowName") == "1")
-l_lModelingDiagram_NodeMinHeight       := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
-l_lModelingDiagram_NodeMaxWidth        := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
+l_lModelingDiagram_NodeMinHeight          := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
+l_lModelingDiagram_NodeMaxWidth           := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
 
 do case
 case l_cActionOnSubmit == "SaveDiagram"
@@ -1301,12 +1302,12 @@ case l_cActionOnSubmit == "SaveDiagram"
     if empty(l_cErrorMessage)
         with object l_oDB1
             :Table("78f6236c-9017-4098-8ad1-038e2643f343","ModelingDiagram")
-            :Field("ModelingDiagram.Name"               ,l_cModelingDiagram_Name)
-            :Field("ModelingDiagram.NodeShowDescription",l_lModelingDiagram_NodeShowDescription)
-            :Field("ModelingDiagram.AssociationShowName",l_lModelingDiagram_AssociationShowName)
+            :Field("ModelingDiagram.Name"                  ,l_cModelingDiagram_Name)
+            :Field("ModelingDiagram.NodeShowDescription"   ,l_lModelingDiagram_NodeShowDescription)
+            :Field("ModelingDiagram.AssociationShowName"   ,l_lModelingDiagram_AssociationShowName)
             :Field("ModelingDiagram.AssociationEndShowName",l_lModelingDiagram_AssociationEndShowName)
-            :Field("ModelingDiagram.NodeMinHeight"      ,l_lModelingDiagram_NodeMinHeight)
-            :Field("ModelingDiagram.NodeMaxWidth"       ,l_lModelingDiagram_NodeMaxWidth)
+            :Field("ModelingDiagram.NodeMinHeight"         ,l_lModelingDiagram_NodeMinHeight)
+            :Field("ModelingDiagram.NodeMaxWidth"          ,l_lModelingDiagram_NodeMaxWidth)
             
             if empty(l_iModelingDiagram_pk)
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
@@ -1383,12 +1384,12 @@ case l_cActionOnSubmit == "SaveDiagram"
         l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk)
 
     else
-        l_hValues["Name"]                := l_cModelingDiagram_Name
-        l_hValues["NodeShowDescription"] := l_lModelingDiagram_NodeShowDescription
-        l_hValues["AssociationShowName"] := l_lModelingDiagram_AssociationShowName
+        l_hValues["Name"]                   := l_cModelingDiagram_Name
+        l_hValues["NodeShowDescription"]    := l_lModelingDiagram_NodeShowDescription
+        l_hValues["AssociationShowName"]    := l_lModelingDiagram_AssociationShowName
         l_hValues["AssociationEndShowName"] := l_lModelingDiagram_AssociationEndShowName
-        l_hValues["NodeMinHeight"]       := l_lModelingDiagram_NodeMinHeight
-        l_hValues["NodeMaxWidth"]        := l_lModelingDiagram_NodeMaxWidth
+        l_hValues["NodeMinHeight"]          := l_lModelingDiagram_NodeMinHeight
+        l_hValues["NodeMaxWidth"]           := l_lModelingDiagram_NodeMaxWidth
                 
         select ListOfAllEntitiesInModel
         scan all

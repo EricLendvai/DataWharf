@@ -5470,28 +5470,39 @@ case l_cActionOnSubmit == "Load"
             :Update(par_iApplicationPk)
         endwith
 
-
+//config
         switch l_nSyncBackendType
         case HB_ORM_BACKENDTYPE_MARIADB
             l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
             l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
-            // l_cDriver       := "MySQL ODBC 8.0 Unicode Driver" //"MariaDB ODBC 3.1 Driver"
-            l_cDriver       := "MariaDB ODBC 3.1 Driver"
+            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MARIADB")
+            if empty(l_cDriver)
+                l_cDriver := "MariaDB ODBC 3.1 Driver"
+            endif
             exit
         case HB_ORM_BACKENDTYPE_MYSQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
             l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
-            l_cDriver       := "MySQL ODBC 8.0 Unicode Driver"
+            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MYSQL")
+            if empty(l_cDriver)
+                l_cDriver := "MySQL ODBC 8.0 Unicode Driver"
+            endif
             exit
         case HB_ORM_BACKENDTYPE_POSTGRESQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_POSTGRESQL
             l_iPort         := iif(empty(l_nSyncPort),5432,l_nSyncPort)
-            l_cDriver       := "PostgreSQL Unicode"
+            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_POSTGRESQL")
+            if empty(l_cDriver)
+                l_cDriver := "PostgreSQL Unicode"
+            endif
             exit
         case HB_ORM_BACKENDTYPE_MSSQL
             l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
             l_iPort         := iif(empty(l_nSyncPort),1433,l_nSyncPort)
-            l_cDriver       := "SQL Server"
+            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MSSQL")
+            if empty(l_cDriver)
+                l_cDriver := "SQL Server"
+            endif
             exit
         otherwise
             l_iPort := -1

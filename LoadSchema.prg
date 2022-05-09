@@ -259,7 +259,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1")
+                                :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
                             endwith
@@ -395,10 +395,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                     endcase
 
 
-                    if vfp_Seek(upper(l_cColumnName),"ListOfColumnsInDataDictionary","tag1")
+                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
-// altd()
+
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))    == l_cColumnType           .and. ;
                            ListOfColumnsInDataDictionary->Column_Length                == l_nColumnLength         .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale                 == l_nColumnScale          .and. ;
@@ -655,10 +655,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 // Load all the Enumerations current EnumValues
                 with object l_oDB2
                     :Table("d8748388-1484-46cf-bb5d-d990bf9fcfad","EnumValue")
-                    :Column("EnumValue.Pk"             , "Pk")
-                    :Column("EnumValue.Order"          , "EnumValue_Order")
-                    :Column("EnumValue.Name"           , "EnumValue_Name")
-                    :Column("upper(EnumValue.Name)"    , "tag1")
+                    :Column("EnumValue.Pk"          , "Pk")
+                    :Column("EnumValue.Order"       , "EnumValue_Order")
+                    :Column("EnumValue.Name"        , "EnumValue_Name")
+                    :Column("upper(EnumValue.Name)" , "tag1")
                     :Where("EnumValue.fk_Enumeration = ^" , l_iEnumerationPk)
                     :OrderBy("EnumValue_Order","Desc")
                     :SQL("ListOfEnumValuesInDataDictionary")
@@ -673,7 +673,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         endif
 
                         with object :p_oCursor
-                            :Index("tag1","tag1")
+                            :Index("tag1","tag1+'*'")
                             :CreateIndexes()
                             // :SetOrder("tag1")
                         endwith
@@ -691,8 +691,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 
 
-                if !vfp_Seek(upper(l_cEnumValueName),"ListOfEnumValuesInDataDictionary","tag1")
+                if !vfp_Seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInDataDictionary","tag1")
                     //Missing EnumValue, Add it
+                    
                     with object l_oDB1
                         l_LastEnumValueOrder += 1
                         :Table("4a1d27a3-e85e-4631-9f75-30534fa6e5d0","EnumValue")
@@ -842,7 +843,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1")
+                                :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
                             endwith
@@ -1010,8 +1011,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         // Altd()
                     endcase
 
-
-                    if vfp_Seek(upper(l_cColumnName),"ListOfColumnsInDataDictionary","tag1")
+                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
@@ -1280,7 +1280,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1")
+                                :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
                                 // :SetOrder("tag1")
                             endwith
@@ -1464,7 +1464,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     endcase
 
 
-                    if vfp_Seek(upper(l_cColumnName),"ListOfColumnsInDataDictionary","tag1")
+                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
@@ -1718,7 +1718,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_cErrorMessage := [Failed to Get index info.]
                         else
                             with object :p_oCursor
-                                :Index("tag1","tag1")
+                                :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
                             endwith
                         endif
@@ -1746,7 +1746,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         endif
                     endif
                     
-                    if vfp_Seek(upper(l_cIndexName),"ListOfIndexesInDataDictionary","tag1")
+                    if vfp_Seek(upper(l_cIndexName)+'*',"ListOfIndexesInDataDictionary","tag1")
                         l_iIndexPk := ListOfIndexesInDataDictionary->Pk
 
                         if !(trim(nvl(ListOfIndexesInDataDictionary->Index_Name,"")) == l_cIndexName) .or. ;
@@ -1756,7 +1756,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                             with object l_oDB1
                                 :Table("200c26df-5127-4d07-b381-0d44ccd7aee7","Index")
-                                :Field("Index.Name"       , l_cIndexName)
+                                :Field("Index.Name"       ,l_cIndexName)
                                 :Field("Index.Unique"     ,l_lIndexUnique)
                                 :Field("Index.Algo"       ,l_iIndexAlgo)
                                 :Field("Index.Expression" ,l_cIndexExpression)
