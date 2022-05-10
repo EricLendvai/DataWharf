@@ -77,8 +77,8 @@ class MyFcgi from hb_Fcgi
     data p_ANFDataTypes         init "Data Types"
     data p_ANFPackage           init "Package"
     data p_ANFPackages          init "Packages"
-    data p_ANFLinkedEntity      init "Aspect"
-    data p_ANFLinkedEntities    init "Aspects"
+    data p_ANFLinkedEntity      init "Linked Entity"
+    data p_ANFLinkedEntities    init "Linked Entities"
 
 
     //In this app the first element of the URL is always a page name. 

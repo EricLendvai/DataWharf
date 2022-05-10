@@ -107,18 +107,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.LinkUID", "Project_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Project.LinkUID = ^" , l_cURLLinkUID)
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
@@ -133,25 +135,27 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
             :Column("Project.LinkUID", "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Model.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Project","","Model.fk_Project = Project.pk")
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
 
-    case vfp_Inlist(l_cURLAction,"ListAttributes","OrderAttributes","NewAttribute","NewAspect")
+    case vfp_Inlist(l_cURLAction,"ListAttributes","OrderAttributes","NewAttribute","NewLinkedEntity")
         with object l_oDB1
             :Table("62211568-2341-4405-bff7-93ba323b529f","Entity")
             :Column("Entity.pk"      , "Entity_pk")
@@ -163,18 +167,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
             :Column("Project.LinkUID", "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
             :Where("Entity.LinkUID = ^" , l_cURLLinkUID)
@@ -195,18 +201,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.Name"   , "Project_Name")
             :Column("Project.LinkUID", "Project_LinkUID")
             :Column("Package.LinkUID", "Package_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Entity.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -227,18 +235,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.Name"       , "Project_Name")
             :Column("Project.LinkUID"    , "Project_LinkUID")
             :Column("Package.LinkUID"    , "Package_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Association.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model"    ,"","Association.fk_Model = Model.pk")
             :Join("inner","Project"  ,"","Model.fk_Project = Project.pk")
@@ -258,18 +268,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"        , "Project_pk")
             :Column("Project.Name"      , "Project_Name")
             :Column("Project.LinkUID"   , "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Package.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model"  ,"","Package.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -288,18 +300,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"      , "Project_pk")
             :Column("Project.Name"    , "Project_Name")
             :Column("Project.LinkUID" , "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("DataType.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Model","","DataType.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -321,18 +335,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"        , "Project_pk")
             :Column("Project.Name"      , "Project_Name")
             :Column("Project.LinkUID"   , "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("Attribute.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Entity","","Attribute.fk_Entity = Entity.pk")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
@@ -341,11 +357,11 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
 
-    case vfp_Inlist(l_cURLAction,"EditAspect")
+    case vfp_Inlist(l_cURLAction,"EditLinkedEntity")
         with object l_oDB1
             :Table("972C942A-5C3D-4CAD-B972-A86CE41F7986","LinkedEntity")
-            :Column("LinkedEntity.pk"      , "Aspect_pk")
-            :Column("LinkedEntity.LinkUID" , "Aspect_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
+            :Column("LinkedEntity.pk"      , "LinkedEntity_pk")
+            :Column("LinkedEntity.LinkUID" , "LinkedEntity_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
             :Column("Entity.pk"         , "Entity_pk")
             :Column("Entity.LinkUID"    , "Entity_LinkUID")
             :Column("Entity.Name"       , "Entity_Name")
@@ -355,18 +371,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             :Column("Project.pk"        , "Project_pk")
             :Column("Project.Name"      , "Project_Name")
             :Column("Project.LinkUID"   , "Project_LinkUID")
-            :Column("Project.AlternateNameForModel"        , "ANFModel")
-            :Column("Project.AlternateNameForModels"       , "ANFModels")
-            :Column("Project.AlternateNameForEntity"       , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"     , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"  , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations" , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"    , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"   , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"     , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"    , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"      , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"     , "ANFPackages")
+            :Column("Project.AlternateNameForModel"         , "ANFModel")
+            :Column("Project.AlternateNameForModels"        , "ANFModels")
+            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
+            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
+            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
             :Where("LinkedEntity.LinkUID = ^" , l_cURLLinkUID)
             :Join("inner","Entity","","LinkedEntity.fk_Entity1 = Entity.pk")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
@@ -381,7 +399,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case l_cURLAction == "ListModels"
         l_cModelingElement := ""  // Not needed
 
-    case vfp_Inlist(l_cURLAction,"ListEntities","NewEntity","EditEntity","ListAttributes","NewAttribute","EditAttribute","OrderAttributes","NewAspect","EditAspect")
+    case vfp_Inlist(l_cURLAction,"ListEntities","NewEntity","EditEntity","ListAttributes","NewAttribute","EditAttribute","OrderAttributes","NewLinkedEntity","EditLinkedEntity")
         l_cModelingElement := "ENTITIES"
 
     case vfp_Inlist(l_cURLAction,"ListAssociations","NewAssociation","EditAssociation")
@@ -407,19 +425,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     if l_lFoundHeaderInfo
         //Update the oFCGI.p_ANF properties
         with object oFcgi
-            :p_ANFModel        := nvl(l_oDataHeader:ANFModel       ,"Model")
-            :p_ANFModels       := nvl(l_oDataHeader:ANFModels      ,"Models")
-            :p_ANFEntity       := nvl(l_oDataHeader:ANFEntity      ,"Entity")
-            :p_ANFEntities     := nvl(l_oDataHeader:ANFEntities    ,"Entities")
-            :p_ANFAssociation  := nvl(l_oDataHeader:ANFAssociation ,"Association")
-            :p_ANFAssociations := nvl(l_oDataHeader:ANFAssociations,"Associations")
-            :p_ANFAttribute    := nvl(l_oDataHeader:ANFAttribute   ,"Attribute")
-            :p_ANFAttributes   := nvl(l_oDataHeader:ANFAttributes  ,"Attributes")
-            :p_ANFDataType     := nvl(l_oDataHeader:ANFDataType    ,"Data Type")
-            :p_ANFDataTypes    := nvl(l_oDataHeader:ANFDataTypes   ,"Data Types")
-            :p_ANFPackage      := nvl(l_oDataHeader:ANFPackage     ,"Package")
-            :p_ANFPackages     := nvl(l_oDataHeader:ANFPackages    ,"Packages")
-
+            :p_ANFModel              := nvl(l_oDataHeader:ANFModel           ,"Model")
+            :p_ANFModels             := nvl(l_oDataHeader:ANFModels          ,"Models")
+            :p_ANFEntity             := nvl(l_oDataHeader:ANFEntity          ,"Entity")
+            :p_ANFEntities           := nvl(l_oDataHeader:ANFEntities        ,"Entities")
+            :p_ANFAssociation        := nvl(l_oDataHeader:ANFAssociation     ,"Association")
+            :p_ANFAssociations       := nvl(l_oDataHeader:ANFAssociations    ,"Associations")
+            :p_ANFAttribute          := nvl(l_oDataHeader:ANFAttribute       ,"Attribute")
+            :p_ANFAttributes         := nvl(l_oDataHeader:ANFAttributes      ,"Attributes")
+            :p_ANFDataType           := nvl(l_oDataHeader:ANFDataType        ,"Data Type")
+            :p_ANFDataTypes          := nvl(l_oDataHeader:ANFDataTypes       ,"Data Types")
+            :p_ANFPackage            := nvl(l_oDataHeader:ANFPackage         ,"Package")
+            :p_ANFPackages           := nvl(l_oDataHeader:ANFPackages        ,"Packages")
+            :p_ANFLinkedEntity       := nvl(l_oDataHeader:ANFLinkedEntity    ,"Linked Entity")
+            :p_ANFLinkedEntities     := nvl(l_oDataHeader:ANFLinkedEntities  ,"Linked Entities")
         endwith
 
         l_iProjectPk   := l_oDataHeader:Project_pk
@@ -553,7 +572,7 @@ otherwise
                                 l_cHtml += AssociationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_oData:Package_LinkUID)
                             case l_cURLSubAction == "ListAttributes"
                                 l_cHtml += AttributeListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
-                            case l_cURLSubAction == "ListAspects"
+                            case l_cURLSubAction == "ListLinkedEntities"
                                 l_cHtml += LinkedEntityListFormBuild(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID)
                         endcase
                     endif
@@ -619,17 +638,17 @@ otherwise
 
             endif
 
-        case l_cURLAction == "NewAspect"
+        case l_cURLAction == "NewLinkedEntity"
             if oFcgi:p_nAccessLevelML >= 5
                 
                 if oFcgi:isGet()
-                    l_cHtml += AspectEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",{=>})
+                    l_cHtml += LinkedEntityEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:LinkedEntity_pk,l_oDataHeader:LinkedEntity_LinkUID,l_oDataHeader:Entity_LinkUID,"",{=>})
                 else
-                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    l_cHtml += LinkedEntityEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:LinkedEntity_pk,l_oDataHeader:LinkedEntity_LinkUID,l_oDataHeader:Entity_LinkUID)
                 endif
             endif
 
-        case l_cURLAction == "EditAspect"
+        case l_cURLAction == "EditLinkedEntity"
             if oFcgi:p_nAccessLevelML >= 2
                 if oFcgi:isGet()
                     with object l_oDB1
@@ -637,18 +656,18 @@ otherwise
                         :Column("LinkedEntity.Description"        , "LinkedEntity_Description")
                         :Column("LinkedEntity.fk_Entity1" , "LinkedEntity_fk_Entity1")
                         :Column("LinkedEntity.fk_Entity2" , "LinkedEntity_fk_Entity2")
-                        l_oData := :Get(l_oDataHeader:Aspect_Pk)
+                        l_oData := :Get(l_oDataHeader:LinkedEntity_Pk)
                     endwith
 
                     if l_oDB1:Tally == 1
-                        l_hValues["AspectFromPk"]  := l_oData:LinkedEntity_fk_Entity1
-                        l_hValues["AspectToPk"]  := l_oData:LinkedEntity_fk_Entity2
+                        l_hValues["LinkedEntityFromPk"]  := l_oData:LinkedEntity_fk_Entity1
+                        l_hValues["LinkedEntityToPk"]  := l_oData:LinkedEntity_fk_Entity2
                         l_hValues["Description"] := l_oData:LinkedEntity_Description
 
-                        l_cHtml += AspectEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_hValues)
+                        l_cHtml += LinkedEntityEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:LinkedEntity_pk,l_oDataHeader:LinkedEntity_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_hValues)
                     endif
                 else
-                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    l_cHtml += LinkedEntityEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:LinkedEntity_pk,l_oDataHeader:LinkedEntity_LinkUID,l_oDataHeader:Entity_LinkUID)
                 endif
 
             endif
@@ -2222,7 +2241,7 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function EntityListFormOnSubmit(par_iProjectPk,par_iAspectPk,par_cAspectLinkUID,par_cEntityLinkUID)
+static function EntityListFormOnSubmit(par_iProjectPk,par_iLinkedEntityPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -2296,7 +2315,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [</li>]
 
     l_cHtml += [<li class="nav-item">]
-    l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ListAspects",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListAspects">Aspects</a>]
+    l_cHtml += [<a class="nav-link ]+iif(par_cEntityElement == "ListLinkedEntities",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEntity/]+par_cEntityLinkUID+[/ListLinkedEntities">]+oFcgi:p_ANFLinkedEntities+[</a>]
     l_cHtml += [</li>]
 
 l_cHtml += [</ul>]
@@ -5493,10 +5512,10 @@ local l_cHtml := []
 local l_oDB1
 local l_oDB2
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-local l_nNumberOfAspects
+local l_nNumberOfLinkedEntities
 local l_hOptionValueToDescriptionMapping := {=>}
 
-oFcgi:TraceAdd("AspectListFormBuild")
+oFcgi:TraceAdd("LinkedEntityListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -5520,17 +5539,17 @@ with object l_oDB1
     :Join("inner","Model"       ,"Model1"    ,"Entity1.fk_Model = Model1.pk")
     :Join("inner","Model"       ,"Model2"    ,"Entity2.fk_Model = Model2.pk")
     :Where("LinkedEntity.fk_Entity1 = ^ OR LinkedEntity.fk_Entity2 = ^", par_iEntityPk, par_iEntityPk)
-    :SQL("ListOfAspects")
-    l_nNumberOfAspects := :Tally
+    :SQL("ListOfLinkedEntities")
+    l_nNumberOfLinkedEntities := :Tally
 endwith
 
 l_cHtml += [<div class="m-3">]
 
-    if empty(l_nNumberOfAspects)
+    if empty(l_nNumberOfLinkedEntities)
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span>No ]+oFcgi:p_ANFLinkedEntities+[ linked.</span>]
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewAspect/]+par_cEntityLinkUID+[/">New Aspect</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewLinkedEntity/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFLinkedEntity+[</a>]
             endif
         l_cHtml += [</div>]
 
@@ -5538,7 +5557,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
                 if oFcgi:p_nAccessLevelML >= 5
-                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/NewAspect/]+par_cEntityLinkUID+[/">New Aspect</a>]
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/NewLinkedEntity/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFLinkedEntity+[</a>]
                 endif
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
@@ -5559,13 +5578,13 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 l_cHtml += [</tr>]
 
-                select ListOfAspects
+                select ListOfLinkedEntities
                 scan all
-                    if ListOfAspects->LinkedEntity_fk_Entity1 = par_iEntityPk
+                    if ListOfLinkedEntities->LinkedEntity_fk_Entity1 = par_iEntityPk
                         l_cHtml += [<tr>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAspect/]+AllTrim(ListOfAspects->LinkedEntity_LinkUID)+[/">Edit Aspect</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditLinkedEntity/]+AllTrim(ListOfLinkedEntities->LinkedEntity_LinkUID)+[/">Edit ]+oFcgi:p_ANFLinkedEntity+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -5573,28 +5592,28 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfAspects->Model2_LinkUID)+[/">]+Allt(ListOfAspects->Model2_Name)+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfLinkedEntities->Model2_LinkUID)+[/">]+Allt(ListOfLinkedEntities->Model2_Name)+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEntity/]+AllTrim(ListOfAspects->Entity2_LinkUID)+[/">]+Allt(ListOfAspects->Entity2_Name)+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEntity/]+AllTrim(ListOfLinkedEntities->Entity2_LinkUID)+[/">]+Allt(ListOfLinkedEntities->Entity2_Name)+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfAspects->LinkedEntity_Description,""))
+                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfLinkedEntities->LinkedEntity_Description,""))
                             l_cHtml += [</td>]
 
                         l_cHtml += [</tr>]
                     endif 
                 endscan
 
-                select ListOfAspects
+                select ListOfLinkedEntities
                 scan all
-                    if ListOfAspects->LinkedEntity_fk_Entity2 = par_iEntityPk
+                    if ListOfLinkedEntities->LinkedEntity_fk_Entity2 = par_iEntityPk
                         l_cHtml += [<tr>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAspect/]+AllTrim(ListOfAspects->LinkedEntity_LinkUID)+[/">Edit Aspect</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditLinkedEntity/]+AllTrim(ListOfLinkedEntities->LinkedEntity_LinkUID)+[/">Edit ]+oFcgi:p_ANFLinkedEntity+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -5602,15 +5621,15 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfAspects->Model1_LinkUID)+[/">]+Allt(ListOfAspects->Model1_Name)+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfLinkedEntities->Model1_LinkUID)+[/">]+Allt(ListOfLinkedEntities->Model1_Name)+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEntity/]+AllTrim(ListOfAspects->Entity1_LinkUID)+[/">]+Allt(ListOfAspects->Entity1_Name)+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEntity/]+AllTrim(ListOfLinkedEntities->Entity1_LinkUID)+[/">]+Allt(ListOfLinkedEntities->Entity1_Name)+[</a>]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfAspects->LinkedEntity_Description,""))
+                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfLinkedEntities->LinkedEntity_Description,""))
                             l_cHtml += [</td>]
 
                         l_cHtml += [</tr>]
@@ -5627,7 +5646,7 @@ l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
-static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_cEntityLinkUID,par_cErrorText,par_hValues)
+static function LinkedEntityEditFormBuild(par_iModelPk,par_iPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID,par_cErrorText,par_hValues)
 
     local l_cHtml := ""
     local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
@@ -5635,8 +5654,8 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     
     local l_ScriptFolder
     
-    local l_iAspectFromEntityPk       := nvl(hb_HGetDef(par_hValues,"AspectFomPk",0),0)
-    local l_iAspectToEntityPk         := nvl(hb_HGetDef(par_hValues,"AspectToPk",0),0)
+    local l_iLinkedEntityFromEntityPk       := nvl(hb_HGetDef(par_hValues,"LinkedEntityFomPk",0),0)
+    local l_iLinkedEntityToEntityPk         := nvl(hb_HGetDef(par_hValues,"LinkedEntityToPk",0),0)
     local l_cDescription              := nvl(hb_HGetDef(par_hValues,"Description",""),"")
     
     local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -5648,7 +5667,7 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     local l_cPreselected_Entity_Name
     local l_cInfo
     
-    oFcgi:TraceAdd("AspectEditFormBuild")
+    oFcgi:TraceAdd("LinkedEntityEditFormBuild")
     
     with object l_oDB_ListOfEntities
         :Table("B436F5AB-75A0-47B2-8AEB-5C3C63C61394","Entity")
@@ -5695,7 +5714,7 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
     l_cHtml += [<input type="hidden" name="formname" value="Edit">]
     l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
-    l_cHtml += [<input type="hidden" name="AspectKey" value="]+trans(par_iPk)+[">]
+    l_cHtml += [<input type="hidden" name="LinkedEntityKey" value="]+trans(par_iPk)+[">]
     
     if !empty(l_cErrorText)
         l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
@@ -5704,9 +5723,9 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             if empty(par_iPk)
-                l_cHtml += [<span class="navbar-brand ms-3">New Aspect</span>]   //navbar-text
+                l_cHtml += [<span class="navbar-brand ms-3">New ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
             else
-                l_cHtml += [<span class="navbar-brand ms-3">Update Aspect</span>]   //navbar-text
+                l_cHtml += [<span class="navbar-brand ms-3">Update ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
             endif
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
@@ -5728,15 +5747,15 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">From ]+oFcgi:p_ANFEntity+[</td>]
                 l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectFromPk" id="AspectFromPk" class="SelectEntity" style="width:600px">]
-                    if l_iAspectFromEntityPk != 0
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityFromPk" id="LinkedEntityFromPk" class="SelectEntity" style="width:600px">]
+                    if l_iLinkedEntityFromEntityPk != 0
                         //select2 will place the current selected option at the top of the list of options, overriding the initial order.
-                        l_cHtml += [<option value="]+Trans(l_iAspectFromEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iAspectFromEntityPk,"")+[</option>]
+                        l_cHtml += [<option value="]+Trans(l_iLinkedEntityFromEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityFromEntityPk,"")+[</option>]
                     elseif !empty(par_cEntityLinkUID)
                         //we are coming from an entity so pereselct it as first end but only do this for the first Association End
                         l_cHtml += [<option value="]+Trans(l_iPreselected_Entity_Pk)+[" selected="selected">]+l_cPreselected_Entity_Name+[</option>]
                     else
-                        oFcgi:p_cjQueryScript += [$("#AspectFromPk").select2('val','0');]  // trick to not have a blank option bar.
+                        oFcgi:p_cjQueryScript += [$("#LinkedEntityFromPk").select2('val','0');]  // trick to not have a blank option bar.
                     endif
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
@@ -5745,12 +5764,12 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">To ]+oFcgi:p_ANFEntity+[</td>]
                 l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectToPk" id="AspectToPk" class="SelectEntity" style="width:600px">]
-                    if l_iAspectToEntityPk != 0
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityToPk" id="LinkedEntityToPk" class="SelectEntity" style="width:600px">]
+                    if l_iLinkedEntityToEntityPk != 0
                         //select2 will place the current selected option at the top of the list of options, overriding the initial order.
-                        l_cHtml += [<option value="]+Trans(l_iAspectToEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iAspectToEntityPk,"")+[</option>]
+                        l_cHtml += [<option value="]+Trans(l_iLinkedEntityToEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityToEntityPk,"")+[</option>]
                     else
-                        oFcgi:p_cjQueryScript += [$("#AspectToPk").select2('val','0');]  // trick to not have a blank option bar.
+                        oFcgi:p_cjQueryScript += [$("#LinkedEntityToPk").select2('val','0');]  // trick to not have a blank option bar.
                     endif
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
@@ -5776,15 +5795,15 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     
     return l_cHtml
     //=================================================================================================================
-    static function AspectEditFormOnSubmit(par_iModelPk,par_cAspectPk,par_cAspectLinkUID,par_cEntityLinkUID)
+    static function LinkedEntityEditFormOnSubmit(par_iModelPk,par_cLinkedEntityPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID)
     local l_cHtml := []
     local l_cActionOnSubmit
     
-    local l_iAspectPk
-    local l_cAspectDescription
-    local l_iAspectFromEntityPk
-    local l_iAspectToEntityPk
-    local l_cAspectLinkUID
+    local l_iLinkedEntityPk
+    local l_cLinkedEntityDescription
+    local l_iLinkedEntityFromEntityPk
+    local l_iLinkedEntityToEntityPk
+    local l_cLinkedEntityLinkUID
     
     local l_cErrorMessage := ""
     local l_hValues := {=>}
@@ -5792,59 +5811,59 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
     local l_oDB1
     local l_oDB2
     
-    oFcgi:TraceAdd("AspectEditFormOnSubmit")
+    oFcgi:TraceAdd("LinkedEntityEditFormOnSubmit")
     
     l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
     
-    l_iAspectFromEntityPk   := Val(oFcgi:GetInputValue("AspectFromPk"))
-    l_iAspectToEntityPk     := Val(oFcgi:GetInputValue("AspectToPk"))
-    l_cAspectDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+    l_iLinkedEntityFromEntityPk   := Val(oFcgi:GetInputValue("LinkedEntityFromPk"))
+    l_iLinkedEntityToEntityPk     := Val(oFcgi:GetInputValue("LinkedEntityToPk"))
+    l_cLinkedEntityDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
     
     
     do case
     case l_cActionOnSubmit == "Save"
         if oFcgi:p_nAccessLevelML >= 7
             do case
-            case empty(l_iAspectFromEntityPk) .or. empty(l_iAspectToEntityPk)
-                l_cErrorMessage := "Aspect needs to have both links set."
+            case empty(l_iLinkedEntityFromEntityPk) .or. empty(l_iLinkedEntityToEntityPk)
+                l_cErrorMessage := oFcgi:p_ANFLinkedEntity+[ needs to have both links set.]
             otherwise
                 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
                 //Save the Model
                 with object l_oDB1
                     :Table("CA6D54DF-D040-4A65-8A93-13C7E9831638","LinkedEntity")
-                    :Field("LinkedEntity.Description",iif(empty(l_cAspectDescription),NULL,l_cAspectDescription))
-                    :Field("LinkedEntity.fk_Entity1" ,l_iAspectFromEntityPk)
-                    :Field("LinkedEntity.fk_Entity2" ,l_iAspectToEntityPk)
+                    :Field("LinkedEntity.Description",iif(empty(l_cLinkedEntityDescription),NULL,l_cLinkedEntityDescription))
+                    :Field("LinkedEntity.fk_Entity1" ,l_iLinkedEntityFromEntityPk)
+                    :Field("LinkedEntity.fk_Entity2" ,l_iLinkedEntityToEntityPk)
                     
-                    if empty(par_cAspectPk)
+                    if empty(par_cLinkedEntityPk)
                         l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
                         with object l_oDB2
                             :Table("DE792BD4-8C30-4356-8859-CD5BA7B88D92","LinkedEntity")
-                            :Where("LinkedEntity.fk_Entity1 = ^ AND LinkedEntity.fk_Entity2 = ^" , l_iAspectFromEntityPk, l_iAspectToEntityPk)
+                            :Where("LinkedEntity.fk_Entity1 = ^ AND LinkedEntity.fk_Entity2 = ^" , l_iLinkedEntityFromEntityPk, l_iLinkedEntityToEntityPk)
                             :SQL()
                         endwith
             
                         if l_oDB2:Tally <> 0 
-                            l_cErrorMessage := "Duplicate Aspect link!"
-                        elseif l_iAspectToEntityPk = l_iAspectFromEntityPk
-                            l_cErrorMessage := "Cannot link Aspect to itself!"
+                            l_cErrorMessage := [Duplicate ]+oFcgi:p_ANFLinkedEntity+[ link!]
+                        elseif l_iLinkedEntityToEntityPk = l_iLinkedEntityFromEntityPk
+                            l_cErrorMessage := [Cannot link ]+oFcgi:p_ANFLinkedEntity+[ to itself!]
                         else
-                            l_cAspectLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                            :Field("LinkedEntity.LinkUID" , l_cAspectLinkUID)
+                            l_cLinkedEntityLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                            :Field("LinkedEntity.LinkUID" , l_cLinkedEntityLinkUID)
                             if :Add()
-                                l_iAspectPk := :Key()
-                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAspects")
+                                l_iLinkedEntityPk := :Key()
+                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                             else
-                                l_cErrorMessage := "Failed to add Aspect."
+                                l_cErrorMessage := [Failed to add ]+oFcgi:p_ANFLinkedEntity+[.]
                             endif
                         endif
                     else
                         AltD()
-                        if :Update(par_cAspectPk)
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAspects")
+                        if :Update(par_cLinkedEntityPk)
+                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                         else
-                            l_cErrorMessage := "Failed to update Aspect."
+                            l_cErrorMessage := [Failed to update ]+oFcgi:p_ANFLinkedEntity+[.]
                         endif
                     endif
                 endwith
@@ -5852,22 +5871,22 @@ static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_
         endif
     
     case l_cActionOnSubmit == "Cancel"
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAspects")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
     
     case l_cActionOnSubmit == "Delete"   // Model
         if oFcgi:p_nAccessLevelML >= 5
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            l_oDB1:Delete("E184F683-C71F-4AAB-9227-3576C17AC4BA","LinkedEntity",par_cAspectPk)
+            l_oDB1:Delete("E184F683-C71F-4AAB-9227-3576C17AC4BA","LinkedEntity",par_cLinkedEntityPk)
         endif
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAspects")
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
     endcase
     
     if !empty(l_cErrorMessage)
-        l_hValues["AspectFomPk"]    := l_iAspectFromEntityPk
-        l_hValues["AspectToPk"]    := l_iAspectToEntityPk
-        l_hValues["Description"]    := l_cAspectDescription
+        l_hValues["LinkedEntityFomPk"]    := l_iLinkedEntityFromEntityPk
+        l_hValues["LinkedEntityToPk"]    := l_iLinkedEntityToEntityPk
+        l_hValues["Description"]    := l_cLinkedEntityDescription
     
-        l_cHtml += AspectEditFormBuild(par_iModelPk,l_iAspectPk,l_cAspectLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
+        l_cHtml += LinkedEntityEditFormBuild(par_iModelPk,l_iLinkedEntityPk,l_cLinkedEntityLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
     endif
     
     return l_cHtml
