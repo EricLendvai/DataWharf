@@ -623,9 +623,9 @@ otherwise
             if oFcgi:p_nAccessLevelML >= 5
                 
                 if oFcgi:isGet()
-                    l_cHtml += AspectEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",{=>})
+                    l_cHtml += AspectEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",{=>})
                 else
-                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
                 endif
             endif
 
@@ -645,10 +645,10 @@ otherwise
                         l_hValues["AspectToPk"]  := l_oData:LinkedEntity_fk_Entity2
                         l_hValues["Description"] := l_oData:LinkedEntity_Description
 
-                        l_cHtml += AspectEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_hValues)
+                        l_cHtml += AspectEditFormBuild(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_hValues)
                     endif
                 else
-                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    l_cHtml += AspectEditFormOnSubmit(l_oDataHeader:Model_Pk,l_oDataHeader:Aspect_pk,l_oDataHeader:Aspect_LinkUID,l_oDataHeader:Entity_LinkUID)
                 endif
 
             endif
@@ -1506,7 +1506,6 @@ with object l_oDB_LinkedModels
     :Join("inner","Model"       ,"Model2"    ,"LinkedModel.fk_Model2 = Model2.pk")
     :Where("LinkedModel.fk_Model1 = ^ OR LinkedModel.fk_Model2 = ^", par_iPk, par_iPk)
     :SQL("LinkedModels")
-// _M_  Access rights restrictions
     select LinkedModels
     scan all
         if !empty(l_cLinkedModels)
@@ -1535,7 +1534,10 @@ with object l_oDB_ListOfModels
     :Column("Project.Name"     ,"Project_Name")
     :OrderBy("tag1")
     :Join("inner","Project","","Project.pk = Model.fk_Project")
-    //:Where("Model.fk_Project = ^",par_Project_pk)
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessProject","","UserAccessProject.fk_Project = Project.pk")
+        :Where("UserAccessProject.fk_User = ^",oFcgi:p_iUserPk)
+    endif
     :SQL("ListOfModels")
     l_nNumberOfModels := :Tally
     // _M_  Access rights restrictions
@@ -1546,8 +1548,10 @@ with object l_oDB_ListOfModels
             if !empty(l_json_Models)
                 l_json_Models += [,]
             endif
-            l_cModelInfo := ListOfModels->Model_Name + [ (]+ListOfModels->Project_Name+[)]
-            l_json_Models += "{tag:'"+l_cModelInfo+"',value:"+trans(ListOfModels->pk)+"}"
+            if !(par_iPk = ListOfModels->pk) //don't allow linking to self
+                l_cModelInfo := ListOfModels->Model_Name + [ (]+ListOfModels->Project_Name+[)]
+                l_json_Models += "{tag:'"+l_cModelInfo+"',value:"+trans(ListOfModels->pk)+"}"
+            endif
         endscan
     endif
 endwith
@@ -4390,7 +4394,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<input type="text" value="]+FcgiPrepFieldForValue(l_cEndpoint_BoundUpper)+[" id="]+l_cObjectName+[" name="]+l_cObjectName+[" maxlength="4" size="2">]
                     l_cHtml += [</td>]
 
-                    //Aspect Of
+                    //IsContainment
                     l_cHtml += [<td class="ps-2 pt-2" valign="top">]
                         l_cObjectName := "CheckIsContainment"+l_nCounterC
                         l_cHtml += [<div class="form-check form-switch">]
@@ -5594,7 +5598,7 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += [To]
+                                l_cHtml += [From]
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -5623,7 +5627,7 @@ l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
-static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,par_cEntityLinkUID,par_cErrorText,par_hValues)
+static function AspectEditFormBuild(par_iModelPk,par_iPk,par_cAspectLinkUID,par_cEntityLinkUID,par_cErrorText,par_hValues)
 
     local l_cHtml := ""
     local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
@@ -5638,31 +5642,55 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
     local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
     
     local l_nNumberOfModels
-    local l_json_Models := []
-    local l_cModelInfo
+    local l_json_Entities := []
+    local l_hEntityNames := {=>}
+    local l_iPreselected_Entity_Pk
+    local l_cPreselected_Entity_Name
+    local l_cInfo
     
-    oFcgi:TraceAdd("ModelEditFormBuild")
+    oFcgi:TraceAdd("AspectEditFormBuild")
     
     with object l_oDB_ListOfEntities
         :Table("B436F5AB-75A0-47B2-8AEB-5C3C63C61394","Entity")
         :Column("Entity.pk"         ,"pk")
         :Column("Entity.Name"       ,"Entity_Name")
         :Column("Entity.LinkUID"    ,"Entity_LinkUID")
-        :Column("Model.Name"       ,"Model_Name")
+        :Column("Model.Name"        ,"Model_Name")
         :Column("Upper(Entity.Name)","tag1")
-        :Join("inner","Model"       ,"Model"    ,"Entity.fk_Model = Model.pk")
+        :Join("inner","Model"       ,"Model"        ,"Entity.fk_Model = Model.pk")
+        :Join("left","LinkedModel"  ,"LinkedModel"  ,"Model.pk = LinkedModel.fk_Model2")
+        :Where("Model.pk = ^ OR LinkedModel.fk_Model1 = ^",par_iModelPk,par_iModelPk)
         :OrderBy("tag1")
         :SQL("ListOfEntities")
     
     // _M_  Access rights restrictions
     
     endwith
+
+    SetSelect2Support()
     
-    l_cHtml += [<style>]
-    l_cHtml += [ .amsify-suggestags-area {font-family:"Arial";} ]
-    l_cHtml += [ .amsify-suggestags-input {max-width: 400px;min-width: 150px;} ]
-    l_cHtml += [ ul.amsify-list {min-height: 150px;} ]
-    l_cHtml += [</style>]
+    select ListOfEntities
+    scan all
+        if !empty(l_json_Entities)
+            l_json_Entities += [,]
+        endif
+        l_cInfo = ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
+        l_cInfo := vfp_StrReplace(l_cInfo,{;
+                                        [\] => [\\] ,;
+                                        ["] => [ ] ,;
+                                        ['] => [ ] ;
+                                    },,1)
+        l_json_Entities += "{id:"+trans(ListOfEntities->pk)+",text:'"+l_cInfo+"'}"
+        l_hEntityNames[ListOfEntities->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
+        if ListOfEntities->Entity_LinkUID = par_cEntityLinkUID
+            l_iPreselected_Entity_Pk   := ListOfEntities->Pk
+            l_cPreselected_Entity_Name := ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
+        endif
+    endscan
+    l_json_Entities := "["+l_json_Entities+"]"
+
+    //Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
+    oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
     
     l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
     l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -5678,7 +5706,7 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
             if empty(par_iPk)
                 l_cHtml += [<span class="navbar-brand ms-3">New Aspect</span>]   //navbar-text
             else
-                l_cHtml += [<span class="navbar-brand ms-3">Update Aspect Settings</span>]   //navbar-text
+                l_cHtml += [<span class="navbar-brand ms-3">Update Aspect</span>]   //navbar-text
             endif
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
@@ -5700,11 +5728,16 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">From ]+oFcgi:p_ANFEntity+[</td>]
                 l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectFromPk" id="AspectFromPk" class="form-select">]
-                    select ListOfEntities
-                    scan all
-                        l_cHtml += [<option value="]+Trans(ListOfEntities->pk)+["]+iif(ListOfEntities->pk = l_iAspectFromEntityPk,[ selected],[])+[>]+AllTrim(ListOfEntities->Entity_Name)+[(]+AllTrim(ListOfEntities->Model_Name)+[)</option>]
-                    endscan
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectFromPk" id="AspectFromPk" class="SelectEntity" style="width:600px">]
+                    if l_iAspectFromEntityPk != 0
+                        //select2 will place the current selected option at the top of the list of options, overriding the initial order.
+                        l_cHtml += [<option value="]+Trans(l_iAspectFromEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iAspectFromEntityPk,"")+[</option>]
+                    elseif !empty(par_cEntityLinkUID)
+                        //we are coming from an entity so pereselct it as first end but only do this for the first Association End
+                        l_cHtml += [<option value="]+Trans(l_iPreselected_Entity_Pk)+[" selected="selected">]+l_cPreselected_Entity_Name+[</option>]
+                    else
+                        oFcgi:p_cjQueryScript += [$("#AspectFromPk").select2('val','0');]  // trick to not have a blank option bar.
+                    endif
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5712,11 +5745,13 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">To ]+oFcgi:p_ANFEntity+[</td>]
                 l_cHtml += [<td class="pb-3">]
-                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectToPk" id="AspectToPk" class="form-select">]
-                    select ListOfEntities
-                    scan all
-                        l_cHtml += [<option value="]+Trans(ListOfEntities->pk)+["]+iif(ListOfEntities->pk = l_iAspectToEntityPk,[ selected],[])+[>]+AllTrim(ListOfEntities->Entity_Name)+[(]+AllTrim(ListOfEntities->Model_Name)+[)</option>]
-                    endscan
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="AspectToPk" id="AspectToPk" class="SelectEntity" style="width:600px">]
+                    if l_iAspectToEntityPk != 0
+                        //select2 will place the current selected option at the top of the list of options, overriding the initial order.
+                        l_cHtml += [<option value="]+Trans(l_iAspectToEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iAspectToEntityPk,"")+[</option>]
+                    else
+                        oFcgi:p_cjQueryScript += [$("#AspectToPk").select2('val','0');]  // trick to not have a blank option bar.
+                    endif
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5741,7 +5776,7 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
     
     return l_cHtml
     //=================================================================================================================
-    static function AspectEditFormOnSubmit(par_iProjectPk,par_cAspectPk,par_cAspectLinkUID,par_cEntityLinkUID)
+    static function AspectEditFormOnSubmit(par_iModelPk,par_cAspectPk,par_cAspectLinkUID,par_cEntityLinkUID)
     local l_cHtml := []
     local l_cActionOnSubmit
     
@@ -5791,7 +5826,9 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
                         endwith
             
                         if l_oDB2:Tally <> 0 
-                            l_cErrorMessage := "Duplicate Apect link!"
+                            l_cErrorMessage := "Duplicate Aspect link!"
+                        elseif l_iAspectToEntityPk = l_iAspectFromEntityPk
+                            l_cErrorMessage := "Cannot link Aspect to itself!"
                         else
                             l_cAspectLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                             :Field("LinkedEntity.LinkUID" , l_cAspectLinkUID)
@@ -5830,7 +5867,7 @@ static function AspectEditFormBuild(par_iProjectPk,par_iPk,par_cAspectLinkUID,pa
         l_hValues["AspectToPk"]    := l_iAspectToEntityPk
         l_hValues["Description"]    := l_cAspectDescription
     
-        l_cHtml += AspectEditFormBuild(par_iProjectPk,l_iAspectPk,l_cAspectLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
+        l_cHtml += AspectEditFormBuild(par_iModelPk,l_iAspectPk,l_cAspectLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
     endif
     
     return l_cHtml
@@ -5871,6 +5908,7 @@ return l_cErrorMessage
 function CascadeDeleteEntity(par_iProjectPk,par_iEntityPk)
 local l_cErrorMessage := ""
 local l_oDB_ListOfEndpointRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfLinkedEntityRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfEndpointRecordsToDelete
@@ -5909,6 +5947,22 @@ with object l_oDB_ListOfEndpointRecordsToDelete
     endif
 endwith
 
+with object l_oDB_ListOfLinkedEntityRecordsToDelete
+    //Delete any LinkedEntity related records
+    :Table("D5C62E48-5A83-49C9-A260-CB3DE7280C8A","LinkedEntity")
+    :Column("LinkedEntity.pk" , "pk")
+    :Where("LinkedEntity.fk_Entity1 = ^ OR LinkedEntity.fk_Entity2 = ^",par_iEntityPk,par_iEntityPk)
+    :SQL("ListOfLinkedEntityRecordsToDelete")
+    if :Tally < 0
+        l_cErrorMessage := [Failed to query for related ]+oFcgi:p_ANFEntity+[ link records.]
+    else
+        select ListOfLinkedEntityRecordsToDelete
+        scan
+            l_oDB1:Delete("04E9FDAB-7D37-4C47-B3AD-C5F4D139997C","LinkedEntity",ListOfLinkedEntityRecordsToDelete->pk)
+        endscan
+    endif
+endwith
+
 return l_cErrorMessage
 //=================================================================================================================
 function CascadeDeleteModel(par_iProjectPk,par_iModelPk)
@@ -5921,7 +5975,8 @@ local l_oDB_RecordToDelete        := hb_SQLData(oFcgi:p_o_SQLConnection)
 // Step 3 - Delete all Entities
 // Step 4 - Delete all DataTypes
 // Step 5 - Delete all Packages
-// Step 6 - Delete Model
+// Step 6 - Delete all LinkedModel relationships
+// Step 7 - Delete Model
 
 // Step 1 - Delete All ModelingDiagram, DiagramEntity records first, then the ModelingDiagram records
 with object l_oDB_ListOfRecordsToDelete
@@ -6012,7 +6067,23 @@ if empty(l_cErrorMessage)
     endwith
 endif
 
-// Step 6 - Delete Model
+// Step 6 - Delete all LinkedModel relationships
+if empty(l_cErrorMessage)
+    with object l_oDB_ListOfRecordsToDelete
+        :Table("7D17932D-E4E1-418D-9FC4-2E8D4C0D3E65","LinkedModel")
+        :Column("LinkedModel.pk" , "pk")
+        :Where("LinkedModel.fk_Model1 = ^ OR LinkedModel.fk_Model2 = ^" , par_iModelPk, par_iModelPk)
+        :SQL("CascadeDeleteModelListOfRecordsToDelete")
+        select CascadeDeleteModelListOfRecordsToDelete
+        scan all while empty(l_cErrorMessage)
+            if !l_oDB_RecordToDelete:Delete("B5C46101-4BD0-444D-8C2A-38230162EB53","LinkedModel",CascadeDeleteModelListOfRecordsToDelete->pk)
+                l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFPackages+[.]
+            endif
+        endscan
+    endwith
+endif
+
+// Step 7 - Delete Model
 if empty(l_cErrorMessage)
     CustomFieldsDelete(par_iProjectPk,USEDON_MODEL,par_iModelPk)
     if !l_oDB_RecordToDelete:Delete("5cfe314f-1303-4e14-865c-0330955850d5","Model",par_iModelPk)
