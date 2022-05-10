@@ -65,18 +65,20 @@ class MyFcgi from hb_Fcgi
     data p_nAccessLevelML   init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
     //Used in Modeling. ANF stands for "AlternateNameFor"
-    data p_ANFModel         init "Model"
-    data p_ANFModels        init "Models"
-    data p_ANFEntity        init "Entity"
-    data p_ANFEntities      init "Entities"
-    data p_ANFAssociation   init "Association"
-    data p_ANFAssociations  init "Associations"
-    data p_ANFAttribute     init "Attribute"
-    data p_ANFAttributes    init "Attributes"
-    data p_ANFDataType      init "Data Type"
-    data p_ANFDataTypes     init "Data Types"
-    data p_ANFPackage       init "Package"
-    data p_ANFPackages      init "Packages"
+    data p_ANFModel             init "Model"
+    data p_ANFModels            init "Models"
+    data p_ANFEntity            init "Entity"
+    data p_ANFEntities          init "Entities"
+    data p_ANFAssociation       init "Association"
+    data p_ANFAssociations      init "Associations"
+    data p_ANFAttribute         init "Attribute"
+    data p_ANFAttributes        init "Attributes"
+    data p_ANFDataType          init "Data Type"
+    data p_ANFDataTypes         init "Data Types"
+    data p_ANFPackage           init "Package"
+    data p_ANFPackages          init "Packages"
+    data p_ANFLinkedEntity      init "Aspect"
+    data p_ANFLinkedEntities    init "Aspects"
 
 
     //In this app the first element of the URL is always a page name. 
