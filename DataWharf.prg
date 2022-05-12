@@ -75,6 +75,8 @@ class MyFcgi from hb_Fcgi
     data p_ANFAttributes        init "Attributes"
     data p_ANFDataType          init "Data Type"
     data p_ANFDataTypes         init "Data Types"
+    data p_ANFEnumeration       init "Enumeration"
+    data p_ANFEnumerations      init "Enumerations"
     data p_ANFPackage           init "Package"
     data p_ANFPackages          init "Packages"
     data p_ANFLinkedEntity      init "Linked Entity"
