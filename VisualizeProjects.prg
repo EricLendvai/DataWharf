@@ -57,6 +57,7 @@ local l_cEndpointDescription_Previous
 local l_cLabel
 local l_cDescription
 
+local l_lGraphLib := "mxgraph"
 local l_cJS
 
 local l_hMultiEdgeCounters := {=>}
@@ -310,7 +311,8 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript">mxBasePath = ']+l_cSitePath+[scripts/mxgraph';</script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript">mxBasePath = ']+l_cSitePath+[scripts/mxgraph'; mxLoadStylesheets = false; </script>]//not loading style sheets as it will load from wrong path
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph/css/common.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
 
@@ -481,6 +483,12 @@ scan all
         if len(l_hCoordinate) > 0
             l_lAutoLayout := .f.
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
+            if hb_HHasKey(l_hCoordinate, "height")
+                l_cHtml += [,height:]+Trans(l_hCoordinate["height"])
+            endif
+            if hb_HHasKey(l_hCoordinate, "width")
+                l_cHtml += [,width:]+Trans(l_hCoordinate["width"])
+            endif
         endif
     endif
 
@@ -610,6 +618,14 @@ scan all
         l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
     endif
 
+    if l_nLengthDecoded > 0
+        l_hCoordinate := hb_HGetDef(l_hNodePositions,"L"+Trans(ListOfEdgesEntityAssociationNode->Endpoint_pk),{=>})
+        if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
+            l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+        endif
+    endif
+
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 endscan
 
@@ -731,6 +747,14 @@ scan all
             l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
         endif
 
+        if l_nLengthDecoded > 0
+            l_hCoordinate := hb_HGetDef(l_hNodePositions,"D"+Trans(ListOfEdgesEntityEntity->Association_pk),{=>})
+            if len(l_hCoordinate) > 0
+                l_lAutoLayout := .f.
+                l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+            endif
+        endif
+
         l_cHtml += [},]
 
         l_iAssociationPk_Previous := 0
@@ -757,8 +781,29 @@ l_cHtml += [  };]
 
 l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
 
-l_cHtml += ' network.on("click", function (params) {'
-l_cHtml += '   params.event = "[original event]";'
+if l_lGraphLib = "mxgraph"
+    l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
+    l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
+    l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
+    l_cHtml += '     var cellsRemoved = evt.getProperty("added");'
+    l_cHtml += '     var cellRemoved = (cellsRemoved && cellsRemoved.length >0) ? cellsRemoved[0] : null;'
+    l_cHtml += '     SelectGraphCell(cellsAdded,cellsRemoved,network);'
+    l_cHtml += '     var params = {};'
+    l_cHtml += '     if (cellAdded != null) {'
+    l_cHtml += '         if(cellAdded.id.startsWith("E") || cellAdded.id.startsWith("A")) {'
+    l_cHtml += '             params.nodes = [ cellAdded.id ];'
+    l_cHtml += '         }'
+    l_cHtml += '         else if(cellAdded.id.startsWith("D")) {'
+    l_cHtml += '             params.edges = [ cellAdded.id ];'
+    l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
+    l_cHtml += '         }'
+    l_cHtml += '     }'
+    l_cHtml += '     evt.consume();'
+else
+    l_cHtml += ' network.on("click", function (params) {'
+    l_cHtml += '   params.event = "[original event]";'
+endif
+
 
 // Code to filter Attributes
 l_cJS := [$("#AttributeSearch").change(function() {]
