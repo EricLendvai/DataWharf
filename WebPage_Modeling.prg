@@ -24,6 +24,7 @@ local l_cModelingElement := "ENTITIES"  //Default to Entities
 local l_cURLAction
 local l_cURLSubAction
 local l_cURLLinkUID := ""
+local l_cURLEnumValueName := ""
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cLinkUID
@@ -321,10 +322,11 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
     
-    case vfp_Inlist(l_cURLAction,"EditEnumeration")
+    case vfp_Inlist(l_cURLAction,"EditEnumeration","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         with object l_oDB1
             :Table("B2F2BD9B-1BCC-4E36-AFD5-277EF9E82FC1","ModelEnumeration")
             :Column("ModelEnumeration.pk"     , "Enumeration_pk")
+            :Column("ModelEnumeration.Name"     , "Enumeration_Name")
             :Column("ModelEnumeration.LinkUID", "Enumeration_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
             :Column("Model.pk"        , "Model_pk")
             :Column("Model.LinkUID"   , "Model_LinkUID")
@@ -352,6 +354,11 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
+        if vfp_Inlist(l_cURLAction,"EditEnumValue")
+            if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+                l_cURLEnumValueName := oFcgi:p_URLPathElements[4]
+            endif
+        endif
 
     case vfp_Inlist(l_cURLAction,"EditAttribute")
         with object l_oDB1
@@ -528,7 +535,7 @@ otherwise
     l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
     l_cHtml += [<div class="container-fluid">]
     l_cHtml += [<div class="row">]
-        l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID,l_oDataHeader:DataType_LinkUID,l_oDataHeader:Association_LinkUID,l_oDataHeader:Entity_LinkUID)
+        l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID,l_oDataHeader:DataType_LinkUID,l_oDataHeader:Association_LinkUID,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Enumeration_LinkUID)
         l_cHtml += [<main class="col-md ms-sm-auto col-lg px-md-4">]
 
         do case
@@ -580,7 +587,7 @@ otherwise
 
         case l_cURLAction == "EditEntity"
             if oFcgi:p_nAccessLevelML >= 2
-
+                l_cHtml += GetEntityEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_cURLSubAction)
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("e9c40921-bd84-4c03-bc86-c805f20b78ef","Entity")
@@ -599,7 +606,6 @@ otherwise
                         l_hValues["Description"]    := l_oData:Entity_Description
                         l_hValues["Information"]    := l_oData:Entity_Information
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
-                        l_cHtml += GetEntityEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,l_cURLSubAction)
                         do case
                             case empty(l_cURLSubAction)
                                 l_cHtml += EntityEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,"",l_oDataHeader:Entity_pk,l_hValues)
@@ -612,7 +618,14 @@ otherwise
                         endcase
                     endif
                 else
-                    l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                    do case
+                        case empty(l_cURLSubAction)
+                            l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
+                        case l_cURLSubAction == "ListAssociations"
+                            l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,)
+                        case l_cURLSubAction == "ListAttributes"
+                            l_cHtml += AttributeListFormOnSubmit(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
+                    endcase
                 endif
 
             endif
@@ -808,7 +821,7 @@ otherwise
 
         case l_cURLAction == "EditPackage"
             if oFcgi:p_nAccessLevelML >= 2
-
+                l_cHtml += GetPackageEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,l_cURLSubAction)
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("6689ff9b-9b8a-400c-abf8-d7146b805461","Package")
@@ -821,7 +834,6 @@ otherwise
                         l_hValues["fk_Package"] := l_oData:Package_fk_Package
                         l_hValues["Name"]       := l_oData:Package_Name
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_PACKAGE,l_oDataHeader:Package_pk,@l_hValues)
-                        l_cHtml += GetPackageEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,l_cURLSubAction)
                         do case
                             case empty(l_cURLSubAction)
                                 l_cHtml += PackageEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID,"",l_oDataHeader:Package_pk,l_hValues)
@@ -834,7 +846,14 @@ otherwise
                         
                     endif
                 else
-                    l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                    do case
+                        case empty(l_cURLSubAction)
+                            l_cHtml += PackageEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                        case l_cURLSubAction == "ListAssociations"
+                            l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,,l_oDataHeader:Package_LinkUID)
+                        case l_cURLSubAction == "ListEntities"
+                            l_cHtml += EntityListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Package_LinkUID)
+                    endcase
                 endif
 
             endif
@@ -886,7 +905,6 @@ otherwise
             endif
         case l_cURLAction == "ListEnumerations"
             //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-            AltD()
             l_cHtml += EnumerationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
         
         case l_cURLAction == "NewEnumeration"
@@ -917,145 +935,85 @@ otherwise
                     if l_oDB1:Tally == 1           
                         l_hValues["Name"]            := l_oData:Enumeration_Name
                         l_hValues["Description"]     := l_oData:Enumeration_Description
-            
-                        l_cHtml += EnumerationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,"",l_oDataHeader:Enumeration_pk,l_hValues)
+                        l_cHtml += GetEnumerationEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_cURLSubAction)
+                        do case
+                            case empty(l_cURLSubAction)
+                                l_cHtml += EnumerationEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,"",l_oDataHeader:Enumeration_pk,l_hValues)
+                            case l_cURLSubAction == "ListEnumValues"
+                                l_cHtml += EnumValueListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_pk,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_Name)
+                            case l_cURLSubAction == "OrderEnumValues"
+                                l_cHtml += EnumValueOrderFormBuild(l_oDataHeader:Enumeration_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_Name,l_oDataHeader:Enumeration_LinkUID)
+                        endcase
+                        
                     endif
                 else
-                    l_cHtml += EnumerationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID)
+                    do case
+                        case empty(l_cURLSubAction)
+                            l_cHtml += EnumerationEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID)
+                        case l_cURLSubAction == "OrderEnumValues"
+                            l_cHtml += EnumValueOrderFormOnSubmit(l_oDataHeader:Enumeration_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_Name,l_oDataHeader:Enumeration_LinkUID)
+                    endcase
                 endif
             endif
-        /*
+        
         case l_cURLAction == "ListEnumValues"
-            l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-        
-            //Find the iEnumerationPk
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            with object l_oDB1
-                :Table("8122e1ae-644c-4b30-bfa6-779400a520e0","Enumeration")
-                :Column("Enumeration.pk"     ,"EnumerationPk")   // 1
-                :Column("Enumeration.AKA"    ,"EnumerationAKA")  // 2
-                :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-                :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-                :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
-                :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
-                l_aSQLResult := {}
-                :SQL(@l_aSQLResult)
-            endwith
-        
-            if l_oDB1:Tally == 1
-                l_iEnumerationPk  := l_aSQLResult[1,1]
-                l_cEnumerationAKA := l_aSQLResult[1,2]
-                l_cHtml += EnumValueListFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,l_cEnumerationAKA)
-            endif
+            //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+
+            l_cHtml += EnumValueListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_pk,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_Name)
+
         
         case l_cURLAction == "OrderEnumValues"
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-        
-                //Find the iEnumerationPk
-                l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                with object l_oDB1
-                    :Table("0d12fc1c-3b02-4e00-ace2-21eb385eff84","Enumeration")
-                    :Column("Enumeration.pk"     ,"EnumerationPk")
-                    :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-                    :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-                    :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
-                    :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
-                    l_aSQLResult := {}
-                    :SQL(@l_aSQLResult)
-                endwith
-        
-                if l_oDB1:Tally == 1
-                    l_iEnumerationPk := l_aSQLResult[1,1]
-                    if oFcgi:isGet()
-                        l_cHtml += EnumValueOrderFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
-                    else
-                        l_cHtml += EnumValueOrderFormOnSubmit(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
-                    endif
+                //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+
+                if oFcgi:isGet()
+                    l_cHtml += EnumValueOrderFormBuild(l_oDataHeader:Enumeration_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_Name,l_oDataHeader:Enumeration_LinkUID)
+                else
+                    l_cHtml += EnumValueOrderFormOnSubmit(l_oDataHeader:Enumeration_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_Name,l_oDataHeader:Enumeration_LinkUID)
                 endif
             endif
         
         case l_cURLAction == "NewEnumValue"
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
-                
-                //Find the iEnumerationPk and iNameSpacePk (for Enumerations)
-        
-                l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                with object l_oDB1
-                    :Table("9a9489dd-bcf1-4688-b03e-6c706960e140","Enumeration")
-                    :Column("NameSpace.pk"  ,"NameSpacePk")
-                    :Column("Enumeration.pk","EnumerationPk")
-                    :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-                    :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-                    :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
-                    :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
-                    l_aSQLResult := {}
-                    :SQL(@l_aSQLResult)
-                endwith
-        
-                if l_oDB1:Tally == 1
-                    l_iNameSpacePk := l_aSQLResult[1,1]  //Will be used to help get all the enumerations
-                    l_iEnumerationPk     := l_aSQLResult[1,2]
-        
-                    if oFcgi:isGet()
-                        l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",0,{=>})
-                    else
-                        l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
-                    endif
+                //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+                if oFcgi:isGet()
+                    l_cHtml += EnumValueEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_Name,"",0,{=>})
+                else
+                    l_cHtml += EnumValueEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_pk,l_oDataHeader:Enumeration_Name)
                 endif
             endif
         
         case l_cURLAction == "EditEnumValue"
-            l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
-            
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            with object l_oDB1
-                :Table("b96a6a89-c1b6-4629-8d00-3ebf37e93845","EnumValue")
-        
-                :Column("EnumValue.pk"         ,"EnumValue_pk")             //  1
-                :Column("NameSpace.pk"         ,"NameSpace_pk")             //  2
-                :Column("Enumeration.pk"       ,"Enumeration_pk")           //  3
-        
-                :Column("EnumValue.Name"       ,"EnumValue_Name")           //  4
-                :Column("EnumValue.AKA"        ,"EnumValue_AKA")            //  5
-                :Column("EnumValue.Number"     ,"EnumValue_Number")         //  6
-                :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")      //  7
-                :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")      //  8
-                :Column("EnumValue.Description","EnumValue_Description")    //  9
-        
-                :Join("inner","Enumeration"    ,"","EnumValue.fk_Enumeration = Enumeration.pk")
-                :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-                :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-                :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
-                :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
-                :Where([lower(replace(EnumValue.Name,' ','')) = ^],lower(StrTran(l_cURLEnumValueName," ","")))
-                l_aSQLResult := {}
-                :SQL(@l_aSQLResult)
-            endwith
-        
-            if l_oDB1:Tally != 1
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
-            else
-                l_iEnumValuePk    := l_aSQLResult[1,1]
-                l_iNameSpacePk    := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
-                l_iEnumerationPk  := l_aSQLResult[1,3]
-        
+            //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+            if oFcgi:p_nAccessLevelML >= 2
                 if oFcgi:isGet()
-        
-                    l_hValues["Name"]            := AllTrim(l_aSQLResult[1,4])
-                    l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,5],""))
-                    l_hValues["Number"]          := l_aSQLResult[1,6]
-                    l_hValues["UseStatus"]       := l_aSQLResult[1,7]
-                    l_hValues["DocStatus"]       := l_aSQLResult[1,8]
-                    l_hValues["Description"]     := l_aSQLResult[1,9]
-        
-                    l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",l_iEnumValuePk,l_hValues)
+                    with object l_oDB1
+                        :Table("47966C2F-C211-4A52-85F7-221E4ED4A791","ModelEnumValue")
+                
+                        :Column("ModelEnumValue.pk"         ,"EnumValue_pk")
+                        :Column("ModelEnumeration.pk"       ,"Enumeration_pk")
+
+                        :Column("ModelEnumValue.Name"       ,"EnumValue_Name")           
+                        :Column("ModelEnumValue.Number"     ,"EnumValue_Number")       
+                        :Column("ModelEnumValue.Description","EnumValue_Description") 
+                
+                        :Join("inner","ModelEnumeration"    ,"","ModelEnumValue.fk_ModelEnumeration = ModelEnumeration.pk")
+                        :Where("ModelEnumeration.LinkUID = ^"   ,l_oDataHeader:Enumeration_LinkUID)
+                        :Where([lower(replace(ModelEnumValue.Name,' ','')) = ^],lower(StrTran(l_cURLEnumValueName," ","")))
+                        l_oData := :SQL()
+                    endwith
+                    if l_oDB1:Tally == 1
+                        l_hValues["Name"]            := l_oData:EnumValue_Name
+                        l_hValues["Number"]          := l_oData:EnumValue_Number
+                        l_hValues["Description"]     := l_oData:EnumValue_Description
+            
+                        l_cHtml += EnumValueEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_Name,"",l_oData:EnumValue_pk,l_hValues)
+                    endif
                 else
-                    l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+                    l_cHtml += EnumValueEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_pk,l_oDataHeader:Enumeration_Name)
                 endif
             endif
-        */
+        
         case l_cURLAction == "Visualize"
             
             if oFcgi:isGet()
@@ -1149,11 +1107,13 @@ return l_cHtml
 
 //=================================================================================================================
 //=================================================================================================================
-static function SideBarBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath, par_cSelectedPackageLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
+static function SideBarBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath, par_cSelectedPackageLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID, par_cSelectedEnumerationLinkUID)
 
 local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
+local l_oDB2  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_aSQLResult2 := {}
 local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
@@ -1205,13 +1165,20 @@ l_cHtml += [<ul class="nav flex-column">]
             :SQL(@l_aSQLResult)
         endwith
 
-        l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
+        with object l_oDB2
+            :Table("E0490159-0568-44E2-98B7-D212A675CCDC","ModelEnumeration")
+            :Column("Count(*)","Total")
+            :Where("ModelEnumeration.fk_Model = ^" , par_iModelPk)
+            :SQL(@l_aSQLResult2)
+        endwith
+
+        l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) + iif(l_oDB2:Tally == 1,l_aSQLResult2[1,1],0) 
         l_cHtml += [<div class="d-flex justify-content-between align-items-center">]
         l_cHtml +=   [<a class="nav-link]+iif(par_cModelElement == "DATATYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-code-slash"></i>]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_iReccount)+[)</a>]
         l_cHtml +=   [<a data-bs-toggle="collapse" data-bs-target="#dataTypesTree" class="link-secondary" href="#"><i class="bi bi-list-nested"></i></a>]
         l_cHtml += [</div>]
         if l_iReccount > 0
-            l_cHtml += DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
+            l_cHtml += DataTypeTreeBuild(par_iModelPk, par_cModelLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedEnumerationLinkUID)
         endif
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
@@ -2446,7 +2413,7 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function EntityListFormOnSubmit(par_iProjectPk,par_iLinkedEntityPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID)
+static function EntityListFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cPackageLinkUID)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -2475,7 +2442,7 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_AttributeName"       ,l_cAttributeName)
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_AttributeDescription",l_cAttributeDescription)
 
-    l_cHtml += EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+    l_cHtml += EntityListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cPackageLinkUID)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityName"        ,"")
@@ -2483,7 +2450,12 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_AttributeName"       ,"")
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_AttributeDescription","")
 
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/"
+    if !empty(par_cPackageLinkUID)
+        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities/"
+    else
+        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/"
+    endif
+        
     oFcgi:Redirect(l_cURL)
 
 case l_cActionOnSubmit == "SyncToStoplight"
@@ -2763,7 +2735,7 @@ case l_cActionOnSubmit == "Cancel"
 
     // switch l_cFrom
     // case 'Attributes'
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cURLProjectLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEntityName+"/")
+    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cURLProjectLinkCode+"/"+par_cEnumerationName+"/"+par_cURLEntityName+"/")
     //     exit
     // otherwise
     //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cURLProjectLinkCode+"/")
@@ -3045,14 +3017,18 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
+static function DataTypeTreeBuild(par_iModelPk, par_cModelLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedEnumerationLinkUID)
     local l_cHtml := []
     local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
     
     local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+    local l_cTreeIdPrefix := "dataTypesTree"
     local l_cSelectedDataTypeFullPk := []
+    local l_cSelectedDataTypePk
+    local l_cSelectedEnumerationPk
     
-    local l_nNumberOfDataTypes
+    local l_nNumberOfEnumerations
     
     oFcgi:TraceAdd("DataTypeTreeBuild")
 
@@ -3069,52 +3045,92 @@ static function DataTypeTreeBuild(par_iModelPk, par_cSelectedDataTypeLinkUID)
         :SQL("ListOfDataTypes")
         l_nNumberOfDataTypes := :Tally
     endwith
+
+    with object l_oDB_ListOfEnumerations
+        :Table("9A99267C-B249-44EB-B59A-166B7E5964FA","ModelEnumeration")
+        :Column("ModelEnumeration.pk"        ,"pk")
+        :Column("ModelEnumeration.LinkUID"   ,"Enumeration_LinkUID")
+        :Column("ModelEnumeration.Name"  ,"Enumeration_Name")
+        :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
+        :OrderBy("Enumeration_Name")
+        :SQL("ListOfEnumerations")
+        l_nNumberOfEnumerations := :Tally
+    endwith
     
     
     //This is using https://github.com/chrisv2/bs5treeview
-    if !empty(l_nNumberOfDataTypes)
+    
         
-        l_cHtml += [<div id="dataTypesTree" class="collapse hide"></div>]
-        l_cHtml += [<script>]
-        l_cHtml += [function getDTTree() {]
-        l_cHtml += '  var dataDT = ['
-        l_cHtml += [{id:"0",text:"]+oFcgi:p_ANFDataTypes+[", icon: "bi bi-code-slash",]+'nodes:[],'
-        if !empty(par_cSelectedDataTypeLinkUID)
+    l_cHtml += [<div id="dataTypesTree" class="collapse hide"></div>]
+    l_cHtml += [<script>]
+    l_cHtml += [function getDTTree() {]
+    l_cHtml += '  var dataDT = ['
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"]+oFcgi:p_ANFDataTypes+[", icon: "bi bi-code-slash",]
+    l_cHtml += [href:"]+l_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+'",nodes:[],'
+    if !empty(par_cSelectedDataTypeLinkUID)
+        l_cHtml += [expanded: true,]
+    endif
+    l_cHtml += '},'
+    select ListOfDataTypes
+    scan all
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->pk)+[",]
+        if !empty(ListOfDataTypes->DataType_Parent)
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->DataType_Parent)+[",]
+        else
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
+        endif
+        if !empty(par_cSelectedDataTypeLinkUID) .and. par_cSelectedDataTypeLinkUID == ListOfDataTypes->DataType_LinkUID
+            l_cSelectedDataTypePk := ListOfDataTypes->pk
+            l_cSelectedDataTypeFullPk := ListOfDataTypes->DataType_FullPk
             l_cHtml += [expanded: true,]
         endif
-        l_cHtml += '},'
-        select ListOfDataTypes
-        scan all
-            l_cHtml += [{id:"]+trans(ListOfDataTypes->pk)+[",]
-            if !empty(ListOfDataTypes->DataType_Parent)
-                l_cHtml += [parentId:"]+trans(ListOfDataTypes->DataType_Parent)+[",]
-            else
-                l_cHtml += [parentId:"0",]
-            endif
-            if !empty(par_cSelectedDataTypeLinkUID) .and. par_cSelectedDataTypeLinkUID == ListOfDataTypes->DataType_LinkUID
-                l_cSelectedDataTypeFullPk = ListOfDataTypes->DataType_FullPk
-                l_cHtml += [expanded: true,]
-            endif
-            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/", text:"]+ListOfDataTypes->DataType_Name+[", icon: "bi bi-code",]
-            l_cHtml += 'nodes: [ ]'
-            l_cHtml += [},]
-        endscan
-        l_cHtml += '  ];'
-        l_cHtml += 'var selectedPKs = "'+l_cSelectedDataTypeFullPk+'";'
-        l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
-        l_cHtml += 'for (var i=0; i<dataDT.length; i++) { '
-        l_cHtml += '    if(splitSelectedPKs.includes(dataDT[i].id)) {'
-        l_cHtml += '       dataDT[i].expanded = true;'
-        l_cHtml += '    }'
-        l_cHtml += '}'
-        l_cHtml += 'buildDTTree(dataDT);'
-        l_cHtml += 'modifyLeafNodes(dataDT);'
-        l_cHtml += [  return dataDT;]
-        l_cHtml += [}]
-        l_cHtml += [$("#dataTypesTree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
-        l_cHtml += [</script>]
-    
+        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/", text:"]+ListOfDataTypes->DataType_Name+[", icon: "bi bi-code",]
+        l_cHtml += 'nodes: [ ]'
+        l_cHtml += [},]
+    endscan
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+[E0",text:"Enumerations", icon: "bi bi-card-list",]
+    l_cHtml += [href:"]+l_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+'",nodes:[],'
+    if !empty(par_cSelectedEnumerationLinkUID)
+        l_cHtml += [expanded: true,]
     endif
+    l_cHtml += '},'
+    select ListOfEnumerations
+    scan all
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEnumerations->pk)+[",]
+        l_cHtml += [parentId:"]+l_cTreeIdPrefix+[E0",]
+        if !empty(par_cSelectedEnumerationLinkUID) .and. par_cSelectedEnumerationLinkUID == ListOfEnumerations->Enumeration_LinkUID
+            l_cSelectedEnumerationPk := ListOfEnumerations->pk
+        endif
+        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_LinkUID+[/", text:"]+ListOfEnumerations->Enumeration_Name+[", icon: "bi bi-card-list"]
+        l_cHtml += [},]
+    endscan
+    l_cHtml += '  ];'
+    l_cHtml += 'var selectedPKs = "'+l_cSelectedDataTypeFullPk+'";'
+    if !empty(par_cSelectedDataTypeLinkUID) .or. !empty(par_cSelectedEnumerationLinkUID)
+        l_cHtml += 'if(selectedPKs == "") {'
+        l_cHtml += '    selectedPKs = "0"'
+        l_cHtml += '}'
+    endif
+    l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
+    l_cHtml += 'for (var i=0; i<dataDT.length; i++) { '
+    l_cHtml += '    if(splitSelectedPKs.includes(dataDT[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
+    l_cHtml += '       dataDT[i].expanded = true;'
+    l_cHtml += '    }'
+    l_cHtml += '}'
+    l_cHtml += 'buildDTTree(dataDT);'
+    l_cHtml += 'modifyLeafNodes(dataDT);'
+    l_cHtml += [  return dataDT;]
+    l_cHtml += [}]
+    l_cHtml += [$("#dataTypesTree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+    if !empty(l_cSelectedDataTypePk)
+        l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedDataTypePk)+[").toggleClass("active");]
+    else
+        if !empty(l_cSelectedEnumerationPk)
+            l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEnumerationPk)+[").toggleClass("active");]
+        endif
+    endif
+    l_cHtml += [</script>]
+    
     
     return l_cHtml
 
@@ -3990,6 +4006,25 @@ endcase
 
 return l_cHtml
 //=================================================================================================================
+static function GetEnumerationEditHeader(par_cSitePath, par_cModelLinkUID, par_cEnumerationLinkUID, par_cEnumerationElement)
+    local l_cHtml := ""
+    l_cHtml += [<ul class="nav nav-tabs">]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(empty(par_cEnumerationElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/">Edit Enumeration</a>]
+        l_cHtml += [</li>]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "ListEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/ListEnumValues">Values</a>]
+        l_cHtml += [</li>]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "OrderEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/OrderEnumValues">Order Values</a>]
+        l_cHtml += [</li>]
+
+    
+    l_cHtml += [</ul>]
+    return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function EnumerationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
@@ -4132,7 +4167,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if oFcgi:p_nAccessLevelML >= 5
                 l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[Modeling/ListEnumValues/]+par_cEnumerationLinkUID+[/">Values</a>]
 
         endif
     l_cHtml += [</div>]
@@ -4314,6 +4348,434 @@ otherwise
         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")
     endswitch
 endcase
+
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+static function EnumValueListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_iEnumerationPk,par_cEnumerationLinkUID,par_cEnumerationName)
+local l_cHtml := []
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_nNumberOfEnumValues
+local l_oDB1
+
+oFcgi:TraceAdd("EnumValueListFormBuild")
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB1
+    :Table("D9D30FA6-D8A6-4069-A737-0FC60F508371","ModelEnumValue")
+    :Column("ModelEnumValue.pk"         ,"pk")
+    :Column("ModelEnumValue.Name"       ,"EnumValue_Name")
+    :Column("ModelEnumValue.Number"     ,"EnumValue_Number")
+    :Column("ModelEnumValue.Description","EnumValue_Description")
+    :Column("ModelEnumValue.Order"      ,"EnumValue_Order")
+    :Where("ModelEnumValue.fk_ModelEnumeration = ^",par_iEnumerationPk)
+    :OrderBy("EnumValue_order")
+    :SQL("ListOfEnumValues")
+    l_nNumberOfEnumValues := :Tally
+endwith
+
+if l_nNumberOfEnumValues <= 0
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cEnumerationName)+[".</span>]
+            if oFcgi:p_nAccessLevelML >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[Modeling/NewEnumValue/]+par_cEnumerationLinkUID+[/">New Enumeration Value</a>]
+            endif
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
+
+else
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            if oFcgi:p_nAccessLevelML >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/NewEnumValue/]+par_cEnumerationLinkUID+[/">New Enumeration Value</a>]
+            endif
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
+
+    l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+    l_cHtml += [<div class="row justify-content-center m-3">]
+        l_cHtml += [<div class="col-auto">]
+
+            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cEnumerationName)+["</th>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+            l_cHtml += [</tr>]
+
+            select ListOfEnumValues
+            scan all
+                l_cHtml += [<tr>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumValue/]+par_cEnumerationLinkUID+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
+                            l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
+                        endif
+                        l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,""))
+                    l_cHtml += [</td>]
+
+                l_cHtml += [</tr>]
+            endscan
+            l_cHtml += [</table>]
+            
+        l_cHtml += [</div>]
+    l_cHtml += [</div>]
+
+endif
+
+// l_cHtml += [<div class="m-3">]
+// l_cHtml += [</div>]
+
+return l_cHtml
+//=================================================================================================================
+static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cModelLinkUID,par_cEnumerationName,par_cEnumerationLinkUID)
+local l_cHtml := []
+local l_oDB1
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+
+oFcgi:TraceAdd("EnumValueOrderFormBuild")
+Altd()
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="Order">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" name="EnumerationKey" value="]+trans(par_iEnumerationPk)+[">]
+l_cHtml += [<input type="hidden" name="ValueOrder" id="ValueOrder" value="">]
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB1
+    :Table("692088EC-09EC-40C7-9950-3CB70674509D","ModelEnumValue")
+    :Column("ModelEnumValue.pk"         ,"pk")
+    :Column("ModelEnumValue.Name"       ,"EnumValue_Name")
+    :Column("ModelEnumValue.Order"      ,"EnumValue_Order")
+    :Where("ModelEnumValue.fk_ModelEnumeration = ^",par_iEnumerationPk)
+    :OrderBy("EnumValue_order")
+    :SQL("ListOfEnumValues")
+endwith
+
+l_cHtml += [<style>]
+l_cHtml += [#sortable { list-style-type: none; margin: 0; padding: 0; }]
+// The width: 60%;  will fail due to Bootstrap
+l_cHtml += [#sortable li { margin: 3px 5px 3px 5px; padding: 2px 5px 5px 5px; font-size: 1.2em; height: 1.5em; line-height: 1.2em;}]   //display:block;   width:200px;
+l_cHtml += [.ui-state-highlight { height: 1.5em; line-height: 1.2em; } ]
+l_cHtml += [</style>]
+
+
+l_cHtml += [<script language="javascript">]
+l_cHtml += [function SendOrderList() {]
+l_cHtml += [var EnumOrderData = $('#sortable').sortable('serialize', { key: 'sort' });]
+// l_cHtml += [alert('hello 3 '+EnumOrderData);]
+l_cHtml += [$('#ValueOrder').val(EnumOrderData);]
+l_cHtml += [$('#ActionOnSubmit').val('Save');]
+l_cHtml += [document.form.submit();]
+l_cHtml += [}; ]
+l_cHtml += [</script>]
+
+oFcgi:p_cjQueryScript += [$( "#sortable" ).sortable({]
+oFcgi:p_cjQueryScript +=   [axis: "y",]
+oFcgi:p_cjQueryScript +=   [placeholder: "ui-state-highlight"]
+oFcgi:p_cjQueryScript += [});]
+oFcgi:p_cjQueryScript += [$( "#sortable" ).disableSelection();]
+//The following line sets the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
+oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );]
+
+// l_cHtml += [<div class="m-3">]
+// l_cHtml += [</div>]
+
+select ListOfEnumValues
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cEnumerationName+["</span>]
+        if oFcgi:p_nAccessLevelML >= 3
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
+        endif
+        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Modeling/ListEnumValues/]+par_cEnumerationLinkUID+[/">Cancel</a>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+l_cHtml += [<div class="row justify-content-center m-3">]
+    l_cHtml += [<div class="col-auto">]
+
+    l_cHtml += [<ul id="sortable">]
+    scan all
+        l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfEnumValues->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+ListOfEnumValues->EnumValue_Name+[</span></li>]
+    endscan
+    l_cHtml += [</ul>]
+
+    l_cHtml += [</div>]
+l_cHtml += [</div>]
+
+
+//Set the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
+// l_cHtml += [<button onclick="$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );return false;">Freeze Width</button>]
+
+// var MaxLiWidth = Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()); alert('Max Width = '+MaxLiWidth);
+
+l_cHtml += [</form>]
+
+return l_cHtml
+//=================================================================================================================
+static function EnumValueOrderFormOnSubmit(par_iEnumerationPk,par_cModelLinkUID,par_cEnumerationName,par_cEnumerationLinkUID)
+local l_cHtml := []
+
+local l_cActionOnSubmit
+local l_iEnumerationPk
+local l_cEnumValuePkOrder
+
+local l_oDB1
+local l_aOrderedPks
+local l_Counter
+
+oFcgi:TraceAdd("EnumValueOrderFormOnSubmit")
+
+l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
+l_iEnumerationPk    := Val(oFcgi:GetInputValue("EnumerationKey"))
+l_cEnumValuePkOrder := SanitizeInput(oFcgi:GetInputValue("ValueOrder"))
+AltD()
+do case
+case l_cActionOnSubmit == "Save"
+    if oFcgi:p_nAccessLevelML >= 5
+        l_aOrderedPks := hb_ATokens(Strtran(substr(l_cEnumValuePkOrder,6),"&",""),"sort=")     // The Substr(..,6) is used to skip the first "sort="
+
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("C6E55B64-A15D-4812-8D2B-2E34FCE1CED1","ModelEnumValue")
+            :Column("ModelEnumValue.pk","pk")
+            :Column("ModelEnumValue.Order","order")
+            :Where([ModelEnumValue.fk_ModelEnumeration = ^],l_iEnumerationPk)
+            :SQL("ListOfEnumValue")
+        endwith
+
+        for l_Counter := 1 to len(l_aOrderedPks)
+            if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfEnumValue","pk") .and. ListOfEnumValue->order <> l_Counter
+                with object l_oDB1
+                    :Table("2DC5DB7B-F029-4161-AEAB-AD162E494EC0","ModelEnumValue")
+                    :Field("ModelEnumValue.order",l_Counter)
+                    :Update(val(l_aOrderedPks[l_Counter]))
+                endwith
+            endif
+        endfor
+    endif
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/")
+
+endcase
+
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+static function EnumValueEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,par_cEnumerationName,par_cErrorText,par_iPk,par_hValues)
+
+//par_cName,par_iNumber,par_nUseStatus,par_nDocStatus,par_cDescription
+
+local l_cHtml := ""
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
+
+local l_cName            := hb_HGetDef(par_hValues,"Name","")
+local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",""))
+local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+
+oFcgi:TraceAdd("EnumValueEditFormBuild")
+
+// local l_ipcount := pcount()
+// local l_test
+// altd()
+// l_test := hb_IsNIL(par_iNumber)
+// l_cNumber      := iif(pcount() > 6 .and. !hb_IsNIL(par_iNumber),Trans(par_iNumber),"")
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="Edit">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" name="EnumerationKey" value="]+trans(par_iPk)+[">]
+
+if !empty(l_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cEnumerationName+["</span>]   //navbar-text
+        if oFcgi:p_nAccessLevelML >= 3
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        endif
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        if !empty(par_iPk)
+            if oFcgi:p_nAccessLevelML >= 5
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            endif
+        endif
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+
+    l_cHtml += [<table>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Name</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Number</td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNumber" id="TextNumber" value="]+FcgiPrepFieldForValue(l_cNumber)+[" maxlength="8" size="8"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr>]
+        l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalForms()
+
+return l_cHtml
+//=================================================================================================================
+static function EnumValueEditFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,par_iEnumerationPk,par_cEnumerationName)
+local l_cHtml := []
+
+local l_cActionOnSubmit
+local l_iEnumValuePk
+local l_cEnumValueName
+local l_cEnumValueNumber,l_iEnumValueNumber
+local l_cEnumValueDescription
+local l_iEnumValueOrder
+local l_aSQLResult   := {}
+local l_hValues := {=>}
+local l_cErrorMessage := ""
+local l_oDB1
+
+oFcgi:TraceAdd("EnumValueEditFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_iEnumValuePk          := Val(oFcgi:GetInputValue("EnumerationKey"))
+l_cEnumValueName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+
+
+//oFcgi:GetInputValue("TextAKA")
+
+l_cEnumValueNumber      := SanitizeInput(oFcgi:GetInputValue("TextNumber"))
+l_iEnumValueNumber      := iif(empty(l_cEnumValueNumber),NULL,val(l_cEnumValueNumber))
+
+l_cEnumValueDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+
+do case
+case l_cActionOnSubmit == "Save"
+    if oFcgi:p_nAccessLevelML >= 5
+        if empty(l_cEnumValueName)
+            l_cErrorMessage := "Missing Name"
+        else
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+            with object l_oDB1
+                :Table("06BDF36F-225B-4452-84F5-CE5F723BE9F7","ModelEnumValue")
+                :Column("ModelEnumValue.pk","pk")
+                :Where([ModelEnumValue.fk_ModelEnumeration = ^],par_iEnumerationPk)
+                :Where([lower(replace(ModelEnumValue.Name,' ','')) = ^],lower(StrTran(l_cEnumValueName," ","")))
+                if l_iEnumValuePk > 0
+                    :Where([ModelEnumValue.pk != ^],l_iEnumValuePk)
+                endif
+                :SQL()
+            endwith
+
+            if l_oDB1:Tally <> 0
+                l_cErrorMessage := "Duplicate Name"
+            endif
+        endif
+    endif
+
+    if empty(l_cErrorMessage)
+        //If adding an EnumValue, find out what the last order is
+        l_iEnumValueOrder := 1
+        if empty(l_iEnumValuePk)
+            with object l_oDB1
+                :Table("140D8B9D-1AC6-4719-BD4E-A1D39588094C","ModelEnumValue")
+                :Column("ModelEnumValue.Order","EnumValue_Order")
+                :Where([ModelEnumValue.fk_ModelEnumeration = ^],par_iEnumerationPk)
+                :OrderBy("EnumValue_Order","Desc")
+                :Limit(1)
+                :SQL(@l_aSQLResult)
+            endwith
+
+            if l_oDB1:Tally > 0
+                l_iEnumValueOrder := l_aSQLResult[1,1] + 1
+            endif
+        endif
+
+        //Save the Enumeration Value
+        with object l_oDB1
+            AltD()
+            :Table("A47CAE9C-A15D-42A4-BBA9-1D1BE2C0C1AD","ModelEnumValue")
+            if oFcgi:p_nAccessLevelML >= 5
+                :Field("ModelEnumValue.Name"       ,l_cEnumValueName)
+                :Field("ModelEnumValue.Number"     ,l_iEnumValueNumber)
+            endif
+            if empty(l_iEnumValuePk)
+                :Field("ModelEnumValue.fk_ModelEnumeration" , par_iEnumerationPk)
+                :Field("ModelEnumValue.Order"          ,l_iEnumValueOrder)
+                if :Add()
+                    l_iEnumValuePk := :Key()
+                else
+                    l_cErrorMessage := "Failed to add Enumeration Value."
+                endif
+
+            else
+                :Update(l_iEnumValuePk)
+            endif
+        endwith
+
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+    endif
+
+
+case l_cActionOnSubmit == "Cancel"
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+
+case l_cActionOnSubmit == "Delete"   // EnumValue
+    if oFcgi:p_nAccessLevelML >= 5
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB1:Delete("04DF0A61-DEF8-44AB-9866-54BA2BB315CA","ModelEnumValue",l_iEnumValuePk)
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+    endif
+
+endcase
+
+if !empty(l_cErrorMessage)
+    l_hValues["Name"]            := l_cEnumValueName
+    l_hValues["Number"]          := l_iEnumValueNumber
+    l_hValues["Description"]     := l_cEnumValueDescription
+
+    l_cHtml += EnumValueEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,par_cEnumerationName,l_cErrorMessage,l_iEnumValuePk,l_hValues)
+endif
 
 return l_cHtml
 //=================================================================================================================
@@ -4661,7 +5123,7 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function AssociationListFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+static function AssociationListFormOnSubmit(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cPackageLinkUID)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -4670,6 +5132,7 @@ local l_cAssociationDescription
 local l_cEndpointName
 local l_cEndpointDescription
 local l_cURL
+AltD()
 
 oFcgi:TraceAdd("AssociationListFormOnSubmit")
 
@@ -4689,21 +5152,28 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointName"       ,l_cEndpointName)
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointDescription",l_cEndpointDescription)
 
-    l_cHtml += AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+    l_cHtml += AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cPackageLinkUID)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_AssociationName"        ,"")
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_AssociationDescription" ,"")
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointName"       ,"")
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointDescription","")
-
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/"
+    if !empty(par_cEntityLinkUID)
+        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAssociations/"
+    elseif !empty(par_cPackageLinkUID)
+        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations/"
+    else
+        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/"
+    endif
+    
     oFcgi:Redirect(l_cURL)
 
 otherwise
-    l_cHtml += AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
+    l_cHtml += AssociationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cPackageLinkUID)
 
 endcase
+return l_cHtml
 
 static function GetPackageEditHeader(par_cSitePath, par_cModelLinkUID, par_cPackageLinkUID, par_cPackageElement)
     local l_cHtml := ""
@@ -5357,6 +5827,7 @@ with object l_oDB_ListOfAttributes
     :Column("Attribute.pk"             ,"pk")
     :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
     :Column("DataType.FullName"        ,"DataType_FullName")
+    :Column("ModelEnumeration.Name"    ,"Enumeration_Name")
     :Column("Attribute.Order"          ,"Attribute_Order")
     :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
     :Column("Attribute.Name"           ,"Attribute_Name")
@@ -5364,7 +5835,8 @@ with object l_oDB_ListOfAttributes
     :Column("Attribute.BoundUpper"     ,"Attribute_BoundUpper")
     :Column("Attribute.Description"    ,"Attribute_Description")
     
-    :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
     :Where("Attribute.fk_Entity = ^",par_iEntityPk)
 
     if !empty(l_cSearchAttributeName) .or. !empty(l_cSearchAttributeDescription)
@@ -5535,7 +6007,11 @@ else
 
                     // Data Type
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += ListOfAttributes->DataType_FullName
+                        if !empty(ListOfAttributes->DataType_FullName)
+                            l_cHtml += [<i class="bi bi-code"></i>&nbsp;]+ListOfAttributes->DataType_FullName
+                        elseif !empty(ListOfAttributes->Enumeration_Name)
+                            l_cHtml += [<i class="bi bi-card-list"></i>&nbsp;]+ListOfAttributes->Enumeration_Name
+                        endif
                     l_cHtml += [</td>]
 
                     // Bound<br>Lower
@@ -5601,7 +6077,7 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Entity_"+Trans(par_iEntityPk)+"_AttributeSearch_AttributeName"       ,"")
     SaveUserSetting("Entity_"+Trans(par_iEntityPk)+"_AttributeSearch_AttributeDescription","")
 
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/"
+    l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes/"+par_cEntityLinkUID+"/"
     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -5618,11 +6094,13 @@ local l_cHtml := ""
 local l_cErrorText    := hb_DefaultValue(par_cErrorText,"")
 local l_cName         := hb_HGetDef(par_hValues,"Name","")
 local l_ifk_DataType  := hb_HGetDef(par_hValues,"fk_DataType",0)
+local l_ifk_Enumeration  := hb_HGetDef(par_hValues,"fk_Enumeration",0)
 local l_cBoundLower   := nvl(hb_HGetDef(par_hValues,"BoundLower",""),"")
 local l_cBoundUpper   := nvl(hb_HGetDef(par_hValues,"BoundUpper",""),"")
 local l_cDescription  := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumeration := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_json_DataTypes
 local l_cInfo
@@ -5641,6 +6119,16 @@ with object l_oDB_ListOfDataType
     :SQL("ListOfDataTypes")
 endwith
 
+with object l_oDB_ListOfEnumeration
+    :Table("4C3C4545-EAC3-4558-ADA6-91BCA0FD50D6","ModelEnumeration")
+    :Column("ModelEnumeration.pk"         , "pk")
+    :Column("ModelEnumeration.Name"   , "Enumeration_Name")
+    :Column("ModelEnumeration.Name" , "tag1")
+    :OrderBy("tag1")
+    :Where("ModelEnumeration.fk_Model = ^" , par_iModelPk)
+    :SQL("ListOfEnumerations")
+endwith
+
 SetSelect2Support()
 
 l_json_DataTypes := []
@@ -5654,13 +6142,33 @@ scan all
                                     ["] => [ ] ,;
                                     ['] => [ ] ;
                                     },,1)
-    l_json_DataTypes += "{id:"+trans(ListOfDataTypes->pk)+",text:'"+l_cInfo+"'}"
+    l_json_DataTypes += "{id:'D"+trans(ListOfDataTypes->pk)+"',text:'"+l_cInfo+"'}"
     l_hDataTypes[ListOfDataTypes->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
+endscan
+select ListOfEnumerations
+scan all
+    if !empty(l_json_DataTypes)
+        l_json_DataTypes += [,]
+    endif
+    l_cInfo := vfp_StrReplace(ListOfEnumerations->Enumeration_Name,{;
+                                    [\] => [\\] ,;
+                                    ["] => [ ] ,;
+                                    ['] => [ ] ;
+                                    },,1)
+    l_json_DataTypes += "{id:'E"+trans(ListOfEnumerations->pk)+"',text:'"+l_cInfo+"'}"
+    l_hDataTypes[ListOfEnumerations->pk] := l_cInfo 
 endscan
 l_json_DataTypes := "["+l_json_DataTypes+"]"
 
 //Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
-oFcgi:p_cjQueryScript += [$(".SelectDataType").select2({placeholder: '',allowClear: true,data: ]+l_json_DataTypes+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+oFcgi:p_cjQueryScript += [function iformat(state) {]
+oFcgi:p_cjQueryScript += [    if(!state.id) { return state.text; }]
+oFcgi:p_cjQueryScript += [    var icon;]
+oFcgi:p_cjQueryScript += [    if(state.id.startsWith('D')) { icon = 'bi-code'; }]
+oFcgi:p_cjQueryScript += [    else if(state.id.startsWith('E')) { icon = 'bi-card-list'; }]
+oFcgi:p_cjQueryScript += [    return $('<i class="bi '+icon+'"></i> ' + state.text + '</span>');]
+oFcgi:p_cjQueryScript += [}]
+oFcgi:p_cjQueryScript += [$(".SelectDataType").select2({placeholder: '',allowClear: true, allowHtml: true, templateResult: iformat, data: ]+l_json_DataTypes+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -5753,6 +6261,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iAttributePk
 local l_cAttributeName
+local l_cAttributeFk_DataType
 local l_iAttributeFk_DataType
 local l_cAttributeBoundLower
 local l_cAttributeBoundUpper
@@ -5776,7 +6285,8 @@ l_iAttributePk          := Val(oFcgi:GetInputValue("AttributeKey"))
 
 l_cAttributeName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
 
-l_iAttributeFk_DataType := Val(oFcgi:GetInputValue("ComboFk_DataType"))
+l_cAttributeFk_DataType := oFcgi:GetInputValue("ComboFk_DataType")
+l_iAttributeFk_DataType := val(substr(l_cAttributeFk_DataType,2))
 
 l_cAttributeBoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"))
 l_cAttributeBoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"))
@@ -5791,7 +6301,7 @@ case l_cActionOnSubmit == "Save"
         case empty(l_cAttributeName)
             l_cErrorMessage := "Missing Name"
 
-        case empty(l_iAttributeFk_DataType)
+        case empty(l_cAttributeFk_DataType)
             l_cErrorMessage := "Missing Data Type"
 
         otherwise
@@ -5829,13 +6339,19 @@ case l_cActionOnSubmit == "Save"
                 l_iAttributeOrder := l_aSQLResult[1,1] + 1
             endif
         endif
-
+        Altd()
         //Save the Attribute
         with object l_oDB1
             :Table("f1109e34-247d-49e8-9a7a-7ffd32e1a914","Attribute")
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("Attribute.Name"        , l_cAttributeName)
-                :Field("Attribute.fk_DataType" , l_iAttributeFk_DataType)
+                if left(l_cAttributeFk_DataType,1) = "D"
+                    :Field("Attribute.fk_DataType" , l_iAttributeFk_DataType)
+                    :Field("Attribute.fk_ModelEnumeration" , 0)
+                elseif left(l_cAttributeFk_DataType,1) = "E"
+                    :Field("Attribute.fk_ModelEnumeration" , l_iAttributeFk_DataType)
+                    :Field("Attribute.fk_DataType" , 0)
+                endif
                 :Field("Attribute.BoundLower"  , iif(empty(l_cAttributeBoundLower),NULL,l_cAttributeBoundLower))
                 :Field("Attribute.BoundUpper"  , iif(empty(l_cAttributeBoundUpper),NULL,l_cAttributeBoundUpper))
             endif
