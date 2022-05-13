@@ -4456,7 +4456,6 @@ local l_oDB1
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 oFcgi:TraceAdd("EnumValueOrderFormBuild")
-Altd()
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Order">]
@@ -4745,7 +4744,6 @@ case l_cActionOnSubmit == "Save"
 
         //Save the Enumeration Value
         with object l_oDB1
-            AltD()
             :Table("A47CAE9C-A15D-42A4-BBA9-1D1BE2C0C1AD","ModelEnumValue")
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("ModelEnumValue.Name"       ,l_cEnumValueName)
@@ -5144,7 +5142,6 @@ local l_cAssociationDescription
 local l_cEndpointName
 local l_cEndpointDescription
 local l_cURL
-AltD()
 
 oFcgi:TraceAdd("AssociationListFormOnSubmit")
 
@@ -6351,7 +6348,7 @@ case l_cActionOnSubmit == "Save"
                 l_iAttributeOrder := l_aSQLResult[1,1] + 1
             endif
         endif
-        Altd()
+
         //Save the Attribute
         with object l_oDB1
             :Table("f1109e34-247d-49e8-9a7a-7ffd32e1a914","Attribute")
@@ -6920,7 +6917,6 @@ static function LinkedEntityEditFormBuild(par_iModelPk,par_iPk,par_cLinkedEntity
                             endif
                         endif
                     else
-                        AltD()
                         if :Update(par_cLinkedEntityPk)
                             oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                         else
