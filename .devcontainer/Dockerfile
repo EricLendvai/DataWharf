@@ -97,6 +97,7 @@ ENV APACHE_LOCK_DIR /var/lock/apache2
 ENV APACHE_PID_FILE /var/run/apache2.pid
 
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
+COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-available/
 
 
 COPY ./FilesForPublishedWebsites/backend /var/www/Harbour_websites/fcgi_DataWharf/backend
