@@ -4062,6 +4062,12 @@ with object l_oDB2
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
     :GroupBy("ModelEnumeration.pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
+
+    with object :p_oCursor
+        :Index("tag1","ModelEnumeration_pk")
+        :CreateIndexes()
+        :SetOrder("tag1")
+    endwith    
 endwith
 
 
@@ -4112,7 +4118,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                            l_iEnumValueCount := iif( VFP_Seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
+                            l_iEnumValueCount := iif( VFP_Seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->ModelEnumValueCount , 0)
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEnumValues/]+ListOfEnumerations->Enumeration_LinkUID+[/">]+Trans(l_iEnumValueCount)+[</a>]
                         l_cHtml += [</td>]
 
@@ -4550,7 +4556,7 @@ oFcgi:TraceAdd("EnumValueOrderFormOnSubmit")
 l_cActionOnSubmit   := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk    := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_cEnumValuePkOrder := SanitizeInput(oFcgi:GetInputValue("ValueOrder"))
-AltD()
+
 do case
 case l_cActionOnSubmit == "Save"
     if oFcgi:p_nAccessLevelML >= 5
@@ -4563,6 +4569,12 @@ case l_cActionOnSubmit == "Save"
             :Column("ModelEnumValue.Order","order")
             :Where([ModelEnumValue.fk_ModelEnumeration = ^],l_iEnumerationPk)
             :SQL("ListOfEnumValue")
+
+            with object :p_oCursor
+                :Index("pk","pk")
+                :CreateIndexes()
+                :SetOrder("pk")
+            endwith
         endwith
 
         for l_Counter := 1 to len(l_aOrderedPks)
