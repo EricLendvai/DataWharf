@@ -861,6 +861,7 @@ otherwise
         case l_cURLAction == "ListDataTypes"
 
             if oFcgi:isGet()
+                l_cHtml += GetDataTypesEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID, l_cURLAction)
                 l_cHtml += DataTypeListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
             else
                 // Nothing for now. All buttons are GET
@@ -905,6 +906,7 @@ otherwise
             endif
         case l_cURLAction == "ListEnumerations"
             //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+            l_cHtml += GetDataTypesEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID, l_cURLAction)
             l_cHtml += EnumerationListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
         
         case l_cURLAction == "NewEnumeration"
@@ -958,7 +960,6 @@ otherwise
         
         case l_cURLAction == "ListEnumValues"
             //l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-
             l_cHtml += EnumValueListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_pk,l_oDataHeader:Enumeration_LinkUID,l_oDataHeader:Enumeration_Name)
 
         
@@ -3513,6 +3514,22 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
+static function GetDataTypesEditHeader(par_cSitePath, par_cModelLinkUID, par_cDataTypeElement)
+    local l_cHtml := ""
+    l_cHtml += [<ul class="nav nav-tabs">]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cDataTypeElement == "ListDataTypes",[ active],[])+[" href="]+par_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/">List ]+oFcgi:p_ANFDataTypes+[</a>]
+        l_cHtml += [</li>]
+    
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cDataTypeElement == "ListEnumerations",[ active],[])+[" href="]+par_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+[/">List ]+oFcgi:p_ANFEnumerations+[</a>]
+        l_cHtml += [</li>]
+    
+    l_cHtml += [</ul>]
+    return l_cHtml
+
+return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function DataTypeListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
@@ -3660,7 +3677,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 l_cHtml += [<td>]  // valign="top"
                     if oFcgi:p_nAccessLevelML >= 5
                         l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewDataType/]+par_cModelLinkUID+[/">New ]+oFcgi:p_ANFDataType+[</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/NewEnumeration/]+par_cModelLinkUID+[/">New ]+oFcgi:p_ANFEnumeration+[</a>]
                         if l_lShowActionButton
                             l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+[/?action=LoadAllPrimitives">Load All Primitives</a>]
                         endif
@@ -4095,7 +4111,7 @@ else
 
     l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
+            l_cHtml += [<div class="col">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -4403,7 +4419,7 @@ else
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
     l_cHtml += [<div class="row justify-content-center m-3">]
-        l_cHtml += [<div class="col-auto">]
+        l_cHtml += [<div class="col">]
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
@@ -6620,7 +6636,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
         l_cHtml += [<div class="row justify-content-center">]
-            l_cHtml += [<div class="col-auto">]
+            l_cHtml += [<div class="col">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
