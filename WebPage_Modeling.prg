@@ -2478,6 +2478,30 @@ return l_cHtml
 
 static function GetEntityEditHeader(par_cSitePath, par_cModelLinkUID, par_cEntityLinkUID, par_cEntityElement)
 local l_cHtml := ""
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oEntity
+
+with object l_oDB1
+    :Table("A84ED358-9173-4C27-88A7-EBB4D2118BAF","Entity")
+    :Column("Entity.pk","Entity_pk")
+    :Column("Entity.Name" ,"Entity_Name")
+    :Column("Package.FullName" ,"Package_FullName")
+    :Column("Package.LinkUID" ,"Package_LinkUID")
+    :Join("left","Package","","Entity.fk_Package = Package.pk")
+    :Where("Entity.LinkUID = ^",par_cEntityLinkUID)
+    l_oEntity := :SQL()
+endwith
+
+l_cHtml += [<nav aria-label="breadcrumb">]
+    l_cHtml += [<ol class="breadcrumb">]
+        l_cHtml += [<li class="breadcrumb-item"><a href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Home</a></li>]
+        if !empty(l_oEntity:Package_LinkUID)
+            l_cHtml += [<li class="breadcrumb-item"><a href="]+par_cSitePath+[Modeling/EditPackage/]+l_oEntity:Package_LinkUID+[/">]+l_oEntity:Package_FullName+[</a></li>]
+        endif
+        l_cHtml += [<li class="breadcrumb-item active" aria-current="page">]+l_oEntity:Entity_Name+[</li>]
+    l_cHtml += [</ol>]
+l_cHtml += [</nav>]
+
 l_cHtml += [<ul class="nav nav-tabs">]
 
     l_cHtml += [<li class="nav-item">]
@@ -5202,8 +5226,31 @@ return l_cHtml
 
 static function GetPackageEditHeader(par_cSitePath, par_cModelLinkUID, par_cPackageLinkUID, par_cPackageElement)
     local l_cHtml := ""
-    l_cHtml += [<ul class="nav nav-tabs">]
-    
+    local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_oPackage
+
+    with object l_oDB1
+        :Table("D25D3152-D05C-4EAB-8CAE-12F8E15AC143","Package")
+        :Column("Package.pk","Package_pk")
+        :Column("Package.Name" ,"Package_Name")
+        :Column("PackageParent.FullName" ,"PackageParent_FullName")
+        :Column("PackageParent.LinkUID" ,"PackageParent_LinkUID")
+        :Join("left","Package","PackageParent","Package.fk_Package = PackageParent.pk")
+        :Where("Package.LinkUID = ^",par_cPackageLinkUID)
+        l_oPackage := :SQL()
+    endwith
+
+    l_cHtml += [<nav aria-label="breadcrumb">]
+        l_cHtml += [<ol class="breadcrumb">]
+            l_cHtml += [<li class="breadcrumb-item"><a href="]+par_cSitePath+[Modeling/ListEntities/]+par_cModelLinkUID+[/">Home</a></li>]
+            if !empty(l_oPackage:PackageParent_LinkUID)
+                l_cHtml += [<li class="breadcrumb-item"><a href="]+par_cSitePath+[Modeling/EditPackage/]+l_oPackage:PackageParent_LinkUID+[/">]+l_oPackage:PackageParent_FullName+[</a></li>]
+            endif
+            l_cHtml += [<li class="breadcrumb-item active" aria-current="page">]+l_oPackage:Package_Name+[</li>]
+        l_cHtml += [</ol>]
+    l_cHtml += [</nav>]
+
+    l_cHtml += [<ul class="nav nav-tabs">]    
         l_cHtml += [<li class="nav-item">]
             l_cHtml += [<a class="nav-link ]+iif(empty(par_cPackageElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditPackage/]+par_cPackageLinkUID+[/">Edit ]+oFcgi:p_ANFPackage+[</a>]
         l_cHtml += [</li>]
