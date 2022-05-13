@@ -6642,37 +6642,39 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
     :Table("B9DC8B16-0CF7-4B9B-B17D-9B69CAC8779C","LinkedEntity")
-    :Column("LinkedEntity.pk"               ,"pk")
+    :Column("LinkedEntity.pk"                    ,"pk")
     :Column("LinkedEntity.LinkUID"               ,"LinkedEntity_LinkUID")
-    :Column("LinkedEntity.Description"      ,"LinkedEntity_Description")
-    :Column("LinkedEntity.fk_Entity1"       ,"LinkedEntity_fk_Entity1")
-    :Column("LinkedEntity.fk_Entity2"       ,"LinkedEntity_fk_Entity2")
-    :Column("Entity1.Name"       ,"Entity1_Name")
-    :Column("Entity2.Name"       ,"Entity2_Name")
-    :Column("Entity1.LinkUID"       ,"Entity1_LinkUID")
-    :Column("Entity2.LinkUID"       ,"Entity2_LinkUID")
-    :Column("Model1.Name"       ,"Model1_Name")
-    :Column("Model2.Name"       ,"Model2_Name")
-    :Column("Model1.LinkUID"       ,"Model1_LinkUID")
-    :Column("Model2.LinkUID"       ,"Model2_LinkUID")
-    :Join("inner","Entity"       ,"Entity1"    ,"LinkedEntity.fk_Entity1 = Entity1.pk")
-    :Join("inner","Entity"       ,"Entity2"    ,"LinkedEntity.fk_Entity2 = Entity2.pk")
-    :Join("inner","Model"       ,"Model1"    ,"Entity1.fk_Model = Model1.pk")
-    :Join("inner","Model"       ,"Model2"    ,"Entity2.fk_Model = Model2.pk")
+    :Column("LinkedEntity.Description"           ,"LinkedEntity_Description")
+    :Column("LinkedEntity.fk_Entity1"            ,"LinkedEntity_fk_Entity1")
+    :Column("LinkedEntity.fk_Entity2"            ,"LinkedEntity_fk_Entity2")
+    :Column("Entity1.Name"                       ,"Entity1_Name")
+    :Column("Entity2.Name"                       ,"Entity2_Name")
+    :Column("Entity1.LinkUID"                    ,"Entity1_LinkUID")
+    :Column("Entity2.LinkUID"                    ,"Entity2_LinkUID")
+    :Column("Model1.Name"                        ,"Model1_Name")
+    :Column("Model2.Name"                        ,"Model2_Name")
+    :Column("Model1.LinkUID"                     ,"Model1_LinkUID")
+    :Column("Model2.LinkUID"                     ,"Model2_LinkUID")
+    :Join("inner","Entity"       ,"Entity1"      ,"LinkedEntity.fk_Entity1 = Entity1.pk")
+    :Join("inner","Entity"       ,"Entity2"      ,"LinkedEntity.fk_Entity2 = Entity2.pk")
+    :Join("inner","Model"        ,"Model1"       ,"Entity1.fk_Model = Model1.pk")
+    :Join("inner","Model"        ,"Model2"       ,"Entity2.fk_Model = Model2.pk")
     :Where("LinkedEntity.fk_Entity1 = ^ OR LinkedEntity.fk_Entity2 = ^", par_iEntityPk, par_iEntityPk)
     :SQL("ListOfLinkedEntities")
     l_nNumberOfLinkedEntities := :Tally
 endwith
 
-l_cHtml += [<div class="m-3">]
+//l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfLinkedEntities)
-        l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span>No ]+oFcgi:p_ANFLinkedEntities+[ linked.</span>]
-            if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewLinkedEntity/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFLinkedEntity+[</a>]
-            endif
-        l_cHtml += [</div>]
+        l_cHtml += [<nav class="navbar navbar-light bg-light">]
+            l_cHtml += [<div class="input-group">]
+                l_cHtml += [<span class="navbar-brand ms-3">No ]+oFcgi:p_ANFLinkedEntities+[ linked.</span>]
+                if oFcgi:p_nAccessLevelML >= 5
+                    l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[Modeling/NewLinkedEntity/]+par_cEntityLinkUID+[/">New ]+oFcgi:p_ANFLinkedEntity+[</a>]
+                endif
+            l_cHtml += [</div>]
+        l_cHtml += [</nav>]
 
     else
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -6763,7 +6765,7 @@ l_cHtml += [<div class="m-3">]
 
     endif
 
-l_cHtml += [</div>]
+//l_cHtml += [</div>]
 
 return l_cHtml
 //=================================================================================================================
