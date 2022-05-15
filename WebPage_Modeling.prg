@@ -662,20 +662,22 @@ otherwise
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("974f878e-4772-4a6f-9f62-04b5dd3f276c","Attribute")
-                        :Column("Attribute.Name"        , "Attribute_Name")
-                        :Column("Attribute.fk_DataType" , "Attribute_fk_DataType")
-                        :Column("Attribute.BoundLower"  , "Attribute_BoundLower")
-                        :Column("Attribute.BoundUpper"  , "Attribute_BoundUpper")
-                        :Column("Attribute.Description" , "Attribute_Description")
+                        :Column("Attribute.Name"         , "Attribute_Name")
+                        :Column("Attribute.Fk_Attribute" , "Attribute_fk_Attribute")
+                        :Column("Attribute.fk_DataType"  , "Attribute_fk_DataType")
+                        :Column("Attribute.BoundLower"   , "Attribute_BoundLower")
+                        :Column("Attribute.BoundUpper"   , "Attribute_BoundUpper")
+                        :Column("Attribute.Description"  , "Attribute_Description")
                         l_oData := :Get(l_oDataHeader:Attribute_pk)
                     endwith
 
                     if l_oDB1:Tally == 1
-                        l_hValues["Name"]        := l_oData:Attribute_Name
-                        l_hValues["fk_DataType"] := l_oData:Attribute_fk_DataType
-                        l_hValues["BoundLower"]  := l_oData:Attribute_BoundLower
-                        l_hValues["BoundUpper"]  := l_oData:Attribute_BoundUpper
-                        l_hValues["Description"] := l_oData:Attribute_Description
+                        l_hValues["Name"]         := l_oData:Attribute_Name
+                        l_hValues["fk_Attribute"] := l_oData:Attribute_fk_Attribute
+                        l_hValues["fk_DataType"]  := l_oData:Attribute_fk_DataType
+                        l_hValues["BoundLower"]   := l_oData:Attribute_BoundLower
+                        l_hValues["BoundUpper"]   := l_oData:Attribute_BoundUpper
+                        l_hValues["Description"]  := l_oData:Attribute_Description
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ATTRIBUTE,l_oDataHeader:Attribute_pk,@l_hValues)
 
                         l_cHtml += AttributeEditFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Entity_pk,l_oDataHeader:Entity_Name,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,"",l_oDataHeader:Attribute_pk,l_hValues)
@@ -764,7 +766,7 @@ otherwise
                             :Column("Endpoint.Name"                  , "Endpoint_Name")
                             :Column("Endpoint.BoundLower"            , "Endpoint_BoundLower")
                             :Column("Endpoint.BoundUpper"            , "Endpoint_BoundUpper")
-                            :Column("Endpoint.IsContainment"              , "Endpoint_IsContainment")
+                            :Column("Endpoint.IsContainment"         , "Endpoint_IsContainment")
                             :Column("Endpoint.Description"           , "Endpoint_Description")
                             :Column("Package.FullName"               , "Package_FullName")
                             :Column("Entity.Name"                    , "Entity_Name")
@@ -782,13 +784,13 @@ otherwise
                             scan all
                                 l_nCounter += 1
                                 l_nCounterC := Trans(l_nCounter)
-                                l_hValues["EndpointPk"+l_nCounterC]          := ListOfEndpoints->Endpoint_pk
-                                l_hValues["EndpointFk_Entity"+l_nCounterC]   := ListOfEndpoints->Endpoint_fk_Entity
-                                l_hValues["EndpointName"+l_nCounterC]        := ListOfEndpoints->Endpoint_Name
-                                l_hValues["EndpointBoundLower"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundLower
-                                l_hValues["EndpointBoundUpper"+l_nCounterC]  := ListOfEndpoints->Endpoint_BoundUpper
-                                l_hValues["EndpointIsContainment"+l_nCounterC]    := ListOfEndpoints->Endpoint_IsContainment
-                                l_hValues["EndpointDescription"+l_nCounterC] := ListOfEndpoints->Endpoint_Description
+                                l_hValues["EndpointPk"+l_nCounterC]            := ListOfEndpoints->Endpoint_pk
+                                l_hValues["EndpointFk_Entity"+l_nCounterC]     := ListOfEndpoints->Endpoint_fk_Entity
+                                l_hValues["EndpointName"+l_nCounterC]          := ListOfEndpoints->Endpoint_Name
+                                l_hValues["EndpointBoundLower"+l_nCounterC]    := ListOfEndpoints->Endpoint_BoundLower
+                                l_hValues["EndpointBoundUpper"+l_nCounterC]    := ListOfEndpoints->Endpoint_BoundUpper
+                                l_hValues["EndpointIsContainment"+l_nCounterC] := ListOfEndpoints->Endpoint_IsContainment
+                                l_hValues["EndpointDescription"+l_nCounterC]   := ListOfEndpoints->Endpoint_Description
                             endscan
                             l_hValues["NumberOfPossibleEndpoints"] := max(3,l_nCounter+1)
                         endwith
@@ -1444,7 +1446,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1459,7 +1460,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1474,7 +1474,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1489,7 +1488,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1504,7 +1502,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1519,7 +1516,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -1534,7 +1530,6 @@ if l_nNumberOfModels > 0
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
-            :SetOrder("tag1")
         endwith
     endwith
 
@@ -2273,7 +2268,6 @@ with object l_oDB_ListOfEntitiesAttributeCounts
     with object :p_oCursor
         :Index("tag1","Entity_pk")
         :CreateIndexes()
-        :SetOrder("tag1")
     endwith
 
 endwith
@@ -2483,10 +2477,10 @@ local l_oEntity
 
 with object l_oDB1
     :Table("A84ED358-9173-4C27-88A7-EBB4D2118BAF","Entity")
-    :Column("Entity.pk","Entity_pk")
-    :Column("Entity.Name" ,"Entity_Name")
+    :Column("Entity.pk"        ,"Entity_pk")
+    :Column("Entity.Name"      ,"Entity_Name")
     :Column("Package.FullName" ,"Package_FullName")
-    :Column("Package.LinkUID" ,"Package_LinkUID")
+    :Column("Package.LinkUID"  ,"Package_LinkUID")
     :Join("left","Package","","Entity.fk_Package = Package.pk")
     :Where("Entity.LinkUID = ^",par_cEntityLinkUID)
     l_oEntity := :SQL()
@@ -2522,8 +2516,6 @@ l_cHtml += [<ul class="nav nav-tabs">]
 
 l_cHtml += [</ul>]
 return l_cHtml
-
-
 //=================================================================================================================
 static function EntityEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEntityLinkUID,par_cErrorText,par_iPk,par_hValues,par_cPackageLinkUID)
 local l_cHtml := ""
@@ -2901,9 +2893,9 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
         :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
         :Column("Package.pk"        ,"pk")
         :Column("Package.LinkUID"   ,"Package_LinkUID")
-        :Column("Package.Name"  ,"Package_Name")
+        :Column("Package.Name"      ,"Package_Name")
         :Column("Package.FullName"  ,"Package_FullName")
-        :Column("Package.FullPk"  ,"Package_FullPk")
+        :Column("Package.FullPk"    ,"Package_FullPk")
         :Column("Package.TreeOrder1","tag1")
         :Column("Package.fk_Package","Package_Parent")
         :Where("Package.fk_Model = ^",par_iModelPk)
@@ -3037,7 +3029,7 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
     
     return l_cHtml
 
-    //=================================================================================================================
+//=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
@@ -3181,7 +3173,7 @@ with object l_oDB_ListOfPackages
     :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
     :Column("Package.pk"        ,"pk")
     :Column("Package.LinkUID"   ,"Package_LinkUID")
-    :Column("Package.Name"  ,"Package_Name")
+    :Column("Package.Name"      ,"Package_Name")
     :Column("Package.FullName"  ,"Package_FullName")
     :Column("Package.TreeOrder1","tag1")
     :Column("Package.fk_Package","Package_Parent")
@@ -3311,6 +3303,8 @@ local l_nNumberOfOtherPackages
 
 oFcgi:TraceAdd("PackageEditFormBuild")
 
+FixNonNormalizeFieldsInPackage(par_iModelPk)    // Just in case data got corrupted.
+
 with object l_oDB1
     //Build the list of Other Packages
     :Table("95cf41eb-a959-4330-803c-eb08af66425d","Package")
@@ -3433,6 +3427,7 @@ case l_cActionOnSubmit == "Save"
                 :Column("Package.pk","pk")
                 :Where([Package.fk_Model = ^],par_iModelPk)
                 :Where([lower(replace(Package.Name,' ','')) = ^],lower(StrTran(l_cPackageName," ","")))
+                :Where("Package.fk_Package = ^",l_iPackageFk_Package)
                 if l_iPackagePk > 0
                     :Where([Package.pk != ^],l_iPackagePk)
                 endif
@@ -3496,6 +3491,7 @@ case l_cActionOnSubmit == "Delete"   // Package
                     if :Tally == 0
                         CustomFieldsDelete(par_iProjectPk,USEDON_PACKAGE,l_iPackagePk)
                         if :Delete("118f7bd4-c4fe-4057-8f3f-cd1808808f81","Package",l_iPackagePk)
+                            FixNonNormalizeFieldsInPackage(par_iModelPk)
                             oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListPackages/"+par_cModelLinkUID+"/")
                             l_cFrom := "Redirect"
                         else
@@ -3791,6 +3787,8 @@ local l_nNumberOfPrimitiveTypes
 
 oFcgi:TraceAdd("DataTypeEditFormBuild")
 
+FixNonNormalizeFieldsInDataType(par_iModelPk)    // Just in case data got corrupted.
+
 with object l_oDB_ListOfOtherDataTypes
     //Build the list of Other DataTypes
     :Table("c6c1c8e3-b91c-4660-b4be-10ee25a6124e","DataType")
@@ -3945,6 +3943,7 @@ case l_cActionOnSubmit == "Save"
                 :Column("DataType.pk","pk")
                 :Where([DataType.fk_Model = ^],par_iModelPk)
                 :Where([lower(replace(DataType.Name,' ','')) = ^],lower(StrTran(l_cDataTypeName," ","")))
+                :Where("DataType.fk_DataType = ^",l_iDataTypeFk_DataType)
                 if l_iDataTypePk > 0
                     :Where([DataType.pk != ^],l_iDataTypePk)
                 endif
@@ -4007,6 +4006,7 @@ case l_cActionOnSubmit == "Delete"   // DataType
                 if :Tally == 0
                     CustomFieldsDelete(par_iProjectPk,USEDON_DATATYPE,l_iDataTypePk)
                     if :Delete("d95ff462-fd11-4ea8-abde-368ad8c0abd2","DataType",l_iDataTypePk)
+                        FixNonNormalizeFieldsInDataType(par_iModelPk)
                         oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListDataTypes/"+par_cModelLinkUID+"/")
                         l_cFrom := "Redirect"
                     else
@@ -4106,7 +4106,6 @@ with object l_oDB2
     with object :p_oCursor
         :Index("tag1","ModelEnumeration_pk")
         :CreateIndexes()
-        :SetOrder("tag1")
     endwith    
 endwith
 
@@ -5436,13 +5435,13 @@ l_cHtml += [<div class="m-3">]
             for l_nCounter := 1 to hb_HGetDef(par_hValues,"NumberOfPossibleEndpoints",3)
                 l_nCounterC := Trans(l_nCounter)
 
-                l_iEndpoint_pk          := nvl(hb_HGetDef(par_hValues,"EndpointPk"+l_nCounterC,0),0)
-                l_iEndpoint_Fk_Entity   := nvl(hb_HGetDef(par_hValues,"EndpointFk_Entity"+l_nCounterC,0),0)
-                l_cEndpoint_Name        := nvl(hb_HGetDef(par_hValues,"EndpointName"+l_nCounterC,""),"")
-                l_cEndpoint_BoundLower  := nvl(hb_HGetDef(par_hValues,"EndpointBoundLower"+l_nCounterC,""),"")
-                l_cEndpoint_BoundUpper  := nvl(hb_HGetDef(par_hValues,"EndpointBoundUpper"+l_nCounterC,""),"")
-                l_lEndpoint_IsContainment    := nvl(hb_HGetDef(par_hValues,"EndpointIsContainment"+l_nCounterC,.f.),.f.)
-                l_cEndpoint_Description := nvl(hb_HGetDef(par_hValues,"EndpointDescription"+l_nCounterC,""),"")
+                l_iEndpoint_pk            := nvl(hb_HGetDef(par_hValues,"EndpointPk"+l_nCounterC,0),0)
+                l_iEndpoint_Fk_Entity     := nvl(hb_HGetDef(par_hValues,"EndpointFk_Entity"+l_nCounterC,0),0)
+                l_cEndpoint_Name          := nvl(hb_HGetDef(par_hValues,"EndpointName"+l_nCounterC,""),"")
+                l_cEndpoint_BoundLower    := nvl(hb_HGetDef(par_hValues,"EndpointBoundLower"+l_nCounterC,""),"")
+                l_cEndpoint_BoundUpper    := nvl(hb_HGetDef(par_hValues,"EndpointBoundUpper"+l_nCounterC,""),"")
+                l_lEndpoint_IsContainment := nvl(hb_HGetDef(par_hValues,"EndpointIsContainment"+l_nCounterC,.f.),.f.)
+                l_cEndpoint_Description   := nvl(hb_HGetDef(par_hValues,"EndpointDescription"+l_nCounterC,""),"")
 
                 l_cHtml += [<tr class="bg-secondary">]
                 // l_cHtml += [<tr class="table-dark">]
@@ -5699,13 +5698,13 @@ case l_cActionOnSubmit == "Save"
             l_oDB_ListOfEndpoints := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB_ListOfEndpoints
                 :Table("b9503dbd-9230-4f13-be08-6da4c637d2f1","Endpoint")
-                :Column("Endpoint.pk"          , "pk")
-                :Column("Endpoint.Fk_Entity"   , "Endpoint_Fk_Entity")
-                :Column("Endpoint.Name"        , "Endpoint_Name")
-                :Column("Endpoint.BoundLower"  , "Endpoint_BoundLower")
-                :Column("Endpoint.BoundUpper"  , "Endpoint_BoundUpper")
-                :Column("Endpoint.IsContainment"    , "Endpoint_IsContainment")
-                :Column("Endpoint.Description" , "Endpoint_Description")
+                :Column("Endpoint.pk"            , "pk")
+                :Column("Endpoint.Fk_Entity"     , "Endpoint_Fk_Entity")
+                :Column("Endpoint.Name"          , "Endpoint_Name")
+                :Column("Endpoint.BoundLower"    , "Endpoint_BoundLower")
+                :Column("Endpoint.BoundUpper"    , "Endpoint_BoundUpper")
+                :Column("Endpoint.IsContainment" , "Endpoint_IsContainment")
+                :Column("Endpoint.Description"   , "Endpoint_Description")
                 :Where("Endpoint.fk_Association = ^" , l_iAssociationPk)
                 :SQL("ListOfEndpoints")
                 // l_nEndpoint_NumberOfEndpoints_OnFile := :Tally  // Original method to get the number of endpoints, but since it is a non normalized fields, did actually load its value.
@@ -5718,13 +5717,13 @@ case l_cActionOnSubmit == "Save"
                 for l_nCounter := 1 to Val(oFcgi:GetInputValue("NumberOfPossibleEndpoints"))
                     l_nCounterC := Trans(l_nCounter)
 
-                    l_iEndpoint_pk          := Val(oFcgi:GetInputValue("TextEndpoint_pk"+l_nCounterC))
-                    l_iEndpoint_fk_Entity   := Val(oFcgi:GetInputValue("ComboEndpoint_Fk_Entity"+l_nCounterC))
-                    l_cEndpoint_Name        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
-                    l_cEndpoint_BoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
-                    l_cEndpoint_BoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
-                    l_lEndpoint_IsContainment    := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
-                    l_cEndpoint_Description := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
+                    l_iEndpoint_pk            := Val(oFcgi:GetInputValue("TextEndpoint_pk"+l_nCounterC))
+                    l_iEndpoint_fk_Entity     := Val(oFcgi:GetInputValue("ComboEndpoint_Fk_Entity"+l_nCounterC))
+                    l_cEndpoint_Name          := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
+                    l_cEndpoint_BoundLower    := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
+                    l_cEndpoint_BoundUpper    := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
+                    l_lEndpoint_IsContainment := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
+                    l_cEndpoint_Description   := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
                     if empty(l_iEndpoint_pk)
                         if l_iEndpoint_fk_Entity > 0
@@ -5736,7 +5735,7 @@ case l_cActionOnSubmit == "Save"
                                 :Field("Endpoint.Name"           , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
                                 :Field("Endpoint.BoundLower"     , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
                                 :Field("Endpoint.BoundUpper"     , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
-                                :Field("Endpoint.IsContainment"       , l_lEndpoint_IsContainment)
+                                :Field("Endpoint.IsContainment"  , l_lEndpoint_IsContainment)
                                 :Field("Endpoint.Description"    , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                 :Add()
                             endwith
@@ -5752,17 +5751,17 @@ case l_cActionOnSubmit == "Save"
                                    .and. nvl(ListOfEndpoints->Endpoint_Name,"")        == nvl(l_cEndpoint_Name,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundLower,"")  == nvl(l_cEndpoint_BoundLower,"") ;
                                    .and. nvl(ListOfEndpoints->Endpoint_BoundUpper,"")  == nvl(l_cEndpoint_BoundUpper,"") ;
-                                   .and. ListOfEndpoints->Endpoint_IsContainment            == l_lEndpoint_IsContainment ;
+                                   .and. ListOfEndpoints->Endpoint_IsContainment       == l_lEndpoint_IsContainment ;
                                    .and. nvl(ListOfEndpoints->Endpoint_Description,"") == nvl(l_cEndpoint_Description,"") )
 
                                 with object l_oDB2
                                     :Table("6b749ef9-b9e4-4d29-ba51-e6c7ccd5754e","Endpoint")
-                                    :Field("Endpoint.fk_Entity"   , l_iEndpoint_fk_Entity)
-                                    :Field("Endpoint.Name"        , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
-                                    :Field("Endpoint.BoundLower"  , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
-                                    :Field("Endpoint.BoundUpper"  , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
-                                    :Field("Endpoint.IsContainment"    , l_lEndpoint_IsContainment)
-                                    :Field("Endpoint.Description" , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
+                                    :Field("Endpoint.fk_Entity"     , l_iEndpoint_fk_Entity)
+                                    :Field("Endpoint.Name"          , iif(empty(l_cEndpoint_Name)       ,NULL,l_cEndpoint_Name))
+                                    :Field("Endpoint.BoundLower"    , iif(empty(l_cEndpoint_BoundLower) ,NULL,l_cEndpoint_BoundLower))
+                                    :Field("Endpoint.BoundUpper"    , iif(empty(l_cEndpoint_BoundUpper) ,NULL,l_cEndpoint_BoundUpper))
+                                    :Field("Endpoint.IsContainment" , l_lEndpoint_IsContainment)
+                                    :Field("Endpoint.Description"   , iif(empty(l_cEndpoint_Description),NULL,l_cEndpoint_Description))
                                     :Update(l_iEndpoint_pk)
 
                                 endwith
@@ -5835,13 +5834,13 @@ case !empty(l_cErrorMessage)
     for l_nCounter := 1 to l_hValues["NumberOfPossibleEndpoints"]
         l_nCounterC := Trans(l_nCounter)
 
-        l_hValues["EndpointPk"+l_nCounterC]          := Val(oFcgi:GetInputValue("TextEndpoint_pk"+l_nCounterC))
-        l_hValues["EndpointFk_Entity"+l_nCounterC]   := Val(oFcgi:GetInputValue("ComboEndpoint_Fk_Entity"+l_nCounterC))
-        l_hValues["EndpointName"+l_nCounterC]        := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
-        l_hValues["EndpointBoundLower"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
-        l_hValues["EndpointBoundUpper"+l_nCounterC]  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
-        l_hValues["EndpointIsContainment"+l_nCounterC]    := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
-        l_hValues["EndpointDescription"+l_nCounterC] := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
+        l_hValues["EndpointPk"+l_nCounterC]            := Val(oFcgi:GetInputValue("TextEndpoint_pk"+l_nCounterC))
+        l_hValues["EndpointFk_Entity"+l_nCounterC]     := Val(oFcgi:GetInputValue("ComboEndpoint_Fk_Entity"+l_nCounterC))
+        l_hValues["EndpointName"+l_nCounterC]          := SanitizeInput(oFcgi:GetInputValue("TextName"+l_nCounterC))
+        l_hValues["EndpointBoundLower"+l_nCounterC]    := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"+l_nCounterC))
+        l_hValues["EndpointBoundUpper"+l_nCounterC]    := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"+l_nCounterC))
+        l_hValues["EndpointIsContainment"+l_nCounterC] := (oFcgi:GetInputValue("CheckIsContainment"+l_nCounterC) == "1")
+        l_hValues["EndpointDescription"+l_nCounterC]   := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription"+l_nCounterC)))
 
     endfor
 
@@ -5900,9 +5899,9 @@ with object l_oDB_ListOfAttributes
     :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
     :Column("DataType.FullName"        ,"DataType_FullName")
     :Column("ModelEnumeration.Name"    ,"Enumeration_Name")
-    :Column("Attribute.Order"          ,"Attribute_Order")
     :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
-    :Column("Attribute.Name"           ,"Attribute_Name")
+    :Column("Attribute.FullName"       ,"Attribute_FullName")
+    :Column("Attribute.TreeOrder1"     ,"tag1")
     :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
     :Column("Attribute.BoundUpper"     ,"Attribute_BoundUpper")
     :Column("Attribute.Description"    ,"Attribute_Description")
@@ -5920,7 +5919,7 @@ with object l_oDB_ListOfAttributes
             :KeywordCondition(l_cSearchAttributeDescription,"Attribute.Description")
         endif
     endif
-    :OrderBy("Attribute_Order")
+    :OrderBy("tag1")
     :SQL("ListOfAttributes")
     l_nNumberOfAttributesInSearch := :Tally
 
@@ -6058,7 +6057,7 @@ else
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
@@ -6072,9 +6071,9 @@ else
             scan all
                 l_cHtml += [<tr>]
 
-                    // Name
+                    // Full Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/">]+ListOfAttributes->Attribute_Name+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/">]+ListOfAttributes->Attribute_FullName+[</a>]
                     l_cHtml += [</td>]
 
                     // Data Type
@@ -6163,22 +6162,43 @@ return l_cHtml
 static function AttributeEditFormBuild(par_iProjectPk,par_iEntityPk,par_cEntityName,par_cEntityLinkUID,par_iModelPk,par_cModelLinkUID,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText    := hb_DefaultValue(par_cErrorText,"")
-local l_cName         := hb_HGetDef(par_hValues,"Name","")
-local l_ifk_DataType  := hb_HGetDef(par_hValues,"fk_DataType",0)
-local l_ifk_Enumeration  := hb_HGetDef(par_hValues,"fk_Enumeration",0)
-local l_cBoundLower   := nvl(hb_HGetDef(par_hValues,"BoundLower",""),"")
-local l_cBoundUpper   := nvl(hb_HGetDef(par_hValues,"BoundUpper",""),"")
-local l_cDescription  := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
+local l_cName           := hb_HGetDef(par_hValues,"Name","")
+local l_ifk_Attribute   := hb_HGetDef(par_hValues,"fk_Attribute",0)
+local l_ifk_DataType    := hb_HGetDef(par_hValues,"fk_DataType",0)
+local l_ifk_Enumeration := hb_HGetDef(par_hValues,"fk_Enumeration",0)
+local l_cBoundLower     := nvl(hb_HGetDef(par_hValues,"BoundLower",""),"")
+local l_cBoundUpper     := nvl(hb_HGetDef(par_hValues,"BoundUpper",""),"")
+local l_cDescription    := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_oDB_ListOfDataType := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfEnumeration := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfOtherAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDataType        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumeration     := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_json_DataTypes
 local l_cInfo
 local l_hDataTypes := {=>}
+local l_nNumberOfOtherAttributes
 
 oFcgi:TraceAdd("AttributeEditFormBuild")
+
+FixNonNormalizeFieldsInAttribute(par_iEntityPk)    // Just in case data got corrupted.
+
+with object l_oDB_ListOfOtherAttributes
+    //Build the list of Other Attributes
+    :Table("73ed32bb-8ca7-4df9-8464-8a8113e995a2","Attribute")
+    :Column("Attribute.pk"         , "pk")
+    :Column("Attribute.FullName"   , "Attribute_FullName")
+    :Column("Attribute.FullPk"     , "Attribute_FullPk")
+    :Column("Attribute.TreeOrder1" , "Tag1")
+    :Where("Attribute.fk_Entity = ^" , par_iEntityPk)
+    if !empty(par_iPk)
+        :Where("Attribute.pk <> ^" , par_iPk)
+    endif
+    :OrderBy("Tag1")
+    :SQL("ListOfOtherAttributes")
+    l_nNumberOfOtherAttributes := :Tally
+endwith
 
 with object l_oDB_ListOfDataType
     :Table("b773e79e-d29f-4545-8e1f-fd92a2b6f195","DataType")
@@ -6273,6 +6293,23 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
+        if l_nNumberOfOtherAttributes > 0
+            l_cHtml += [<tr class="pb-5">]
+                l_cHtml += [<td class="pe-2 pb-3">Parent ]+oFcgi:p_ANFAttribute+[</td>]
+                l_cHtml += [<td class="pb-3">]
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboAttributePk" id="ComboAttributePk"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-select">]
+                    l_cHtml += [<option value="0"]+iif(0 = l_ifk_Attribute,[ selected],[])+[></option>]
+                    select ListOfOtherAttributes
+                    scan all
+                        if !("*"+Trans(par_iPk)+"*" $ "*"+ListOfOtherAttributes->Attribute_FullPk+"*")
+                            l_cHtml += [<option value="]+Trans(ListOfOtherAttributes->pk)+["]+iif(ListOfOtherAttributes->pk = l_ifk_Attribute,[ selected],[])+[>]+AllTrim(ListOfOtherAttributes->Attribute_FullName)+[</option>]
+                        endif
+                    endscan
+                    l_cHtml += [</select>]
+                l_cHtml += [</td>]
+            l_cHtml += [</tr>]
+        endif
+
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[></td>]
@@ -6332,6 +6369,7 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iAttributePk
+local l_iAttributeFk_Attribute
 local l_cAttributeName
 local l_cAttributeFk_DataType
 local l_iAttributeFk_DataType
@@ -6339,8 +6377,7 @@ local l_cAttributeBoundLower
 local l_cAttributeBoundUpper
 local l_cAttributeDescription
 local l_cAttributeLinkUID
-
-local l_iAttributeOrder
+local l_iAttributeTreeOrder1
 
 local l_hValues := {=>}
 
@@ -6353,17 +6390,14 @@ oFcgi:TraceAdd("AttributeEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iAttributePk          := Val(oFcgi:GetInputValue("AttributeKey"))
-
-l_cAttributeName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
-
-l_cAttributeFk_DataType := oFcgi:GetInputValue("ComboFk_DataType")
-l_iAttributeFk_DataType := val(substr(l_cAttributeFk_DataType,2))
-
-l_cAttributeBoundLower  := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"))
-l_cAttributeBoundUpper  := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"))
-
-l_cAttributeDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iAttributePk           := Val(oFcgi:GetInputValue("AttributeKey"))
+l_iAttributeFk_Attribute := Val(oFcgi:GetInputValue("ComboAttributePk"))
+l_cAttributeName         := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cAttributeFk_DataType  := oFcgi:GetInputValue("ComboFk_DataType")
+l_iAttributeFk_DataType  := val(substr(l_cAttributeFk_DataType,2))
+l_cAttributeBoundLower   := SanitizeInput(oFcgi:GetInputValue("TextBoundLower"))
+l_cAttributeBoundUpper   := SanitizeInput(oFcgi:GetInputValue("TextBoundUpper"))
+l_cAttributeDescription  := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -6382,6 +6416,7 @@ case l_cActionOnSubmit == "Save"
                 :Column("Attribute.pk","pk")
                 :Where([Attribute.fk_Entity = ^],par_iEntityPk)
                 :Where([lower(replace(Attribute.Name,' ','')) = ^],lower(StrTran(l_cAttributeName," ","")))
+                :Where("Attribute.fk_Attribute = ^",l_iAttributeFk_Attribute)
                 if l_iAttributePk > 0
                     :Where([Attribute.pk != ^],l_iAttributePk)
                 endif
@@ -6395,20 +6430,20 @@ case l_cActionOnSubmit == "Save"
     endif
 
     if empty(l_cErrorMessage)
-        //If adding a Attribute, find out what the last order is
-        l_iAttributeOrder := 1
+        //If adding a Attribute, find out what the last order is. When dealing with entries with a parent pointer, it is going to be fixed later by FixNonNormalizeFieldsInAttribute(par_iEntityPk)
+        l_iAttributeTreeOrder1 := 1
         if empty(l_iAttributePk)
             with object l_oDB1
                 :Table("42e1af2e-547c-4012-9407-23854801859e","Attribute")
-                :Column("Attribute.Order","Attribute_Order")
+                :Column("Attribute.TreeOrder1","Attribute_TreeOrder1")
                 :Where([Attribute.fk_Entity = ^],par_iEntityPk)
-                :OrderBy("Attribute_Order","Desc")
+                :OrderBy("Attribute_TreeOrder1","Desc")
                 :Limit(1)
                 :SQL(@l_aSQLResult)
             endwith
 
             if l_oDB1:Tally > 0
-                l_iAttributeOrder := l_aSQLResult[1,1] + 1
+                l_iAttributeTreeOrder1 := l_aSQLResult[1,1] + 1
             endif
         endif
 
@@ -6416,6 +6451,7 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("f1109e34-247d-49e8-9a7a-7ffd32e1a914","Attribute")
             if oFcgi:p_nAccessLevelML >= 5
+                :Field("Attribute.fk_Attribute",l_iAttributeFk_Attribute)
                 :Field("Attribute.Name"        , l_cAttributeName)
                 if left(l_cAttributeFk_DataType,1) = "D"
                     :Field("Attribute.fk_DataType" , l_iAttributeFk_DataType)
@@ -6430,17 +6466,20 @@ case l_cActionOnSubmit == "Save"
             :Field("Attribute.Description" , iif(empty(l_cAttributeDescription),NULL,l_cAttributeDescription))
         
             if empty(l_iAttributePk)
-                :Field("Attribute.fk_Entity" , par_iEntityPk)
-                :Field("Attribute.Order"     , l_iAttributeOrder)
+                :Field("Attribute.fk_Entity"  , par_iEntityPk)
+                :Field("Attribute.TreeOrder1" , l_iAttributeTreeOrder1)
                 l_cAttributeLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                 :Field("Attribute.LinkUID"   , l_cAttributeLinkUID)
                 if :Add()
                     l_iAttributePk := :Key()
+                    FixNonNormalizeFieldsInAttribute(par_iEntityPk)
                 else
                     l_cErrorMessage := [Failed to add ]+oFcgi:p_ANFAttribute+[.]
                 endif
             else
-                if !:Update(l_iAttributePk)
+                if :Update(l_iAttributePk)
+                    FixNonNormalizeFieldsInAttribute(par_iEntityPk)
+                else
                     l_cErrorMessage := [Failed to update ]+oFcgi:p_ANFAttribute+[.]
                 endif
             endif
@@ -6459,21 +6498,31 @@ case l_cActionOnSubmit == "Cancel"
 case l_cActionOnSubmit == "Delete"   // Attribute
     if oFcgi:p_nAccessLevelML >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-        CustomFieldsDelete(par_iProjectPk,USEDON_ATTRIBUTE,l_iAttributePk)
-        l_oDB1:Delete("f47695cf-ff12-4c3f-8e12-3b4a17bc306b","Attribute",l_iAttributePk)
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
-
+        with object l_oDB1
+            :Table("409521e2-0e58-48b4-ab4a-242b7a8287a7","Attribute")
+            :Where("Attribute.fk_Attribute = ^",l_iAttributePk)
+            :SQL()
+            if :Tally == 0
+                CustomFieldsDelete(par_iProjectPk,USEDON_ATTRIBUTE,l_iAttributePk)
+                :Delete("f47695cf-ff12-4c3f-8e12-3b4a17bc306b","Attribute",l_iAttributePk)
+                FixNonNormalizeFieldsInAttribute(par_iEntityPk)
+                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
+            else
+                l_cErrorMessage := [Related ]+oFcgi:p_ANFAttribute+[ record on file.]
+            endif
+        endwith
     endif
 
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["fk_DataType"] := l_iAttributeFk_DataType
-    l_hValues["Name"]        := l_cAttributeName
-    l_hValues["BoundLower"]  := l_cAttributeBoundLower
-    l_hValues["BoundUpper"]  := l_cAttributeBoundUpper
-    l_hValues["Description"] := l_cAttributeDescription
+    l_hValues["fk_Attribute"] := l_iAttributeFk_Attribute
+    l_hValues["fk_DataType"]  := l_iAttributeFk_DataType
+    l_hValues["Name"]         := l_cAttributeName
+    l_hValues["BoundLower"]   := l_cAttributeBoundLower
+    l_hValues["BoundUpper"]   := l_cAttributeBoundUpper
+    l_hValues["Description"]  := l_cAttributeDescription
 
     CustomFieldsFormToHash(par_iProjectPk,USEDON_ATTRIBUTE,@l_hValues)
 
@@ -6501,10 +6550,11 @@ l_oDB_ListOfAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB_ListOfAttributes
     :Table("f5feb43e-cc16-4ecb-81f1-5d78d78c3081","Attribute")
     :Column("Attribute.pk"         ,"pk")
-    :Column("Attribute.Name"       ,"Attribute_Name")
-    :Column("Attribute.Order"      ,"Attribute_Order")
+    :Column("Attribute.FullName"       ,"Attribute_FullName")
+    :Column("Attribute.TreeOrder1"     ,"Attribute_TreeOrder1")
+
     :Where("Attribute.fk_Entity = ^",par_iEntityPk)
-    :OrderBy("Attribute_order")
+    :OrderBy("Attribute_TreeOrder1")
     :SQL("ListOfAttributes")
 endwith
 
@@ -6554,7 +6604,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<ul id="sortable">]
         scan all
-            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfAttributes->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+strtran(ListOfAttributes->Attribute_Name," ","&nbsp;")+[</span></li>]
+            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfAttributes->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+strtran(ListOfAttributes->Attribute_FullName," ","&nbsp;")+[</span></li>]
         endscan
         l_cHtml += [</ul>]
 
@@ -6594,7 +6644,7 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB_ListOfAttributes
             :Table("b6be9d37-f4c8-4e69-8963-1ce395d06039","Attribute")
             :Column("Attribute.pk","pk")
-            :Column("Attribute.Order","order")
+            :Column("Attribute.TreeOrder1","TreeOrder1")
             :Where([Attribute.fk_Entity = ^],l_iEntityPk)
             :SQL("ListOfAttribute")
     
@@ -6607,15 +6657,17 @@ case l_cActionOnSubmit == "Save"
         endwith
 
         for l_Counter := 1 to len(l_aOrderedPks)
-            if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfAttribute","pk") .and. ListOfAttribute->order <> l_Counter
+            if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfAttribute","pk") .and. ListOfAttribute->TreeOrder1 <> l_Counter
                 with object l_oDB_ListOfAttributes
                     :Table("41e21aee-a559-4a2a-ab9b-968e41424be9","Attribute")
-                    :Field("Attribute.order",l_Counter)
+                    :Field("Attribute.TreeOrder1",l_Counter)
                     :Update(val(l_aOrderedPks[l_Counter]))
                 endwith
             endif
         endfor
     endif
+
+    FixNonNormalizeFieldsInAttribute(l_iEntityPk)
 
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 

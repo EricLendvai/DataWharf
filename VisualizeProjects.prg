@@ -207,14 +207,14 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         // All Entities in Model
         :Table("a039013f-1bb2-42f0-9c42-4c33b3dd667a","Entity")
         :Distinct(.t.)
-        :Column("Entity.pk"           ,"Entity_pk")
-        :Column("Association.pk"      ,"Association_pk")
-        :Column("Endpoint.pk"         ,"Endpoint_pk")
-        :Column("Endpoint.Name"       ,"Endpoint_Name")
-        :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
-        :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
-        :Column("Endpoint.IsContainment"   ,"Endpoint_IsContainment")
-        :Column("Endpoint.Description","Endpoint_Description")
+        :Column("Entity.pk"              ,"Entity_pk")
+        :Column("Association.pk"         ,"Association_pk")
+        :Column("Endpoint.pk"            ,"Endpoint_pk")
+        :Column("Endpoint.Name"          ,"Endpoint_Name")
+        :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
+        :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
+        :Column("Endpoint.IsContainment" ,"Endpoint_IsContainment")
+        :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
         :Join("inner","Association","","Endpoint.fk_Association = Association.pk")
         :Where("Entity.fk_Model = ^",par_oDataHeader:Model_pk)
@@ -227,13 +227,13 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         // A subset of Entities
         :Table("4143b79d-a42b-4270-a69d-e2efce746c2a","DiagramEntity")
         :Distinct(.t.)
-        :Column("Entity.pk"           ,"Entity_pk")
-        :Column("Association.pk"      ,"Association_pk")
-        :Column("Endpoint.pk"         ,"Endpoint_pk")
-        :Column("Endpoint.Name"       ,"Endpoint_Name")
-        :Column("Endpoint.BoundLower" ,"Endpoint_BoundLower")
-        :Column("Endpoint.BoundUpper" ,"Endpoint_BoundUpper")
-        :Column("Endpoint.IsContainment"   ,"Endpoint_IsContainment")
+        :Column("Entity.pk"             ,"Entity_pk")
+        :Column("Association.pk"        ,"Association_pk")
+        :Column("Endpoint.pk"           ,"Endpoint_pk")
+        :Column("Endpoint.Name"         ,"Endpoint_Name")
+        :Column("Endpoint.BoundLower"   ,"Endpoint_BoundLower")
+        :Column("Endpoint.BoundUpper"   ,"Endpoint_BoundUpper")
+        :Column("Endpoint.IsContainment","Endpoint_IsContainment")
         :Column("Endpoint.Description","Endpoint_Description")
         :Join("inner","Entity"   ,"","DiagramEntity.fk_Entity = Entity.pk")
         :Join("inner","Endpoint","","Endpoint.fk_Entity = Entity.pk")
@@ -259,7 +259,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        :Column("Endpoint.IsContainment"      ,"Endpoint_IsContainment")
+        :Column("Endpoint.IsContainment" ,"Endpoint_IsContainment")
         :Column("Entity.pk"              ,"Entity_pk")
         :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
         :Join("inner","Entity"  ,"","Endpoint.fk_Entity = Entity.pk")
@@ -731,13 +731,13 @@ scan all
 
         l_iAssociationPk_Previous := 0
     else
-        l_iAssociationPk_Previous       := ListOfEdgesEntityEntity->Association_pk
-        l_iEntityPk_Previous            := ListOfEdgesEntityEntity->Entity_pk
-        l_cEndpointBoundLower_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundLower
-        l_cEndpointBoundUpper_Previous  := ListOfEdgesEntityEntity->Endpoint_BoundUpper
-        l_lEndpointIsContainment_Previous    := ListOfEdgesEntityEntity->Endpoint_IsContainment
-        l_cEndpointName_Previous        := ListOfEdgesEntityEntity->Endpoint_Name
-        l_cEndpointDescription_Previous := ListOfEdgesEntityEntity->Endpoint_Description
+        l_iAssociationPk_Previous         := ListOfEdgesEntityEntity->Association_pk
+        l_iEntityPk_Previous              := ListOfEdgesEntityEntity->Entity_pk
+        l_cEndpointBoundLower_Previous    := ListOfEdgesEntityEntity->Endpoint_BoundLower
+        l_cEndpointBoundUpper_Previous    := ListOfEdgesEntityEntity->Endpoint_BoundUpper
+        l_lEndpointIsContainment_Previous := ListOfEdgesEntityEntity->Endpoint_IsContainment
+        l_cEndpointName_Previous          := ListOfEdgesEntityEntity->Endpoint_Name
+        l_cEndpointDescription_Previous   := ListOfEdgesEntityEntity->Endpoint_Description
     endif
 endscan
 

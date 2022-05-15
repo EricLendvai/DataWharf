@@ -26,6 +26,7 @@ iFastCGIRunLogPk := 0
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
 public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
                           "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
+                          "ChangePassword"   => {"Change Password"          ,1,@BuildPageChangePassword()},;
                           "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Project"          => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
@@ -313,6 +314,38 @@ with object ::p_o_SQLConnection
             l_iCurrentDataVersion := 10
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 11
+            if ::p_o_SQLConnection:FieldExists("public.Attribute","Order") .and. ::p_o_SQLConnection:FieldExists("public.Attribute","TreeOrder1")
+
+                with object l_oDB1
+
+                    :Table("405e7421-717f-45cf-b108-3f758b5d05b3","Attribute")
+                    :Column("Attribute.pk"   ,"pk")
+                    :Column("Attribute.Order","Attribute_Order")
+                    :SQL("ListOfRecordsToFix")
+                    select ListOfRecordsToFix
+                    scan all
+                        with object l_oDB2
+                            :Table("dcbff351-7f65-416c-854e-94028fc5c67e","Attribute")
+                            :Field("Attribute.TreeOrder1" , ListOfRecordsToFix->Attribute_Order)
+                            :Update(ListOfRecordsToFix->pk)
+                        endwith
+                    endscan
+
+                endwith
+
+                ::p_o_SQLConnection:DeleteField("public.Attribute","Order")
+            endif
+            l_iCurrentDataVersion := 11
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
 
@@ -998,6 +1031,10 @@ l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-
                     if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
                         l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                     endif
+
+                    // l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "settings"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Settings">Settings</a></li>]
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "changepassword"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
 
                     l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
 
