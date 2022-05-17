@@ -6195,6 +6195,7 @@ with object l_oDB_ListOfOtherAttributes
     if !empty(par_iPk)
         :Where("Attribute.pk <> ^" , par_iPk)
     endif
+    :Where("Attribute.fk_DataType = 0") //only show non-primitive typed Attributes
     :OrderBy("Tag1")
     :SQL("ListOfOtherAttributes")
     l_nNumberOfOtherAttributes := :Tally
@@ -6223,7 +6224,7 @@ endwith
 
 SetSelect2Support()
 
-l_json_DataTypes := []
+l_json_DataTypes := [{id:'0',text:'Object'}]
 select ListOfDataTypes
 scan all
     if !empty(l_json_DataTypes)
@@ -6258,6 +6259,7 @@ oFcgi:p_cjQueryScript += [    if(!state.id) { return state.text; }]
 oFcgi:p_cjQueryScript += [    var icon;]
 oFcgi:p_cjQueryScript += [    if(state.id.startsWith('D')) { icon = 'bi-code'; }]
 oFcgi:p_cjQueryScript += [    else if(state.id.startsWith('E')) { icon = 'bi-card-list'; }]
+oFcgi:p_cjQueryScript += [    else { icon = 'bi-code-square'; }]
 oFcgi:p_cjQueryScript += [    return $('<i class="bi '+icon+'"></i> ' + state.text + '</span>');]
 oFcgi:p_cjQueryScript += [}]
 oFcgi:p_cjQueryScript += [$(".SelectDataType").select2({placeholder: '',allowClear: true, allowHtml: true, templateResult: iformat, data: ]+l_json_DataTypes+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
@@ -6320,11 +6322,9 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
 
                 l_cHtml += [<select name="ComboFk_DataType" id="ComboFk_DataType" class="SelectDataType" style="width:700px">]
-                if l_ifk_DataType == 0
-                    oFcgi:p_cjQueryScript += [$("#ComboFk_DataType").select2('val','0');]  // trick to not have a blank option bar.
-                else
+                
                     l_cHtml += [<option value="]+Trans(l_ifk_DataType)+[" selected="selected">]+hb_HGetDef(l_hDataTypes,l_ifk_DataType,"")+[</option>]
-                endif
+                
                 l_cHtml += [</select>]
 
             l_cHtml += [</td>]
@@ -6407,8 +6407,10 @@ case l_cActionOnSubmit == "Save"
         case empty(l_cAttributeName)
             l_cErrorMessage := "Missing Name"
 
-        case empty(l_cAttributeFk_DataType)
+        //this is allowed for nested Attributes
+        /*case empty(l_cAttributeFk_DataType)
             l_cErrorMessage := "Missing Data Type"
+            */
 
         otherwise
             with object l_oDB1
