@@ -1,11 +1,11 @@
 #include "DataWharf.ch"
 memvar oFcgi
 //=================================================================================================================
-function BuildPageAppInfo()
+function BuildPageAppAbout()
 local l_cHtml := []
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-oFcgi:TraceAdd("BuildPageAppInfo")
+oFcgi:TraceAdd("BuildPageAppAbout")
 
 l_cHtml += [<div class="m-3"></div>]   //Spacer
 

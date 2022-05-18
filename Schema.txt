@@ -392,6 +392,7 @@ l_Schema := ;
    ,"BoundLower"          =>{, "CV",   4,  0,"N"};
    ,"BoundUpper"          =>{, "CV",   4,  0,"N"};
    ,"Description"         =>{,  "M",   0,  0,"N"};
+   ,"IsObject"            =>{,  "L",   0,  0,};          // Its an nested attribute
    ,"FullName"            =>{,  "M",   0,  0,};     // Denormalized sum of all the parent name. Unique in Entity.
    ,"FullPk"              =>{,  "M",   0,  0,};     // Denormalized sum of all the pk fields separated by '*'
    ,"TreeLevel"           =>{,  "I",   0,  0,};     // Denormalized Tree dept. Can be used to assist indentation on display.Unique in Entity.
