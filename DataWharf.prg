@@ -25,7 +25,7 @@ iFastCGIRunLogPk := 0
 //The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
 public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
-                          "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
+                          "About"            => {"About"                    ,0,@BuildPageAppAbout()},;   //Does not require to be logged in.
                           "ChangePassword"   => {"Change Password"          ,1,@BuildPageChangePassword()},;
                           "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Project"          => {"Projects"                 ,1,@BuildPageProjects()},;
@@ -996,56 +996,60 @@ endif
 
 l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
 
-l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
-    l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand]+l_cExtraClass+[" href="#">]+l_cThisAppTitle+[</a>]
+
+l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
+    l_cHtml += [<div id="app" class="container" >]
+        l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]+l_cThisAppTitle+[</a>]
         if par_LoggedIn
-            l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
-                l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-
-                    if l_lShowMenuProjects
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
-                    endif
-
-                    if l_lShowMenuApplications
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    endif
+            //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
+                l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
                     if l_lShowMenuModeling
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
                     endif
 
                     if l_lShowMenuDataDictionaries
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
                     endif
 
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     endif
 
-                    if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
-                    endif
+                    l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                    l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
+                        if l_lShowMenuProjects
+                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                        endif
 
-                    if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
-                    endif
+                        if l_lShowMenuApplications
+                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                        endif
 
-                    // l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "settings"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Settings">Settings</a></li>]
+                        if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                        endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "changepassword"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                        if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
+                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                        endif
+                        l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                        
+                    l_cHtml += [</ul>]
+                    l_cHtml += [</li>]
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[About">About</a></li>]
 
                 l_cHtml += [</ul>]
-                l_cHtml += [<ul class="navbar-nav">]
-                    l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a></li>]
-                l_cHtml += [</ul>]
-            l_cHtml += [</div>]
+                l_cHtml += [<div class="text-end">]
+                    l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a>]
+                l_cHtml += [</div>]
+            //l_cHtml += [</div>]
         endif
-    l_cHtml += [</div>]
-l_cHtml += [</nav>]
+    l_cHtml += [</div>]    
+l_cHtml += [</header>]
+
 
 // l_cHtml += [<div class="m-3"></div>]   //Spacer
 
