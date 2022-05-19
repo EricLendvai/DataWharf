@@ -27,14 +27,14 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"R:\\Harbour_VFP",
-                        "HB_ORM_ROOT":"R:\\Harbour_ORM",
-                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
+                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_ORM_ROOT":"C:\\Harbour_ORM",
+                        "HB_FASTCGI_ROOT":"C:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"debug",
 //                        "HB_COMPILER":"${input:CCompiler}",
                         "HB_COMPILER":"mingw64",
-                        "WebsiteDrive":"R:",
+                        "WebsiteDrive":"C:",
                         "SiteRootFolder":"\\Harbour_websites\\fcgi_DataWharf\\"
                     },
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
@@ -87,15 +87,14 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"R:\\Harbour_VFP",
-                        "HB_ORM_ROOT":"R:\\Harbour_ORM",
-                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
-                        "HB_FASTCGI_ROOT":"R:\\Harbour_FastCGI",
+                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_ORM_ROOT":"C:\\Harbour_ORM",
+                        "HB_FASTCGI_ROOT":"C:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
                         "BuildMode":"release",
                         // "HB_COMPILER":"${input:CCompiler}",
                         "HB_COMPILER":"mingw64",
-                        "WebsiteDrive":"R:",
+                        "WebsiteDrive":"C:",
                         "SiteRootFolder":"\\Harbour_websites\\fcgi_DataWharf\\"
                     },
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
@@ -164,7 +163,7 @@
             "windows":{
                 "type": "shell",
                 "command":"${workspaceFolder}\\..\\..\\FCGITaskManagerBin\\FCGITaskManager.exe",
-                "args": ["kill","http","localhost","8164","/fcgi_DataWharf/","R:/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
+                "args": ["kill","http","localhost","8164","/fcgi_DataWharf/","C:/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
                 "options": {
                     "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
                 }
@@ -228,7 +227,7 @@
             "label": "Down",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -251,7 +250,7 @@
             "label": "ActivateDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -274,7 +273,7 @@
             "label": "KillDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "R:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_DataWharf/ R:/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
