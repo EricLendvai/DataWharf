@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 05/17/2022 v 2.22
+* Settings pull down main menu.
+* New "Object" data type for entity attributes.
+
 ## 05/14/2022 v 2.21
 * New Model Enumerations.
 * New Linking of Models and Entities.
