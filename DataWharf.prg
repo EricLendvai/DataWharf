@@ -1017,24 +1017,24 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     endif
 
-                    l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                    l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
                     l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
                         if l_lShowMenuProjects
-                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
                         endif
 
                         if l_lShowMenuApplications
-                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
                         endif
 
                         if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
                         endif
 
                         if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
-                            l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                         endif
-                        l_cHtml += [<li><a class="dropdown-item]+l_cExtraClass+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                        l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
                         
                     l_cHtml += [</ul>]
                     l_cHtml += [</li>]

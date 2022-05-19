@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 05/18/2022 v 2.23
+* Fix on Pull down menu when using COLOR_HEADER_TEXT_WHITE in config.txt
+
 ## 05/17/2022 v 2.22
 * Settings pull down main menu.
 * New "Object" data type for entity attributes.
