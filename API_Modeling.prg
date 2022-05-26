@@ -1,7 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
 
 //=================================================================================================================
 // Example: /api/GetApplicationInformation

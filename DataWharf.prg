@@ -1,30 +1,22 @@
 //Copyright (c) 2021-2022 Eric Lendvai MIT License
 
-#include "hb_fcgi.ch"
+#include "DataWharf.ch"
 
 request HB_CODEPAGE_UTF8
 
-#include "DataWharf.ch"
-
-memvar v_hPP
-memvar iFastCGIRunLogPk
-
+memvar v_iFastCGIRunLogPk
 memvar v_hPageMapping
-// memvar oFcgi  Already declared as memvar in "hb_fcgi.ch"
+
 //=================================================================================================================
 Function Main()
 
-public v_hPP
-public oFcgi
-v_hPP := nil
+private oFcgi
 
-public iFastCGIRunLogPk
-iFastCGIRunLogPk := 0
-
+private v_iFastCGIRunLogPk := 0    // Will be the FastCGIRunLog.pk of the current executing exe.
 
 //The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
-public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
+private v_hPageMapping := {"home"            => {"Home"                     ,1,@BuildPageHome()},;
                           "About"            => {"About"                    ,0,@BuildPageAppAbout()},;   //Does not require to be logged in.
                           "ChangePassword"   => {"Change Password"          ,1,@BuildPageChangePassword()},;
                           "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
@@ -165,7 +157,7 @@ with object ::p_o_SQLConnection
             :Field("FastCGIRunLog.OSInfo"            ,OS())
             :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
             if :Add()
-                iFastCGIRunLogPk := :Key()
+                v_iFastCGIRunLogPk := :Key()
             endif
         endwith
 
@@ -595,7 +587,7 @@ else
         with object l_oDB1
             :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
             :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
-            :Update(iFastCGIRunLogPk)
+            :Update(v_iFastCGIRunLogPk)
         endwith
 
         if l_cAction == "logout"
@@ -884,7 +876,7 @@ local l_cErrorInfo
         ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
         l_cErrorInfo := FcgiGetErrorInfo(par_oError)
         ::Print("<div>"+l_cErrorInfo+"</div>")
-        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(iFastCGIRunLogPk,0))+"</div>")
+        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(v_iFastCGIRunLogPk,0))+"</div>")
         ::Print("<div>"+::TraceList(4)+"</div>")
 
         //  ::hb_Fcgi:OnError(par_oError)
@@ -897,7 +889,7 @@ local l_cErrorInfo
                 with object l_oDB1
                     :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIRunLog")
                     :Field("FastCGIRunLog.ErrorInfo",l_cErrorInfo)
-                    :Update(iFastCGIRunLogPk)
+                    :Update(v_iFastCGIRunLogPk)
                 endwith
             endif
         endif

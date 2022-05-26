@@ -1,5 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
 
 //=================================================================================================================
 function ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk)

@@ -1,5 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
 
 //=================================================================================================================
 function DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk)

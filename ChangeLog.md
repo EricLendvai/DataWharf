@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 05/26/2022 v 2.24
+* Code refactor to remove public variables and simplify header files by combining them in datawharf.ch
+
 ## 05/18/2022 v 2.23
 * Fix on Pull down menu when using COLOR_HEADER_TEXT_WHITE in config.txt
 
