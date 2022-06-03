@@ -3,7 +3,7 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.24"
+#define BUILDVERSION "2.25"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2

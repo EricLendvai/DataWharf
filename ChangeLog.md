@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 06/02/2022 v 2.25
+* Fix list of attributes being displayed in Visualize models.
+
 ## 05/26/2022 v 2.24
 * Code refactor to remove public variables and simplify header files by combining them in datawharf.ch
 

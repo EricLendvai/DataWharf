@@ -1815,7 +1815,7 @@ if len(l_aNodes) == 1
             :Column("Attribute.pk"             ,"pk")
             :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
             :Column("DataType.FullName"        ,"DataType_FullName")
-            :Column("Attribute.Order"          ,"Attribute_Order")
+            :Column("Attribute.TreeOrder1"     ,"Attribute_TreeOrder1")
             :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
             :Column("Attribute.Name"           ,"Attribute_Name")
             :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
@@ -1823,7 +1823,7 @@ if len(l_aNodes) == 1
             :Column("Attribute.Description"    ,"Attribute_Description")
             :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
             :Where("Attribute.fk_Entity = ^",l_iEntityPk)
-            :OrderBy("Attribute_Order")
+            :OrderBy("Attribute_TreeOrder1")
             :SQL("ListOfAttributes")
             l_nNumberOfAttributes := :Tally
         endwith
