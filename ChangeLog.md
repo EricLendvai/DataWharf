@@ -1,5 +1,27 @@
 # DataWharf - Change Log
 
+## 06/02/2022 v 2.25
+* Fix list of attributes being displayed in Visualize models.
+
+## 05/26/2022 v 2.24
+* Code refactor to remove public variables and simplify header files by combining them in datawharf.ch
+
+## 05/18/2022 v 2.23
+* Fix on Pull down menu when using COLOR_HEADER_TEXT_WHITE in config.txt
+
+## 05/17/2022 v 2.22
+* Settings pull down main menu.
+* New "Object" data type for entity attributes.
+
+## 05/14/2022 v 2.21
+* New Model Enumerations.
+* New Linking of Models and Entities.
+* New total counts of tables,columns and other items on list of data dictionaries.
+* Allow to create tree structure like for attributes (in Entities).
+* Discontinued the field Attribute.Order, using instead Attribute.TreeOrder1.
+* Allow to have the same name in Packages, Datatypes and Attributes, as long as using a different parent record.
+* Change Password menu option.
+
 ## 05/07/2022 v 2.20
 * To allow to use email addresses for login id, expanded the user.id field to 100 characters long.
 * Renamed environment variable from FastCGIRootPath to HB_FASTCGI_ROOT to be consistent with other variables.
@@ -10,8 +32,6 @@
   * ODBC_DRIVER_MYSQL
   * ODBC_DRIVER_POSTGRESQL
   * ODBC_DRIVER_MSSQL
-
-
 
 ## 04/12/2022 v 2.19
 * Fix error in "Settings" in "Diagrams" where some entities have packages and some don't.

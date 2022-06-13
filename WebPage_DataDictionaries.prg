@@ -1,7 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
 
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())
@@ -1121,19 +1118,22 @@ return l_cHtml
 //=================================================================================================================
 static function ApplicationListFormBuild()
 local l_cHtml := []
-local l_oDB1
-local l_oDB2
+local l_oDB_ListOfDataDictionaries  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfColumnCounts      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumerationCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfIndexCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfDataDictionaries
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_nCount
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-with object l_oDB1
+with object l_oDB_ListOfDataDictionaries
     :Table("d5b0a13d-7048-457c-a826-a80a09384464","Application")
     :Column("Application.pk"         ,"pk")
     :Column("Application.Name"       ,"Application_Name")
@@ -1155,7 +1155,7 @@ endwith
 
 
 if l_nNumberOfDataDictionaries > 0
-    with object l_oDB2
+    with object l_oDB_ListOfCustomFieldValues
         :Table("3deb9b62-0c79-4c9c-a7af-b4e1d47dfed8","Application")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
@@ -1190,6 +1190,97 @@ if l_nNumberOfDataDictionaries > 0
     endwith
 endif
 
+with object l_oDB_ListOfTableCounts
+    :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfTableCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+with object l_oDB_ListOfColumnCounts
+    :Table("97ea0070-3ca0-4bf9-9634-aa2ae6913fd1","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfColumnCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+with object l_oDB_ListOfEnumerationCounts
+    :Table("5d6d5a9f-5f0f-4c24-b112-d5faeed06a94","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","NameSpace"  ,"","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfEnumerationCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+with object l_oDB_ListOfIndexCounts
+    :Table("0e2d5bee-76be-4b99-a898-7d9e26296c96","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Index"   ,"","Index.fk_Table = Table.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfIndexCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+with object l_oDB_ListOfDiagramCounts
+    :Table("f6b9021e-f835-4ea3-aebb-a1ecc81be807","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","Diagram","","Diagram.fk_Application = Application.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfDiagramCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfDataDictionaries)
@@ -1204,12 +1295,17 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Columns</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Enumerations</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Indexes</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Diagrams</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
@@ -1227,6 +1323,41 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfDataDictionaries->Application_Description,""))
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1") , ListOfEnumerationCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfIndexCounts","tag1") , ListOfIndexCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfDiagramCounts","tag1") , ListOfDiagramCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1825,8 +1956,8 @@ return l_cHtml
 static function TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB_ListOfTables             := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTablesColumnCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTablesIndexCounts  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfColumnCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfIndexCounts  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomField              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTags              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_TableTags               := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1835,7 +1966,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_oCursor
 local l_iTablePk
 local l_nColumnCount
-local l_iIndexCount
+local l_nIndexCount
 
 local l_cSearchTableName
 local l_cSearchTableDescription
@@ -2045,7 +2176,7 @@ if l_nNumberOfTables > 0
 endif
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
-with object l_oDB_ListOfTablesColumnCounts
+with object l_oDB_ListOfColumnCounts
     :Table("30c4a441-523c-40ca-85eb-e4b30f6358cc","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"ColumnCount")
@@ -2053,17 +2184,14 @@ with object l_oDB_ListOfTablesColumnCounts
     :Join("inner","Column","","Column.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Table.pk")
-    :SQL("ListOfTablesColumnCounts")
-
+    :SQL("ListOfColumnCounts")
     with object :p_oCursor
         :Index("tag1","Table_pk")
         :CreateIndexes()
-        :SetOrder("tag1")
     endwith
-
 endwith
 
-with object l_oDB_ListOfTablesIndexCounts
+with object l_oDB_ListOfIndexCounts
     :Table("8ed29bff-8f51-4140-a889-d22dcca7c313","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"IndexCount")
@@ -2071,14 +2199,11 @@ with object l_oDB_ListOfTablesIndexCounts
     :Join("inner","Index","","Index.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Table.pk")
-    :SQL("ListOfTablesIndexCounts")
-
+    :SQL("ListOfIndexCounts")
     with object :p_oCursor
         :Index("tag1","Table_pk")
         :CreateIndexes()
-        :SetOrder("tag1")
     endwith
-
 endwith
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
@@ -2247,13 +2372,13 @@ if !empty(l_nNumberOfTables)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nColumnCount := iif( VFP_Seek(l_iTablePk,"ListOfTablesColumnCounts","tag1") , ListOfTablesColumnCounts->ColumnCount , 0)
+                        l_nColumnCount := iif( VFP_Seek(l_iTablePk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->ColumnCount , 0)
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/]+l_cColumnSearchParameters+[">]+Trans(l_nColumnCount)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_iIndexCount := iif( VFP_Seek(l_iTablePk,"ListOfTablesIndexCounts","tag1") , ListOfTablesIndexCounts->IndexCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_iIndexCount)+[</a>]
+                        l_nIndexCount := iif( VFP_Seek(l_iTablePk,"ListOfIndexCounts","tag1") , ListOfIndexCounts->IndexCount , 0)
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_nIndexCount)+[</a>]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfTags > 0
@@ -4323,13 +4448,10 @@ with object l_oDB2
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Enumeration.pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
-
     with object :p_oCursor
         :Index("tag1","Enumeration_pk")
         :CreateIndexes()
-        :SetOrder("tag1")
     endwith
-
 endwith
 
 
@@ -5520,7 +5642,7 @@ case l_cActionOnSubmit == "Load"
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
             l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";"
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
-            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";"
+            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
         otherwise
             l_cErrorMessage := "Invalid 'Backend Type'"
         endcase

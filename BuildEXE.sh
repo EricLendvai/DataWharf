@@ -21,14 +21,6 @@ else
         #The following command most likely will do nothing if the SoftKill task was called first.
         killall "FCGI${EXEName}.exe"
 
-        #HB_PATH="C:\Harbour"
-
-        #set PATH=%HB_PATH%\bin\win\%HB_COMPILER%;C:\HarbourTools;%PATH%
-
-        #echo HB_PATH     = %HB_PATH%
-        #echo HB_COMPILER = %HB_COMPILER%
-        #echo PATH        = %PATH%
-
         echo "HB_COMPILER = ${HB_COMPILER}"
 
         mkdir "build" 2>/dev/null

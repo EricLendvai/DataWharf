@@ -1,7 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
 
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())
@@ -172,6 +169,8 @@ case l_cURLAction == "ProjectSettings"
                 :Column("Project.AlternateNameForDataTypes"     , "Project_AlternateNameForDataTypes")
                 :Column("Project.AlternateNameForPackage"       , "Project_AlternateNameForPackage")
                 :Column("Project.AlternateNameForPackages"      , "Project_AlternateNameForPackages")
+                :Column("Project.AlternateNameForLinkedEntity"  , "Project_AlternateNameForLinkedEntity")
+                :Column("Project.AlternateNameForLinkedEntities", "Project_AlternateNameForLinkedEntities")
                 :Column("Project.ValidEndpointBoundLowerValues" , "Project_ValidEndpointBoundLowerValues")
                 :Column("Project.ValidEndpointBoundUpperValues" , "Project_ValidEndpointBoundUpperValues")
 
@@ -194,6 +193,8 @@ case l_cURLAction == "ProjectSettings"
                 l_hValues["AlternateNameForDataTypes"]     := l_oData:Project_AlternateNameForDataTypes
                 l_hValues["AlternateNameForPackage"]       := l_oData:Project_AlternateNameForPackage
                 l_hValues["AlternateNameForPackages"]      := l_oData:Project_AlternateNameForPackages
+                l_hValues["AlternateNameForLinkedEntity"]  := l_oData:Project_AlternateNameForLinkedEntity
+                l_hValues["AlternateNameForLinkedEntities"]:= l_oData:Project_AlternateNameForLinkedEntities
                 l_hValues["ValidEndpointBoundLowerValues"] := l_oData:Project_ValidEndpointBoundLowerValues
                 l_hValues["ValidEndpointBoundUpperValues"] := l_oData:Project_ValidEndpointBoundUpperValues
 
@@ -445,20 +446,22 @@ local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 local l_cName                          := hb_HGetDef(par_hValues,"Name","")
 local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription                   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cAlternateNameForModel         := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"        ,""),"")
-local l_cAlternateNameForModels        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"       ,""),"")
-local l_cAlternateNameForEntity        := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"       ,""),"")
-local l_cAlternateNameForEntities      := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntities"     ,""),"")
-local l_cAlternateNameForAssociation   := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociation"  ,""),"")
-local l_cAlternateNameForAssociations  := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociations" ,""),"")
-local l_cAlternateNameForAttribute     := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttribute"    ,""),"")
-local l_cAlternateNameForAttributes    := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttributes"   ,""),"")
-local l_cAlternateNameForDataType      := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataType"     ,""),"")
-local l_cAlternateNameForDataTypes     := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataTypes"    ,""),"")
-local l_cAlternateNameForPackage       := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackage"      ,""),"")
-local l_cAlternateNameForPackages      := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackages"     ,""),"")
-local l_cValidEndpointBoundLowerValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundLowerValues",""),"")
-local l_cValidEndpointBoundUpperValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundUpperValues",""),"")
+local l_cAlternateNameForModel         := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"         ,""),"")
+local l_cAlternateNameForModels        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"        ,""),"")
+local l_cAlternateNameForEntity        := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"        ,""),"")
+local l_cAlternateNameForEntities      := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntities"      ,""),"")
+local l_cAlternateNameForAssociation   := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociation"   ,""),"")
+local l_cAlternateNameForAssociations  := nvl(hb_HGetDef(par_hValues,"AlternateNameForAssociations"  ,""),"")
+local l_cAlternateNameForAttribute     := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttribute"     ,""),"")
+local l_cAlternateNameForAttributes    := nvl(hb_HGetDef(par_hValues,"AlternateNameForAttributes"    ,""),"")
+local l_cAlternateNameForDataType      := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataType"      ,""),"")
+local l_cAlternateNameForDataTypes     := nvl(hb_HGetDef(par_hValues,"AlternateNameForDataTypes"     ,""),"")
+local l_cAlternateNameForPackage       := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackage"       ,""),"")
+local l_cAlternateNameForPackages      := nvl(hb_HGetDef(par_hValues,"AlternateNameForPackages"      ,""),"")
+local l_cAlternateNameForLinkedEntity  := nvl(hb_HGetDef(par_hValues,"AlternateNameForLinkedEntity"  ,""),"")
+local l_cAlternateNameForLinkedEntities:= nvl(hb_HGetDef(par_hValues,"AlternateNameForLinkedEntities",""),"")
+local l_cValidEndpointBoundLowerValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundLowerValues" ,""),"")
+local l_cValidEndpointBoundUpperValues := nvl(hb_HGetDef(par_hValues,"ValidEndpointBoundUpperValues" ,""),"")
 
 oFcgi:TraceAdd("ProjectEditFormBuild")
 
@@ -568,6 +571,12 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForPackages" id="TextAlternateNameForPackages" value="]+FcgiPrepFieldForValue(l_cAlternateNameForPackages)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
+                        l_cHtml += [<tr>]
+                        l_cHtml += [<td class="pe-2 pb-3">Linked Entity</td>]
+                        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForLinkedEntity"  id="TextAlternateNameForLinkedEntity"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntity) +[" maxlength="80" size="32"></td>]
+                        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForLinkedEntities" id="TextAlternateNameForLinkedEntities" value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntities)+[" maxlength="80" size="32"></td>]
+                    l_cHtml += [</tr>]
+
                     l_cHtml += [</table>]
                 l_cHtml += [</div>]
 
@@ -624,6 +633,8 @@ local l_cProjectAlternateNameForDataType
 local l_cProjectAlternateNameForDataTypes
 local l_cProjectAlternateNameForPackage
 local l_cProjectAlternateNameForPackages
+local l_cProjectAlternateNameForLinkedEntity
+local l_cProjectAlternateNameForLinkedEntities
 local l_cProjectValidEndpointBoundLowerValues
 local l_cProjectValidEndpointBoundUpperValues
 
@@ -658,6 +669,8 @@ l_cProjectAlternateNameForDataType      := SanitizeInput(oFCGI:GetInputValue("Te
 l_cProjectAlternateNameForDataTypes     := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForDataTypes"))
 l_cProjectAlternateNameForPackage       := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackage"))
 l_cProjectAlternateNameForPackages      := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForPackages"))
+l_cProjectAlternateNameForLinkedEntity  := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForLinkedEntity"))
+l_cProjectAlternateNameForLinkedEntities:= SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForLinkedEntities"))
 l_cProjectValidEndpointBoundLowerValues := SanitizeInput(oFCGI:GetInputValue("TextValidEndpointBoundLowerValues"))
 l_cProjectValidEndpointBoundUpperValues := SanitizeInput(oFCGI:GetInputValue("TextValidEndpointBoundUpperValues"))
 
@@ -691,23 +704,25 @@ case l_cActionOnSubmit == "Save"
                 //Save the Project
                 with object l_oDB1
                     :Table("b953d374-34e6-40d4-9972-df00d392c54a","Project")
-                    :Field("Project.Name"                         , l_cProjectName)
-                    :Field("Project.UseStatus"                    , l_nProjectUseStatus)
-                    :Field("Project.Description"                  , iif(empty(l_cProjectDescription),NULL,l_cProjectDescription))
-                    :Field("Project.AlternateNameForModel"        , iif(empty(l_cProjectAlternateNameForModel)             ,NULL,l_cProjectAlternateNameForModel))
-                    :Field("Project.AlternateNameForModels"       , iif(empty(l_cProjectAlternateNameForModels)            ,NULL,l_cProjectAlternateNameForModels))
-                    :Field("Project.AlternateNameForEntity"       , iif(empty(l_cProjectAlternateNameForEntity)            ,NULL,l_cProjectAlternateNameForEntity))
-                    :Field("Project.AlternateNameForEntities"     , iif(empty(l_cProjectAlternateNameForEntities)          ,NULL,l_cProjectAlternateNameForEntities))
-                    :Field("Project.AlternateNameForAssociation"  , iif(empty(l_cProjectAlternateNameForAssociation)       ,NULL,l_cProjectAlternateNameForAssociation))
-                    :Field("Project.AlternateNameForAssociations" , iif(empty(l_cProjectAlternateNameForAssociations)      ,NULL,l_cProjectAlternateNameForAssociations))
-                    :Field("Project.AlternateNameForAttribute"    , iif(empty(l_cProjectAlternateNameForAttribute)         ,NULL,l_cProjectAlternateNameForAttribute))
-                    :Field("Project.AlternateNameForAttributes"   , iif(empty(l_cProjectAlternateNameForAttributes)        ,NULL,l_cProjectAlternateNameForAttributes))
-                    :Field("Project.AlternateNameForDataType"     , iif(empty(l_cProjectAlternateNameForDataType)          ,NULL,l_cProjectAlternateNameForDataType))
-                    :Field("Project.AlternateNameForDataTypes"    , iif(empty(l_cProjectAlternateNameForDataTypes)         ,NULL,l_cProjectAlternateNameForDataTypes))
-                    :Field("Project.AlternateNameForPackage"      , iif(empty(l_cProjectAlternateNameForPackage)           ,NULL,l_cProjectAlternateNameForPackage))
-                    :Field("Project.AlternateNameForPackages"     , iif(empty(l_cProjectAlternateNameForPackages)          ,NULL,l_cProjectAlternateNameForPackages))
-                    :Field("Project.ValidEndpointBoundLowerValues", iif(empty(l_cProjectValidEndpointBoundLowerValuesFixed),NULL,l_cProjectValidEndpointBoundLowerValuesFixed))
-                    :Field("Project.ValidEndpointBoundUpperValues", iif(empty(l_cProjectValidEndpointBoundUpperValuesFixed),NULL,l_cProjectValidEndpointBoundUpperValuesFixed))
+                    :Field("Project.Name"                          , l_cProjectName)
+                    :Field("Project.UseStatus"                     , l_nProjectUseStatus)
+                    :Field("Project.Description"                   , iif(empty(l_cProjectDescription),NULL,l_cProjectDescription))
+                    :Field("Project.AlternateNameForModel"         , iif(empty(l_cProjectAlternateNameForModel)             ,NULL,l_cProjectAlternateNameForModel))
+                    :Field("Project.AlternateNameForModels"        , iif(empty(l_cProjectAlternateNameForModels)            ,NULL,l_cProjectAlternateNameForModels))
+                    :Field("Project.AlternateNameForEntity"        , iif(empty(l_cProjectAlternateNameForEntity)            ,NULL,l_cProjectAlternateNameForEntity))
+                    :Field("Project.AlternateNameForEntities"      , iif(empty(l_cProjectAlternateNameForEntities)          ,NULL,l_cProjectAlternateNameForEntities))
+                    :Field("Project.AlternateNameForAssociation"   , iif(empty(l_cProjectAlternateNameForAssociation)       ,NULL,l_cProjectAlternateNameForAssociation))
+                    :Field("Project.AlternateNameForAssociations"  , iif(empty(l_cProjectAlternateNameForAssociations)      ,NULL,l_cProjectAlternateNameForAssociations))
+                    :Field("Project.AlternateNameForAttribute"     , iif(empty(l_cProjectAlternateNameForAttribute)         ,NULL,l_cProjectAlternateNameForAttribute))
+                    :Field("Project.AlternateNameForAttributes"    , iif(empty(l_cProjectAlternateNameForAttributes)        ,NULL,l_cProjectAlternateNameForAttributes))
+                    :Field("Project.AlternateNameForDataType"      , iif(empty(l_cProjectAlternateNameForDataType)          ,NULL,l_cProjectAlternateNameForDataType))
+                    :Field("Project.AlternateNameForDataTypes"     , iif(empty(l_cProjectAlternateNameForDataTypes)         ,NULL,l_cProjectAlternateNameForDataTypes))
+                    :Field("Project.AlternateNameForPackage"       , iif(empty(l_cProjectAlternateNameForPackage)           ,NULL,l_cProjectAlternateNameForPackage))
+                    :Field("Project.AlternateNameForPackages"      , iif(empty(l_cProjectAlternateNameForPackages)          ,NULL,l_cProjectAlternateNameForPackages))
+                    :Field("Project.AlternateNameForLinkedEntity"  , iif(empty(l_cProjectAlternateNameForLinkedEntity)      ,NULL,l_cProjectAlternateNameForLinkedEntity))
+                    :Field("Project.AlternateNameForLinkedEntities", iif(empty(l_cProjectAlternateNameForLinkedEntities)    ,NULL,l_cProjectAlternateNameForLinkedEntities))
+                    :Field("Project.ValidEndpointBoundLowerValues" , iif(empty(l_cProjectValidEndpointBoundLowerValuesFixed),NULL,l_cProjectValidEndpointBoundLowerValuesFixed))
+                    :Field("Project.ValidEndpointBoundUpperValues" , iif(empty(l_cProjectValidEndpointBoundUpperValuesFixed),NULL,l_cProjectValidEndpointBoundUpperValuesFixed))
 
                     if empty(l_iProjectPk)
                         l_cProjectLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
@@ -788,6 +803,8 @@ if !empty(l_cErrorMessage)
     l_hValues["AlternateNameForDataTypes"]     := l_cProjectAlternateNameForDataTypes
     l_hValues["AlternateNameForPackage"]       := l_cProjectAlternateNameForPackage
     l_hValues["AlternateNameForPackages"]      := l_cProjectAlternateNameForPackages
+    l_hValues["AlternateNameForLinkedEntity"]  := l_cProjectAlternateNameForLinkedEntity
+    l_hValues["AlternateNameForLinkedEntities"]:= l_cProjectAlternateNameForLinkedEntities
     l_hValues["ValidEndpointBoundLowerValues"] := l_cProjectValidEndpointBoundLowerValuesFixed
     l_hValues["ValidEndpointBoundUpperValues"] := l_cProjectValidEndpointBoundUpperValuesFixed
 

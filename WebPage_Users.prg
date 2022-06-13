@@ -4,9 +4,6 @@
 // -User Access modes
 
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
 
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())

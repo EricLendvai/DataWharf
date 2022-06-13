@@ -10,11 +10,11 @@
             "request": "attach",
             "name": "Attach Program DataWharf.exe",
             "windows":{
-                "program": "R:\\Harbour_websites\\fcgi_DataWharf\\backend\\FCGIDataWharf.exe",
+                "program": "C:\\Harbour_websites\\fcgi_DataWharf\\backend\\FCGIDataWharf.exe",
                 "sourcePaths": [
                     "${workspaceFolder}",
-                    "R:\\Harbour_ORM\\",
-                    "R:\\Harbour_VFP\\"
+                    "C:\\Harbour_ORM\\",
+                    "C:\\Harbour_VFP\\"
                 ]
             },
             "linux":{

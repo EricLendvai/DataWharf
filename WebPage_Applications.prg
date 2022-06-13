@@ -1,7 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
 
 // Sample Code to help debug failed SQL
 //      SendToClipboard(l_oDB1:LastSQL())
@@ -225,19 +222,18 @@ return l_cHtml
 //=================================================================================================================
 static function ApplicationListFormBuild()
 local l_cHtml := []
-local l_oDB1
-local l_oDB2
+local l_oDB_ListOfApplications       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_nCount
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-with object l_oDB1
+with object l_oDB_ListOfApplications
     :Table("70a13bfd-f9b0-4c36-a8d7-af8ed062d781","Application")
     :Column("Application.pk"         ,"pk")
     :Column("Application.Name"       ,"Application_Name")
@@ -259,7 +255,7 @@ endwith
 
 
 if l_nNumberOfApplications > 0
-    with object l_oDB2
+    with object l_oDB_ListOfCustomFieldValues
         :Table("279f9d90-7b3c-4a5a-8bcc-ced72a2651e4","Application")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
@@ -294,6 +290,25 @@ if l_nNumberOfApplications > 0
     endwith
 endif
 
+with object l_oDB_ListOfTableCounts
+    :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"TableCount")
+    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :GroupBy("Application.pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfTableCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfApplications)
@@ -308,13 +323,14 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"5","6")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-info">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Link Code</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
@@ -336,6 +352,13 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfApplications->Application_Description,""))
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->TableCount , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]

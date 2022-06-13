@@ -1,31 +1,24 @@
 //Copyright (c) 2021-2022 Eric Lendvai MIT License
 
-#include "hb_fcgi.ch"
+#include "DataWharf.ch"
 
 request HB_CODEPAGE_UTF8
 
-#include "DataWharf.ch"
-
-memvar v_hPP
-memvar iFastCGIRunLogPk
-
+memvar v_iFastCGIRunLogPk
 memvar v_hPageMapping
-// memvar oFcgi  Already declared as memvar in "hb_fcgi.ch"
+
 //=================================================================================================================
 Function Main()
 
-public v_hPP
-public oFcgi
-v_hPP := nil
+private oFcgi
 
-public iFastCGIRunLogPk
-iFastCGIRunLogPk := 0
-
+private v_iFastCGIRunLogPk := 0    // Will be the FastCGIRunLog.pk of the current executing exe.
 
 //The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
-public v_hPageMapping := {"home"             => {"Home"                     ,1,@BuildPageHome()},;
-                          "Info"             => {"Info"                     ,0,@BuildPageAppInfo()},;   //Does not require to be logged in.
+private v_hPageMapping := {"home"            => {"Home"                     ,1,@BuildPageHome()},;
+                          "About"            => {"About"                    ,0,@BuildPageAppAbout()},;   //Does not require to be logged in.
+                          "ChangePassword"   => {"Change Password"          ,1,@BuildPageChangePassword()},;
                           "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Project"          => {"Projects"                 ,1,@BuildPageProjects()},;
                           "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
@@ -65,18 +58,22 @@ class MyFcgi from hb_Fcgi
     data p_nAccessLevelML   init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
     //Used in Modeling. ANF stands for "AlternateNameFor"
-    data p_ANFModel         init "Model"
-    data p_ANFModels        init "Models"
-    data p_ANFEntity        init "Entity"
-    data p_ANFEntities      init "Entities"
-    data p_ANFAssociation   init "Association"
-    data p_ANFAssociations  init "Associations"
-    data p_ANFAttribute     init "Attribute"
-    data p_ANFAttributes    init "Attributes"
-    data p_ANFDataType      init "Data Type"
-    data p_ANFDataTypes     init "Data Types"
-    data p_ANFPackage       init "Package"
-    data p_ANFPackages      init "Packages"
+    data p_ANFModel             init "Model"
+    data p_ANFModels            init "Models"
+    data p_ANFEntity            init "Entity"
+    data p_ANFEntities          init "Entities"
+    data p_ANFAssociation       init "Association"
+    data p_ANFAssociations      init "Associations"
+    data p_ANFAttribute         init "Attribute"
+    data p_ANFAttributes        init "Attributes"
+    data p_ANFDataType          init "Data Type"
+    data p_ANFDataTypes         init "Data Types"
+    data p_ANFEnumeration       init "Enumeration"
+    data p_ANFEnumerations      init "Enumerations"
+    data p_ANFPackage           init "Package"
+    data p_ANFPackages          init "Packages"
+    data p_ANFLinkedEntity      init "Linked Entity"
+    data p_ANFLinkedEntities    init "Linked Entities"
 
 
     //In this app the first element of the URL is always a page name. 
@@ -160,7 +157,7 @@ with object ::p_o_SQLConnection
             :Field("FastCGIRunLog.OSInfo"            ,OS())
             :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
             if :Add()
-                iFastCGIRunLogPk := :Key()
+                v_iFastCGIRunLogPk := :Key()
             endif
         endwith
 
@@ -309,6 +306,38 @@ with object ::p_o_SQLConnection
             l_iCurrentDataVersion := 10
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 11
+            if ::p_o_SQLConnection:FieldExists("public.Attribute","Order") .and. ::p_o_SQLConnection:FieldExists("public.Attribute","TreeOrder1")
+
+                with object l_oDB1
+
+                    :Table("405e7421-717f-45cf-b108-3f758b5d05b3","Attribute")
+                    :Column("Attribute.pk"   ,"pk")
+                    :Column("Attribute.Order","Attribute_Order")
+                    :SQL("ListOfRecordsToFix")
+                    select ListOfRecordsToFix
+                    scan all
+                        with object l_oDB2
+                            :Table("dcbff351-7f65-416c-854e-94028fc5c67e","Attribute")
+                            :Field("Attribute.TreeOrder1" , ListOfRecordsToFix->Attribute_Order)
+                            :Update(ListOfRecordsToFix->pk)
+                        endwith
+                    endscan
+
+                endwith
+
+                ::p_o_SQLConnection:DeleteField("public.Attribute","Order")
+            endif
+            l_iCurrentDataVersion := 11
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
 
@@ -558,7 +587,7 @@ else
         with object l_oDB1
             :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
             :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
-            :Update(iFastCGIRunLogPk)
+            :Update(v_iFastCGIRunLogPk)
         endwith
 
         if l_cAction == "logout"
@@ -847,7 +876,7 @@ local l_cErrorInfo
         ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
         l_cErrorInfo := FcgiGetErrorInfo(par_oError)
         ::Print("<div>"+l_cErrorInfo+"</div>")
-        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(iFastCGIRunLogPk,0))+"</div>")
+        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(v_iFastCGIRunLogPk,0))+"</div>")
         ::Print("<div>"+::TraceList(4)+"</div>")
 
         //  ::hb_Fcgi:OnError(par_oError)
@@ -860,7 +889,7 @@ local l_cErrorInfo
                 with object l_oDB1
                     :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIRunLog")
                     :Field("FastCGIRunLog.ErrorInfo",l_cErrorInfo)
-                    :Update(iFastCGIRunLogPk)
+                    :Update(v_iFastCGIRunLogPk)
                 endwith
             endif
         endif
@@ -959,52 +988,60 @@ endif
 
 l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
 
-l_cHtml += [<nav class="navbar navbar-expand-md navbar-light" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
-    l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="navbar-brand]+l_cExtraClass+[" href="#">]+l_cThisAppTitle+[</a>]
+
+l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
+    l_cHtml += [<div id="app" class="container" >]
+        l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]+l_cThisAppTitle+[</a>]
         if par_LoggedIn
-            l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
-                l_cHtml += [<ul class="navbar-nav mr-auto">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
-
-                    if l_lShowMenuProjects
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
-                    endif
-
-                    if l_lShowMenuApplications
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                    endif
+            //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
+                l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
                     if l_lShowMenuModeling
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
                     endif
 
                     if l_lShowMenuDataDictionaries
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
                     endif
 
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     endif
 
-                    if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
-                    endif
+                    l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                    l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
+                        if l_lShowMenuProjects
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                        endif
 
-                    if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
-                    endif
+                        if l_lShowMenuApplications
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                        endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link]+l_cExtraClass+iif(lower(par_cCurrentPage) == "info"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Info">Info</a></li>]
+                        if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                        endif
+
+                        if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                        endif
+                        l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                        
+                    l_cHtml += [</ul>]
+                    l_cHtml += [</li>]
+
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[About">About</a></li>]
 
                 l_cHtml += [</ul>]
-                l_cHtml += [<ul class="navbar-nav">]
-                    l_cHtml += [<li class="nav-item ms-3"><a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a></li>]
-                l_cHtml += [</ul>]
-            l_cHtml += [</div>]
+                l_cHtml += [<div class="text-end">]
+                    l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a>]
+                l_cHtml += [</div>]
+            //l_cHtml += [</div>]
         endif
-    l_cHtml += [</div>]
-l_cHtml += [</nav>]
+    l_cHtml += [</div>]    
+l_cHtml += [</header>]
+
 
 // l_cHtml += [<div class="m-3"></div>]   //Spacer
 

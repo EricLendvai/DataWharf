@@ -1,5 +1,5 @@
 #include "DataWharf.ch"
-memvar oFcgi
+
 //=================================================================================================================
 function BuildPageHome()
 local l_cHtml := []

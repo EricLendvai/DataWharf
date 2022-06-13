@@ -1,8 +1,4 @@
 #include "DataWharf.ch"
-memvar oFcgi
-
-#include "dbinfo.ch"
-#include "hb_orm.ch"
 
 function LoadSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey)
 local l_SQLCommandEnums       := []
@@ -261,7 +257,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             with object :p_oCursor
                                 :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
-                                // :SetOrder("tag1")
                             endwith
 
                         endif
@@ -675,7 +670,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         with object :p_oCursor
                             :Index("tag1","tag1+'*'")
                             :CreateIndexes()
-                            // :SetOrder("tag1")
                         endwith
 
                     endif
@@ -693,7 +687,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                 if !vfp_Seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInDataDictionary","tag1")
                     //Missing EnumValue, Add it
-                    
+
                     with object l_oDB1
                         l_LastEnumValueOrder += 1
                         :Table("4a1d27a3-e85e-4631-9f75-30534fa6e5d0","EnumValue")
@@ -845,7 +839,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             with object :p_oCursor
                                 :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
-                                // :SetOrder("tag1")
                             endwith
 
                         endif
@@ -1282,7 +1275,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             with object :p_oCursor
                                 :Index("tag1","tag1+'*'")
                                 :CreateIndexes()
-                                // :SetOrder("tag1")
                             endwith
 
                         endif
@@ -1573,7 +1565,7 @@ if par_nSyncSetForeignKey > 1
                     with object :p_oCursor
                         :Index("tag1","tag1")
                         :CreateIndexes()
-                        :SetOrder("tag1")
+                        // :SetOrder("tag1")
                     endwith
 
                 endwith
@@ -1593,7 +1585,7 @@ if par_nSyncSetForeignKey > 1
                     with object :p_oCursor
                         :Index("tag1","tag1")
                         :CreateIndexes()
-                        :SetOrder("tag1")
+                        // :SetOrder("tag1")
                     endwith
 
                 endwith
@@ -1849,18 +1841,6 @@ CloseAlias("AllTablesAsParentsForForeignKeys")
 CloseAlias("AllTableColumnsChildrenForForeignKeys")
 
 return l_cErrorMessage
-
-
-
-
-
-
-
-
-
-
-
-
 //-----------------------------------------------------------------------------------------------------------------
 static function SQLExec(par_SQLHandle,par_Command,par_cCursorName)
 local l_cPreviousDefaultRDD := RDDSETDEFAULT("SQLMIX")
