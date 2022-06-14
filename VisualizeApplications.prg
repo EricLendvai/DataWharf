@@ -11,6 +11,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_nLengthDecoded
+local l_lAutoLayout := .t.
 local l_hCoordinate
 local l_cNodeLabel
 local l_nNumberOfTableInDiagram
@@ -158,7 +159,14 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+if GRAPH_LIB == "mxgraph"
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph/css/common.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
+elseif GRAPH_LIB == "visjs"
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+endif
+
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -180,7 +188,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if oFcgi:p_nAccessLevelDD >= 4
             l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
-            l_cHtml += [network.storePositions();]
 
             //Since the redraw() fails to make the edges straight, need to actually submit the entire form.
             // l_cHtml += [$.ajax({]
@@ -190,7 +197,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [  cache: false ]
             // l_cHtml += [});]
 
-            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+            if GRAPH_LIB == "mxgraph"
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+            elseif GRAPH_LIB == "visjs"
+                l_cHtml += [network.storePositions();]
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()));]
+            endif
             l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
             //Code used to debug the positions.
@@ -265,7 +277,7 @@ l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 l_cHtml += [<table><tr>]
 //-------------------------------------
 l_cHtml += [<td valign="top">]
-l_cHtml += [<div id="mynetwork"></div>]
+l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
 
@@ -307,7 +319,7 @@ l_cHtml += [var network;]
 l_cHtml += [function MakeVis(){]
 
 // create an array with nodes
-l_cHtml += 'var nodes = new vis.DataSet(['
+l_cHtml += 'var nodes = ['
 select ListOfTables
 scan all
     if l_lShowNameSpace
@@ -348,7 +360,7 @@ scan all
     l_cTableDescription := EscapeNewlineAndQuotes(ListOfTables->Table_Description)
 
     //Due to some bugs in the js library, had to setup font before the label.
-    l_cHtml += [{id:]+Trans(ListOfTables->pk)
+    l_cHtml += [{id:"T]+Trans(ListOfTables->pk)+["]
     l_cHtml += [,font:{multi:"html",align:"left"}]
     if empty(l_cTableDescription)
         l_cHtml += [,label:"]+l_cNodeLabel+["]
@@ -404,8 +416,9 @@ scan all
     endif
 
     if l_nLengthDecoded > 0
-        l_hCoordinate := hb_HGetDef(l_hNodePositions,Trans(ListOfTables->pk),{=>})
+        l_hCoordinate := hb_HGetDef(l_hNodePositions,"T"+Trans(ListOfTables->pk),{=>})
         if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
         endif
     endif
@@ -416,7 +429,7 @@ scan all
 
     l_cHtml += [},]
 endscan
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // create an array with edges
 with object l_oDB_ListOfLinks
@@ -443,14 +456,14 @@ scan all
     l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
 endscan
 
-l_cHtml += 'var edges = new vis.DataSet(['
+l_cHtml += 'var edges = ['
 
 l_cMultiEdgeKeyPrevious := ""
 
 select ListOfLinks
 scan all
 
-    l_cHtml += [{id:"]+Trans(ListOfLinks->Column_Pk)+[",from:]+Trans(ListOfLinks->pkFrom)+[,to:]+Trans(ListOfLinks->pkTo)+[,arrows:"from"]
+    l_cHtml += [{id:"C]+Trans(ListOfLinks->Column_Pk)+[",from:"T]+Trans(ListOfLinks->pkFrom)+[",to:"T]+Trans(ListOfLinks->pkTo)+[",arrows:{from:{enabled: true,type:"classic"}}]
 
     do case
     case ListOfLinks->Column_UseStatus <= 1
@@ -487,31 +500,76 @@ scan all
         l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
     endif
 
+    if l_nLengthDecoded > 0
+        l_hCoordinate := hb_HGetDef(l_hNodePositions,"C"+Trans(ListOfLinks->Column_Pk),{=>})
+        if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
+            l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+        endif
+    endif
+
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 endscan
 
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // create a network
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
-l_cHtml += [  var data = {]
-l_cHtml += [    nodes: nodes,]
-l_cHtml += [    edges: edges,]
-l_cHtml += [  };]
+if GRAPH_LIB == "mxgraph"
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
+    l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
+    l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
+    l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
+    l_cHtml += '     var cellsRemoved = evt.getProperty("added");'
+    l_cHtml += '     var cellRemoved = (cellsRemoved && cellsRemoved.length >0) ? cellsRemoved[0] : null;'
+    l_cHtml += '     SelectGraphCell(cellsAdded,cellsRemoved,network);'
+    l_cHtml += '     var params = {};'
+    l_cHtml += '     if (cellAdded != null) {'
+    l_cHtml += '         if(cellAdded.id.startsWith("T")) {'
+    l_cHtml += '             params.nodes = [ cellAdded.id ];'
+    l_cHtml += '             if(cellAdded.edges) {'
+    l_cHtml += '               cellAdded.edges.forEach(edge => {'
+    l_cHtml += '                  var newStyle = "strokeWidth=2;startArrow=classic;endArrow=none;startFill=1;endFill=1;";'
+    l_cHtml += '                  edge.style = newStyle;'
+    l_cHtml += '                  network.refresh(edge);'
+    l_cHtml += '               });'
+    l_cHtml += '             }'
+    l_cHtml += '         }'
+    l_cHtml += '         else if(cellAdded.id.startsWith("C")) {'
+    l_cHtml += '             params.edges = [ cellAdded.id ];'
+    l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
+    l_cHtml += '         }'
+    l_cHtml += '     }'
+    l_cHtml += '     if (cellRemoved != null) {'
+    l_cHtml += '         if(cellRemoved.id.startsWith("T")) {'
+    l_cHtml += '             if(cellRemoved.edges) {'
+    l_cHtml += '               cellRemoved.edges.forEach(edge => {'
+    l_cHtml += '                  var newStyle = "strokeWidth=1;startArrow=classic;endArrow=none;startFill=1;endFill=1;";'
+    l_cHtml += '                  edge.style = newStyle;'
+    l_cHtml += '                  network.refresh(edge);'
+    l_cHtml += '               });'
+    l_cHtml += '            }'
+    l_cHtml += '         }'
+    l_cHtml += '     }'
+    l_cHtml += '     evt.consume();'
+elseif GRAPH_LIB == "visjs"
+    l_cHtml += [  var data = {]
+    l_cHtml += [    nodes: new vis.DataSet(nodes),]
+    l_cHtml += [    edges: new vis.DataSet(edges),]
+    l_cHtml += [  };]
+    l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
 
-l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
+    l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
+    if l_lNavigationControl
+        l_cHtml +=              [interaction:{navigationButtons:true},]
+    endif
+    l_cHtml +=                  [};]
 
-l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
-if l_lNavigationControl
-    l_cHtml +=              [interaction:{navigationButtons:true},]
+    l_cHtml += [  network = new vis.Network(container, data, options);]  //var
+    l_cHtml += ' network.on("click", function (params) {'
+    l_cHtml += '   params.event = "[original event]";'
 endif
-l_cHtml +=                  [};]
-
-l_cHtml += [  network = new vis.Network(container, data, options);]  //var
-
-l_cHtml += ' network.on("click", function (params) {'
-l_cHtml += '   params.event = "[original event]";'
 
 // Code to filter columns
 l_cJS := [$("#ColumnSearch").change(function() {]
@@ -538,13 +596,16 @@ l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
-l_cHtml += ' network.on("dragStart", function (params) {'
-l_cHtml += '   params.event = "[original event]";'
-// l_cHtml += '   debugger;'
-l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
-l_cHtml += '      });'
-
-l_cHtml += [network.fit();]
+if GRAPH_LIB == "mxgraph"
+    //TODO add code to switch "save" button to yellow on diagram change
+elseif GRAPH_LIB == "visjs"
+    l_cHtml += ' network.on("dragStart", function (params) {'
+    l_cHtml += '   params.event = "[original event]";'
+    // l_cHtml += '   debugger;'
+    l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
+    l_cHtml += '      });'
+    l_cHtml += [network.fit();]
+endif
 
 l_cHtml += [};]
 
@@ -1546,7 +1607,7 @@ l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover")
 
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
-    l_iTablePk := l_aNodes[1]
+    l_iTablePk := val(substr(l_aNodes[1],2))
 
     with object l_oDB_Application
         :Table("51edf270-d3d3-4c8b-b530-c2d3b90c93c1","Table")
@@ -2067,8 +2128,13 @@ if len(l_aNodes) == 1
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelDD >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
-                        l_cHtml += [network.storePositions();]
-                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                        if GRAPH_LIB == "mxgraph"
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+                        elseif GRAPH_LIB == "visjs"
+                            l_cHtml += [network.storePositions();]
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                        endif
+                        
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
                         l_cHtml += [">Update Table selection and Save Layout</button></div>]
                         l_cDisabled := ""
@@ -2139,8 +2205,12 @@ if len(l_aNodes) == 1
                 //---------------------------------------------------------------------------
                 if l_nAccessLevelDD >= 4
                     l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
-                    l_cHtml += [network.storePositions();]
-                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                    if GRAPH_LIB == "mxgraph"
+                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)));]
+                    elseif GRAPH_LIB == "visjs"
+                        l_cHtml += [network.storePositions();]
+                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                    endif
                     l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
                     l_cHtml += [">Remove Table and Save Layout</button></div>]
                 endif
@@ -2200,7 +2270,7 @@ else
         with object l_oDB_InArray
 
             for l_nEdgeCounter := 1 to l_nEdgeNumber
-                l_iColumnPk := val(hb_HGetDef(l_aItems[l_nEdgeCounter],"edgeId","0"))
+                l_iColumnPk := val(substr(hb_HGetDef(l_aItems[l_nEdgeCounter],"edgeId","0"),2))
                 if l_iColumnPk > 0
 
                     :Table("9410bb49-ad19-458f-9a77-b33b29afcccf","Column")

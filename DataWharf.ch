@@ -29,6 +29,8 @@
 #define USEDON_ATTRIBUTE  10
 #define USEDON_PROJECT    11
 
+#define GRAPH_LIB "mxgraph"
+
 #define CANVAS_WIDTH_MIN      300
 #define CANVAS_WIDTH_MAX      3000
 #define CANVAS_WIDTH_DEFAULT  1200

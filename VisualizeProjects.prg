@@ -14,6 +14,7 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_nLengthDecoded
+local l_lAutoLayout := .t.
 local l_hCoordinate
 local l_cNodeLabel
 local l_nNumberOfEntityInModelingDiagram
@@ -308,7 +309,14 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+if GRAPH_LIB == "mxgraph"
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph/css/common.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
+elseif GRAPH_LIB == "visjs"
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+endif
+
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
 
 // oFcgi:p_cHeader += [<script type="text/javascript">]
 // oFcgi:p_cHeader += 'function htmlTitle(html) {'
@@ -338,9 +346,14 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if oFcgi:p_nAccessLevelML >= 4
             l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
-            l_cHtml += [network.storePositions();]
 
-            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+            if GRAPH_LIB == "mxgraph"
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+            elseif GRAPH_LIB == "visjs"
+                l_cHtml += [network.storePositions();]
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()));]
+            endif
+
             l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
 
             //Code used to debug the positions.
@@ -402,7 +415,7 @@ l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 l_cHtml += [<table><tr>]
 //-------------------------------------
 l_cHtml += [<td valign="top">]
-l_cHtml += [<div id="mynetwork"></div>]
+l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
 
@@ -435,10 +448,10 @@ l_cHtml += [var network;]
 l_cHtml += [function MakeVis(){]
 
 // create an array with nodes
-l_cHtml += 'var nodes = new vis.DataSet(['
+l_cHtml += 'var nodes = ['
 select ListOfEntities
 scan all
-    l_cNodeLabel := [<b>]+AllTrim(ListOfEntities->Entity_Name)+[</b>]
+    l_cNodeLabel := '<b>'+AllTrim(ListOfEntities->Entity_Name)+'</b>'
     if l_lShowPackage .and. len(nvl(ListOfEntities->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfEntities->Package_FullName+[)]
     endif
@@ -475,7 +488,14 @@ scan all
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"E"+Trans(ListOfEntities->pk),{=>})
         if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
+            if hb_HHasKey(l_hCoordinate, "height")
+                l_cHtml += [,height:]+Trans(l_hCoordinate["height"])
+            endif
+            if hb_HHasKey(l_hCoordinate, "width")
+                l_cHtml += [,width:]+Trans(l_hCoordinate["width"])
+            endif
         endif
     endif
 
@@ -490,7 +510,7 @@ endscan
 //All Nodes for all Association with more than 2 Entity
 select ListOfAssociationNodes
 scan all
-    l_cNodeLabel := [<b>]+AllTrim(ListOfAssociationNodes->Association_Name)+[</b>]
+    l_cNodeLabel := AllTrim(ListOfAssociationNodes->Association_Name)
     if l_lShowPackage .and. len(nvl(ListOfAssociationNodes->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfAssociationNodes->Package_FullName+[)]
     endif
@@ -525,7 +545,12 @@ scan all
         endif
     endif
 
-    l_cHtml += [,shape: "diamond",color:{background:'#]+MODELING_ASSOCIATION_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ASSOCIATION_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+    if GRAPH_LIB == "mxgraph"
+        l_cHtml += [,shape: "rhombus"]
+    elseif GRAPH_LIB == "visjs"
+        l_cHtml += [,shape: "diamond"]
+    endif
+    l_cHtml += [,color:{background:'#]+MODELING_ASSOCIATION_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ASSOCIATION_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
     if l_nLengthDecoded > 0
         l_hCoordinate := hb_HGetDef(l_hNodePositions,"A"+Trans(ListOfAssociationNodes->pk),{=>})
@@ -541,13 +566,13 @@ scan all
     l_cHtml += [},]
 endscan
 
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // SendToClipboard(l_cHtml)
 
 // create an array with edges
 
-l_cHtml += 'var edges = new vis.DataSet(['
+l_cHtml += 'var edges = ['
 
 // Edges between Association Nodes and Entities
 
@@ -603,6 +628,14 @@ scan all
             l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
         endif
         l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
+    endif
+
+    if l_nLengthDecoded > 0
+        l_hCoordinate := hb_HGetDef(l_hNodePositions,"L"+Trans(ListOfEdgesEntityAssociationNode->Endpoint_pk),{=>})
+        if len(l_hCoordinate) > 0
+            l_lAutoLayout := .f.
+            l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+        endif
     endif
 
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
@@ -726,6 +759,14 @@ scan all
             l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
         endif
 
+        if l_nLengthDecoded > 0
+            l_hCoordinate := hb_HGetDef(l_hNodePositions,"D"+Trans(ListOfEdgesEntityEntity->Association_pk),{=>})
+            if len(l_hCoordinate) > 0
+                l_lAutoLayout := .f.
+                l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+            endif
+        endif
+
         l_cHtml += [},]
 
         l_iAssociationPk_Previous := 0
@@ -740,27 +781,48 @@ scan all
     endif
 endscan
 
-l_cHtml += ']);'
+l_cHtml += '];'
 
 // create a network
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
-l_cHtml += [  var data = {]
-l_cHtml += [    nodes: nodes,]
-l_cHtml += [    edges: edges,]
-l_cHtml += [  };]
+if GRAPH_LIB = "mxgraph"
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
+    l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
+    l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
+    l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
+    l_cHtml += '     var cellsRemoved = evt.getProperty("added");'
+    l_cHtml += '     var cellRemoved = (cellsRemoved && cellsRemoved.length >0) ? cellsRemoved[0] : null;'
+    l_cHtml += '     SelectGraphCell(cellsAdded,cellsRemoved,network);'
+    l_cHtml += '     var params = {};'
+    l_cHtml += '     if (cellAdded != null) {'
+    l_cHtml += '         if(cellAdded.id.startsWith("E") || cellAdded.id.startsWith("A")) {'
+    l_cHtml += '             params.nodes = [ cellAdded.id ];'
+    l_cHtml += '         }'
+    l_cHtml += '         else if(cellAdded.id.startsWith("D")) {'
+    l_cHtml += '             params.edges = [ cellAdded.id ];'
+    l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
+    l_cHtml += '         }'
+    l_cHtml += '     }'
+    l_cHtml += '     evt.consume();'
+elseif GRAPH_LIB == "visjs"
+    l_cHtml += [  var data = {]
+    l_cHtml += [    nodes: new vis.DataSet(nodes),]
+    l_cHtml += [    edges: new vis.DataSet(edges),]
+    l_cHtml += [  };]
+    l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
 
-l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
-l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
-if l_lNavigationControl
-    l_cHtml +=              [interaction:{navigationButtons:true},]
+    l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
+    if l_lNavigationControl
+        l_cHtml +=              [interaction:{navigationButtons:true},]
+    endif
+    l_cHtml +=                  [};]
+
+    l_cHtml += [  network = new vis.Network(container, data, options);]  //var
+    l_cHtml += ' network.on("click", function (params) {'
+    l_cHtml += '   params.event = "[original event]";'
 endif
-l_cHtml +=                  [};]
 
-l_cHtml += [  network = new vis.Network(container, data, options);]  //var
-
-l_cHtml += ' network.on("click", function (params) {'
-l_cHtml += '   params.event = "[original event]";'
 
 // Code to filter Attributes
 l_cJS := [$("#AttributeSearch").change(function() {]
@@ -786,13 +848,16 @@ l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");});
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetMLInfo","modelingdiagrampk='+Trans(l_iModelingDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
-l_cHtml += ' network.on("dragStart", function (params) {'
-l_cHtml += '   params.event = "[original event]";'
-// l_cHtml += '   debugger;'
-l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
-l_cHtml += '      });'
-
-l_cHtml += [network.fit();]
+if GRAPH_LIB = "mxgraph"
+    //TODO add code to switch "save" button to yellow on diagram change
+elseif GRAPH_LIB == "visjs"
+    l_cHtml += ' network.on("dragStart", function (params) {'
+    l_cHtml += '   params.event = "[original event]";'
+    // l_cHtml += '   debugger;'
+    l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
+    l_cHtml += '      });'
+    l_cHtml += [network.fit();]
+endif
 
 l_cHtml += [};]
 
@@ -2135,8 +2200,12 @@ if len(l_aNodes) == 1
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelML >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedEntities" class="btn btn-primary rounded" onclick="]
-                        l_cHtml += [network.storePositions();]
-                        l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                        if GRAPH_LIB == "mxgraph"
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+                        elseif GRAPH_LIB == "visjs"
+                            l_cHtml += [network.storePositions();]
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                        endif
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
                         l_cHtml += [">Update ]+oFcgi:p_ANFEntity+[ selection and Save Layout</button></div>]
                     endif
@@ -2195,8 +2264,12 @@ if len(l_aNodes) == 1
             l_cHtml += [<div id="DetailType4"]+iif(l_nActiveTabNumber <> 4,[ style="display: none;"],[])+[ class="m-3">]
                 //---------------------------------------------------------------------------
                 l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteEntity" class="btn btn-primary rounded" onclick="]
-                l_cHtml += [network.storePositions();]
-                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                if GRAPH_LIB == "mxgraph"
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+                elseif GRAPH_LIB == "visjs"
+                    l_cHtml += [network.storePositions();]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                endif
                 l_cHtml += [$('#ActionOnSubmit').val('RemoveEntityAndSaveLayout');document.form.submit();]
                 l_cHtml += [">Remove ]+oFcgi:p_ANFEntity+[ and Save Layout</button></div>]
                 //---------------------------------------------------------------------------
