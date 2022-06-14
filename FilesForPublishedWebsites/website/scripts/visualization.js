@@ -205,9 +205,9 @@ function getPositions(graph) {
     var positions = {};
     for(var cellProp in graph.model.cells) {
         var cell = graph.model.cells[cellProp];
-        if(cell.id.startsWith('E') || cell.id.startsWith('A')) {
+        if(cell.id.startsWith('E') || cell.id.startsWith('A') || cell.id.startsWith('T')) {
             positions[cell.id] = { id: cell.id, x: cell.geometry.x ,y: cell.geometry.y, height: cell.geometry.height, width: cell.geometry.width}
-        } else if (cell.id.startsWith('D') || cell.id.startsWith('L') ) {
+        } else if (cell.id.startsWith('D') || cell.id.startsWith('L') || cell.id.startsWith('C')) {
             positions[cell.id] = { id: cell.id, points: cell.geometry.points};
         }
     }
