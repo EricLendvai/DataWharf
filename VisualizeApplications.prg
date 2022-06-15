@@ -160,13 +160,13 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
 endif
 
 if GRAPH_LIB == "mxgraph"
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph/css/common.css">]
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_18_0_1/css/common.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_18_0_1/mxClient.js"></script>]
 elseif GRAPH_LIB == "visjs"
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_06_15/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -241,10 +241,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
-        //---------------------------------------------------------------------------
-        if !l_lNavigationControl
-            l_cHtml += [<input type="button" role="button" value="Fit Diagram" class="btn btn-primary rounded ms-3" onclick="network.fit();return false;">]
-        endif
         //---------------------------------------------------------------------------
 
         //Get the current URL and add a reference to the current diagram LinkUID
@@ -420,6 +416,12 @@ scan all
         if len(l_hCoordinate) > 0
             l_lAutoLayout := .f.
             l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
+            if hb_HHasKey(l_hCoordinate, "height")
+                l_cHtml += [,height:]+Trans(l_hCoordinate["height"])
+            endif
+            if hb_HHasKey(l_hCoordinate, "width")
+                l_cHtml += [,width:]+Trans(l_hCoordinate["width"])
+            endif
         endif
     endif
 
@@ -517,7 +519,7 @@ l_cHtml += '];'
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 if GRAPH_LIB == "mxgraph"
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "direct"); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
     l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
@@ -528,28 +530,10 @@ if GRAPH_LIB == "mxgraph"
     l_cHtml += '     if (cellAdded != null) {'
     l_cHtml += '         if(cellAdded.id.startsWith("T")) {'
     l_cHtml += '             params.nodes = [ cellAdded.id ];'
-    l_cHtml += '             if(cellAdded.edges) {'
-    l_cHtml += '               cellAdded.edges.forEach(edge => {'
-    l_cHtml += '                  var newStyle = "strokeWidth=2;startArrow=classic;endArrow=none;startFill=1;endFill=1;";'
-    l_cHtml += '                  edge.style = newStyle;'
-    l_cHtml += '                  network.refresh(edge);'
-    l_cHtml += '               });'
-    l_cHtml += '             }'
     l_cHtml += '         }'
     l_cHtml += '         else if(cellAdded.id.startsWith("C")) {'
     l_cHtml += '             params.edges = [ cellAdded.id ];'
     l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
-    l_cHtml += '         }'
-    l_cHtml += '     }'
-    l_cHtml += '     if (cellRemoved != null) {'
-    l_cHtml += '         if(cellRemoved.id.startsWith("T")) {'
-    l_cHtml += '             if(cellRemoved.edges) {'
-    l_cHtml += '               cellRemoved.edges.forEach(edge => {'
-    l_cHtml += '                  var newStyle = "strokeWidth=1;startArrow=classic;endArrow=none;startFill=1;endFill=1;";'
-    l_cHtml += '                  edge.style = newStyle;'
-    l_cHtml += '                  network.refresh(edge);'
-    l_cHtml += '               });'
-    l_cHtml += '            }'
     l_cHtml += '         }'
     l_cHtml += '     }'
     l_cHtml += '     evt.consume();'
@@ -2132,7 +2116,7 @@ if len(l_aNodes) == 1
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
                         elseif GRAPH_LIB == "visjs"
                             l_cHtml += [network.storePositions();]
-                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                         endif
                         
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]

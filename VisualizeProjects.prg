@@ -310,13 +310,13 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
 endif
 
 if GRAPH_LIB == "mxgraph"
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph/css/common.css">]
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph/mxClient.js"></script>]
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_18_0_1/css/common.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_18_0_1/mxClient.js"></script>]
 elseif GRAPH_LIB == "visjs"
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_06_15/visualization.js"></script>]
 
 // oFcgi:p_cHeader += [<script type="text/javascript">]
 // oFcgi:p_cHeader += 'function htmlTitle(html) {'
@@ -378,10 +378,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
-        //---------------------------------------------------------------------------
-        if !l_lNavigationControl
-            l_cHtml += [<input type="button" role="button" value="Fit Diagram" class="btn btn-primary rounded ms-3" onclick="network.fit();return false;">]
-        endif
         //---------------------------------------------------------------------------
 
         //Get the current URL and add a reference to the current modeling diagram LinkUID
@@ -787,7 +783,7 @@ l_cHtml += '];'
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 if GRAPH_LIB = "mxgraph"
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[); ]
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal"); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
     l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
