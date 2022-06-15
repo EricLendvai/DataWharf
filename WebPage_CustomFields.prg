@@ -535,7 +535,7 @@ l_cHtml += [</div>]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================

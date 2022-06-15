@@ -1856,7 +1856,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -2676,7 +2676,7 @@ oFcgi:p_cjQueryScript += [$('#TextInformation').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 
 return l_cHtml
@@ -3409,7 +3409,7 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 
 return l_cHtml
@@ -3924,7 +3924,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -4267,7 +4267,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 
 return l_cHtml
@@ -4730,7 +4730,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -5547,7 +5547,7 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -6396,7 +6396,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -7029,7 +7029,7 @@ static function LinkedEntityEditFormBuild(par_iModelPk,par_iPk,par_cLinkedEntity
     
     l_cHtml += [</form>]
     
-    l_cHtml += GetConfirmationModalForms()
+    l_cHtml += GetConfirmationModalFormsDelete()
     
     return l_cHtml
     //=================================================================================================================

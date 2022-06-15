@@ -1,6 +1,7 @@
 
 DataWharf.prg
 LoadSchema.prg
+DeltaSchema.prg
 VisualizeApplications.prg
 VisualizeProjects.prg
 FixNonNormalizedFields.prg
