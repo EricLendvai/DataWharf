@@ -477,7 +477,7 @@ hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
                             else
                                 select ListOfColumnsInTable
                                 scan all
-l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfEnumValuesInEnumeration->Pk,l_cLastNameSpace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name}
+l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfColumnsInTable->Pk,l_cLastNameSpace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name}
                                     l_LastColumnOrder := ListOfColumnsInTable->Column_Order   // since Ascending now, the last loop will have the biggest value
                                 endscan
                             endif
