@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 06/15/2022 v 2.27
+* Partial fixes for preview option of mxgraph method to visualize, see DataWharf.ch.
+
 ## 06/14/2022 v 2.26
 * Deleting a table will also delete its related indexes, once the table has no more columns.
 * Preview option of mxgraph method to visualize, see DataWharf.ch.
