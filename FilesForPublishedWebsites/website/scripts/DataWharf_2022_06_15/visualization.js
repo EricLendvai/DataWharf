@@ -1,10 +1,14 @@
-function createGraph(container, nodes, edges, autoLayout) {
+function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout) {
     var model = new mxGraphModel();
     var graph = new mxGraph(container, model);
     graph.setHtmlLabels(true);
     graph.setAllowDanglingEdges(false);
     graph.setDisconnectOnMove(false);
     graph.setTooltips(true);
+    graph.autoExtend = true;
+    graph.autoScroll = true;
+    graph.allowNegativeCoordinates = false;
+
     new mxRubberband(graph);
 
     graph.isCellEditable = function(cell) {
@@ -33,8 +37,13 @@ function createGraph(container, nodes, edges, autoLayout) {
 				style['startSize'] = '8';
 				style['endSize'] = '8';
                 style[mxConstants.STYLE_ROUNDED] = true;
-                style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector;
-                //style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+                if(edgeLayout == "orthogonal") {
+                    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector;
+                    //style[mxConstants.STYLE_EDGE] = mxEdgeStyle.SegmentConnector;
+                    //style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+                } else {
+                    //default is direct
+                }
 
     // Adds cells to the model in a single step
     model.beginUpdate();
@@ -86,7 +95,10 @@ function createGraph(container, nodes, edges, autoLayout) {
                 styleTo += 'endArrow=none;';
             }
             var style = styleFrom + styleTo + 'startFill=1;endFill=1;';
+            style += "strokeColor="+edge.color.color+";";
             var mxEdge = graph.insertEdge(parent, edge.id, edge.label, mxNodes.get(edge.from), mxNodes.get(edge.to),style);
+            mxEdge.highlight = edge.color.highlight;
+            mxEdge.color = edge.color.color;
             if(edge.points) {
                 mxEdge.geometry.points = edge.points;
             }
@@ -114,10 +126,21 @@ function createGraph(container, nodes, edges, autoLayout) {
         model.endUpdate();
     }
 
+    if(rerouteEdgesOnVertexMove) {
+        graph.addListener(mxEvent.CELLS_MOVED, function (sender, evt) {
+            var cells = evt.getProperties("cell");
+            if(cells && cells.cells && cells.cells.length > 0 && cells.cells[0].isVertex()) {
+                rerouteEdges(graph, cells.cells[0]);
+            }
+        });
+    }
+
     if(autoLayout) {
         var layout = new mxFastOrganicLayout(graph);
         layout.disableEdgeStyle = false;
         layout.execute(graph.getDefaultParent());
+        /*var layoutEdges = new mxParallelEdgeLayout(graph);
+        layoutEdges.execute(graph.getDefaultParent());*/
     }
 
     var zoomIn = container.parentElement.appendChild(mxUtils.button(' Zoom In ', function(event)
@@ -126,6 +149,13 @@ function createGraph(container, nodes, edges, autoLayout) {
         graph.zoomIn();
     }));
     $(zoomIn).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-in'></i>");
+
+    var fit = container.parentElement.appendChild(mxUtils.button(' Fit ', function(event)
+    {
+        event.preventDefault();
+        graph.fit();
+    }));
+    $(fit).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrows-fullscreen'></i>");
     
     var zoomOut = container.parentElement.appendChild(mxUtils.button(' Zoom Out ', function(event)
     {
@@ -134,20 +164,14 @@ function createGraph(container, nodes, edges, autoLayout) {
     }));
     $(zoomOut).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-out'></i>");
 
-    var reroute = container.parentElement.appendChild(mxUtils.button(' Reset Associations ', function(event)
+    var reroute = container.parentElement.appendChild(mxUtils.button(' Reroute Edges ', function(event)
     {
         event.preventDefault();
         var cells = graph.getSelectionCells();
         if(cells && cells.length > 0)
         {
             cells.forEach(cell => {
-                if(cell.id.startsWith("L") || cell.id.startsWith("D")) 
-                {
-                    graph.resetEdge(cell);
-                } else if (cell.id.startsWith("E") || cell.id.startsWith("A"))
-                {
-                    graph.resetEdges([cell]);
-                }
+                rerouteEdges(graph, cell);
             });
         }
         else {
@@ -157,11 +181,13 @@ function createGraph(container, nodes, edges, autoLayout) {
                 {
                     graph.resetEdge(cell);
                 }
+                new mxParallelEdgeLayout(graph).execute(graph.getDefaultParent());
             }
         }
         
     }));
-    $(reroute).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi'></i>");
+    $(reroute).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-bezier2'></i>");
+
 
 	return graph;
     /*var executeLayout = function(change, post)
@@ -201,6 +227,26 @@ function createGraph(container, nodes, edges, autoLayout) {
     
 }
 
+function rerouteEdges(graph, cell) {
+    var layout = new mxParallelEdgeLayout(graph);
+    if (cell.id.startsWith("L") || cell.id.startsWith("D" || cell.id.startsWith("C"))) {
+        graph.resetEdge(cell);
+        layout.isEdgeIgnored = function (edge2) {
+            return !(cell == edge2);
+        };
+    } else if (cell.id.startsWith("E") || cell.id.startsWith("A") || cell.id.startsWith("T")) {
+        graph.resetEdges([cell]);
+        layout.isEdgeIgnored = function (edge2) {
+            var model = graph.getModel();
+            var src2 = model.getTerminal(edge2, true);
+            var trg2 = model.getTerminal(edge2, false);
+
+            return !(cell == src2 || cell == trg2);
+        };
+    }
+    layout.execute(graph.getDefaultParent());
+}
+
 function getPositions(graph) {
     var positions = {};
     for(var cellProp in graph.model.cells) {
@@ -223,8 +269,15 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
                 if(element.highlight && element.highlight.background) {
                     mxUtils.setCellStyles(graph.getModel(), [element], 'fillColor', element.highlight.background);
                 }
-                if(element.highlight && element.highlight.border)
-                mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight.border);
+                if(element.highlight && element.highlight.border) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight.border);
+                }
+                if(element.edges) {
+                    element.edges.forEach(edge => {
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeWidth', 2);
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeColor', edge.highlight);
+                    });
+                }
             });
         }
         if(cellsRemoved) {
@@ -234,6 +287,12 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
                 }
                 if(element.color && element.color.border) {
                     mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.color.border);
+                }
+                if(element.edges) {
+                    element.edges.forEach(edge => {
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeWidth', 1);
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeColor', edge.color);
+                    });
                 }
             });
         }
