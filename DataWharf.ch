@@ -3,7 +3,7 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.25"
+#define BUILDVERSION "2.27"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2
@@ -29,7 +29,8 @@
 #define USEDON_ATTRIBUTE  10
 #define USEDON_PROJECT    11
 
-#define GRAPH_LIB "mxgraph"
+//#define GRAPH_LIB "mxgraph"
+#define GRAPH_LIB "visjs"
 
 #define CANVAS_WIDTH_MIN      300
 #define CANVAS_WIDTH_MAX      3000

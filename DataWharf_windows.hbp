@@ -33,7 +33,9 @@ ${HB_VFP_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_vfp.hbx
 ${HB_ORM_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_orm.hbx
 #The following are includes used by the HB_ORM
 sddodbc.hbc
-xhb.hbc
+
+#Following is not needed anymore
+#xhb.hbc
 
 
 -obuild\win64\${HB_COMPILER}\${BuildMode}\${EXEName}.exe

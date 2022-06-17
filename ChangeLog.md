@@ -1,7 +1,17 @@
 # DataWharf - Change Log
 
+## 06/15/2022 v 2.27
+* Partial fixes for preview option of mxgraph method to visualize, see DataWharf.ch.
+
+## 06/14/2022 v 2.26
+* Deleting a table will also delete its related indexes, once the table has no more columns.
+* Preview option of mxgraph method to visualize, see DataWharf.ch.
+* On add of new table, redirect to options to add columns instead of list of tables.
+* New Delta option in Load/Sync of datadictionary to report difference between the data in DataWharf and the physical implementation. Only functional for PostgreSQL and to test existence of enumerations, enumerations values, tables and columns (not if matching or indexes yet).
+
 ## 06/02/2022 v 2.25
 * Fix list of attributes being displayed in Visualize models.
+* Removed xhb.hbc
 
 ## 05/26/2022 v 2.24
 * Code refactor to remove public variables and simplify header files by combining them in datawharf.ch

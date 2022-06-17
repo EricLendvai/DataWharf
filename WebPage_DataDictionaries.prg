@@ -282,7 +282,8 @@ case l_cURLAction == "DataDictionaryLoadSchema"
                                                             "",;
                                                             l_oData:Application_SyncDatabase,;
                                                             l_oData:Application_SyncNameSpaces,;
-                                                            l_oData:Application_SyncSetForeignKey)
+                                                            l_oData:Application_SyncSetForeignKey,;
+                                                            {})
             endif
         else
             if l_iApplicationPk > 0
@@ -1437,7 +1438,7 @@ oFcgi:p_cjQueryScript += [$('#TextSupportColumns').focus();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -1749,7 +1750,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -2648,7 +2649,7 @@ else
 
     l_cHtml += [</form>]
 
-    l_cHtml += GetConfirmationModalForms()
+    l_cHtml += GetConfirmationModalFormsDelete()
 endif
 
 return l_cHtml
@@ -2745,7 +2746,7 @@ case l_cActionOnSubmit == "Save"
             if empty(l_iTablePk)
                 if :Add()
                     l_iTablePk := :Key()
-                    l_cFrom := oFcgi:GetQueryString('From')
+                    l_cFrom := 'Columns'   // To redirect to columns entry options
                 else
                     l_cErrorMessage := "Failed to add Table."
                 endif
@@ -2856,11 +2857,40 @@ case l_cActionOnSubmit == "Delete"   // Table
                     :SQL()
 
                     if :Tally == 0
-                        :Table("8c926070-36da-4c35-9f63-1db6322e7bdb","Index")
+                        
+                        //Delete IndexColumn related records 
+                        :Table("129123ac-08bb-459b-b946-88fb92f67d32","Index")
+                        :Column("IndexColumn.pk","pk")
+                        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
                         :Where("Index.fk_Table = ^",l_iTablePk)
-                        :SQL()
+                        :SQL("ListOfRecordsToDelete")
+                        if :Tally > 0
+                            select ListOfRecordsToDelete
+                            scan all
+                                if !:Delete("629ff66c-ea5e-4737-9d5a-ee70317dbc4a","IndexColumn",ListOfRecordsToDelete->pk)
+                                    l_cErrorMessage := "Failed to delete IndexColumn."
+                                    exit
+                                endif
+                            endscan
+                        endif
 
-                        if :Tally == 0
+                        :Table("c928f496-9e84-43f6-a1fb-99d2191f528e","Index")
+                        :Column("Index.pk","pk")
+                        :Where("Index.fk_Table = ^" , l_iTablePk)
+                        :SQL("ListOfRecordsToDelete")
+                        if :Tally < 0
+                            l_cErrorMessage := "Failed to delete Table. Error 3."
+                        else
+                            select ListOfRecordsToDelete
+                            scan all
+                                if !:Delete("a6d54bb0-fd92-4ac4-b466-24780cacd93e","Index",ListOfRecordsToDelete->pk)
+                                    l_cErrorMessage := "Failed to delete Index."
+                                    exit
+                                endif
+                            endscan
+                        endif
+
+                        if empty(l_cErrorMessage)
                             //Delete any DiagramTable related records
                             :Table("3c006261-26e5-4e1a-9164-278f5bd4e31a","DiagramTable")
                             :Column("DiagramTable.pk" , "pk")
@@ -2902,8 +2932,6 @@ case l_cActionOnSubmit == "Delete"   // Table
                             else
                                 l_cErrorMessage := "Failed to clear related DiagramTable records."
                             endif
-                        else
-                            l_cErrorMessage := "Related Index record on file"
                         endif
                     else
                         l_cErrorMessage := "Related Column record on file (Foreign Key Link)"
@@ -3892,7 +3920,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -4711,7 +4739,7 @@ else
 
     l_cHtml += [</form>]
 
-    l_cHtml += GetConfirmationModalForms()
+    l_cHtml += GetConfirmationModalFormsDelete()
 endif
 
 return l_cHtml
@@ -5268,7 +5296,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -5407,7 +5435,8 @@ endif
 return l_cHtml
 //=================================================================================================================
 static function DataDictionaryLoadSchemaStep1FormBuild(par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
-                                                    par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey)
+                                                    par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey,;
+                                                    par_aDeltaMessages)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
@@ -5422,6 +5451,8 @@ local l_cSyncPassword      := hb_DefaultValue(par_cSyncPassword,"")
 local l_cSyncDatabase      := hb_DefaultValue(par_cSyncDatabase,"")
 local l_cSyncNameSpaces    := hb_DefaultValue(par_cSyncNameSpaces,"")
 local l_nSyncSetForeignKey := hb_DefaultValue(par_nSyncSetForeignKey,1)
+
+local l_cMessageLine
 
 oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormBuild")
 
@@ -5438,11 +5469,14 @@ if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">Load Schema - Enter Connection Information</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
+
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" data-bs-target="#ConfirmLoadModal" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
+            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmLoadModal">Load</button>]
+
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
-
 
     l_cHtml += [<div class="m-3"></div>]
 
@@ -5512,9 +5546,19 @@ if !empty(par_iPk)
 
     oFcgi:p_cjQueryScript += [$('#ComboSyncBackendType').focus();]
 
+    if !empty(par_aDeltaMessages)
+        l_cHtml += [<div class="m-3">]
+            l_cHtml += [<div class="fs-4">Delta Result:</div>]
+            for each l_cMessageLine in par_aDeltaMessages
+                l_cHtml += [<div>]+l_cMessageLine+[</div>]
+            endfor
+            l_cHtml += [<div class="m-5"></div>]
+        l_cHtml += [</div>]
+    endif
+
     l_cHtml += [</form>]
 
-    l_cHtml += GetConfirmationModalForms()
+    l_cHtml += GetConfirmationModalFormsLoad()
 endif
 
 return l_cHtml
@@ -5543,6 +5587,7 @@ local l_SQLEngineType
 local l_iPort
 local l_cDriver
 local l_SQLHandle
+local l_aDeltaMessages := {}
 
 oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormOnSubmit")
 
@@ -5560,7 +5605,7 @@ l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
 
 do case
-case l_cActionOnSubmit == "Load"
+case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
 
     do case
     case empty(l_nSyncBackendType)
@@ -5655,7 +5700,14 @@ case l_cActionOnSubmit == "Load"
 
             else
 // SendToDebugView(l_cConnectionString)
-               l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
+                do case
+                case l_cActionOnSubmit == "Load"
+                    l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
+                    
+                case l_cActionOnSubmit == "Delta"
+                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+
+                endcase
 
                 hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_SQLHandle)
                 // l_cErrorMessage := "Connected OK"
@@ -5678,7 +5730,8 @@ if !empty(l_cErrorMessage)
                                                    l_cSyncPassword,;
                                                    l_cSyncDatabase,;
                                                    l_cSyncNameSpaces,;
-                                                   l_nSyncSetForeignKey)
+                                                   l_nSyncSetForeignKey,;
+                                                   l_aDeltaMessages)
 endif
 
 return l_cHtml
@@ -5877,7 +5930,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================

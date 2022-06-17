@@ -8,6 +8,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
     graph.autoExtend = true;
     graph.autoScroll = true;
     graph.allowNegativeCoordinates = false;
+
     new mxRubberband(graph);
 
     graph.isCellEditable = function(cell) {
@@ -43,7 +44,6 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
                 } else {
                     //default is direct
                 }
-
 
     // Adds cells to the model in a single step
     model.beginUpdate();
@@ -187,7 +187,6 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
         
     }));
     $(reroute).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-bezier2'></i>");
-
 
 
 	return graph;

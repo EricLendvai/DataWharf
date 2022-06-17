@@ -351,7 +351,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
             elseif GRAPH_LIB == "visjs"
                 l_cHtml += [network.storePositions();]
-                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()));]
+                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
             endif
 
             l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
@@ -1297,7 +1297,7 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -1645,7 +1645,7 @@ oFcgi:p_cjQueryScript += [$('#ComboDiagramInfoScale').focus();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalForms()
+l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
@@ -2200,7 +2200,7 @@ if len(l_aNodes) == 1
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
                         elseif GRAPH_LIB == "visjs"
                             l_cHtml += [network.storePositions();]
-                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                         endif
                         l_cHtml += [$('#ActionOnSubmit').val('UpdateEntitySelectionAndSaveLayout');document.form.submit();]
                         l_cHtml += [">Update ]+oFcgi:p_ANFEntity+[ selection and Save Layout</button></div>]
@@ -2264,7 +2264,7 @@ if len(l_aNodes) == 1
                     l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
                 elseif GRAPH_LIB == "visjs"
                     l_cHtml += [network.storePositions();]
-                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions())) );]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                 endif
                 l_cHtml += [$('#ActionOnSubmit').val('RemoveEntityAndSaveLayout');document.form.submit();]
                 l_cHtml += [">Remove ]+oFcgi:p_ANFEntity+[ and Save Layout</button></div>]

@@ -1071,40 +1071,35 @@ for l_nPos := 1 to len(par_text)
 endfor
 return l_result
 //=================================================================================================================
-function GetConfirmationModalForms()
+function GetConfirmationModalFormsLoad()
 local cHtml
 
-// Following Method failed once upgrated to bootstrap 5.
-// TEXT TO VAR cHtml
-// <script>
-   
-// function ConfirmDelete(par_Action) {
-//     $('#modal').find('.modal-title').text('Confirm Delete?');
-//     $('#modal-btn-yes').click(function(){$('#ActionOnSubmit').val('Delete');document.form.submit(); });
-//     $('#modal').modal({show:true});
-// } ;
-   
-// </script>
+TEXT TO VAR cHtml
 
-// <div class="modal fade" id="modal">
-//     <div class="modal-dialog">
-//         <div class="modal-content">
-//             <div class="modal-header">
-//                 <h4 class="modal-title">Are You Sure?</h4>
-//                 <button type="button" class="close" data-dismiss="modal">&times;</button>
-//             </div>
-//             <div class="modal-body">
-//                 This action cannot be undone.
-//             </div>
-//             <div class="modal-footer">
-//                 <a id="modal-btn-yes" class="btn btn-danger" >Yes</a>
-//                 <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
-//             </div>
-//         </div>
-//     </div>
-// </div>
-// ENDTEXT
+<div class="modal fade" id="ConfirmLoadModal" tabindex="-1" aria-labelledby="ConfirmLoadModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ConfirmLoadModalLabel">Confirm Load</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Any missing tables, columns, enumerations and indexes will be added. Nothing will be deleted, even if not physically present anymore!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();">Yes</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
 
+ENDTEXT
+
+return cHtml
+//=================================================================================================================
+function GetConfirmationModalFormsDelete()
+local cHtml
 
 TEXT TO VAR cHtml
 
@@ -1434,5 +1429,50 @@ else
     l_cResult := ""
 endif
 return l_cResult
+//=================================================================================================================
+function SQLExec(par_SQLHandle,par_Command,par_cCursorName)
+local l_cPreviousDefaultRDD := RDDSETDEFAULT("SQLMIX")
+local l_lSQLExecResult := .f.
+local l_oError
+local l_select := iif(used(),select(),0)
+local cErrorInfo
+local l_cSQLExecErrorMessage
+
+l_cSQLExecErrorMessage:= ""
+if par_SQLHandle > 0
+    try
+        if pcount() == 3
+            CloseAlias(par_cCursorName)
+            select 0  //Ensure we don't overwrite any other work area
+            l_lSQLExecResult := DBUseArea(.t.,"SQLMIX",par_Command,par_cCursorName,.t.,.t.,"UTF8",par_SQLHandle)
+            if l_lSQLExecResult
+                //There is a bug with reccount() when using SQLMIX. So to force loading all the data, using goto bottom+goto top
+                dbGoBottom()
+                dbGoTop()
+            endif
+        else
+            l_lSQLExecResult := hb_RDDInfo(RDDI_EXECUTE,par_Command,"SQLMIX",par_SQLHandle)
+        endif
+
+        if !l_lSQLExecResult
+            l_cSQLExecErrorMessage := "SQLExec Error Code: "+Trans(hb_RDDInfo(RDDI_ERRORNO))+" - Error description: "+alltrim(hb_RDDInfo(RDDI_ERROR))
+        endif
+    catch l_oError
+        l_lSQLExecResult := .f.  //Just in case the catch occurs after DBUserArea / hb_RDDInfo
+        l_cSQLExecErrorMessage := "SQLExec Error Code: "+Trans(l_oError:oscode)+" - Error description: "+alltrim(l_oError:description)+" - Operation: "+l_oError:operation
+        // Idea for later  ::SQLSendToLogFileAndMonitoringSystem(0,1,l_SQLCommand+[ -> ]+l_cSQLExecErrorMessage)  _M_
+    endtry
+
+    if !empty(l_cSQLExecErrorMessage)
+        cErrorInfo := hb_StrReplace(l_cSQLExecErrorMessage+" - Command: "+par_Command+iif(pcount() < 3,""," - Cursor Name: "+par_cCursorName),{chr(13)=>" ",chr(10)=>""})
+        hb_orm_SendToDebugView(cErrorInfo)
+    endif
+
+endif
+
+RDDSETDEFAULT(l_cPreviousDefaultRDD)
+select (l_select)
+    
+return l_lSQLExecResult
 //=================================================================================================================
 
