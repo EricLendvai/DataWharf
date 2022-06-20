@@ -282,8 +282,10 @@ function APIGetListOfModels()
 local l_cResponse := ""
 local l_cModelId  := GetAPIURIElement(2)
 local l_oDB_ListOfModels := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfLinkedModels := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfModels
 local l_aListOfModels := {}
+local l_aListOfLinkedModels := {}
 local l_hModelInfo    := {=>}
 
 with object l_oDB_ListOfModels
@@ -309,6 +311,18 @@ with object l_oDB_ListOfModels
     l_nNumberOfModels := :Tally
 endwith
 
+with object l_oDB_ListOfLinkedModels
+    :Table("9D52E5F1-CB6B-44D3-B871-E67ECAC4B5B3","Model")
+    :Column("Model.pk"                  ,"pk")
+    :Column("LinkedModelTo.LinkUID"     ,"LinkedModelTo_LinkUID")
+    :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
+    :Join("inner","Model","LinkedModelTo","LinkedModelTo.pk = LinkedModel.fk_Model2")
+    if !empty(l_cModelId)
+        :Where("Model.LinkUID = ^", l_cModelId)
+    endif
+    :SQL("ListOfLinkedModels")
+endwith
+
 if l_nNumberOfModels < 0
     l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL d498c464-b815-43eb-8649-5b609219fdba"})
     oFcgi:SetHeaderValue("Status","500 Internal Server Error")
@@ -322,9 +336,13 @@ else
         if !empty(ListOfModels->Model_Description)
             l_hModelInfo["description"] := ListOfModels->Model_Description
         endif
-
-        AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
-
+        l_aListOfLinkedModels = {}
+        select ListOfLinkedModels
+        scan all for ListOfLinkedModels->pk == ListOfModels->pk
+            AAdd(l_aListOfLinkedModels, ListOfLinkedModels->LinkedModelTo_LinkUID)   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
+        endscan
+        l_hModelInfo["linkedModels"] = l_aListOfLinkedModels
+        AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))
     endscan
     if !empty(l_cModelId)
         if l_nNumberOfModels == 0
