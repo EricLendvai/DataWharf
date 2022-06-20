@@ -94,14 +94,18 @@ function APIGetListOfEntities()
 
 local l_cResponse := ""
 local l_cEntityId  := GetAPIURIElement(2)
-local l_oDB_ListOfEntities              := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfEntitiesAndAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntities                      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndAttributes         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndLinkedEntitiesFrom := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndLinkedEntitiesTo   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfEntities
-local l_aListOfEntities   := {}
-local l_hEntityInfo       := {=>}
-local l_aListOfAttributes := {}
-local l_hAttributesInfo   := {=>}
-local l_cModelId         := oFcgi:GetQueryString("model")
+local l_aListOfEntities           := {}
+local l_hEntityInfo               := {=>}
+local l_aListOfAttributes         := {}
+local l_hAttributesInfo           := {=>}
+local l_aListOfLinkedEntitiesFrom := {}
+local l_aListOfLinkedEntitiesTo   := {}
+local l_cModelId                  := oFcgi:GetQueryString("model")
 
 with object l_oDB_ListOfEntities
     :Table("9C052CE0-BD88-49B4-B5BD-A85C5A89B549","Entity")
@@ -154,6 +158,32 @@ with object l_oDB_ListOfEntitiesAndAttributes
     :SQL("ListOfEntitiesAndAttributes")
 endwith
 
+with object l_oDB_ListOfEntitiesAndLinkedEntitiesFrom
+    :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
+    :Column("Entity.pk"                     ,"Entity_pk")
+    :Column("EntityFrom.LinkUID"            ,"LinkedEntityFrom_LinkUID")
+    :Join("left outer","LinkedEntity","LinkedEntityFrom","LinkedEntityFrom.fk_Entity2 = Entity.pk")
+    :Join("inner","Entity","EntityFrom","LinkedEntityFrom.fk_Entity1 = EntityFrom.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    endif
+    :OrderBy("Entity_pk")
+    :SQL("ListOfEntitiesAndLinkedEntitiesFrom")
+endwith
+
+with object l_oDB_ListOfEntitiesAndLinkedEntitiesTo
+    :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
+    :Column("Entity.pk"                     ,"Entity_pk")
+    :Column("EntityTo.LinkUID"        ,"LinkedEntityTo_LinkUID")
+    :Join("left outer","LinkedEntity","LinkedEntityTo","LinkedEntityTo.fk_Entity1 = Entity.pk")
+    :Join("inner","Entity","EntityTo","LinkedEntityTo.fk_Entity2 = EntityTo.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    endif
+    :OrderBy("Entity_pk")
+    :SQL("ListOfEntitiesAndLinkedEntitiesTo")
+endwith
+
 if l_nNumberOfEntities < 0
     l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 9909c890-9078-419e-a6a8-71c778cea5f6"})
     //set error code to 500
@@ -193,7 +223,20 @@ else
         endif
         l_hEntityInfo["model"]  := ListOfEntities->Model_LinkUID
         l_hEntityInfo["properties"]  := l_aListOfAttributes
-        
+
+        l_aListOfLinkedEntitiesFrom := {}
+        select ListOfEntitiesAndLinkedEntitiesFrom
+        scan all for ListOfEntitiesAndLinkedEntitiesFrom->Entity_pk == ListOfEntities->pk
+            AAdd(l_aListOfLinkedEntitiesFrom, ListOfEntitiesAndLinkedEntitiesFrom->LinkedEntityFrom_LinkUID)
+        endscan
+        l_hEntityInfo["aspectFrom"]  := l_aListOfLinkedEntitiesFrom
+
+        l_aListOfLinkedEntitiesTo := {}
+        select ListOfEntitiesAndLinkedEntitiesTo
+        scan all for ListOfEntitiesAndLinkedEntitiesTo->Entity_pk == ListOfEntities->pk
+            AAdd(l_aListOfLinkedEntitiesTo, ListOfEntitiesAndLinkedEntitiesTo->LinkedEntityTo_LinkUID)
+        endscan
+        l_hEntityInfo["aspectsTo"]  := l_aListOfLinkedEntitiesTo
         //add attributes as inner array:
         /*
         {
