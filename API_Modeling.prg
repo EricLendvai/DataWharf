@@ -590,7 +590,81 @@ endif
 
 return l_cResponse
 //=================================================================================================================
+//=================================================================================================================
+// Example: /api/enumerations/
+function APIGetListOfEnumerations()
 
+local l_cResponse := ""
+local l_cModelEnumerationId  := GetAPIURIElement(2)
+local l_oDB_ListOfTopModelEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nNumberOfModelEnumerations
+local l_aListOfModelEnumerations := {}
+local l_hModelEnumerationInfo    := {=>}
+local l_cModelId         := oFcgi:GetQueryString("model")
+
+with object l_oDB_ListOfTopModelEnumerations
+    :Table("D1DC2101-984B-4901-BBA7-C7E258B5A23A","ModelEnumeration")
+    :Column("ModelEnumeration.pk"         ,"pk")
+    :Column("ModelEnumeration.Name"       ,"ModelEnumeration_Name")
+    :Column("ModelEnumeration.LinkUID"    ,"ModelEnumeration_LinkUID")
+    :Column("ModelEnumeration.Description","ModelEnumeration_Description")
+    :Column("Model.LinkUID"       ,"Model_LinkUID")
+    //:Column("ModelEnumeration.Description","ModelEnumeration_Description")
+    :Join("inner","Model","","ModelEnumeration.fk_Model = Model.pk")
+    // :Column("Upper(ModelEnumeration.Name)","tag1")
+    if !empty(l_cModelEnumerationId)
+        :Where("ModelEnumeration.LinkUID = ^", l_cModelEnumerationId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
+
+    //_M_ Add access right restrictions
+    // if oFcgi:p_nUserAccessMode <= 1
+    //     :Join("inner","UserAccessProject","","UserAccessProject.fk_Project = Project.pk")
+    //     :Where("UserAccessProject.fk_User = ^",oFcgi:p_iUserPk)
+    // endif
+
+    :SQL("ListOfTopModelEnumerations")
+    l_nNumberOfModelEnumerations := :Tally
+endwith
+
+if l_nNumberOfModelEnumerations < 0
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+else
+    select ListOfTopModelEnumerations
+    scan all
+        hb_HClear(l_hModelEnumerationInfo)
+        l_hModelEnumerationInfo["id"]  := ListOfTopModelEnumerations->ModelEnumeration_LinkUID
+        l_hModelEnumerationInfo["name"] := ListOfTopModelEnumerations->ModelEnumeration_Name
+        if !empty(ListOfTopModelEnumerations->ModelEnumeration_Description)
+            l_hModelEnumerationInfo["description"] := ListOfTopModelEnumerations->ModelEnumeration_Description
+        endif
+        l_hModelEnumerationInfo["model"] := ListOfTopModelEnumerations->Model_LinkUID
+        AAdd(l_aListOfModelEnumerations,hb_hClone(l_hModelEnumerationInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
+
+    endscan
+    if !empty(l_cModelEnumerationId)
+        if l_nNumberOfModelEnumerations == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfModelEnumerations == 1
+            l_cResponse := hb_jsonEncode(l_aListOfModelEnumerations[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
+                "@recordsetCount" => l_nNumberOfModelEnumerations,;
+                "items" => l_aListOfModelEnumerations;
+            })
+    endif
+endif
+
+return l_cResponse
+//=================================================================================================================
 //=================================================================================================================
 // Example: /api/datatypes/
 function APIGetListOfDataTypes()
