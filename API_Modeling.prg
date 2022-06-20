@@ -103,6 +103,7 @@ local l_aListOfEntities           := {}
 local l_hEntityInfo               := {=>}
 local l_aListOfAttributes         := {}
 local l_hAttributesInfo           := {=>}
+local l_xSubDataAttributes
 local l_aListOfLinkedEntitiesFrom := {}
 local l_aListOfLinkedEntitiesTo   := {}
 local l_cModelId                  := oFcgi:GetQueryString("model")
@@ -140,16 +141,19 @@ endwith
 
 with object l_oDB_ListOfEntitiesAndAttributes
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Entity")
-    :Column("Attribute.pk"         ,"pk")
-    :Column("Entity.pk"            ,"Entity_pk")
-    :Column("Attribute.TreeOrder1" ,"tag1")
-    :Column("Attribute.Name"       ,"Attribute_Name")
-    :Column("Attribute.Description","Attribute_Description")
-    :Column("Attribute.BoundLower" ,"Attribute_BoundLower")
-    :Column("Attribute.BoundUpper" ,"Attribute_BoundUpper")
-    :Column("DataType.Name"        ,"DataType_Name")
+    :Column("Attribute.pk"                 ,"pk")
+    :Column("Entity.pk"                    ,"Entity_pk")
+    :Column("Attribute.TreeOrder1"         ,"tag1")
+    :Column("Attribute.Name"               ,"Attribute_Name")
+    :Column("Attribute.Description"        ,"Attribute_Description")
+    :Column("Attribute.BoundLower"         ,"Attribute_BoundLower")
+    :Column("Attribute.BoundUpper"         ,"Attribute_BoundUpper")
+    :Column("DataType.Name"                ,"DataType_Name")
+    :Column("ModelEnumeration.Name"        ,"ModelEnumeration_Name")
     :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
-    :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
+    :Where("Attribute.fk_Attribute = 0")
     if !empty(l_cEntityId)
         :Where("Entity.LinkUID = ^", l_cEntityId)
     endif
@@ -196,7 +200,11 @@ else
         scan all for ListOfEntitiesAndAttributes->Entity_pk == ListOfEntities->pk
             hb_HClear(l_hAttributesInfo)
             l_hAttributesInfo["name"] := ListOfEntitiesAndAttributes->Attribute_Name
-            l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->DataType_Name
+            if !empty(ListOfEntitiesAndAttributes->DataType_Name)
+                l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->DataType_Name
+            elseif !empty(ListOfEntitiesAndAttributes->ModelEnumeration_Name)
+                l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->ModelEnumeration_Name
+            endif
             if !empty(ListOfEntitiesAndAttributes->Attribute_Description)
                 l_hAttributesInfo["description"] := ListOfEntitiesAndAttributes->Attribute_Description
             endif
@@ -205,6 +213,10 @@ else
             endif
             if !empty(ListOfEntitiesAndAttributes->Attribute_BoundUpper)
                 l_hAttributesInfo["upper"] := ListOfEntitiesAndAttributes->Attribute_BoundUpper
+            endif
+            l_xSubDataAttributes := BuildAttributeInfo(ListOfEntitiesAndAttributes->pk)
+            if !hb_IsNil(l_xSubDataAttributes)
+                l_hAttributesInfo["properties"] := l_xSubDataAttributes
             endif
             AAdd(l_aListOfAttributes,hb_hClone(l_hAttributesInfo))
         endscan
@@ -719,3 +731,71 @@ endwith
 
 return iif(hb_IsNil(l_aInfo),NIL,AClone(l_aInfo)) 
 //=================================================================================================================
+
+//=================================================================================================================
+static function BuildAttributeInfo(par_Attribute_pk)
+    local l_aInfo
+    local l_oDB_ListOfAllOtherAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_aArray := {}
+    local l_hAttributeInfo := {=>}
+    local l_nLoop
+    local l_xSubAttributes
+    local l_nNumberOfSubAttributes
+    
+    with object l_oDB_ListOfAllOtherAttributes
+        :Table("DEEC107A-75ED-4E63-A0CC-76ACFD950C34","Attribute")
+        :Column("Attribute.pk"                 ,"pk")                   //1
+        :Column("Attribute.TreeOrder1"         ,"tag1")                 //2
+        :Column("Attribute.Name"               ,"Attribute_Name")       //3
+        :Column("Attribute.Description"        ,"Attribute_Description")//4
+        :Column("Attribute.BoundLower"         ,"Attribute_BoundLower") //5
+        :Column("Attribute.BoundUpper"         ,"Attribute_BoundUpper") //6
+        :Column("DataType.Name"                ,"DataType_Name")        //7
+        :Column("ModelEnumeration.Name"        ,"ModelEnumeration_Name")//8
+        :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
+        :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
+        if !empty(par_Attribute_pk)
+            :Where("Attribute.fk_Attribute = ^", par_Attribute_pk)
+        endif
+        :OrderBy("pk")
+        :OrderBy("tag1")
+        :SQL("ListOfSubAttributes")
+    
+        :SQL(@l_aArray)
+        l_nNumberOfSubAtttributes := :Tally
+        if l_nNumberOfSubAtttributes > 0
+            l_aInfo := {}
+            ASize(l_aInfo,l_nNumberOfSubAtttributes)
+    
+            for l_nLoop = 1 to l_nNumberOfSubAtttributes
+                hb_HClear(l_hAttributeInfo)
+                l_hAttributeInfo["name"] := l_aArray[l_nLoop,3]
+                if !empty(l_aArray[l_nLoop,4])
+                    l_hAttributeInfo["description"] := l_aArray[l_nLoop,4]
+                endif
+                if !empty(l_aArray[l_nLoop,5])
+                    l_hAttributeInfo["lower"] := l_aArray[l_nLoop,5]
+                endif
+                if !empty(l_aArray[l_nLoop,6])
+                    l_hAttributeInfo["upper"] := l_aArray[l_nLoop,6]
+                endif
+                if !empty(l_aArray[l_nLoop,7])
+                    l_hAttributeInfo["type"] := l_aArray[l_nLoop,7]
+                elseif !empty(l_aArray[l_nLoop,8])
+                    l_hAttributeInfo["type"] := l_aArray[l_nLoop,8]
+                endif
+                l_xSubAttributes := BuildDataTypeInfo(l_aArray[l_nLoop,1])
+                if !hb_IsNil(l_xSubAttributes)
+                    l_hAttributeInfo["properties"] := l_xSubAttributes
+                endif
+    
+                l_aInfo[l_nLoop] := hb_hClone(l_hAttributeInfo)
+            endfor
+    
+        else
+            l_aInfo := NIL
+        endif
+    endwith
+    
+    return iif(hb_IsNil(l_aInfo),NIL,AClone(l_aInfo)) 
+    //=================================================================================================================
