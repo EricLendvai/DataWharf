@@ -30,7 +30,7 @@
 #define USEDON_PROJECT    11
 
 #define GRAPH_LIB_ML "mxgraph"
-#define GRAPH_LIB_DD "mxgraph"
+#define GRAPH_LIB_DD "visjs"
 
 #define CANVAS_WIDTH_MIN      300
 #define CANVAS_WIDTH_MAX      3000
