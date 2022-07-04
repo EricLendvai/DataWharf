@@ -13,6 +13,9 @@ local l_oDB_ListOfEdgesEntityEntity          := hb_SQLData(oFcgi:p_o_SQLConnecti
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
+local l_hNodePosition := {=>}
+local l_nMinX
+local l_nMinY
 local l_nLengthDecoded
 local l_lAutoLayout := .t.
 local l_hCoordinate
@@ -408,6 +411,29 @@ l_cHtml += [</nav>]
 
 l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 
+//migreate from x,y coordinates that may be negative
+if GRAPH_LIB_DD == "mxgraph"
+    AltD()
+    l_nMinX := 0
+    l_nMinY := 0
+    for each l_hNodePosition in l_hNodePositions
+        if left(l_hNodePosition["id"], 1) == "T"
+            if l_hNodePosition["x"] < l_nMinX
+                l_nMinX = l_hNodePosition["x"]
+            endif
+            if l_hNodePosition["y"] < l_nMinY
+                l_nMinY = l_hNodePosition["y"]
+            endif
+        endif
+    endfor
+    for each l_hNodePosition in l_hNodePositions
+        if left(l_hNodePosition["id"], 1) == "T"
+            l_hNodePosition["x"] += (-l_nMinX)
+            l_hNodePosition["y"] += (-l_nMinY)
+        endif
+    endfor
+endif
+
 l_cHtml += [<table><tr>]
 //-------------------------------------
 l_cHtml += [<td valign="top">]
@@ -783,7 +809,7 @@ l_cHtml += '];'
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 if GRAPH_LIB_ML = "mxgraph"
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal"); ]
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
     l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
