@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 07/04/2022 v 2.28
+* Unabled mxgraph for modeling visualization.
+* New APIs, see api.txt.
+* Now allowing "-" for user ids, since email address also allow "-".
+
 ## 06/15/2022 v 2.27
 * Partial fixes for preview option of mxgraph method to visualize, see DataWharf.ch.
 

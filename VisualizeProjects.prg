@@ -316,7 +316,7 @@ elseif GRAPH_LIB_ML == "visjs"
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_06_15/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_04/visualization.js"></script>]
 
 // oFcgi:p_cHeader += [<script type="text/javascript">]
 // oFcgi:p_cHeader += 'function htmlTitle(html) {'
