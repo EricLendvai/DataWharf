@@ -1,4 +1,4 @@
-function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout) {
+function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout, resetEdges) {
     var model = new mxGraphModel();
     var graph = new mxGraph(container, model);
     graph.setHtmlLabels(true);
@@ -141,6 +141,10 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
         layout.execute(graph.getDefaultParent());
         /*var layoutEdges = new mxParallelEdgeLayout(graph);
         layoutEdges.execute(graph.getDefaultParent());*/
+    }
+
+    if(resetEdges) {
+        new mxParallelEdgeLayout(graph).execute(graph.getDefaultParent());
     }
 
     var zoomIn = container.parentElement.appendChild(mxUtils.button(' Zoom In ', function(event)
