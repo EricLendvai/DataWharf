@@ -9,5 +9,6 @@ data p_APIs init ;
  "packages"               => @APIGetListOfPackages(),;
  "associations"           => @APIGetListOfAssociations(),;
  "datatypes"              => @APIGetListOfDataTypes(),;
+ "enumerations"           => @APIGetListOfEnumerations(),;
  "classes"                => @APIGetListOfEntities() }
  

@@ -94,14 +94,19 @@ function APIGetListOfEntities()
 
 local l_cResponse := ""
 local l_cEntityId  := GetAPIURIElement(2)
-local l_oDB_ListOfEntities              := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfEntitiesAndAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntities                      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndAttributes         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndLinkedEntitiesFrom := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntitiesAndLinkedEntitiesTo   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfEntities
-local l_aListOfEntities   := {}
-local l_hEntityInfo       := {=>}
-local l_aListOfAttributes := {}
-local l_hAttributesInfo   := {=>}
-local l_cModelId         := oFcgi:GetQueryString("model")
+local l_aListOfEntities           := {}
+local l_hEntityInfo               := {=>}
+local l_aListOfAttributes         := {}
+local l_hAttributesInfo           := {=>}
+local l_xSubDataAttributes
+local l_aListOfLinkedEntitiesFrom := {}
+local l_aListOfLinkedEntitiesTo   := {}
+local l_cModelId                  := oFcgi:GetQueryString("model")
 
 with object l_oDB_ListOfEntities
     :Table("9C052CE0-BD88-49B4-B5BD-A85C5A89B549","Entity")
@@ -136,22 +141,51 @@ endwith
 
 with object l_oDB_ListOfEntitiesAndAttributes
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Entity")
-    :Column("Attribute.pk"         ,"pk")
-    :Column("Entity.pk"            ,"Entity_pk")
-    :Column("Attribute.TreeOrder1" ,"tag1")
-    :Column("Attribute.Name"       ,"Attribute_Name")
-    :Column("Attribute.Description","Attribute_Description")
-    :Column("Attribute.BoundLower" ,"Attribute_BoundLower")
-    :Column("Attribute.BoundUpper" ,"Attribute_BoundUpper")
-    :Column("DataType.Name"        ,"DataType_Name")
+    :Column("Attribute.pk"                 ,"pk")
+    :Column("Entity.pk"                    ,"Entity_pk")
+    :Column("Attribute.TreeOrder1"         ,"tag1")
+    :Column("Attribute.Name"               ,"Attribute_Name")
+    :Column("Attribute.Description"        ,"Attribute_Description")
+    :Column("Attribute.BoundLower"         ,"Attribute_BoundLower")
+    :Column("Attribute.BoundUpper"         ,"Attribute_BoundUpper")
+    :Column("DataType.Name"                ,"DataType_Name")
+    :Column("ModelEnumeration.Name"        ,"ModelEnumeration_Name")
     :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
-    :Join("inner","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
+    :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
+    :Where("Attribute.fk_Attribute = 0")
     if !empty(l_cEntityId)
         :Where("Entity.LinkUID = ^", l_cEntityId)
     endif
     :OrderBy("Entity_pk")
     :OrderBy("tag1")
     :SQL("ListOfEntitiesAndAttributes")
+endwith
+
+with object l_oDB_ListOfEntitiesAndLinkedEntitiesFrom
+    :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
+    :Column("Entity.pk"                     ,"Entity_pk")
+    :Column("EntityFrom.LinkUID"            ,"LinkedEntityFrom_LinkUID")
+    :Join("left outer","LinkedEntity","LinkedEntityFrom","LinkedEntityFrom.fk_Entity2 = Entity.pk")
+    :Join("inner","Entity","EntityFrom","LinkedEntityFrom.fk_Entity1 = EntityFrom.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    endif
+    :OrderBy("Entity_pk")
+    :SQL("ListOfEntitiesAndLinkedEntitiesFrom")
+endwith
+
+with object l_oDB_ListOfEntitiesAndLinkedEntitiesTo
+    :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
+    :Column("Entity.pk"                     ,"Entity_pk")
+    :Column("EntityTo.LinkUID"        ,"LinkedEntityTo_LinkUID")
+    :Join("left outer","LinkedEntity","LinkedEntityTo","LinkedEntityTo.fk_Entity1 = Entity.pk")
+    :Join("inner","Entity","EntityTo","LinkedEntityTo.fk_Entity2 = EntityTo.pk")
+    if !empty(l_cEntityId)
+        :Where("Entity.LinkUID = ^", l_cEntityId)
+    endif
+    :OrderBy("Entity_pk")
+    :SQL("ListOfEntitiesAndLinkedEntitiesTo")
 endwith
 
 if l_nNumberOfEntities < 0
@@ -166,7 +200,11 @@ else
         scan all for ListOfEntitiesAndAttributes->Entity_pk == ListOfEntities->pk
             hb_HClear(l_hAttributesInfo)
             l_hAttributesInfo["name"] := ListOfEntitiesAndAttributes->Attribute_Name
-            l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->DataType_Name
+            if !empty(ListOfEntitiesAndAttributes->DataType_Name)
+                l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->DataType_Name
+            elseif !empty(ListOfEntitiesAndAttributes->ModelEnumeration_Name)
+                l_hAttributesInfo["type"] := ListOfEntitiesAndAttributes->ModelEnumeration_Name
+            endif
             if !empty(ListOfEntitiesAndAttributes->Attribute_Description)
                 l_hAttributesInfo["description"] := ListOfEntitiesAndAttributes->Attribute_Description
             endif
@@ -175,6 +213,10 @@ else
             endif
             if !empty(ListOfEntitiesAndAttributes->Attribute_BoundUpper)
                 l_hAttributesInfo["upper"] := ListOfEntitiesAndAttributes->Attribute_BoundUpper
+            endif
+            l_xSubDataAttributes := BuildAttributeInfo(ListOfEntitiesAndAttributes->pk)
+            if !hb_IsNil(l_xSubDataAttributes)
+                l_hAttributesInfo["properties"] := l_xSubDataAttributes
             endif
             AAdd(l_aListOfAttributes,hb_hClone(l_hAttributesInfo))
         endscan
@@ -193,7 +235,20 @@ else
         endif
         l_hEntityInfo["model"]  := ListOfEntities->Model_LinkUID
         l_hEntityInfo["properties"]  := l_aListOfAttributes
-        
+
+        l_aListOfLinkedEntitiesFrom := {}
+        select ListOfEntitiesAndLinkedEntitiesFrom
+        scan all for ListOfEntitiesAndLinkedEntitiesFrom->Entity_pk == ListOfEntities->pk
+            AAdd(l_aListOfLinkedEntitiesFrom, ListOfEntitiesAndLinkedEntitiesFrom->LinkedEntityFrom_LinkUID)
+        endscan
+        l_hEntityInfo["aspectFrom"]  := l_aListOfLinkedEntitiesFrom
+
+        l_aListOfLinkedEntitiesTo := {}
+        select ListOfEntitiesAndLinkedEntitiesTo
+        scan all for ListOfEntitiesAndLinkedEntitiesTo->Entity_pk == ListOfEntities->pk
+            AAdd(l_aListOfLinkedEntitiesTo, ListOfEntitiesAndLinkedEntitiesTo->LinkedEntityTo_LinkUID)
+        endscan
+        l_hEntityInfo["aspectsTo"]  := l_aListOfLinkedEntitiesTo
         //add attributes as inner array:
         /*
         {
@@ -239,8 +294,10 @@ function APIGetListOfModels()
 local l_cResponse := ""
 local l_cModelId  := GetAPIURIElement(2)
 local l_oDB_ListOfModels := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfLinkedModels := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfModels
 local l_aListOfModels := {}
+local l_aListOfLinkedModels := {}
 local l_hModelInfo    := {=>}
 
 with object l_oDB_ListOfModels
@@ -266,6 +323,18 @@ with object l_oDB_ListOfModels
     l_nNumberOfModels := :Tally
 endwith
 
+with object l_oDB_ListOfLinkedModels
+    :Table("9D52E5F1-CB6B-44D3-B871-E67ECAC4B5B3","Model")
+    :Column("Model.pk"                  ,"pk")
+    :Column("LinkedModelTo.LinkUID"     ,"LinkedModelTo_LinkUID")
+    :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
+    :Join("inner","Model","LinkedModelTo","LinkedModelTo.pk = LinkedModel.fk_Model2")
+    if !empty(l_cModelId)
+        :Where("Model.LinkUID = ^", l_cModelId)
+    endif
+    :SQL("ListOfLinkedModels")
+endwith
+
 if l_nNumberOfModels < 0
     l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL d498c464-b815-43eb-8649-5b609219fdba"})
     oFcgi:SetHeaderValue("Status","500 Internal Server Error")
@@ -279,9 +348,13 @@ else
         if !empty(ListOfModels->Model_Description)
             l_hModelInfo["description"] := ListOfModels->Model_Description
         endif
-
-        AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
-
+        l_aListOfLinkedModels = {}
+        select ListOfLinkedModels
+        scan all for ListOfLinkedModels->pk == ListOfModels->pk
+            AAdd(l_aListOfLinkedModels, ListOfLinkedModels->LinkedModelTo_LinkUID)   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
+        endscan
+        l_hModelInfo["linkedModels"] = l_aListOfLinkedModels
+        AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))
     endscan
     if !empty(l_cModelId)
         if l_nNumberOfModels == 0
@@ -517,7 +590,81 @@ endif
 
 return l_cResponse
 //=================================================================================================================
+//=================================================================================================================
+// Example: /api/enumerations/
+function APIGetListOfEnumerations()
 
+local l_cResponse := ""
+local l_cModelEnumerationId  := GetAPIURIElement(2)
+local l_oDB_ListOfTopModelEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nNumberOfModelEnumerations
+local l_aListOfModelEnumerations := {}
+local l_hModelEnumerationInfo    := {=>}
+local l_cModelId         := oFcgi:GetQueryString("model")
+
+with object l_oDB_ListOfTopModelEnumerations
+    :Table("D1DC2101-984B-4901-BBA7-C7E258B5A23A","ModelEnumeration")
+    :Column("ModelEnumeration.pk"         ,"pk")
+    :Column("ModelEnumeration.Name"       ,"ModelEnumeration_Name")
+    :Column("ModelEnumeration.LinkUID"    ,"ModelEnumeration_LinkUID")
+    :Column("ModelEnumeration.Description","ModelEnumeration_Description")
+    :Column("Model.LinkUID"       ,"Model_LinkUID")
+    //:Column("ModelEnumeration.Description","ModelEnumeration_Description")
+    :Join("inner","Model","","ModelEnumeration.fk_Model = Model.pk")
+    // :Column("Upper(ModelEnumeration.Name)","tag1")
+    if !empty(l_cModelEnumerationId)
+        :Where("ModelEnumeration.LinkUID = ^", l_cModelEnumerationId)
+    else
+        if !empty(l_cModelId)
+            :Where("Model.LinkUID = ^", l_cModelId)
+        endif
+    endif
+
+    //_M_ Add access right restrictions
+    // if oFcgi:p_nUserAccessMode <= 1
+    //     :Join("inner","UserAccessProject","","UserAccessProject.fk_Project = Project.pk")
+    //     :Where("UserAccessProject.fk_User = ^",oFcgi:p_iUserPk)
+    // endif
+
+    :SQL("ListOfTopModelEnumerations")
+    l_nNumberOfModelEnumerations := :Tally
+endwith
+
+if l_nNumberOfModelEnumerations < 0
+    l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89"})
+    oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+else
+    select ListOfTopModelEnumerations
+    scan all
+        hb_HClear(l_hModelEnumerationInfo)
+        l_hModelEnumerationInfo["id"]  := ListOfTopModelEnumerations->ModelEnumeration_LinkUID
+        l_hModelEnumerationInfo["name"] := ListOfTopModelEnumerations->ModelEnumeration_Name
+        if !empty(ListOfTopModelEnumerations->ModelEnumeration_Description)
+            l_hModelEnumerationInfo["description"] := ListOfTopModelEnumerations->ModelEnumeration_Description
+        endif
+        l_hModelEnumerationInfo["model"] := ListOfTopModelEnumerations->Model_LinkUID
+        AAdd(l_aListOfModelEnumerations,hb_hClone(l_hModelEnumerationInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
+
+    endscan
+    if !empty(l_cModelEnumerationId)
+        if l_nNumberOfModelEnumerations == 0
+            oFcgi:SetHeaderValue("Status","404 Not found")
+        elseif l_nNumberOfModelEnumerations == 1
+            l_cResponse := hb_jsonEncode(l_aListOfModelEnumerations[1])
+        else
+            oFcgi:SetHeaderValue("Status","500 Internal Server Error")
+            l_cResponse += hb_jsonEncode({"Error"=>"Id is not unique"})
+        endif
+    else
+        l_cResponse := hb_jsonEncode({;
+                "@recordsetCount" => l_nNumberOfModelEnumerations,;
+                "items" => l_aListOfModelEnumerations;
+            })
+    endif
+endif
+
+return l_cResponse
+//=================================================================================================================
 //=================================================================================================================
 // Example: /api/datatypes/
 function APIGetListOfDataTypes()
@@ -658,3 +805,71 @@ endwith
 
 return iif(hb_IsNil(l_aInfo),NIL,AClone(l_aInfo)) 
 //=================================================================================================================
+
+//=================================================================================================================
+static function BuildAttributeInfo(par_Attribute_pk)
+    local l_aInfo
+    local l_oDB_ListOfAllOtherAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
+    local l_aArray := {}
+    local l_hAttributeInfo := {=>}
+    local l_nLoop
+    local l_xSubAttributes
+    local l_nNumberOfSubAttributes
+    
+    with object l_oDB_ListOfAllOtherAttributes
+        :Table("DEEC107A-75ED-4E63-A0CC-76ACFD950C34","Attribute")
+        :Column("Attribute.pk"                 ,"pk")                   //1
+        :Column("Attribute.TreeOrder1"         ,"tag1")                 //2
+        :Column("Attribute.Name"               ,"Attribute_Name")       //3
+        :Column("Attribute.Description"        ,"Attribute_Description")//4
+        :Column("Attribute.BoundLower"         ,"Attribute_BoundLower") //5
+        :Column("Attribute.BoundUpper"         ,"Attribute_BoundUpper") //6
+        :Column("DataType.Name"                ,"DataType_Name")        //7
+        :Column("ModelEnumeration.Name"        ,"ModelEnumeration_Name")//8
+        :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
+        :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
+        if !empty(par_Attribute_pk)
+            :Where("Attribute.fk_Attribute = ^", par_Attribute_pk)
+        endif
+        :OrderBy("pk")
+        :OrderBy("tag1")
+        :SQL("ListOfSubAttributes")
+    
+        :SQL(@l_aArray)
+        l_nNumberOfSubAtttributes := :Tally
+        if l_nNumberOfSubAtttributes > 0
+            l_aInfo := {}
+            ASize(l_aInfo,l_nNumberOfSubAtttributes)
+    
+            for l_nLoop = 1 to l_nNumberOfSubAtttributes
+                hb_HClear(l_hAttributeInfo)
+                l_hAttributeInfo["name"] := l_aArray[l_nLoop,3]
+                if !empty(l_aArray[l_nLoop,4])
+                    l_hAttributeInfo["description"] := l_aArray[l_nLoop,4]
+                endif
+                if !empty(l_aArray[l_nLoop,5])
+                    l_hAttributeInfo["lower"] := l_aArray[l_nLoop,5]
+                endif
+                if !empty(l_aArray[l_nLoop,6])
+                    l_hAttributeInfo["upper"] := l_aArray[l_nLoop,6]
+                endif
+                if !empty(l_aArray[l_nLoop,7])
+                    l_hAttributeInfo["type"] := l_aArray[l_nLoop,7]
+                elseif !empty(l_aArray[l_nLoop,8])
+                    l_hAttributeInfo["type"] := l_aArray[l_nLoop,8]
+                endif
+                l_xSubAttributes := BuildDataTypeInfo(l_aArray[l_nLoop,1])
+                if !hb_IsNil(l_xSubAttributes)
+                    l_hAttributeInfo["properties"] := l_xSubAttributes
+                endif
+    
+                l_aInfo[l_nLoop] := hb_hClone(l_hAttributeInfo)
+            endfor
+    
+        else
+            l_aInfo := NIL
+        endif
+    endwith
+    
+    return iif(hb_IsNil(l_aInfo),NIL,AClone(l_aInfo)) 
+    //=================================================================================================================
