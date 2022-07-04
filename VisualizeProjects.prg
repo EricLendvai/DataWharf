@@ -309,10 +309,10 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-if GRAPH_LIB == "mxgraph"
+if GRAPH_LIB_ML == "mxgraph"
     oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_18_0_1/css/common.css">]
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_18_0_1/mxClient.js"></script>]
-elseif GRAPH_LIB == "visjs"
+elseif GRAPH_LIB_ML == "visjs"
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
@@ -347,9 +347,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
 
-            if GRAPH_LIB == "mxgraph"
+            if GRAPH_LIB_ML == "mxgraph"
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-            elseif GRAPH_LIB == "visjs"
+            elseif GRAPH_LIB_ML == "visjs"
                 l_cHtml += [network.storePositions();]
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
             endif
@@ -541,9 +541,9 @@ scan all
         endif
     endif
 
-    if GRAPH_LIB == "mxgraph"
+    if GRAPH_LIB_ML == "mxgraph"
         l_cHtml += [,shape: "rhombus"]
-    elseif GRAPH_LIB == "visjs"
+    elseif GRAPH_LIB_ML == "visjs"
         l_cHtml += [,shape: "diamond"]
     endif
     l_cHtml += [,color:{background:'#]+MODELING_ASSOCIATION_NODE_BACKGROUND+[',highlight:{background:'#]+MODELING_ASSOCIATION_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
@@ -782,7 +782,7 @@ l_cHtml += '];'
 // create a network
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
-if GRAPH_LIB = "mxgraph"
+if GRAPH_LIB_ML = "mxgraph"
     l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal"); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
@@ -801,7 +801,7 @@ if GRAPH_LIB = "mxgraph"
     l_cHtml += '         }'
     l_cHtml += '     }'
     l_cHtml += '     evt.consume();'
-elseif GRAPH_LIB == "visjs"
+elseif GRAPH_LIB_ML == "visjs"
     l_cHtml += [  var data = {]
     l_cHtml += [    nodes: new vis.DataSet(nodes),]
     l_cHtml += [    edges: new vis.DataSet(edges),]
@@ -844,9 +844,9 @@ l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");});
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetMLInfo","modelingdiagrampk='+Trans(l_iModelingDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
-if GRAPH_LIB = "mxgraph"
+if GRAPH_LIB_ML = "mxgraph"
     //TODO add code to switch "save" button to yellow on diagram change
-elseif GRAPH_LIB == "visjs"
+elseif GRAPH_LIB_ML == "visjs"
     l_cHtml += ' network.on("dragStart", function (params) {'
     l_cHtml += '   params.event = "[original event]";'
     // l_cHtml += '   debugger;'
@@ -2196,9 +2196,9 @@ if len(l_aNodes) == 1
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelML >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedEntities" class="btn btn-primary rounded" onclick="]
-                        if GRAPH_LIB == "mxgraph"
+                        if GRAPH_LIB_ML == "mxgraph"
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-                        elseif GRAPH_LIB == "visjs"
+                        elseif GRAPH_LIB_ML == "visjs"
                             l_cHtml += [network.storePositions();]
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                         endif
@@ -2260,9 +2260,9 @@ if len(l_aNodes) == 1
             l_cHtml += [<div id="DetailType4"]+iif(l_nActiveTabNumber <> 4,[ style="display: none;"],[])+[ class="m-3">]
                 //---------------------------------------------------------------------------
                 l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteEntity" class="btn btn-primary rounded" onclick="]
-                if GRAPH_LIB == "mxgraph"
+                if GRAPH_LIB_ML == "mxgraph"
                     l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-                elseif GRAPH_LIB == "visjs"
+                elseif GRAPH_LIB_ML == "visjs"
                     l_cHtml += [network.storePositions();]
                     l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                 endif

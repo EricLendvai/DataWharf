@@ -18,7 +18,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
         return cell.tooltip;
     };
 
-    graph.getSelectionModel().setSingleSelection(true);
+    graph.getSelectionModel().setSingleSelection(false);
 
     var parent = graph.getDefaultParent();
 
