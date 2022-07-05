@@ -117,6 +117,7 @@ local l_oDB2
 local l_cSecuritySalt
 local l_cSecurityDefaultPassword
 local l_iCurrentDataVersion
+local l_cVisPos
 
 SendToDebugView("Called from method OnFirstRequest")
 
@@ -333,6 +334,35 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion <= 14
+            with object l_oDB1
+                :Table("bb6ceea9-72f0-471f-b555-0affd9359cb3","Diagram")
+                :Column("Diagram.pk"     , "pk")
+                :Column("Diagram.VisPos" , "Diagram_VisPos")
+                :Where([Diagram.VisPos is not null])
+                :Where([Diagram.VisPos not like '%T%'])
+                :SQL("ListOfDiagramToUpdate")
+                select ListOfDiagramToUpdate
+                scan all
+                    l_cVisPos := Strtran(ListOfDiagramToUpdate->Diagram_VisPos,[{"x],chr(1))
+                    l_cVisPos := Strtran(l_cVisPos,[,"y],chr(2))
+                    l_cVisPos := Strtran(l_cVisPos,[{"],[{"T])
+                    l_cVisPos := Strtran(l_cVisPos,[,"],[,"T])
+                    l_cVisPos := Strtran(l_cVisPos,chr(1),[{"x])
+                    l_cVisPos := Strtran(l_cVisPos,chr(2),[,"y])
+
+                    with object l_oDB2
+                        :Table("ed4bed4f-30d0-4dd7-9639-4314e80c0cd5","Diagram")
+                        :Field("Diagram.VisPos" , l_cVisPos)
+                        :Update(ListOfDiagramToUpdate->pk)
+                    endwith
+                endscan
+            endwith
+
+            l_iCurrentDataVersion := 14
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
