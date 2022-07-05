@@ -11,8 +11,8 @@ local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_hNodePosition := {=>}
-local l_nMinX
-local l_nMinY
+local l_nMinX := 0
+local l_nMinY := 0
 local l_nLengthDecoded
 local l_lAutoLayout := .t.
 local l_hCoordinate
@@ -47,6 +47,8 @@ local l_cMultiEdgeKeyPrevious
 local l_cMultiEdgeKey
 local l_nMultiEdgeTotalCount
 local l_nMultiEdgeCount
+
+local l_cHashKey
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
 
@@ -169,7 +171,7 @@ elseif GRAPH_LIB_DD == "visjs"
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_04/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_05/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -273,31 +275,34 @@ l_cHtml += [</nav>]
 
 
 l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
-
-//migreate from x,y coordinates that may be negative
-if GRAPH_LIB_DD == "mxgraph"
-    AltD()
-    l_nMinX := 0
-    l_nMinY := 0
-    for each l_hNodePosition in l_hNodePositions
-        if left(l_hNodePosition["id"], 1) == "T"
-            if l_hNodePosition["x"] < l_nMinX
-                l_nMinX = l_hNodePosition["x"]
+if l_nLengthDecoded > 0
+    //migrate from x,y coordinates that may be negative
+    if GRAPH_LIB_DD == "mxgraph"
+        for each l_hNodePosition in l_hNodePositions
+            l_cHashKey := l_hNodePosition:__enumkey
+            if left(l_cHashKey, 1) == "T"
+                if l_hNodePosition["x"] < l_nMinX
+                    l_nMinX = l_hNodePosition["x"]
+                endif
+                if l_hNodePosition["y"] < l_nMinY
+                    l_nMinY = l_hNodePosition["y"]
+                endif
             endif
-            if l_hNodePosition["y"] < l_nMinY
-                l_nMinY = l_hNodePosition["y"]
+        endfor
+        for each l_hNodePosition in l_hNodePositions
+            l_cHashKey := l_hNodePosition:__enumkey
+            if left(l_cHashKey, 1) == "T"
+                l_hNodePosition["x"] += (-l_nMinX)
+                l_hNodePosition["y"] += (-l_nMinY)
             endif
-        endif
-    endfor
-    for each l_hNodePosition in l_hNodePositions
-        if left(l_hNodePosition["id"], 1) == "T"
-            l_hNodePosition["x"] += (-l_nMinX)
-            l_hNodePosition["y"] += (-l_nMinY)
-        endif
-    endfor
+        endfor
+    endif
 endif
 
 l_cHtml += [<table><tr>]
+l_cHtml += [<div id="buttons"</div>]
+l_cHtml += [</tr>]
+l_cHtml += [<tr>]
 //-------------------------------------
 l_cHtml += [<td valign="top">]
 l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
@@ -546,7 +551,8 @@ l_cHtml += '];'
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 if GRAPH_LIB_DD == "mxgraph"
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "direct", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
+//    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "direct", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
     l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
@@ -608,7 +614,14 @@ l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk
 l_cHtml += '      });'
 
 if GRAPH_LIB_DD == "mxgraph"
-    //TODO add code to switch "save" button to yellow on diagram change
+    l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
+    l_cHtml += '    var changes = evt.getProperty("edit").changes;'
+    l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
+    l_cHtml += '        if(changes[i].constructor.name ==  "mxGeometryChange") {'
+    l_cHtml += '           $("#ButtonSaveLayout").addClass("btn-warning").removeClass("btn-primary");'
+    l_cHtml += '        }'
+    l_cHtml += '    }'
+    l_cHtml += ' });'
 elseif GRAPH_LIB_DD == "visjs"
     l_cHtml += ' network.on("dragStart", function (params) {'
     l_cHtml += '   params.event = "[original event]";'

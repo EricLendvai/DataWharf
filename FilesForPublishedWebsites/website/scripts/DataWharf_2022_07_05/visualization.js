@@ -9,10 +9,27 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
     graph.autoScroll = true;
     graph.allowNegativeCoordinates = false;
 
+    var undoManager = new mxUndoManager();
+    var listener = function(sender, evt)
+    {
+        var changes = evt.getProperty("edit").changes;
+        var recordChange = false;
+        for (var i = 0; i < changes.length; i++) {
+            if(changes[i].constructor.name ==  "mxGeometryChange") {
+                recordChange = true;
+            }
+        }
+        if(recordChange) {
+            undoManager.undoableEditHappened(evt.getProperty('edit'));
+        }        
+    };
+    graph.getModel().addListener(mxEvent.UNDO, listener);
+    graph.getView().addListener(mxEvent.UNDO, listener);
+
     new mxRubberband(graph);
 
     graph.isCellEditable = function(cell) {
-        return cell.id.startsWith("D") || cell.id.startsWith("L");
+        return cell.id.startsWith("D") || cell.id.startsWith("L") || cell.id.startsWith("C");
     };
     graph.getTooltipForCell = function(cell) {
         return cell.tooltip;
@@ -124,6 +141,8 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
     {
         // Updates the display
         model.endUpdate();
+        //reset undoable evets
+        undoManager.clear();
     }
 
     if(rerouteEdgesOnVertexMove) {
@@ -147,28 +166,46 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
         new mxParallelEdgeLayout(graph).execute(graph.getDefaultParent());
     }
 
-    var zoomIn = container.parentElement.appendChild(mxUtils.button(' Zoom In ', function(event)
+    var undo = document.getElementById("buttons").appendChild(mxUtils.button(' Undo ', function(event)
+    {
+        event.preventDefault();
+        if(undoManager.canUndo()) {
+           undoManager.undo();
+        }
+    }));
+    $(undo).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
+
+    var redo = document.getElementById("buttons").appendChild(mxUtils.button(' Redo ', function(event)
+    {
+        event.preventDefault();
+        if(undoManager.canRedo()) {
+           undoManager.redo();
+        }
+    }));
+    $(redo).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
+
+    var zoomIn = document.getElementById("buttons").appendChild(mxUtils.button(' Zoom In ', function(event)
     {
         event.preventDefault();
         graph.zoomIn();
     }));
     $(zoomIn).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-in'></i>");
 
-    var fit = container.parentElement.appendChild(mxUtils.button(' Fit ', function(event)
+    var fit = document.getElementById("buttons").appendChild(mxUtils.button(' Fit ', function(event)
     {
         event.preventDefault();
         graph.fit();
     }));
     $(fit).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrows-fullscreen'></i>");
     
-    var zoomOut = container.parentElement.appendChild(mxUtils.button(' Zoom Out ', function(event)
+    var zoomOut = document.getElementById("buttons").appendChild(mxUtils.button(' Zoom Out ', function(event)
     {
         event.preventDefault();
         graph.zoomOut();
     }));
     $(zoomOut).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-out'></i>");
 
-    var reroute = container.parentElement.appendChild(mxUtils.button(' Reroute Edges ', function(event)
+    var reroute = document.getElementById("buttons").appendChild(mxUtils.button(' Reroute Edges ', function(event)
     {
         event.preventDefault();
         var cells = graph.getSelectionCells();
@@ -178,19 +215,21 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
                 rerouteEdges(graph, cell);
             });
         }
-        else {
+        /*else {
             for(var cellProp in graph.model.cells) {
                 var cell = graph.model.cells[cellProp];
-                if(cell.id.startsWith("L") || cell.id.startsWith("D")) 
+                if(cell.id.startsWith("L") || cell.id.startsWith("D") || cell.id.startsWith("T")) 
                 {
                     graph.resetEdge(cell);
                 }
                 new mxParallelEdgeLayout(graph).execute(graph.getDefaultParent());
             }
-        }
+        }*/
         
     }));
     $(reroute).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-bezier2'></i>");
+
+    
 
 
 	return graph;
@@ -233,7 +272,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
 
 function rerouteEdges(graph, cell) {
     var layout = new mxParallelEdgeLayout(graph);
-    if (cell.id.startsWith("L") || cell.id.startsWith("D" || cell.id.startsWith("C"))) {
+    if (cell.id.startsWith("L") || cell.id.startsWith("D") || cell.id.startsWith("C")) {
         graph.resetEdge(cell);
         layout.isEdgeIgnored = function (edge2) {
             return !(cell == edge2);
@@ -270,6 +309,16 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
     try {
         if(cellsAdded) {
             cellsAdded.forEach(element => {
+                if(element.highlight && element.edge) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeWidth', 2);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'fontStyle', 1);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight);
+                    if(element.children) {
+                        element.children.forEach(child => {
+                            mxUtils.setCellStyles(graph.getModel(), [child], 'fontStyle', 1);
+                        });
+                    }
+                }
                 if(element.highlight && element.highlight.background) {
                     mxUtils.setCellStyles(graph.getModel(), [element], 'fillColor', element.highlight.background);
                 }
@@ -286,6 +335,16 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
         }
         if(cellsRemoved) {
             cellsRemoved.forEach(element => {
+                if(element.highlight && element.edge) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeWidth', 1);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'fontStyle', 0);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.color);
+                    if(element.children) {
+                        element.children.forEach(child => {
+                            mxUtils.setCellStyles(graph.getModel(), [child], 'fontStyle', 0);
+                        });
+                    }
+                }
                 if(element.color && element.color.background) {
                     mxUtils.setCellStyles(graph.getModel(), [element], 'fillColor', element.color.background);
                 }

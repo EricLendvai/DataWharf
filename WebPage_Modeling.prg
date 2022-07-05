@@ -52,7 +52,7 @@ oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
 //oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_06_15/datawharf.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_05/datawharf.js"></script>]
 
 // Variables
 // l_cURLAction
