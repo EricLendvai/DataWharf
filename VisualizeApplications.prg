@@ -22,6 +22,7 @@ local l_lShowNameSpace
 local l_cNameSpace_Name
 local l_oDataDiagram
 local l_nNodeDisplayMode
+local l_nRenderMode
 local l_lNodeShowDescription
 local l_nNodeMinHeight
 local l_nNodeMaxWidth
@@ -89,14 +90,22 @@ with object l_oDB1
     endif
 
     :Table("f8632e51-09a7-4ee7-bc76-517c490f505a","Diagram")
+    :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
     :Column("Diagram.VisPos"             ,"Diagram_VisPos")
+    :Column("Diagram.MxgPos"             ,"Diagram_MxgPos")
     :Column("Diagram.NodeDisplayMode"    ,"Diagram_NodeDisplayMode")
     :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
     :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
     :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
     :Column("Diagram.LinkUID"            ,"Diagram_LinkUID")
     l_oDataDiagram := :Get(l_iDiagramPk)
-    l_cNodePositions       := l_oDataDiagram:Diagram_VisPos
+
+    l_nRenderMode          := max(1,l_oDataDiagram:Diagram_RenderMode)
+    if l_nRenderMode == 2
+        l_cNodePositions := l_oDataDiagram:Diagram_MxgPos
+    else
+        l_cNodePositions := l_oDataDiagram:Diagram_VisPos
+    endif
     l_nNodeDisplayMode     := max(1,l_oDataDiagram:Diagram_NodeDisplayMode)
     l_lNodeShowDescription := l_oDataDiagram:Diagram_NodeShowDescription
     l_nNodeMinHeight       := l_oDataDiagram:Diagram_NodeMinHeight
@@ -164,10 +173,12 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
     l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
 endif
 
-if GRAPH_LIB_DD == "mxgraph"
+// if GRAPH_LIB_DD == "mxgraph"
+if l_nRenderMode == 2
     oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_18_0_1/css/common.css">]
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_18_0_1/mxClient.js"></script>]
-elseif GRAPH_LIB_DD == "visjs"
+//elseif GRAPH_LIB_DD == "visjs"
+else
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
@@ -202,9 +213,11 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [  cache: false ]
             // l_cHtml += [});]
 
-            if GRAPH_LIB_DD == "mxgraph"
+            // if GRAPH_LIB_DD == "mxgraph"
+            if l_nRenderMode == 2
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-            elseif GRAPH_LIB_DD == "visjs"
+            // elseif GRAPH_LIB_DD == "visjs"
+            else
                 l_cHtml += [network.storePositions();]
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
             endif
@@ -277,7 +290,8 @@ l_cHtml += [</nav>]
 l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 if l_nLengthDecoded > 0
     //migrate from x,y coordinates that may be negative
-    if GRAPH_LIB_DD == "mxgraph"
+    // if GRAPH_LIB_DD == "mxgraph"
+    if l_nRenderMode == 2
         for each l_hNodePosition in l_hNodePositions
             l_cHashKey := l_hNodePosition:__enumkey
             if left(l_cHashKey, 1) == "T"
@@ -550,7 +564,8 @@ l_cHtml += '];'
 // create a network
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
-if GRAPH_LIB_DD == "mxgraph"
+// if GRAPH_LIB_DD == "mxgraph"
+if l_nRenderMode == 2
 //    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "direct", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
     l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
@@ -570,7 +585,8 @@ if GRAPH_LIB_DD == "mxgraph"
     l_cHtml += '         }'
     l_cHtml += '     }'
     l_cHtml += '     evt.consume();'
-elseif GRAPH_LIB_DD == "visjs"
+// elseif GRAPH_LIB_DD == "visjs"
+else
     l_cHtml += [  var data = {]
     l_cHtml += [    nodes: new vis.DataSet(nodes),]
     l_cHtml += [    edges: new vis.DataSet(edges),]
@@ -613,7 +629,8 @@ l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
-if GRAPH_LIB_DD == "mxgraph"
+// if GRAPH_LIB_DD == "mxgraph"
+if l_nRenderMode == 2
     l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '    var changes = evt.getProperty("edit").changes;'
     l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
@@ -622,7 +639,8 @@ if GRAPH_LIB_DD == "mxgraph"
     l_cHtml += '        }'
     l_cHtml += '    }'
     l_cHtml += ' });'
-elseif GRAPH_LIB_DD == "visjs"
+// elseif GRAPH_LIB_DD == "visjs"
+else
     l_cHtml += ' network.on("dragStart", function (params) {'
     l_cHtml += '   params.event = "[original event]";'
     // l_cHtml += '   debugger;'
@@ -646,31 +664,34 @@ function DataDictionaryVisualizeDiagramOnSubmit(par_iApplicationPk,par_cErrorTex
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+local l_oDB_Diagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cNodePositions
 local l_oDB1
 local l_oDB2
 local l_oDB3
-local l_iDiagram_pk
+local l_iDiagramPk
 local l_cListOfRelatedTablePks
 local l_aListOfRelatedTablePks
 local l_nNumberOfCurrentTablesInDiagram
 local l_lSelected
 local l_cTablePk
 local l_iTablePk
+local l_oDataDiagram
+local l_nRenderMode
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramOnSubmit")
 
-l_iDiagram_pk := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_iDiagramPk := Val(oFcgi:GetInputValue("TextDiagramPk"))
 
 do case
 case l_cActionOnSubmit == "Show"
-    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelDD >= 4
-    l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case l_cActionOnSubmit == "MyDiagramSettings"
-    l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelDD >= 4
     l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
@@ -679,21 +700,37 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+    if empty(l_iDiagramPk)
+        l_nRenderMode := 2
+    else
+        with object l_oDB_Diagram
+            :Table("edbccb15-007b-4de6-8281-5cfaf5f452cf","Diagram")
+            :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
+            l_oDataDiagram := :Get(l_iDiagramPk)
+            l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+        endwith
+    endif
+
     with object l_oDB1
         :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
-        :Field("Diagram.VisPos",l_cNodePositions)
-        if empty(l_iDiagram_pk)
+        if l_nRenderMode == 2
+            :Field("Diagram.MxgPos",l_cNodePositions)
+        else
+            :Field("Diagram.VisPos",l_cNodePositions)
+        endif
+        if empty(l_iDiagramPk)
             //Add an initial Diagram File this should not happen, since record was already added
             :Field("Diagram.fk_Application",par_iApplicationPk)
             :Field("Diagram.Name"          ,"All Tables")
             :Field("Diagram.UseStatus"     ,1)
             :Field("Diagram.DocStatus"     ,1)
+            :Field("Diagram.RenderMode"    ,2)
             :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
-                l_iDiagram_pk := :Key()
+                l_iDiagramPk := :Key()
             endif
         else
-            :Update(l_iDiagram_pk)
+            :Update(l_iDiagramPk)
         endif
     endwith
 
@@ -710,7 +747,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                 :Column("DiagramTable.pk","DiagramTable_pk")
                 :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
                 :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
                 :SQL("ListOfCurrentTablesInDiagram")
                 l_nNumberOfCurrentTablesInDiagram := :Tally
                 if l_nNumberOfCurrentTablesInDiagram > 0
@@ -731,7 +768,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                     with object l_oDB2
                         :Table("24d7118f-c867-4f8e-ab1c-e1404766081b","Diagram")
                         :Column("Table.pk" , "Table_pk")
-                        :Where("Diagram.pk = ^" , l_iDiagram_pk)
+                        :Where("Diagram.pk = ^" , l_iDiagramPk)
                         :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
                         :Join("Inner","Table","","Table.fk_NameSpace = NameSpace.pk")
                         :SQL("ListOfAllApplicationTable")
@@ -747,7 +784,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                                 if l_lSelected
                                     with object l_oDB3
                                         :Table("adee80f0-932a-40c2-92bd-91c4daad0ce7","DiagramTable")
-                                        :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                        :Field("DiagramTable.fk_Diagram" , l_iDiagramPk)
                                         :Field("DiagramTable.fk_Table"   , ListOfAllApplicationTable->Table_pk)
                                         :Add()
                                     endwith
@@ -767,7 +804,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                                 //Add if not present
                                 with object l_oDB3
                                     :Table("d653adf7-19bf-4c6a-b2d5-8c9043ce7061","DiagramTable")
-                                    :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                    :Field("DiagramTable.fk_Diagram" , l_iDiagramPk)
                                     :Field("DiagramTable.fk_Table"   , val(l_cTablePk))
                                     :Add()
                                 endwith
@@ -798,7 +835,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                 :Column("DiagramTable.pk","DiagramTable_pk")
                 :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
                 :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+                :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
                 :SQL("ListOfCurrentTablesInDiagram")
                 l_nNumberOfCurrentTablesInDiagram := :Tally
                 if l_nNumberOfCurrentTablesInDiagram > 0
@@ -819,7 +856,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                     with object l_oDB2
                         :Table("e9e09007-67ad-4029-8187-050396590662","Diagram")
                         :Column("Table.pk" , "Table_pk")
-                        :Where("Diagram.pk = ^" , l_iDiagram_pk)
+                        :Where("Diagram.pk = ^" , l_iDiagramPk)
                         :Join("Inner","NameSpace","","NameSpace.fk_Application = Diagram.fk_Application")
                         :Join("Inner","Table","","Table.fk_NameSpace = NameSpace.pk")
                         :SQL("ListOfAllApplicationTable")
@@ -829,7 +866,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                                 if ListOfAllApplicationTable->Table_pk <> l_iTablePk
                                     with object l_oDB3
                                         :Table("4b80fd71-4d3f-4ae1-84bc-509391db42b7","DiagramTable")
-                                        :Field("DiagramTable.fk_Diagram" , l_iDiagram_pk)
+                                        :Field("DiagramTable.fk_Diagram" , l_iDiagramPk)
                                         :Field("DiagramTable.fk_Table"   , ListOfAllApplicationTable->Table_pk)
                                         :Add()
                                     endwith
@@ -851,7 +888,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
         endif
     endif
 
-    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase
 
@@ -866,7 +903,8 @@ local l_hValues      := hb_DefaultValue(par_hValues,{=>})
 local l_CheckBoxId
 local l_lShowNameSpace
 local l_cNameSpace_Name
-local l_iNodeDisplayMode
+local l_nNodeDisplayMode
+local l_nRenderMode
 local l_lNodeShowDescription
 local l_nNodeMinHeight
 local l_nNodeMaxWidth
@@ -886,6 +924,8 @@ if pcount() < 6
             :Table("cadc1049-56e3-4efa-bb61-dd9396e2c6fe","Diagram")
             :Column("Diagram.name"               ,"Diagram_name")
             :Column("Diagram.NodeDisplayMode"    ,"Diagram_NodeDisplayMode")
+            :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
+            :Column("Diagram.VisPos"             ,"Diagram_VisPos")
             :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
             :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
             :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
@@ -893,6 +933,7 @@ if pcount() < 6
             if :Tally == 1
                 l_hValues["Name"]                := l_oData:Diagram_name
                 l_hValues["NodeDisplayMode"]     := l_oData:Diagram_NodeDisplayMode
+                l_hValues["RenderMode"]          := l_oData:Diagram_RenderMode
                 l_hValues["NodeShowDescription"] := l_oData:Diagram_NodeShowDescription
                 l_hValues["NodeMinHeight"]       := l_oData:Diagram_NodeMinHeight
                 l_hValues["NodeMaxWidth"]        := l_oData:Diagram_NodeMaxWidth
@@ -947,14 +988,25 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
-        l_iNodeDisplayMode := hb_HGetDef(l_hValues,"NodeDisplayMode",1)
+        l_nNodeDisplayMode := hb_HGetDef(l_hValues,"NodeDisplayMode",1)
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Display</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNodeDisplayMode" id="ComboNodeDisplayMode">]
-                    l_cHtml += [<option value="1"]+iif(l_iNodeDisplayMode==1,[ selected],[])+[>Table Name and Alias</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iNodeDisplayMode==2,[ selected],[])+[>Table Alias or Name</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iNodeDisplayMode==3,[ selected],[])+[>Table Name</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nNodeDisplayMode==1,[ selected],[])+[>Table Name and Alias</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nNodeDisplayMode==2,[ selected],[])+[>Table Alias or Name</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nNodeDisplayMode==3,[ selected],[])+[>Table Name</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_nRenderMode := hb_HGetDef(l_hValues,"RenderMode",2)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Render Mode</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRenderMode" id="ComboRenderMode">]
+                    l_cHtml += [<option value="1"]+iif(l_nRenderMode==1,[ selected],[])+[>Straight Connectors (visjs)</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nRenderMode==2,[ selected],[])+[>Custom Connectors (mxgraph)</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1085,9 +1137,10 @@ local l_cNodePositions
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_iDiagram_pk
+local l_iDiagramPk
 local l_cDiagram_Name
 local l_nDiagram_NodeDisplayMode
+local l_nDiagram_RenderMode
 local l_lDiagram_NodeShowDescription
 local l_lDiagram_NodeMinHeight
 local l_lDiagram_NodeMaxWidth
@@ -1095,12 +1148,18 @@ local l_cErrorMessage
 local l_lSelected
 local l_cValue
 local l_hValues := {=>}
+local l_oDataDiagram
+local l_nRenderMode
+local l_nRenderMode_OnFile
+local l_cVisPos_OnFile
+local l_cMxgPos_OnFile
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramSettingsOnSubmit")
 
-l_iDiagram_pk                  := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_iDiagramPk                   := Val(oFcgi:GetInputValue("TextDiagramPk"))
 l_cDiagram_Name                := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_nDiagram_NodeDisplayMode     := val(oFcgi:GetInputValue("ComboNodeDisplayMode"))
+l_nDiagram_RenderMode          := val(oFcgi:GetInputValue("ComboRenderMode"))
 l_lDiagram_NodeShowDescription := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
 l_lDiagram_NodeMinHeight       := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMinHeight")))))
 l_lDiagram_NodeMaxWidth        := min(9999,max(0,Val(SanitizeInput(oFcgi:GetInputValue("TextNodeMaxWidth")))))
@@ -1124,8 +1183,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Table("bcc7cf4c-4fb4-41a3-a8d8-88c8c9f3d797","Diagram")
             :Where([lower(replace(Diagram.Name,' ','')) = ^],lower(StrTran(l_cDiagram_Name," ","")))
             :Where([Diagram.fk_Application = ^],par_iApplicationPk)
-            if l_iDiagram_pk > 0
-                :Where([Diagram.pk != ^],l_iDiagram_pk)
+            if l_iDiagramPk > 0
+                :Where([Diagram.pk != ^],l_iDiagramPk)
             endif
             :SQL()
         endwith
@@ -1136,25 +1195,47 @@ case l_cActionOnSubmit == "SaveDiagram"
 
     if empty(l_cErrorMessage)
         with object l_oDB1
+            // Find preview value of RenderMode to determine if should Initialize MxgPos to VisPos
+            if !empty(l_iDiagramPk)
+                :Table("393c9962-a6ca-486a-bd7c-f8409d069cfd","Diagram")
+                :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
+                :Column("Diagram.VisPos"             ,"Diagram_VisPos")
+                :Column("Diagram.MxgPos"             ,"Diagram_MxgPos")
+                l_oDataDiagram := :Get(l_iDiagramPk)
+                if :Tally == 1
+                    l_nRenderMode_OnFile := l_oDataDiagram:Diagram_RenderMode
+                    l_cVisPos_OnFile     := l_oDataDiagram:Diagram_VisPos
+                    l_cMxgPos_OnFile     := l_oDataDiagram:Diagram_MxgPos
+                else
+                    l_nRenderMode_OnFile := 0
+                endif
+            endif
+
+
             :Table("d303eed8-944e-4a7c-8314-133eb13fca3d","Diagram")
             :Field("Diagram.Name"               ,l_cDiagram_Name)
             :Field("Diagram.NodeDisplayMode"    ,l_nDiagram_NodeDisplayMode)
+            :Field("Diagram.RenderMode"         ,l_nDiagram_RenderMode)
+            if l_nRenderMode_OnFile == 1 .and. l_nDiagram_RenderMode == 2 .and. hb_IsNIL(l_cMxgPos_OnFile) .and. !hb_IsNIL(l_cVisPos_OnFile)
+                //If switching from visjs to mxgraph rendering mode with no MxgPos value and existing VisPos value
+                :Field("Diagram.MxgPos",l_cVisPos_OnFile)
+            endif
             :Field("Diagram.NodeShowDescription",l_lDiagram_NodeShowDescription)
             :Field("Diagram.NodeMinHeight"      ,l_lDiagram_NodeMinHeight)
             :Field("Diagram.NodeMaxWidth"       ,l_lDiagram_NodeMaxWidth)
-            if empty(l_iDiagram_pk)
+            if empty(l_iDiagramPk)  // Should not happen
                 :Field("Diagram.fk_Application",par_iApplicationPk)
                 :Field("Diagram.UseStatus"     , 1)
                 :Field("Diagram.DocStatus"     , 1)
                 :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
-                    l_iDiagram_pk := :Key()
+                    l_iDiagramPk := :Key()
                 else
-                    l_iDiagram_pk := 0
+                    l_iDiagramPk := 0
                     l_cErrorMessage := "Failed to save changes!"
                 endif
             else
-                if !:Update(l_iDiagram_pk)
+                if !:Update(l_iDiagramPk)
                     l_cErrorMessage := "Failed to save changes!"
                 endif
 
@@ -1172,7 +1253,7 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Column("DiagramTable.pk","DiagramTable_pk")
             :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+            :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
             :SQL("ListOfCurrentTablesInDiagram")
             with object :p_oCursor
                 :Index("pk","pk")
@@ -1201,7 +1282,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                     with Object l_oDB3
                         :Table("0f252d7a-6656-4ef0-a2be-f85bf84f93fb","DiagramTable")
                         :Field("DiagramTable.fk_Table"   ,ListOfAllTablesInApplication->pk)
-                        :Field("DiagramTable.fk_Diagram" ,l_iDiagram_pk)
+                        :Field("DiagramTable.fk_Diagram" ,l_iDiagramPk)
                         if !:Add()
                             l_cErrorMessage := "Failed to Save table selection."
                             exit
@@ -1215,10 +1296,11 @@ case l_cActionOnSubmit == "SaveDiagram"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
     else
         l_hValues["Name"]                := l_cDiagram_Name
         l_hValues["NodeDisplayMode"]     := l_nDiagram_NodeDisplayMode
+        l_hValues["RenderMode"]          := l_nDiagram_RenderMode
         l_hValues["NodeShowDescription"] := l_lDiagram_NodeShowDescription
         l_hValues["NodeMinHeight"]       := l_lDiagram_NodeMinHeight
         l_hValues["NodeMaxWidth"]        := l_lDiagram_NodeMaxWidth
@@ -1230,34 +1312,45 @@ case l_cActionOnSubmit == "SaveDiagram"
                 l_hValues["Table"+Trans(ListOfAllTablesInApplication->pk)] := .t.
             endif
         endscan
-        l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk,l_hValues)
+        l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case l_cActionOnSubmit == "Delete"
     with object l_oDB1
         //Delete related records in DiagramTable
         :Table("c4d616b9-9f17-47f2-a536-42ec624b3d46","DiagramTable")
         :Column("DiagramTable.pk","pk")
-        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
         :SQL("ListOfDiagramTableToDelete")
         select ListOfDiagramTableToDelete
         scan all
             l_oDB2:Delete("469afb28-2829-4400-9670-a3e6acfd592a","DiagramTable",ListOfDiagramTableToDelete->pk)
         endscan
-        l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagram_pk)
+        l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagramPk)
     endwith
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/Visualize/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
-    with object l_oDB1
-        :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
-        :Field("Diagram.VisPos",NIL)
-        :Update(l_iDiagram_pk)
-    endwith
-    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    if !empty(l_iDiagramPk)
+        with object l_oDB1
+            :Table("bdb0a61a-0bb1-48b0-8d6a-5e29e96414f2","Diagram")
+            :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
+            l_oDataDiagram := :Get(l_iDiagramPk)
+            l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+
+            :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
+            if l_nRenderMode == 2
+                :Field("Diagram.MxgPos",NIL)
+            else
+                :Field("Diagram.VisPos",NIL)
+            endif
+            :Update(l_iDiagramPk)
+        endwith
+    endif
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase
 
@@ -1453,7 +1546,7 @@ function DataDictionaryVisualizeMyDiagramSettingsOnSubmit(par_iApplicationPk,par
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
-local l_iDiagram_pk
+local l_iDiagramPk
 
 local l_nDiagramInfoScale
 local l_iCanvasWidth
@@ -1468,7 +1561,7 @@ local l_hValues := {=>}
 
 oFcgi:TraceAdd("DataDictionaryVisualizeMyDiagramSettingsOnSubmit")
 
-l_iDiagram_pk       := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_iDiagramPk       := Val(oFcgi:GetInputValue("TextDiagramPk"))
 l_nDiagramInfoScale := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
 if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
     l_nDiagramInfoScale := 1
@@ -1528,15 +1621,15 @@ case l_cActionOnSubmit == "SaveMySettings"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
     else
         l_hValues["DiagramInfoScale"] := l_nDiagramInfoScale
 
-        l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk,l_hValues)
+        l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagram_pk)
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase
 
@@ -1545,7 +1638,7 @@ return l_cHtml
 function GetDDInfoDuringVisualization()
 local l_cHtml := []
 local l_cInfo := Strtran(oFcgi:GetQueryString("info"),[%22],["])
-local l_iDiagram_pk := val(oFcgi:GetQueryString("diagrampk"))
+local l_iDiagramPk := val(oFcgi:GetQueryString("diagrampk"))
 local l_hOnClickInfo := {=>}
 local l_nLengthDecoded
 local l_aNodes
@@ -1553,6 +1646,7 @@ local l_aEdges
 local l_aItems
 local l_iTablePk
 local l_iColumnPk
+local l_oDB_Diagram                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_Application                  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_InArray                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelatedTables          := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1610,10 +1704,19 @@ local l_iApplicationPk
 local l_cDisabled
 local l_cObjectId
 local l_lFoundData
+local l_nRenderMode
+local l_oDataDiagram
 
 //oFcgi:p_nAccessLevelDD
 
 oFcgi:TraceAdd("GetDDInfoDuringVisualization")
+
+with object l_oDB_Diagram
+    :Table("f8632e51-09a7-4ee7-bc76-517c490f505a","Diagram")
+    :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
+    l_oDataDiagram := :Get(l_iDiagramPk)
+    l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+endwith
 
 hb_HKeepOrder(l_hRelatedTables,.f.) // Will order the hash by its key, with will be entered as upper case. For Keys stored as Strings they will need to be the same length
 
@@ -1667,7 +1770,7 @@ if len(l_aNodes) == 1
             :Column("DiagramTable.pk","DiagramTable_pk")
             :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where("DiagramTable.fk_Diagram = ^" , l_iDiagram_pk)
+            :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
             :SQL("ListOfCurrentTablesInDiagram")
             l_nNumberOfTablesInDiagram := :Tally
             if l_nNumberOfTablesInDiagram > 0
@@ -1728,7 +1831,7 @@ if len(l_aNodes) == 1
             :Column("upper(Diagram.Name)","tag1")
             :Join("inner","Diagram","","DiagramTable.fk_Diagram = Diagram.pk")
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
-            :Where("Diagram.pk <> ^",l_iDiagram_pk)
+            :Where("Diagram.pk <> ^",l_iDiagramPk)
             :OrderBy("tag1")
             :SQL("ListOfOtherDiagram")
             l_nNumberOfOtherDiagram := :Tally
@@ -2152,9 +2255,11 @@ if len(l_aNodes) == 1
                     //---------------------------------------------------------------------------
                     if l_nAccessLevelDD >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
-                        if GRAPH_LIB_DD == "mxgraph"
+                        // if GRAPH_LIB_DD == "mxgraph"
+                        if l_nRenderMode == 2
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-                        elseif GRAPH_LIB_DD == "visjs"
+                        // elseif GRAPH_LIB_DD == "visjs"
+                        else
                             l_cHtml += [network.storePositions();]
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                         endif
@@ -2229,9 +2334,11 @@ if len(l_aNodes) == 1
                 //---------------------------------------------------------------------------
                 if l_nAccessLevelDD >= 4
                     l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
-                    if GRAPH_LIB_DD == "mxgraph"
+                    // if GRAPH_LIB_DD == "mxgraph"
+                    if l_nRenderMode == 2
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-                    elseif GRAPH_LIB_DD == "visjs"
+                    // elseif GRAPH_LIB_DD == "visjs"
+                    else
                         l_cHtml += [network.storePositions();]
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                     endif

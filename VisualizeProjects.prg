@@ -414,7 +414,7 @@ l_cHtml += [</nav>]
 l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 if l_nLengthDecoded > 0
     //migreate from x,y coordinates that may be negative
-    if GRAPH_LIB_DD == "mxgraph"
+    if GRAPH_LIB_ML == "mxgraph"
         for each l_hNodePosition in l_hNodePositions
             l_cHashKey := l_hNodePosition:__enumkey
             if left(l_cHashKey, 1) $ "AE"

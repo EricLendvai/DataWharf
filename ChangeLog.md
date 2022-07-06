@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 07/05/2022 v 2.29
+* Multiple Visualization Enhancement ( https://github.com/EricLendvai/DataWharf/pull/27 )
+* Added setting in Application Visualization to select VisJs or MxGraph, making it easier to convert to new mxgraph rendering mode.
+
 ## 07/04/2022 v 2.28
 * Unabled mxgraph for modeling visualization.
 * New APIs, see api.txt.

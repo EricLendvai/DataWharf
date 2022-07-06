@@ -3,7 +3,7 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.27"
+#define BUILDVERSION "2.29"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2
@@ -30,7 +30,8 @@
 #define USEDON_PROJECT    11
 
 #define GRAPH_LIB_ML "mxgraph"
-#define GRAPH_LIB_DD "visjs"
+//#define GRAPH_LIB_DD "visjs"
+#define GRAPH_LIB_DD "mxgraph"   // Not used anymore. Each Diagram can be set to use either rendering javascript library.
 
 #define CANVAS_WIDTH_MIN      300
 #define CANVAS_WIDTH_MAX      3000

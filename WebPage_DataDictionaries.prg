@@ -326,6 +326,7 @@ case l_cURLAction == "Visualize"
                 :Field("Diagram.Name"           ,"All Tables")  // l_cDiagramName
                 :Field("Diagram.UseStatus"      ,1)
                 :Field("Diagram.DocStatus"      ,1)
+                :Field("Diagram.RenderMode"     ,2)
                 if :Add()
                     l_iDiagramPk := :Key()
                 endif

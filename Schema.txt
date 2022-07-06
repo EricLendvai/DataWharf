@@ -154,7 +154,9 @@ l_Schema := ;
    ,"NodeShowDescription"=>{,  "L",   0,  0,};      // True If the table description should be included in the node.
    ,"NodeMinHeight"      =>{,  "I",   0,  0,};
    ,"NodeMaxWidth"       =>{,  "I",   0,  0,};
-   ,"VisPos"             =>{,  "M",   0,  0,"N"}};  // Last Visualization Positions
+   ,"RenderMode"         =>{,  "N",   1,  0,};      // 1 = VisJs, 2 = mxgraph
+   ,"VisPos"             =>{,  "M",   0,  0,"N"};   // Last Visualization Positions for VisJs mode
+   ,"MxgPos"             =>{,  "M",   0,  0,"N"}};  // Last Visualization Positions for mxgraph mode
    ,;   //Index Definition
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
 ,"public.DiagramTable"=>{;   //Field Definition

@@ -362,8 +362,27 @@ with object ::p_o_SQLConnection
             l_iCurrentDataVersion := 14
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
-
         //-----------------------------------------------------------------------------------
+        
+        if l_iCurrentDataVersion <= 15
+            with object l_oDB1
+                :Table("6a473090-8c14-47f7-a1dc-95f79a4e45b4","Diagram")
+                :Column("Diagram.pk" , "pk")
+                :Where([Diagram.RenderMode = 0])
+                :SQL("ListOfDiagramToUpdate")
+                select ListOfDiagramToUpdate
+                scan all
+                    with object l_oDB2
+                        :Table("ed08301f-15d4-4ae4-b7b1-838974333135","Diagram")
+                        :Field("Diagram.RenderMode" , 1)
+                        :Update(ListOfDiagramToUpdate->pk)
+                    endwith
+                endscan
+            endwith
+
+            l_iCurrentDataVersion := 15
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
