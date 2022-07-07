@@ -26,6 +26,15 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
     graph.getModel().addListener(mxEvent.UNDO, listener);
     graph.getView().addListener(mxEvent.UNDO, listener);
 
+    // Enables guides
+    mxGraphHandler.prototype.guidesEnabled = true;
+
+    // Alt disables guides
+    mxGuide.prototype.isEnabledForEvent = function(evt)
+    {
+        return !mxEvent.isAltDown(evt);
+    };
+
     new mxRubberband(graph);
 
     graph.isCellEditable = function(cell) {
@@ -173,7 +182,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
            undoManager.undo();
         }
     }));
-    $(undo).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
+    $(undo).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
 
     var redo = document.getElementById("buttons").appendChild(mxUtils.button(' Redo ', function(event)
     {
@@ -182,28 +191,28 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
            undoManager.redo();
         }
     }));
-    $(redo).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
+    $(redo).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-arrow-counterclockwise'></i>");
 
     var zoomIn = document.getElementById("buttons").appendChild(mxUtils.button(' Zoom In ', function(event)
     {
         event.preventDefault();
         graph.zoomIn();
     }));
-    $(zoomIn).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-in'></i>");
+    $(zoomIn).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-in'></i>");
 
     var fit = document.getElementById("buttons").appendChild(mxUtils.button(' Fit ', function(event)
     {
         event.preventDefault();
         graph.fit();
     }));
-    $(fit).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-arrows-fullscreen'></i>");
+    $(fit).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-arrows-fullscreen'></i>");
     
     var zoomOut = document.getElementById("buttons").appendChild(mxUtils.button(' Zoom Out ', function(event)
     {
         event.preventDefault();
         graph.zoomOut();
     }));
-    $(zoomOut).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-out'></i>");
+    $(zoomOut).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-zoom-out'></i>");
 
     var reroute = document.getElementById("buttons").appendChild(mxUtils.button(' Reroute Edges ', function(event)
     {
@@ -227,7 +236,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
         }*/
         
     }));
-    $(reroute).addClass("btn btn-primary rounded ms-3").prepend("<i class='bi bi-bezier2'></i>");
+    $(reroute).addClass("btn-sm btn-primary rounded ms-3").prepend("<i class='bi bi-bezier2'></i>");
 
     
 
@@ -307,32 +316,6 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
 
     graph.getModel().beginUpdate(); // required if you want to apply the highlight to all cells in a single transaction
     try {
-        if(cellsAdded) {
-            cellsAdded.forEach(element => {
-                if(element.highlight && element.edge) {
-                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeWidth', 2);
-                    mxUtils.setCellStyles(graph.getModel(), [element], 'fontStyle', 1);
-                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight);
-                    if(element.children) {
-                        element.children.forEach(child => {
-                            mxUtils.setCellStyles(graph.getModel(), [child], 'fontStyle', 1);
-                        });
-                    }
-                }
-                if(element.highlight && element.highlight.background) {
-                    mxUtils.setCellStyles(graph.getModel(), [element], 'fillColor', element.highlight.background);
-                }
-                if(element.highlight && element.highlight.border) {
-                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight.border);
-                }
-                if(element.edges) {
-                    element.edges.forEach(edge => {
-                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeWidth', 2);
-                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeColor', edge.highlight);
-                    });
-                }
-            });
-        }
         if(cellsRemoved) {
             cellsRemoved.forEach(element => {
                 if(element.highlight && element.edge) {
@@ -355,6 +338,32 @@ function SelectGraphCell(cellsAdded, cellsRemoved, graph) {
                     element.edges.forEach(edge => {
                         mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeWidth', 1);
                         mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeColor', edge.color);
+                    });
+                }
+            });
+        }
+        if(cellsAdded) {
+            cellsAdded.forEach(element => {
+                if(element.highlight && element.edge) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeWidth', 2);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'fontStyle', 1);
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight);
+                    if(element.children) {
+                        element.children.forEach(child => {
+                            mxUtils.setCellStyles(graph.getModel(), [child], 'fontStyle', 1);
+                        });
+                    }
+                }
+                if(element.highlight && element.highlight.background) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'fillColor', element.highlight.background);
+                }
+                if(element.highlight && element.highlight.border) {
+                    mxUtils.setCellStyles(graph.getModel(), [element], 'strokeColor', element.highlight.border);
+                }
+                if(element.edges) {
+                    element.edges.forEach(edge => {
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeWidth', 2);
+                        mxUtils.setCellStyles(graph.getModel(), [edge], 'strokeColor', edge.highlight);
                     });
                 }
             });

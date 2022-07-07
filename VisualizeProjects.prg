@@ -437,7 +437,7 @@ if l_nLengthDecoded > 0
 endif
 
 l_cHtml += [<table><tr>]
-l_cHtml += [<div id="buttons"</div>]
+l_cHtml += [<div id="buttons" class="mb-2"></div>]
 l_cHtml += [</tr>]
 l_cHtml += [<tr>]
 //-------------------------------------
