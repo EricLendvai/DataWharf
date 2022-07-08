@@ -26,6 +26,42 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
     graph.getModel().addListener(mxEvent.UNDO, listener);
     graph.getView().addListener(mxEvent.UNDO, listener);
 
+
+
+    // Enables Mouse Wheel zoom  see https://github.com/jgraph/mxgraph/issues/418
+    mxEvent.addMouseWheelListener((evt, up) => {
+      if (mxEvent.isConsumed(evt)) {
+        return;
+      }
+    
+      let gridEnabled = graph.gridEnabled;
+    
+      // disable snapping
+      graph.gridEnabled = false;
+    
+      let p1 = graph.getPointForEvent(evt, false);
+    
+      if (up) {
+        graph.zoomIn();
+      } else {
+        graph.zoomOut();
+      }
+    
+      let p2 = graph.getPointForEvent(evt, false);
+      let deltaX = p2.x - p1.x;
+      let deltaY = p2.y - p1.y;
+      let view = graph.view;
+    
+      view.setTranslate(view.translate.x + deltaX, view.translate.y + deltaY);
+    
+      graph.gridEnabled = gridEnabled;
+    
+      mxEvent.consume(evt);
+    }, container);
+
+
+
+
     // Enables guides
     mxGraphHandler.prototype.guidesEnabled = true;
 

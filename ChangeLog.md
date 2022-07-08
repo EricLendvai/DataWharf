@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 07/08/2022 v 2.30
+* Multiple Visualization Enhancement as per  https://github.com/EricLendvai/DataWharf/pull/28
+* Support for Mouse Wheel Zooming support in Visualizations.
+
 ## 07/05/2022 v 2.29
 * Multiple Visualization Enhancement ( https://github.com/EricLendvai/DataWharf/pull/27 )
 * Added setting in Application Visualization to select VisJs or MxGraph, making it easier to convert to new mxgraph rendering mode.
