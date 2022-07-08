@@ -182,7 +182,7 @@ else
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_05/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_07/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
@@ -314,7 +314,7 @@ if l_nLengthDecoded > 0
 endif
 
 l_cHtml += [<table><tr>]
-l_cHtml += [<div id="buttons"</div>]
+l_cHtml += [<div id="buttons" class="mb-2"></div>]
 l_cHtml += [</tr>]
 l_cHtml += [<tr>]
 //-------------------------------------
@@ -566,8 +566,9 @@ l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 // if GRAPH_LIB_DD == "mxgraph"
 if l_nRenderMode == 2
-//    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "direct", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, true, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
+
+// See visualization.js .. function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout, resetEdges) {
+    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
     l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
     l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
