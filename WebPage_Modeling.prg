@@ -44,15 +44,15 @@ local l_nCounterC
 local l_iModelingDiagramPk
 
 oFcgi:TraceAdd("BuildPageModeling")
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]
 
-oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_1_2_0/css/bstreeview.min.css">]
+oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/bstreeview_]+BSTREEVIEW_SCRIPT_VERSION+[/css/bstreeview.min.css">]
 
 //Temp solution of using previous version  _M_
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview.min.js"></script>]
-//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_1_2_0/js/bstreeview_1_4_0.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_]+BSTREEVIEW_SCRIPT_VERSION+[/js/bstreeview.min.js"></script>]
+//oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/bstreeview_]+BSTREEVIEW_SCRIPT_VERSION+[/js/bstreeview_1_4_0.js"></script>]
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_07/datawharf.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_]+DATAWHARF_SCRIPT_VERSION+[/datawharf.js"></script>]
 
 // Variables
 // l_cURLAction
@@ -1708,7 +1708,7 @@ with object l_oDB_LinkedModels
     endscan
 endwith
 
-l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
+l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_]+JQUERYAMSIFY_SCRIPT_VERSION+[/]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
 
@@ -2142,7 +2142,7 @@ oFcgi:TraceAdd("EntityListFormBuild")
 
 //Left code below in case would like to make this a user optional feature 
     //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
-    //Left code below in case would like to make this a user optional feature oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
+    //Left code below in case would like to make this a user optional feature oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]
 
 l_cSearchEntityName           := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityName")
 l_cSearchEntityDescription    := GetUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_EntityDescription")

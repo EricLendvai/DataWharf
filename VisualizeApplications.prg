@@ -54,7 +54,7 @@ local l_cHashKey
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
 
 //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_2022_02_23_001/marked.min.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]
 
 l_cHtml += [<script type="text/javascript">]
 l_cHtml += 'function KeywordSearch(par_cListOfWords, par_cString) {'
@@ -175,14 +175,14 @@ endif
 
 // if GRAPH_LIB_DD == "mxgraph"
 if l_nRenderMode == 2
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_18_0_1/css/common.css">]
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_18_0_1/mxClient.js"></script>]
+    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/css/common.css">]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/mxClient.js"></script>]
 //elseif GRAPH_LIB_DD == "visjs"
 else
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_2022_02_15_001/vis-network.min.js"></script>]
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_]+VISJS_SCRIPT_VERSION+[/vis-network.min.js"></script>]
 endif
 
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_2022_07_08/visualization.js"></script>]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_]+DATAWHARF_SCRIPT_VERSION+[/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
 l_cHtml += [  #mynetwork {]
