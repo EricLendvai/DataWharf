@@ -30,7 +30,7 @@ function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMo
 
     // Enables Mouse Wheel zoom  see https://github.com/jgraph/mxgraph/issues/418
     mxEvent.addMouseWheelListener((evt, up) => {
-      if (mxEvent.isConsumed(evt)) {
+      if (mxEvent.isConsumed(evt) || !mxEvent.isControlDown(evt)) {
         return;
       }
     
