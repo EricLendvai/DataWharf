@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 07/08/2022 v 2.32
+* Fix of Load/Sync Schema of MSSQL under Ubuntu
+
 ## 07/08/2022 v 2.31
 * Mouse Wheel Zooming support in Visualizations now requires to also press the CTRL key per https://github.com/EricLendvai/DataWharf/pull/29
 * Code refactoring to centralize JavaScript library versions in DataWharf.ch
