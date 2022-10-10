@@ -128,7 +128,7 @@ set delete on
 ::SetOnErrorProgramInfo(hb_BuildInfo())
 
 ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
-                                    ,;
+                                    ::GetAppConfig("POSTGRESDRIVER"),;
                                     ::GetAppConfig("POSTGRESHOST"),;
                                     val(::GetAppConfig("POSTGRESPORT")),;
                                     ::GetAppConfig("POSTGRESID"),;
@@ -462,6 +462,7 @@ local l_cAjaxAction
 local l_cThisAppTitle
 local l_cSecuritySalt
 local l_lCyanAuditAware         := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
+local l_cPostgresDriver         := ::GetAppConfig("POSTGRESDRIVER")
 local l_cPostgresHost           := ::GetAppConfig("POSTGRESHOST")
 local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
 local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
@@ -499,7 +500,7 @@ if l_lPostgresLostConnection                                    .or.;
 
 ////    SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
-                                        ,;
+                                        l_cPostgresDriver,;
                                         l_cPostgresHost,;
                                         l_iPostgresPort,;
                                         l_cPostgresId,;
