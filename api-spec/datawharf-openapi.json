@@ -1,0 +1,1579 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "AvaBase",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000"
+        }
+    ],
+    "paths": {
+        "/classes/{classId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "classId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "classes",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AvClass"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-classes-classId",
+                "description": ""
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-models-userId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvClass"
+                            }
+                        }
+                    },
+                    "description": ""
+                },
+                "tags": [
+                    "classes",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-models-userId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "classes",
+                    "v3"
+                ]
+            }
+        },
+        "/classes": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "classes",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClassList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-classes",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "model"
+                    }
+                ],
+                "description": ""
+            },
+            "post": {
+                "summary": "create new class",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "operationId": "post-classes",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvClass"
+                            }
+                        }
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "classes",
+                    "v2"
+                ]
+            },
+            "parameters": []
+        },
+        "/packages": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "packages",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PackageList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-packages"
+            },
+            "post": {
+                "summary": "",
+                "operationId": "post-packages",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Package"
+                            }
+                        },
+                        "application/xml": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Package"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "packages",
+                    "v2"
+                ]
+            }
+        },
+        "/packages/{packageId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "packageId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Package"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-packages-packageId",
+                "tags": [
+                    "packages",
+                    "v3"
+                ]
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-packages-packageId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Package"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "packages",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-packages-packageId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "packages",
+                    "v3"
+                ]
+            }
+        },
+        "/associations": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "associations",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AssociationList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-associations"
+            },
+            "post": {
+                "summary": "",
+                "operationId": "post-associations",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Association"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "associations",
+                    "v2"
+                ]
+            }
+        },
+        "/association/{associationId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "associationId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "associations",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Association"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-association-associationId",
+                "description": ""
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-association-associationId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Association"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "associations",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-association-associationId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "associations",
+                    "v3"
+                ]
+            }
+        },
+        "/datatypes/{datatypeId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "datatypeId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "datatypes",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataType"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-datatypes-datatypeId",
+                "description": ""
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-datatypes-datatypeId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DataType"
+                            }
+                        }
+                    },
+                    "description": ""
+                },
+                "tags": [
+                    "datatypes",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-datatypes-datatypeId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "datatypes",
+                    "v3"
+                ]
+            }
+        },
+        "/datatypes": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "datatypes",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DataTypeList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-datatypes",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "model"
+                    }
+                ],
+                "description": ""
+            },
+            "post": {
+                "summary": "create new datatype",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "operationId": "post-datatype",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DataType"
+                            }
+                        }
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "datatypes",
+                    "v2"
+                ]
+            },
+            "parameters": []
+        },
+        "/enumerations/{enumerationId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "enumerationId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "enumerations",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Enumeration"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-enumeration-enumerationId",
+                "description": ""
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-enumeration-enumerationId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Enumeration"
+                            }
+                        }
+                    },
+                    "description": ""
+                },
+                "tags": [
+                    "enumerations",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-enumeration-enumerationId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "enumerations",
+                    "v3"
+                ]
+            }
+        },
+        "/enumerations": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "enumerations",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EnumerationList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-enumerations",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "model"
+                    }
+                ],
+                "description": ""
+            },
+            "post": {
+                "summary": "create new enumeration",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "operationId": "post-enumeration",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Enumeration"
+                            }
+                        }
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "enumerations",
+                    "v2"
+                ]
+            },
+            "parameters": []
+        },
+        "/projects": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "projects",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProjectList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-projects"
+            },
+            "post": {
+                "summary": "",
+                "operationId": "post-projects",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Project"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "projects",
+                    "v3"
+                ]
+            }
+        },
+        "/projects/{projectId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "projectId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "projects",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Project"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-projects-projectId"
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-projects-projectId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Project"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "projects",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-projects-projectId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "projects",
+                    "v3"
+                ]
+            }
+        },
+        "/models": {
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "models",
+                    "v1"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ModelList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-models"
+            },
+            "post": {
+                "summary": "",
+                "operationId": "post-models",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "name": "template",
+                        "in": "query",
+                        "required": false,
+                        "description": "The new model will inherit all access rights from the model referenced as `template`"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvModel"
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "models",
+                    "v2"
+                ]
+            }
+        },
+        "/models/{modelId}": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "modelId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "models",
+                    "v2"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AvModel"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-models-modelId"
+            },
+            "put": {
+                "summary": "",
+                "operationId": "put-models-modelId",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AvModel"
+                            }
+                        }
+                    }
+                },
+                "description": "",
+                "tags": [
+                    "models",
+                    "v3"
+                ]
+            },
+            "delete": {
+                "summary": "",
+                "operationId": "delete-models-modelId",
+                "parameters": [
+                    {
+                        "schema": {
+                            "type": "string",
+                            "enumeration": [
+                                "truncate",
+                                "includingContent",
+                                "excludingContent"
+                            ]
+                        },
+                        "name": "mode",
+                        "in": "query",
+                        "required": false,
+                        "description": "Truncate: keep the model itself but delete all its contents; includingContent: delete model and all of its contents, excludingContent: delete model only, will through an error if contents exist."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "models",
+                    "v2"
+                ]
+            }
+        },
+        "/packages/{packageId}/classes": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "packageId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "packages",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClassList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-packages-packageId-classes"
+            }
+        },
+        "/packages/{packageId}/packages": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "packageId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "packages",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PackageList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-packages-packageId-packages"
+            }
+        },
+        "/projects/{projectId}/models": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "projectId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "projects",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ModelList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-projects-projectId-models",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ModelList"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/models/{modelId}/classes": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "modelId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "models",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClassList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-models-modelId-classes",
+                "description": ""
+            }
+        },
+        "/models/{modelId}/packages": {
+            "parameters": [
+                {
+                    "schema": {
+                        "type": "string"
+                    },
+                    "name": "modelId",
+                    "in": "path",
+                    "required": true
+                }
+            ],
+            "get": {
+                "summary": "Your GET endpoint",
+                "tags": [
+                    "models",
+                    "v3"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PackageList"
+                                }
+                            }
+                        }
+                    }
+                },
+                "operationId": "get-models-modelId-packages"
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Association": {
+                "title": "Association",
+                "type": "object",
+                "description": "",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "package": {
+                        "type": "string"
+                    },
+                    "associationEnds": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "endName": {
+                                    "type": "string"
+                                },
+                                "endDescription": {
+                                    "type": "string"
+                                },
+                                "lower": {
+                                    "type": "string"
+                                },
+                                "upper": {
+                                    "type": "string"
+                                },
+                                "classId": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "classId"
+                            ]
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "model"
+                ]
+            },
+            "AssociationList": {
+                "title": "ClassList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Association"
+                        }
+                    }
+                }
+            },
+            "AvClass": {
+                "title": "AvClass",
+                "type": "object",
+                "description": "",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "information": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "package": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Property"
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "aspectsFrom": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "fromClass": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "aspectsTo": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "toClass": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "model"
+                ]
+            },
+            "AvModel": {
+                "title": "AvModel",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "linkedModels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "ClassList": {
+                "title": "ClassList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvClass"
+                        }
+                    }
+                }
+            },
+            "DataType": {
+                "title": "DataType",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "dataType": {
+                                    "$ref": "#/components/schemas/DataType"
+                                }
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "model"
+                ]
+            },
+            "DataTypeList": {
+                "title": "DataTypeList",
+                "x-stoplight": {
+                    "id": "687ee1b3c1e6f"
+                },
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DataType"
+                        }
+                    }
+                }
+            },
+            "Enumeration": {
+                "title": "Enumeration",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "number": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "model"
+                ]
+            },
+            "EnumerationList": {
+                "title": "EnumerationList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Enumeration"
+                        }
+                    }
+                }
+            },
+            "ModelList": {
+                "title": "ClassList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AvModel"
+                        }
+                    }
+                }
+            },
+            "Package": {
+                "title": "Package",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "parentPackage": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "model": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "model"
+                ]
+            },
+            "PackageList": {
+                "title": "PackageList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Package"
+                        }
+                    }
+                }
+            },
+            "Project": {
+                "title": "project",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "ProjectList": {
+                "title": "PackageList",
+                "type": "object",
+                "properties": {
+                    "@recordSetCount": {
+                        "type": "integer"
+                    },
+                    "@nextLink": {
+                        "type": "string"
+                    },
+                    "@pageKey": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Project"
+                        }
+                    }
+                }
+            },
+            "Property": {
+                "title": "Property",
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "lower": {
+                        "type": "string"
+                    },
+                    "upper": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "properties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Property"
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "type",
+                    "lower",
+                    "upper"
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "classes"
+        },
+        {
+            "name": "packages"
+        },
+        {
+            "name": "models"
+        },
+        {
+            "name": "projects"
+        },
+        {
+            "name": "associations"
+        },
+        {
+            "name": "datatypes"
+        },
+        {
+            "name": "enumerations"
+        },
+        {
+            "name": "v1"
+        },
+        {
+            "name": "v2"
+        },
+        {
+            "name": "v3"
+        }
+    ]
+}
