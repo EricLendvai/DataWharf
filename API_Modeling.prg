@@ -467,7 +467,7 @@ local l_cAssociationId  := GetAPIURIElement(2)
 local l_oDB_ListOfAssociations        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociationsAndEnds := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfAssociations
-local l_nNumberOfAssociationEnds
+// local l_nNumberOfAssociationEnds
 local l_aListOfAssociations := {}
 local l_aListOfAssociationEnds := {}
 local l_hAssociationInfo    := {=>}
@@ -522,9 +522,9 @@ if l_nNumberOfAssociations >= 0
         :OrderBy("Endpoint.pk")
         :OrderBy("tag1")
         :SQL("ListOfAssociationsAndEnds")
-        if :Tally < 0
-            l_nNumberOfAssociationEnds := :Tally
-        endif
+        // if :Tally < 0
+        //     l_nNumberOfAssociationEnds := :Tally
+        // endif
     endwith
 endif
 
@@ -836,12 +836,12 @@ static function BuildAttributeInfo(par_Attribute_pk)
         :SQL("ListOfSubAttributes")
     
         :SQL(@l_aArray)
-        l_nNumberOfSubAtttributes := :Tally
-        if l_nNumberOfSubAtttributes > 0
+        l_nNumberOfSubAttributes := :Tally
+        if l_nNumberOfSubAttributes > 0
             l_aInfo := {}
-            ASize(l_aInfo,l_nNumberOfSubAtttributes)
+            ASize(l_aInfo,l_nNumberOfSubAttributes)
     
-            for l_nLoop = 1 to l_nNumberOfSubAtttributes
+            for l_nLoop = 1 to l_nNumberOfSubAttributes
                 hb_HClear(l_hAttributeInfo)
                 l_hAttributeInfo["name"] := l_aArray[l_nLoop,3]
                 if !empty(l_aArray[l_nLoop,4])

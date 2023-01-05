@@ -16,7 +16,7 @@
 -cflag=-DUSING_HB_VFP
 
 #To include the hb_vfp module, and even allow its debugging
--incpath=${HB_VFP_ROOT}/
+-incpath=${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
 #Update the path where the HB_VFP package is installed
 -L${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
 -lhb_vfp
@@ -24,7 +24,7 @@
 ${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}/hb_vfp.hbx
 
 #To include the hb_orm module, and even allow its debugging
--incpath=${HB_ORM_ROOT}/
+-incpath=${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
 #Update the path where the HB_ORM package is installed
 -L${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
 -lhb_orm

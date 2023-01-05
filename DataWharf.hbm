@@ -5,11 +5,10 @@ DeltaSchema.prg
 VisualizeApplications.prg
 VisualizeProjects.prg
 FixNonNormalizedFields.prg
+ImportExport.prg
 
 WebPages.hbm
 API.hbm
-
-debugger.hbm
 
 #To load additional contrib libraries
 hbct.hbc

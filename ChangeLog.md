@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 01/04/2023 v 2.33
+* WARNING: You must pull recent version of Harbour_VFP, Harbour_ORM and Harbour_FastCGI repos!
+* Added support to UUID and JSON in PostgreSQL and MySQL/MariaDB
+* Added support to array field types in PostgreSQL
+* Updated devcontainer to not git pull Harbour_VFP, Harbour_ORM and Harbour_FastCGI. Instead clone them on your local host and mount statements will handle them in the DataWharf devcontainer.
+
 ## 07/08/2022 v 2.32
 * Fix of Load/Sync Schema of MSSQL under Ubuntu
 

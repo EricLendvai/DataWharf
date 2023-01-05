@@ -37,6 +37,7 @@ l_Schema := ;
    ,"UseStatus"      =>{,  "N",   1,  0,};      // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"      =>{,  "N",   1,  0,};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Type"           =>{,  "C",   3,  0,};
+   ,"Array"          =>{,  "L",   1,  0,};      // Used for PostgreSQL only. Fields can be of an array of types.
    ,"Length"         =>{,  "I",   0,  0,"N"};
    ,"Scale"          =>{,  "I",   0,  0,"N"};
    ,"Nullable"       =>{,  "L",   0,  0,};
@@ -536,7 +537,7 @@ l_Schema := ;
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_User"        =>{,  "I",   0,  0,};
    ,"fk_Application" =>{,  "I",   0,  0,};
-   ,"AccessLevelDD"  =>{,  "N",   1,  0,}};      // Data Dictionary Access Level: 1 - None,2 - Read Only,3 - Edit Description and Information Entries,4 - Edit Description and Information Entries and Diagrams,5 - Edit Anything,6 - Edit Anything and Load/Sync Schema,7 - Full Access
+   ,"AccessLevelDD"  =>{,  "N",   1,  0,}};      // Data Dictionary Access Level: 1 - None,2 - Read Only,3 - Edit Description and Information Entries,4 - Edit Description and Information Entries and Diagrams,5 - Edit Anything and Import/Export,6 - Edit Anything and Load/Sync Schema,7 - Full Access
    ,;   //Index Definition
    {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};

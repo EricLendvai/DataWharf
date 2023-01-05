@@ -65,15 +65,13 @@ if exist build\win64\%HB_COMPILER%\%BuildMode%\%EXEName%.exe (
 ::  /p        = Leave generated ppo files
 
 if %BuildMode% == debug (
-    copy debugger_on.hbm debugger.hbm
 rem  cannot used -shared due to some libs. Still researching into this matter.
 rem    hbmk2 %EXEName%_windows.hbp -b -p -w3 -dDEBUGVIEW
-    hbmk2 %EXEName%_windows.hbp %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm -b -p -w3 -dDEBUGVIEW
+    hbmk2 %EXEName%_windows.hbp vscode_debugger.prg %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm -b -p -w3 -dDEBUGVIEW -dCLIPBOARDSUPPORT
 ) else (
-    copy debugger_off.hbm debugger.hbm
     rem can not do -fullstatic due to libfcgi
 rem    hbmk2 %EXEName%_windows.hbp -w3  -static -dDEBUGVIEW
-    hbmk2 %EXEName%_windows.hbp %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm  -w3  -static -dDEBUGVIEW
+    hbmk2 %EXEName%_windows.hbp %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm  -w3  -static -dDEBUGVIEW -dCLIPBOARDSUPPORT
 )
 
 echo Current time is %mydate% %mytime%

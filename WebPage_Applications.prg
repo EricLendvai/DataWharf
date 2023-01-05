@@ -35,7 +35,7 @@ local l_nAccessLevelDD := 1   // None by default
 //     2 - Read Only
 //     3 - Edit Description and Information Entries
 //     4 - Edit Description and Information Entries and Diagrams
-//     5 - Edit Anything
+//     5 - Edit Anything and Import/Export
 //     6 - Edit Anything and Load/Sync Schema
 //     7 - Full Access
 
@@ -296,7 +296,7 @@ with object l_oDB_ListOfTableCounts
     :Column("Count(*)" ,"TableCount")
     :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)

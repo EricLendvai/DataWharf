@@ -1442,7 +1442,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"EntityCount")
         :Join("inner","Entity","","Entity.fk_Model = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsEntityCounts")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1456,7 +1456,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"AssociationCount")
         :Join("inner","Association","","Association.fk_Model = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsAssociationCounts")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1470,7 +1470,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"PackageCount")
         :Join("inner","Package","","Package.fk_Model = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsPackageCounts")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1484,7 +1484,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"DataTypeCount")
         :Join("inner","DataType","","DataType.fk_Model = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsDataTypeCounts")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1498,7 +1498,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"LinkedModelCount")
         :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsDataTypeCounts1")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1512,7 +1512,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"LinkedModelCount")
         :Join("inner","LinkedModel","","LinkedModel.fk_Model2 = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsDataTypeCounts2")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -1526,7 +1526,7 @@ if l_nNumberOfModels > 0
         :Column("Count(*)" ,"ModelingDiagramCount")
         :Join("inner","ModelingDiagram","","ModelingDiagram.fk_Model = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model.pk")
+        :GroupBy("Model_pk")
         :SQL("ListOfModelsModelingDiagramCounts")
         with object :p_oCursor
             :Index("tag1","Model_pk")
@@ -2286,7 +2286,7 @@ with object l_oDB_ListOfEntitiesAttributeCounts
     :Column("Count(*)" ,"AttributeCount")
     :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
     :Where("Entity.fk_Model = ^",par_iModelPk)
-    :GroupBy("Entity.pk")
+    :GroupBy("Entity_pk")
     :SQL("ListOfEntitiesAttributeCounts")
 
     with object :p_oCursor
@@ -3084,7 +3084,7 @@ static function DataTypeTreeBuild(par_iModelPk, par_cModelLinkUID, par_cSelected
         //:Join("left outer","Package","","DataType.fk_Package = Package.pk")
         :OrderBy("DataType_Name")
         :SQL("ListOfDataTypes")
-        l_nNumberOfDataTypes := :Tally
+        // l_nNumberOfDataTypes := :Tally
     endwith
 
     with object l_oDB_ListOfEnumerations
@@ -3639,7 +3639,7 @@ if l_cAction == "LoadAllPrimitives"
                     :Update(ListOfDataTypeWithMatchingPrimitiveName->datatype_pk)
                 endcase
             endwith
-            SendToDebugView("Will Add "+ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name)
+            // SendToDebugView("Will Add "+ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name)
         endscan
 
         FixNonNormalizeFieldsInDataType(par_iModelPk)
@@ -4124,7 +4124,7 @@ with object l_oDB2
     :Column("Count(*)" ,"ModelEnumValueCount")
     :Join("inner","ModelEnumValue","","ModelEnumValue.fk_ModelEnumeration = ModelEnumeration.pk")
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
-    :GroupBy("ModelEnumeration.pk")
+    :GroupBy("ModelEnumeration_pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
 
     with object :p_oCursor
@@ -5027,7 +5027,7 @@ endif
 //     :Column("Count(*)" ,"EndpointCount")
 //     :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
 //     :Where("Association.fk_Model = ^",par_iModelPk)
-//     :GroupBy("Association.pk")
+//     :GroupBy("Association_pk")
 //     :SQL("ListOfAssociationsEndpointCounts")
 
 //     with object :p_oCursor

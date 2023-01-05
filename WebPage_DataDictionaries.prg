@@ -53,7 +53,7 @@ local l_nAccessLevelDD := 1   // None by default
 //     2 - Read Only
 //     3 - Edit Description and Information Entries
 //     4 - Edit Description and Information Entries and Diagrams
-//     5 - Edit Anything
+//     5 - Edit Anything and Import/Export
 //     6 - Edit Anything and Load/Sync Schema
 //     7 - Full Access
 
@@ -72,6 +72,8 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 //Improved and new way:
 // DataDictionaries/                      Same as DataDictionaries/ListDataDictionaries/
 // DataDictionaries/DataDictionarySettings/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryImport/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryLoadSchema/<ApplicationLinkCode>/
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
@@ -168,6 +170,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionarySettings")
         l_cApplicationElement := "SETTINGS"
 
+    case vfp_Inlist(l_cURLAction,"DataDictionaryImport")
+        l_cApplicationElement := "IMPORT"
+
+    case vfp_Inlist(l_cURLAction,"DataDictionaryExport")
+        l_cApplicationElement := "EXPORT"
+
     case vfp_Inlist(l_cURLAction,"DataDictionaryLoadSchema")
         l_cApplicationElement := "LOADSCHEMA"
 
@@ -251,6 +259,94 @@ case l_cURLAction == "DataDictionarySettings"
             endif
         endif
     endif
+
+case l_cURLAction == "DataDictionaryImport"  //_M_
+    if oFcgi:p_nAccessLevelDD >= 5
+        // l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+        //Will Build the header after new entities are created.
+        l_cHtmlUnderHeader := []
+
+        if oFcgi:isGet()
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+            with object l_oDB1
+                :Table("0c62b1c8-25f8-4bae-b8b0-4248805814b1","public.Application")
+                :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
+                :Column("Application.SyncServer"       ,"Application_SyncServer")
+                :Column("Application.SyncPort"         ,"Application_SyncPort")
+                :Column("Application.SyncUser"         ,"Application_SyncUser")
+                :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
+                :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
+                :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
+                l_oData := :Get(l_iApplicationPk)
+            endwith
+
+            // if l_oDB1:Tally == 1
+            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+            //                                                 l_oData:Application_SyncBackendType,;
+            //                                                 l_oData:Application_SyncServer,;
+            //                                                 l_oData:Application_SyncPort,;
+            //                                                 l_oData:Application_SyncUser,;
+            //                                                 "",;
+            //                                                 l_oData:Application_SyncDatabase,;
+            //                                                 l_oData:Application_SyncNameSpaces,;
+            //                                                 l_oData:Application_SyncSetForeignKey,;
+            //                                                 {})
+            // endif
+        else
+            // if l_iApplicationPk > 0
+            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+            // endif
+        endif
+        l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+        l_cHtml += l_cHtmlUnderHeader
+    endif
+
+
+case l_cURLAction == "DataDictionaryExport"  //_M_
+    if oFcgi:p_nAccessLevelDD >= 5
+        // l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+        //Will Build the header after new entities are created.
+        l_cHtmlUnderHeader := []
+
+        if oFcgi:isGet()
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+            with object l_oDB1
+                :Table("0c62b1c8-25f8-4bae-b8b0-4248805814b1","public.Application")
+                :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
+                :Column("Application.SyncServer"       ,"Application_SyncServer")
+                :Column("Application.SyncPort"         ,"Application_SyncPort")
+                :Column("Application.SyncUser"         ,"Application_SyncUser")
+                :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
+                :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
+                :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
+                l_oData := :Get(l_iApplicationPk)
+            endwith
+
+l_cHtmlUnderHeader += [<pre>]+ExportToHbORM(l_iApplicationPk)+[</pre>]
+
+            // if l_oDB1:Tally == 1
+            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+            //                                                 l_oData:Application_SyncBackendType,;
+            //                                                 l_oData:Application_SyncServer,;
+            //                                                 l_oData:Application_SyncPort,;
+            //                                                 l_oData:Application_SyncUser,;
+            //                                                 "",;
+            //                                                 l_oData:Application_SyncDatabase,;
+            //                                                 l_oData:Application_SyncNameSpaces,;
+            //                                                 l_oData:Application_SyncSetForeignKey,;
+            //                                                 {})
+            // endif
+        else
+            // if l_iApplicationPk > 0
+            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+            // endif
+        endif
+        l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+        l_cHtml += l_cHtmlUnderHeader
+    endif
+
 
 case l_cURLAction == "DataDictionaryLoadSchema"
     if oFcgi:p_nAccessLevelDD >= 6
@@ -552,20 +648,20 @@ case l_cURLAction == "EditColumn"
         :Column("Column.UseStatus"       ,"Column_UseStatus")       //  6
         :Column("Column.DocStatus"       ,"Column_DocStatus")       //  7
         :Column("Column.Description"     ,"Column_Description")     //  8
-
         :Column("Column.Type"            ,"Column_Type")            //  9
-        :Column("Column.Length"          ,"Column_Length")          // 10
-        :Column("Column.Scale"           ,"Column_Scale")           // 11
-        :Column("Column.Nullable"        ,"Column_Nullable")        // 12
-        :Column("Column.Required"        ,"Column_Required")        // 13
-        :Column("Column.Primary"         ,"Column_Primary")         // 14
-        :Column("Column.Unicode"         ,"Column_Unicode")         // 15
-        :Column("Column.Default"         ,"Column_Default")         // 16
-        :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 17
-        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 18
-        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 19
-        :Column("Column.ForeignKeyUse"   ,"Column_ForeignKeyUse")   // 20
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 21
+        :Column("Column.Array"           ,"Column_Array")           // 10
+        :Column("Column.Length"          ,"Column_Length")          // 11
+        :Column("Column.Scale"           ,"Column_Scale")           // 12
+        :Column("Column.Nullable"        ,"Column_Nullable")        // 13
+        :Column("Column.Required"        ,"Column_Required")        // 14
+        :Column("Column.Primary"         ,"Column_Primary")         // 15
+        :Column("Column.Unicode"         ,"Column_Unicode")         // 16
+        :Column("Column.Default"         ,"Column_Default")         // 17
+        :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 18
+        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 19
+        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 20
+        :Column("Column.ForeignKeyUse"   ,"Column_ForeignKeyUse")   // 21
+        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 22
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
@@ -601,18 +697,19 @@ case l_cURLAction == "EditColumn"
             l_hValues["DocStatus"]       := l_aSQLResult[1, 7]
             l_hValues["Description"]     := l_aSQLResult[1, 8]
             l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 9])
-            l_hValues["Length"]          := l_aSQLResult[1,10]
-            l_hValues["Scale"]           := l_aSQLResult[1,11]
-            l_hValues["Nullable"]        := l_aSQLResult[1,12]
-            l_hValues["Required"]        := l_aSQLResult[1,13]
-            l_hValues["Primary"]         := l_aSQLResult[1,14]
-            l_hValues["Unicode"]         := l_aSQLResult[1,15]
-            l_hValues["Default"]         := l_aSQLResult[1,16]
-            l_hValues["LastNativeType"]  := l_aSQLResult[1,17]
-            l_hValues["UsedBy"]          := l_aSQLResult[1,18]
-            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,19]
-            l_hValues["ForeignKeyUse"]   := l_aSQLResult[1,20]
-            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,21]
+            l_hValues["Array"]           := l_aSQLResult[1,10]
+            l_hValues["Length"]          := l_aSQLResult[1,11]
+            l_hValues["Scale"]           := l_aSQLResult[1,12]
+            l_hValues["Nullable"]        := l_aSQLResult[1,13]
+            l_hValues["Required"]        := l_aSQLResult[1,14]
+            l_hValues["Primary"]         := l_aSQLResult[1,15]
+            l_hValues["Unicode"]         := l_aSQLResult[1,16]
+            l_hValues["Default"]         := l_aSQLResult[1,17]
+            l_hValues["LastNativeType"]  := l_aSQLResult[1,18]
+            l_hValues["UsedBy"]          := l_aSQLResult[1,19]
+            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,20]
+            l_hValues["ForeignKeyUse"]   := l_aSQLResult[1,21]
+            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,22]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -1021,6 +1118,26 @@ if l_iTypePos > 0
         endif
     endcase
 
+    // // Not a native Enumeration but has a link to an enumeration - Following was a test to see if should allow to link to an enum without forcing it. Decided not to allow.
+    // if !oFcgi:p_ColumnTypes[l_iTypePos,5] .and. !hb_IsNIL(par_cEnumerationName)
+    //     l_cResult += [&nbsp;(]
+    //     l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
+    //     l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
+    //     l_cResult += [</a>]
+    //     l_cResult += [)]
+
+    //     // do case
+    //     // case par_iEnumerationImplementAs == 1
+    //     //     l_cResult += [SQL Enum)]
+    //     // case par_iEnumerationImplementAs == 2
+    //     //     l_cResult += [Integer)]
+    //     // case par_iEnumerationImplementAs == 3
+    //     //     l_cResult += [Numeric ]+Trans(nvl(par_iEnumerationImplementLength,0))+[ digit]+iif(nvl(par_iEnumerationImplementLength,0) > 1,[s],[])+[)]
+    //     // case par_iEnumerationImplementAs == 4
+    //     //     l_cResult += [String ]+Trans(nvl(par_iEnumerationImplementLength,0))+[ character]+iif(nvl(par_iEnumerationImplementLength,0) > 1,[s],[])+[)]
+    //     // endcase
+    // endif
+
     if par_iColumnUnicode .and. oFcgi:p_ColumnTypes[l_iTypePos,6]
         l_cResult += " Unicode"
     endif
@@ -1098,6 +1215,16 @@ l_cHtml += [<ul class="nav nav-tabs">]
             l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionarySettings/]+par_cURLApplicationLinkCode+[/">Data Dictionary Settings</a>]
         l_cHtml += [</li>]
     endif
+    //--------------------------------------------------------------------------------------
+//_M_ Under Development
+    // if oFcgi:p_nAccessLevelDD >= 5
+    //     l_cHtml += [<li class="nav-item">]
+    //         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "IMPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryImport/]+par_cURLApplicationLinkCode+[/">Import</a>]
+    //     l_cHtml += [</li>]
+    //     l_cHtml += [<li class="nav-item">]
+    //         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "EXPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryExport/]+par_cURLApplicationLinkCode+[/">Export</a>]
+    //     l_cHtml += [</li>]
+    // endif
     //--------------------------------------------------------------------------------------
     if oFcgi:p_nAccessLevelDD >= 6
         l_cHtml += [<li class="nav-item">]
@@ -1198,7 +1325,7 @@ with object l_oDB_ListOfTableCounts
     :Column("Count(*)" ,"Count")
     :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -1217,7 +1344,7 @@ with object l_oDB_ListOfColumnCounts
     :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -1235,7 +1362,7 @@ with object l_oDB_ListOfEnumerationCounts
     :Column("Count(*)" ,"Count")
     :Join("inner","NameSpace"  ,"","NameSpace.fk_Application = Application.pk")
     :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -1254,7 +1381,7 @@ with object l_oDB_ListOfIndexCounts
     :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Index"   ,"","Index.fk_Table = Table.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -1271,7 +1398,7 @@ with object l_oDB_ListOfDiagramCounts
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"Count")
     :Join("inner","Diagram","","Diagram.fk_Application = Application.pk")
-    :GroupBy("Application.pk")
+    :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
         :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -2185,7 +2312,7 @@ with object l_oDB_ListOfColumnCounts
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :GroupBy("Table.pk")
+    :GroupBy("Table_pk")
     :SQL("ListOfColumnCounts")
     with object :p_oCursor
         :Index("tag1","Table_pk")
@@ -2200,7 +2327,7 @@ with object l_oDB_ListOfIndexCounts
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Index","","Index.fk_Table = Table.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :GroupBy("Table.pk")
+    :GroupBy("Table_pk")
     :SQL("ListOfIndexCounts")
     with object :p_oCursor
         :Index("tag1","Table_pk")
@@ -3047,6 +3174,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.Description"    ,"Column_Description")
     :Column("Column.Order"          ,"Column_Order")
     :Column("Column.Type"           ,"Column_Type")
+    :Column("Column.Array"          ,"Column_Array")
     :Column("Column.Length"         ,"Column_Length")
     :Column("Column.Scale"          ,"Column_Scale")
     :Column("Column.Nullable"       ,"Column_Nullable")
@@ -3280,6 +3408,9 @@ else
                                                         l_cSitePath,;
                                                         par_cURLApplicationLinkCode,;
                                                         par_cURLNameSpaceName)
+                        if ListOfColumns->Column_Array
+                            l_cHtml += " [Array]"
+                        endif
                     l_cHtml += [</td>]
 
                     // Nullable
@@ -3537,6 +3668,7 @@ local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
+local l_lArray           := hb_HGetDef(par_hValues,"Array",.f.)
 local l_cLength          := Trans(hb_HGetDef(par_hValues,"Length",""))
 local l_cScale           := Trans(hb_HGetDef(par_hValues,"Scale",""))
 local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
@@ -3763,6 +3895,14 @@ l_cHtml += [<div class="m-3">]
 
 
     l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Array</td>]
+        l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckArray" id="CheckArray" value="1"]+iif(l_lArray," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+        l_cHtml += [</div></td>]
+    l_cHtml += [</tr>]
+
+
+    l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Required</td>]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRequired" id="ComboRequired"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
@@ -3936,6 +4076,7 @@ local l_nColumnUseStatus
 local l_nColumnDocStatus
 local l_cColumnDescription
 local l_cColumnType
+local l_lColumnArray
 local l_cColumnLength
 local l_nColumnLength
 local l_cColumnScale
@@ -3989,6 +4130,7 @@ endif
 l_nColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
 l_cColumnType            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
+l_lColumnArray           := (oFcgi:GetInputValue("CheckArray") == "1")
 
 l_cColumnLength          := SanitizeInput(oFcgi:GetInputValue("TextLength"))
 l_nColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
@@ -4138,6 +4280,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Column.AKA"             , l_cColumnAKA)
                 :Field("Column.UseStatus"       , l_nColumnUseStatus)
                 :Field("Column.Type"            , l_cColumnType)
+                :Field("Column.Array"           , l_lColumnArray)
                 :Field("Column.Length"          , l_nColumnLength)
                 :Field("Column.Scale"           , l_nColumnScale)
                 :Field("Column.Nullable"        , l_lColumnNullable)
@@ -4269,6 +4412,7 @@ if !empty(l_cErrorMessage)
     l_hValues["DocStatus"]       := l_nColumnDocStatus
     l_hValues["Description"]     := l_cColumnDescription
     l_hValues["Type"]            := l_cColumnType
+    l_hValues["Array"]           := l_lColumnArray
     l_hValues["Length"]          := l_nColumnLength
     l_hValues["Scale"]           := l_nColumnScale
     l_hValues["LastNativeType"]  := l_cColumnLastNativeType
@@ -4475,7 +4619,7 @@ with object l_oDB2
     :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
     :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :GroupBy("Enumeration.pk")
+    :GroupBy("Enumeration_pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
     with object :p_oCursor
         :Index("tag1","Enumeration_pk")
@@ -5686,7 +5830,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
             // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
             l_cConnectionString := "SERVER="+l_cSyncServer+";Driver={"+l_cDriver+"};USER="+l_cSyncUser+";PASSWORD="+l_cSyncPassword+";DATABASE="+l_cSyncDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
-            l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";"
+            l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";BoolsAsChar=0;"
         case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
             l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
         otherwise

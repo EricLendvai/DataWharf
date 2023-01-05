@@ -680,6 +680,7 @@ local l_iTablePk
 local l_oDataDiagram
 local l_nRenderMode
 
+
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramOnSubmit")
 
 l_iDiagramPk := Val(oFcgi:GetInputValue("TextDiagramPk"))
@@ -1795,6 +1796,7 @@ if len(l_aNodes) == 1
             :Column("Column.Description"    ,"Column_Description")
             :Column("Column.Order"          ,"Column_Order")
             :Column("Column.Type"           ,"Column_Type")
+            :Column("Column.Array"          ,"Column_Array")
             :Column("Column.Length"         ,"Column_Length")
             :Column("Column.Scale"          ,"Column_Scale")
             :Column("Column.Nullable"       ,"Column_Nullable")
@@ -2184,6 +2186,9 @@ if len(l_aNodes) == 1
                                                                         l_cSitePath,;
                                                                         l_cApplicationLinkCode,;
                                                                         l_cNameSpaceName)
+                                        if ListOfColumns->Column_Array
+                                            l_cHtml += " [Array]"
+                                        endif
                                     l_cHtml += [</td>]
 
                                     // Nullable

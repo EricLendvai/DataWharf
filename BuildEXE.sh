@@ -44,10 +44,8 @@ else
             #  -p        = Leave generated ppo files
 
             if [ "${BuildMode}" = "debug" ] ; then
-                cp ./debugger_on.hbm ./debugger.hbm
-                hbmk2 "${EXEName}_linux.hbp" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -b  -p -w3 -shared
+                hbmk2 "${EXEName}_linux.hbp" "vscode_debugger.prg" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -b  -p -w3 -shared
             else
-                cp ./debugger_off.hbm ./debugger.hbm
                 hbmk2 "${EXEName}_linux.hbp" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -w3 -static
                 # -static
                 # -fullstatic

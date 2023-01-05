@@ -1,10 +1,11 @@
 #include "DataWharf.ch"
 
 function DeltaSchema(par_SQLHandle,par_iApplicationPk,par_SQLEngineType,par_cDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey)
-local l_SQLCommandEnums       := []
-local l_SQLCommandFields      := []
-local l_SQLCommandIndexes     := []
-local l_SQLCommandForeignKeys := []
+local l_cSQLCommand
+local l_cSQLCommandEnums       := []
+local l_cSQLCommandFields      := []
+local l_cSQLCommandIndexes     := []
+local l_cSQLCommandForeignKeys := []
 local l_aNameSpaces
 local l_iPosition
 local l_iFirstNameSpace
@@ -25,6 +26,7 @@ local l_LastColumnOrder
 local l_LastEnumValueOrder
 
 local l_cColumnType
+local l_lColumnArray
 local l_nColumnLength
 local l_nColumnScale
 local l_lColumnNullable
@@ -66,14 +68,14 @@ local l_oDB_AllTableColumnsChildrenForForeignKeys
 local l_aSQLResult := {}
 local l_cErrorMessage := ""
 
-local l_iNewTables       := 0
-local l_iNewNameSpace    := 0
-local l_iNewColumns      := 0
-local l_iNewEnumerations := 0
-local l_iNewEnumValues   := 0
-local l_iUpdatedColumns  := 0
-local l_iNewIndexes      := 0
-local l_iUpdatedIndexes  := 0
+local l_iNewTables         := 0
+local l_iNewNameSpace      := 0
+local l_iNewColumns        := 0
+local l_iNewEnumerations   := 0
+local l_iNewEnumValues     := 0
+local l_iMismatchedColumns := 0
+local l_iNewIndexes        := 0
+local l_iMismatchedIndexes := 0
 
 local l_nPos
 
@@ -87,6 +89,14 @@ local l_iParentTableKey
 local l_iChildColumnKey
 
 local l_aListOfMessages := {}
+
+do case
+case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
+case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
+    //To work around performance issues when querying meta database
+    l_cSQLCommand := [SET enable_nestloop = false;]
+    SQLExec(par_SQLHandle,l_cSQLCommand)
+endcase
 
 hb_HCaseMatch(l_hCurrentListOfEnumerations,.f.)
 hb_HKeepOrder(l_hCurrentListOfEnumerations,.t.)
@@ -114,14 +124,14 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
-    l_SQLCommandEnums := [SELECT namespaces.nspname as schema_name,]
-    l_SQLCommandEnums += [       types.typname      as enum_name,]
-    l_SQLCommandEnums += [       enums.enumlabel    as enum_value]
-    l_SQLCommandEnums += [ FROM pg_type types]
-    l_SQLCommandEnums += [ JOIN pg_enum enums on types.oid = enums.enumtypid]
-    l_SQLCommandEnums += [ JOIN pg_catalog.pg_namespace namespaces ON namespaces.oid = types.typnamespace]
+    l_cSQLCommandEnums := [SELECT namespaces.nspname as schema_name,]
+    l_cSQLCommandEnums += [       types.typname      as enum_name,]
+    l_cSQLCommandEnums += [       enums.enumlabel    as enum_value]
+    l_cSQLCommandEnums += [ FROM pg_type types]
+    l_cSQLCommandEnums += [ JOIN pg_enum enums on types.oid = enums.enumtypid]
+    l_cSQLCommandEnums += [ JOIN pg_catalog.pg_namespace namespaces ON namespaces.oid = types.typnamespace]
     if !empty(par_cSyncNameSpaces)
-        l_SQLCommandFields  += [ AND lower(namespaces.nspname) in (]
+        l_cSQLCommandFields  += [ AND lower(namespaces.nspname) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
         l_iFirstNameSpace := .t.
         for l_iPosition := 1 to len(l_aNameSpaces)
@@ -130,37 +140,51 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if l_iFirstNameSpace
                     l_iFirstNameSpace := .f.
                 else
-                    l_SQLCommandFields += [,]
+                    l_cSQLCommandFields += [,]
                 endif
-                l_SQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
+                l_cSQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
             endif
         endfor
-        l_SQLCommandFields  += [)]
+        l_cSQLCommandFields  += [)]
     endif
-    l_SQLCommandEnums += [ ORDER BY schema_name,enum_name;]
+    l_cSQLCommandEnums += [ ORDER BY schema_name,enum_name;]
 
 
-    l_SQLCommandFields  := [SELECT columns.table_schema             AS schema_name,]
-    l_SQLCommandFields  += [       columns.table_name               AS table_name,]
-    l_SQLCommandFields  += [       columns.ordinal_position         AS field_position,]
-    l_SQLCommandFields  += [       columns.column_name              AS field_name,]
-    l_SQLCommandFields  += [       columns.data_type                AS field_type,]
-    l_SQLCommandFields  += [       columns.character_maximum_length AS field_clength,]
-    l_SQLCommandFields  += [       columns.numeric_precision        AS field_nlength,]
-    l_SQLCommandFields  += [       columns.datetime_precision       AS field_tlength,]
-    l_SQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]
-    l_SQLCommandFields  += [       (columns.is_nullable = 'YES')    AS field_nullable,]
-    l_SQLCommandFields  += [       columns.column_default           AS field_default,]
-    l_SQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_is_identity,]
-    l_SQLCommandFields  += [       columns.udt_name                 AS enumeration_name,]
-    l_SQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
-    l_SQLCommandFields  += [       upper(columns.table_name)        AS tag2]
-    l_SQLCommandFields  += [ FROM information_schema.columns]
-    l_SQLCommandFields  += [ INNER JOIN information_schema.tables ON columns.table_catalog = columns.table_catalog AND columns.table_schema = tables.table_schema AND columns.table_name = tables.table_name]
-    l_SQLCommandFields  += [ WHERE NOT (lower(left(columns.table_name,11)) = 'schemacache' OR lower(columns.table_schema) in ('information_schema','pg_catalog'))]
-    l_SQLCommandFields  += [ AND   tables.table_type = 'BASE TABLE']
+    l_cSQLCommandFields  := [SELECT columns.table_schema             AS schema_name,]
+    l_cSQLCommandFields  += [       columns.table_name               AS table_name,]
+    l_cSQLCommandFields  += [       columns.ordinal_position         AS field_position,]
+    l_cSQLCommandFields  += [       columns.column_name              AS field_name,]
+
+    // l_cSQLCommandFields  += [       columns.data_type                AS field_type,]
+    // l_cSQLCommandFields  += [       element_types.data_type          AS field_type_extra,]
+
+    l_cSQLCommandFields  += [      CASE]+CRLF
+    l_cSQLCommandFields  += [         WHEN columns.data_type = 'ARRAY' THEN element_types.data_type::text]+CRLF
+    l_cSQLCommandFields  += [        ELSE columns.data_type::text]+CRLF
+    l_cSQLCommandFields  += [      END AS field_type,]+CRLF
+    l_cSQLCommandFields  += [         CASE]+CRLF
+    l_cSQLCommandFields  += [         WHEN columns.data_type = 'ARRAY' THEN true]+CRLF
+    l_cSQLCommandFields  += [        ELSE false]+CRLF
+    l_cSQLCommandFields  += [      END AS field_array,]+CRLF
+
+
+    l_cSQLCommandFields  += [       columns.character_maximum_length AS field_clength,]
+    l_cSQLCommandFields  += [       columns.numeric_precision        AS field_nlength,]
+    l_cSQLCommandFields  += [       columns.datetime_precision       AS field_tlength,]
+    l_cSQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]
+    l_cSQLCommandFields  += [       (columns.is_nullable = 'YES')    AS field_nullable,]
+    l_cSQLCommandFields  += [       columns.column_default           AS field_default,]
+    l_cSQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_is_identity,]
+    l_cSQLCommandFields  += [       columns.udt_name                 AS enumeration_name,]
+    l_cSQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
+    l_cSQLCommandFields  += [       upper(columns.table_name)        AS tag2]
+    l_cSQLCommandFields  += [ FROM information_schema.columns]
+    l_cSQLCommandFields  += [ INNER JOIN information_schema.tables ON columns.table_catalog = columns.table_catalog AND columns.table_schema = tables.table_schema AND columns.table_name = tables.table_name]
+    l_cSQLCommandFields  += [ LEFT  JOIN information_schema.element_types ON ((columns.table_catalog, columns.table_schema, columns.table_name, 'TABLE', columns.dtd_identifier) = (element_types.object_catalog, element_types.object_schema, element_types.object_name, element_types.object_type, element_types.collection_type_identifier))]
+    l_cSQLCommandFields  += [ WHERE NOT (lower(left(columns.table_name,11)) = 'schemacache' OR lower(columns.table_schema) in ('information_schema','pg_catalog'))]
+    l_cSQLCommandFields  += [ AND   tables.table_type = 'BASE TABLE']
     if !empty(par_cSyncNameSpaces)
-        l_SQLCommandFields  += [ AND lower(columns.table_schema) in (]
+        l_cSQLCommandFields  += [ AND lower(columns.table_schema) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
         l_iFirstNameSpace := .t.
         for l_iPosition := 1 to len(l_aNameSpaces)
@@ -169,32 +193,32 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if l_iFirstNameSpace
                     l_iFirstNameSpace := .f.
                 else
-                    l_SQLCommandFields += [,]
+                    l_cSQLCommandFields += [,]
                 endif
-                l_SQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
+                l_cSQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
             endif
         endfor
-        l_SQLCommandFields  += [)]
+        l_cSQLCommandFields  += [)]
     endif
-    l_SQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
+    l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
 
-// SendToClipboard(l_SQLCommandFields)
+// SendToClipboard(l_cSQLCommandFields)
 
 
-    l_SQLCommandIndexes := [SELECT pg_indexes.schemaname        AS schema_name,]
-    l_SQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
-    l_SQLCommandIndexes += [       pg_indexes.indexname         AS index_name,]
-    l_SQLCommandIndexes += [       pg_indexes.indexdef          AS index_definition,]
-    l_SQLCommandIndexes += [       upper(pg_indexes.schemaname) AS tag1,]
-    l_SQLCommandIndexes += [       upper(pg_indexes.tablename)  AS tag2]
-    l_SQLCommandIndexes += [ FROM pg_indexes]
-    l_SQLCommandIndexes += [ WHERE NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog'))]
-    l_SQLCommandIndexes += [ ORDER BY tag1,tag2,index_name]
+    l_cSQLCommandIndexes := [SELECT pg_indexes.schemaname        AS schema_name,]
+    l_cSQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
+    l_cSQLCommandIndexes += [       pg_indexes.indexname         AS index_name,]
+    l_cSQLCommandIndexes += [       pg_indexes.indexdef          AS index_definition,]
+    l_cSQLCommandIndexes += [       upper(pg_indexes.schemaname) AS tag1,]
+    l_cSQLCommandIndexes += [       upper(pg_indexes.tablename)  AS tag2]
+    l_cSQLCommandIndexes += [ FROM pg_indexes]
+    l_cSQLCommandIndexes += [ WHERE NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog'))]
+    l_cSQLCommandIndexes += [ ORDER BY tag1,tag2,index_name]
 
 
 
 //--Load Enumerations-----------
-    if !SQLExec(par_SQLHandle,l_SQLCommandEnums,"ListOfEnumsForLoads")
+    if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
         l_cErrorMessage := "Failed to retrieve Enumeration Meta data."
     else
         // ExportTableToHtmlFile("ListOfEnumsForLoads","d:\PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
@@ -367,7 +391,7 @@ hb_HDel(l_hCurrentListOfEnumValues,l_cLastNameSpace+"*"+l_cLastEnumerationName+"
 
 //--Load Tables-----------
     if empty(l_cErrorMessage)
-        if !SQLExec(par_SQLHandle,l_SQLCommandFields,"ListOfFieldsForLoads")
+        if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
             // ExportTableToHtmlFile("ListOfFieldsForLoads","d:\PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
@@ -455,6 +479,7 @@ hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
                         :Column("Column.Name"           , "Column_Name")
                         :Column("upper(Column.Name)"    , "tag1")
                         :Column("Column.Type"           , "Column_Type")
+                        :Column("Column.Array"          , "Column_Array")
                         :Column("Column.Length"         , "Column_Length")
                         :Column("Column.Scale"          , "Column_Scale")
                         :Column("Column.Nullable"       , "Column_Nullable")
@@ -499,16 +524,18 @@ l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsI
                     l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
 hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cColumnName+"*")
 
-                    l_lColumnNullable       := (alltrim(ListOfFieldsForLoads->field_nullable) == "1")      // Since the information_schema does not follow odbc driver setting to return boolean as logical
-                    l_lColumnPrimary        := (alltrim(ListOfFieldsForLoads->field_is_identity) == "1")
+                    l_lColumnNullable       := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnPrimary        := ListOfFieldsForLoads->field_is_identity
                     l_lColumnUnicode        := .f.
                     l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_lColumnArray          := ListOfFieldsForLoads->field_array
                     l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
-
                     if l_cColumnDefault == "NULL"
                         l_cColumnDefault := ""
                     endif
                     l_cColumnDefault        := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
+                    l_cColumnLastNativeType := l_cColumnLastNativeType + iif(l_lColumnArray,"[]","")
+                    
                     if l_cColumnLastNativeType == "character"
                         l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
                     endif
@@ -522,6 +549,9 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                     // if ListOfFieldsForLoads->field_type == "USER-DEFINED"
                     //     altd()
                     // endif
+
+                    // l_lColumnArray := (ListOfFieldsForLoads->field_type == "ARRAY")
+                    // switch iif(ListOfFieldsForLoads->field_type == "ARRAY",nvl(ListOfFieldsForLoads->field_type_extra,"unknown"),ListOfFieldsForLoads->field_type)
 
                     switch ListOfFieldsForLoads->field_type
                     case "integer"
@@ -631,6 +661,12 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                         l_nColumnScale  := NIL
                         exit
 
+                    case "json"
+                        l_cColumnType   := "JS"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "USER-DEFINED"
                         l_cColumnType   := "E"
                         l_nColumnLength := NIL
@@ -652,11 +688,21 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                         // Altd()
                     endcase
 
+//_M_ l_lColumnPrimary vs AutoIncrement
+                    l_cColumnDefault := oFcgi:p_o_SQLConnection:SanitizeFieldDefaultFromDefaultBehavior(par_SQLEngineType,;
+                                                                                                        l_cColumnType,;
+                                                                                                        iif(l_lColumnNullable,"N","")+iif(l_lColumnPrimary,"+","")+iif(l_lColumnArray,"A",""),;
+                                                                                                        l_cColumnDefault)
+                    if hb_IsNil(l_cColumnDefault)
+                        l_cColumnDefault := ""
+                    endif
+                    
                     if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInTable","tag1")
                         l_iColumnPk := ListOfColumnsInTable->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
                         if trim(nvl(ListOfColumnsInTable->Column_Type,""))    == l_cColumnType           .and. ;
+                           nvl(ListOfColumnsInTable->Column_Array,.f.)        == l_lColumnArray          .and. ;
                            ListOfColumnsInTable->Column_Length                == l_nColumnLength         .and. ;
                            ListOfColumnsInTable->Column_Scale                 == l_nColumnScale          .and. ;
                            ListOfColumnsInTable->Column_Nullable              == l_lColumnNullable       .and. ;
@@ -672,7 +718,7 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                             else
                                 if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInTable","Column_Type") .or. empty(ListOfColumnsInTable->Column_Type))
 
-                                    l_iUpdatedColumns += 1
+                                    l_iMismatchedColumns += 1
                                     AAdd(l_aListOfMessages,[Different Column Definition "]+l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName+["])
 
                                 endif
@@ -712,7 +758,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
     // //--Load Indexes----------------
     // if empty(l_cErrorMessage)
-    //     if !SQLExec(par_SQLHandle,l_SQLCommandIndexes,"ListOfIndexesForLoads")
+    //     if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
     //         l_cErrorMessage := "Failed to retrieve Fields Meta data."
     //     else
     //         // ExportTableToHtmlFile("ListOfIndexesForLoads","d:\PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
@@ -778,7 +824,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //                         ListOfIndexesInTable->Index_Algo <> l_iIndexAlgo                 .or. ;
     //                         ListOfIndexesInTable->Index_Expression <> l_cIndexExpression
 
-    //                         l_iUpdatedIndexes += 1
+    //                         l_iMismatchedIndexes += 1
     //                         AAdd(l_aListOfMessages,[Updated Index "]+l_cLastNameSpace+"."+l_cLastTableName+" "+l_cIndexName+["])
 
     //                     else
@@ -823,17 +869,17 @@ endfor
 //--Final Return Info-----------
 
 if empty(l_cErrorMessage)
-    l_cErrorMessage := "Success"
 
-    if !empty(l_iNewTables)       .or. ;
-       !empty(l_iNewNameSpace)    .or. ;
-       !empty(l_iNewColumns)      .or. ;
-       !empty(l_iUpdatedColumns)  .or. ;
-       !empty(l_iNewEnumerations) .or. ;
-       !empty(l_iNewEnumValues)   .or. ;
-       !empty(l_iNewIndexes)      .or. ;
-       !empty(l_iUpdatedIndexes)
+    if !empty(l_iNewTables)         .or. ;
+       !empty(l_iNewNameSpace)      .or. ;
+       !empty(l_iNewColumns)        .or. ;
+       !empty(l_iMismatchedColumns) .or. ;
+       !empty(l_iNewEnumerations)   .or. ;
+       !empty(l_iNewEnumValues)     .or. ;
+       !empty(l_iNewIndexes)        .or. ;
+       !empty(l_iMismatchedIndexes)
 
+        l_cErrorMessage := "Success - Delta Result - "
         if !empty(l_iNewTables)
             l_cErrorMessage += [  New Tables: ]+trans(l_iNewTables)
         endif
@@ -843,8 +889,8 @@ if empty(l_cErrorMessage)
         if !empty(l_iNewColumns)
             l_cErrorMessage += [  New Columns: ]+trans(l_iNewColumns)
         endif
-        if !empty(l_iUpdatedColumns)
-            l_cErrorMessage += [  Updated Columns: ]+trans(l_iUpdatedColumns)
+        if !empty(l_iMismatchedColumns)
+            l_cErrorMessage += [  Mismatched Columns: ]+trans(l_iMismatchedColumns)
         endif
         if !empty(l_iNewEnumerations)
             l_cErrorMessage += [  New Enumeration: ]+trans(l_iNewEnumerations)
@@ -855,9 +901,11 @@ if empty(l_cErrorMessage)
         if !empty(l_iNewIndexes)
             l_cErrorMessage += [  New Indexes: ]+trans(l_iNewIndexes)
         endif
-        if !empty(l_iUpdatedIndexes)
-            l_cErrorMessage += [  Updated Indexes: ]+trans(l_iUpdatedIndexes)
+        if !empty(l_iMismatchedIndexes)
+            l_cErrorMessage += [  Mismatched Indexes: ]+trans(l_iMismatchedIndexes)
         endif
+    else
+        l_cErrorMessage := "Success - Delta Result"
     endif
 endif
 
@@ -867,6 +915,14 @@ CloseAlias("ListOfIndexesForLoads")
 CloseAlias("ListOfFieldsForeignKeys")
 CloseAlias("AllTablesAsParentsForForeignKeys")
 CloseAlias("AllTableColumnsChildrenForForeignKeys")
+
+do case
+case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
+case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
+    //To stop work around performance issues when querying meta database
+    l_cSQLCommand := [SET enable_nestloop = true;]
+    SQLExec(par_SQLHandle,l_cSQLCommand)
+endcase
 
 return {l_cErrorMessage,l_aListOfMessages}
 //-----------------------------------------------------------------------------------------------------------------

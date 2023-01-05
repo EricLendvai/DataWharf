@@ -4,6 +4,37 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "SwitchOS",
+            "windows": {
+                "command": "${command:remote-containers.reopenInContainer}",
+                "options": {
+                    "statusbar": {"label" : "<Open Container - Go to Ubuntu>","hide" : false}
+                },
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            },
+            "linux": {
+                "command": "${command:remote-containers.reopenLocally}",
+                "options": {
+                    "statusbar": {"label" : "<Close Container - Go to Windows>","hide" : false}
+                },
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared",
+                    "showReuseMessage": false,
+                    "clear": true
+                }
+            }
+        },
+        {
             "label": "RunDebug",
             "command": "${command:workbench.action.debug.start}",
             "options": {
@@ -204,7 +235,7 @@
             "label": "DelBuildCache",
             "windows":{
                 "type": "shell",
-                "command": "rd ${workspaceFolder}\\build\\win64\\mingw64\\release\\hbmk2 /Q /S|rd ${workspaceFolder}\\build\\win64\\mingw64\\debug\\hbmk2 /Q /S",
+                "command": "rd ${workspaceFolder}\\build\\win64\\ /Q /S",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -214,7 +245,7 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "rm -rf ${workspaceFolder}/build/lin64/gcc/release/hbmk2 ${workspaceFolder}/build/lin64/gcc/debug/hbmk2",
+                "command": "rm -rf ${workspaceFolder}/build/lin64/",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -260,7 +291,7 @@
             },
             "linux":{
                 "type": "shell",
-                "command": "/etc/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_DataWharf/ /etc/Harbour_websites/fcgi_DataWharf/ DataWharf",
+                "command": "/opt/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_DataWharf/ /opt/Harbour_websites/fcgi_DataWharf/ DataWharf",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -296,7 +327,7 @@
             "label": "BrowseDataWharf",
             "windows":{
                 "type": "shell",
-                "command": "\"C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe\" http://localhost:8164/fcgi_DataWharf/",
+                "command": "firefox.exe http://localhost:8164/fcgi_DataWharf/",
                 "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",

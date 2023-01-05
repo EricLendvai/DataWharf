@@ -1,4 +1,4 @@
-//Copyright (c) 2021-2022 Eric Lendvai MIT License
+//Copyright (c) 2023 Eric Lendvai MIT License
 
 #include "DataWharf.ch"
 
@@ -49,13 +49,13 @@ return nil
 //=================================================================================================================
 class MyFcgi from hb_Fcgi
     data p_o_SQLConnection
-    data p_cHeader          init ""
-    data p_cjQueryScript    init ""
-    data p_iUserPk          init 0   // Current "User.pk"
-    data p_cUserName        init ""  // Current logged in User Name
-    data p_nUserAccessMode  init 0   // User based access level. Comes from "User.AccessMode"
-    data p_nAccessLevelDD   init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
-    data p_nAccessLevelML   init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
+    data p_cHeader              init ""
+    data p_cjQueryScript        init ""
+    data p_iUserPk              init 0   // Current "User.pk"
+    data p_cUserName            init ""  // Current logged in User Name
+    data p_nUserAccessMode      init 0   // User based access level. Comes from "User.AccessMode"
+    data p_nAccessLevelDD       init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
+    data p_nAccessLevelML       init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     
     //Used in Modeling. ANF stands for "AlternateNameFor"
     data p_ANFModel             init "Model"
@@ -91,13 +91,14 @@ class MyFcgi from hb_Fcgi
                                   {  "R","Raw Binary"                                   ,.f.,.f.,.f.,.f.,"bytea"                      ,"LONGBLOB"},;
                                   {  "L","Logical"                                      ,.f.,.f.,.f.,.f.,"boolean"                    ,"TINYINT(1)"},;
                                   {  "D","Date"                                         ,.f.,.f.,.f.,.f.,"date"                       ,"DATE"},;
-                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'with timezone'"},;
+                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'Type=TOZ'"},;
                                   { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,.f.,"time without time zone"     ,"TIME"},;
                                   {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"},;
                                   { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
-                                  {  "Y","Money"                                        ,.f.,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'money'"},;
+                                  {  "Y","Money"                                        ,.f.,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'Type=Y'"},;
                                   {  "E","Enumeration"                                  ,.f.,.f.,.t.,.f.,"enum"                       ,"ENUM"},;
-                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,.f.,"uuid"                       ,"BINARY(16)"},;   // In DBF VarChar 36
+                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,.f.,"uuid"                       ,"VARCHAR(36)"},;   // In DBF VarChar 36
+                                  { "JS","JSON"                                         ,.f.,.f.,.f.,.f.,"json"                       ,"LONGTEXT"},;
                                   {  "?","Other"                                        ,.f.,.f.,.f.,.f.,""                           ,""};
                                  }
     method OnFirstRequest()
@@ -498,6 +499,8 @@ if l_lPostgresLostConnection                                    .or.;
         ::p_o_SQLConnection:Disconnect()
     endif
 
+// l_cPostgresDriver := "PostgreSQL Unicode"
+
 ////    SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                         l_cPostgresDriver,;
@@ -520,12 +523,25 @@ if l_lPostgresLostConnection                                    .or.;
             ::p_o_SQLConnection := NIL
         endif
     endwith
+else
+    if ::p_o_SQLConnection:CheckIfSchemaCacheShouldBeUpdated()
+        UpdateSchema(::p_o_SQLConnection)
+    endif
 endif
 
 if ::p_o_SQLConnection == NIL
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
+
+    l_cHtml += [<h2>Config File: ]+::PathBackend+"config.txt"+[</h2>]
+    l_cHtml += [<h2>Driver: ]+l_cPostgresDriver+[</h2>]
+    l_cHtml += [<h2>Host: ]+l_cPostgresHost+[</h2>]
+    l_cHtml += [<h2>Port: ]+trans(l_iPostgresPort)+[</h2>]
+    l_cHtml += [<h2>User ID: ]+l_cPostgresId+[</h2>]
+    l_cHtml += [<h2>Password: ]+::GetAppConfig("POSTGRESPASSWORD")+[</h2>]
+    l_cHtml += [<h2>Database: ]+l_cPostgresDatabase+[</h>]
+    
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
@@ -576,7 +592,7 @@ else
         if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
             l_cPageName := "home"
         endif
-
+// altd()
         ::p_PageName := l_cPageName
 
         // ::URLPathElements := {}
@@ -1510,7 +1526,7 @@ if par_SQLHandle > 0
     catch l_oError
         l_lSQLExecResult := .f.  //Just in case the catch occurs after DBUserArea / hb_RDDInfo
         l_cSQLExecErrorMessage := "SQLExec Error Code: "+Trans(l_oError:oscode)+" - Error description: "+alltrim(l_oError:description)+" - Operation: "+l_oError:operation
-        // Idea for later  ::SQLSendToLogFileAndMonitoringSystem(0,1,l_SQLCommand+[ -> ]+l_cSQLExecErrorMessage)  _M_
+        // Idea for later  ::SQLSendToLogFileAndMonitoringSystem(0,1,l_cSQLCommand+[ -> ]+l_cSQLExecErrorMessage)  _M_
     endtry
 
     if !empty(l_cSQLExecErrorMessage)
