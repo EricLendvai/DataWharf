@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/09/2023 v 2.34
+* Fix for Load and Delta feature on PostgreSQL for jonb native field types.
+
 ## 01/04/2023 v 2.33
 * WARNING: You must pull recent version of Harbour_VFP, Harbour_ORM and Harbour_FastCGI repos!
 * Added support to UUID and JSON in PostgreSQL and MySQL/MariaDB

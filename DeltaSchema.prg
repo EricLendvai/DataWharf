@@ -662,6 +662,7 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                         exit
 
                     case "json"
+                    case "jsonb"
                         l_cColumnType   := "JS"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL

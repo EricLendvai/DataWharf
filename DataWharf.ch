@@ -3,7 +3,7 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.33"
+#define BUILDVERSION "2.34"
 
 #define DATAWHARF_SCRIPT_VERSION     "2022_07_12"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"

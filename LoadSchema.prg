@@ -1028,6 +1028,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         exit
 
                     case "json"
+                    case "jsonb"
                         l_cColumnType   := "JS"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL
