@@ -256,6 +256,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         //---------------------------------------------------------------------------
         if oFcgi:p_nAccessLevelDD >= 4
              l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+             l_cHtml += [<input type="button" role="button" value="Duplicate" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();">]
         endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
@@ -697,6 +698,9 @@ case l_cActionOnSubmit == "MyDiagramSettings"
 
 case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelDD >= 4
     l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,0)
+
+case l_cActionOnSubmit == "DuplicateDiagram" .and. oFcgi:p_nAccessLevelDD >= 4
+    l_cHtml := DataDictionaryVisualizeDiagramDuplicateBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
@@ -1148,7 +1152,6 @@ local l_lDiagram_NodeMinHeight
 local l_lDiagram_NodeMaxWidth
 local l_cErrorMessage
 local l_lSelected
-local l_cValue
 local l_hValues := {=>}
 local l_oDataDiagram
 local l_nRenderMode
@@ -1352,6 +1355,193 @@ case l_cActionOnSubmit == "ResetLayout"
             :Update(l_iDiagramPk)
         endwith
     endif
+    l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
+
+endcase
+
+return l_cHtml
+//=================================================================================================================
+function DataDictionaryVisualizeDiagramDuplicateBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk,par_hValues)
+
+local l_cHtml := ""
+local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
+local l_hValues      := hb_DefaultValue(par_hValues,{=>})
+
+local l_oDB1
+local l_oData
+
+oFcgi:TraceAdd("DataDictionaryVisualizeDiagramDuplicateBuild")
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+if pcount() < 6
+    if par_iDiagramPk > 0
+        with object l_oDB1
+            //Get current Diagram Name
+            :Table("e833b9f1-4427-4001-965d-f02f3d071b87","Diagram")
+            :Column("Diagram.name" ,"Diagram_name")
+            l_oData := :Get(par_iDiagramPk)
+            if :Tally == 1
+                l_hValues["Name"] := l_oData:Diagram_name
+            endif
+        endwith
+    endif
+endif
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="DuplicateDiagram">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
+
+if !empty(par_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">Duplicate Diagram</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+
+    l_cHtml += [<table>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">New Diagram Name</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+        l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalFormsDelete()
+
+return l_cHtml
+//=================================================================================================================
+function DataDictionaryVisualizeDiagramDuplicateOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
+local l_cHtml := []
+
+local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+local l_cNodePositions
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_iDiagramPk
+local l_iNewDiagramPk
+local l_cDiagram_Name
+local l_cErrorMessage
+local l_hValues := {=>}
+local l_oDataDiagram
+
+oFcgi:TraceAdd("DataDictionaryVisualizeDiagramDuplicateOnSubmit")
+
+l_iDiagramPk    := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_cDiagram_Name := SanitizeInput(oFcgi:GetInputValue("TextName"))
+
+do case
+case l_cActionOnSubmit == "DuplicateDiagram"
+
+    do case
+    case empty(l_iDiagramPk)
+        l_cErrorMessage := "Missing Diagram Pk"
+    case empty(l_cDiagram_Name)
+        l_cErrorMessage := "Missing Name"
+    otherwise
+        with object l_oDB1
+            // Avoid duplicating name
+            :Table("8af8349e-adf2-427a-ad6d-918b984d3e07","Diagram")
+            :Where([lower(replace(Diagram.Name,' ','')) = ^],lower(StrTran(l_cDiagram_Name," ","")))
+            :Where([Diagram.fk_Application = ^],par_iApplicationPk)
+            :SQL()
+        endwith
+        if l_oDB1:Tally <> 0
+            l_cErrorMessage := "Duplicate Name"
+        endif
+    endcase
+
+    if empty(l_cErrorMessage)
+        with object l_oDB1
+            //Get the source Diagram Column Values
+            :Table("6c6404f1-b321-459c-9a2b-df2329325091","Diagram")
+            :Column("Diagram.UseStatus"           ,"Diagram_UseStatus")
+            :Column("Diagram.DocStatus"           ,"Diagram_DocStatus")
+            :Column("Diagram.Description"         ,"Diagram_Description")
+            :Column("Diagram.NodeDisplayMode"     ,"Diagram_NodeDisplayMode")
+            :Column("Diagram.NodeShowDescription" ,"Diagram_NodeShowDescription")
+            :Column("Diagram.NodeDisplayMode"     ,"Diagram_NodeDisplayMode")
+            :Column("Diagram.RenderMode"          ,"Diagram_RenderMode")
+            :Column("Diagram.VisPos"              ,"Diagram_VisPos")
+            :Column("Diagram.MxgPos"              ,"Diagram_MxgPos")
+            // :Column("Diagram.LinkUID"             ,"Diagram_LinkUID")
+            :Column("Diagram.NodeMaxWidth"        ,"Diagram_NodeMaxWidth")
+            :Column("Diagram.NodeMinHeight"       ,"Diagram_NodeMinHeight")
+            l_oDataDiagram := :Get(l_iDiagramPk)
+            if :Tally == 1
+
+                :Table("5f129adf-af33-4b70-9c1f-3b1a10921b2a","Diagram")
+                :Field("Diagram.fk_Application"      ,par_iApplicationPk)
+                :Field("Diagram.LinkUID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Diagram.Name"                ,l_cDiagram_Name)
+                :Field("Diagram.UseStatus"           ,l_oDataDiagram:Diagram_UseStatus)
+                :Field("Diagram.DocStatus"           ,l_oDataDiagram:Diagram_DocStatus)
+                :Field("Diagram.Description"         ,l_oDataDiagram:Diagram_Description)
+                :Field("Diagram.NodeDisplayMode"     ,l_oDataDiagram:Diagram_NodeDisplayMode)
+                :Field("Diagram.NodeShowDescription" ,l_oDataDiagram:Diagram_NodeShowDescription)
+                :Field("Diagram.NodeDisplayMode"     ,l_oDataDiagram:Diagram_NodeDisplayMode)
+                :Field("Diagram.RenderMode"          ,l_oDataDiagram:Diagram_RenderMode)
+                :Field("Diagram.VisPos"              ,l_oDataDiagram:Diagram_VisPos)
+                :Field("Diagram.MxgPos"              ,l_oDataDiagram:Diagram_MxgPos)
+                :Field("Diagram.NodeMaxWidth"        ,l_oDataDiagram:Diagram_NodeMaxWidth)
+                :Field("Diagram.NodeMinHeight"       ,l_oDataDiagram:Diagram_NodeMinHeight)
+
+                if :Add()
+                    l_iNewDiagramPk := :Key()
+
+                    // Duplicate the DiagramTable records
+                    :Table("91cf88f8-992e-4852-8a10-376feec30950","DiagramTable")
+                    :Column("DiagramTable.fk_Table" , "DiagramTable_fk_Table")
+                    :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
+                    :SQL("ListOfSourceDiagramTables")
+
+                    if :Tally > 1
+                        select ListOfSourceDiagramTables
+                        scan all
+                            with object l_oDB2
+                                :Table("ba188227-4e99-4219-bf13-53186a4ed638","DiagramTable")
+                                :Field("DiagramTable.fk_Diagram" , l_iNewDiagramPk)
+                                :Field("DiagramTable.fk_Table"   , ListOfSourceDiagramTables->DiagramTable_fk_Table)
+                                :Add()
+                            endwith
+                        endscan
+                    endif
+                else
+                    l_cErrorMessage := "Failed to save changes!"
+                endif
+
+            else
+                l_cErrorMessage := "Failed to load Source information."
+            endif
+        endwith
+    endif
+
+    if empty(l_cErrorMessage)
+        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iNewDiagramPk)  // l_iDiagramPk
+    else
+        l_hValues["Name"] := l_cDiagram_Name
+        
+        l_cHtml := DataDictionaryVisualizeDiagramDuplicateBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
+    endif
+
+case l_cActionOnSubmit == "Cancel"
     l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase

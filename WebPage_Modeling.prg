@@ -1072,6 +1072,9 @@ otherwise
                 case l_cFormName == "MyDiagramSettings"
                     l_cHtml += ModelingVisualizeMyDiagramSettingsOnSubmit(l_oDataHeader,"")
 
+                case l_cFormName == "DuplicateDiagram"
+                    l_cHtml += ModelingVisualizeDiagramDuplicateOnSubmit(l_oDataHeader,"")
+
                 endcase
             endif
 

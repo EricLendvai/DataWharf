@@ -441,6 +441,8 @@ case l_cURLAction == "Visualize"
          l_cHtml += DataDictionaryVisualizeDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "MyDiagramSettings"
          l_cHtml += DataDictionaryVisualizeMyDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+        case l_cFormName == "DuplicateDiagram"
+         l_cHtml += DataDictionaryVisualizeDiagramDuplicateOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         endcase
     endif
 

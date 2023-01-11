@@ -1,7 +1,10 @@
 # DataWharf - Change Log
 
+## 01/11/2023 v 2.35
+* New "Duplicate" option of Application and Project Visualize (Diagrams).
+
 ## 01/09/2023 v 2.34
-* Fix for Load and Delta feature on PostgreSQL for jonb native field types.
+* Fix for Load and Delta feature on PostgreSQL for jsonb native field types.
 
 ## 01/04/2023 v 2.33
 * WARNING: You must pull recent version of Harbour_VFP, Harbour_ORM and Harbour_FastCGI repos!

@@ -380,6 +380,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         //---------------------------------------------------------------------------
         if oFcgi:p_nAccessLevelML >= 4
              l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+             l_cHtml += [<input type="button" role="button" value="Duplicate" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();">]
         endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
@@ -911,7 +912,7 @@ local l_cNodePositions
 local l_oDB1
 local l_oDB2
 local l_oDB3
-local l_iModelingDiagram_pk
+local l_iModelingDiagramPk
 local l_cListOfRelatedEntityPks
 local l_aListOfRelatedEntityPks
 local l_nNumberOfCurrentEntitiesInDiagram
@@ -921,21 +922,24 @@ local l_iEntityPk
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramOnSubmit")
 
-l_iModelingDiagram_pk := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
+l_iModelingDiagramPk := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 
 do case
 case l_cActionOnSubmit == "Show"
-    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
                                             
 //Stopped below.
 case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
-    l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 case l_cActionOnSubmit == "MyDiagramSettings"
-    l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 case l_cActionOnSubmit == "NewDiagram" .and. oFcgi:p_nAccessLevelML >= 4
    l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,0)
+
+case l_cActionOnSubmit == "DuplicateDiagram" .and. oFcgi:p_nAccessLevelML >= 4
+   l_cHtml := ModelingVisualizeDiagramDuplicateBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
     l_cNodePositions  := Strtran(SanitizeInput(oFcgi:GetInputValue("TextNodePositions")),[%22],["])
@@ -944,16 +948,16 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
     with object l_oDB1
         :Table("52aff222-451d-4726-849f-e17dbf4ab3a3","ModelingDiagram")
         :Field("ModelingDiagram.VisPos",l_cNodePositions)
-        if empty(l_iModelingDiagram_pk)
+        if empty(l_iModelingDiagramPk)
             //Add an initial Diagram File this should not happen, since record was already added
             :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
             :Field("ModelingDiagram.Name"    ,[All ]+oFcgi:p_ANFEntities)
             :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
-                l_iModelingDiagram_pk := :Key()
+                l_iModelingDiagramPk := :Key()
             endif
         else
-            :Update(l_iModelingDiagram_pk)
+            :Update(l_iModelingDiagramPk)
         endif
     endwith
 
@@ -969,7 +973,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                 :Column("Entity.pk","pk")
                 :Column("DiagramEntity.pk","DiagramEntity_pk")
                 :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
                 :SQL("ListOfCurrentEntitiesInModelingDiagram")
                 l_nNumberOfCurrentEntitiesInDiagram := :Tally
                 if l_nNumberOfCurrentEntitiesInDiagram > 0
@@ -991,7 +995,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                         // :Table("1d6f5c96-a2c3-4623-a91b-60b1243a3a00","ModelingDiagram")
                         // :Column("Entity.pk" , "Entity_pk")
                         // :Join("Inner","Entity","","ModelingDiagram.fk_Entity = Entity.pk")
-                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagram_pk)
+                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagramPk)
                         // :SQL("ListOfAllModelEntity")
 
                         :Table("1d6f5c96-a2c3-4623-a91b-60b1243a3a00","Entity")
@@ -1011,7 +1015,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                                 if l_lSelected
                                     with object l_oDB3
                                         :Table("5f908e53-e3ec-402e-acb2-973fad4f9888","DiagramEntity")
-                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagramPk)
                                         :Field("DiagramEntity.fk_Entity"          , ListOfAllModelEntity->Entity_pk)
                                         :Add()
                                     endwith
@@ -1031,7 +1035,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                                 //Add if not present
                                 with object l_oDB3
                                     :Table("5c2c3a2c-349b-4949-aba7-cb00875263d6","DiagramEntity")
-                                    :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                    :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagramPk)
                                     :Field("DiagramEntity.fk_Entity"          , val(l_cEntityPk))
                                     :Add()
                                 endwith
@@ -1061,7 +1065,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                 :Column("Entity.pk","pk")
                 :Column("DiagramEntity.pk","DiagramEntity_pk")
                 :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+                :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
                 :SQL("ListOfCurrentEntitiesInModelingDiagram")
                 l_nNumberOfCurrentEntitiesInDiagram := :Tally
                 if l_nNumberOfCurrentEntitiesInDiagram > 0
@@ -1082,7 +1086,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                     with object l_oDB2
                         // :Table("0830f12f-bcdc-4057-8907-d615771e4b4b","ModelingDiagram")
                         // :Column("Entity.pk" , "Entity_pk")
-                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagram_pk)
+                        // :Where("ModelingDiagram.pk = ^" , l_iModelingDiagramPk)
                         // :Join("Inner","Entity","","ModelingDiagram.fk_Entity = Entity.pk")
                         // :SQL("ListOfAllModelEntity")
 
@@ -1097,7 +1101,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                                 if ListOfAllModelEntity->Entity_pk <> l_iEntityPk
                                     with object l_oDB3
                                         :Table("0ea9ad9d-b3b4-41f1-ac73-e1a9b06002d9","DiagramEntity")
-                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagramPk)
                                         :Field("DiagramEntity.fk_Entity"          , ListOfAllModelEntity->Entity_pk)
                                         :Add()
                                     endwith
@@ -1119,7 +1123,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
         endif
     endif
 
-    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,"",l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,"",l_iModelingDiagramPk)
 
 endcase
 
@@ -1347,7 +1351,7 @@ local l_cNodePositions
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_iModelingDiagram_pk
+local l_iModelingDiagramPk
 local l_cModelingDiagram_Name
 local l_lModelingDiagram_NodeShowDescription
 local l_lModelingDiagram_AssociationShowName
@@ -1361,7 +1365,7 @@ local l_hValues := {=>}
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramSettingsOnSubmit")
 
-l_iModelingDiagram_pk                     := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
+l_iModelingDiagramPk                      := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 l_cModelingDiagram_Name                   := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_lModelingDiagram_NodeShowDescription    := (oFcgi:GetInputValue("CheckNodeShowDescription") == "1")
 l_lModelingDiagram_AssociationShowName    := (oFcgi:GetInputValue("CheckAssociationShowName") == "1")
@@ -1387,8 +1391,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Table("60dafbab-0b7a-48cc-a49f-237ef6f34cee","ModelingDiagram")
             :Where([lower(replace(ModelingDiagram.Name,' ','')) = ^],lower(StrTran(l_cModelingDiagram_Name," ","")))
             :Where([ModelingDiagram.fk_Model = ^],par_oDataHeader:Model_pk)
-            if l_iModelingDiagram_pk > 0
-                :Where([ModelingDiagram.pk != ^],l_iModelingDiagram_pk)
+            if l_iModelingDiagramPk > 0
+                :Where([ModelingDiagram.pk != ^],l_iModelingDiagramPk)
             endif
             :SQL()
         endwith
@@ -1407,19 +1411,19 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Field("ModelingDiagram.NodeMinHeight"         ,l_lModelingDiagram_NodeMinHeight)
             :Field("ModelingDiagram.NodeMaxWidth"          ,l_lModelingDiagram_NodeMaxWidth)
             
-            if empty(l_iModelingDiagram_pk)
+            if empty(l_iModelingDiagramPk)
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
                 :Field("ModelingDiagram.UseStatus"     , 1)
                 :Field("ModelingDiagram.DocStatus"     , 1)
                 :Field("ModelingDiagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
-                    l_iModelingDiagram_pk := :Key()
+                    l_iModelingDiagramPk := :Key()
                 else
-                    l_iModelingDiagram_pk := 0
+                    l_iModelingDiagramPk := 0
                     l_cErrorMessage := "Failed to save changes!"
                 endif
             else
-                if !:Update(l_iModelingDiagram_pk)
+                if !:Update(l_iModelingDiagramPk)
                     l_cErrorMessage := "Failed to save changes!"
                 endif
 
@@ -1436,7 +1440,7 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Column("Entity.pk","pk")
             :Column("DiagramEntity.pk","DiagramEntity_pk")
             :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")
-            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
             :SQL("ListOfCurrentEntitiesInModelingDiagram")
             with object :p_oCursor
                 :Index("pk","pk")
@@ -1465,7 +1469,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                     with Object l_oDB3
                         :Table("af4e7487-6a13-4fa2-b1ea-14f5a0651039","DiagramEntity")
                         :Field("DiagramEntity.fk_Entity"          , ListOfAllEntitiesInModel->pk)
-                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagram_pk)
+                        :Field("DiagramEntity.fk_ModelingDiagram" , l_iModelingDiagramPk)
                         if !:Add()
                             l_cErrorMessage := "Failed to Save Entity selection."
                             exit
@@ -1479,7 +1483,7 @@ case l_cActionOnSubmit == "SaveDiagram"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk)
+        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk)
 
     else
         l_hValues["Name"]                   := l_cModelingDiagram_Name
@@ -1496,12 +1500,12 @@ case l_cActionOnSubmit == "SaveDiagram"
                 l_hValues["Entity"+Trans(ListOfAllEntitiesInModel->pk)] := .t.
             endif
         endscan
-        l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk,l_hValues)
+        l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
         
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 
 case l_cActionOnSubmit == "Delete"
@@ -1509,13 +1513,13 @@ case l_cActionOnSubmit == "Delete"
         //Delete related records in DiagramEntity
         :Table("a317b1a2-0cad-48f9-8f0f-892af023c9d4","DiagramEntity")
         :Column("DiagramEntity.pk","pk")
-        :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+        :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
         :SQL("ListOfDiagramEntityToDelete")
         select ListOfDiagramEntityToDelete
         scan all
             l_oDB2:Delete("1419a855-311f-410f-8ec1-ed5978b06cd6","DiagramEntity",ListOfDiagramEntityToDelete->pk)
         endscan
-        l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagram_pk)
+        l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagramPk)
     endwith
     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
 
@@ -1523,14 +1527,193 @@ case l_cActionOnSubmit == "ResetLayout"
     with object l_oDB1
         :Table("c8ef687c-a39b-4c4d-80e7-fa737a844832","ModelingDiagram")
         :Field("ModelingDiagram.VisPos",NIL)
-        :Update(l_iModelingDiagram_pk)
+        :Update(l_iModelingDiagramPk)
     endwith
-    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
+function ModelingVisualizeDiagramDuplicateBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk,par_hValues)
+
+local l_cHtml := ""
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
+local l_hValues    := hb_DefaultValue(par_hValues,{=>})
+
+local l_oDB1
+local l_oData
+
+oFcgi:TraceAdd("ModelingVisualizeDiagramDuplicateBuild")
+
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+if pcount() < 4
+    if par_iModelingDiagramPk > 0
+        with object l_oDB1
+            //Get current Diagram Name
+            :Table("4176ca1a-269c-4c6e-897e-36d9e3727fb9","ModelingDiagram")
+            :Column("ModelingDiagram.name" ,"ModelingDiagram_name")
+            l_oData := :Get(par_iModelingDiagramPk)
+            if :Tally == 1
+                l_hValues["Name"] := l_oData:ModelingDiagram_name
+            endif
+
+        endwith
+    endif
+endif
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="DuplicateDiagram">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" id="TextModelingDiagramPk" name="TextModelingDiagramPk" value="]+trans(par_iModelingDiagramPk)+[">]
+
+if !empty(par_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<span class="navbar-brand ms-3">Duplicate Diagram</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+
+    l_cHtml += [<table>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+        l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+    
+l_cHtml += [</div>]
+
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalFormsDelete()
+
+return l_cHtml
+//=================================================================================================================
+function ModelingVisualizeDiagramDuplicateOnSubmit(par_oDataHeader,par_cErrorText)
+local l_cHtml := []
+
+local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+local l_cNodePositions
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_iModelingDiagramPk
+local l_iNewModelingDiagramPk
+local l_cModelingDiagram_Name
+local l_cErrorMessage
+local l_cValue
+local l_hValues := {=>}
+local l_oDataModelingDiagram
+
+oFcgi:TraceAdd("ModelingVisualizeDiagramDuplicateOnSubmit")
+
+l_iModelingDiagramPk    := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
+l_cModelingDiagram_Name := SanitizeInput(oFcgi:GetInputValue("TextName"))
+
+do case
+case l_cActionOnSubmit == "DuplicateDiagram"
+
+    do case
+    case empty(l_iModelingDiagramPk)
+        l_cErrorMessage := "Missing Diagram Pk"
+    case empty(l_cModelingDiagram_Name)
+        l_cErrorMessage := "Missing Name"
+    otherwise
+        with object l_oDB1
+            :Table("a8cb4237-fa05-4935-8874-11aafaa0d80f","ModelingDiagram")
+            :Where([lower(replace(ModelingDiagram.Name,' ','')) = ^],lower(StrTran(l_cModelingDiagram_Name," ","")))
+            :Where([ModelingDiagram.fk_Model = ^],par_oDataHeader:Model_pk)
+            :SQL()
+        endwith
+        if l_oDB1:Tally <> 0
+            l_cErrorMessage := "Duplicate Name"
+        endif
+    endcase
+
+    if empty(l_cErrorMessage)
+        with object l_oDB1
+            //Get the source Diagram Column Values
+            :Table("31e0e051-adea-4ba9-afb3-8339b71ce7c0","ModelingDiagram")
+            :Column("ModelingDiagram.NodeShowDescription"    ,"ModelingDiagram_NodeShowDescription")
+            :Column("ModelingDiagram.VisPos"                 ,"ModelingDiagram_VisPos")
+            :Column("ModelingDiagram.NodeMinHeight"          ,"ModelingDiagram_NodeMinHeight")
+            :Column("ModelingDiagram.NodeMaxWidth"           ,"ModelingDiagram_NodeMaxWidth")
+            :Column("ModelingDiagram.AssociationShowName"    ,"ModelingDiagram_AssociationShowName")
+            :Column("ModelingDiagram.AssociationEndShowName" ,"ModelingDiagram_AssociationEndShowName")
+            l_oDataModelingDiagram := :Get(l_iModelingDiagramPk)
+
+            if :Tally == 1
+
+                :Table("946aadba-5312-451a-bd00-282cba8f75e8","ModelingDiagram")
+                :Field("ModelingDiagram.fk_Model"               ,par_oDataHeader:Model_pk)
+                :Field("ModelingDiagram.LinkUID"                ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.Name"                   ,l_cModelingDiagram_Name)
+                :Field("ModelingDiagram.NodeShowDescription"    ,l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription)
+                :Field("ModelingDiagram.VisPos"                 ,l_oDataModelingDiagram:ModelingDiagram_VisPos)
+                :Field("ModelingDiagram.NodeMinHeight"          ,l_oDataModelingDiagram:ModelingDiagram_NodeMinHeight)
+                :Field("ModelingDiagram.NodeMaxWidth"           ,l_oDataModelingDiagram:ModelingDiagram_NodeMaxWidth)
+                :Field("ModelingDiagram.AssociationShowName"    ,l_oDataModelingDiagram:ModelingDiagram_AssociationShowName)
+                :Field("ModelingDiagram.AssociationEndShowName" ,l_oDataModelingDiagram:ModelingDiagram_AssociationEndShowName)
+                if :Add()
+                    l_iNewModelingDiagramPk := :Key()
+
+                    // Duplicate the DiagramEntity records
+                    :Table("0689907e-ab00-4c22-81a0-fa503b1ed6c2","DiagramEntity")
+                    :Column("DiagramEntity.fk_Entity" , "DiagramEntity_fk_Entity")
+                    :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
+                    :SQL("ListOfSourceDiagramEntities")
+
+                    if :Tally > 1
+                        select ListOfSourceDiagramEntities
+                        scan all
+                            with object l_oDB2
+                                :Table("57ce9393-102f-4092-8f29-b6a744d5fe27","DiagramEntity")
+                                :Field("DiagramEntity.fk_ModelingDiagram" , l_iNewModelingDiagramPk)
+                                :Field("DiagramEntity.fk_Entity"          , ListOfSourceDiagramEntities->DiagramEntity_fk_Entity)
+                                :Add()
+                            endwith
+                        endscan
+                    endif
+                else
+                    l_cErrorMessage := "Failed to save changes!"
+                endif
+
+            else
+                l_cErrorMessage := "Failed to load Source information."
+            endif
+
+        endwith
+
+    endif
+
+    if empty(l_cErrorMessage)
+        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iNewModelingDiagramPk)
+    else
+        l_hValues["Name"] := l_cModelingDiagram_Name
+        
+        l_cHtml := ModelingVisualizeDiagramDuplicateBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
+    endif
+
+case l_cActionOnSubmit == "Cancel"
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
+
+endcase
+
+return l_cHtml
 //=================================================================================================================
 function ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk,par_hValues)
 local l_cHtml := ""
@@ -1692,7 +1875,7 @@ function ModelingVisualizeMyDiagramSettingsOnSubmit(par_oDataHeader,par_cErrorTe
 local l_cHtml := []
 
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
-local l_iModelingDiagram_pk
+local l_iModelingDiagramPk
 
 local l_nDiagramInfoScale
 local l_iCanvasWidth
@@ -1706,7 +1889,7 @@ local l_hValues := {=>}
 
 oFcgi:TraceAdd("ModelingVisualizeMyDiagramSettingsOnSubmit")
 
-l_iModelingDiagram_pk       := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
+l_iModelingDiagramPk       := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
 l_nDiagramInfoScale := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
 if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
     l_nDiagramInfoScale := 1
@@ -1759,14 +1942,14 @@ case l_cActionOnSubmit == "SaveMySettings"
     endif
 
     if empty(l_cErrorMessage)
-        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk)
+        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk)
     else
         l_hValues["DiagramInfoScale"] := l_nDiagramInfoScale
-        l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagram_pk,l_hValues)
+        l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagram_pk)
+    l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 endcase
 
@@ -1775,7 +1958,7 @@ return l_cHtml
 function GetMLInfoDuringVisualization()
 local l_cHtml := []
 local l_cInfo := Strtran(oFcgi:GetQueryString("info"),[%22],["])
-local l_iModelingDiagram_pk := val(oFcgi:GetQueryString("modelingdiagrampk"))
+local l_iModelingDiagramPk := val(oFcgi:GetQueryString("modelingdiagrampk"))
 local l_hOnClickInfo := {=>}
 local l_nLengthDecoded
 local l_aNodes
@@ -1896,7 +2079,7 @@ if len(l_aNodes) == 1
             :Column("Entity.pk","pk")
             :Column("DiagramEntity.pk","DiagramEntity_pk")
             :Join("inner","Entity","","DiagramEntity.fk_Entity = Entity.pk")    // Extra inner join to ensure we don't pick up orphan records
-            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagram_pk)
+            :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
             :SQL("ListOfCurrentEntitiesInModelingDiagram")
             l_nNumberOfEntitiesInDiagram := :Tally
             if l_nNumberOfEntitiesInDiagram > 0
@@ -1936,7 +2119,7 @@ if len(l_aNodes) == 1
             :Column("upper(ModelingDiagram.Name)","tag1")
             :Join("inner","ModelingDiagram","","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
             :Where("DiagramEntity.fk_Entity = ^",l_iEntityPk)
-            :Where("ModelingDiagram.pk <> ^",l_iModelingDiagram_pk)
+            :Where("ModelingDiagram.pk <> ^",l_iModelingDiagramPk)
             :OrderBy("tag1")
             :SQL("ListOfOtherModelingDiagram")
             l_nNumberOfOtherModelingDiagram := :Tally
