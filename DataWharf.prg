@@ -14,21 +14,22 @@ private oFcgi
 
 private v_iFastCGIRunLogPk := 0    // Will be the FastCGIRunLog.pk of the current executing exe.
 
-//The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,PointerToFunctionToBuildThePage}
+//The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,IncludeHeader,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
-private v_hPageMapping := {"home"            => {"Home"                     ,1,@BuildPageHome()},;
-                          "About"            => {"About"                    ,0,@BuildPageAppAbout()},;   //Does not require to be logged in.
-                          "ChangePassword"   => {"Change Password"          ,1,@BuildPageChangePassword()},;
-                          "Projects"         => {"Projects"                 ,1,@BuildPageProjects()},;
-                          "Project"          => {"Projects"                 ,1,@BuildPageProjects()},;
-                          "Applications"     => {"Applications"             ,1,@BuildPageApplications()},;
-                          "Application"      => {"Applications"             ,1,@BuildPageApplications()},;
-                          "Modeling"         => {"Modeling"                 ,1,@BuildPageModeling()},;
-                          "DataDictionaries" => {"DataDictionaries"         ,1,@BuildPageDataDictionaries()},;
-                          "DataDictionary"   => {"DataDictionaries"         ,1,@BuildPageDataDictionaries()},;
-                          "InterAppMapping"  => {"Inter Application Mapping",1,@BuildPageInterAppMapping()},;
-                          "CustomFields"     => {"Custom Fields"            ,1,@BuildPageCustomFields()},;
-                          "Users"            => {"Users"                    ,1,@BuildPageUsers()} }
+private v_hPageMapping := {"home"            => {"Home"                     ,1,.t.,@BuildPageHome()},;
+                          "About"            => {"About"                    ,0,.t.,@BuildPageAbout()},;   //Does not require to be logged in.
+                          "ChangePassword"   => {"Change Password"          ,1,.t.,@BuildPageChangePassword()},;
+                          "Projects"         => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
+                          "Project"          => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
+                          "Applications"     => {"Applications"             ,1,.t.,@BuildPageApplications()},;
+                          "Application"      => {"Applications"             ,1,.t.,@BuildPageApplications()},;
+                          "Modeling"         => {"Modeling"                 ,1,.t.,@BuildPageModeling()},;
+                          "DataDictionaries" => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
+                          "DataDictionary"   => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
+                          "InterAppMapping"  => {"Inter Application Mapping",1,.t.,@BuildPageInterAppMapping()},;
+                          "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
+                          "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
+                          "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
 
 hb_HCaseMatch(v_hPageMapping,.f.)
 
@@ -562,7 +563,6 @@ else
         l_cHtml += [</html>]
 
     else
-
         if l_lCyanAuditAware
             //Ensure no user specific cyanaudit is being identified
             ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( 0 );")
@@ -592,7 +592,7 @@ else
         if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
             l_cPageName := "home"
         endif
-// altd()
+        
         ::p_PageName := l_cPageName
 
         // ::URLPathElements := {}
@@ -606,42 +606,45 @@ else
         // endfor
 
         // if l_cPageName <> "ajax"
-        if !VFP_Inlist(lower(l_cPageName),"ajax","api")
+        if !VFP_Inlist(lower(l_cPageName),"ajax","api") // ,"health"
 
-            l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,@BuildPageHome()})
+            l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,.t.,@BuildPageHome()})
             // #define WEBPAGEHANDLE_NAME            1
             // #define WEBPAGEHANDLE_ACCESSMODE      2
-            // #define WEBPAGEHANDLE_FUNCTIONPOINTER 3
+            // #define WEBPAGEHANDLE_BUILDHEADER     3
+            // #define WEBPAGEHANDLE_FUNCTIONPOINTER 4
 
             ::p_cHeader       := ""
             ::p_cjQueryScript := ""
 
+            if l_aWebPageHandle[WEBPAGEHANDLE_BUILDHEADER]
 
-            // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
+                // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
-            l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
-            if empty(l_cThisAppTitle)
-                l_cThisAppTitle := APPLICATION_TITLE
+                l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
+                if empty(l_cThisAppTitle)
+                    l_cThisAppTitle := APPLICATION_TITLE
+                endif
+
+                l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
+                l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
+                l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
+
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]
+
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/icons/font/bootstrap-icons.css">]
+
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/Themes/smoothness/jQueryUI.css">]
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[datawharf.css">]
+
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery.min.js"></script>]
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/js/bootstrap.bundle.min.js"></script>]
+
+                // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.js"></script>]
+
+                ::p_cHeader := l_cPageHeaderHtml
             endif
-
-            l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
-            l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-            l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
-
-            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]
-
-            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/icons/font/bootstrap-icons.css">]
-
-            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/Themes/smoothness/jQueryUI.css">]
-            l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[datawharf.css">]
-
-            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery.min.js"></script>]
-            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/js/bootstrap.bundle.min.js"></script>]
-
-            // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
-            l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.js"></script>]
-
-            ::p_cHeader := l_cPageHeaderHtml
         endif
 
         l_cPageHeaderHtml := NIL  //To free memory
@@ -704,7 +707,7 @@ else
         l_cUserName       := ""
         l_nUserAccessMode := 0
 
-        if !empty(l_cSessionID) .and. !VFP_Inlist(lower(l_cPageName),"api")
+        if !empty(l_cSessionID) .and. !VFP_Inlist(lower(l_cPageName),"api") // ,"health"
             l_nPos               := at("-",l_cSessionID)
             l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
             l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
@@ -835,24 +838,28 @@ else
 
                 endif
             else
-                l_cBody += GetPageHeader(.t.,l_cPageName)
-
+                if l_aWebPageHandle[WEBPAGEHANDLE_BUILDHEADER]
+                    l_cBody += GetPageHeader(.t.,l_cPageName)
+                endif
                 l_cBody += l_aWebPageHandle[WEBPAGEHANDLE_FUNCTIONPOINTER]:exec()
 
-                l_lShowDevelopmentInfo := (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
-                if l_lShowDevelopmentInfo
-                    l_cBody += [<div class="m-3">]   //Spacer
-                        if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
-                            l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
-                        endif
-                        l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
-                        l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
-                        l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
-                        l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
-                        l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
-                        l_cBody += ::TraceList(4)
-                    l_cBody += [</div>]   //Spacer
+                if left(l_cBody,10) <> [UNBUFFERED]
+                    l_lShowDevelopmentInfo :=  (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+                    if l_lShowDevelopmentInfo
+                        l_cBody += [<div class="m-3">]   //Spacer
+                            if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0  //Logged in page
+                                l_cBody += "<div>Web Site Version: " + BUILDVERSION + "</div>"
+                            endif
+                            l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
+                            l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
+                            l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+                            l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
+                            l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
+                            l_cBody += ::TraceList(4)
+                        l_cBody += [</div>]   //Spacer
+                    endif
                 endif
+
             endif
         else
             //Not Logged In

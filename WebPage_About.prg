@@ -1,11 +1,11 @@
 #include "DataWharf.ch"
 
 //=================================================================================================================
-function BuildPageAppAbout()
+function BuildPageAbout()
 local l_cHtml := []
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-oFcgi:TraceAdd("BuildPageAppAbout")
+oFcgi:TraceAdd("BuildPageAbout")
 
 l_cHtml += [<div class="m-3"></div>]   //Spacer
 
@@ -39,4 +39,4 @@ l_cHtml += [<div class="row justify-content-center">]
 l_cHtml += [</div>]
 
 return l_cHtml
-//=================================================================================================================                      
+//=================================================================================================================

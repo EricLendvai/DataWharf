@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/12/2023 v 2.36
+* New "/health" web page returning status info to be used to monitor deployment of DataWharf.
+* New Export option in data dictionaries. Currently only with export for Harbour ORM.
+
 ## 01/11/2023 v 2.35
 * New "Duplicate" option of Application and Project Visualize (Diagrams).
 

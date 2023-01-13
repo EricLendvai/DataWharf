@@ -3,7 +3,7 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.35"
+#define BUILDVERSION "2.36"
 
 #define DATAWHARF_SCRIPT_VERSION     "2022_07_12"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
@@ -18,7 +18,8 @@
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2
-#define WEBPAGEHANDLE_FUNCTIONPOINTER 3
+#define WEBPAGEHANDLE_BUILDHEADER     3
+#define WEBPAGEHANDLE_FUNCTIONPOINTER 4
 
 #define COLOR_ON_LINK_NEWPAGE "198754"
 
