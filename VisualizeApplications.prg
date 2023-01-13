@@ -587,6 +587,10 @@ if l_nRenderMode == 2
     l_cHtml += '         }'
     l_cHtml += '     }'
     l_cHtml += '     evt.consume();'
+
+    l_cHtml += '     network.setAllowDanglingEdges(false);'
+    l_cHtml += '     network.setDisconnectOnMove(false);'
+
 // elseif GRAPH_LIB_DD == "visjs"
 else
     l_cHtml += [  var data = {]
@@ -2354,7 +2358,7 @@ if len(l_aNodes) == 1
                                     l_cHtml_tr_class := "ColumnCore"
                                 endcase
 
-                                l_cHtml += [<tr class="]+l_cHtml_tr_class+[">]
+                                l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColor(ListOfColumns->Column_UseStatus)+[>]
 
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
 

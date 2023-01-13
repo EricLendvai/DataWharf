@@ -405,7 +405,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfProjects
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfProjects->Project_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+AllTrim(ListOfProjects->Project_LinkUID)+[/">]+Allt(ListOfProjects->Project_Name)+[</a>]

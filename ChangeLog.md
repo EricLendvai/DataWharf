@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/13/2023 v 2.37
+* Using different background colors in application grids to reflect the Use Status.
+* In Mxgrap visualization, Potential fix dragging many nodes without loosing edges.
+
 ## 01/12/2023 v 2.36
 * New "/health" web page returning status info to be used to monitor deployment of DataWharf.
 * New Export option in data dictionaries. Currently only with export for Harbour ORM.

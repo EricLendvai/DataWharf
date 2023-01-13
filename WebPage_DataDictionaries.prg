@@ -1539,7 +1539,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfDataDictionaries
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfDataDictionaries->Application_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+AllTrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Allt(ListOfDataDictionaries->Application_Name)+[</a>]
@@ -1840,7 +1840,7 @@ else
 
                 select ListOfNameSpaces
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfNameSpaces->NameSpace_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNameSpace/]+par_cURLApplicationLinkCode+[/]+ListOfNameSpaces->NameSpace_Name+[/">]+ListOfNameSpaces->NameSpace_Name+FormatAKAForDisplay(ListOfNameSpaces->NameSpace_AKA)+[</a>]
@@ -2585,7 +2585,7 @@ if !empty(l_nNumberOfTables)
             scan all
                 l_iTablePk := ListOfTables->pk
 
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfTables->Table_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(ListOfTables->NameSpace_Name)
@@ -3471,7 +3471,7 @@ else
 
             select ListOfColumns
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfColumns->Column_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                         do case
@@ -4617,7 +4617,7 @@ else
 
             select ListOfIndexes
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfIndexes->Index_UseStatus)+[>]
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -4767,7 +4767,7 @@ else
 
                 select ListOfEnumerations
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumerations->Enumeration_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += Allt(ListOfEnumerations->NameSpace_Name)
@@ -5244,7 +5244,7 @@ else
 
             select ListOfEnumValues
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</a>]

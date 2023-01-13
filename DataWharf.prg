@@ -1548,4 +1548,19 @@ select (l_select)
     
 return l_lSQLExecResult
 //=================================================================================================================
-
+function GetTRStyleBackgroundColor(par_nUseStatus)
+local l_cHtml
+do case
+case par_nUseStatus == 2  // Proposed
+    l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+["]
+case par_nUseStatus == 3  // Under Development
+    l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+["]
+case par_nUseStatus == 5  // To be Discontinued
+    l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+["]
+case par_nUseStatus == 6  // To be Discontinued
+    l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+["]
+otherwise
+    l_cHtml := ""
+endcase
+return l_cHtml
+//=================================================================================================================
