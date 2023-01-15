@@ -1518,11 +1518,11 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
@@ -1824,11 +1824,11 @@ else
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
@@ -2560,11 +2560,11 @@ if !empty(l_nNumberOfTables)
                 l_nColspan += 1
             endif
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">Tables (]+Trans(l_nNumberOfTables)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
@@ -3367,7 +3367,7 @@ if l_nNumberOfColumns > 0
     endwith
 endif
 
-// ExportTableToHtmlFile("ListOfCustomFieldValues","d:\PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("ListOfCustomFieldValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
 if l_nNumberOfColumns <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -3442,7 +3442,7 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">]
                     if l_nNumberOfColumns == l_nNumberOfColumnsInSearch
                         l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
@@ -3452,7 +3452,7 @@ else
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white"></th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
@@ -4558,7 +4558,7 @@ with object l_oDB1
     :SQL("ListOfIndexes")
     l_nNumberOfIndexes := :Tally
 
-    // ExportTableToHtmlFile("ListOfIndexes","d:\PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
+    // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
 
 endwith
 
@@ -4598,13 +4598,13 @@ else
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="8">]
                     l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Expression</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
@@ -4751,11 +4751,11 @@ else
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Enumeration Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Implemented As</th>]
@@ -5230,11 +5230,11 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+["</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
@@ -6031,11 +6031,11 @@ else
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Tags (]+Trans(l_nNumberOfTags)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Code</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]

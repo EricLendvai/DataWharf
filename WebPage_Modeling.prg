@@ -590,6 +590,7 @@ otherwise
                         :Table("e9c40921-bd84-4c03-bc86-c805f20b78ef","Entity")
                         :Column("Entity.fk_Package"   , "Entity_fk_Package")
                         :Column("Entity.Name"         , "Entity_Name")
+                        :Column("Entity.UseStatus"    , "Entity_UseStatus")
                         :Column("Entity.Description"  , "Entity_Description")
                         :Column("Entity.Information"  , "Entity_Information")
                         :Column("Package.LinkUID"     , "Package_LinkUID")
@@ -600,6 +601,7 @@ otherwise
                     if l_oDB1:Tally == 1
                         l_hValues["fk_Package"]     := l_oData:Entity_fk_Package
                         l_hValues["Name"]           := l_oData:Entity_Name
+                        l_hValues["UseStatus"]      := l_oData:Entity_UseStatus
                         l_hValues["Description"]    := l_oData:Entity_Description
                         l_hValues["Information"]    := l_oData:Entity_Information
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ENTITY,l_oDataHeader:Entity_pk,@l_hValues)
@@ -619,7 +621,7 @@ otherwise
                         case empty(l_cURLSubAction)
                             l_cHtml += EntityEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
                         case l_cURLSubAction == "ListAssociations"
-                            l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID,)
+                            l_cHtml += AssociationListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID,l_oDataHeader:Entity_LinkUID)
                         case l_cURLSubAction == "ListAttributes"
                             l_cHtml += AttributeListFormOnSubmit(l_oDataHeader:Entity_pk,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Entity_Name,l_oDataHeader:Model_LinkUID)
                     endcase
@@ -660,6 +662,7 @@ otherwise
                     with object l_oDB1
                         :Table("974f878e-4772-4a6f-9f62-04b5dd3f276c","Attribute")
                         :Column("Attribute.Name"                 , "Attribute_Name")
+                        :Column("Attribute.UseStatus"            , "Attribute_UseStatus")
                         :Column("Attribute.Fk_Attribute"         , "Attribute_fk_Attribute")
                         :Column("Attribute.fk_DataType"          , "Attribute_fk_DataType")
                         :Column("Attribute.fk_ModelEnumeration"  , "Attribute_fk_Enumeration")
@@ -672,6 +675,7 @@ otherwise
 
                     if l_oDB1:Tally == 1
                         l_hValues["Name"]           := l_oData:Attribute_Name
+                        l_hValues["UseStatus"]      := l_oData:Attribute_UseStatus
                         l_hValues["fk_Attribute"]   := l_oData:Attribute_fk_Attribute
                         l_hValues["fk_DataType"]    := l_oData:Attribute_fk_DataType
                         l_hValues["fk_Enumeration"] := l_oData:Attribute_fk_Enumeration
@@ -704,9 +708,9 @@ otherwise
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("B9993FED-AE78-4AE7-A274-DA4BD34696E2","LinkedEntity")
-                        :Column("LinkedEntity.Description"        , "LinkedEntity_Description")
-                        :Column("LinkedEntity.fk_Entity1" , "LinkedEntity_fk_Entity1")
-                        :Column("LinkedEntity.fk_Entity2" , "LinkedEntity_fk_Entity2")
+                        :Column("LinkedEntity.Description" , "LinkedEntity_Description")
+                        :Column("LinkedEntity.fk_Entity1"  , "LinkedEntity_fk_Entity1")
+                        :Column("LinkedEntity.fk_Entity2"  , "LinkedEntity_fk_Entity2")
                         l_oData := :Get(l_oDataHeader:LinkedEntity_Pk)
                     endwith
 
@@ -749,6 +753,7 @@ otherwise
                         :Table("e399d44f-9bd6-451f-8806-d5128fcd09ab","Association")
                         :Column("Association.fk_Package"   , "Association_fk_Package")
                         :Column("Association.Name"         , "Association_Name")
+                        :Column("Association.UseStatus"    , "Association_UseStatus")
                         :Column("Association.Description"  , "Association_Description")
                         l_oData := :Get(l_oDataHeader:Association_pk)
                     endwith
@@ -756,6 +761,7 @@ otherwise
                     if l_oDB1:Tally == 1
                         l_hValues["fk_Package"]     := l_oData:Association_fk_Package
                         l_hValues["Name"]           := l_oData:Association_Name
+                        l_hValues["UseStatus"]      := l_oData:Association_UseStatus
                         l_hValues["Description"]    := l_oData:Association_Description
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_ASSOCIATION,l_oDataHeader:Association_pk,@l_hValues)
 
@@ -830,12 +836,14 @@ otherwise
                         :Table("6689ff9b-9b8a-400c-abf8-d7146b805461","Package")
                         :Column("Package.fk_Package" , "Package_fk_Package")
                         :Column("Package.Name"       , "Package_Name")
+                        :Column("Package.UseStatus"  , "Package_UseStatus")
                         l_oData := :Get(l_oDataHeader:Package_pk)
                     endwith
 
                     if l_oDB1:Tally == 1
                         l_hValues["fk_Package"] := l_oData:Package_fk_Package
                         l_hValues["Name"]       := l_oData:Package_Name
+                        l_hValues["UseStatus"]  := l_oData:Package_UseStatus
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_PACKAGE,l_oDataHeader:Package_pk,@l_hValues)
                         do case
                             case empty(l_cURLSubAction)
@@ -889,6 +897,7 @@ otherwise
                         :Column("DataType.fk_DataType"      , "DataType_fk_DataType")
                         :Column("DataType.fk_PrimitiveType" , "DataType_fk_PrimitiveType")
                         :Column("DataType.Name"             , "DataType_Name")
+                        :Column("DataType.UseStatus"        , "DataType_UseStatus")
                         :Column("DataType.Description"      , "DataType_Description")
                         l_oData := :Get(l_oDataHeader:DataType_pk)
                     endwith
@@ -897,6 +906,7 @@ otherwise
                         l_hValues["fk_DataType"]      := l_oData:DataType_fk_DataType
                         l_hValues["fk_PrimitiveType"] := l_oData:DataType_fk_PrimitiveType
                         l_hValues["Name"]             := l_oData:DataType_Name
+                        l_hValues["UseStatus"]        := l_oData:DataType_UseStatus
                         l_hValues["Description"]      := l_oData:DataType_Description
                         CustomFieldsLoad(l_oDataHeader:Project_pk,USEDON_DATATYPE,l_oDataHeader:DataType_pk,@l_hValues)
 
@@ -932,14 +942,16 @@ otherwise
                         :Column("ModelEnumeration.pk"                 , "Enumeration_Pk")
                         :Column("ModelEnumeration.fk_Model"           , "Enumeration_fk_Model")
                         :Column("ModelEnumeration.Name"               , "Enumeration_Name")
+                        :Column("ModelEnumeration.UseStatus"          , "Enumeration_UseStatus")
                         :Column("ModelEnumeration.Description"        , "Enumeration_Description")
                         :Column("ModelEnumeration.LinkUID"            , "Enumeration_LinkUID")
                         l_oData := :Get(l_oDataHeader:Enumeration_pk)
                     endwith
                 
                     if l_oDB1:Tally == 1           
-                        l_hValues["Name"]            := l_oData:Enumeration_Name
-                        l_hValues["Description"]     := l_oData:Enumeration_Description
+                        l_hValues["Name"]        := l_oData:Enumeration_Name
+                        l_hValues["UseStatus"]   := l_oData:Enumeration_UseStatus
+                        l_hValues["Description"] := l_oData:Enumeration_Description
                         l_cHtml += GetEnumerationEditHeader(l_cSitePath, l_oDataHeader:Model_LinkUID,l_oDataHeader:Enumeration_LinkUID,l_cURLSubAction)
                         do case
                             case empty(l_cURLSubAction)
@@ -1220,19 +1232,18 @@ return l_cHtml
 //=================================================================================================================
 static function ProjectListFormBuild()
 local l_cHtml := []
-local l_oDB1
-local l_oDB2
+local l_oDB_ListOfProjects    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomFields      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfProjects
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_nCount
 
 oFcgi:TraceAdd("ProjectListFormBuild")
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-with object l_oDB1
+with object l_oDB_ListOfProjects
     :Table("ef540265-9ca9-4045-835c-65772402ca0d","Project")
     :Column("Project.pk"         ,"pk")
     :Column("Project.Name"       ,"Project_Name")
@@ -1251,9 +1262,26 @@ with object l_oDB1
     l_nNumberOfProjects := :Tally
 endwith
 
-
 if l_nNumberOfProjects > 0
-    with object l_oDB2
+
+    with object l_oDB_ListOfModelCounts
+        :Table("f5b17e37-226b-444a-ad25-f2f1e06ea585","Project")
+        :Column("Project.pk" ,"Project_pk")
+        :Column("Count(*)" ,"ModelCount")
+        :Join("inner","Model","","Model.fk_Project = Project.pk")
+        :GroupBy("Project_pk")
+        if oFcgi:p_nUserAccessMode <= 1
+            :Join("inner","UserAccessProject","","UserAccessProject.fk_Project = Project.pk")
+            :Where("UserAccessProject.fk_User = ^",oFcgi:p_iUserPk)
+        endif
+        :SQL("ListOfModelCounts")
+        with object :p_oCursor
+            :Index("tag1","Project_pk")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    with object l_oDB_CustomFields
         :Table("42747915-4e1c-4151-8094-691f7305b82d","Project")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
@@ -1301,13 +1329,14 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModels+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
@@ -1324,6 +1353,13 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfProjects->Project_Description,""))
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( VFP_Seek(ListOfProjects->pk,"ListOfModelCounts","tag1") , ListOfModelCounts->ModelCount , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1358,10 +1394,12 @@ local l_cHtml := []
 local l_oDB1
 local l_oDB2
 local l_oDB_CustomFields                      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsEntityCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsAssociationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelsPackageCounts         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsEntityCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsAttributeCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsAssociationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelsDataTypeCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsEnumerationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelsLinkedModelCounts1    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelsLinkedModelCounts2    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelsModelingDiagramCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1372,10 +1410,12 @@ local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 
 local l_iModelPk
-local l_nEntityCount
-local l_nAssociationCount
 local l_nPackageCount
+local l_nEntityCount
+local l_nAttributeCount
+local l_nAssociationCount
 local l_nDataTypeCount
+local l_nEnumerationCount
 local l_nLinkedModelCount
 local l_nModelingDiagramCount
 
@@ -1453,6 +1493,21 @@ if l_nNumberOfModels > 0
         endwith
     endwith
 
+    with object l_oDB_ListOfModelsAttributeCounts
+        :Table("5d01ab7f-ef35-4f49-bb30-39e6dfa067f4","Model")
+        :Column("Model.pk" ,"Model_pk")
+        :Column("Count(*)" ,"AttributeCount")
+        :Join("inner","Entity","","Entity.fk_Model = Model.pk")
+        :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
+        :Where("Model.fk_Project = ^",par_Project_pk)
+        :GroupBy("Model_pk")
+        :SQL("ListOfModelsAttributeCounts")
+        with object :p_oCursor
+            :Index("tag1","Model_pk")
+            :CreateIndexes()
+        endwith
+    endwith
+
     with object l_oDB_ListOfModelsAssociationCounts
         :Table("49945b95-d779-4794-ad8d-b9509149474f","Model")
         :Column("Model.pk" ,"Model_pk")
@@ -1495,6 +1550,20 @@ if l_nNumberOfModels > 0
         endwith
     endwith
 
+    with object l_oDB_ListOfModelsEnumerationCounts
+        :Table("a27a822e-2e7c-47fb-bca2-2f5ddab21725","Model")
+        :Column("Model.pk" ,"Model_pk")
+        :Column("Count(*)" ,"EnumerationCount")
+        :Join("inner","ModelEnumeration","","ModelEnumeration.fk_Model = Model.pk")
+        :Where("Model.fk_Project = ^",par_Project_pk)
+        :GroupBy("Model_pk")
+        :SQL("ListOfModelsEnumerationCounts")
+        with object :p_oCursor
+            :Index("tag1","Model_pk")
+            :CreateIndexes()
+        endwith
+    endwith
+
     with object l_oDB_ListOfModelsLinkedModelCounts1
         :Table("c7f308dc-4cd3-44c5-a26a-f15938b035a5","Model")
         :Column("Model.pk" ,"Model_pk")
@@ -1502,26 +1571,30 @@ if l_nNumberOfModels > 0
         :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
         :Where("Model.fk_Project = ^",par_Project_pk)
         :GroupBy("Model_pk")
-        :SQL("ListOfModelsDataTypeCounts1")
+        :SQL("ListOfModelsLinkedModelCounts1")
         with object :p_oCursor
             :Index("tag1","Model_pk")
             :CreateIndexes()
         endwith
     endwith
+// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts1",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfModelsLinkedModelCounts1.html","From PostgreSQL",,25,.t.)
 
-    with object l_oDB_ListOfModelsLinkedModelCounts2
-        :Table("cddfeb45-7d28-4e07-8016-7137ab611a81","Model")
-        :Column("Model.pk" ,"Model_pk")
-        :Column("Count(*)" ,"LinkedModelCount")
-        :Join("inner","LinkedModel","","LinkedModel.fk_Model2 = Model.pk")
-        :Where("Model.fk_Project = ^",par_Project_pk)
-        :GroupBy("Model_pk")
-        :SQL("ListOfModelsDataTypeCounts2")
-        with object :p_oCursor
-            :Index("tag1","Model_pk")
-            :CreateIndexes()
-        endwith
-    endwith
+
+//     with object l_oDB_ListOfModelsLinkedModelCounts2
+//         :Table("cddfeb45-7d28-4e07-8016-7137ab611a81","Model")
+//         :Column("Model.pk" ,"Model_pk")
+//         :Column("Count(*)" ,"LinkedModelCount")
+//         :Join("inner","LinkedModel","","LinkedModel.fk_Model2 = Model.pk")
+//         :Where("Model.fk_Project = ^",par_Project_pk)
+//         :GroupBy("Model_pk")
+//         :SQL("ListOfModelsLinkedModelCounts2")
+//         with object :p_oCursor
+//             :Index("tag1","Model_pk")
+//             :CreateIndexes()
+//         endwith
+//     endwith
+// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts2",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfModelsLinkedModelCounts2.html","From PostgreSQL",,25,.t.)
+
 
     with object l_oDB_ListOfModelsModelingDiagramCounts
         :Table("0f4987c4-c0f7-4e7f-abda-bb07d7fd6bdb","Model")
@@ -1552,19 +1625,21 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"10","11")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"12","13")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Project</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModel+[ Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Stage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackages+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntities+[</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAttributes+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAssociations+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataTypes+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackages+[</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModelEnumerations+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Linked ]+oFcgi:p_ANFModel+[</th>]
                     // l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Settings</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Visualize</th>]
@@ -1595,9 +1670,19 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfModels->Model_Description,""))
                         l_cHtml += [</td>]
 
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Packages
+                            l_nPackageCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsPackageCounts","tag1") , ListOfModelsPackageCounts->PackageCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListPackages/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nPackageCount)+[</a>]
+                        l_cHtml += [</td>]
+                        
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Entities
                             l_nEntityCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsEntityCounts","tag1") , ListOfModelsEntityCounts->EntityCount , 0)
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nEntityCount)+[</a>]
+                        l_cHtml += [</td>]
+                        
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Attributes
+                            l_nAttributeCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsAttributeCounts","tag1") , ListOfModelsAttributeCounts->AttributeCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nAttributeCount)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Associations
@@ -1610,15 +1695,15 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListDataTypes/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nDataTypeCount)+[</a>]
                         l_cHtml += [</td>]
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Packages
-                            l_nPackageCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsPackageCounts","tag1") , ListOfModelsPackageCounts->PackageCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListPackages/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nPackageCount)+[</a>]
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Enumerations
+                            l_nEnumerationCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsEnumerationCounts","tag1") , ListOfModelsEnumerationCounts->EnumerationCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEnumerations/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nEnumerationCount)+[</a>]
                         l_cHtml += [</td>]
-                        
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Packages
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Linked Models
                             l_nLinkedModelCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsLinkedModelCounts1","tag1") , ListOfModelsLinkedModelCounts1->LinkedModelCount , 0)
-                            l_nLinkedModelCount += iif( VFP_Seek(l_iModelPk,"ListOfModelsLinkedModelCounts2","tag1") , ListOfModelsLinkedModelCounts2->LinkedModelCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListLinkedModels/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nLinkedModelCount)+[</a>]
+                            // l_nLinkedModelCount += iif( VFP_Seek(l_iModelPk,"ListOfModelsLinkedModelCounts2","tag1") , ListOfModelsLinkedModelCounts2->LinkedModelCount , 0)
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ModelSettings/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nLinkedModelCount)+[</a>]
                         l_cHtml += [</td>]
                         
                         // l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Settings
@@ -2140,7 +2225,7 @@ local l_hOptionValueToDescriptionMapping := {=>}
 local l_cAttributeSearchParameters
 local l_nColspan
 local l_cObjectId
-AltD()
+
 oFcgi:TraceAdd("EntityListFormBuild")
 
 //Left code below in case would like to make this a user optional feature 
@@ -2164,6 +2249,7 @@ with object l_oDB_ListOfEntities
     :Column("Entity.pk"         ,"pk")
     :Column("Entity.LinkUID"    ,"Entity_LinkUID")
     :Column("Entity.Name"       ,"Entity_Name")
+    :Column("Entity.UseStatus"  ,"Entity_UseStatus")
     :Column("Entity.Description","Entity_Description")
     :Column("Entity.Information","Entity_Information")
     :Column("Upper(Entity.Name)","tag2")
@@ -2368,21 +2454,22 @@ if !empty(l_nNumberOfEntities)
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_nColspan := 5
+            l_nColspan := 6
             if l_nNumberOfCustomFieldValues > 0
                 l_nColspan += 1
             endif
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFEntities+[ (]+Trans(l_nNumberOfEntities)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackage+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[ Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAttributes+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Information</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -2392,7 +2479,7 @@ if !empty(l_nNumberOfEntities)
             scan all
                 l_iEntityPk := ListOfEntities->pk
 
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEntities->Entity_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(nvl(ListOfEntities->Package_FullName,""))
@@ -2418,6 +2505,10 @@ if !empty(l_nNumberOfEntities)
                         //     l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(ListOfEntities->Entity_Information)+[');</script>]
                         // endif
                         l_cHtml += iif(len(nvl(ListOfEntities->Entity_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEntities->Entity_UseStatus,1,6),ListOfEntities->Entity_UseStatus,1)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -2550,6 +2641,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
@@ -2643,6 +2735,20 @@ l_cHtml += [<div class="m-3 card-group">]
                     l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
                 l_cHtml += [</tr>]
 
+                l_cHtml += [<tr class="pb-5">]
+                    l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+                    l_cHtml += [<td class="pb-3">]
+                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                            l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                            l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                            l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                            l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                            l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                            l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                        l_cHtml += [</select>]
+                    l_cHtml += [</td>]
+                l_cHtml += [</tr>]
+
                 l_cHtml += [<tr>]
                     l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
                     l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
@@ -2692,6 +2798,7 @@ local l_cActionOnSubmit
 local l_iEntityPk
 local l_iEntityFk_Package
 local l_cEntityName
+local l_nEntityUseStatus
 local l_cEntityDescription
 local l_cEntityInformation
 local l_cFrom := ""
@@ -2710,6 +2817,7 @@ l_iEntityPk          := Val(oFcgi:GetInputValue("EntityKey"))
 
 l_iEntityFk_Package  := Val(oFcgi:GetInputValue("ComboPackagePk"))
 l_cEntityName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nEntityUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_cEntityDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 l_cEntityInformation := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextInformation")))
 
@@ -2746,6 +2854,7 @@ case l_cActionOnSubmit == "Save"
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("Entity.fk_package",l_iEntityFk_Package)
                 :Field("Entity.Name"      ,l_cEntityName)
+                :Field("Entity.UseStatus" ,l_nEntityUseStatus)
             endif
             :Field("Entity.Description" ,iif(empty(l_cEntityDescription),NULL,l_cEntityDescription))
             :Field("Entity.Information" ,iif(empty(l_cEntityInformation),NULL,l_cEntityInformation))
@@ -2849,6 +2958,7 @@ case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_hValues["fk_package"]  := l_iEntityFk_Package
     l_hValues["Name"]        := l_cEntityName
+    l_hValues["UseStatus"]   := l_nEntityUseStatus
     l_hValues["Description"] := l_cEntityDescription
     l_hValues["Information"] := l_cEntityInformation
     CustomFieldsFormToHash(par_iProjectPk,USEDON_ENTITY,@l_hValues)
@@ -2885,14 +2995,8 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-//=================================================================================================================
-//=================================================================================================================
 
 
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-//=================================================================================================================
-//=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
@@ -3201,6 +3305,7 @@ with object l_oDB_ListOfPackages
     :Column("Package.pk"        ,"pk")
     :Column("Package.LinkUID"   ,"Package_LinkUID")
     :Column("Package.Name"      ,"Package_Name")
+    :Column("Package.UseStatus" ,"Package_UseStatus")
     :Column("Package.FullName"  ,"Package_FullName")
     :Column("Package.TreeOrder1","tag1")
     :Column("Package.fk_Package","Package_Parent")
@@ -3283,12 +3388,13 @@ if !empty(l_nNumberOfPackages)
         l_cHtml += [<div class="col">]
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
-            l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"1","2")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -3296,10 +3402,14 @@ if !empty(l_nNumberOfPackages)
 
             select ListOfPackages
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfPackages->Package_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/">]+ListOfPackages->Package_FullName+[</a>]
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfPackages->Package_UseStatus,1,6),ListOfPackages->Package_UseStatus,1)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -3324,6 +3434,7 @@ local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName       := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus  := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_ifk_Package := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_oDB1        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfOtherPackages
@@ -3402,6 +3513,20 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
         l_cHtml += CustomFieldsBuild(par_iProjectPk,USEDON_PACKAGE,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelML >= 5,[],[disabled]))
 
     l_cHtml += [</table>]
@@ -3425,6 +3550,7 @@ local l_cActionOnSubmit
 local l_iPackagePk
 local l_iPackageFk_Package
 local l_cPackageName
+local l_nPackageUseStatus
 local l_cFrom := ""
 local l_cErrorMessage := ""
 
@@ -3440,6 +3566,7 @@ l_iPackagePk         := Val(oFcgi:GetInputValue("PackageKey"))
 
 l_iPackageFk_Package := Val(oFcgi:GetInputValue("ComboPackagePk"))
 l_cPackageName       := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nPackageUseStatus  := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -3475,6 +3602,7 @@ case l_cActionOnSubmit == "Save"
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("Package.fk_package",l_iPackageFk_Package)
                 :Field("Package.Name"      ,l_cPackageName)
+                :Field("Package.UseStatus" ,l_nPackageUseStatus)
             endif
             if empty(l_iPackagePk)
                 :Field("Package.LinkUID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
@@ -3546,6 +3674,7 @@ case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_hValues["fk_package"] := l_iPackageFk_Package
     l_hValues["Name"]       := l_cPackageName
+    l_hValues["UseStatus"]  := l_nPackageUseStatus
     CustomFieldsFormToHash(par_iProjectPk,USEDON_PACKAGE,@l_hValues)
 
     l_cHtml += PackageEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cPackageLinkUID,l_cErrorMessage,l_iPackagePk,l_hValues)
@@ -3570,7 +3699,7 @@ static function GetDataTypesEditHeader(par_cSitePath, par_cModelLinkUID, par_cDa
         l_cHtml += [</li>]
     
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cDataTypeElement == "ListEnumerations",[ active],[])+[" href="]+par_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+[/">List ]+oFcgi:p_ANFEnumerations+[</a>]
+            l_cHtml += [<a class="nav-link ]+iif(par_cDataTypeElement == "ListEnumerations",[ active],[])+[" href="]+par_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+[/">List ]+oFcgi:p_ANFModelEnumerations+[</a>]
         l_cHtml += [</li>]
     
     l_cHtml += [</ul>]
@@ -3664,6 +3793,7 @@ with object l_oDB_ListOfDataTypes
     :Column("DataType.pk"         ,"pk")
     :Column("DataType.LinkUID"    ,"DataType_LinkUID")
     :Column("DataType.FullName"   ,"DataType_FullName")
+    :Column("DataType.UseStatus"  ,"DataType_UseStatus")
     :Column("DataType.Description","DataType_Description")
     :Column("PrimitiveType.Name"  ,"PrimitiveType_Name")
     :Column("DataType.TreeOrder1","tag1")
@@ -3751,14 +3881,15 @@ if !empty(l_nNumberOfDataTypes)
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
-            l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Primitive Type</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -3767,7 +3898,7 @@ if !empty(l_nNumberOfDataTypes)
             select ListOfDataTypes
             scan all
 
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfDataTypes->DataType_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/">]+ListOfDataTypes->DataType_FullName+[</a>]
@@ -3779,6 +3910,10 @@ if !empty(l_nNumberOfDataTypes)
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfDataTypes->DataType_Description,""))
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfDataTypes->DataType_UseStatus,1,6),ListOfDataTypes->DataType_UseStatus,1)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -3805,6 +3940,7 @@ local l_cErrorText    := hb_DefaultValue(par_cErrorText,"")
 local l_ifk_DataType      := nvl(hb_HGetDef(par_hValues,"fk_DataType",0),0)
 local l_ifk_PrimitiveType := nvl(hb_HGetDef(par_hValues,"fk_PrimitiveType",0),0)
 local l_cName             := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfOtherDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3911,6 +4047,20 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
@@ -3940,6 +4090,7 @@ local l_iDataTypePk
 local l_iDataTypeFk_DataType
 local l_iDataTypeFk_PrimitiveType
 local l_cDataTypeName
+local l_nDataTypeUseStatus
 local l_cDataTypeDescription
 local l_cFrom := ""
 local l_cErrorMessage := ""
@@ -3957,6 +4108,7 @@ l_iDataTypePk   := Val(oFcgi:GetInputValue("DataTypeKey"))
 l_iDataTypeFk_DataType      := Val(oFcgi:GetInputValue("ComboDataTypePk"))
 l_iDataTypeFk_PrimitiveType := Val(oFcgi:GetInputValue("ComboPrimitiveTypePk"))
 l_cDataTypeName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nDataTypeUseStatus        := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_cDataTypeDescription      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
@@ -3992,6 +4144,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("DataType.fk_DataType"     ,l_iDataTypeFk_DataType)
                 :Field("DataType.fk_PrimitiveType",l_iDataTypeFk_PrimitiveType)
                 :Field("DataType.Name"            ,l_cDataTypeName)
+                :Field("DataType.UseStatus"       ,l_nDataTypeUseStatus)
                 :Field("DataType.Description"     ,iif(empty(l_cDataTypeDescription),NULL,l_cDataTypeDescription))
             endif
             if empty(l_iDataTypePk)
@@ -4059,6 +4212,7 @@ case !empty(l_cErrorMessage)
     l_hValues["fk_DataType"]      := l_iDataTypeFk_DataType
     l_hValues["fk_PrimitiveType"] := l_iDataTypeFk_PrimitiveType
     l_hValues["Name"]             := l_cDataTypeName
+    l_hValues["UseStatus"]        := l_nDataTypeUseStatus
     l_hValues["Description"]      := l_cDataTypeDescription
     CustomFieldsFormToHash(par_iProjectPk,USEDON_DATATYPE,@l_hValues)
 
@@ -4112,6 +4266,7 @@ with object l_oDB1
     :Column("ModelEnumeration.pk"                ,"pk")
     :Column("ModelEnumeration.fk_Model"          ,"Enumeration_fk_Model")
     :Column("ModelEnumeration.Name"              ,"Enumeration_Name")
+    :Column("ModelEnumeration.UseStatus"         ,"Enumeration_UseStatus")
     :Column("ModelEnumeration.LinkUID"           ,"Enumeration_LinkUID")
     :Column("ModelEnumeration.Description"       ,"Enumeration_Description")
     :Column("Upper(ModelEnumeration.Name)","tag1")
@@ -4165,19 +4320,20 @@ else
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Enumeration Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Values</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfEnumerations
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumerations->Enumeration_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_LinkUID+[/">]+ListOfEnumerations->Enumeration_Name+[</a>]
@@ -4192,6 +4348,10 @@ else
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_Description,""))
                         l_cHtml += [</td>]
 
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEnumerations->Enumeration_UseStatus,1,6),ListOfEnumerations->Enumeration_UseStatus,1)]
+                        l_cHtml += [</td>]
+                    
                     l_cHtml += [</tr>]
                 endscan
                 l_cHtml += [</table>]
@@ -4209,8 +4369,9 @@ local l_cHtml := ""
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
-local l_cName            := hb_HGetDef(par_hValues,"Name","")
-local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDataTableInfo
 
@@ -4255,6 +4416,20 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
     l_cHtml += [<tr>]
     l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
     l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
@@ -4281,6 +4456,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_iEnumerationPk
 local l_cEnumerationName
+local l_nEnumerationUseStatus
 local l_cEnumerationDescription
 local l_cEnumerationLinkUID
 local l_cFrom := ""
@@ -4296,9 +4472,10 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 // l_cFormName       := oFcgi:GetInputValue("formname")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_cEnumerationName              := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
-l_cEnumerationDescription       := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iEnumerationPk          := Val(oFcgi:GetInputValue("EnumerationKey"))
+l_cEnumerationName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+l_nEnumerationUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_cEnumerationDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -4331,6 +4508,7 @@ case l_cActionOnSubmit == "Save"
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("ModelEnumeration.fk_Model"       , par_iModelPk)
                 :Field("ModelEnumeration.Name"           , l_cEnumerationName)
+                :Field("ModelEnumeration.UseStatus"      , l_nEnumerationUseStatus)
             endif
             :Field("ModelEnumeration.Description"    , iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
             if empty(l_iEnumerationPk)
@@ -4395,8 +4573,9 @@ do case
 case l_cFrom == "Redirect"
 
 case !empty(l_cErrorMessage)
-    l_hValues["Name"]            := l_cEnumerationName
-    l_hValues["Description"]     := l_cEnumerationDescription
+    l_hValues["Name"]        := l_cEnumerationName
+    l_hValues["UseStatus"]   := l_nEnumerationUseStatus
+    l_hValues["Description"] := l_cEnumerationDescription
 
     l_cHtml += EnumerationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,l_cErrorMessage,l_iEnumerationPk,l_hValues)
 
@@ -4473,11 +4652,11 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cEnumerationName)+["</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
@@ -4660,8 +4839,6 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function EnumValueEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,par_cEnumerationName,par_cErrorText,par_iPk,par_hValues)
-
-//par_cName,par_iNumber,par_nUseStatus,par_nDocStatus,par_cDescription
 
 local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
@@ -4892,6 +5069,7 @@ with object l_oDB_ListOfAssociations
     :Column("Association.pk"         ,"pk")
     :Column("Association.LinkUID"    ,"Association_LinkUID")
     :Column("Association.Name"       ,"Association_Name")
+    :Column("Association.UseStatus"  ,"Association_UseStatus")
     :Column("Association.Description","Association_Description")
     :Column("Upper(Association.Name)","tag2")
     :Where("Association.fk_Model = ^",par_iModelPk)
@@ -5022,25 +5200,6 @@ if l_nNumberOfAssociations > 0
 
 endif
 
-
-//For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
-// with object l_oDB_ListOfAssociationsEndpointCounts
-//     :Table("db818131-6cee-43a8-81a3-2ff610842a2f","Association")
-//     :Column("Association.pk","Association_pk")
-//     :Column("Count(*)" ,"EndpointCount")
-//     :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
-//     :Where("Association.fk_Model = ^",par_iModelPk)
-//     :GroupBy("Association_pk")
-//     :SQL("ListOfAssociationsEndpointCounts")
-
-//     with object :p_oCursor
-//         :Index("tag1","Association_pk")
-//         :CreateIndexes()
-//         :SetOrder("tag1")
-//     endwith
-
-// endwith
-
 with object l_oDB_ListOfAssociationsEndpoints
     :Table("ac8cb457-53ec-41f2-aa9d-8e68ce3efd92","Association")
     :Column("Association.pk","Association_pk")
@@ -5056,7 +5215,6 @@ with object l_oDB_ListOfAssociationsEndpoints
     with object :p_oCursor
         :Index("tag1","Association_pk")
         :CreateIndexes()
-        // :SetOrder("tag1")
     endwith
 endwith
 
@@ -5138,20 +5296,21 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_nColspan := 5
+            l_nColspan := 6
             if l_nNumberOfCustomFieldValues > 0
                 l_nColspan += 1
             endif
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFAssociations+[ (]+Trans(l_nNumberOfAssociations)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackage+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAssociation+[ Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntities+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -5161,7 +5320,7 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
             scan all
                 l_iAssociationPk := ListOfAssociations->pk
 
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAssociations->Association_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(nvl(ListOfAssociations->Package_FullName,""))
@@ -5182,6 +5341,9 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfAssociations->Association_Description,""))
                     l_cHtml += [</td>]
 
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAssociations->Association_UseStatus,1,6),ListOfAssociations->Association_UseStatus,1)]
+                    l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -5301,6 +5463,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfPackages    := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -5396,6 +5559,20 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Association Name</td>]
             l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[ class="form-control"></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
@@ -5562,6 +5739,7 @@ local l_cActionOnSubmit
 local l_iAssociationPk
 local l_iAssociationFk_Package
 local l_cAssociationName
+local l_nAssociationUseStatus
 local l_cAssociationDescription
 local l_cFrom := ""
 local l_oData
@@ -5598,6 +5776,7 @@ l_iAssociationPk          := Val(oFcgi:GetInputValue("AssociationKey"))
 
 l_iAssociationFk_Package  := Val(oFcgi:GetInputValue("ComboPackagePk"))
 l_cAssociationName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nAssociationUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_cAssociationDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
@@ -5667,6 +5846,7 @@ case l_cActionOnSubmit == "Save"
                 :Table("f81f332a-f00f-475b-b37b-aed5c25d69a7","Association")
                 :Column("Association.fk_package"       ,"Association_fk_package")
                 :Column("Association.Name"             ,"Association_Name")
+                :Column("Association.UseStatus"        ,"Association_UseStatus")
                 :Column("Association.NumberOfEndpoints","Association_NumberOfEndpoints")
                 :Column("Association.Description"      ,"Association_Description")
                 l_oData := :Get(l_iAssociationPk)
@@ -5686,6 +5866,12 @@ case l_cActionOnSubmit == "Save"
                     l_lChanged := .t.
                     :Field("Association.Name"      ,iif(empty(l_cAssociationName),NULL,l_cAssociationName))
                 endif
+
+                if empty(l_iAssociationPk) .or. l_oData:Association_seStatus <> l_nAssociationUseStatus
+                    l_lChanged := .t.
+                    :Field("Association.UseStatus" ,l_nAssociationUseStatus)
+                endif
+
             endif
 
             if empty(l_iAssociationPk) .or. nvl(l_oData:Association_Description,"") <> nvl(l_cAssociationDescription,"")
@@ -5854,6 +6040,7 @@ case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_hValues["fk_package"]  := l_iAssociationFk_Package
     l_hValues["Name"]        := l_cAssociationName
+    l_hValues["UseStatus"]   := l_nAssociationUseStatus
     l_hValues["Description"] := l_cAssociationDescription
     CustomFieldsFormToHash(par_iProjectPk,USEDON_ASSOCIATION,@l_hValues)
 
@@ -5933,6 +6120,7 @@ with object l_oDB_ListOfAttributes
     :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
     :Column("Attribute.BoundUpper"     ,"Attribute_BoundUpper")
     :Column("Attribute.Description"    ,"Attribute_Description")
+    :Column("Attribute.UseStatus"      ,"Attribute_UseStatus")
     
     :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
     :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
@@ -6074,8 +6262,8 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-            l_cHtml += [<tr class="bg-info">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"5","6")+[">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
+                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">]
                     if l_nNumberOfAttributes == l_nNumberOfAttributesInSearch
                         l_cHtml += oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
                     else
@@ -6084,12 +6272,13 @@ else
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Use<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                 endif
@@ -6097,7 +6286,7 @@ else
 
             select ListOfAttributes
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAttributes->Attribute_UseStatus)+[>]
 
                     // Full Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -6132,6 +6321,10 @@ else
                     // Description
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,""))
+                    l_cHtml += [</td>]
+
+                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,1,6),ListOfAttributes->Attribute_UseStatus,1)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -6194,6 +6387,7 @@ static function AttributeEditFormBuild(par_iProjectPk,par_iEntityPk,par_cEntityN
 local l_cHtml := ""
 local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 local l_cName           := hb_HGetDef(par_hValues,"Name","")
+local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_ifk_Attribute   := hb_HGetDef(par_hValues,"fk_Attribute",0)
 local l_ifk_DataType    := hb_HGetDef(par_hValues,"fk_DataType",0)
 local l_ifk_Enumeration := hb_HGetDef(par_hValues,"fk_Enumeration",0)
@@ -6351,6 +6545,20 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" class="form-select">]
+                    l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nUseStatus==4,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nUseStatus==5,[ selected],[])+[>To Be Discontinued</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nUseStatus==6,[ selected],[])+[>Discontinued</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Data Type</td>]
             l_cHtml += [<td class="pb-3">]
 
@@ -6411,6 +6619,7 @@ local l_cActionOnSubmit
 local l_iAttributePk
 local l_iAttributeFk_Attribute
 local l_cAttributeName
+local l_nAttributeUseStatus
 local l_cAttributeFk_DataType
 local l_iAttributeFk_DataType := 0
 local l_iAttributeFk_Enumeration := 0
@@ -6435,6 +6644,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iAttributePk           := Val(oFcgi:GetInputValue("AttributeKey"))
 l_iAttributeFk_Attribute := Val(oFcgi:GetInputValue("ComboAttributePk"))
 l_cAttributeName         := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_nAttributeUseStatus    := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_cAttributeFk_DataType  := oFcgi:GetInputValue("ComboFk_DataType")
 if left(l_cAttributeFk_DataType,1) == "D"
     l_iAttributeFk_DataType  := val(substr(l_cAttributeFk_DataType,2))
@@ -6512,6 +6722,7 @@ case l_cActionOnSubmit == "Save"
             if oFcgi:p_nAccessLevelML >= 5
                 :Field("Attribute.fk_Attribute",l_iAttributeFk_Attribute)
                 :Field("Attribute.Name"        , l_cAttributeName)
+                :Field("Attribute.UseStatus"   ,l_nAttributeUseStatus)
                 if l_iAttributeFk_DataType != 0
                     :Field("Attribute.fk_DataType" , l_iAttributeFk_DataType)
                     :Field("Attribute.fk_ModelEnumeration" , 0)
@@ -6585,6 +6796,7 @@ if !empty(l_cErrorMessage)
     l_hValues["fk_Enumeration"]  := l_iAttributeFk_Enumeration
     l_hValues["IsObject"]        := l_lAttributeIsObject
     l_hValues["Name"]            := l_cAttributeName
+    l_hValues["UseStatus"]       := l_nAttributeUseStatus
     l_hValues["BoundLower"]      := l_cAttributeBoundLower
     l_hValues["BoundUpper"]      := l_cAttributeBoundUpper
     l_hValues["Description"]     := l_cAttributeDescription
@@ -6806,11 +7018,11 @@ endwith
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">]+oFcgi:p_ANFLinkedEntities+[</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white" ></th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white" >From/To</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white" >]+oFcgi:p_ANFModel+[</th>]

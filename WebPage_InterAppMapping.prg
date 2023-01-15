@@ -313,14 +313,14 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfNameSpacesInTablesFrom > 1,"2","1")+[">]+lcApplicationNameFrom+[ Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
                     l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]+lcApplicationNameTo+[ Tables</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Map</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     if l_nNumberOfNameSpacesInTablesFrom > 1
                         l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
                     endif
@@ -775,13 +775,13 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">]+lcApplicationNameFrom+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]+lcApplicationNameTo+[</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">]+lcTableInfoFrom+[</th>]
                     l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]
@@ -792,7 +792,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white"></th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]

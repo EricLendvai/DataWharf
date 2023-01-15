@@ -221,7 +221,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
         l_cErrorMessage := "Failed to retrieve Enumeration Meta data."
     else
-        // ExportTableToHtmlFile("ListOfEnumsForLoads","d:\PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfEnumsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
 
         with object l_oDB1
             :Table("77f9c695-656a-4f08-9f3b-0b9f255cae6d","NameSpace")
@@ -394,7 +394,7 @@ hb_HDel(l_hCurrentListOfEnumValues,l_cLastNameSpace+"*"+l_cLastEnumerationName+"
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfFieldsForLoads","d:\PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNameSpace  := ""
             l_cLastTableName  := ""
@@ -762,7 +762,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //     if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
     //         l_cErrorMessage := "Failed to retrieve Fields Meta data."
     //     else
-    //         // ExportTableToHtmlFile("ListOfIndexesForLoads","d:\PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+    //         // ExportTableToHtmlFile("ListOfIndexesForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
     //         l_cLastNameSpace  := ""
     //         l_cLastTableName  := ""

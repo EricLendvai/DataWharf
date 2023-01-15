@@ -1889,8 +1889,8 @@ local l_cDocStatus
 local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_TableCustomFields := ""
-local l_lUnknownInGray
-local l_lNeverShowDescriptionOnHover
+local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
+local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 local l_oData_Application
 local l_cApplicationSupportColumns
 local l_cHtml_icon
@@ -1924,9 +1924,6 @@ l_nLengthDecoded := hb_jsonDecode(l_cInfo,@l_hOnClickInfo)
 // if l_hOnClickInfo["nodes"] is a 0 size array and l_hOnClickInfo["edges"] array of len 1   will be column.pk
 
 // SendToDebugView("TabCookie = "+oFcgi:GetCookieValue("DiagramDetailTab"))
-
-l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
-l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
@@ -1976,7 +1973,7 @@ if len(l_aNodes) == 1
                     :SetOrder("pk")
                 endwith
             endif
-            // ExportTableToHtmlFile("ListOfCurrentTablesInDiagram","d:\PostgreSQL_ListOfCurrentTablesInDiagram.html","From PostgreSQL",,25,.t.)
+            // ExportTableToHtmlFile("ListOfCurrentTablesInDiagram",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCurrentTablesInDiagram.html","From PostgreSQL",,25,.t.)
         endwith
 
 
@@ -2323,7 +2320,7 @@ if len(l_aNodes) == 1
 
                             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                            l_cHtml += [<tr class="bg-info">]
+                            l_cHtml += [<tr class="bg-primary bg-gradient">]
                                 l_cHtml += [<th></th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]

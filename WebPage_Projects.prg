@@ -390,11 +390,11 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
@@ -875,11 +875,11 @@ if !empty(l_nNumberOfPrimitiveTypes)
 
             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
             
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="2">Primitive Types (]+Trans(l_nNumberOfPrimitiveTypes)+[)</th>]
             l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-info">]
+            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
             l_cHtml += [</tr>]

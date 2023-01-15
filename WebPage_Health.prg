@@ -12,7 +12,8 @@ l_hStatus["message"]   := "OK"
 
 l_hStatus["zulu_time"] := strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"
 
-l_hStatus["version"] := BUILDVERSION
+l_hStatus["application_version"] := BUILDVERSION
+l_hStatus["data_schema_version"] := trans(oFcgi:p_o_SQLConnection:GetSchemaDefinitionVersion("Core"))
 
 l_hStatus["build Info"] := {"datawharf"   => hb_buildinfo(),;
                             "harbour_orm" => hb_orm_buildinfo(),;

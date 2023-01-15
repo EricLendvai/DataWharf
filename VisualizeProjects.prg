@@ -275,7 +275,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :SQL("ListOfEdgesEntityEntity")
         //Pairs of records should be created
 
- //ExportTableToHtmlFile("ListOfEdgesEntityEntity","d:\PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
+ //ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     else
         // A subset of Entities
@@ -833,6 +833,10 @@ if GRAPH_LIB_ML = "mxgraph"
     l_cHtml += '         }'
     l_cHtml += '     }'
     l_cHtml += '     evt.consume();'
+
+    l_cHtml += '     network.setAllowDanglingEdges(false);'
+    l_cHtml += '     network.setDisconnectOnMove(false);'
+
 elseif GRAPH_LIB_ML == "visjs"
     l_cHtml += [  var data = {]
     l_cHtml += [    nodes: new vis.DataSet(nodes),]
@@ -1985,6 +1989,7 @@ local l_cPackageFullName
 local l_cEntityName
 local l_cEntityDescription
 local l_cEntityInformation
+local l_nEntityUseStatus
 
 local l_cAttributeName
 local l_cAttributeDescription
@@ -2002,23 +2007,21 @@ local l_nNumberOfAttributes
 local l_nNumberOfOtherModelingDiagram
 local l_nNumberOfRelatedEntities
 local l_cUseStatus
-local l_cDocStatus
 local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_EntityCustomFields := ""
-local l_lNeverShowDescriptionOnHover
 local l_oData_Project
 local l_cApplicationSupportAttributes
 local l_cHtml_icon
 local l_nAccessLevelML
 local l_cZoomInfo
 local l_cObjectId
+local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
 
 oFcgi:TraceAdd("GetMLInfoDuringVisualization")
 
 l_nLengthDecoded := hb_jsonDecode(l_cInfo,@l_hOnClickInfo)
-
-l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
 l_aNodes := hb_HGetDef(l_hOnClickInfo,"nodes",{})
 if len(l_aNodes) == 1
@@ -2100,6 +2103,7 @@ if len(l_aNodes) == 1
             :Column("Attribute.TreeOrder1"     ,"Attribute_TreeOrder1")
             :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
             :Column("Attribute.Name"           ,"Attribute_Name")
+            :Column("Attribute.UseStatus"      ,"Attribute_UseStatus")
             :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
             :Column("Attribute.BoundUpper"     ,"Attribute_BoundUpper")
             :Column("Attribute.Description"    ,"Attribute_Description")
@@ -2235,6 +2239,7 @@ if len(l_aNodes) == 1
             :Column("Entity.Name"          ,"Entity_Name")            // 3
             :Column("Entity.Description"   ,"Entity_Description")     // 4
             :Column("Entity.Information"   ,"Entity_Information")     // 5
+            :Column("Entity.UseStatus"     ,"Entity_UseStatus")       // 6
             // :join("inner","Model"  ,"","Entity.fk_Model = Model.pk")
             // :join("inner","Project","","Model.fk_Project = Project.pk")
             :Join("left" ,"Package","","Entity.fk_Package = Package.pk") 
@@ -2248,6 +2253,7 @@ if len(l_aNodes) == 1
             l_cEntityName           := l_aSQLResult[1,3]
             l_cEntityDescription    := nvl(l_aSQLResult[1,4],"")
             l_cEntityInformation    := nvl(l_aSQLResult[1,5],"")
+            l_nEntityUseStatus      := l_aSQLResult[1,6]
 
             if !empty(l_cPackageFullName)
                 l_cZoomInfo := l_cPackageFullName+" / "+l_cEntityName
@@ -2256,7 +2262,25 @@ if len(l_aNodes) == 1
             endif
 
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
-            l_cHtml += MODELING_ENTITY_NODE_BACKGROUND
+            // l_cHtml += MODELING_ENTITY_NODE_BACKGROUND
+            do case
+            case l_nEntityUseStatus <= 1
+                if l_lUnknownInGray
+                    l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
+                else
+                    l_cHtml += MODELING_ENTITY_NODE_BACKGROUND // USESTATUS_4_NODE_HIGHLIGHT
+                endif
+            case l_nEntityUseStatus == 2
+                l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
+            case l_nEntityUseStatus == 3
+                l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
+            case l_nEntityUseStatus == 4
+                l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
+            case l_nEntityUseStatus == 5
+                l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
+            case l_nEntityUseStatus >= 6
+                l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
+            endcase
             l_cHtml += [;">]
 
                 l_cHtml += [<div class="input-group">]
@@ -2347,12 +2371,13 @@ if len(l_aNodes) == 1
 
                             l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                            l_cHtml += [<tr class="bg-info">]
+                            l_cHtml += [<tr class="bg-primary bg-gradient">]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Use<br>Status</th>]
                                 if l_nNumberOfCustomFieldValues > 0
                                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                                 endif
@@ -2360,11 +2385,11 @@ if len(l_aNodes) == 1
 
                             select ListOfAttributes
                             scan all
-                                l_cHtml += [<tr>]
+                                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAttributes->Attribute_UseStatus)+[>]
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
+                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
                                     l_cHtml += [</td>]
 
                                     // Data Type
@@ -2389,6 +2414,11 @@ if len(l_aNodes) == 1
                                     // Description
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,""))
+                                    l_cHtml += [</td>]
+
+                                    // Use Status
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,1,6),ListOfAttributes->Attribute_UseStatus,1)]
                                     l_cHtml += [</td>]
 
                                     if l_nNumberOfCustomFieldValues > 0
@@ -2491,6 +2521,11 @@ if len(l_aNodes) == 1
                 l_cHtml += [">Remove ]+oFcgi:p_ANFEntity+[ and Save Layout</button></div>]
                 //---------------------------------------------------------------------------
                 l_cHtml += [<input type="hidden" name="TextEntityPkToRemove" value="]+Trans(l_iEntityPk)+[">]
+
+                l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nEntityUseStatus,1,6),l_nEntityUseStatus,1)]
+                if !empty(l_cUseStatus)
+                    l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
+                endif
 
                 if !empty(l_cEntityDescription)
                     l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cEntityDescription)+[</div>]
@@ -2618,6 +2653,10 @@ local l_oDB_ListOfEndpoints
 local l_oDB_AssociationCustomFields
 local l_oDB_InArray
 
+local l_nAssociationUseStatus
+local l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
+local l_cUseStatus
+
 //Get the list of Endpoints
 l_oDB_ListOfEndpoints := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB_ListOfEndpoints
@@ -2694,6 +2733,7 @@ with object l_oDB_InArray
     :Column("Association.Name"              ,"Association_Name")                // 3
     :Column("Association.Description"       ,"Association_Description")         // 4
     :Column("Association.NumberOfEndpoints" ,"Association_NumberOfEndpoints")   // 5
+    :Column("Association.UseStatus"         ,"Association_UseStatus")           // 6
     // :join("inner","Model"  ,"","Association.fk_Model = Model.pk")
     // :join("inner","Project","","Model.fk_Project = Project.pk")
     :Join("left" ,"Package","","Association.fk_Package = Package.pk") 
@@ -2707,6 +2747,7 @@ if l_oDB_InArray:Tally == 1
     l_cAssociationName              := nvl(l_aSQLResult[1,3],"")
     l_cAssociationDescription       := nvl(l_aSQLResult[1,4],"")
     l_nAssociationNumberOfEndpoints := l_aSQLResult[1,5]
+    l_nAssociationUseStatus         := l_aSQLResult[1,6]
 
     if !empty(l_cPackageFullName)
         l_cZoomInfo := l_cPackageFullName+" / "+l_cAssociationName
@@ -2715,7 +2756,25 @@ if l_oDB_InArray:Tally == 1
     endif
 
     l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
-    l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND
+    // l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND
+    do case
+    case l_nAssociationUseStatus <= 1
+        if l_lUnknownInGray
+            l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
+        else
+            l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND  //USESTATUS_4_NODE_HIGHLIGHT
+        endif
+    case l_nAssociationUseStatus == 2
+        l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
+    case l_nAssociationUseStatus == 3
+        l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
+    case l_nAssociationUseStatus == 4
+        l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
+    case l_nAssociationUseStatus == 5
+        l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
+    case l_nAssociationUseStatus >= 6
+        l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
+    endcase
     l_cHtml += [;">]
 
         l_cHtml += [<div class="input-group">]
@@ -2731,6 +2790,11 @@ if l_oDB_InArray:Tally == 1
     // -----------------------------------------------------------------------------------------------------------------------------------------
 
     l_cHtml += [<div class="m-3">]
+
+        l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nAssociationUseStatus,1,6),l_nAssociationUseStatus,1)]
+        if !empty(l_cUseStatus)
+            l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
+        endif
 
         if !empty(l_cAssociationDescription)
             l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cAssociationDescription)+[</div>]
@@ -2755,7 +2819,7 @@ if l_oDB_InArray:Tally == 1
 
                     l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                    l_cHtml += [<tr class="bg-info">]
+                    l_cHtml += [<tr class="bg-primary bg-gradient">]
                         l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]

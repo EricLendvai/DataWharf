@@ -1,8 +1,17 @@
 # DataWharf - Change Log
 
+## 01/15/2023 v 2.38
+* In Mxgrap visualization, fix dragging many nodes without loosing edges in Modeling.
+* Changed color of lists heading to a darker blue to help readability of white text.
+* Added models count on projects list.
+* Added more counts on list of models.
+* Added "Use Status" in the following modeling items: Entities, Associations, Attributes, Data Types, Enumerations, Packages
+* Using background colors in lists when "Use Status" is one of the following: Proposed, Under Development, To Be Discontinued, Discontinued
+* In Model Visualization, the "Use Status" is used to display the heading color of Entity and Association information panels. 
+
 ## 01/13/2023 v 2.37
 * Using different background colors in application grids to reflect the Use Status.
-* In Mxgrap visualization, Potential fix dragging many nodes without loosing edges.
+* In Mxgrap visualization, fix dragging many nodes without loosing edges in Applications.
 
 ## 01/12/2023 v 2.36
 * New "/health" web page returning status info to be used to monitor deployment of DataWharf.

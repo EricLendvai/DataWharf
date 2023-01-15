@@ -8,7 +8,7 @@ local l_oDB_ListOfCurrentRecords := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 CreateCursorTreeStructureForPackage(l_oCursor1,par_iModelPk)
-// ExportTableToHtmlFile("CursorTreeStructureForPackage","d:\PostgreSQL_CursorTreeStructureForPackage.html","From PostgreSQL",,,.t.)
+// ExportTableToHtmlFile("CursorTreeStructureForPackage",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_CursorTreeStructureForPackage.html","From PostgreSQL",,,.t.)
 
 with object l_oCursor1
     select CursorTreeStructureForPackage
@@ -165,7 +165,7 @@ local l_oDB_ListOfCurrentRecords := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 CreateCursorTreeStructureForDataType(l_oCursor1,par_iModelPk)
-// ExportTableToHtmlFile("CursorTreeStructureForDataType","d:\PostgreSQL_CursorTreeStructureForDataType.html","From PostgreSQL",,,.t.)
+// ExportTableToHtmlFile("CursorTreeStructureForDataType",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_CursorTreeStructureForDataType.html","From PostgreSQL",,,.t.)
 
 with object l_oCursor1
     select CursorTreeStructureForDataType
@@ -322,7 +322,7 @@ local l_oDB_ListOfCurrentRecords := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 CreateCursorTreeStructureForAttribute(l_oCursor1,par_iEntityPk)
-// ExportTableToHtmlFile("CursorTreeStructureForAttribute","d:\PostgreSQL_CursorTreeStructureForAttribute.html","From PostgreSQL",,,.t.)
+// ExportTableToHtmlFile("CursorTreeStructureForAttribute",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_CursorTreeStructureForAttribute.html","From PostgreSQL",,,.t.)
 
 with object l_oCursor1
     select CursorTreeStructureForAttribute

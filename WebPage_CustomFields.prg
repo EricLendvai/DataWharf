@@ -206,11 +206,11 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Custom Fields (]+Trans(l_nNumberOfCustomFields)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Code</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Label</th>]

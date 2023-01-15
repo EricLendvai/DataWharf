@@ -16,20 +16,20 @@ private v_iFastCGIRunLogPk := 0    // Will be the FastCGIRunLog.pk of the curren
 
 //The following Hash will have per web page name (url) an array that consists of {Page Title,Minimum User Access Level,IncludeHeader,PointerToFunctionToBuildThePage}
 //User Access Levels: 0 = public, 1 = logged in, 2 = Admin
-private v_hPageMapping := {"home"            => {"Home"                     ,1,.t.,@BuildPageHome()},;
-                          "About"            => {"About"                    ,0,.t.,@BuildPageAbout()},;   //Does not require to be logged in.
-                          "ChangePassword"   => {"Change Password"          ,1,.t.,@BuildPageChangePassword()},;
-                          "Projects"         => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
-                          "Project"          => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
-                          "Applications"     => {"Applications"             ,1,.t.,@BuildPageApplications()},;
-                          "Application"      => {"Applications"             ,1,.t.,@BuildPageApplications()},;
-                          "Modeling"         => {"Modeling"                 ,1,.t.,@BuildPageModeling()},;
-                          "DataDictionaries" => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
-                          "DataDictionary"   => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
-                          "InterAppMapping"  => {"Inter Application Mapping",1,.t.,@BuildPageInterAppMapping()},;
-                          "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
-                          "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
-                          "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
+private v_hPageMapping := {"home"             => {"Home"                     ,1,.t.,@BuildPageHome()},;
+                           "About"            => {"About"                    ,0,.t.,@BuildPageAbout()},;   //Does not require to be logged in.
+                           "ChangePassword"   => {"Change Password"          ,1,.t.,@BuildPageChangePassword()},;
+                           "Projects"         => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
+                           "Project"          => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
+                           "Applications"     => {"Applications"             ,1,.t.,@BuildPageApplications()},;
+                           "Application"      => {"Applications"             ,1,.t.,@BuildPageApplications()},;
+                           "Modeling"         => {"Modeling"                 ,1,.t.,@BuildPageModeling()},;
+                           "DataDictionaries" => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
+                           "DataDictionary"   => {"DataDictionaries"         ,1,.t.,@BuildPageDataDictionaries()},;
+                           "InterAppMapping"  => {"Inter Application Mapping",1,.t.,@BuildPageInterAppMapping()},;
+                           "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
+                           "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
+                           "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
 
 hb_HCaseMatch(v_hPageMapping,.f.)
 
@@ -38,6 +38,8 @@ SendToDebugView("Starting DataWharf FastCGI App")
 hb_cdpSelect("UTF8")
 
 set century on
+
+hb_DirCreate(OUTPUT_FOLDER+hb_ps())
 
 oFcgi := MyFcgi():New()    // Used a subclass of hb_Fcgi
 do while oFcgi:Wait()
@@ -69,8 +71,8 @@ class MyFcgi from hb_Fcgi
     data p_ANFAttributes        init "Attributes"
     data p_ANFDataType          init "Data Type"
     data p_ANFDataTypes         init "Data Types"
-    data p_ANFEnumeration       init "Enumeration"
-    data p_ANFEnumerations      init "Enumerations"
+    data p_ANFModelEnumeration  init "Enumeration"
+    data p_ANFModelEnumerations init "Enumerations"
     data p_ANFPackage           init "Package"
     data p_ANFPackages          init "Packages"
     data p_ANFLinkedEntity      init "Linked Entity"
@@ -120,6 +122,7 @@ local l_cSecuritySalt
 local l_cSecurityDefaultPassword
 local l_iCurrentDataVersion
 local l_cVisPos
+local l_cTableName
 
 SendToDebugView("Called from method OnFirstRequest")
 
@@ -386,6 +389,29 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
+        // ud  make it a for each on the following tables
+        
+        if l_iCurrentDataVersion <= 16
+            with object l_oDB1
+                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","Model","NameSpace","Project","Table","Version","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
+                    :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
+                    :Column(l_cTableName+".pk" , "pk")
+                    :Where(l_cTableName+[.UseStatus = 0])
+                    :SQL("ListOfRecordsToUpdate")
+                    select ListOfRecordsToUpdate
+                    scan all
+                        with object l_oDB2
+                            :Table("091cf769-4ced-4276-be6b-cf7dc50dd546",l_cTableName)
+                            :Field(l_cTableName+".UseStatus" , 1)
+                            :Update(ListOfRecordsToUpdate->pk)
+                        endwith
+                    endscan
+                endfor
+            endwith
+
+            l_iCurrentDataVersion := 16
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
@@ -978,23 +1004,27 @@ local l_LastError := ""
 local l_Schema
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
+// local l_cUpdateScript := ""
 
 #include "Schema.txt"
 
+// if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_LastError) > 0
 if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResult,,@l_LastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
             //Ensure Cyanaudit is up to date
             oFcgi:p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_update_audit_fields('public');")
-////            SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
+            //SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
         endif
     endif
 else
     if !empty(l_LastError)
-////        SendToDebugView("PostgreSQL - Failed Migrate")
+        SendToDebugView("PostgreSQL - Failed Migrate")
     endif
 endif
+
+// VFP_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript.txt")
 
 return nil
 //=================================================================================================================
@@ -1552,13 +1582,17 @@ function GetTRStyleBackgroundColor(par_nUseStatus)
 local l_cHtml
 do case
 case par_nUseStatus == 2  // Proposed
-    l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+["]
+    // l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+[;"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,0.3);"]
 case par_nUseStatus == 3  // Under Development
-    l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+["]
+    // l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+[;"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,0.3);"]
 case par_nUseStatus == 5  // To be Discontinued
-    l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+["]
+    // l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+[;"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,0.3);"]
 case par_nUseStatus == 6  // To be Discontinued
-    l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+["]
+    // l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+[;"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,0.3);"]
 otherwise
     l_cHtml := ""
 endcase

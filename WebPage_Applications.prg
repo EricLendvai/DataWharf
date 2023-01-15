@@ -278,7 +278,7 @@ if l_nNumberOfApplications > 0
         :Column("CustomFieldValue.ValueI"     ,"CustomFieldValue_ValueI")
         :Column("CustomFieldValue.ValueM"     ,"CustomFieldValue_ValueM")
         :Column("CustomFieldValue.ValueD"     ,"CustomFieldValue_ValueD")
-        :Column("upper(CustomField.Name)" ,"tag1")
+        :Column("upper(CustomField.Name)"     ,"tag1")
         :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Application.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
         :Where("CustomField.UsedOn = ^",USEDON_APPLICATION)
@@ -322,11 +322,11 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
-                l_cHtml += [<tr class="bg-info">]
+                l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Link Code</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
