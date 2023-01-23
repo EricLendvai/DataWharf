@@ -670,7 +670,13 @@ return l_cHtml
 //=================================================================================================================
 function CascadeDeleteApplication(par_iApplicationPk)
 
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
+local l_oDB1                      := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
+local l_oDB_ListOfRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_RecordToDelete        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Delete                := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cTableName
+local l_cTableDescription
+
 local l_cErrorMessage := ""
 
 with object l_oDB1
@@ -684,113 +690,51 @@ with object l_oDB1
         select ListOfRecordsToDeleteInCascadeDeleteApplication
         scan all
             l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+            //This will also delete all the tables, column, index, tags ...
             if !empty(l_cErrorMessage)
                 exit
             endif
         endscan
     endif
     
-    if empty(l_cErrorMessage)
-        :Table("00660757-26a7-4d3b-ac6b-6bfa8b4bfc49","Diagram")
-        :Column("Diagram.pk","pk")
-        :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
-        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
-        if :Tally < 0
-            l_cErrorMessage := "Failed to delete Application. Error 2."
-        else
-            select ListOfRecordsToDeleteInCascadeDeleteApplication
-            scan all
-                if !:Delete("a5dd9e66-3ecb-4780-b5c0-e8a6308eb49a","Diagram",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
-                    l_cErrorMessage := "Failed to delete Application. Error 3."
-                    exit
-                endif
-            endscan
+    //Due to the deleting all name spaces, only a few directly related tables need to be cleared
 
+    // Deleted all directly related records
+    with object l_oDB_ListOfRecordsToDelete
+        for each l_cTableName,l_cTableDescription in {"Diagram" ,"Version" ,"ApplicationCustomField"   ,"Tag" ,"UserAccessApplication"   ,"UserSettingApplication"     },;
+                                                     {"Diagrams","Versions","Application Custom Fields","Tags","User Access Application ","Last Diagrams Used by Users"}
             if empty(l_cErrorMessage)
-
-                :Table("26f6b1c2-401d-4bb7-aa21-5c7edd97535b","Version")
-                :Column("Version.pk","pk")
-                :Where("Version.fk_Application = ^" , par_iApplicationPk)
-                :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
-                if :Tally < 0
-                    l_cErrorMessage := "Failed to delete Application. Error 4."
-                else
-                    select ListOfRecordsToDeleteInCascadeDeleteApplication
+                :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b3",l_cTableName)
+                :Column(l_cTableName+".pk","pk")
+                :Where(l_cTableName+".fk_Application = ^",par_iApplicationPk)
+                :SQL("ListOfRecordsToDelete")
+                do case
+                case :Tally < 0
+                    l_cErrorMessage := "Failed to query "+l_cTableName+"."
+                case :Tally > 0
+                    select ListOfRecordsToDelete
                     scan all
-                        if !:Delete("3862d009-1f7c-4c4e-b987-14b47560f09c","Version",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
-                            l_cErrorMessage := "Failed to delete Application. Error 5."
+                        if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6f",l_cTableName,ListOfRecordsToDelete->pk)
+                            l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
                             exit
                         endif
                     endscan
-                    
-                    if empty(l_cErrorMessage)
-
-                        :Table("308f0e3b-029d-4104-aad7-6bfece9817f6","ApplicationCustomField")
-                        :Column("ApplicationCustomField.pk","pk")
-                        :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
-                        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
-                        if :Tally < 0
-                            l_cErrorMessage := "Failed to delete Application. Error 6."
-                        else
-                            select ListOfRecordsToDeleteInCascadeDeleteApplication
-                            scan all
-                                if !:Delete("eecb94eb-aa3d-4f58-9fc5-373964ed9aa8","ApplicationCustomField",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
-                                    l_cErrorMessage := "Failed to delete Application. Error 7."
-                                    exit
-                                endif
-                            endscan
-                            
-                            if empty(l_cErrorMessage)
-
-                                :Table("df5a5c9b-1c0a-483a-b510-bd8d98b9858d","UserAccessApplication")
-                                :Column("UserAccessApplication.pk","pk")
-                                :Where("UserAccessApplication.fk_Application = ^" , par_iApplicationPk)
-                                :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
-                                if :Tally < 0
-                                    l_cErrorMessage := "Failed to delete Application. Error 8."
-                                else
-                                    select ListOfRecordsToDeleteInCascadeDeleteApplication
-                                    scan all
-                                        if !:Delete("fce416e5-7991-4180-aa1c-b95ed1789cef","UserAccessApplication",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
-                                            l_cErrorMessage := "Failed to delete Application. Error 9."
-                                            exit
-                                        endif
-                                    endscan
-
-                                    if empty(l_cErrorMessage)
-
-                                        :Table("6c32710b-ab9d-4525-8d9a-af6b0690d45b","Tag")
-                                        :Column("Tag.pk","pk")
-                                        :Where("Tag.fk_Application = ^" , par_iApplicationPk)
-                                        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
-                                        if :Tally < 0
-                                            l_cErrorMessage := "Failed to delete Application. Error 8."
-                                        else
-                                            select ListOfRecordsToDeleteInCascadeDeleteApplication
-                                            scan all
-                                                if !:Delete("a7c83051-1e7d-44d5-9229-1965656e4370","Tag",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
-                                                    l_cErrorMessage := "Failed to delete Application. Error 9."
-                                                    exit
-                                                endif
-                                            endscan
-                                            
-                                            if empty(l_cErrorMessage)
-                                                CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
-                                                if !:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
-                                                    l_cErrorMessage := "Failed to delete Application. Error 10."
-                                                endif
-                                            endif
-
-                                        endif
-                                    endif
-                                endif
-                            endif
-                        endif
-                    endif
-                endif
+                endcase
+            else
+                exit
             endif
+
+        endfor
+    endwith
+
+
+    if empty(l_cErrorMessage)
+        CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
+        if !l_oDB_RecordToDelete:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
+            l_cErrorMessage := "Failed to delete Application. Error 14."
         endif
     endif
+
 endwith
 return l_cErrorMessage
 //=================================================================================================================

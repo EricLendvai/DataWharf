@@ -451,6 +451,11 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cModelingElement := "SETTINGS"
 
     case vfp_Inlist(l_cURLAction,"Visualize")
+        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+            if vfp_inlist(oFcgi:p_URLPathElements[4],"resources","css")
+                return [<div>Bad URL - calling for some css or resources - bug in mxgraph</div>]
+            endif
+        endif
         l_cModelingElement := "VISUALIZE"
 
     case vfp_Inlist(l_cURLAction,"ListEnumerations","NewEnumeration","EditEnumeration","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
@@ -1105,9 +1110,9 @@ return l_cHtml
 static function ModelingHeaderBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath)
 
 local l_cHtml := ""
-local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_aSQLResult := {}
-local l_iReccount
+// local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
+// local l_aSQLResult := {}
+// local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
@@ -1135,8 +1140,10 @@ local l_oDB2  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult2 := {}
 local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_lSideBarMenuOpen := (oFcgi:GetCookieValue("sidebarMenu") == "false")
+local l_cInitialDiagram
 
-l_cHtml += [<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">]
+l_cHtml += [<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar]+iif(l_lSideBarMenuOpen,[],[ active])+[">]
 l_cHtml += [<div class="position-sticky pt-3">]
 l_cHtml += [<ul class="nav flex-column">]
     //--------------------------------------------------------------------------------------
@@ -1146,9 +1153,26 @@ l_cHtml += [<ul class="nav flex-column">]
         l_cHtml += [</li>]
     endif
     //--------------------------------------------------------------------------------------
-        //--------------------------------------------------------------------------------------
-        l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/Visualize/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-diagram-3"></i>Visualize</a>]
+    //--------------------------------------------------------------------------------------
+    l_cHtml += [<li class="nav-item">]
+
+        with object l_oDB1
+            :Table("b879207d-9a3d-4a54-9563-2db4de482a3c","UserSettingModel")
+            :Column("UserSettingModel.pk"    ,"pk")
+            :Column("ModelingDiagram.LinkUID","ModelingDiagram_LinkUID")
+            :Join("inner","ModelingDiagram","","UserSettingModel.fk_ModelingDiagram = ModelingDiagram.pk")
+            :Where("UserSettingModel.fk_User = ^" ,oFcgi:p_iUserPk)
+            :Where("UserSettingModel.fk_Model = ^",par_iModelPk)
+            :SQL("ListOfUserSettingModel")
+            // hb_orm_SendToDebugView(:GetLastEventId(),:LastSQL())
+            if :Tally == 1
+                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingModel->ModelingDiagram_LinkUID
+            else
+                l_cInitialDiagram := ""
+            endif
+        endwith
+        
+        l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/Visualize/]+par_cModelLinkUID+[/]+l_cInitialDiagram+["><i class="item-icon bi bi-diagram-3"></i>Visualize</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------------
@@ -1393,16 +1417,17 @@ static function ModelListFormBuild(par_Project_pk,par_Project_Name)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_oDB_CustomFields                      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsPackageCounts         := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsEntityCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsAttributeCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsAssociationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsDataTypeCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsEnumerationCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsLinkedModelCounts1    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsLinkedModelCounts2    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfModelsModelingDiagramCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomFields                                 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsPackageCounts                    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsEntityCounts                     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsAttributeCounts                  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsAssociationCounts                := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsDataTypeCounts                   := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsEnumerationCounts                := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsLinkedModelCounts1               := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsLinkedModelCounts2               := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfModelsModelingDiagramCounts            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfUserSettingModelDefaultModelingDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfModels
@@ -1418,8 +1443,11 @@ local l_nDataTypeCount
 local l_nEnumerationCount
 local l_nLinkedModelCount
 local l_nModelingDiagramCount
+local l_cInitialDiagram
 
 oFcgi:TraceAdd("ModelListFormBuild")
+
+oFcgi:SetCookieValue("sidebarMenu","false",,"/")  // To re-open the sidebar menu in case was left closed.
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1620,6 +1648,20 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</div>]
 
     else
+        //Will check if we have a previously accessed ModelingDiagram.
+        with object l_oDB_ListOfUserSettingModelDefaultModelingDiagram
+            :Table("ed410689-7946-4597-aa12-f7727255fc74","UserSettingModel")
+            :Column("UserSettingModel.fk_Model","ModelPk")
+            :Column("ModelingDiagram.LinkUID"  ,"ModelingDiagram_LinkUID")
+            :Join("inner","ModelingDiagram","","UserSettingModel.fk_ModelingDiagram = ModelingDiagram.pk")
+            :Where("UserSettingModel.fk_User = ^",oFcgi:p_iUserPk)
+            :SQL("ListOfUserSettingModelDefaultModelingDiagram")
+            with object :p_oCursor
+                :Index("ModelPk","ModelPk")
+                :CreateIndexes()
+            endwith
+        endwith
+
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
@@ -1682,7 +1724,8 @@ l_cHtml += [<div class="m-3">]
                         
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Attributes
                             l_nAttributeCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsAttributeCounts","tag1") , ListOfModelsAttributeCounts->AttributeCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nAttributeCount)+[</a>]
+                            // l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nAttributeCount)+[</a>]
+                            l_cHtml += Trans(l_nAttributeCount)
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Associations
@@ -1712,7 +1755,16 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Visualize
                             l_nModelingDiagramCount := iif( VFP_Seek(l_iModelPk,"ListOfModelsModelingDiagramCounts","tag1") , ListOfModelsModelingDiagramCounts->ModelingDiagramCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nModelingDiagramCount)+[</a>]
+                            // l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+AllTrim(ListOfModels->Model_LinkUID)+[/">]+Trans(l_nModelingDiagramCount)+[</a>]
+
+                            //Will check if we have a previously accessed ModelingDiagram.
+                            if vfp_seek(l_iModelPk,"ListOfUserSettingModelDefaultModelingDiagram","ModelPk")
+                                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingModelDefaultModelingDiagram->ModelingDiagram_LinkUID
+                            else
+                                l_cInitialDiagram := ""
+                            endif
+                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+AllTrim(ListOfModels->Model_LinkUID)+[/]+l_cInitialDiagram+[">]+Trans(l_nModelingDiagramCount)+[</a>]
+
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -1973,6 +2025,7 @@ local l_cLinkedModelsSelected
 local l_iLinkedModelsSelectedPk
 local l_iLinkedModelsPk
 local l_iLinkedModelsFk
+local l_lDeletedCurrentMode := .f.
 
 oFcgi:TraceAdd("ModelEditFormOnSubmit")
 
@@ -2156,18 +2209,25 @@ case l_cActionOnSubmit == "Delete"   // Model
                             :SQL()
 
                             if :Tally == 0
-                                :Table("3d533d32-9518-4de8-be2a-92a227a7a5f5","ModelingDiagram")
-                                :Where("ModelingDiagram.fk_Model = ^",l_iModelPk)
-                                :SQL()
+                                // Will Allow to delete even if diagram exists, they will be removed.
+                                l_cErrorMessage := CascadeDeleteModel(par_iProjectPk,l_iModelPk)
 
-                                if :Tally == 0
-                                    CustomFieldsDelete(par_iProjectPk,USEDON_MODEL,l_iModelPk)
-                                    :Delete("8c45bacb-78dd-46e5-ab34-38b0ff7c30b8","Model",l_iModelPk)
-
-                                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
-                                else
-                                    l_cErrorMessage := [Related Diagrams record on file.]
+                                if empty(l_cErrorMessage)
+                                    l_lDeletedCurrentMode := .t.
                                 endif
+
+                                // :Table("3d533d32-9518-4de8-be2a-92a227a7a5f5","ModelingDiagram")
+                                // :Where("ModelingDiagram.fk_Model = ^",l_iModelPk)
+                                // :SQL()
+
+                                // if :Tally == 0
+                                //     CustomFieldsDelete(par_iProjectPk,USEDON_MODEL,l_iModelPk)
+                                //     :Delete("8c45bacb-78dd-46e5-ab34-38b0ff7c30b8","Model",l_iModelPk)
+
+                                //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+                                // else
+                                //     l_cErrorMessage := [Related Diagrams record on file.]
+                                // endif
                             else
                                 l_cErrorMessage := [Related ]+oFcgi:p_ANFDataType+[ record on file.]
                             endif
@@ -2195,7 +2255,11 @@ if !empty(l_cErrorMessage)
 
     l_cHtml += ModelEditFormBuild(l_iProjectPk,l_cErrorMessage,l_iModelPk,l_hValues)
 else
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+l_cModelLinkUID+"/")
+    if l_lDeletedCurrentMode
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+    else
+        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+l_cModelLinkUID+"/")
+    endif
 endif
 
 return l_cHtml
@@ -2587,7 +2651,7 @@ otherwise
 endcase
 
 return l_cHtml
-
+//=================================================================================================================
 static function GetEntityEditHeader(par_cSitePath, par_cModelLinkUID, par_cEntityLinkUID, par_cEntityElement)
 local l_cHtml := ""
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3001,164 +3065,164 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_cSelectedAssociationLinkUID, par_cSelectedEntityLinkUID)
-    local l_cHtml := []
-    local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
-    local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
-    local l_oDB_ListOfAssociations := hb_SQLData(oFcgi:p_o_SQLConnection)
-    
-    local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-    local l_cSelectedPackageFullPk := []
-    local l_cSelectedPackagePk
-    local l_cSelectedEntityPk
-    local l_cSelectedAssociationPk
-    
-    local l_nNumberOfPackages
-    local l_nNumberOfEntities
-    local l_nNumberOfAssociations
+local l_cHtml := []
+local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfAssociations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-    local l_cTreeIdPrefix := [packagesTree-]
-    
-    oFcgi:TraceAdd("PackageTreeBuild")
-    
-    with object l_oDB_ListOfPackages
-        :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
-        :Column("Package.pk"        ,"pk")
-        :Column("Package.LinkUID"   ,"Package_LinkUID")
-        :Column("Package.Name"      ,"Package_Name")
-        :Column("Package.FullName"  ,"Package_FullName")
-        :Column("Package.FullPk"    ,"Package_FullPk")
-        :Column("Package.TreeOrder1","tag1")
-        :Column("Package.fk_Package","Package_Parent")
-        :Where("Package.fk_Model = ^",par_iModelPk)
-        :OrderBy("tag1")
-        :SQL("ListOfPackages")
-        l_nNumberOfPackages := :Tally
-    endwith
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSelectedPackageFullPk := []
+local l_cSelectedPackagePk
+local l_cSelectedEntityPk
+local l_cSelectedAssociationPk
+
+local l_nNumberOfPackages
+local l_nNumberOfEntities
+local l_nNumberOfAssociations
+
+local l_cTreeIdPrefix := [packagesTree-]
+
+oFcgi:TraceAdd("PackageTreeBuild")
+
+with object l_oDB_ListOfPackages
+    :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
+    :Column("Package.pk"        ,"pk")
+    :Column("Package.LinkUID"   ,"Package_LinkUID")
+    :Column("Package.Name"      ,"Package_Name")
+    :Column("Package.FullName"  ,"Package_FullName")
+    :Column("Package.FullPk"    ,"Package_FullPk")
+    :Column("Package.TreeOrder1","tag1")
+    :Column("Package.fk_Package","Package_Parent")
+    :Where("Package.fk_Model = ^",par_iModelPk)
+    :OrderBy("tag1")
+    :SQL("ListOfPackages")
+    l_nNumberOfPackages := :Tally
+endwith
 
 
-    with object l_oDB_ListOfEntities
-        :Table("1FB3D5FB-B8F3-4515-B091-55ED9CB4AB3B","Entity")
-        :Column("Entity.pk"        ,"pk")
-        :Column("Entity.LinkUID"   ,"Entity_LinkUID")
-        :Column("Entity.Name"  ,"Entity_Name")
-        :Column("Entity.fk_Package","Entity_Parent")
-        :Where("Entity.fk_Model = ^",par_iModelPk)
-        //:Join("left outer","Package","","Entity.fk_Package = Package.pk")
-        :OrderBy("Entity_Name")
-        :SQL("ListOfEntities")
-        l_nNumberOfEntities := :Tally
-    endwith
+with object l_oDB_ListOfEntities
+    :Table("1FB3D5FB-B8F3-4515-B091-55ED9CB4AB3B","Entity")
+    :Column("Entity.pk"        ,"pk")
+    :Column("Entity.LinkUID"   ,"Entity_LinkUID")
+    :Column("Entity.Name"  ,"Entity_Name")
+    :Column("Entity.fk_Package","Entity_Parent")
+    :Where("Entity.fk_Model = ^",par_iModelPk)
+    //:Join("left outer","Package","","Entity.fk_Package = Package.pk")
+    :OrderBy("Entity_Name")
+    :SQL("ListOfEntities")
+    l_nNumberOfEntities := :Tally
+endwith
 
-    with object l_oDB_ListOfAssociations
-        :Table("0C757B19-C062-4B1B-B97A-AF70A1974BDE","Association")
-        :Column("Association.pk"        ,"pk")
-        :Column("Association.LinkUID"   ,"Association_LinkUID")
-        :Column("Association.Name"  ,"Association_Name")
-        :Column("Association.fk_Package","Association_Parent")
-        :Where("Association.fk_Model = ^",par_iModelPk)
-        //:Join("left outer","Package","","Association.fk_Package = Package.pk")
-        :OrderBy("Association_Name")
-        :SQL("ListOfAssociations")
-        l_nNumberOfAssociations := :Tally
-    endwith
+with object l_oDB_ListOfAssociations
+    :Table("0C757B19-C062-4B1B-B97A-AF70A1974BDE","Association")
+    :Column("Association.pk"        ,"pk")
+    :Column("Association.LinkUID"   ,"Association_LinkUID")
+    :Column("Association.Name"  ,"Association_Name")
+    :Column("Association.fk_Package","Association_Parent")
+    :Where("Association.fk_Model = ^",par_iModelPk)
+    //:Join("left outer","Package","","Association.fk_Package = Package.pk")
+    :OrderBy("Association_Name")
+    :SQL("ListOfAssociations")
+    l_nNumberOfAssociations := :Tally
+endwith
+
+//This is using https://github.com/chrisv2/bs5treeview
+if !empty(l_nNumberOfPackages)
     
-    //This is using https://github.com/chrisv2/bs5treeview
-    if !empty(l_nNumberOfPackages)
-        
-        l_cHtml += [<div id="packagesTree" class="collapse hide"></div>]
-        l_cHtml += [<script>]        
-        l_cHtml += [function getTree() {]
-        l_cHtml += '  var data = ['
-        l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"Uncontained ]+oFcgi:p_ANFEntities+[", icon: "bi bi-boxes",]+'nodes:['
-        l_cHtml += [{id:"]+l_cTreeIdPrefix+[A",text:"]+oFcgi:p_ANFAssociations+[", icon: "bi bi-box-arrow-in-up-right",]+'nodes:[]} ]},'
-        select ListOfPackages
-        scan all
-            l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfPackages->pk)+[",]
-            if !empty(ListOfPackages->Package_Parent)
-                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfPackages->Package_Parent)+[",]
-            endif
-            if !empty(par_cSelectedPackageLinkUID) .and. par_cSelectedPackageLinkUID == ListOfPackages->Package_LinkUID
-                l_cSelectedPackageFullPk = ListOfPackages->Package_FullPk
-                l_cSelectedPackagePk = ListOfPackages->pk
-                l_cHtml += [expanded: true,]
-            endif
-            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
-            l_cHtml += 'nodes: [ {id:"'+l_cTreeIdPrefix+trans(ListOfPackages->pk)+'-A",text:"'+oFcgi:p_ANFAssociations+'", icon: "bi bi-box-arrow-in-up-right", nodes: []'
-            if !empty(par_cSelectedAssociationLinkUID)
-                l_cHtml += [,expanded: true]
-            endif
-            l_cHtml += '} ]'
-            l_cHtml += [},]
-        endscan
-        select ListOfEntities
-        scan all
-            l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEntities->pk)+[",]
-            if !empty(ListOfEntities->Entity_Parent)
-                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfEntities->Entity_Parent)+[",]
-            else
-                l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
-            endif
-            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_LinkUID+[/", text:"]+ListOfEntities->Entity_Name+[", icon: "bi bi-box",]
-            l_cHtml += [},]
-            if !empty(par_cSelectedEntityLinkUID) .and. par_cSelectedEntityLinkUID == ListOfEntities->Entity_LinkUID
-                l_cSelectedEntityPk = ListOfEntities->pk
-            endif
-        endscan
-        select ListOfAssociations
-        scan all
-            l_cHtml += [{id:"]+l_cTreeIdPrefix+[A]+trans(ListOfAssociations->pk)+[",]
-            if !empty(ListOfAssociations->Association_Parent)
-                l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfAssociations->Association_Parent)+[-A",]
-            else
-                l_cHtml += [parentId:"]+l_cTreeIdPrefix +[A",]
-            endif
-            l_cHtml += [href:"]+l_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_LinkUID+[/", text:"]+ListOfAssociations->Association_Name+[", icon: "bi bi-box-arrow-in-up-right",]
-            l_cHtml += [},]
-            if !empty(par_cSelectedAssociationLinkUID) .and. par_cSelectedAssociationLinkUID == ListOfAssociations->Association_LinkUID
-                l_cSelectedAssociationPk = ListOfAssociations->pk
-            endif
-        endscan
-        l_cHtml += '  ];'
-        if !empty(l_cSelectedPackageFullPk) .and. !empty(par_cSelectedAssociationLinkUID)
-            l_cHtml += 'var isAssocSelected = true;'
+    l_cHtml += [<div id="packagesTree" class="collapse hide"></div>]
+    l_cHtml += [<script>]        
+    l_cHtml += [function getTree() {]
+    l_cHtml += '  var data = ['
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"Uncontained ]+oFcgi:p_ANFEntities+[", icon: "bi bi-boxes",]+'nodes:['
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+[A",text:"]+oFcgi:p_ANFAssociations+[", icon: "bi bi-box-arrow-in-up-right",]+'nodes:[]} ]},'
+    select ListOfPackages
+    scan all
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfPackages->pk)+[",]
+        if !empty(ListOfPackages->Package_Parent)
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfPackages->Package_Parent)+[",]
+        endif
+        if !empty(par_cSelectedPackageLinkUID) .and. par_cSelectedPackageLinkUID == ListOfPackages->Package_LinkUID
+            l_cSelectedPackageFullPk = ListOfPackages->Package_FullPk
+            l_cSelectedPackagePk = ListOfPackages->pk
+            l_cHtml += [expanded: true,]
+        endif
+        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/", text:"]+ListOfPackages->Package_Name+[", icon: "bi bi-folder",]
+        l_cHtml += 'nodes: [ {id:"'+l_cTreeIdPrefix+trans(ListOfPackages->pk)+'-A",text:"'+oFcgi:p_ANFAssociations+'", icon: "bi bi-box-arrow-in-up-right", nodes: []'
+        if !empty(par_cSelectedAssociationLinkUID)
+            l_cHtml += [,expanded: true]
+        endif
+        l_cHtml += '} ]'
+        l_cHtml += [},]
+    endscan
+    select ListOfEntities
+    scan all
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEntities->pk)+[",]
+        if !empty(ListOfEntities->Entity_Parent)
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfEntities->Entity_Parent)+[",]
         else
-            l_cHtml += 'var isAssocSelected = false;'
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
         endif
-        l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
-        if !empty(par_cSelectedEntityLinkUID) .or. !empty(par_cSelectedAssociationLinkUID)
-            l_cHtml += 'if(selectedPKs == "") {'
-            l_cHtml += '    selectedPKs = "0"'
-            l_cHtml += '}'
+        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_LinkUID+[/", text:"]+ListOfEntities->Entity_Name+[", icon: "bi bi-box",]
+        l_cHtml += [},]
+        if !empty(par_cSelectedEntityLinkUID) .and. par_cSelectedEntityLinkUID == ListOfEntities->Entity_LinkUID
+            l_cSelectedEntityPk = ListOfEntities->pk
         endif
-        l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
-        l_cHtml += 'for (var i=0; i<data.length; i++) { '
-        l_cHtml += '    if(splitSelectedPKs.includes(data[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
-        l_cHtml += '       data[i].expanded = true;'
-        l_cHtml += '       if(isAssocSelected && splitSelectedPKs[splitSelectedPKs.length-1] == data[i].id.substring("'+l_cTreeIdPrefix+'".length)) {'
-        l_cHtml += '           data[i].nodes[0].expanded = true;'
-        l_cHtml += '       }'
-        l_cHtml += '    }'
-        l_cHtml += '}'
-        l_cHtml += 'buildTree(data);'
-        l_cHtml += 'modifyLeafNodes(data);'
-        l_cHtml += [  return data;]
-        l_cHtml += [}]
-        l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
-        if !empty(l_cSelectedEntityPk)
-            l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEntityPk)+[").toggleClass("active");]
+    endscan
+    select ListOfAssociations
+    scan all
+        l_cHtml += [{id:"]+l_cTreeIdPrefix+[A]+trans(ListOfAssociations->pk)+[",]
+        if !empty(ListOfAssociations->Association_Parent)
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfAssociations->Association_Parent)+[-A",]
         else
-            if !empty(l_cSelectedAssociationPk)
-                l_cHtml += [$("#]+l_cTreeIdPrefix+[A]+trans(l_cSelectedAssociationPk)+[").toggleClass("active");]
-            else
-                if !empty(l_cSelectedPackagePk)
-                    l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedPackagePk)+[").toggleClass("active");]
-                endif
-            endif
+            l_cHtml += [parentId:"]+l_cTreeIdPrefix +[A",]
         endif
-        l_cHtml += [</script>]
+        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_LinkUID+[/", text:"]+ListOfAssociations->Association_Name+[", icon: "bi bi-box-arrow-in-up-right",]
+        l_cHtml += [},]
+        if !empty(par_cSelectedAssociationLinkUID) .and. par_cSelectedAssociationLinkUID == ListOfAssociations->Association_LinkUID
+            l_cSelectedAssociationPk = ListOfAssociations->pk
+        endif
+    endscan
+    l_cHtml += '  ];'
+    if !empty(l_cSelectedPackageFullPk) .and. !empty(par_cSelectedAssociationLinkUID)
+        l_cHtml += 'var isAssocSelected = true;'
+    else
+        l_cHtml += 'var isAssocSelected = false;'
     endif
-    
-    return l_cHtml
+    l_cHtml += 'var selectedPKs = "'+l_cSelectedPackageFullPk+'";'
+    if !empty(par_cSelectedEntityLinkUID) .or. !empty(par_cSelectedAssociationLinkUID)
+        l_cHtml += 'if(selectedPKs == "") {'
+        l_cHtml += '    selectedPKs = "0"'
+        l_cHtml += '}'
+    endif
+    l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
+    l_cHtml += 'for (var i=0; i<data.length; i++) { '
+    l_cHtml += '    if(splitSelectedPKs.includes(data[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
+    l_cHtml += '       data[i].expanded = true;'
+    l_cHtml += '       if(isAssocSelected && splitSelectedPKs[splitSelectedPKs.length-1] == data[i].id.substring("'+l_cTreeIdPrefix+'".length)) {'
+    l_cHtml += '           data[i].nodes[0].expanded = true;'
+    l_cHtml += '       }'
+    l_cHtml += '    }'
+    l_cHtml += '}'
+    l_cHtml += 'buildTree(data);'
+    l_cHtml += 'modifyLeafNodes(data);'
+    l_cHtml += [  return data;]
+    l_cHtml += [}]
+    l_cHtml += [$("#packagesTree").bstreeview({data: getTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+    if !empty(l_cSelectedEntityPk)
+        l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEntityPk)+[").toggleClass("active");]
+    else
+        if !empty(l_cSelectedAssociationPk)
+            l_cHtml += [$("#]+l_cTreeIdPrefix+[A]+trans(l_cSelectedAssociationPk)+[").toggleClass("active");]
+        else
+            if !empty(l_cSelectedPackagePk)
+                l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedPackagePk)+[").toggleClass("active");]
+            endif
+        endif
+    endif
+    l_cHtml += [</script>]
+endif
+
+return l_cHtml
 
 //=================================================================================================================
 //=================================================================================================================
@@ -3166,123 +3230,121 @@ static function PackageTreeBuild(par_iModelPk, par_cSelectedPackageLinkUID, par_
 //=================================================================================================================
 //=================================================================================================================
 static function DataTypeTreeBuild(par_iModelPk, par_cModelLinkUID, par_cSelectedDataTypeLinkUID, par_cSelectedEnumerationLinkUID)
-    local l_cHtml := []
-    local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
-    local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
-    
-    local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-    local l_cTreeIdPrefix := "dataTypesTree"
-    local l_cSelectedDataTypeFullPk := []
-    local l_cSelectedDataTypePk
-    local l_cSelectedEnumerationPk
-    
-    local l_nNumberOfEnumerations
-    
-    oFcgi:TraceAdd("DataTypeTreeBuild")
+local l_cHtml := []
+local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-    with object l_oDB_ListOfDataTypes
-        :Table("FDD6607E-63E7-4328-81AB-B85BFDBF6040","DataType")
-        :Column("DataType.pk"        ,"pk")
-        :Column("DataType.LinkUID"   ,"DataType_LinkUID")
-        :Column("DataType.Name"  ,"DataType_Name")
-        :Column("DataType.fk_DataType","DataType_Parent")
-        :Column("DataType.FullPk"  ,"DataType_FullPk")
-        :Where("DataType.fk_Model = ^",par_iModelPk)
-        //:Join("left outer","Package","","DataType.fk_Package = Package.pk")
-        :OrderBy("DataType_Name")
-        :SQL("ListOfDataTypes")
-        // l_nNumberOfDataTypes := :Tally
-    endwith
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cTreeIdPrefix := "dataTypesTree"
+local l_cSelectedDataTypeFullPk := []
+local l_cSelectedDataTypePk
+local l_cSelectedEnumerationPk
 
-    with object l_oDB_ListOfEnumerations
-        :Table("9A99267C-B249-44EB-B59A-166B7E5964FA","ModelEnumeration")
-        :Column("ModelEnumeration.pk"        ,"pk")
-        :Column("ModelEnumeration.LinkUID"   ,"Enumeration_LinkUID")
-        :Column("ModelEnumeration.Name"  ,"Enumeration_Name")
-        :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
-        :OrderBy("Enumeration_Name")
-        :SQL("ListOfEnumerations")
-        l_nNumberOfEnumerations := :Tally
-    endwith
+local l_nNumberOfEnumerations
+
+oFcgi:TraceAdd("DataTypeTreeBuild")
+
+with object l_oDB_ListOfDataTypes
+    :Table("FDD6607E-63E7-4328-81AB-B85BFDBF6040","DataType")
+    :Column("DataType.pk"        ,"pk")
+    :Column("DataType.LinkUID"   ,"DataType_LinkUID")
+    :Column("DataType.Name"  ,"DataType_Name")
+    :Column("DataType.fk_DataType","DataType_Parent")
+    :Column("DataType.FullPk"  ,"DataType_FullPk")
+    :Where("DataType.fk_Model = ^",par_iModelPk)
+    //:Join("left outer","Package","","DataType.fk_Package = Package.pk")
+    :OrderBy("DataType_Name")
+    :SQL("ListOfDataTypes")
+    // l_nNumberOfDataTypes := :Tally
+endwith
+
+with object l_oDB_ListOfEnumerations
+    :Table("9A99267C-B249-44EB-B59A-166B7E5964FA","ModelEnumeration")
+    :Column("ModelEnumeration.pk"        ,"pk")
+    :Column("ModelEnumeration.LinkUID"   ,"Enumeration_LinkUID")
+    :Column("ModelEnumeration.Name"  ,"Enumeration_Name")
+    :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
+    :OrderBy("Enumeration_Name")
+    :SQL("ListOfEnumerations")
+    l_nNumberOfEnumerations := :Tally
+endwith
+
+
+//This is using https://github.com/chrisv2/bs5treeview
+
     
-    
-    //This is using https://github.com/chrisv2/bs5treeview
-    
-        
-    l_cHtml += [<div id="dataTypesTree" class="collapse hide"></div>]
-    l_cHtml += [<script>]
-    l_cHtml += [function getDTTree() {]
-    l_cHtml += '  var dataDT = ['
-    l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"]+oFcgi:p_ANFDataTypes+[", icon: "bi bi-code-slash",]
-    l_cHtml += [href:"]+l_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+'",nodes:[],'
-    if !empty(par_cSelectedDataTypeLinkUID)
-        l_cHtml += [expanded: true,]
-    endif
-    l_cHtml += '},'
-    select ListOfDataTypes
-    scan all
-        l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->pk)+[",]
-        if !empty(ListOfDataTypes->DataType_Parent)
-            l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->DataType_Parent)+[",]
-        else
-            l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
-        endif
-        if !empty(par_cSelectedDataTypeLinkUID) .and. par_cSelectedDataTypeLinkUID == ListOfDataTypes->DataType_LinkUID
-            l_cSelectedDataTypePk := ListOfDataTypes->pk
-            l_cSelectedDataTypeFullPk := ListOfDataTypes->DataType_FullPk
-            l_cHtml += [expanded: true,]
-        endif
-        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/", text:"]+ListOfDataTypes->DataType_Name+[", icon: "bi bi-code",]
-        l_cHtml += 'nodes: [ ]'
-        l_cHtml += [},]
-    endscan
-    l_cHtml += [{id:"]+l_cTreeIdPrefix+[E0",text:"Enumerations", icon: "bi bi-card-list",]
-    l_cHtml += [href:"]+l_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+'",nodes:[],'
-    if !empty(par_cSelectedEnumerationLinkUID)
-        l_cHtml += [expanded: true,]
-    endif
-    l_cHtml += '},'
-    select ListOfEnumerations
-    scan all
-        l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEnumerations->pk)+[",]
-        l_cHtml += [parentId:"]+l_cTreeIdPrefix+[E0",]
-        if !empty(par_cSelectedEnumerationLinkUID) .and. par_cSelectedEnumerationLinkUID == ListOfEnumerations->Enumeration_LinkUID
-            l_cSelectedEnumerationPk := ListOfEnumerations->pk
-        endif
-        l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_LinkUID+[/", text:"]+ListOfEnumerations->Enumeration_Name+[", icon: "bi bi-card-list"]
-        l_cHtml += [},]
-    endscan
-    l_cHtml += '  ];'
-    l_cHtml += 'var selectedPKs = "'+l_cSelectedDataTypeFullPk+'";'
-    if !empty(par_cSelectedDataTypeLinkUID) .or. !empty(par_cSelectedEnumerationLinkUID)
-        l_cHtml += 'if(selectedPKs == "") {'
-        l_cHtml += '    selectedPKs = "0"'
-        l_cHtml += '}'
-    endif
-    l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
-    l_cHtml += 'for (var i=0; i<dataDT.length; i++) { '
-    l_cHtml += '    if(splitSelectedPKs.includes(dataDT[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
-    l_cHtml += '       dataDT[i].expanded = true;'
-    l_cHtml += '    }'
-    l_cHtml += '}'
-    l_cHtml += 'buildDTTree(dataDT);'
-    l_cHtml += 'modifyLeafNodes(dataDT);'
-    l_cHtml += [  return dataDT;]
-    l_cHtml += [}]
-    l_cHtml += [$("#dataTypesTree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
-    if !empty(l_cSelectedDataTypePk)
-        l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedDataTypePk)+[").toggleClass("active");]
+l_cHtml += [<div id="dataTypesTree" class="collapse hide"></div>]
+l_cHtml += [<script>]
+l_cHtml += [function getDTTree() {]
+l_cHtml += '  var dataDT = ['
+l_cHtml += [{id:"]+l_cTreeIdPrefix+[0",text:"]+oFcgi:p_ANFDataTypes+[", icon: "bi bi-code-slash",]
+l_cHtml += [href:"]+l_cSitePath+[Modeling/ListDataTypes/]+par_cModelLinkUID+'",nodes:[],'
+if !empty(par_cSelectedDataTypeLinkUID)
+    l_cHtml += [expanded: true,]
+endif
+l_cHtml += '},'
+select ListOfDataTypes
+scan all
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->pk)+[",]
+    if !empty(ListOfDataTypes->DataType_Parent)
+        l_cHtml += [parentId:"]+l_cTreeIdPrefix+trans(ListOfDataTypes->DataType_Parent)+[",]
     else
-        if !empty(l_cSelectedEnumerationPk)
-            l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEnumerationPk)+[").toggleClass("active");]
-        endif
+        l_cHtml += [parentId:"]+l_cTreeIdPrefix+[0",]
     endif
-    l_cHtml += [</script>]
-    
-    
-    return l_cHtml
+    if !empty(par_cSelectedDataTypeLinkUID) .and. par_cSelectedDataTypeLinkUID == ListOfDataTypes->DataType_LinkUID
+        l_cSelectedDataTypePk := ListOfDataTypes->pk
+        l_cSelectedDataTypeFullPk := ListOfDataTypes->DataType_FullPk
+        l_cHtml += [expanded: true,]
+    endif
+    l_cHtml += [href:"]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/", text:"]+ListOfDataTypes->DataType_Name+[", icon: "bi bi-code",]
+    l_cHtml += 'nodes: [ ]'
+    l_cHtml += [},]
+endscan
+l_cHtml += [{id:"]+l_cTreeIdPrefix+[E0",text:"Enumerations", icon: "bi bi-card-list",]
+l_cHtml += [href:"]+l_cSitePath+[Modeling/ListEnumerations/]+par_cModelLinkUID+'",nodes:[],'
+if !empty(par_cSelectedEnumerationLinkUID)
+    l_cHtml += [expanded: true,]
+endif
+l_cHtml += '},'
+select ListOfEnumerations
+scan all
+    l_cHtml += [{id:"]+l_cTreeIdPrefix+[E]+trans(ListOfEnumerations->pk)+[",]
+    l_cHtml += [parentId:"]+l_cTreeIdPrefix+[E0",]
+    if !empty(par_cSelectedEnumerationLinkUID) .and. par_cSelectedEnumerationLinkUID == ListOfEnumerations->Enumeration_LinkUID
+        l_cSelectedEnumerationPk := ListOfEnumerations->pk
+    endif
+    l_cHtml += [href:"]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_LinkUID+[/", text:"]+ListOfEnumerations->Enumeration_Name+[", icon: "bi bi-card-list"]
+    l_cHtml += [},]
+endscan
+l_cHtml += '  ];'
+l_cHtml += 'var selectedPKs = "'+l_cSelectedDataTypeFullPk+'";'
+if !empty(par_cSelectedDataTypeLinkUID) .or. !empty(par_cSelectedEnumerationLinkUID)
+    l_cHtml += 'if(selectedPKs == "") {'
+    l_cHtml += '    selectedPKs = "0"'
+    l_cHtml += '}'
+endif
+l_cHtml += 'var splitSelectedPKs = selectedPKs.split("*");'
+l_cHtml += 'for (var i=0; i<dataDT.length; i++) { '
+l_cHtml += '    if(splitSelectedPKs.includes(dataDT[i].id.substring("'+l_cTreeIdPrefix+'".length))) {'
+l_cHtml += '       dataDT[i].expanded = true;'
+l_cHtml += '    }'
+l_cHtml += '}'
+l_cHtml += 'buildDTTree(dataDT);'
+l_cHtml += 'modifyLeafNodes(dataDT);'
+l_cHtml += [  return dataDT;]
+l_cHtml += [}]
+l_cHtml += [$("#dataTypesTree").bstreeview({data: getDTTree(),  expandIcon: 'bi bi-caret-down', collapseIcon: 'bi bi-caret-right', openNodeLinkOnNewTab: false});]
+if !empty(l_cSelectedDataTypePk)
+    l_cHtml += [$("#]+l_cTreeIdPrefix+trans(l_cSelectedDataTypePk)+[").toggleClass("active");]
+else
+    if !empty(l_cSelectedEnumerationPk)
+        l_cHtml += [$("#]+l_cTreeIdPrefix+[E]+trans(l_cSelectedEnumerationPk)+[").toggleClass("active");]
+    endif
+endif
+l_cHtml += [</script>]
 
 
+return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
@@ -4228,24 +4290,24 @@ endcase
 return l_cHtml
 //=================================================================================================================
 static function GetEnumerationEditHeader(par_cSitePath, par_cModelLinkUID, par_cEnumerationLinkUID, par_cEnumerationElement)
-    local l_cHtml := ""
-    l_cHtml += [<ul class="nav nav-tabs">]
-    
-        l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(empty(par_cEnumerationElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/">Edit Enumeration</a>]
-        l_cHtml += [</li>]
-    
-        l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "ListEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/ListEnumValues">Values</a>]
-        l_cHtml += [</li>]
-    
-        l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "OrderEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/OrderEnumValues">Order Values</a>]
-        l_cHtml += [</li>]
+local l_cHtml := ""
+l_cHtml += [<ul class="nav nav-tabs">]
 
-    
-    l_cHtml += [</ul>]
-    return l_cHtml
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(empty(par_cEnumerationElement),[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/">Edit Enumeration</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "ListEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/ListEnumValues">Values</a>]
+    l_cHtml += [</li>]
+
+    l_cHtml += [<li class="nav-item">]
+        l_cHtml += [<a class="nav-link ]+iif(par_cEnumerationElement == "OrderEnumValues",[ active],[])+[" href="]+par_cSitePath+[Modeling/EditEnumeration/]+par_cEnumerationLinkUID+[/OrderEnumValues">Order Values</a>]
+    l_cHtml += [</li>]
+
+
+l_cHtml += [</ul>]
+return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 static function EnumerationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID)
@@ -7100,248 +7162,248 @@ return l_cHtml
 //=================================================================================================================
 static function LinkedEntityEditFormBuild(par_iModelPk,par_iPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID,par_cErrorText,par_hValues)
 
-    local l_cHtml := ""
-    local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
-    local l_cSitePath := oFcgi:RequestSettings["SitePath"]
-    
-    local l_ScriptFolder
-    
-    local l_iLinkedEntityFromEntityPk       := nvl(hb_HGetDef(par_hValues,"LinkedEntityFomPk",0),0)
-    local l_iLinkedEntityToEntityPk         := nvl(hb_HGetDef(par_hValues,"LinkedEntityToPk",0),0)
-    local l_cDescription              := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-    
-    local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
-    
-    local l_nNumberOfModels
-    local l_json_Entities := []
-    local l_hEntityNames := {=>}
-    local l_iPreselected_Entity_Pk
-    local l_cPreselected_Entity_Name
-    local l_cInfo
-    
-    oFcgi:TraceAdd("LinkedEntityEditFormBuild")
-    
-    with object l_oDB_ListOfEntities
-        :Table("B436F5AB-75A0-47B2-8AEB-5C3C63C61394","Entity")
-        :Column("Entity.pk"         ,"pk")
-        :Column("Entity.Name"       ,"Entity_Name")
-        :Column("Entity.LinkUID"    ,"Entity_LinkUID")
-        :Column("Model.Name"        ,"Model_Name")
-        :Column("Upper(Entity.Name)","tag1")
-        :Join("inner","Model"       ,"Model"        ,"Entity.fk_Model = Model.pk")
-        :Join("left","LinkedModel"  ,"LinkedModel"  ,"Model.pk = LinkedModel.fk_Model2")
-        :Where("Model.pk = ^ OR LinkedModel.fk_Model1 = ^",par_iModelPk,par_iModelPk)
-        :Distinct(.t.)
-        :OrderBy("tag1")
-        :SQL("ListOfEntities")
-    
-    // _M_  Access rights restrictions
-    
-    endwith
+local l_cHtml := ""
+local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
+local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
-    SetSelect2Support()
-    
-    select ListOfEntities
-    scan all
-        if !empty(l_json_Entities)
-            l_json_Entities += [,]
-        endif
-        l_cInfo = ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
-        l_cInfo := vfp_StrReplace(l_cInfo,{;
-                                        [\] => [\\] ,;
-                                        ["] => [ ] ,;
-                                        ['] => [ ] ;
-                                    },,1)
-        l_json_Entities += "{id:"+trans(ListOfEntities->pk)+",text:'"+l_cInfo+"'}"
-        l_hEntityNames[ListOfEntities->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
-        if ListOfEntities->Entity_LinkUID = par_cEntityLinkUID
-            l_iPreselected_Entity_Pk   := ListOfEntities->Pk
-            l_cPreselected_Entity_Name := ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
-        endif
-    endscan
-    l_json_Entities := "["+l_json_Entities+"]"
+local l_ScriptFolder
 
-    //Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
-    oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
-    
-    l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
-    l_cHtml += [<input type="hidden" name="formname" value="Edit">]
-    l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
-    l_cHtml += [<input type="hidden" name="LinkedEntityKey" value="]+trans(par_iPk)+[">]
-    
-    if !empty(l_cErrorText)
-        l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+local l_iLinkedEntityFromEntityPk       := nvl(hb_HGetDef(par_hValues,"LinkedEntityFomPk",0),0)
+local l_iLinkedEntityToEntityPk         := nvl(hb_HGetDef(par_hValues,"LinkedEntityToPk",0),0)
+local l_cDescription              := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+
+local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_nNumberOfModels
+local l_json_Entities := []
+local l_hEntityNames := {=>}
+local l_iPreselected_Entity_Pk
+local l_cPreselected_Entity_Name
+local l_cInfo
+
+oFcgi:TraceAdd("LinkedEntityEditFormBuild")
+
+with object l_oDB_ListOfEntities
+    :Table("B436F5AB-75A0-47B2-8AEB-5C3C63C61394","Entity")
+    :Column("Entity.pk"         ,"pk")
+    :Column("Entity.Name"       ,"Entity_Name")
+    :Column("Entity.LinkUID"    ,"Entity_LinkUID")
+    :Column("Model.Name"        ,"Model_Name")
+    :Column("Upper(Entity.Name)","tag1")
+    :Join("inner","Model"       ,"Model"        ,"Entity.fk_Model = Model.pk")
+    :Join("left","LinkedModel"  ,"LinkedModel"  ,"Model.pk = LinkedModel.fk_Model2")
+    :Where("Model.pk = ^ OR LinkedModel.fk_Model1 = ^",par_iModelPk,par_iModelPk)
+    :Distinct(.t.)
+    :OrderBy("tag1")
+    :SQL("ListOfEntities")
+
+// _M_  Access rights restrictions
+
+endwith
+
+SetSelect2Support()
+
+select ListOfEntities
+scan all
+    if !empty(l_json_Entities)
+        l_json_Entities += [,]
     endif
-    
-    l_cHtml += [<nav class="navbar navbar-light bg-light">]
-        l_cHtml += [<div class="input-group">]
-            if empty(par_iPk)
-                l_cHtml += [<span class="navbar-brand ms-3">New ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
-            else
-                l_cHtml += [<span class="navbar-brand ms-3">Update ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
-            endif
+    l_cInfo = ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
+    l_cInfo := vfp_StrReplace(l_cInfo,{;
+                                    [\] => [\\] ,;
+                                    ["] => [ ] ,;
+                                    ['] => [ ] ;
+                                },,1)
+    l_json_Entities += "{id:"+trans(ListOfEntities->pk)+",text:'"+l_cInfo+"'}"
+    l_hEntityNames[ListOfEntities->pk] := l_cInfo   // Will be used to assist in setting up default <select> <option>
+    if ListOfEntities->Entity_LinkUID = par_cEntityLinkUID
+        l_iPreselected_Entity_Pk   := ListOfEntities->Pk
+        l_cPreselected_Entity_Name := ListOfEntities->Entity_Name + [ (] + ListOfEntities->Model_Name + [)]
+    endif
+endscan
+l_json_Entities := "["+l_json_Entities+"]"
+
+//Call the jQuery code even before the for loop, since it will be used after html is loaded anyway.
+oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="Edit">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<input type="hidden" name="LinkedEntityKey" value="]+trans(par_iPk)+[">]
+
+if !empty(l_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+endif
+
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        if empty(par_iPk)
+            l_cHtml += [<span class="navbar-brand ms-3">New ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
+        else
+            l_cHtml += [<span class="navbar-brand ms-3">Update ]+oFcgi:p_ANFLinkedEntity+[</span>]   //navbar-text
+        endif
+        if oFcgi:p_nAccessLevelML >= 5
+            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+        endif
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 5
-                l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
-            if !empty(par_iPk)
-                if oFcgi:p_nAccessLevelML >= 5
-                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
-                endif
-            endif
-        l_cHtml += [</div>]
-    l_cHtml += [</nav>]
-    
-    l_cHtml += [<div class="m-3"></div>]
-    
-    l_cHtml += [<div class="m-3">]
-        l_cHtml += [<table>]
-    
-            l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pe-2 pb-3">From ]+oFcgi:p_ANFEntity+[</td>]
-                l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityFromPk" id="LinkedEntityFromPk" class="SelectEntity" style="width:600px"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
-                    if l_iLinkedEntityFromEntityPk != 0
-                        //select2 will place the current selected option at the top of the list of options, overriding the initial order.
-                        l_cHtml += [<option value="]+Trans(l_iLinkedEntityFromEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityFromEntityPk,"")+[</option>]
-                    elseif !empty(par_cEntityLinkUID)
-                        //we are coming from an entity so pereselct it as first end but only do this for the first Association End
-                        l_cHtml += [<option value="]+Trans(l_iPreselected_Entity_Pk)+[" selected="selected">]+l_cPreselected_Entity_Name+[</option>]
-                    else
-                        oFcgi:p_cjQueryScript += [$("#LinkedEntityFromPk").select2('val','0');]  // trick to not have a blank option bar.
-                    endif
-                    l_cHtml += [</select>]
-                l_cHtml += [</td>]
-            l_cHtml += [</tr>]
-
-            l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pe-2 pb-3">To ]+oFcgi:p_ANFEntity+[</td>]
-                l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityToPk" id="LinkedEntityToPk" class="SelectEntity" style="width:600px"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
-                    if l_iLinkedEntityToEntityPk != 0
-                        //select2 will place the current selected option at the top of the list of options, overriding the initial order.
-                        l_cHtml += [<option value="]+Trans(l_iLinkedEntityToEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityToEntityPk,"")+[</option>]
-                    else
-                        oFcgi:p_cjQueryScript += [$("#LinkedEntityToPk").select2('val','0');]  // trick to not have a blank option bar.
-                    endif
-                    l_cHtml += [</select>]
-                l_cHtml += [</td>]
-            l_cHtml += [</tr>]
-
-    
-            l_cHtml += [<tr>]
-                l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-                l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
-            l_cHtml += [</tr>]
-    
-        l_cHtml += [</table>]
-    
+        endif
     l_cHtml += [</div>]
-     
-    oFcgi:p_cjQueryScript += [$('#TextName').focus();]
-    
-    oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
-    
-    l_cHtml += [</form>]
-    
-    l_cHtml += GetConfirmationModalFormsDelete()
-    
-    return l_cHtml
-    //=================================================================================================================
-    static function LinkedEntityEditFormOnSubmit(par_iModelPk,par_cLinkedEntityPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID)
-    local l_cHtml := []
-    local l_cActionOnSubmit
-    
-    local l_iLinkedEntityPk
-    local l_cLinkedEntityDescription
-    local l_iLinkedEntityFromEntityPk
-    local l_iLinkedEntityToEntityPk
-    local l_cLinkedEntityLinkUID
-    
-    local l_cErrorMessage := ""
-    local l_hValues := {=>}
-    
-    local l_oDB1
-    local l_oDB2
-    
-    oFcgi:TraceAdd("LinkedEntityEditFormOnSubmit")
-    
-    l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
-    
-    l_iLinkedEntityFromEntityPk   := Val(oFcgi:GetInputValue("LinkedEntityFromPk"))
-    l_iLinkedEntityToEntityPk     := Val(oFcgi:GetInputValue("LinkedEntityToPk"))
-    l_cLinkedEntityDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
-    
-    
-    do case
-    case l_cActionOnSubmit == "Save"
-        if oFcgi:p_nAccessLevelML >= 7
-            do case
-            case empty(l_iLinkedEntityFromEntityPk) .or. empty(l_iLinkedEntityToEntityPk)
-                l_cErrorMessage := oFcgi:p_ANFLinkedEntity+[ needs to have both links set.]
-            otherwise
-                l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_cHtml += [</nav>]
 
-                //Save the Model
-                with object l_oDB1
-                    :Table("CA6D54DF-D040-4A65-8A93-13C7E9831638","LinkedEntity")
-                    :Field("LinkedEntity.Description",iif(empty(l_cLinkedEntityDescription),NULL,l_cLinkedEntityDescription))
-                    :Field("LinkedEntity.fk_Entity1" ,l_iLinkedEntityFromEntityPk)
-                    :Field("LinkedEntity.fk_Entity2" ,l_iLinkedEntityToEntityPk)
-                    
-                    if empty(par_cLinkedEntityPk)
-                        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                        with object l_oDB2
-                            :Table("DE792BD4-8C30-4356-8859-CD5BA7B88D92","LinkedEntity")
-                            :Where("LinkedEntity.fk_Entity1 = ^ AND LinkedEntity.fk_Entity2 = ^" , l_iLinkedEntityFromEntityPk, l_iLinkedEntityToEntityPk)
-                            :SQL()
-                        endwith
-            
-                        if l_oDB2:Tally <> 0 
-                            l_cErrorMessage := [Duplicate ]+oFcgi:p_ANFLinkedEntity+[ link!]
-                        elseif l_iLinkedEntityToEntityPk = l_iLinkedEntityFromEntityPk
-                            l_cErrorMessage := [Cannot link ]+oFcgi:p_ANFLinkedEntity+[ to itself!]
-                        else
-                            l_cLinkedEntityLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                            :Field("LinkedEntity.LinkUID" , l_cLinkedEntityLinkUID)
-                            if :Add()
-                                l_iLinkedEntityPk := :Key()
-                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
-                            else
-                                l_cErrorMessage := [Failed to add ]+oFcgi:p_ANFLinkedEntity+[.]
-                            endif
-                        endif
+l_cHtml += [<div class="m-3"></div>]
+
+l_cHtml += [<div class="m-3">]
+    l_cHtml += [<table>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">From ]+oFcgi:p_ANFEntity+[</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityFromPk" id="LinkedEntityFromPk" class="SelectEntity" style="width:600px"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
+                if l_iLinkedEntityFromEntityPk != 0
+                    //select2 will place the current selected option at the top of the list of options, overriding the initial order.
+                    l_cHtml += [<option value="]+Trans(l_iLinkedEntityFromEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityFromEntityPk,"")+[</option>]
+                elseif !empty(par_cEntityLinkUID)
+                    //we are coming from an entity so pereselct it as first end but only do this for the first Association End
+                    l_cHtml += [<option value="]+Trans(l_iPreselected_Entity_Pk)+[" selected="selected">]+l_cPreselected_Entity_Name+[</option>]
+                else
+                    oFcgi:p_cjQueryScript += [$("#LinkedEntityFromPk").select2('val','0');]  // trick to not have a blank option bar.
+                endif
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">To ]+oFcgi:p_ANFEntity+[</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="LinkedEntityToPk" id="LinkedEntityToPk" class="SelectEntity" style="width:600px"]+iif(oFcgi:p_nAccessLevelML >= 5,[],[ disabled])+[>]
+                if l_iLinkedEntityToEntityPk != 0
+                    //select2 will place the current selected option at the top of the list of options, overriding the initial order.
+                    l_cHtml += [<option value="]+Trans(l_iLinkedEntityToEntityPk)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iLinkedEntityToEntityPk,"")+[</option>]
+                else
+                    oFcgi:p_cjQueryScript += [$("#LinkedEntityToPk").select2('val','0');]  // trick to not have a blank option bar.
+                endif
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelML >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [</tr>]
+
+    l_cHtml += [</table>]
+
+l_cHtml += [</div>]
+    
+oFcgi:p_cjQueryScript += [$('#TextName').focus();]
+
+oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+
+l_cHtml += [</form>]
+
+l_cHtml += GetConfirmationModalFormsDelete()
+
+return l_cHtml
+//=================================================================================================================
+static function LinkedEntityEditFormOnSubmit(par_iModelPk,par_cLinkedEntityPk,par_cLinkedEntityLinkUID,par_cEntityLinkUID)
+local l_cHtml := []
+local l_cActionOnSubmit
+
+local l_iLinkedEntityPk
+local l_cLinkedEntityDescription
+local l_iLinkedEntityFromEntityPk
+local l_iLinkedEntityToEntityPk
+local l_cLinkedEntityLinkUID
+
+local l_cErrorMessage := ""
+local l_hValues := {=>}
+
+local l_oDB1
+local l_oDB2
+
+oFcgi:TraceAdd("LinkedEntityEditFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_iLinkedEntityFromEntityPk   := Val(oFcgi:GetInputValue("LinkedEntityFromPk"))
+l_iLinkedEntityToEntityPk     := Val(oFcgi:GetInputValue("LinkedEntityToPk"))
+l_cLinkedEntityDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+
+
+do case
+case l_cActionOnSubmit == "Save"
+    if oFcgi:p_nAccessLevelML >= 7
+        do case
+        case empty(l_iLinkedEntityFromEntityPk) .or. empty(l_iLinkedEntityToEntityPk)
+            l_cErrorMessage := oFcgi:p_ANFLinkedEntity+[ needs to have both links set.]
+        otherwise
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+            //Save the Model
+            with object l_oDB1
+                :Table("CA6D54DF-D040-4A65-8A93-13C7E9831638","LinkedEntity")
+                :Field("LinkedEntity.Description",iif(empty(l_cLinkedEntityDescription),NULL,l_cLinkedEntityDescription))
+                :Field("LinkedEntity.fk_Entity1" ,l_iLinkedEntityFromEntityPk)
+                :Field("LinkedEntity.fk_Entity2" ,l_iLinkedEntityToEntityPk)
+                
+                if empty(par_cLinkedEntityPk)
+                    l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
+                    with object l_oDB2
+                        :Table("DE792BD4-8C30-4356-8859-CD5BA7B88D92","LinkedEntity")
+                        :Where("LinkedEntity.fk_Entity1 = ^ AND LinkedEntity.fk_Entity2 = ^" , l_iLinkedEntityFromEntityPk, l_iLinkedEntityToEntityPk)
+                        :SQL()
+                    endwith
+        
+                    if l_oDB2:Tally <> 0 
+                        l_cErrorMessage := [Duplicate ]+oFcgi:p_ANFLinkedEntity+[ link!]
+                    elseif l_iLinkedEntityToEntityPk = l_iLinkedEntityFromEntityPk
+                        l_cErrorMessage := [Cannot link ]+oFcgi:p_ANFLinkedEntity+[ to itself!]
                     else
-                        if :Update(par_cLinkedEntityPk)
+                        l_cLinkedEntityLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                        :Field("LinkedEntity.LinkUID" , l_cLinkedEntityLinkUID)
+                        if :Add()
+                            l_iLinkedEntityPk := :Key()
                             oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                         else
-                            l_cErrorMessage := [Failed to update ]+oFcgi:p_ANFLinkedEntity+[.]
+                            l_cErrorMessage := [Failed to add ]+oFcgi:p_ANFLinkedEntity+[.]
                         endif
                     endif
-                endwith
-            endcase
-        endif
-    
-    case l_cActionOnSubmit == "Cancel"
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
-    
-    case l_cActionOnSubmit == "Delete"   // Model
-        if oFcgi:p_nAccessLevelML >= 5
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            l_oDB1:Delete("E184F683-C71F-4AAB-9227-3576C17AC4BA","LinkedEntity",par_cLinkedEntityPk)
-        endif
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
-    endcase
-    
-    if !empty(l_cErrorMessage)
-        l_hValues["LinkedEntityFomPk"]    := l_iLinkedEntityFromEntityPk
-        l_hValues["LinkedEntityToPk"]    := l_iLinkedEntityToEntityPk
-        l_hValues["Description"]    := l_cLinkedEntityDescription
-    
-        l_cHtml += LinkedEntityEditFormBuild(par_iModelPk,l_iLinkedEntityPk,l_cLinkedEntityLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
+                else
+                    if :Update(par_cLinkedEntityPk)
+                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+                    else
+                        l_cErrorMessage := [Failed to update ]+oFcgi:p_ANFLinkedEntity+[.]
+                    endif
+                endif
+            endwith
+        endcase
     endif
-    
-    return l_cHtml
+
+case l_cActionOnSubmit == "Cancel"
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+
+case l_cActionOnSubmit == "Delete"   // Model
+    if oFcgi:p_nAccessLevelML >= 5
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB1:Delete("E184F683-C71F-4AAB-9227-3576C17AC4BA","LinkedEntity",par_cLinkedEntityPk)
+    endif
+    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+endcase
+
+if !empty(l_cErrorMessage)
+    l_hValues["LinkedEntityFomPk"]    := l_iLinkedEntityFromEntityPk
+    l_hValues["LinkedEntityToPk"]    := l_iLinkedEntityToEntityPk
+    l_hValues["Description"]    := l_cLinkedEntityDescription
+
+    l_cHtml += LinkedEntityEditFormBuild(par_iModelPk,l_iLinkedEntityPk,l_cLinkedEntityLinkUID,par_cEntityLinkUID,l_cErrorMessage,l_hValues)
+endif
+
+return l_cHtml
 
 //=================================================================================================================
 //=================================================================================================================
@@ -7548,13 +7610,29 @@ if empty(l_cErrorMessage)
         select CascadeDeleteModelListOfRecordsToDelete
         scan all while empty(l_cErrorMessage)
             if !l_oDB_RecordToDelete:Delete("B5C46101-4BD0-444D-8C2A-38230162EB53","LinkedModel",CascadeDeleteModelListOfRecordsToDelete->pk)
-                l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFPackages+[.]
+                l_cErrorMessage := [Failed to delete LinkedModel.]
             endif
         endscan
     endwith
 endif
 
-// Step 7 - Delete Model
+// Step 7 - Delete all UserSettingModel relationships
+if empty(l_cErrorMessage)
+    with object l_oDB_ListOfRecordsToDelete
+        :Table("7D17932D-E4E1-418D-9FC4-2E8D4C0D3E66","UserSettingModel")
+        :Column("UserSettingModel.pk" , "pk")
+        :Where("UserSettingModel.fk_Model = ^" , par_iModelPk)
+        :SQL("CascadeDeleteModelListOfRecordsToDelete")
+        select CascadeDeleteModelListOfRecordsToDelete
+        scan all while empty(l_cErrorMessage)
+            if !l_oDB_RecordToDelete:Delete("B5C46101-4BD0-444D-8C2A-38230162EB54","UserSettingModel",CascadeDeleteModelListOfRecordsToDelete->pk)
+                l_cErrorMessage := [Failed to delete UserSettingModel.]
+            endif
+        endscan
+    endwith
+endif
+
+// Step 8 - Delete Model
 if empty(l_cErrorMessage)
     CustomFieldsDelete(par_iProjectPk,USEDON_MODEL,par_iModelPk)
     if !l_oDB_RecordToDelete:Delete("5cfe314f-1303-4e14-865c-0330955850d5","Model",par_iModelPk)

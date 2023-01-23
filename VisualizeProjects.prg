@@ -3,7 +3,7 @@
 //=================================================================================================================
 function ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,par_iModelingDiagramPk)
 local l_cHtml := []
-local l_oDB1
+local l_oDB1                                 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_Project                          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntities                   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelingDiagrams           := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -20,7 +20,11 @@ local l_nLengthDecoded
 local l_lAutoLayout := .t.
 local l_hCoordinate
 local l_cNodeLabel
+local l_nNumberOfSelectedEntityInModelingDiagram
 local l_nNumberOfEntityInModelingDiagram
+local l_nNumberOfAssociationNodes
+local l_nNumberOfLinksInDiagram
+local l_cListOfAssociationWhereAnEndpointWasDeleted
 local l_oDataModelingDiagram
 local l_lNodeShowDescription
 local l_lAssociationShowName    := .t.
@@ -71,6 +75,37 @@ local l_cHashKey
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
 
+//Save current diagram being used by current user in current model
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB1
+    :Table("c1765610-ad27-4fc2-97e6-e0c4c47dbac1","UserSettingModel")
+    :Column("UserSettingModel.pk"        ,"pk")
+    :Column("UserSettingModel.fk_ModelingDiagram","fk_ModelingDiagram")
+    :Where("UserSettingModel.fk_User = ^",oFcgi:p_iUserPk)
+    :Where("UserSettingModel.fk_Model = ^",par_oDataHeader:Model_pk)
+    :SQL("ListOfUserSettingModel")
+    do case
+    case :Tally == 0
+        //Add a new record
+        :Table("c1765610-ad27-4fc2-97e6-e0c4c47dbac2","UserSettingModel")
+        :Field("UserSettingModel.fk_ModelingDiagram"    ,par_iModelingDiagramPk)
+        :Field("UserSettingModel.fk_User"       ,oFcgi:p_iUserPk)
+        :Field("UserSettingModel.fk_Model",par_oDataHeader:Model_pk)
+        :Add()
+    case :Tally == 1
+        if ListOfUserSettingModel->fk_ModelingDiagram <> par_iModelingDiagramPk
+            :Table("c1765610-ad27-4fc2-97e6-e0c4c47dbac3","UserSettingModel")
+            :Field("UserSettingModel.fk_ModelingDiagram",par_iModelingDiagramPk)
+            :Update(ListOfUserSettingModel->pk)
+        endif
+    case :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+        select ListOfUserSettingModel
+        scan all
+            :Delete("c1765610-ad27-4fc2-97e6-e0c4c47dbac4","UserSettingModel",ListOfUserSettingModel->pk)
+        endscan
+    endcase
+endwith
+
 //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]
 
@@ -87,8 +122,6 @@ l_cHtml += '}'
 l_cHtml += [</script>]
 
 // See https://visjs.github.io/vis-network/examples/
-
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfModelingDiagrams
     :Table("457beda4-3ff9-4c01-87f9-2a9bb37cf32f","ModelingDiagram")
@@ -129,9 +162,9 @@ with object l_oDB_ListOfEntities
     //Check if there is at least one record in DiagramEntity for the current Diagram
     :Table("d9e7a7d3-5f13-4668-be0c-b1d1efb0a66b","DiagramEntity")
     :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
-    l_nNumberOfEntityInModelingDiagram := :Count()
+    l_nNumberOfSelectedEntityInModelingDiagram := :Count()
     
-    if l_nNumberOfEntityInModelingDiagram == 0
+    if l_nNumberOfSelectedEntityInModelingDiagram == 0
         // All Entities in Model
         :Table("32f4e1f2-7c22-4378-bd3c-422076f50633","Entity")
         :Column("Entity.pk"         ,"pk")
@@ -154,8 +187,13 @@ with object l_oDB_ListOfEntities
         :Join("left","Package","","Entity.fk_Package = Package.pk")
         :Where("DiagramEntity.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
         :SQL("ListOfEntities")
-
+        with object :p_oCursor
+            :Index("pk","pk")
+            :CreateIndexes()
+        endwith
+        
     endif
+    l_nNumberOfEntityInModelingDiagram := :Tally
 
     select ListOfEntities
     l_cPackage_FullName := nvl(ListOfEntities->Package_FullName," ")
@@ -165,7 +203,7 @@ with object l_oDB_ListOfEntities
 endwith
 
 with object l_oDB_ListOfAssociationNodes
-    if l_nNumberOfEntityInModelingDiagram == 0
+    if l_nNumberOfSelectedEntityInModelingDiagram == 0
         // All Entities in Model
         :Table("f1ba32fa-1576-47e8-8ca1-fe7dfceeec33","Entity")
         :Distinct(.t.)
@@ -197,6 +235,7 @@ with object l_oDB_ListOfAssociationNodes
         :SQL("ListOfAssociationNodes")
 
     endif
+    l_nNumberOfAssociationNodes := :Tally
 
     if !l_lShowPackage
         select ListOfAssociationNodes
@@ -207,8 +246,9 @@ with object l_oDB_ListOfAssociationNodes
 
 endwith
 
+l_nNumberOfLinksInDiagram := 0
 with object l_oDB_ListOfEdgesEntityAssociationNode
-    if l_nNumberOfEntityInModelingDiagram == 0
+    if l_nNumberOfSelectedEntityInModelingDiagram == 0
         // All Entities in Model
         :Table("a039013f-1bb2-42f0-9c42-4c33b3dd667a","Entity")
         :Distinct(.t.)
@@ -227,6 +267,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :OrderBy("Association_pk")
         :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityAssociationNode")
+        l_nNumberOfLinksInDiagram += :Tally
 
     else
         // A subset of Entities
@@ -249,11 +290,21 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
         :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityAssociationNode")
 
+        select ListOfEdgesEntityAssociationNode
+        scan all
+            if vfp_seek(ListOfEdgesEntityAssociationNode->Entity_pk,"ListOfEntities","pk")
+                l_nNumberOfLinksInDiagram++
+            else
+                dbDelete()
+                SendToDebugView("Delete a ListOfEdgesEntityAssociationNode")
+            endif
+        endscan
+
     endif
 endwith
 
 with object l_oDB_ListOfEdgesEntityEntity
-    if l_nNumberOfEntityInModelingDiagram == 0
+    if l_nNumberOfSelectedEntityInModelingDiagram == 0
         // All Entities in Model
         :Table("4a726d29-46b4-45e1-9277-a2faee907608","Association")
         :Column("Association.pk"         ,"Association_pk")
@@ -273,6 +324,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         :OrderBy("Association_pk")
         :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityEntity")
+        l_nNumberOfLinksInDiagram += (:Tally / 2)    // 2 record will be paired for each link
         //Pairs of records should be created
 
  //ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
@@ -300,6 +352,33 @@ with object l_oDB_ListOfEdgesEntityEntity
         :OrderBy("Endpoint_pk")
         :SQL("ListOfEdgesEntityEntity")
         //It is possible that some non pairs are created.
+
+        //Scan the list to see the endpoint entity was selected
+        l_cListOfAssociationWhereAnEndpointWasDeleted := "*"
+        select ListOfEdgesEntityEntity
+        scan all
+            if vfp_seek(ListOfEdgesEntityEntity->Entity_pk,"ListOfEntities","pk")
+                // l_nNumberOfLinksInDiagram++  Will not set here, since we need to ensure we have pairs
+            else
+                l_cListOfAssociationWhereAnEndpointWasDeleted += trans(ListOfEdgesEntityEntity->Association_pk)+"*"
+                dbDelete()
+                SendToDebugView("Delete a ListOfEdgesEntityEntity")
+            endif
+        endscan
+
+        //Loop Again to remove the opposite endpoints (E <- A -> E). One side deleted so remove the other which has the same association
+// altd()
+        select ListOfEdgesEntityEntity
+        scan all //for !Deleted()
+            if "*"+trans(ListOfEdgesEntityEntity->Association_pk)+"*" $ l_cListOfAssociationWhereAnEndpointWasDeleted
+                dbDelete()
+            else
+                if !Deleted()
+                    l_nNumberOfLinksInDiagram := l_nNumberOfLinksInDiagram + 0.5  //The 2 0.5 will make up one full link
+                endif
+            endif
+        endscan
+ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     endif
 endwith
@@ -384,6 +463,15 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         endif
         //---------------------------------------------------------------------------
          l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
+        //---------------------------------------------------------------------------
+        l_cHtml += [<span class="navbar-text ms-3">]
+        l_cHtml += [Entities: ]+trans(l_nNumberOfEntityInModelingDiagram)
+        l_cHtml += [ - Association Nodes: ]+trans(l_nNumberOfAssociationNodes)
+        l_cHtml += [ - Links: ]+trans(int(l_nNumberOfLinksInDiagram))
+        // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
+        // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
+        
+        l_cHtml += [</span>]
         //---------------------------------------------------------------------------
 
         //Get the current URL and add a reference to the current modeling diagram LinkUID
@@ -1379,7 +1467,7 @@ l_lModelingDiagram_NodeMaxWidth           := min(9999,max(0,Val(SanitizeInput(oF
 
 do case
 case l_cActionOnSubmit == "SaveDiagram"
-    //Get all the Application Entities to help scan all the selection checkboxes.
+    //Get all the Model Entities to help scan all the selection checkboxes.
     with Object l_oDB2
         :Table("67cfa8ab-7675-451d-9a68-09f7bd3654da","Entity")
         :Column("Entity.pk"         ,"pk")
@@ -2011,7 +2099,6 @@ local l_nNumberOfCustomFieldValues
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_EntityCustomFields := ""
 local l_oData_Project
-local l_cApplicationSupportAttributes
 local l_cHtml_icon
 local l_nAccessLevelML
 local l_cZoomInfo

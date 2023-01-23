@@ -582,4 +582,26 @@ l_Schema := ;
    ,"Status"      =>{,  "N",   1,  0,}};    // 1 = Logged In, 2 = User Logout, 3 = Implicit Logout
    ,;   //Index Definition
    {"fk_User"=>{,"fk_User",.f.,"BTREE"}}};
+,"public.UserSettingApplication"=>{;   //Field Definition
+   {"pk"             =>{,  "I",   0,  0,"+"};
+   ,"sysc"           =>{, "DT",   0,  6,"N"};
+   ,"sysm"           =>{, "DT",   0,  6,"N"};
+   ,"fk_User"        =>{,  "I",   0,  0,};
+   ,"fk_Application" =>{,  "I",   0,  0,};
+   ,"fk_Diagram"     =>{,  "I",   0,  0,}};      //  Last Accessed Diagram, to help default the menu to restart on that diagram.
+   ,;   //Index Definition
+   {"fk_User"       =>{,"fk_User"       ,.f.,"BTREE"};
+   ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"};
+   ,"fk_Diagram"    =>{,"fk_Diagram"    ,.f.,"BTREE"}}};
+,"public.UserSettingModel"=>{;   //Field Definition
+   {"pk"                 =>{,  "I",   0,  0,"+"};
+   ,"sysc"               =>{, "DT",   0,  6,"N"};
+   ,"sysm"               =>{, "DT",   0,  6,"N"};
+   ,"fk_User"            =>{,  "I",   0,  0,};
+   ,"fk_Model"           =>{,  "I",   0,  0,};
+   ,"fk_ModelingDiagram" =>{,  "I",   0,  0,}};      //  Last Accessed Diagram, to help default the menu to restart on that diagram.
+   ,;   //Index Definition
+   {"fk_User"            =>{,"fk_User"           ,.f.,"BTREE"};
+   ,"fk_Model"           =>{,"fk_Model"          ,.f.,"BTREE"};
+   ,"fk_ModelingDiagram" =>{,"fk_ModelingDiagram",.f.,"BTREE"}}};
 }

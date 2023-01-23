@@ -76,6 +76,7 @@ with object l_oDB_ListOfTables
         l_lContinue := .f.
         l_cSourceCode += :LastSQL() + CRLF
     endif
+    // l_cSourceCode += :LastSQL() + CRLF   // Used to see how the changes to beautify code is done in the Harbour_ORM
 endwith
 
 
@@ -311,12 +312,9 @@ if l_lContinue
 
     endscan
 
-
     if !empty(l_cSourceCode)
         l_cSourceCode += "}"
     endif
-
-
 
 endif
 
@@ -326,8 +324,4 @@ if !l_lContinue
 endif
 
 return l_cSourceCode
-
-
-
-
 //=================================================================================================================

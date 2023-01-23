@@ -763,9 +763,6 @@ l_cHtml += [<div class="m-3">]
 
         l_cColumnsToOptions += "]"
 
-//123456
-// SendToClipboard(l_cColumnsToOptions)
-
         oFcgi:p_cjQueryScript += [$(".ColumnsTos").select2({placeholder: '',allowClear: true,data: ]+l_cColumnsToOptions+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
 
         l_cHtml += [<div class="m-3"></div>]   //Spacer
@@ -836,6 +833,7 @@ l_cHtml += [<div class="m-3">]
                                                             ListColumnsFrom->Enumeration_ImplementAs,;
                                                             ListColumnsFrom->Enumeration_ImplementLength,;
                                                             ListColumnsFrom->Column_Unicode,;
+                                                            "",;
                                                             "",;
                                                             "",;
                                                             "")

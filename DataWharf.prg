@@ -110,10 +110,18 @@ class MyFcgi from hb_Fcgi
     method OnError(par_oError)
     method Self() inline Self
 
+    method Redirect(par_cURL)
+
     #include "api.txt"
 
 endclass
 //=================================================================================================================
+method Redirect(par_cURL) class MyFcgi
+// SendToDebugView("Redirecting to",par_cURL)
+::Super:Redirect(par_cURL)
+return nil
+//=================================================================================================================
+
 method OnFirstRequest() class MyFcgi
 local l_oDB1
 local l_oDB2
@@ -123,6 +131,7 @@ local l_cSecurityDefaultPassword
 local l_iCurrentDataVersion
 local l_cVisPos
 local l_cTableName
+local l_cName
 
 SendToDebugView("Called from method OnFirstRequest")
 
@@ -168,7 +177,7 @@ with object ::p_o_SQLConnection
         endwith
 
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 1
+        if l_iCurrentDataVersion < 1
             with object l_oDB1
                 :Table("58b648b9-ec53-40ba-8e29-a8b4e99beb36","Diagram")
                 :Column("Diagram.pk" , "pk")
@@ -187,7 +196,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 4
+        if l_iCurrentDataVersion < 4
             if ::p_o_SQLConnection:TableExists("public.Property")
                 ::p_o_SQLConnection:DeleteTable("public.Property")
             endif
@@ -228,7 +237,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 5
+        if l_iCurrentDataVersion < 5
             if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
                 ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
             endif
@@ -236,7 +245,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 6
+        if l_iCurrentDataVersion < 6
             if ::p_o_SQLConnection:TableExists("public.AssociationEnd")
                 ::p_o_SQLConnection:DeleteTable("public.AssociationEnd")
             endif
@@ -244,7 +253,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 7
+        if l_iCurrentDataVersion < 7
             if ::p_o_SQLConnection:FieldExists("public.Attribute","fk_Association")
                 ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
             endif
@@ -257,7 +266,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 8
+        if l_iCurrentDataVersion < 8
             if ::p_o_SQLConnection:TableExists("public.ConceptualDiagram")
                 ::p_o_SQLConnection:DeleteTable("public.ConceptualDiagram")
             endif
@@ -268,7 +277,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 9
+        if l_iCurrentDataVersion < 9
             with object l_oDB1
                 :Table("dcbb495b-7a14-4ba0-9d2b-eefc5a41fac3","ModelingDiagram")
                 :Column("ModelingDiagram.pk" , "pk")
@@ -287,7 +296,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 10
+        if l_iCurrentDataVersion < 10
             if ::p_o_SQLConnection:FieldExists("public.Entity","Scope") .and. ::p_o_SQLConnection:FieldExists("public.Entity","Information")
 
                 with object l_oDB1
@@ -313,7 +322,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 11
+        if l_iCurrentDataVersion < 11
             if ::p_o_SQLConnection:FieldExists("public.Attribute","Order") .and. ::p_o_SQLConnection:FieldExists("public.Attribute","TreeOrder1")
 
                 with object l_oDB1
@@ -339,7 +348,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        if l_iCurrentDataVersion <= 14
+        if l_iCurrentDataVersion < 14
             with object l_oDB1
                 :Table("bb6ceea9-72f0-471f-b555-0affd9359cb3","Diagram")
                 :Column("Diagram.pk"     , "pk")
@@ -369,7 +378,7 @@ with object ::p_o_SQLConnection
         endif
         //-----------------------------------------------------------------------------------
         
-        if l_iCurrentDataVersion <= 15
+        if l_iCurrentDataVersion < 15
             with object l_oDB1
                 :Table("6a473090-8c14-47f7-a1dc-95f79a4e45b4","Diagram")
                 :Column("Diagram.pk" , "pk")
@@ -389,9 +398,7 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        // ud  make it a for each on the following tables
-        
-        if l_iCurrentDataVersion <= 16
+        if l_iCurrentDataVersion < 16
             with object l_oDB1
                 For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","Model","NameSpace","Project","Table","Version","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
                     :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
@@ -409,7 +416,32 @@ with object ::p_o_SQLConnection
                 endfor
             endwith
 
-            l_iCurrentDataVersion := 16
+            l_iCurrentDataVersion := 17
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        // Skipped version 17 since changed logic from "l_iCurrentDataVersion <=" to "l_iCurrentDataVersion <"
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 18
+            with object l_oDB1
+                :Table("5de9d15e-1af2-4f12-9762-ffdfc779a750","EnumValue")
+                :Column("EnumValue.Pk"   , "Pk")
+                :Column("EnumValue.Name" , "EnumValue_Name")
+                :SQL("ListOfRecordsToUpdate")
+                select ListOfRecordsToUpdate
+                scan all
+                    l_cName := SanitizeInputAlphaNumeric(ListOfRecordsToUpdate->EnumValue_Name)
+                    if !(ListOfRecordsToUpdate->EnumValue_Name == l_cName)
+                        with object l_oDB2
+                            :Table("1b2715fd-fad5-4c0d-a24a-f8b5c4b21be6","EnumValue")
+                            :Field("EnumValue.Name" , l_cName)
+                            :Update(ListOfRecordsToUpdate->pk)
+                        endwith
+                    endif
+                endscan
+            endwith
+
+            l_iCurrentDataVersion := 18
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
@@ -504,6 +536,7 @@ local l_cAccessToken
 local l_sAPIFunction
 
 SendToDebugView("Request Counter",::RequestCount)
+SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
 
 ::SetHeaderValue("X-Frame-Options","DENY")  // To help prevent clickhacking, meaning to place the web site into an frame of another site.
 
@@ -950,7 +983,6 @@ else
         endif
     endif
 endif
-// altd()
 
 ::Print(l_cHtml)
 
@@ -1578,21 +1610,22 @@ select (l_select)
     
 return l_lSQLExecResult
 //=================================================================================================================
-function GetTRStyleBackgroundColor(par_nUseStatus)
+function GetTRStyleBackgroundColor(par_nUseStatus,par_cOpacity)
 local l_cHtml
+local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
 do case
 case par_nUseStatus == 2  // Proposed
     // l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+[;"]
-    l_cHtml := [ style="background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,0.3);"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 case par_nUseStatus == 3  // Under Development
     // l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+[;"]
-    l_cHtml := [ style="background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,0.3);"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 case par_nUseStatus == 5  // To be Discontinued
     // l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+[;"]
-    l_cHtml := [ style="background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,0.3);"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 case par_nUseStatus == 6  // To be Discontinued
     // l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+[;"]
-    l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,0.3);"]
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 otherwise
     l_cHtml := ""
 endcase

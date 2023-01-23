@@ -3,7 +3,7 @@
 //=================================================================================================================
 function DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk)
 local l_cHtml := []
-local l_oDB1
+local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTables   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDiagrams := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfLinks    := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -17,7 +17,9 @@ local l_nLengthDecoded
 local l_lAutoLayout := .t.
 local l_hCoordinate
 local l_cNodeLabel
+local l_nNumberOfSelectedTableInDiagram
 local l_nNumberOfTableInDiagram
+local l_nNumberOfLinksInDiagram
 local l_lShowNameSpace
 local l_cNameSpace_Name
 local l_oDataDiagram
@@ -53,6 +55,38 @@ local l_cHashKey
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
 
+//Save current diagram being used by current user in current application
+l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB1
+    :Table("37aa71df-4025-4f88-bd67-29cdee691d33","UserSettingApplication")
+    :Column("UserSettingApplication.pk"        ,"pk")
+    :Column("UserSettingApplication.fk_Diagram","fk_Diagram")
+    :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+    :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
+    :SQL("ListOfUserSettingApplication")
+    do case
+    case :Tally == 0
+        //Add a new record
+        :Table("37aa71df-4025-4f88-bd67-29cdee691d34","UserSettingApplication")
+        :Field("UserSettingApplication.fk_Diagram"    ,par_iDiagramPk)
+        :Field("UserSettingApplication.fk_User"       ,oFcgi:p_iUserPk)
+        :Field("UserSettingApplication.fk_Application",par_iApplicationPk)
+        :Add()
+    case :Tally == 1
+        if ListOfUserSettingApplication->fk_Diagram <> par_iDiagramPk
+            :Table("37aa71df-4025-4f88-bd67-29cdee691d35","UserSettingApplication")
+            :Field("UserSettingApplication.fk_Diagram",par_iDiagramPk)
+            :Update(ListOfUserSettingApplication->pk)
+        endif
+    case :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+        select ListOfUserSettingApplication
+        scan all
+            :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
+        endscan
+    endcase
+endwith
+
+
 //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]
 
@@ -70,7 +104,6 @@ l_cHtml += [</script>]
 
 // See https://visjs.github.io/vis-network/examples/
 
-l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfDiagrams
     :Table("44eabf03-8b35-4e96-a128-e9c1bc6168f0","Diagram")
@@ -118,9 +151,9 @@ with object l_oDB_ListOfTables
     //Check if there is at least one record in DiagramTable for the current Diagram
     :Table("66daafd2-9566-43be-85e5-b663682ba88c","DiagramTable")
     :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
-    l_nNumberOfTableInDiagram := :Count()
+    l_nNumberOfSelectedTableInDiagram := :Count()
     
-    if l_nNumberOfTableInDiagram == 0
+    if l_nNumberOfSelectedTableInDiagram == 0
         // All Tables
         :Table("5ad2a893-e8bd-40e5-8eb0-a6e4bafbbf51","Table")
         :Column("Table.pk"         ,"pk")
@@ -130,14 +163,12 @@ with object l_oDB_ListOfTables
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
-        // :Column("Upper(NameSpace.Name)","tag1")
-        // :Column("Upper(Table.Name)"    ,"tag2")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
         :SQL("ListOfTables")
+
     else
         // A subset of Tables
-
         :Table("545ab66b-9384-4e06-abf3-ce8e529aa6e1","DiagramTable")
         :Distinct(.t.)
         :Column("Table.pk"         ,"pk")
@@ -147,20 +178,76 @@ with object l_oDB_ListOfTables
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
-        // :Column("Upper(NameSpace.Name)","tag1")
-        // :Column("Upper(Table.Name)"    ,"tag2")
         :Join("inner","Table","","DiagramTable.fk_Table = Table.pk")
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
         :SQL("ListOfTables")
+        with object :p_oCursor
+            :Index("pk","pk")
+            :CreateIndexes()
+        endwith
 
     endif
+    l_nNumberOfTableInDiagram := :Tally
 
     select ListOfTables
+    goto top
     l_cNameSpace_Name := ListOfTables->NameSpace_Name
     locate for ListOfTables->NameSpace_Name <> l_cNameSpace_Name
     l_lShowNameSpace := Found()
 
+endwith
+
+// create an array with edges
+with object l_oDB_ListOfLinks
+    if l_nNumberOfSelectedTableInDiagram == 0
+        // All tables are displayed
+        :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
+        :Column("Table.pk"              ,"pkFrom")
+        :Column("Column.fk_TableForeign","pkTo")
+        :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
+        :Column("Column.UseStatus"      ,"Column_UseStatus")
+        :Column("Column.pk"             ,"Column_Pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Column","","Column.fk_Table = Table.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Column.fk_TableForeign <> 0")
+        :OrderBy("pkFrom")
+        :OrderBy("pkTo")
+        :SQL("ListOfLinks")
+        l_nNumberOfLinksInDiagram := :Tally
+
+    else
+        // _M_ When the Harbour_ORM will add support to CTE could avoid using vfp_seek and delete
+        :Table("9f3afcce-5f28-457e-965c-e294cfd628aa","DiagramTable")
+        :Distinct(.t.)
+        :Column("Table.pk"              ,"pkFrom")
+        :Column("Column.fk_TableForeign","pkTo")
+        :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
+        :Column("Column.UseStatus"      ,"Column_UseStatus")
+        :Column("Column.pk"             ,"Column_Pk")
+        :Join("inner","Table"    ,"","DiagramTable.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
+        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
+        :Where("Column.fk_TableForeign <> 0")
+        :OrderBy("pkFrom")
+        :OrderBy("pkTo")
+        :SQL("ListOfLinks")
+
+        //Reduce the list
+        l_nNumberOfLinksInDiagram := 0
+        select ListOfLinks
+        scan all
+            if vfp_seek(ListOfLinks->pkTo,"ListOfTables","pk")
+                l_nNumberOfLinksInDiagram++
+            else
+                dbDelete()
+            endif
+        endscan
+        // ExportTableToHtmlFile("ListOfTables",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfTables.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfLinks" ,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfLinks.html" ,"From PostgreSQL",,200,.t.)
+    endif
 endwith
 
 // l_cHtml += '<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>'
@@ -185,11 +272,16 @@ endif
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_]+DATAWHARF_SCRIPT_VERSION+[/visualization.js"></script>]
 
 l_cHtml += [<style type="text/css">]
+
 l_cHtml += [  #mynetwork {]
 l_cHtml += [    width: ]+Trans(l_iCanvasWidth)+[px;]
 l_cHtml += [    height: ]+Trans(l_iCanvasHeight)+[px;]
 l_cHtml += [    border: 1px solid lightgray;]
 l_cHtml += [  }]
+
+l_cHtml += [ .tooltip-inner {max-width: 700px;opacity: 1.0;background-color: #198754;} ]
+l_cHtml += [ .tooltip.show {opacity:1.0} ]
+
 l_cHtml += [</style>]
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
@@ -283,7 +375,15 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
         l_cHtml += [;return false;">]
         //---------------------------------------------------------------------------
-
+        l_cHtml += [<span class="navbar-text ms-3">]
+        l_cHtml += [Tables: ]+trans(l_nNumberOfTableInDiagram)
+        l_cHtml += [ - Links: ]+trans(l_nNumberOfLinksInDiagram)
+        // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
+        // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
+        
+        l_cHtml += [</span>]
+        //---------------------------------------------------------------------------
+    
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -480,23 +580,24 @@ scan all
 endscan
 l_cHtml += '];'
 
-// create an array with edges
-with object l_oDB_ListOfLinks
-    :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
-    :Column("Table.pk"              ,"pkFrom")
-    :Column("Column.fk_TableForeign","pkTo")
-    :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
-    :Column("Column.UseStatus"      ,"Column_UseStatus")
-    // :Column("Column.DocStatus"      ,"Column_DocStatus")
-    :Column("Column.pk"             ,"Column_Pk")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Join("inner","Column","","Column.fk_Table = Table.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Where("Column.fk_TableForeign <> 0")
-    :OrderBy("pkFrom")
-    :OrderBy("pkTo")
-    :SQL("ListOfLinks")
-endwith
+// // create an array with edges
+// with object l_oDB_ListOfLinks
+//     :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
+//     :Column("Table.pk"              ,"pkFrom")
+//     :Column("Column.fk_TableForeign","pkTo")
+//     :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
+//     :Column("Column.UseStatus"      ,"Column_UseStatus")
+//     // :Column("Column.DocStatus"      ,"Column_DocStatus")
+//     :Column("Column.pk"             ,"Column_Pk")
+//     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+//     :Join("inner","Column","","Column.fk_Table = Table.pk")
+//     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+//     :Where("Column.fk_TableForeign <> 0")
+//     :OrderBy("pkFrom")
+//     :OrderBy("pkTo")
+//     :SQL("ListOfLinks")
+// endwith
+// l_nNumberOfLinksInDiagram := :Tally
 
 //Pre-Determine multi-links
 select ListOfLinks
@@ -628,9 +729,10 @@ l_cJS +=      [return $(e.target).blur().focus();]
 l_cJS +=    [}]
 l_cJS += [});]
 
-// Code to enable the "All" and "Core Only" button
+// Code to enable the "All" and "Core Only" button. JavaScript code executed after the right panel is loaded.
 l_cJS += [$("#ButtonShowAll").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").show(),$(".ColumnCore").show();});]
 l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
+l_cJS += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
 
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
@@ -1848,6 +1950,7 @@ local l_oDB_InArray                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelatedTables          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCurrentTablesInDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumn                 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumValues             := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfOtherDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_TableCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
@@ -1902,6 +2005,7 @@ local l_cObjectId
 local l_lFoundData
 local l_nRenderMode
 local l_oDataDiagram
+local l_cTooltipEnumValues
 
 //oFcgi:p_nAccessLevelDD
 
@@ -1936,6 +2040,7 @@ if len(l_aNodes) == 1
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
         l_oData_Application := :Get(l_iTablePk)
+// SendToDebugView(:GetLastEventId(),:LastSQL())
         l_lFoundData := (:Tally == 1)
     endwith
 
@@ -1965,6 +2070,8 @@ if len(l_aNodes) == 1
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
             :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
             :SQL("ListOfCurrentTablesInDiagram")
+// SendToDebugView(:GetLastEventId(),:LastSQL())
+
             l_nNumberOfTablesInDiagram := :Tally
             if l_nNumberOfTablesInDiagram > 0
                 with object :p_oCursor
@@ -2016,6 +2123,30 @@ if len(l_aNodes) == 1
             l_nNumberOfColumns := :Tally
         endwith
 
+        if l_nNumberOfColumns > 1
+            with object l_oDB_ListOfEnumValues
+                :Table("3784d627-8099-4966-b66e-d177304a3310","Column")
+                :Column("Column.pk"                     ,"Column_pk")
+
+                :Column("EnumValue.Order"               ,"EnumValue_Order")
+                :Column("EnumValue.Number"              ,"EnumValue_Number")
+                :Column("EnumValue.Name"                ,"EnumValue_Name")
+                :Column("EnumValue.AKA"                 ,"EnumValue_AKA")
+                :Column("EnumValue.Description"         ,"EnumValue_Description")
+                :Column("EnumValue.UseStatus"           ,"EnumValue_UseStatus")
+                
+                :Join("inner","EnumValue","","Column.fk_Enumeration > 0 and Column.fk_Enumeration = EnumValue.fk_Enumeration")
+                :Where("Column.fk_Table = ^",l_iTablePk)
+
+                :OrderBy("Column_pk")
+                :OrderBy("EnumValue_Order")
+                :SQL("ListOfEnumValues")
+                with object :p_oCursor
+                    :Index("tag1","alltrim(str(Column_pk))+'*'+str(EnumValue_Order,10)")
+                    :CreateIndexes()
+                endwith
+            endwith
+        endif
 
         with object l_oDB_ListOfOtherDiagrams
             :Table("d7bf79b7-d7bf-435d-ab83-3d02fcbc6612","DiagramTable")
@@ -2366,6 +2497,32 @@ if len(l_aNodes) == 1
 
                                     // Type
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
+
+            // Prepare the tooltip text for enumeration type fields
+            if allt(ListOfColumns->Column_Type) == "E" .and. vfp_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                l_cTooltipEnumValues := [<table>]
+                select ListOfEnumValues
+                scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                    l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                {[ ]=>[&nbsp;],;
+                                ["]=>[&#34;],;
+                                [']=>[&#39;],;
+                                [<]=>[&lt;],;
+                                [>]=>[&gt;]})+[</td>]
+                    l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                    if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                        l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                    else
+                        l_cTooltipEnumValues += [<td></td>]
+                    endif
+                    l_cTooltipEnumValues += [</tr>]
+                endscan
+                l_cTooltipEnumValues += [</table>]
+            else
+                l_cTooltipEnumValues := ""
+            endif
+
                                         l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
                                                                         ListOfColumns->Column_Length,;
                                                                         ListOfColumns->Column_Scale,;
@@ -2376,7 +2533,8 @@ if len(l_aNodes) == 1
                                                                         ListOfColumns->Column_Unicode,;
                                                                         l_cSitePath,;
                                                                         l_cApplicationLinkCode,;
-                                                                        l_cNameSpaceName)
+                                                                        l_cNameSpaceName,;
+                                                                        l_cTooltipEnumValues)
                                         if ListOfColumns->Column_Array
                                             l_cHtml += " [Array]"
                                         endif

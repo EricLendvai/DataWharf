@@ -575,7 +575,9 @@ local l_nAccessLevelDD
 local l_cErrorMessage := ""
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Delete := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+local l_oDB_ListOfRelatedToDelete           := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRecordsToDelete           := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_oDB_ListOfCurrentApplicationForUser := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -583,6 +585,9 @@ local l_oDB_ListOfCurrentProjectForUser     := hb_SQLData(oFcgi:p_o_SQLConnectio
 
 local l_oDB_ListOfApplications              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjects                  := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_cTableName
+local l_cTableDescription
 
 oFcgi:TraceAdd("UserEditFormOnSubmit")
 
@@ -689,7 +694,7 @@ case l_cActionOnSubmit == "Save"
                             if l_nAccessLevelDD <= 1
                                 // Remove the Application
                                 with Object l_oDB1
-                                    if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
+                                    if !l_oDB1:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
                                         l_cErrorMessage := "Failed to Save Application selection."
                                         exit
                                     endif
@@ -803,81 +808,70 @@ case l_cActionOnSubmit == "Delete"   // User
     if l_iUserPk == oFcgi:p_iUserPk
         l_cErrorMessage := "May not delete self."
     else
-    
-        with object l_oDB1
-            :Table("098bbc02-bf72-4838-b2ed-c3305486d69f","UserAccessApplication")
-            :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
-            :SQL()
-            if :Tally == 0
-
-                :Table("a1607f34-05e6-41c8-87b3-4e16aca9400f","UserAccessProject")
-                :Where("UserAccessProject.fk_User = ^",l_iUserPk)
+        // Run Test first if may delete the record
+        with object l_oDB_ListOfRelatedToDelete
+            if empty(l_cErrorMessage)
+                :Table("098bbc02-bf72-4838-b2ed-c3305486d69f","UserAccessApplication")
+                :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
+                :Where("UserAccessApplication.AccessLevelDD > 1")
+                :Join("inner","Application","","UserAccessApplication.fk_Application = Application.pk")  // In case we had an orphan record, it can be ignored.
                 :SQL()
-                if :Tally == 0
-
-                    //Delete any LoginLogs related records
-                    with object l_oDB_ListOfRecordsToDelete
-                        :Table("39277ef9-6489-4a73-9184-2bbb9b0310c4","LoginLogs")
-                        :Column("LoginLogs.pk" , "pk")
-                        :Where("LoginLogs.fk_User = ^",l_iUserPk)
-                        :SQL("ListOfRecordsToDelete")
-                        if :Tally >= 0
-                            if :Tally > 0
-                                select ListOfRecordsToDelete
-                                scan
-                                    l_oDB1:Delete("93945e52-a54b-432e-8375-be596eae8181","LoginLogs",ListOfRecordsToDelete->pk)
-                                endscan
-                            endif
-
-                            //Delete any UserSetting related records
-                            :Table("576e02a8-84d8-49b7-a693-59c84de3ef18","UserSetting")
-                            :Column("UserSetting.pk" , "pk")
-                            :Where("UserSetting.fk_User = ^",l_iUserPk)
-                            :SQL("ListOfRecordsToDelete")
-                            if :Tally >= 0
-                                if :Tally > 0
-                                    select ListOfRecordsToDelete
-                                    scan
-                                        l_oDB1:Delete("d96ed10f-ed9f-41e8-af32-f47fa31cea1b","UserSetting",ListOfRecordsToDelete->pk)
-                                    endscan
-                                endif
-                            else
-                                l_cErrorMessage := "Failed to clear related UserSetting records."
-                            endif
-
-                        else
-                            l_cErrorMessage := "Failed to clear related LoginLogs records."
-                        endif
-                    endwith
-                else
-                    l_cErrorMessage := "Related Project security setup records."
-                endif
-            else
-                l_cErrorMessage := "Related Application security setup records."
+                do case
+                case :Tally < 0
+                    l_cErrorMessage := "Failed to query UserAccessApplication."
+                case :Tally > 0
+                    l_cErrorMessage := "Related Application security setup records."
+                endcase
             endif
 
             if empty(l_cErrorMessage)
-                :Table("839b7414-c220-49a4-ab7b-b3ca82373a14","UserAccessApplication")
-                :Where("UserAccessApplication.fk_User = ^",l_iUserPk)
+                :Table("a1607f34-05e6-41c8-87b3-4e16aca9400f","UserAccessProject")
+                :Where("UserAccessProject.fk_User = ^",l_iUserPk)
+                :Where("UserAccessProject.AccessLevelML > 1")
+                :Join("inner","Project","","UserAccessProject.fk_Project = Project.pk")  // In case we had an orphan record, it can be ignored.
                 :SQL()
-                if :Tally == 0
-                
-                    :Table("1fdd5b28-261c-45ef-9080-c69a47035e97","UserAccessProject")
-                    :Where("UserAccessProject.fk_User = ^",l_iUserPk)
-                    :SQL()
-                    if :Tally == 0
-                    
-                        :Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
-
-                    else
-                        l_cErrorMessage := "Related UserAccessApplication record on file"
-                    endif
-                else
-                    l_cErrorMessage := "Related UserAccessApplication record on file"
-                endif
+                do case
+                case :Tally < 0
+                    l_cErrorMessage := "Failed to query UserAccessProject."
+                case :Tally > 0
+                    l_cErrorMessage := "Related Project security setup records."
+                endcase
             endif
         endwith
+
+
+        // Deleted all related records
+        with object l_oDB_ListOfRecordsToDelete
+            for each l_cTableName,l_cTableDescription in {"UserAccessApplication"     ,"UserAccessProject"     ,"LoginLogs" ,"UserSetting"  ,"UserSettingApplication","UserSettingModel"},;
+                                                         {"Application security setup","Project security setup","Login Logs","User Settings","Last Diagrams Used"    ,"Last Modeling Diagrams Used"}
+                if empty(l_cErrorMessage)
+                    :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b2",l_cTableName)
+                    :Column(l_cTableName+".pk","pk")
+                    :Where(l_cTableName+".fk_User = ^",l_iUserPk)
+                    :SQL("ListOfRecordsToDelete")
+                    do case
+                    case :Tally < 0
+                        l_cErrorMessage := "Failed to query "+l_cTableName+"."
+                    case :Tally > 0
+                        select ListOfRecordsToDelete
+                        scan all
+                            if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6e",l_cTableName,ListOfRecordsToDelete->pk)
+                                l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
+                                exit
+                            endif
+                        endscan
+                    endcase
+                else
+                    exit
+                endif
+
+            endfor
+        endwith
+
+        if empty(l_cErrorMessage)
+            l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
+            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
+        endif
     endif
 
 endcase

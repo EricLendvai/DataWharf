@@ -188,6 +188,11 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cApplicationElement := "LOADSCHEMA"
 
     case vfp_Inlist(l_cURLAction,"Visualize")
+        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
+            if vfp_inlist(oFcgi:p_URLPathElements[4],"resources","css")
+                return [<div>Bad URL - calling for some css or resources - bug in mxgraph</div>]
+            endif
+        endif
         l_cApplicationElement := "VISUALIZE"
 
     otherwise
@@ -340,7 +345,7 @@ case l_cURLAction == "DataDictionaryExportToHarbourORM"
                 l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
 
                 l_cHtmlUnderHeader += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
-                l_cHtmlUnderHeader += [copyToClip(document.getElementById('HarbourCode').innerHTML);return false;">]
+                l_cHtmlUnderHeader += [copyToClip(document.getElementById('HarbourCode').innerText);return false;">]
 
             l_cHtmlUnderHeader += [</div>]
         l_cHtmlUnderHeader += [</nav>]
@@ -1172,12 +1177,12 @@ otherwise
 endcase
 return l_cResult
 //=================================================================================================================
-function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_cEnumerationAKA,par_iEnumerationImplementAs,par_iEnumerationImplementLength,par_iColumnUnicode,;
-                                    par_cSitePath,par_cURLApplicationLinkCode,par_cURLNameSpaceName)
+function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_cEnumerationAKA,;
+                              par_iEnumerationImplementAs,par_iEnumerationImplementLength,par_iColumnUnicode,;
+                              par_cSitePath,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cTooltipEnumValues)
 local l_cResult
 local l_iTypePos
 
-// Altd()
 l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[1] == par_cColumnType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
 if l_iTypePos > 0
     l_cResult := par_cColumnType+" "+oFcgi:p_ColumnTypes[l_iTypePos,2]
@@ -1194,7 +1199,13 @@ if l_iTypePos > 0
     case oFcgi:p_ColumnTypes[l_iTypePos,5]  // Enumeration
         if !hb_IsNIL(par_cEnumerationName) .and. !hb_IsNIL(par_iEnumerationImplementAs) //.and. !hb_IsNIL(par_iEnumerationImplementLength)
             l_cResult += [&nbsp;(]
-            l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
+            l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/"]
+            if empty(par_cTooltipEnumValues)
+                l_cResult += [>]
+            else
+                l_cResult += [data-toggle="tooltip" data-html="true" title="]+par_cTooltipEnumValues+[" class="DisplayEnum">]
+            endif
+
             l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
             l_cResult += [</a>]
             l_cResult += [ - ]
@@ -1249,6 +1260,7 @@ local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cInitialDiagram
  
 oFcgi:TraceAdd("DataDictionaryHeaderBuild")
 
@@ -1328,7 +1340,24 @@ l_cHtml += [<ul class="nav nav-tabs">]
     endif
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/">Visualize</a>]
+        //Will check if we have a previously accessed diagram.
+        with object l_oDB1
+            :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
+            :Column("UserSettingApplication.pk","pk")
+            :Column("Diagram.LinkUID"          ,"Diagram_LinkUID")
+            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")
+            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+            :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
+            :SQL("ListOfUserSettingApplication")
+            // hb_orm_SendToDebugView(:GetLastEventId(),:LastSQL())
+            if :Tally == 1
+                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplication->Diagram_LinkUID
+            else
+                l_cInitialDiagram := ""
+            endif
+        endwith
+
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/]+l_cInitialDiagram+[">Visualize</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
 l_cHtml += [</ul>]
@@ -1342,18 +1371,20 @@ return l_cHtml
 //=================================================================================================================
 static function ApplicationListFormBuild()
 local l_cHtml := []
-local l_oDB_ListOfDataDictionaries  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfCustomFieldValues := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTableCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfColumnCounts      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfEnumerationCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfIndexCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfDiagramCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDataDictionaries                     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldValues                    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts                          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfColumnCounts                         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumerationCounts                    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfIndexCounts                          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramCounts                        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfUserSettingApplicationDefaultDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfDataDictionaries
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_nCount
+local l_cInitialDiagram
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
@@ -1513,6 +1544,20 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</div>]
 
     else
+        //Will check if we have a previously accessed diagram.
+        with object l_oDB_ListOfUserSettingApplicationDefaultDiagram
+            :Table("620799a2-adb9-40dc-8136-5a6007fead0f","UserSettingApplication")
+            :Column("UserSettingApplication.fk_Application","ApplicationPk")
+            :Column("Diagram.LinkUID"                      ,"Diagram_LinkUID")
+            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")
+            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+            :SQL("ListOfUserSettingApplicationDefaultDiagram")
+            with object :p_oCursor
+                :Index("ApplicationPk","ApplicationPk")
+                :CreateIndexes()
+            endwith
+        endwith
+
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
@@ -1552,7 +1597,8 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->Count , 0)
                             if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+                                // l_cHtml += Trans(l_nCount)
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+AllTrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Trans(l_nCount)+[</a>]
                             endif
                         l_cHtml += [</td>]
 
@@ -1566,7 +1612,8 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1") , ListOfEnumerationCounts->Count , 0)
                             if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+                                // l_cHtml += Trans(l_nCount)
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+AllTrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Trans(l_nCount)+[</a>]
                             endif
                         l_cHtml += [</td>]
 
@@ -1580,7 +1627,14 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             l_nCount := iif( VFP_Seek(ListOfDataDictionaries->pk,"ListOfDiagramCounts","tag1") , ListOfDiagramCounts->Count , 0)
                             if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+                                // l_cHtml += Trans(l_nCount)
+                                //Will check if we have a previously accessed diagram.
+                                if vfp_seek(ListOfDataDictionaries->pk,"ListOfUserSettingApplicationDefaultDiagram","ApplicationPk")
+                                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplicationDefaultDiagram->Diagram_LinkUID
+                                else
+                                    l_cInitialDiagram := ""
+                                endif
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/Visualize/]+AllTrim(ListOfDataDictionaries->Application_LinkCode)+[/]+l_cInitialDiagram+[">]+Trans(l_nCount)+[</a>]
                             endif
                         l_cHtml += [</td>]
 
@@ -3219,9 +3273,10 @@ return l_cHtml
 //=================================================================================================================
 static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
-local l_oDB_Application   := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_CustomField   := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomField      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_nNumberOfColumns := 0
 local l_nNumberOfColumnsInSearch := 0
@@ -3234,6 +3289,8 @@ local l_hOptionValueToDescriptionMapping := {=>}
 
 local l_cSearchColumnName
 local l_cSearchColumnDescription
+
+local l_cTooltipEnumValues
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
@@ -3285,6 +3342,7 @@ with object l_oDB_ListOfColumns
     :Column("NameSpace.Name"                ,"NameSpace_Name")
     :Column("Table.Name"                    ,"Table_Name")
     :Column("Table.AKA"                     ,"Table_AKA")
+    :Column("Enumeration.Pk"                ,"Enumeration_Pk")
     :Column("Enumeration.Name"              ,"Enumeration_Name")
     :Column("Enumeration.AKA"               ,"Enumeration_AKA")
     :Column("Enumeration.ImplementAs"       ,"Enumeration_ImplementAs")
@@ -3311,6 +3369,40 @@ with object l_oDB_ListOfColumns
 endwith
 
 if l_nNumberOfColumns > 0
+    with object l_oDB_ListOfEnumValues
+        :Table("3784d627-8099-4966-b66e-d177304a3309","Column")
+        :Column("Column.pk"                     ,"Column_pk")
+
+        :Column("EnumValue.Order"               ,"EnumValue_Order")
+        :Column("EnumValue.Number"              ,"EnumValue_Number")
+        :Column("EnumValue.Name"                ,"EnumValue_Name")
+        :Column("EnumValue.AKA"                 ,"EnumValue_AKA")
+        :Column("EnumValue.Description"         ,"EnumValue_Description")
+        :Column("EnumValue.UseStatus"           ,"EnumValue_UseStatus")
+        
+        :Join("inner","EnumValue","","Column.fk_Enumeration > 0 and Column.fk_Enumeration = EnumValue.fk_Enumeration")
+        :Where("Column.fk_Table = ^",par_iTablePk)
+
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+            :Distinct(.t.)
+            if !empty(l_cSearchColumnName)
+                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+            endif
+            if !empty(l_cSearchColumnDescription)
+                :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
+            endif
+        endif
+        :OrderBy("Column_pk")
+        :OrderBy("EnumValue_Order")
+        :SQL("ListOfEnumValues")
+        with object :p_oCursor
+            :Index("tag1","alltrim(str(Column_pk))+'*'+str(EnumValue_Order,10)")
+            :CreateIndexes()
+        endwith
+        // ExportTableToHtmlFile("ListOfEnumValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumValues.html","From PostgreSQL",,25,.t.)
+
+    endwith
+
     with object l_oDB_CustomField
         :Table("8f1aab3d-5f57-44c6-b58b-e2756afef2ed","Column")
         :Distinct(.t.)
@@ -3366,6 +3458,11 @@ if l_nNumberOfColumns > 0
 
     endwith
 endif
+
+l_cHtml += [<style>]
+l_cHtml += [ .tooltip-inner {max-width: 700px;opacity: 1.0;background-color: #198754;} ]
+l_cHtml += [ .tooltip.show {opacity:1.0} ]
+l_cHtml += [</style>]
 
 // ExportTableToHtmlFile("ListOfCustomFieldValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
@@ -3433,9 +3530,8 @@ else
     l_cHtml += [</nav>]
     l_cHtml += [</form>]
 
-
-
     l_cHtml += [<div class="m-3"></div>]   //Spacer
+
 
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
@@ -3486,12 +3582,37 @@ else
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-// l_cHtml += Trans(ListOfColumns->pk)
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+ListOfColumns->Column_Name+[/">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     // Type
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
+
+                        // Prepare the tooltip text for enumeration type fields
+                        if allt(ListOfColumns->Column_Type) == "E" .and. vfp_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                            l_cTooltipEnumValues := [<table>]
+                            select ListOfEnumValues
+                            scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                            {[ ]=>[&nbsp;],;
+                                            ["]=>[&#34;],;
+                                            [']=>[&#39;],;
+                                            [<]=>[&lt;],;
+                                            [>]=>[&gt;]})+[</td>]
+                                l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                                if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                                    l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                                else
+                                    l_cTooltipEnumValues += [<td></td>]
+                                endif
+                                l_cTooltipEnumValues += [</tr>]
+                            endscan
+                            l_cTooltipEnumValues += [</table>]
+                        else
+                            l_cTooltipEnumValues := ""
+                        endif
+
                         l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
                                                         ListOfColumns->Column_Length,;
                                                         ListOfColumns->Column_Scale,;
@@ -3502,7 +3623,8 @@ else
                                                         ListOfColumns->Column_Unicode,;
                                                         l_cSitePath,;
                                                         par_cURLApplicationLinkCode,;
-                                                        par_cURLNameSpaceName)
+                                                        par_cURLNameSpaceName,;
+                                                        l_cTooltipEnumValues)
                         if ListOfColumns->Column_Array
                             l_cHtml += " [Array]"
                         endif
@@ -3567,6 +3689,8 @@ else
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
+
+    oFcgi:p_cjQueryScript += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
 
 endif
 
@@ -6367,7 +6491,6 @@ with object l_oDB1
                 endscan
 
                 if empty(l_cErrorMessage)
-
                     :Table("38e49098-14af-4ff8-a09f-71de2bad430b","Column")
                     :Column("Column.pk","pk")
                     :Where("Column.fk_Table = ^" , par_iTablePk)
@@ -6383,8 +6506,8 @@ with object l_oDB1
                                 exit
                             endif
                         endscan
-                        if empty(l_cErrorMessage)
 
+                        if empty(l_cErrorMessage)
                             :Table("08bc2a9b-86fa-4b9d-8b03-67a0e3fdf56e","DiagramTable")
                             :Column("DiagramTable.pk","pk")
                             :Where("DiagramTable.fk_Table = ^" , par_iTablePk)
@@ -6401,7 +6524,6 @@ with object l_oDB1
                                 endscan
 
                                 if empty(l_cErrorMessage)
-
                                     :Table("6675a32d-34f0-4f4c-a913-19fbd2b980b1","TagTable")
                                     :Column("TagTable.pk","pk")
                                     :Where("TagTable.fk_Table = ^" , par_iTablePk)
@@ -6418,25 +6540,43 @@ with object l_oDB1
                                         endscan
 
                                         if empty(l_cErrorMessage)
-
-                                            // Clear our Column.fk_TableForeign   par_iTablePk
-                                            :Table("15a91705-fad2-42b9-8116-327b39b0d355","Column")
-                                            :Column("Column.pk","pk")
-                                            :Where("Column.fk_TableForeign = ^" , par_iTablePk)
+                                            :Table("6675a32d-34f0-4f4c-a913-19fbd2b980b2","Column")
+                                            :Column("TagColumn.pk","pk")
+                                            :Join("inner","TagColumn","","TagColumn.fk_Column = Column.pk")
+                                            :Where("Column.fk_Table = ^" , par_iTablePk)
                                             :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
                                             if :Tally < 0
                                                 l_cErrorMessage := "Failed to delete Table. Error 11."
                                             else
                                                 select ListOfRecordsToDeleteInCascadeDeleteTable
                                                 scan all
-                                                    :Table("978e4c66-259d-4a47-be46-89d7420728e8","Column")
-                                                    :Field("Column.fk_TableForeign" , 0)
-                                                    :Update(ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                                    if !:Delete("ed839e1d-2ece-4525-b154-be06afbbc88d","TagColumn",ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                                        l_cErrorMessage := "Failed to delete Table. Error 10."
+                                                        exit
+                                                    endif
                                                 endscan
-                                                
-                                                CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
-                                                if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
-                                                    l_cErrorMessage := "Failed to delete Table. Error 12."
+
+                                                if empty(l_cErrorMessage)
+                                                    // Clear our Column.fk_TableForeign   par_iTablePk
+                                                    :Table("15a91705-fad2-42b9-8116-327b39b0d355","Column")
+                                                    :Column("Column.pk","pk")
+                                                    :Where("Column.fk_TableForeign = ^" , par_iTablePk)
+                                                    :SQL("ListOfRecordsToDeleteInCascadeDeleteTable")
+                                                    if :Tally < 0
+                                                        l_cErrorMessage := "Failed to delete Table. Error 12."
+                                                    else
+                                                        select ListOfRecordsToDeleteInCascadeDeleteTable
+                                                        scan all
+                                                            :Table("978e4c66-259d-4a47-be46-89d7420728e8","Column")
+                                                            :Field("Column.fk_TableForeign" , 0)
+                                                            :Update(ListOfRecordsToDeleteInCascadeDeleteTable->pk)
+                                                        endscan
+                                                        
+                                                        CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,par_iTablePk)
+                                                        if !:Delete("b7c803fe-9a16-47f6-9f64-981bce0ee66d","Table",par_iTablePk)
+                                                            l_cErrorMessage := "Failed to delete Table. Error 13."
+                                                        endif
+                                                    endif
                                                 endif
                                             endif
                                         endif

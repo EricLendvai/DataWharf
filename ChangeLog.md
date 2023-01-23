@@ -1,5 +1,14 @@
 # DataWharf - Change Log
 
+## 01/23/2023 v 2.39
+* Please pull latest version of Harbour_ORM and Harbour_FastCGI.
+* Fix of "Copy To Clipboard" for "Export To Harbour_ORM". Issue of => notation formatting.
+* In Data Dictionary list of columns, when hovering the mouse over an enumeration, the possible values are displayed.
+* In Data Dictionary Main Menu added direct links to several components.
+* Changes in Data Dictionary Visualize: Increase rendering speed, Display total number of tables and links, remembers the last diagram accessed by each user and application, when hovering the mouse over an enumeration the possible values are displayed.
+* Changes in Model Visualize: Display total number of Entities, Association Nodes and links, remembers the last diagram accessed by each user and model.
+* In Modeling, will remember if the sidebar menu is open or not. Will still reset to open when going to the list of models screen. This makes for a better user experience in visualize.
+
 ## 01/15/2023 v 2.38
 * In Mxgrap visualization, fix dragging many nodes without loosing edges in Modeling.
 * Changed color of lists heading to a darker blue to help readability of white text.
