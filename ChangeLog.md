@@ -2,6 +2,12 @@
 
 ## 01/23/2023 v 2.40
 * Fix on version of DataWharf JS library to use.
+* Fix to devcontainer and Dockerfile to use local host install in PostgreSQL server. This is the preferred method when developing in and out the container.
+* Added "fake" instruction in Dockerfile to force rebuilding image from that location.   
+  See line "ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 4".   
+  Simply increment the number every time you would like to rebuild without cache from that point on.   
+  This is needed to force a re-copy of host files in the container.   
+  "docker build" will not detect local files being modified in the folder "FilesForPublishedWebsites" for example.   
 
 ## 01/23/2023 v 2.39
 * Please pull latest version of Harbour_ORM and Harbour_FastCGI.

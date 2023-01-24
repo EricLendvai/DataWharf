@@ -37,27 +37,31 @@ RUN make -j 8 install
 RUN ldconfig
 
 #Fake command to force not using a cache from this point on.
-ARG CACHEBUST=9
+ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 4
 
 #- RUN chmod -R a+rwx /src
 
-# install Postgresql 
-RUN apt-get -y install postgresql \
-        postgresql-contrib \
-        odbc-postgresql
+# Instead of installing PostgreSQL inside the container, to make it easier to develop in both Windows (or Mac) and Docker (Ubuntu)
+#  It is preferable to install PostgreSQL on the Host and access it from within the container.
 
-# Run the rest of the commands as the ``postgres`` user when it was ``apt-get installed``
-USER postgres
+#   # install Postgresql 
+#   RUN apt-get -y install postgresql \
+#           postgresql-contrib \
+#           odbc-postgresql
+#   
+#   # Run the rest of the commands as the ``postgres`` user when it was ``apt-get installed``
+#   USER postgres
+#   
+#   # Create a PostgreSQL role named ``datawharf`` with ``mypassord`` as the password and
+#   # then create a database `DataWharf` owned by the ``datawharf`` role.
+#   RUN    /etc/init.d/postgresql start &&\
+#       psql --command "CREATE USER datawharf WITH SUPERUSER PASSWORD 'mypassord';" &&\
+#       createdb -O datawharf DataWharf &&\
+#       psql --dbname DataWharf --command "CREATE EXTENSION pgcrypto;"
 
-# Create a PostgreSQL role named ``datawharf`` with ``mypassord`` as the password and
-# then create a database `DataWharf` owned by the ``datawharf`` role.
-RUN    /etc/init.d/postgresql start &&\
-    psql --command "CREATE USER datawharf WITH SUPERUSER PASSWORD 'mypassord';" &&\
-    createdb -O datawharf DataWharf &&\
-    psql --dbname DataWharf --command "CREATE EXTENSION pgcrypto;"
 
 #Required for the a2enmod
-USER root
+USER root 
 
 RUN a2enmod rewrite
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/
@@ -71,8 +75,9 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
 COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-available/
 
+COPY ./FilesForPublishedWebsites/backend  /var/www/Harbour_websites/fcgi_DataWharf/backend
+COPY ./FilesForPublishedWebsites/backend/config_docker.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 
-COPY ./FilesForPublishedWebsites/backend /var/www/Harbour_websites/fcgi_DataWharf/backend
 #RUN cp /src/build/lin64/gcc/release/FCGIDataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 

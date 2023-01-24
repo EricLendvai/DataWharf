@@ -348,8 +348,16 @@
         },
         {
             "label": "LoadSampleData",
+            "type": "shell",
+            "windows":{
+                "command": "echo not available",
+                "options": {
+                    "cwd": "${workspaceFolder}",
+                    "statusbar": {"label" : "<Load Sample Data>","hide" : true}
+                },
+                "presentation": {"reveal": "never"}
+            },
             "linux":{
-                "type": "shell",
                 "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
                 "options": {
                     "cwd": "${workspaceFolder}",

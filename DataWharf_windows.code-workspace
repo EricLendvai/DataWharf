@@ -4,19 +4,19 @@
             "path": "."
         }
         // ,{
-        //     "path": "R:\\Harbour_websites\\fcgi_DataWharf\\backend"
+        //     "path": "C:\\Harbour_websites\\fcgi_DataWharf\\backend"
         // }
         // ,{
-        //     "path": "R:\\Harbour_FastCGI\\hb_fcgi"
+        //     "path": "C:\\Harbour_FastCGI\\hb_fcgi"
         // }
         // ,{
         //     "path": "c:\\apache24-64\\conf"
         // }
         // ,{
-        //     "path": "R:\\Harbour_ORM\\"
+        //     "path": "C:\\Harbour_ORM\\"
         // }
         // ,{
-        //     "path": "R:\\Harbour_VFP\\"
+        //     "path": "C:\\Harbour_VFP\\"
         // }
     ],
     "settings": {
@@ -24,13 +24,13 @@
         "harbour.compilerExecutable": "C:\\Harbour\\bin\\win\\mingw64\\harbour.exe",
         "harbour.extraOptions": "-iC:\\Harbour\\include",
         "harbour.extraIncludePaths":["C:\\Harbour\\include\\",
-                                     "R:\\Harbour_VFP\\",
-                                     "R:\\Harbour_ORM\\",
-                                     "R:\\Harbour_FastCGI\\hb_fcgi\\"],
+                                     "C:\\Harbour_VFP\\",
+                                     "C:\\Harbour_ORM\\",
+                                     "C:\\Harbour_FastCGI\\hb_fcgi\\"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
         "harbour.workspaceDepth": 1,
-        "local-history.path": "R:\\VSCode_History\\Harbour_FastCGI",
+        "local-history.path": "C:\\VSCode_History\\Harbour_FastCGI",
         "local-history.treeLocation": "localHistory",
         "local-history.daysLimit": 0,
         "local-history.maxDisplay": 5,

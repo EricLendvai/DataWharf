@@ -2,7 +2,7 @@ ReloadConfigAtEveryRequest=true             //"true" or "false"
 MaxRequestPerFCGIProcess=0                  //0 for Unlimited
 
 POSTGRESDRIVER=PostgreSQL Unicode
-POSTGRESHOST=localhost
+POSTGRESHOST=host.docker.internal
 POSTGRESPORT=5432
 POSTGRESID=datawharf
 POSTGRESPASSWORD=main

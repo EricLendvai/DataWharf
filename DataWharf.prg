@@ -132,6 +132,8 @@ local l_iCurrentDataVersion
 local l_cVisPos
 local l_cTableName
 local l_cName
+local l_cLastSQL
+
 
 SendToDebugView("Called from method OnFirstRequest")
 
@@ -400,9 +402,10 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 16
             with object l_oDB1
-                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","Model","NameSpace","Project","Table","Version","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
+                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","NameSpace","Project","Table","Version","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
                     :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
                     :Column(l_cTableName+".pk" , "pk")
+
                     :Where(l_cTableName+[.UseStatus = 0])
                     :SQL("ListOfRecordsToUpdate")
                     select ListOfRecordsToUpdate

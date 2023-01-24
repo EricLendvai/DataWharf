@@ -26,12 +26,13 @@
 
     // Add the IDs of extensions you want installed when the container is created.
     "extensions": [
-        "aperricone.harbour@1.0.7",
+        "aperricone.harbour",
         "actboy168.tasks"
     ],
 
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
-    "forwardPorts": [80, 5432],
+    // "forwardPorts": [80, 5432],
+    "forwardPorts": [80],
 
     // Use 'portsAttributes' to set default properties for specific forwarded ports. More info1: https://code.visualstudio.com/docs/remote/devcontainerjson-reference.
     "portsAttributes": {
@@ -49,13 +50,12 @@
 
     // Use 'postCreateCommand' to run commands after the container is created.
 
+// Instead of installing PostgreSQL inside the container, to make it easier to develop in both Windows (or Mac) and Docker (Ubuntu)
+//  It is preferable to install PostgreSQL on the Host and access it from within the container.
+//
+//   ,"postStartCommand": "service postgresql start; service apache2 start" //start services
 
-
-   ,"postStartCommand": "service postgresql start; service apache2 start" //start services
-
-    
-    
-    
+   ,"postStartCommand": "service apache2 start" //start services
     
     // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
     //"remoteUser": "node"
