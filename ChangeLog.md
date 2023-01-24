@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/23/2023 v 2.40
+* Fix on version of DataWharf JS library to use.
+
 ## 01/23/2023 v 2.39
 * Please pull latest version of Harbour_ORM and Harbour_FastCGI.
 * Fix of "Copy To Clipboard" for "Export To Harbour_ORM". Issue of => notation formatting.

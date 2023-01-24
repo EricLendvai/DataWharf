@@ -452,7 +452,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     case vfp_Inlist(l_cURLAction,"Visualize")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            if vfp_inlist(oFcgi:p_URLPathElements[4],"resources","css")
+            if vfp_inlist(oFcgi:p_URLPathElements[4],"resources","css","mxgraph")
                 return [<div>Bad URL - calling for some css or resources - bug in mxgraph</div>]
             endif
         endif

@@ -3,9 +3,9 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.39"
+#define BUILDVERSION "2.40"
 
-#define DATAWHARF_SCRIPT_VERSION     "2023_01_22"
+#define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
 #define MXGRAPH_SCRIPT_VERSION       "18_0_1"
 #define BOOTSTRAP_SCRIPT_VERSION     "5_0_2"
