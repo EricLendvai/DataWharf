@@ -313,6 +313,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         l_nColumnScale  := NIL
                         exit
 
+                    case "smallint"
+                        l_cColumnType   := "IS"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "decimal"
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength
@@ -933,6 +939,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_nColumnScale  := NIL
                         exit
 
+                    case "smallint"
+                        l_cColumnType   := "IS"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "numeric"
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength
@@ -1395,6 +1407,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         l_nColumnScale  := NIL
                         exit
 
+                    case "smallint"
+                        l_cColumnType   := "IS"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "numeric"
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength
@@ -1728,7 +1746,7 @@ if par_nSyncSetForeignKey > 1
                 :Join("inner","Table","","lower(Column.Name) = lower(concat(Table.Name,'_id'))")
             endcase
                 
-            :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB")
+            :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB","IS")
             :Where("Column.DocStatus <= 1")
 
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")

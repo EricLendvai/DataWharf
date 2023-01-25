@@ -83,8 +83,9 @@ class MyFcgi from hb_Fcgi
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
     data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
 
-    data p_ColumnTypes      init {{  "I","Integer"                                      ,.f.,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
-                                  { "IB","Integer Big"                                  ,.f.,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
+    data p_ColumnTypes      init {{  "I","Integer (4 bytes)"                            ,.f.,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
+                                  { "IB","Integer Big (8 bytes)"                        ,.f.,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
+                                  { "IS","Integer Small (2 bytes)"                      ,.f.,.f.,.f.,.f.,"smallint"                   ,"SMALLINT"},;
                                   {  "N","Numeric"                                      ,.t.,.t.,.f.,.f.,"numeric"                    ,"DECIMAL"},;
                                   {  "C","Character String"                             ,.t.,.f.,.f.,.t.,"character"                  ,"CHAR"},;
                                   { "CV","Character String Varying"                     ,.t.,.f.,.f.,.t.,"character varying"          ,"VARCHAR"},;

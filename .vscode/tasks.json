@@ -5,32 +5,24 @@
     "tasks": [
         {
             "label": "SwitchOS",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
             "windows": {
                 "command": "${command:remote-containers.reopenInContainer}",
                 "options": {
                     "statusbar": {"label" : "<Open Container - Go to Ubuntu>","hide" : false}
-                },
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
                 }
             },
             "linux": {
                 "command": "${command:remote-containers.reopenLocally}",
                 "options": {
                     "statusbar": {"label" : "<Close Container - Go to Windows>","hide" : false}
-                },
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
                 }
             }
         },
@@ -52,8 +44,16 @@
         },
         {
             "label": "CompileDebug",
+            "type": "shell",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
             "windows":{
-                "type": "shell",
                 "command": "${workspaceFolder}\\BuildEXE.bat",
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -71,18 +71,9 @@
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
                 },
                 "dependsOrder": "sequence",
-                "dependsOn":["SoftKillFcgiExe"],
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
-                }
+                "dependsOn":["SoftKillFcgiExe"]
             },
             "linux":{
-                "type": "shell",
                 "command": "sh ${workspaceFolder}/BuildEXE.sh",
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -99,21 +90,21 @@
                     "statusbar": {"label" : "<Compile Debug>","hide" : false}
                 },
                 "dependsOrder": "sequence",
-                "dependsOn":["SoftKillFcgiExe"],
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
-                }
+                "dependsOn":["SoftKillFcgiExe"]
             }
         },
         {
             "label": "CompileRelease",
+            "type": "shell",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
             "windows":{
-                "type": "shell",
                 "command": "${workspaceFolder}\\BuildEXE.bat",
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -131,18 +122,9 @@
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
                 },
                 "dependsOrder": "sequence",
-                "dependsOn":["SoftKillFcgiExe"],
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
-                }
+                "dependsOn":["SoftKillFcgiExe"]
             },
             "linux":{
-                "type": "shell",
                 "command": "sh ${workspaceFolder}/BuildEXE.sh",
                 "options": {
                     "cwd": "${workspaceFolder}",
@@ -159,212 +141,161 @@
                     "statusbar": {"label" : "<Compile Release>","hide" : false}
                 },
                 "dependsOrder": "sequence",
-                "dependsOn":["SoftKillFcgiExe"],
-                "presentation": {
-                    "echo": true,
-                    "reveal": "always",
-                    "focus": true,
-                    "panel": "shared",
-                    "showReuseMessage": false,
-                    "clear": true
-                }
-            }
-        },
-        {
-            "label":"KillFcgiExe",
-            "windows":{
-                "type": "shell",
-                "command":"taskkill",
-                "args": ["/IM","FCGIDataWharf.exe","/f","/t"],
-                "options": {
-                    "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
-                }
-            },
-            "linux":{
-                "type": "shell",
-                "command":"killall",
-                "args": ["FCGIDataWharf.exe"],
-                "options": {
-                    "statusbar": {"label" : "<Kill Fcgi Exe>","hide" : false}
-                }
-            }
-        },
-        {
-            "label":"SoftKillFcgiExe",
-            "windows":{
-                "type": "shell",
-                "command":"${workspaceFolder}\\..\\..\\FCGITaskManagerBin\\FCGITaskManager.exe",
-                "args": ["kill","http","localhost","8164","/fcgi_DataWharf/","C:/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
-                "options": {
-                    "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
-                }
-            },
-            "linux":{
-                "type": "shell",
-                "command":"/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe",
-                "args": ["kill","http","localhost","80","/fcgi_DataWharf/","/var/www/Harbour_websites/fcgi_DataWharf/","DataWharf",""],
-                "options": {
-                    "statusbar": {"label" : "<Soft Kill Fcgi Exe>","hide" : true}
-                }
+                "dependsOn":["SoftKillFcgiExe"]
             }
         },
         {
             "label": "DelAllPPO",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {"label" : "<Del All PPO>","hide" : false}
+            },
+            "presentation": {"reveal": "never"},
             "windows":{
-                "type": "shell",
                 "command": "del ${workspaceFolder}\\*.ppo",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Del All PPO>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
             },
             "linux":{
-                "type": "shell",
                 "command": "rm ${workspaceFolder}/ *.ppo",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Del All PPO>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
             }
         },
         {
             "label": "DelBuildCache",
+            "type": "shell",
+            "isBackground": true,
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {"label" : "<Del Build Caches>","hide" : false}
+            },
+            "presentation": {"reveal": "never"},
             "windows":{
-                "type": "shell",
-                "command": "rd ${workspaceFolder}\\build\\win64\\ /Q /S",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                "command": "rd ${workspaceFolder}\\build\\win64\\ /Q /S"
             },
             "linux":{
-                "type": "shell",
-                "command": "rm -rf ${workspaceFolder}/build/lin64/",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Del Build Caches>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                "command": "rm -rf ${workspaceFolder}/build/lin64/"
             }
         },
         {
+            "type": "shell",
             "label": "Down",
+            "isBackground": true,
+            "presentation": {"reveal": "never"},
             "windows":{
-                "type": "shell",
-                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "statusbar": {"label" : "<Down>","hide" : false}
                 },
-                "presentation": {"reveal": "never"}
+                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe down http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf"
             },
             "linux":{
-                "type": "shell",
-                "command": "/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe down http localhost 80 /fcgi_DataWharf/ /var/www/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Down>","hide" : false}
+                    "statusbar": {"label" : "<Down>","hide" : true}
                 },
-                "presentation": {"reveal": "never"}
+                "command": ""
             }
         },
         {
             "label": "ActivateDataWharf",
+            "type": "shell",
+            "isBackground": true,
+            "presentation": {"reveal": "never"},
             "windows":{
-                "type": "shell",
                 "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe activate http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "statusbar": {"label" : "<Activate DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                }
             },
             "linux":{
-                "type": "shell",
-                "command": "/opt/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe activate http localhost 80 /fcgi_DataWharf/ /opt/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
+                "command": "",
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Activate DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                    "statusbar": {"label" : "<Activate DataWharf>","hide" : true}
+                }
             }
         },
+        // Instead of a "soft terminate" we can use the OS level application termination.
+        // {
+        //     "label": "KillDataWharf",
+        //     "windows":{
+        //         "type": "shell",
+        //         "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
+        //         "isBackground": true,
+        //         "options": {
+        //             "cwd": "${workspaceFolder}",
+        //             "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
+        //         },
+        //         "presentation": {"reveal": "never"}
+        //     },
+        //     "linux":{
+        //         "type": "shell",
+        //         "command": "/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_DataWharf/ /var/www/Harbour_websites/fcgi_DataWharf/ DataWharf",
+        //         "isBackground": true,
+        //         "options": {
+        //             "cwd": "${workspaceFolder}",
+        //             "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
+        //         },
+        //         "presentation": {"reveal": "never"}
+        //     }
+        // },
         {
-            "label": "KillDataWharf",
+            "label":"KillFcgiExe",
+            "type": "shell",
+            "options": {
+                "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
+            },
             "windows":{
-                "type": "shell",
-                "command": "C:\\Harbour_FastCGI\\FCGITaskManagerBin\\FCGITaskManager.exe kill http localhost 8164 /fcgi_DataWharf/ C:/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                "command":"taskkill",
+                "args": ["/IM","FCGIDataWharf.exe","/f","/t"]
             },
             "linux":{
-                "type": "shell",
-                "command": "/var/www/Harbour_FastCGI/FCGITaskManagerBin/FCGITaskManager.exe kill http localhost 80 /fcgi_DataWharf/ /var/www/Harbour_websites/fcgi_DataWharf/ DataWharf",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Kill DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
+                "command":"killall",
+                "args": ["FCGIDataWharf.exe"]
             }
         },
         {
             "label": "BrowseDataWharf",
-            "windows":{
-                "type": "shell",
-                "command": "firefox.exe http://localhost:8164/fcgi_DataWharf/",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Browse DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
-            },
-            "linux":{
-                "type": "shell",
-                "command": "firefox http://DataWharf/",
-                "isBackground": true,
-                "options": {
-                    "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Browse DataWharf>","hide" : false}
-                },
-                "presentation": {"reveal": "never"}
-            }
-        },
-        {
-            "label": "LoadSampleData",
             "type": "shell",
+            "isBackground": true,
+            "presentation": {"reveal": "never"},
             "windows":{
-                "command": "echo not available",
+                "command":"explorer",
+                "args": ["http://localhost:8164/fcgi_DataWharf/"],
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Load Sample Data>","hide" : true}
-                },
-                "presentation": {"reveal": "never"}
+                    "statusbar": {"label" : "<Browse DataWharf>","hide" : false}
+                }
             },
             "linux":{
-                "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
+                "command": "",
                 "options": {
                     "cwd": "${workspaceFolder}",
-                    "statusbar": {"label" : "<Load Sample Data>","hide" : false}
-                },
+                    "statusbar": {"label" : "<Browse DataWharf>","hide" : true}
+                }
             }
         }
+        //The following tasks is no longer used since we are accessing a PostgreSQL on "localhost" or "host.docker.internal"
+        // ,{
+        //     "label": "LoadSampleData",
+        //     "type": "shell",
+        //     "windows":{
+        //         "command": "echo not available",
+        //         "options": {
+        //             "cwd": "${workspaceFolder}",
+        //             "statusbar": {"label" : "<Load Sample Data>","hide" : true}
+        //         },
+        //         "presentation": {"reveal": "never"}
+        //     },
+        //     "linux":{
+        //         "command": "PGPASSWORD=mypassord pg_restore -hlocalhost -dDataWharf -Udatawharf --format=c < examples/datawharf.dmp",
+        //         "options": {
+        //             "cwd": "${workspaceFolder}",
+        //             "statusbar": {"label" : "<Load Sample Data>","hide" : false}
+        //         },
+        //     }
+        // }
     ],
     "inputs": [
         {

@@ -239,7 +239,7 @@ if l_lContinue
                     endcase
                 endif
 
-                if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB"))  //Only those fields types may be flagged as Auto-Increment
+                if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
                     l_lFieldAutoIncrement := .f.
                 endif
                 if l_lFieldAutoIncrement .and. l_lFieldAllowNull  //Auto-Increment fields may not be null (and not have a default)

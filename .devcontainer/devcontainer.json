@@ -38,10 +38,9 @@
     "portsAttributes": {
         "80": {
             "label": "Apache",
-            "onAutoForward": "notify"
+            "onAutoForward": "silent"
         }
     }
-//,
 
     // Use 'otherPortsAttributes' to configure any ports that aren't configured using 'portsAttributes'.
     // "otherPortsAttributes": {
@@ -50,10 +49,10 @@
 
     // Use 'postCreateCommand' to run commands after the container is created.
 
-// Instead of installing PostgreSQL inside the container, to make it easier to develop in both Windows (or Mac) and Docker (Ubuntu)
-//  It is preferable to install PostgreSQL on the Host and access it from within the container.
-//
-//   ,"postStartCommand": "service postgresql start; service apache2 start" //start services
+    // Instead of installing PostgreSQL inside the container, to make it easier to develop in both Windows (or Mac) and Docker (Ubuntu)
+    //  It is preferable to install PostgreSQL on the Host and access it from within the container.
+    //
+    //   ,"postStartCommand": "service postgresql start; service apache2 start" //start services
 
    ,"postStartCommand": "service apache2 start" //start services
     

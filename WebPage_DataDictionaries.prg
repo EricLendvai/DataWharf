@@ -1574,7 +1574,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Columns</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Enumerations</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Indexes</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Diagrams</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Visualize</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0

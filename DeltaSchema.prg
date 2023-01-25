@@ -566,6 +566,12 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                         l_nColumnScale  := NIL
                         exit
 
+                    case "smallint"
+                        l_cColumnType   := "IS"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "numeric"
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength

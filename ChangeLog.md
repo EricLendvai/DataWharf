@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/24/2023 v 2.41
+* Clean up of tasks.json to be smaller and remove "Soft Task Kill"
+* Added support for smallint data types.
+
 ## 01/23/2023 v 2.40
 * Fix on version of DataWharf JS library to use.
 * Fix to devcontainer and Dockerfile to use local host install in PostgreSQL server. This is the preferred method when developing in and out the container.

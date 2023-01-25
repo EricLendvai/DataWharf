@@ -59,6 +59,8 @@ ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 4
 #       createdb -O datawharf DataWharf &&\
 #       psql --dbname DataWharf --command "CREATE EXTENSION pgcrypto;"
 
+# install Postgresql odbc driver
+RUN apt-get -y install odbc-postgresql
 
 #Required for the a2enmod
 USER root 
@@ -84,4 +86,5 @@ COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWhar
 RUN chown -R www-data:www-data /var/www/Harbour_websites
 
 RUN update-rc.d apache2  defaults
-RUN update-rc.d postgresql  defaults
+
+#   RUN update-rc.d postgresql  defaults
