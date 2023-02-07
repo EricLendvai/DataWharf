@@ -1,11 +1,14 @@
 
 DataWharf.prg
+Schema.prg
 LoadSchema.prg
 DeltaSchema.prg
 VisualizeApplications.prg
 VisualizeProjects.prg
 FixNonNormalizedFields.prg
-ImportExport.prg
+ImportExportAny.prg
+ImportExportApplication.prg
+ImportExportModel.prg
 
 WebPages.hbm
 API.hbm
@@ -13,3 +16,6 @@ API.hbm
 #To load additional contrib libraries
 hbct.hbc
 hbmisc.hbc
+
+#hbmzip.hbc
+hbziparc.hbc

@@ -30,7 +30,7 @@ local l_lFoundHeaderInfo := .f.
 local l_cParentPackage := oFcgi:GetQueryString("parentPackage")
 local l_cFromEntity    := oFcgi:GetQueryString("fromEntity")
 local l_nAccessLevelML := 1
-// As per the info in Schema.txt
+// As per the info in Schema.prg
 //     1 - None
 //     2 - Read Only
 //     3 - Edit Description and Information Entries
@@ -62,6 +62,9 @@ oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+
 // Modeling/ListModels/<Project.LinkUID>/
 // Modeling/NewModel/<Project.LinkUID>/
 // Modeling/ModelSettings/<Model.LinkUID>/
+// Modeling/ModelExport/<Model.LinkUID>/
+// Modeling/ModelExportForDataWharfImports/<Model.LinkUID>/
+// Modeling/ModelImport/<Model.LinkUID>/
 
 // Modeling/Visualize/<Model.LinkUID>/
 
@@ -124,7 +127,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
 
-    case vfp_Inlist(l_cURLAction,"ModelSettings","ListEntities","ListAssociations","ListPackages","ListDataTypes","ListEnumerations","NewEntity","NewAssociation","NewPackage","NewDataType","NewEnumeration","Visualize")
+    case vfp_Inlist(l_cURLAction,"ModelSettings","ModelExport","ModelExportForDataWharfImports","ModelImport","ListEntities","ListAssociations","ListPackages","ListDataTypes","ListEnumerations","NewEntity","NewAssociation","NewPackage","NewDataType","NewEnumeration","Visualize")
         with object l_oDB1
             :Table("eaa6b925-b225-4fe2-8eeb-a0afcefc3848","Model")
             :Column("Model.pk"       , "Model_pk")
@@ -450,6 +453,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"ModelSettings")
         l_cModelingElement := "SETTINGS"
 
+    case vfp_Inlist(l_cURLAction,"ModelExport","ModelExportForDataWharfImports")
+        l_cModelingElement := "EXPORT"
+
+    case vfp_Inlist(l_cURLAction,"ModelImport")
+        l_cModelingElement := "IMPORT"
+
     case vfp_Inlist(l_cURLAction,"Visualize")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
             if vfp_inlist(oFcgi:p_URLPathElements[4],"resources","css","mxgraph")
@@ -534,7 +543,7 @@ case l_cURLAction == "ListModels"
 
     l_cHtml += ModelListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_Name)
 otherwise
-    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath)
+    l_cHtml += ModelingHeaderBuild(l_oDataHeader:Project_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name)
     l_cHtml += [<div class="container-fluid">]
     l_cHtml += [<div class="row">]
         l_cHtml += SideBarBuild(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID,l_oDataHeader:Project_Name,l_oDataHeader:Model_Name,l_cModelingElement,.t.,l_cSitePath,l_oDataHeader:Package_LinkUID,l_oDataHeader:DataType_LinkUID,l_oDataHeader:Association_LinkUID,l_oDataHeader:Entity_LinkUID,l_oDataHeader:Enumeration_LinkUID)
@@ -569,14 +578,59 @@ otherwise
                 endif
             endif
 
-        case l_cURLAction == "ListEntities"
 
+
+
+        case l_cURLAction == "ModelImport"
+            if oFcgi:p_nAccessLevelML >= 7 .and. l_lFoundHeaderInfo
+                //par_iModelPk,par_cModelLinkUID,par_cProjectName,par_cModelName,par_lActiveHeader
+
+                if oFcgi:isGet()
+                    l_cHtml += ModelImportStep1FormBuild(l_oDataHeader:Model_pk,"")
+                else
+                    l_cHtml += ModelImportStep1FormOnSubmit(l_oDataHeader:Model_pk,l_oDataHeader:Project_LinkUID,l_oDataHeader:Model_LinkUID)
+                endif
+            endif
+
+        case l_cURLAction == "ModelExport"
+            if oFcgi:p_nAccessLevelML >= 7 .and. l_lFoundHeaderInfo
+                if oFcgi:isGet()
+                    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+                        l_cHtml += [<div class="input-group">]
+                            l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[Modeling/ModelExportForDataWharfImports/]+l_oDataHeader:Model_LinkUID+[/">Export For DataWharf Imports</a>]
+                        l_cHtml += [</div>]
+                    l_cHtml += [</nav>]
+                else
+                    
+                endif
+            endif
+
+        case l_cURLAction == "ModelExportForDataWharfImports"
+            if oFcgi:p_nAccessLevelML >= 7 .and. l_lFoundHeaderInfo
+                if oFcgi:isGet()
+                    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+                        l_cHtml += [<div class="input-group">]
+                            l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[Modeling/ModelExport/]+l_oDataHeader:Model_LinkUID+[/">Other Export</a>]
+
+                            l_cLinkUID := ExportModelForImports(l_oDataHeader:Model_pk)
+
+                            if !empty(l_cLinkUID)
+                                l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+[">Download Export File</a>]
+                            endif
+
+                        l_cHtml += [</div>]
+                    l_cHtml += [</nav>]
+                else
+                    
+                endif
+            endif
+
+        case l_cURLAction == "ListEntities"
             if oFcgi:isGet()
                 l_cHtml += EntityListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
             else
                 l_cHtml += EntityListFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Model_pk,l_oDataHeader:Model_LinkUID)
             endif
-
 
         case l_cURLAction == "NewEntity"
             if oFcgi:p_nAccessLevelML >= 5
@@ -1107,7 +1161,7 @@ otherwise
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ModelingHeaderBuild(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID,par_cProjectName,par_cModelName,par_cModelElement,par_lActiveHeader,par_cSitePath)
+static function ModelingHeaderBuild(par_cProjectLinkUID,par_cProjectName,par_cModelName)
 
 local l_cHtml := ""
 // local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1153,6 +1207,28 @@ l_cHtml += [<ul class="nav flex-column">]
         l_cHtml += [</li>]
     endif
     //--------------------------------------------------------------------------------------
+    if oFcgi:p_nAccessLevelML >= 7
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "IMPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ModelImport/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-gear"></i>]+oFcgi:p_ANFModel+[ Import</a>]
+        l_cHtml += [</li>]
+
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cModelElement == "EXPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Modeling/ModelExport/]+par_cModelLinkUID+[/"><i class="item-icon bi bi-gear"></i>]+oFcgi:p_ANFModel+[ Export</a>]
+        l_cHtml += [</li>]
+
+
+    // if oFcgi:p_nAccessLevelDD >= 6
+    //     l_cHtml += [<li class="nav-item">]
+    //         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "IMPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryImport/]+par_cURLApplicationLinkCode+[/">Import</a>]
+    //     l_cHtml += [</li>]
+    //     l_cHtml += [<li class="nav-item">]
+    //         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "EXPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryExport/]+par_cURLApplicationLinkCode+[/">Export</a>]
+    //     l_cHtml += [</li>]
+    // endif
+
+
+
+    endif
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
 
@@ -1790,7 +1866,7 @@ static function ModelEditFormBuild(par_iProjectPk,par_cErrorText,par_iPk,par_hVa
 
 local l_cHtml := ""
 local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath      := oFcgi:RequestSettings["SitePath"]
 
 local l_ScriptFolder
 

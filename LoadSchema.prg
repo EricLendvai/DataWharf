@@ -266,7 +266,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","str(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -711,7 +711,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         endif
 
                         with object :p_oCursor
-                            :Index("tag1","tag1+'*'")
+                            :Index("tag1","str(tag1+'*',240)")
                             :CreateIndexes()
                         endwith
 
@@ -882,7 +882,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","str(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -1368,7 +1368,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","str(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -1668,7 +1668,7 @@ if par_nSyncSetForeignKey > 1
                     :SQL("AllTablesAsParentsForForeignKeys")
 
                     with object :p_oCursor
-                        :Index("tag1","tag1")
+                        :Index("tag1","padr(tag1,240)")
                         :CreateIndexes()
                         // :SetOrder("tag1")
                     endwith
@@ -1688,7 +1688,7 @@ if par_nSyncSetForeignKey > 1
                     :SQL("AllTableColumnsChildrenForForeignKeys")
 
                     with object :p_oCursor
-                        :Index("tag1","tag1")
+                        :Index("tag1","padr(tag1,240)")
                         :CreateIndexes()
                         // :SetOrder("tag1")
                     endwith
@@ -1815,7 +1815,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_cErrorMessage := [Failed to Get index info.]
                         else
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
                         endif

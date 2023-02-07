@@ -30,7 +30,7 @@ local l_cURLVersionCode         := ""
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 
 local l_nAccessLevelDD := 1   // None by default
-// As per the info in Schema.txt
+// As per the info in Schema.prg
 //     1 - None
 //     2 - Read Only
 //     3 - Edit Description and Information Entries

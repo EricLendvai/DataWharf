@@ -49,7 +49,7 @@ local l_cLinkUID
 local l_cJavaScript
 
 local l_nAccessLevelDD := 1   // None by default
-// As per the info in Schema.txt
+// As per the info in Schema.prg
 //     1 - None
 //     2 - Read Only
 //     3 - Edit Description and Information Entries
@@ -113,8 +113,8 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/EditIndex/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/<IndexName>
 
 // DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
-// DataDictionaries/DataDictionaryExportForImports/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExportToHarbourORM/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryExportForDataWharfImports/<ApplicationLinkCode>/
 
 
 
@@ -181,7 +181,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionaryImport")
         l_cApplicationElement := "IMPORT"
 
-    case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportForImports")
+    case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportForDataWharfImports")
         l_cApplicationElement := "EXPORT"
 
     case vfp_Inlist(l_cURLAction,"DataDictionaryLoadSchema")
@@ -273,75 +273,46 @@ case l_cURLAction == "DataDictionarySettings"
         endif
     endif
 
-case l_cURLAction == "DataDictionaryImport"  //_M_
-    if oFcgi:p_nAccessLevelDD >= 5
-        // l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-        //Will Build the header after new entities are created.
+case l_cURLAction == "DataDictionaryImport"
+    if oFcgi:p_nAccessLevelDD >= 6
         l_cHtmlUnderHeader := []
 
         if oFcgi:isGet()
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-            with object l_oDB1
-                :Table("0c62b1c8-25f8-4bae-b8b0-4248805814b1","public.Application")
-                :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
-                :Column("Application.SyncServer"       ,"Application_SyncServer")
-                :Column("Application.SyncPort"         ,"Application_SyncPort")
-                :Column("Application.SyncUser"         ,"Application_SyncUser")
-                :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
-                :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
-                :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
-                l_oData := :Get(l_iApplicationPk)
-            endwith
-
-            // if l_oDB1:Tally == 1
-            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
-            //                                                 l_oData:Application_SyncBackendType,;
-            //                                                 l_oData:Application_SyncServer,;
-            //                                                 l_oData:Application_SyncPort,;
-            //                                                 l_oData:Application_SyncUser,;
-            //                                                 "",;
-            //                                                 l_oData:Application_SyncDatabase,;
-            //                                                 l_oData:Application_SyncNameSpaces,;
-            //                                                 l_oData:Application_SyncSetForeignKey,;
-            //                                                 {})
-            // endif
+            l_cHtmlUnderHeader += DataDictionaryImportStep1FormBuild(l_iApplicationPk,"")
         else
-            // if l_iApplicationPk > 0
-            //     l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
-            // endif
+            if l_iApplicationPk > 0
+                l_cHtmlUnderHeader += DataDictionaryImportStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+            endif
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
     endif
 
 
-case l_cURLAction == "DataDictionaryExport"  //_M_
-    if oFcgi:p_nAccessLevelDD >= 5
-
-        l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
-            l_cHtmlUnderHeader += [<div class="input-group">]
-                l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+l_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
-                l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForImports/]+l_cURLApplicationLinkCode+[/">Export For Imports</a>]
-            l_cHtmlUnderHeader += [</div>]
-        l_cHtmlUnderHeader += [</nav>]
+case l_cURLAction == "DataDictionaryExport"
+    if oFcgi:p_nAccessLevelDD >= 6
 
         if oFcgi:isGet()
+            l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
+                l_cHtmlUnderHeader += [<div class="input-group">]
+                    l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+l_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
+                    l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/">Export For DataWharf Imports</a>]
+                l_cHtmlUnderHeader += [</div>]
+            l_cHtmlUnderHeader += [</nav>]
 
         else
+            l_cHtmlUnderHeader := []
+
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
     endif
-
 
 case l_cURLAction == "DataDictionaryExportToHarbourORM"
     if oFcgi:p_nAccessLevelDD >= 5
 
         l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
             l_cHtmlUnderHeader += [<div class="input-group">]
-                // l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+l_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
-                // l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForImports/]+l_cURLApplicationLinkCode+[/">Export For Imports</a>]
                 l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
 
                 l_cHtmlUnderHeader += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
@@ -367,84 +338,42 @@ case l_cURLAction == "DataDictionaryExportToHarbourORM"
         l_cHtml += [</script>]+CRLF
 
         if oFcgi:isGet()
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-            with object l_oDB1
-                :Table("0c62b1c8-25f8-4bae-b8b0-4248805814b1","public.Application")
-                :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
-                :Column("Application.SyncServer"       ,"Application_SyncServer")
-                :Column("Application.SyncPort"         ,"Application_SyncPort")
-                :Column("Application.SyncUser"         ,"Application_SyncUser")
-                :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
-                :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
-                :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
-                l_oData := :Get(l_iApplicationPk)
-            endwith
-
-            l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportToHbORM(l_iApplicationPk)+[</pre>]
-
+            l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportApplicationToHbORM(l_iApplicationPk)+[</pre>]
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
     endif
 
-
-
-case l_cURLAction == "DataDictionaryExportForImports"
+case l_cURLAction == "DataDictionaryExportForDataWharfImports"
     if oFcgi:p_nAccessLevelDD >= 5
 
         l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
             l_cHtmlUnderHeader += [<div class="input-group">]
                 l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
+                // l_cHtmlUnderHeader += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode">]
 
-                // l_cHtmlUnderHeader += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
-                // l_cHtmlUnderHeader += [copyToClip(document.getElementById('ExportCode').innerHTML);return false;">]
+                if oFcgi:isGet()
+                    l_cLinkUID := ExportApplicationForImports(l_iApplicationPk)
+
+                    if !empty(l_cLinkUID)
+                        l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+[">Download Export File</a>]
+                    endif
+                else
+                    l_cLinkUID := ""
+                endif
 
             l_cHtmlUnderHeader += [</div>]
         l_cHtmlUnderHeader += [</nav>]
 
-l_cHtmlUnderHeader += [<div id="ExportCode" class="ms-3">Under Development / Coming Soon</div>]
+        if empty(l_cLinkUID)
+            l_cHtmlUnderHeader += [<p class="ms-3">Failed to create an Export file.</p>]
+        else
+            l_cHtmlUnderHeader += [<p class="ms-3">The Export file was created as a ZIP file. Use the "Download Export File" button.</p>]
+        endif
 
-        // l_cJavaScript := [function copyToClip(str) {]
-        // l_cJavaScript +=   [function listener(e) {]
-        // l_cJavaScript +=     [e.clipboardData.setData("text/html", str);]
-        // l_cJavaScript +=     [e.clipboardData.setData("text/plain", str);]
-        // l_cJavaScript +=     [e.preventDefault();]
-        // l_cJavaScript +=   [}]
-        // l_cJavaScript +=   [document.addEventListener("copy", listener);]
-        // l_cJavaScript +=   [document.execCommand("copy");]
-        // l_cJavaScript +=   [document.removeEventListener("copy", listener);]
-        // l_cJavaScript +=   [$('#CopySourceCode').addClass('btn-success').removeClass('btn-primary');]
-        // l_cJavaScript += [};]
-
-        // l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
-        // l_cHtml += l_cJavaScript+CRLF
-        // l_cHtml += [</script>]+CRLF
-
-        // if oFcgi:isGet()
-        //     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-        //     with object l_oDB1
-        //         :Table("0c62b1c8-25f8-4bae-b8b0-4248805814b1","public.Application")
-        //         :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
-        //         :Column("Application.SyncServer"       ,"Application_SyncServer")
-        //         :Column("Application.SyncPort"         ,"Application_SyncPort")
-        //         :Column("Application.SyncUser"         ,"Application_SyncUser")
-        //         :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
-        //         :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
-        //         :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
-        //         l_oData := :Get(l_iApplicationPk)
-        //     endwith
-
-        //     l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportToHbORM(l_iApplicationPk)+[</pre>]
-
-        // endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
     endif
-
-
-
 
 case l_cURLAction == "DataDictionaryLoadSchema"
     if oFcgi:p_nAccessLevelDD >= 6
@@ -1324,10 +1253,10 @@ l_cHtml += [<ul class="nav nav-tabs">]
     endif
     //--------------------------------------------------------------------------------------
 //_M_ Under Development
-    if oFcgi:p_nAccessLevelDD >= 5
-        // l_cHtml += [<li class="nav-item">]
-        //     l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "IMPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryImport/]+par_cURLApplicationLinkCode+[/">Import</a>]
-        // l_cHtml += [</li>]
+    if oFcgi:p_nAccessLevelDD >= 6
+        l_cHtml += [<li class="nav-item">]
+            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "IMPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryImport/]+par_cURLApplicationLinkCode+[/">Import</a>]
+        l_cHtml += [</li>]
         l_cHtml += [<li class="nav-item">]
             l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "EXPORT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryExport/]+par_cURLApplicationLinkCode+[/">Export</a>]
         l_cHtml += [</li>]

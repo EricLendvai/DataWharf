@@ -354,7 +354,7 @@ hb_HDel(l_hCurrentListOfEnumerations,l_cLastNameSpace+"*"+l_cLastEnumerationName
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -508,7 +508,7 @@ l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsI
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","tag1+'*'")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -795,7 +795,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //                         l_cErrorMessage := [Failed to Get index info.]
     //                     else
     //                         with object :p_oCursor
-    //                             :Index("tag1","tag1+'*'")
+    //                             :Index("tag1","padr(tag1+'*',240)")
     //                             :CreateIndexes()
     //                         endwith
     //                     endif

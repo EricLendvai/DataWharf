@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 02/07/2023 v 2.42
+* Additional clean up of tasks.json to be smaller and fix "Del Build Cache" under powershell.
+* Import and Export feature for Applications (Data Dictionary) and Models. Currently Highest access right is required.
+
 ## 01/24/2023 v 2.41
 * Clean up of tasks.json to be smaller and remove "Soft Task Kill"
 * Added support for smallint data types.

@@ -538,6 +538,11 @@ local l_lShowDevelopmentInfo := .f.
 static l_lGetUUIDSupported := .f.  // Used to ensure the PostgreSQL database has the "pgcrypto" extension installed.
 local l_cAccessToken
 local l_sAPIFunction
+local l_cLinkUID
+local l_oDB_ListOfFileStream
+local l_oDB_FileStream
+local l_cFilePath
+local l_cFileName
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
@@ -593,7 +598,12 @@ else
     endif
 endif
 
-if ::p_o_SQLConnection == NIL
+// l_1 := val(::p_o_SQLConnection:p_hb_orm_version)
+// l_2 := val(MIN_HARBOUR_ORM_VERSION)
+// altd()
+
+do case
+case ::p_o_SQLConnection == NIL
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
@@ -609,7 +619,28 @@ if ::p_o_SQLConnection == NIL
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
-else
+case CompareVersionsWithDecimals( val(::p_o_SQLConnection:p_hb_orm_version) , val(MIN_HARBOUR_ORM_VERSION) ) < 0
+    l_cHtml := [<html>]
+    l_cHtml += [<body>]
+    l_cHtml += [<h1>Harbour ORM must be version ]+MIN_HARBOUR_ORM_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [</body>]
+    l_cHtml += [</html>]
+
+case CompareVersionsWithDecimals( VFP_GetCompatibilityPackVersion() , val(MIN_HARBOUR_VFP_VERSION) ) < 0
+    l_cHtml := [<html>]
+    l_cHtml += [<body>]
+    l_cHtml += [<h1>Harbour VFP must be version ]+MIN_HARBOUR_VFP_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [</body>]
+    l_cHtml += [</html>]
+
+case CompareVersionsWithDecimals( vaL(::p_hb_fcgi_version) , val(MIN_HARBOUR_FCGI_VERSION) ) < 0
+    l_cHtml := [<html>]
+    l_cHtml += [<body>]
+    l_cHtml += [<h1>Harbour FastCGI must be version ]+MIN_HARBOUR_FCGI_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [</body>]
+    l_cHtml += [</html>]
+
+otherwise
     //Test GetUUIDString is Supported
     if !l_lGetUUIDSupported
         if !empty(::p_o_SQLConnection:GetUUIDString())
@@ -669,7 +700,7 @@ else
         // endfor
 
         // if l_cPageName <> "ajax"
-        if !VFP_Inlist(lower(l_cPageName),"ajax","api") // ,"health"
+        if !VFP_Inlist(lower(l_cPageName),"ajax","api","streamfile") // ,"health"
 
             l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,.t.,@BuildPageHome()})
             // #define WEBPAGEHANDLE_NAME            1
@@ -801,7 +832,7 @@ else
         endif
         
         // if l_cPageName <> "ajax"
-        if !VFP_Inlist(lower(l_cPageName),"ajax","api")
+        if !VFP_Inlist(lower(l_cPageName),"ajax","api","streamfile")
             //If not a public page and not logged in, then request to log in.
             if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
                 if oFcgi:IsGet()
@@ -900,6 +931,45 @@ else
                     endswitch
 
                 endif
+            elseif l_cPageName == "streamfile"
+                // l_cBody := [UNBUFFERED]+hb_MemoRead("d:\LastExport.Zip")
+
+                l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
+                l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+                l_cLinkUID := oFcgi:GetQueryString("id")
+                if empty(l_cLinkUID)
+                    l_cBody := [UNBUFFEREDBad Link]
+                else
+                    with object l_oDB_ListOfFileStream
+
+                        :Table("d85a01ec-6a9d-436f-a643-3623839a5de6","volatile.FileStream","FileStream")
+                        :Column("FileStream.pk"      ,"pk")
+                        :Column("FileStream.FileName","FileName")
+                        :Column("FileStream.type"    ,"Type")
+                        :Where("FileStream.fk_User = ^" , oFCgi:p_iUserPk)
+                        :Where("FileStream.LinkUID = ^" , l_cLinkUID)
+                        :SQL("ListOfFileStream")
+
+                        if :Tally == 1
+                            l_cFilePath := GetStreamFileFolderForCurrentProcess()
+                            l_oDB_FileStream:GetFile("d94f5984-7ed8-41df-8b81-0d5267bec552","volatile.FileStream",ListOfFileStream->pk,"oid",l_cFilePath+"Export.Zip")
+
+                            l_cBody := [UNBUFFERED]+hb_MemoRead(l_cFilePath+"Export.Zip")
+                            DeleteFile(l_cFilePath+"Export.Zip")
+                            ::SetContentType("application/octet-stream")
+
+                            l_cFileName := nvl((ListOfFileStream->FileName),"Export.zip")
+                            
+                            ::SetHeaderValue("content-disposition",'attachment; filename="'+l_cFileName+'"')
+                        else
+                            l_cBody := [UNBUFFEREDBad FileStream Link]
+                        endif
+
+                        CloseAlias("ListOfFileStream")
+                    endwith
+                endif
+
             else
                 if l_aWebPageHandle[WEBPAGEHANDLE_BUILDHEADER]
                     l_cBody += GetPageHeader(.t.,l_cPageName)
@@ -946,6 +1016,8 @@ else
                     endif
 
                 endif
+            elseif l_cPageName == "streamfile"
+                //_M_ Should it be allowed to stream a file while not logged in ?
             else
                 ::p_nUserAccessMode := 0
                 if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] == 0   //public page
@@ -986,7 +1058,7 @@ else
 
         endif
     endif
-endif
+endcase
 
 ::Print(l_cHtml)
 
@@ -1037,15 +1109,17 @@ return nil
 //=================================================================================================================
 function UpdateSchema(par_o_SQLConnection)
 local l_LastError := ""
-local l_Schema
+local l_hSchema
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
 // local l_cUpdateScript := ""
 
-#include "Schema.txt"
+//#include "Schema.txt"
 
-// if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_LastError) > 0
-if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_Schema),@l_nMigrateSchemaResult,,@l_LastError) > 0
+l_hSchema := Schema()
+
+// if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_LastError) > 0
+if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResult,,@l_LastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
@@ -1634,4 +1708,41 @@ otherwise
     l_cHtml := ""
 endcase
 return l_cHtml
+//=================================================================================================================
+function CompareVersionsWithDecimals(par_nVal1,par_nVal2)  // return 0 if same, -1 if par_nVal1 < par_nVal2, 1 otherwise
+local l_nResult
+local l_nDecimal1
+local l_nDecimal2
+
+if par_nVal1 == par_nVal2
+    l_nResult := 0
+else
+    if int(par_nVal1) == int(par_nVal2)
+        //Compare decimals
+        l_nDecimal1 := val(substr(alltrim(str(par_nVal1-int(par_nVal1))),3))
+        l_nDecimal2 := val(substr(alltrim(str(par_nVal2-int(par_nVal2))),3))
+        l_nResult := iif(l_nDecimal1 < l_nDecimal2,-1,1)
+    else
+        l_nResult := iif(int(par_nVal1) < int(par_nVal2),-1,1)
+    endif
+endif
+
+return l_nResult
+//=================================================================================================================
+function GetStreamFileFolderForCurrentProcess()
+local l_iPID := el_GetProcessId()
+local l_cFilePath := ""
+
+l_cFilePath := oFCgi:PathBackend+hb_ps()+"StreamFile"
+hb_DirCreate(l_cFilePath)
+l_cFilePath += hb_ps()+trans(l_iPID)
+hb_DirCreate(l_cFilePath)
+l_cFilePath += hb_ps()
+
+return l_cFilePath
+//=================================================================================================================
+function GetZuluTimeStampForFileNameSuffix()
+local l_cTimeStamp := hb_TSToStr(hb_TSToUTC(hb_DateTime()))
+l_cTimeStamp := left(l_cTimeStamp,len(l_cTimeStamp)-4)
+return hb_StrReplace( l_cTimeStamp , {" "=>"-",":"=>"-"})+"-Zulu"
 //=================================================================================================================
