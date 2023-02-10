@@ -12,7 +12,8 @@ local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ModelInfo        := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cFilePath
+local l_cFilePathPID
+local l_cFilePathUser
 local l_iKey
 local l_cLinkUID
 local l_cFileName
@@ -251,12 +252,12 @@ endwith
 if l_lContinue
     l_cBackupCode += CRLF
 
-    l_cFilePath := GetStreamFileFolderForCurrentProcess()
+    l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
 
-    vfp_StrToFile(l_cBackupCode,l_cFilePath+"Export.txt")
+    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
 
-    hb_ZipFile(l_cFilePath+"Export.zip",l_cFilePath+"Export.txt",9,,.t.)
-    DeleteFile(l_cFilePath+"Export.txt")
+    hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
+    DeleteFile(l_cFilePathPID+"Export.txt")
 
     //_M_ Add a Sanitizing function for l_oModelInfo:Application_Name
     l_cFileName := "ExportModel_"+strtran(l_oModelInfo:Project_Name+"-"+l_oModelInfo:Model_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
@@ -277,8 +278,10 @@ if l_lContinue
         case :Tally == 1
             l_iKey     := ListOfFileStream->pk
             l_cLinkUID := ListOfFileStream->LinkUID
-            l_oDB_FileStream:SaveFile("f50e774d-d353-4834-8b88-5619fdb086b9","volatile.FileStream",l_iKey,"oid",l_cFilePath+"Export.zip")
-
+            if !l_oDB_FileStream:SaveFile("f50e774d-d353-4834-8b88-5619fdb086b9","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+            endif
             with object l_oDB_FileStream
                 :Table("d3c44e42-08d1-441c-a1ba-22be051aff7b","volatile.FileStream","FileStream")
                 :Field("FileName" , l_cFileName)
@@ -303,14 +306,17 @@ if l_lContinue
                 :Field("FileName"       , l_cFileName)
                 if :Add()
                     l_iKey := :Key()
-                    l_oDB_FileStream:SaveFile("f8a1facb-a2fa-4ed8-85c6-5bb61989ab83","volatile.FileStream",l_iKey,"oid",l_cFilePath+"Export.zip")
+                    if !l_oDB_FileStream:SaveFile("f8a1facb-a2fa-4ed8-85c6-5bb61989ab83","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                        l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                        hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+                    endif
                 else
                     l_iKey := 0
                 endif
             endwith
         endcase
     endwith
-    DeleteFile(l_cFilePath+"Export.zip")
+    DeleteFile(l_cFilePathPID+"Export.zip")
 else
     l_iKey := 0
 endif
@@ -382,7 +388,7 @@ local l_cActionOnSubmit
 local l_cErrorMessage := ""
 
 local l_cInputFileName
-local l_cFilePath
+local l_cFilePathPID
 local l_iHandleUnzip
 local l_xRes
 local l_cImportContent
@@ -399,26 +405,26 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
         l_cErrorMessage := [Missing File.]
     else
 
-        l_cFilePath := GetStreamFileFolderForCurrentProcess()
-        oFcgi:SaveInputFileContent("TextExportFile",l_cFilePath+"Export.zip")
+        l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
+        oFcgi:SaveInputFileContent("TextExportFile",l_cFilePathPID+"Export.zip")
 
-        l_iHandleUnzip := hb_unzipOpen(l_cFilePath+"Export.zip")
+        l_iHandleUnzip := hb_unzipOpen(l_cFilePathPID+"Export.zip")
         if empty(l_iHandleUnzip)
             l_xRes := -1
         else
             l_xRes := hb_unzipFileFirst(l_iHandleUnzip)
             if empty(l_xRes)
-                l_xRes := hb_unzipExtractCurrentFile(l_iHandleUnzip,l_cFilePath+"Export.txt")
+                l_xRes := hb_unzipExtractCurrentFile(l_iHandleUnzip,l_cFilePathPID+"Export.txt")
             endif
             if empty(l_xRes)
                 l_xRes := hb_unzipClose( l_iHandleUnzip )
             endif
         endif
         if empty(l_xRes)
-            DeleteFile(l_cFilePath+"Export.zip")
+            DeleteFile(l_cFilePathPID+"Export.zip")
 
-            l_cImportContent := hb_MemoRead(l_cFilePath+"Export.txt")
-            DeleteFile(l_cFilePath+"Export.txt")
+            l_cImportContent := hb_MemoRead(l_cFilePathPID+"Export.txt")
+            DeleteFile(l_cFilePathPID+"Export.txt")
 
             ImportModelFile(par_iModelPk,@l_cImportContent)
 

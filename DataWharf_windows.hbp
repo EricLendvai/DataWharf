@@ -23,6 +23,7 @@
 -lhb_vfp
 #The following will force the linking of all functions in hb_vfp module
 ${HB_VFP_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}\hb_vfp.hbx
+hbwin.hbc
 
 #To include the hb_orm module, and even allow its debugging
 -incpath=${HB_ORM_ROOT}\

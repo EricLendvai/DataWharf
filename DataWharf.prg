@@ -932,7 +932,7 @@ otherwise
 
                 endif
             elseif l_cPageName == "streamfile"
-                // l_cBody := [UNBUFFERED]+hb_MemoRead("d:\LastExport.Zip")
+                // l_cBody := [UNBUFFERED]+hb_MemoRead("d:\LastExport.zip")
 
                 l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
                 l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -953,10 +953,15 @@ otherwise
 
                         if :Tally == 1
                             l_cFilePath := GetStreamFileFolderForCurrentProcess()
-                            l_oDB_FileStream:GetFile("d94f5984-7ed8-41df-8b81-0d5267bec552","volatile.FileStream",ListOfFileStream->pk,"oid",l_cFilePath+"Export.Zip")
+                            l_oDB_FileStream:GetFile("d94f5984-7ed8-41df-8b81-0d5267bec552","volatile.FileStream",ListOfFileStream->pk,"oid",l_cFilePath+"Export.zip")
+                            if file(l_cFilePath+"Export.zip")
+                                l_cBody := [UNBUFFERED]+hb_MemoRead(l_cFilePath+"Export.zip")
+                                DeleteFile(l_cFilePath+"Export.zip")
+                            else
+                                l_cFilePath := GetStreamFileFolderForCurrentUser()
+                                l_cBody := [UNBUFFERED]+hb_MemoRead(l_cFilePath+"Export"+trans(ListOfFileStream->pk)+".zip")
+                            endif
 
-                            l_cBody := [UNBUFFERED]+hb_MemoRead(l_cFilePath+"Export.Zip")
-                            DeleteFile(l_cFilePath+"Export.Zip")
                             ::SetContentType("application/octet-stream")
 
                             l_cFileName := nvl((ListOfFileStream->FileName),"Export.zip")
@@ -1736,6 +1741,17 @@ local l_cFilePath := ""
 l_cFilePath := oFCgi:PathBackend+hb_ps()+"StreamFile"
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()+trans(l_iPID)
+hb_DirCreate(l_cFilePath)
+l_cFilePath += hb_ps()
+
+return l_cFilePath
+//=================================================================================================================
+function GetStreamFileFolderForCurrentUser()
+local l_cFilePath := ""
+
+l_cFilePath := oFCgi:PathBackend+hb_ps()+"UserStreamFile"
+hb_DirCreate(l_cFilePath)
+l_cFilePath += hb_ps()+trans(oFcgi:p_iUserPk)
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()
 

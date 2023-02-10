@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/10/2023 v 2.43
+* Fix of Import/Export when deploying on AWS RDS. The issue is related to RDS blocking use of PostgreSQL Large Objects. If using RDS and using multiple web servers, a balancer needs to be used to route all traffic to the same server for a logged in user. This requirement is only needed for import/exports.
+
 ## 02/07/2023 v 2.42
 * Additional clean up of tasks.json to be smaller and fix "Del Build Cache" under powershell.
 * Import and Export feature for Applications (Data Dictionary) and Models. Currently Highest access right is required.

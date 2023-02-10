@@ -298,7 +298,8 @@ local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ApplicationInfo  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cFilePath
+local l_cFilePathPID
+local l_cFilePathUser
 local l_iKey
 local l_cLinkUID
 local l_cFileName
@@ -535,12 +536,12 @@ endwith
 if l_lContinue
     l_cBackupCode += CRLF
 
-    l_cFilePath := GetStreamFileFolderForCurrentProcess()
+    l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
 
-    vfp_StrToFile(l_cBackupCode,l_cFilePath+"Export.txt")
+    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
 
-    hb_ZipFile(l_cFilePath+"Export.Zip",l_cFilePath+"Export.txt",9,,.t.)
-    DeleteFile(l_cFilePath+"Export.txt")
+    hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
+    DeleteFile(l_cFilePathPID+"Export.txt")
 
     with object l_oDB_ApplicationInfo
         :Table("f639a7b0-41da-4b49-b812-9db23bc52f9e","Application")
@@ -567,8 +568,10 @@ if l_lContinue
         case :Tally == 1
             l_iKey     := ListOfFileStream->pk
             l_cLinkUID := ListOfFileStream->LinkUID
-            l_oDB_FileStream:SaveFile("456e02d9-c305-4504-a391-7692c51f0ec0","volatile.FileStream",l_iKey,"oid",l_cFilePath+"Export.Zip")
-
+            if !l_oDB_FileStream:SaveFile("456e02d9-c305-4504-a391-7692c51f0ec0","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+            endif
             with object l_oDB_FileStream
                 :Table("2c5183d2-9aad-4f72-8cfe-f4ad411e6c74","volatile.FileStream","FileStream")
                 :Field("FileName" , l_cFileName)
@@ -593,14 +596,17 @@ if l_lContinue
                 :Field("FileName"       , l_cFileName)
                 if :Add()
                     l_iKey := :Key()
-                    l_oDB_FileStream:SaveFile("456e02d9-c305-4504-a391-7692c51f0ec1","volatile.FileStream",l_iKey,"oid",l_cFilePath+"Export.Zip")
+                    if !l_oDB_FileStream:SaveFile("456e02d9-c305-4504-a391-7692c51f0ec1","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                        l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                        hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+                    endif
                 else
                     l_iKey := 0
                 endif
             endwith
         endcase
     endwith
-    DeleteFile(l_cFilePath+"Export.zip")
+    DeleteFile(l_cFilePathPID+"Export.zip")
 else
     l_iKey := 0
 endif
@@ -673,7 +679,7 @@ local l_cActionOnSubmit
 local l_cErrorMessage := ""
 
 local l_cInputFileName
-local l_cFilePath
+local l_cFilePathPID
 local l_iHandleUnzip
 local l_xRes
 local l_cImportContent
@@ -691,26 +697,26 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
     else
         // l_cInputFileContentType := oFcgi:GetInputFileContentType("TextExportFile")
 
-        l_cFilePath := GetStreamFileFolderForCurrentProcess()
-        oFcgi:SaveInputFileContent("TextExportFile",l_cFilePath+"Export.zip")
+        l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
+        oFcgi:SaveInputFileContent("TextExportFile",l_cFilePathPID+"Export.zip")
 
-        l_iHandleUnzip := hb_unzipOpen(l_cFilePath+"Export.zip")
+        l_iHandleUnzip := hb_unzipOpen(l_cFilePathPID+"Export.zip")
         if empty(l_iHandleUnzip)
             l_xRes := -1
         else
             l_xRes := hb_unzipFileFirst(l_iHandleUnzip)
             if empty(l_xRes)
-                l_xRes := hb_unzipExtractCurrentFile(l_iHandleUnzip,l_cFilePath+"Export.txt")
+                l_xRes := hb_unzipExtractCurrentFile(l_iHandleUnzip,l_cFilePathPID+"Export.txt")
             endif
             if empty(l_xRes)
                 l_xRes := hb_unzipClose( l_iHandleUnzip )
             endif
         endif
         if empty(l_xRes)
-            DeleteFile(l_cFilePath+"Export.zip")
+            DeleteFile(l_cFilePathPID+"Export.zip")
 
-            l_cImportContent := hb_MemoRead(l_cFilePath+"Export.txt")
-            DeleteFile(l_cFilePath+"Export.txt")
+            l_cImportContent := hb_MemoRead(l_cFilePathPID+"Export.txt")
+            DeleteFile(l_cFilePathPID+"Export.txt")
 
             ImportApplicationFile(par_iApplicationPk,@l_cImportContent)
 
