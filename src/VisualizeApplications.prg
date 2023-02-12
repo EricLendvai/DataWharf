@@ -2142,7 +2142,7 @@ if len(l_aNodes) == 1
                 :OrderBy("EnumValue_Order")
                 :SQL("ListOfEnumValues")
                 with object :p_oCursor
-                    :Index("tag1","alltrim(str(Column_pk))+'*'+str(EnumValue_Order,10)")
+                    :Index("tag1","padr(alltrim(str(Column_pk))+'*'+str(EnumValue_Order,10),40)")
                     :CreateIndexes()
                 endwith
             endwith
@@ -2449,7 +2449,7 @@ if len(l_aNodes) == 1
 
                             l_cHtml += [<div class="m-3"></div>]
 
-                            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                             l_cHtml += [<tr class="bg-primary bg-gradient">]
                                 l_cHtml += [<th></th>]
@@ -2486,7 +2486,7 @@ if len(l_aNodes) == 1
                                     l_cHtml_tr_class := "ColumnCore"
                                 endcase
 
-                                l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColor(ListOfColumns->Column_UseStatus)+[>]
+                                l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
 
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
 
@@ -2503,7 +2503,7 @@ if len(l_aNodes) == 1
                 l_cTooltipEnumValues := [<table>]
                 select ListOfEnumValues
                 scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
                     l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
                                 {[ ]=>[&nbsp;],;
                                 ["]=>[&#34;],;

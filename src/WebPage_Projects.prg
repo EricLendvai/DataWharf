@@ -388,7 +388,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
@@ -405,7 +405,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfProjects
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfProjects->Project_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+AllTrim(ListOfProjects->Project_LinkUID)+[/">]+Allt(ListOfProjects->Project_Name)+[</a>]
@@ -873,7 +873,7 @@ if !empty(l_nNumberOfPrimitiveTypes)
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
             
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="2">Primitive Types (]+Trans(l_nNumberOfPrimitiveTypes)+[)</th>]
@@ -888,7 +888,7 @@ if !empty(l_nNumberOfPrimitiveTypes)
             scan all
                 l_iPrimitiveTypePk := ListOfPrimitiveTypes->pk
 
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_LinkUID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>]

@@ -311,7 +311,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center m-3">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfNameSpacesInTablesFrom > 1,"2","1")+[">]+lcApplicationNameFrom+[ Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
@@ -335,7 +335,7 @@ l_cHtml += [<div class="m-3">]
                     l_cInputObjectName := "MappedToTables"+Trans(ListOfTablesFrom->pk)
                     l_cInputValue      := hb_HGetDef(par_hValues,l_cInputObjectName,"")
 
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         if l_nNumberOfNameSpacesInTablesFrom > 1
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -770,7 +770,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center m-3">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">]+lcApplicationNameFrom+[</th>]
@@ -804,7 +804,7 @@ l_cHtml += [<div class="m-3">]
                 scan all
                     l_cInputObjectName  := "MappedToColumn"+Trans(ListColumnsFrom->pk)
 
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             do case

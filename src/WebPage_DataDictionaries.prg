@@ -1490,7 +1490,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
@@ -1513,7 +1513,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfDataDictionaries
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfDataDictionaries->Application_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfDataDictionaries->Application_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+AllTrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Allt(ListOfDataDictionaries->Application_Name)+[</a>]
@@ -1805,7 +1805,7 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
@@ -1823,7 +1823,7 @@ else
 
                 select ListOfNameSpaces
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfNameSpaces->NameSpace_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfNameSpaces->NameSpace_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNameSpace/]+par_cURLApplicationLinkCode+[/]+ListOfNameSpaces->NameSpace_Name+[/">]+ListOfNameSpaces->NameSpace_Name+FormatAKAForDisplay(ListOfNameSpaces->NameSpace_AKA)+[</a>]
@@ -2533,7 +2533,7 @@ if !empty(l_nNumberOfTables)
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_nColspan := 8
             if l_nNumberOfCustomFieldValues > 0
@@ -2568,7 +2568,7 @@ if !empty(l_nNumberOfTables)
             scan all
                 l_iTablePk := ListOfTables->pk
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfTables->Table_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTables->Table_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(ListOfTables->NameSpace_Name)
@@ -3465,7 +3465,7 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">]
@@ -3496,7 +3496,7 @@ else
 
             select ListOfColumns
             scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfColumns->Column_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                         do case
@@ -3522,7 +3522,7 @@ else
                             l_cTooltipEnumValues := [<table>]
                             select ListOfEnumValues
                             scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
                                 l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
                                             {[ ]=>[&nbsp;],;
                                             ["]=>[&#34;],;
@@ -4648,7 +4648,7 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -4670,7 +4670,7 @@ else
 
             select ListOfIndexes
             scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfIndexes->Index_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfIndexes->Index_UseStatus)+[>]
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -4802,7 +4802,7 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">] //  table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
@@ -4820,7 +4820,7 @@ else
 
                 select ListOfEnumerations
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumerations->Enumeration_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += Allt(ListOfEnumerations->NameSpace_Name)
@@ -4872,8 +4872,8 @@ local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_iImplementAs     := hb_HGetDef(par_hValues,"par_iImplementAs",1)
-local l_iImplementLength := hb_HGetDef(par_hValues,"par_iImplementLength",1)
+local l_iImplementAs     := hb_HGetDef(par_hValues,"ImplementAs",1)
+local l_iImplementLength := hb_HGetDef(par_hValues,"ImplementLength",1)
 
 local l_oDataTableInfo
 local l_oDB1
@@ -5281,7 +5281,7 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+["</th>]
@@ -5297,7 +5297,7 @@ else
 
             select ListOfEnumValues
             scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumValues->EnumValue_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumValues->EnumValue_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</a>]
@@ -6082,7 +6082,7 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Tags (]+Trans(l_nNumberOfTags)+[)</th>]
@@ -6098,7 +6098,7 @@ else
 
                 select ListOfTags
                 scan all
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTag/]+par_cURLApplicationLinkCode+[/]+ListOfTags->Tag_Code+[/">]+ListOfTags->Tag_Name+[</a>]

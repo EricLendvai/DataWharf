@@ -1,3 +1,5 @@
+#define BUILDVERSION "2.45"
+
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
 #include "hb_vfp.ch"
@@ -7,11 +9,8 @@
 #include "hbcurl.ch"
 #endif
 
-#define BUILDVERSION "2.44"
-
 // #ifdef __PLATFORM__WINDOWS
 // #endif
-
 
 #define MIN_HARBOUR_ORM_VERSION  "3.5"
 #define MIN_HARBOUR_VFP_VERSION  "3.3"
@@ -86,6 +85,9 @@
 #define USESTATUS_6_NODE_BACKGROUND    "ff9696"       // Discontinued
 #define USESTATUS_6_NODE_TR_BACKGROUND "255,150,150"  // Discontinued
 #define USESTATUS_6_NODE_HIGHLIGHT  "feb4b4"
+
+#define STAGE_6_NODE_TR_BACKGROUND "255,150,150"  // Discontinued
+#define STAGE_6_NODE_HIGHLIGHT  "feb4b4"
 
 #define MODELING_ENTITY_NODE_BACKGROUND "99fdfc"
 #define MODELING_ENTITY_NODE_HIGHLIGHT  "c5e789"

@@ -1963,7 +1963,7 @@ return l_lSQLExecResult
     return l_iUserPk
 #endif
 //=================================================================================================================
-function GetTRStyleBackgroundColor(par_nUseStatus,par_cOpacity)
+function GetTRStyleBackgroundColorUseStatus(par_iRecno,par_nUseStatus,par_cOpacity)
 local l_cHtml
 local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
 do case
@@ -1980,8 +1980,31 @@ case par_nUseStatus == 6  // To be Discontinued
     // l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 otherwise
-    l_cHtml := ""
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cHtml := [ style="background-color:#f2f2f2;"]
+    else
+        l_cHtml := ""
+    endif
 endcase
+return l_cHtml
+//=================================================================================================================
+function GetTRStyleBackgroundColorStage(par_iRecno,par_nStage,par_cOpacity)
+local l_cHtml
+local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
+
+//1 = Proposed, 2 = Draft, 3 = Beta, 4 = Stable, 5 = In Use, 6 = Discontinued
+
+do case
+case par_nStage == 6  // To be Discontinued
+    l_cHtml := [ style="background-color:rgb(]+STAGE_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cHtml := [ style="background-color:#f2f2f2;"]
+    else
+        l_cHtml := ""
+    endif
+endcase
+
 return l_cHtml
 //=================================================================================================================
 function CompareVersionsWithDecimals(par_nVal1,par_nVal2)  // return 0 if same, -1 if par_nVal1 < par_nVal2, 1 otherwise

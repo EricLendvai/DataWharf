@@ -2456,7 +2456,7 @@ if len(l_aNodes) == 1
 
                             l_cHtml += [<div class="m-3"></div>]
 
-                            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                             l_cHtml += [<tr class="bg-primary bg-gradient">]
                                 l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
@@ -2472,7 +2472,7 @@ if len(l_aNodes) == 1
 
                             select ListOfAttributes
                             scan all
-                                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAttributes->Attribute_UseStatus)+[>]
+                                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAttributes->Attribute_UseStatus)+[>]
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -2904,7 +2904,7 @@ if l_oDB_InArray:Tally == 1
             l_cHtml += [<div class="row">]  //  justify-content-center
                 l_cHtml += [<div class="col-auto">]
 
-                    l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                     l_cHtml += [<tr class="bg-primary bg-gradient">]
                         l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[</th>]
@@ -2917,7 +2917,7 @@ if l_oDB_InArray:Tally == 1
 
                     select ListOfEndpoints
                     scan all
-                        l_cHtml += [<tr>]
+                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                             // Entity
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                 l_cHtml += ListOfEndpoints->Entity_Name

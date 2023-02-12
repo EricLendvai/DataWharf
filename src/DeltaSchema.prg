@@ -149,7 +149,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     endif
     l_cSQLCommandEnums += [ ORDER BY schema_name,enum_name;]
 
-
     l_cSQLCommandFields  := [SELECT columns.table_schema             AS schema_name,]
     l_cSQLCommandFields  += [       columns.table_name               AS table_name,]
     l_cSQLCommandFields  += [       columns.ordinal_position         AS field_position,]
@@ -491,6 +490,11 @@ hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
                         :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order") // ,"Desc"
+
+                        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+                        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
+
                         :SQL("ListOfColumnsInTable")
                         // SendToClipboard(:LastSQL())
 
@@ -707,6 +711,22 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                     if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInTable","tag1")
                         l_iColumnPk := ListOfColumnsInTable->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        if trim(nvl(ListOfColumnsInTable->Column_Type,"")) == "E"
+                            do case
+                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == 2
+                                ListOfColumnsInTable->Column_Type           := "I"
+                                ListOfColumnsInTable->Column_Length         := nil
+                                ListOfColumnsInTable->Column_Scale          := nil
+                                ListOfColumnsInTable->Column_fk_Enumeration := 0
+                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == 3
+                                ListOfColumnsInTable->Column_Type           := "N"
+                                ListOfColumnsInTable->Column_Length         := nvl(ListOfColumnsInTable->Enumeration_ImplementLength,0)
+                                ListOfColumnsInTable->Column_Scale          := 0
+                                ListOfColumnsInTable->Column_fk_Enumeration := 0
+                            endcase
+                        endif
 
                         if trim(nvl(ListOfColumnsInTable->Column_Type,""))    == l_cColumnType           .and. ;
                            nvl(ListOfColumnsInTable->Column_Array,.f.)        == l_lColumnArray          .and. ;

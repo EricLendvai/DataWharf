@@ -243,7 +243,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Users (]+Trans(l_nNumberOfUsers)+[)</th>]
@@ -264,7 +264,7 @@ l_cHtml += [<div class="m-3">]
                 scan all
                     l_iUserPk := ListOfUsers->pk
 
-                    l_cHtml += [<tr>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Users/EditUser/]+AllTrim(ListOfUsers->User_ID)+[/">]+Allt(ListOfUsers->User_FirstName)+" "+Allt(ListOfUsers->User_LastName)+[</a>]
@@ -473,7 +473,7 @@ l_cHtml += [<div id="DivApplicationSecurity">]
 
     // l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<table class="ms-4 table table-striped" style="width:auto;">]
+    l_cHtml += [<table class="ms-4 table" style="width:auto;">]   // table-striped
         l_cHtml += [<tr class="table-dark">]
             l_cHtml += [<td class="pb-2">Applications</td>]
             l_cHtml += [<td class="pb-2">Access Rights</td>]
@@ -485,7 +485,7 @@ l_cHtml += [<div id="DivApplicationSecurity">]
 
             l_nAccessLevelDD := hb_HGetDef(par_hValues,"Application"+Trans(ListOfAllApplications->pk),1)
 
-            l_cHtml += [<tr>]
+            l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                 l_cHtml += [<td class="pb-2">]+ListOfAllApplications->Application_Name+[</td>]
                 
                 l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
@@ -513,7 +513,7 @@ l_cHtml += [<div id="DivProjectSecurity">]
 
     l_cHtml += [<div class="m-5"></div>]
 
-    l_cHtml += [<table class="ms-4 table table-striped" style="width:auto;">]
+    l_cHtml += [<table class="ms-4 table" style="width:auto;">]   // table-striped
         l_cHtml += [<tr class="table-dark">]
             l_cHtml += [<td class="pb-2">Projects</td>]
             l_cHtml += [<td class="pb-2">Access Rights</td>]
@@ -525,7 +525,7 @@ l_cHtml += [<div id="DivProjectSecurity">]
 
             l_nAccessLevelML := hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),1)
 
-            l_cHtml += [<tr>]
+            l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                 l_cHtml += [<td class="pb-2">]+ListOfAllProjects->Project_Name+[</td>]
                 
                 l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[

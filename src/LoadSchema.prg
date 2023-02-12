@@ -253,8 +253,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
+
+                        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+                        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
+
                         :SQL("ListOfColumnsInDataDictionary")
-                        // SendToClipboard(:LastSQL())
 
                         if :Tally < 0
                             l_cErrorMessage := "Failed to load Meta Data Columns. Error 105."
@@ -266,7 +270,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","str(tag1+'*',240)")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -419,6 +423,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                     if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
+                            do case
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                                ListOfColumnsInDataDictionary->Column_Type           := "I"
+                                ListOfColumnsInDataDictionary->Column_Length         := nil
+                                ListOfColumnsInDataDictionary->Column_Scale          := nil
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                                ListOfColumnsInDataDictionary->Column_Type           := "N"
+                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
+                                ListOfColumnsInDataDictionary->Column_Scale          := 0
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            endcase
+                        endif
 
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType           .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray          .and. ;
@@ -711,7 +731,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         endif
 
                         with object :p_oCursor
-                            :Index("tag1","str(tag1+'*',240)")
+                            :Index("tag1","padr(tag1+'*',240)")
                             :CreateIndexes()
                         endwith
 
@@ -869,8 +889,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
+
+                        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+                        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
+
                         :SQL("ListOfColumnsInDataDictionary")
-                        // SendToClipboard(:LastSQL())
 
                         if :Tally < 0
                             l_cErrorMessage := "Failed to load Meta Data Columns. Error 205."
@@ -882,7 +906,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","str(tag1+'*',240)")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -1080,6 +1104,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
+                            do case
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                                ListOfColumnsInDataDictionary->Column_Type           := "I"
+                                ListOfColumnsInDataDictionary->Column_Length         := nil
+                                ListOfColumnsInDataDictionary->Column_Scale          := nil
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                                ListOfColumnsInDataDictionary->Column_Type           := "N"
+                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
+                                ListOfColumnsInDataDictionary->Column_Scale          := 0
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            endcase
+                        endif
 
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType           .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray          .and. ;
@@ -1355,8 +1395,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         :Column("Column.UseStatus"      , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
+
+                        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+                        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
+
                         :SQL("ListOfColumnsInDataDictionary")
-                        // SendToClipboard(:LastSQL())
 
                         if :Tally < 0
                             l_cErrorMessage := "Failed to load Meta Data Columns. Error 305."
@@ -1368,7 +1412,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             endif
 
                             with object :p_oCursor
-                                :Index("tag1","str(tag1+'*',240)")
+                                :Index("tag1","padr(tag1+'*',240)")
                                 :CreateIndexes()
                             endwith
 
@@ -1562,6 +1606,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNameSpace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
+                            do case
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                                ListOfColumnsInDataDictionary->Column_Type           := "I"
+                                ListOfColumnsInDataDictionary->Column_Length         := nil
+                                ListOfColumnsInDataDictionary->Column_Scale          := nil
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                                ListOfColumnsInDataDictionary->Column_Type           := "N"
+                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
+                                ListOfColumnsInDataDictionary->Column_Scale          := 0
+                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                            endcase
+                        endif
+                        
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType     .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray    .and. ;
                            ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength   .and. ;

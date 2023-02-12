@@ -1427,7 +1427,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
@@ -1445,7 +1445,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfProjects
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfProjects->Project_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListModels/]+AllTrim(ListOfProjects->Project_LinkUID)+[/">]+Allt(ListOfProjects->Project_Name)+[</a>]
@@ -1741,7 +1741,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">] // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"12","13")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
@@ -1770,7 +1770,8 @@ l_cHtml += [<div class="m-3">]
                 scan all
                     l_iModelPk := ListOfModels->pk
 
-                    l_cHtml += [<tr>]
+                    // l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorStage(recno(),ListOfModels->Model_Stage)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Project
                             l_cHtml += par_Project_Name
@@ -2592,7 +2593,7 @@ if !empty(l_nNumberOfEntities)
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_nColspan := 6
             if l_nNumberOfCustomFieldValues > 0
@@ -2619,7 +2620,7 @@ if !empty(l_nNumberOfEntities)
             scan all
                 l_iEntityPk := ListOfEntities->pk
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEntities->Entity_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEntities->Entity_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(nvl(ListOfEntities->Package_FullName,""))
@@ -3524,7 +3525,7 @@ if !empty(l_nNumberOfPackages)
 
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
             
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
@@ -3540,7 +3541,7 @@ if !empty(l_nNumberOfPackages)
 
             select ListOfPackages
             scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfPackages->Package_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfPackages->Package_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_LinkUID+[/">]+ListOfPackages->Package_FullName+[</a>]
@@ -4017,7 +4018,7 @@ if !empty(l_nNumberOfDataTypes)
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
             
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
@@ -4035,8 +4036,7 @@ if !empty(l_nNumberOfDataTypes)
 
             select ListOfDataTypes
             scan all
-
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfDataTypes->DataType_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfDataTypes->DataType_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_LinkUID+[/">]+ListOfDataTypes->DataType_FullName+[</a>]
@@ -4456,7 +4456,7 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
@@ -4471,7 +4471,7 @@ else
 
                 select ListOfEnumerations
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfEnumerations->Enumeration_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_LinkUID+[/">]+ListOfEnumerations->Enumeration_Name+[</a>]
@@ -4788,7 +4788,7 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cEnumerationName)+["</th>]
@@ -4802,7 +4802,7 @@ else
 
             select ListOfEnumValues
             scan all
-                l_cHtml += [<tr>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumValue/]+par_cEnumerationLinkUID+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+[</a>]
@@ -5432,7 +5432,7 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_nColspan := 6
             if l_nNumberOfCustomFieldValues > 0
@@ -5458,7 +5458,7 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
             scan all
                 l_iAssociationPk := ListOfAssociations->pk
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAssociations->Association_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAssociations->Association_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += Allt(nvl(ListOfAssociations->Package_FullName,""))
@@ -6398,7 +6398,7 @@ else
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
                 l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">]
@@ -6424,7 +6424,7 @@ else
 
             select ListOfAttributes
             scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfAttributes->Attribute_UseStatus)+[>]
+                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAttributes->Attribute_UseStatus)+[>]
 
                     // Full Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]

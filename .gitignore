@@ -8,6 +8,7 @@
 *.ppo
 *.log
 .history
+.lh
 .hbmk
 *.NotInGit
 Thumbs.db
@@ -21,3 +22,4 @@ build/**
 Harbour_FastCGI
 !examples/datawharf.dmp
 debugger.hbm
+config_deployment.txt

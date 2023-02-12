@@ -121,7 +121,7 @@ TEXT TO VAR cHtml
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        Any missing tables, columns, enumerations and indexes will be added. Nothing will be deleted!
+        Any missing item will be added. Nothing will be deleted or updated!
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Import');document.form.submit();">Yes</button>

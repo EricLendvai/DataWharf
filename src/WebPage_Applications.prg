@@ -320,7 +320,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered table-striped">]
+                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
@@ -340,7 +340,7 @@ l_cHtml += [<div class="m-3">]
 
                 select ListOfApplications
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColor(ListOfApplications->Application_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfApplications->Application_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationSettings/]+AllTrim(ListOfApplications->Application_LinkCode)+[/">]+Allt(ListOfApplications->Application_Name)+[</a>]
