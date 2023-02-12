@@ -5,7 +5,7 @@
 #To enabled progressing recompilation uncomment the following line
 #-inc
 
--workdir=build/lin64/${HB_COMPILER}/${BuildMode}/hbmk2/
+-workdir=../build/lin64/${HB_COMPILER}/${BuildMode}/hbmk2/
 
 #To also create a list of all the object files linked uncomment the following line
 #-map
@@ -39,6 +39,9 @@ sddodbc.hbc
 
 hbunix.hbc
 
--obuild/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe
+-o../build/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe
 
 DataWharf.hbm
+
+hbcurl.hbc
+extra/jwt.prg

@@ -109,6 +109,10 @@ class MyFcgi from hb_Fcgi
     method OnRequest()
     method OnShutdown()
     method OnError(par_oError)
+#ifdef __PLATFORM__LINUX
+    method isOauth()
+    method OnCallback(par_code)
+#endif
     method Self() inline Self
 
     method Redirect(par_cURL)
@@ -135,6 +139,7 @@ local l_cTableName
 local l_cName
 local l_cLastSQL
 
+// altd()
 
 SendToDebugView("Called from method OnFirstRequest")
 
@@ -506,7 +511,7 @@ local l_cSessionID
 local l_nPos
 local l_lLoggedIn
 local l_nLoggedInPk,l_cLoggedInSignature
-local l_cID
+local l_cUserID
 local l_cPassword
 local l_oDB1
 local l_cSessionCookie
@@ -543,6 +548,7 @@ local l_oDB_ListOfFileStream
 local l_oDB_FileStream
 local l_cFilePath
 local l_cFileName
+local l_oJWT
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
@@ -687,6 +693,10 @@ otherwise
             l_cPageName := "home"
         endif
         
+        if l_cPageName == "favicon.ico" .or. l_cPageName == "scripts"
+            return nil
+        endif
+
         ::p_PageName := l_cPageName
 
         // ::URLPathElements := {}
@@ -743,10 +753,19 @@ otherwise
 
         l_cPageHeaderHtml := NIL  //To free memory
 
-        l_oDB1       := hb_SQLData(::p_o_SQLConnection)
-        l_cSessionID := ::GetCookieValue("SessionID")
+#ifdef __PLATFORM__LINUX
+        if ::isOAuth()
+            l_cSessionID := ::GetCookieValue("SessionJWT")
+        else
+            l_cSessionID := ::GetCookieValue("SessionID")
+        endif
+#else
+    l_cSessionID := ::GetCookieValue("SessionID")
+#endif
+
         l_cAction    := ::GetQueryString("action")
 
+        l_oDB1 := hb_SQLData(::p_o_SQLConnection)
         with object l_oDB1
             :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
             :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
@@ -755,144 +774,217 @@ otherwise
 
         if l_cAction == "logout"
             if !empty(l_cSessionID)
-                l_nPos               := at("-",l_cSessionID)
-                l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
-                l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
-                if !empty(l_nLoggedInPk)
-                    l_oDB1:Table("f40ca9ad-ef2c-4628-af82-67c1a8102f11","public.LoginLogs")
-                    l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
-                    l_oDB1:Column("LoginLogs.Signature","LoginLogs_Signature")
-                    l_oDB1:Column("LoginLogs.fk_User","User_pk")
-                    l_oData := l_oDB1:Get(l_nLoggedInPk)
 
-                    if l_oDB1:Tally == 1
-                        l_nLoginOutUserPk := l_oData:User_pk
-                        if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
-                            l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
-                            l_oDB1:Field("LoginLogs.Status",2)
-                            l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
-                            l_oDB1:Update(l_nLoggedInPk)
+#ifdef __PLATFORM__LINUX
+                if ::isOAuth()
+                    ::DeleteCookie("SessionJWT")
+                    //::Redirect(::RequestSettings["SitePath"]+"home")
+                    ::Redirect(oFcgi:GetAppConfig("OAUTH_LOGOUT_URL"))
+                    return nil
+                else
+#endif
+
+                    l_nPos               := at("-",l_cSessionID)
+                    l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
+                    l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
+                    if !empty(l_nLoggedInPk)
+                        l_oDB1:Table("f40ca9ad-ef2c-4628-af82-67c1a8102f11","public.LoginLogs")
+                        l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
+                        l_oDB1:Column("LoginLogs.Signature","LoginLogs_Signature")
+                        l_oDB1:Column("LoginLogs.fk_User","User_pk")
+                        l_oData := l_oDB1:Get(l_nLoggedInPk)
+
+                        if l_oDB1:Tally == 1
+                            l_nLoginOutUserPk := l_oData:User_pk
+                            if Trim(l_oData:LoginLogs_Signature) == l_cLoggedInSignature .and. l_oData:LoginLogs_Status == 1
+                                l_oDB1:Table("241914ab-ab79-43dd-b5dd-8424c38a1e9b","Public.LoginLogs")
+                                l_oDB1:Field("LoginLogs.Status",2)
+                                l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
+                                l_oDB1:Update(l_nLoggedInPk)
+                            endif
+
+                            //Logout implicitly any other session for the same user
+                            l_oDB1:Table("dbe98b47-b5ce-4fbd-aedd-8f59fac60ec3","public.LoginLogs")
+                            l_oDB1:Column("LoginLogs.pk","pk")
+                            l_oDB1:Where("LoginLogs.fk_User = ^" , l_nLoginOutUserPk)
+                            l_oDB1:Where("LoginLogs.Status = 1")
+                            l_oDB1:SQL("ListOfResults")
+                            select ListOfResults
+                            scan all
+                                l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
+                                l_oDB1:Field("LoginLogs.Status",3)
+                                l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
+                                l_oDB1:Update(ListOfResults->pk)
+                            endscan
+                            CloseAlias("ListOfResults")
+                        // else
                         endif
-
-                        //Logout implicitly any other session for the same user
-                        l_oDB1:Table("dbe98b47-b5ce-4fbd-aedd-8f59fac60ec3","public.LoginLogs")
-                        l_oDB1:Column("LoginLogs.pk","pk")
-                        l_oDB1:Where("LoginLogs.fk_User = ^" , l_nLoginOutUserPk)
-                        l_oDB1:Where("LoginLogs.Status = 1")
-                        l_oDB1:SQL("ListOfResults")
-                        select ListOfResults
-                        scan all
-                            l_oDB1:Table("c03a9f3e-ace3-48e1-9c21-df0d43be5ad2","public.LoginLogs")
-                            l_oDB1:Field("LoginLogs.Status",3)
-                            l_oDB1:Field("LoginLogs.TimeOut",{"S","now()"})
-                            l_oDB1:Update(ListOfResults->pk)
-                        endscan
-                        CloseAlias("ListOfResults")
-                    // else
                     endif
+                    ::DeleteCookie("SessionID")
+                    ::Redirect(::RequestSettings["SitePath"]+"home")
+                    return nil
+#ifdef __PLATFORM__LINUX
                 endif
-                ::DeleteCookie("SessionID")
-                ::Redirect(::RequestSettings["SitePath"]+"home")
-                return nil
+#endif
             endif
         endif
 
         l_lLoggedIn       := .f.
         l_cUserName       := ""
+        l_cUserID         := ""
         l_nUserAccessMode := 0
 
         if !empty(l_cSessionID) .and. !VFP_Inlist(lower(l_cPageName),"api") // ,"health"
-            l_nPos               := at("-",l_cSessionID)
-            l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
-            l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
-            if !empty(l_nLoggedInPk)
-                // Verify if valid loggin
-                l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
-                l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
-                l_oDB1:Column("User.pk"         ,"User_pk")
-                l_oDB1:Column("User.FirstName"  ,"User_FirstName")
-                l_oDB1:Column("User.LastName"   ,"User_LastName")
-                l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
-                l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
-                l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
-                l_oDB1:Where("User.Status = 1")
-                l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
-                l_oDB1:SQL("ListOfResults")
-                if l_oDB1:Tally = 1
-                    l_lLoggedIn       := .t.
-                    l_iUserPk         := ListOfResults->User_pk
-                    l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
-                    l_nUserAccessMode := ListOfResults->User_AccessMode
-                else
-                    // Clear the cookie
-                    ::DeleteCookie("SessionID")
+#ifdef __PLATFORM__LINUX
+            if ::isOAuth()
+                //validate session JWT
+                l_oJWT := JWT():new()
+                l_oJWT:Decode(l_cSessionID)
+                if !empty(l_oJWT:GetError())
+                    ::OnError(l_oJWT:GetError())
                 endif
-                CloseAlias("ListOfResults")
+
+                //check if token is still valid:
+                if getLinuxEpochTime() - l_oJWT:GetExpration() < 0 .and. ValidateToken(l_oJWT)
+                    l_lLoggedIn := .t.
+                    l_cUserID := l_oJWT:GetPayloadData('preferred_username')
+                    l_cUserName := AllTrim(l_oJWT:GetPayloadData('given_name'))+" "+l_oJWT:GetPayloadData('family_name')
+                    //check if user is already in local DB
+                    with object l_oDB1
+                        :Table("0405BFDF-8347-46DA-9C4C-BFF6E883CC94","public.User")
+                        :Column("User.pk"        ,"User_pk")
+                        :Column("User.AccessMode" ,"User_AccessMode")
+                        :Where("trim(User.id) = ^",l_cUserID)
+                        :SQL("ListOfResults")
+
+                        if :Tally == 1
+                            l_iUserPk := ListOfResults->User_Pk
+                            l_nUserAccessMode := ListOfResults->User_AccessMode
+                        else
+                            //first time user login, create with default access rights
+                            AutoProvisionUser(l_cUserID, l_oJWT:GetPayloadData('given_name'), l_oJWT:GetPayloadData('family_name'))
+                            :SQL("ListOfResults")
+                            if :Tally == 1
+                                l_iUserPk := ListOfResults->User_Pk
+                                l_nUserAccessMode := ListOfResults->User_AccessMode
+                            endif
+                        endif
+
+                    endwith
+                else
+                    ::DeleteCookie("SessionJWT")
+                endif
+            else
+#endif
+                l_nPos               := at("-",l_cSessionID)
+                l_nLoggedInPk        := val(left(l_cSessionID,l_nPos))
+                l_cLoggedInSignature := Trim(substr(l_cSessionID,l_nPos+1))
+                if !empty(l_nLoggedInPk)
+                    // Verify if valid loggin
+                    l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
+                    l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
+                    l_oDB1:Column("User.pk"         ,"User_pk")
+                    l_oDB1:Column("User.FirstName"  ,"User_FirstName")
+                    l_oDB1:Column("User.LastName"   ,"User_LastName")
+                    l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
+                    l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
+                    l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
+                    l_oDB1:Where("User.Status = 1")
+                    l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
+                    l_oDB1:SQL("ListOfResults")
+                    if l_oDB1:Tally = 1
+                        l_lLoggedIn       := .t.
+                        l_iUserPk         := ListOfResults->User_pk
+                        l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                        l_nUserAccessMode := ListOfResults->User_AccessMode
+                    else
+                        // Clear the cookie
+                        ::DeleteCookie("SessionID")
+                    endif
+                    CloseAlias("ListOfResults")
+                endif
+#ifdef __PLATFORM__LINUX
             endif
+#endif
         endif
         
         // if l_cPageName <> "ajax"
         if !VFP_Inlist(lower(l_cPageName),"ajax","api","streamfile")
             //If not a public page and not logged in, then request to log in.
             if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
-                if oFcgi:IsGet()
-                    l_cBody += GetPageHeader(.f.,l_cPageName)
-                    l_cBody += BuildPageLoginScreen()
+#ifdef __PLATFORM__LINUX
+                if ::isOAuth()
+                    if ::RequestSettings["Path"] == [login/]
+                        if ::RequestSettings["Page"] == [callback]
+                            ::OnCallback(::GetQueryString("code"))
+                        endif
+                    else
+                        // altd()
+                        ::Redirect(oFcgi:GetAppConfig("OAUTH_AUTH_URL") + [?] + [response_type=code&client_id=] + oFcgi:GetAppConfig("OAUTH_CLIENT_ID"))
+                    endif
                 else
-                    //Post
-                    l_cID             := SanitizeInput(oFcgi:GetInputValue("TextID"))
-                    l_cPassword       := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
+#endif
+                    if oFcgi:IsGet()
+                        l_cBody += GetPageHeader(.f.,l_cPageName)
+                        l_cBody += BuildPageLoginScreen()
+                    else
+                        //Post
+                        l_cUserID   := SanitizeInput(oFcgi:GetInputValue("TextID"))
+                        l_cPassword := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
 
-                    with object l_oDB1
-                        :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
-                        :Column("User.pk"        ,"User_pk")
-                        :Column("User.FirstName" ,"User_FirstName")
-                        :Column("User.LastName"  ,"User_LastName")
-                        :Column("User.Password"  ,"User_Password")
-                        :Column("User.AccessMode","User_AccessMode")
-                        :Where("trim(User.id) = ^",l_cID)
-                        // :Where("trim(User.Password) = ^",l_cPassword)
-                        :Where("User.Status = 1")
-                        :SQL("ListOfResults")
+                        with object l_oDB1
+                            :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
+                            :Column("User.pk"        ,"User_pk")
+                            :Column("User.FirstName" ,"User_FirstName")
+                            :Column("User.LastName"  ,"User_LastName")
+                            :Column("User.Password"  ,"User_Password")
+                            :Column("User.AccessMode","User_AccessMode")
+                            :Where("trim(User.id) = ^",l_cUserID)
+                            // :Where("trim(User.Password) = ^",l_cPassword)
+                            :Where("User.Status = 1")
+                            :SQL("ListOfResults")
 
-                        if :Tally == 1
-                            l_iUserPk := ListOfResults->User_Pk
+                            if :Tally == 1
+                                l_iUserPk := ListOfResults->User_Pk
 
-                            //Check if valid Password
-                            l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
+                                //Check if valid Password
+                                l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
 
-                            if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
-                                l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
-                                l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-                                l_nUserAccessMode := ListOfResults->User_AccessMode
+                                if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
+                                    l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                                    l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+                                    l_nUserAccessMode := ListOfResults->User_AccessMode
 
-                                :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
-                                :Field("LoginLogs.fk_User"  ,l_iUserPk)
-                                :Field("LoginLogs.TimeIn"   ,{"S","now()"})
-                                :Field("LoginLogs.IP"       ,l_cIP)
-                                :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
-                                :Field("LoginLogs.Status"   ,1)
-                                :Field("LoginLogs.Signature",l_cSignature)
-                                if :Add()
-                                    l_nLoginLogsPk := :Key()
-                                    l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
-                                    ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
-                                    l_lLoggedIn := .t.
+                                    :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
+                                    :Field("LoginLogs.fk_User"  ,l_iUserPk)
+                                    :Field("LoginLogs.TimeIn"   ,{"S","now()"})
+                                    :Field("LoginLogs.IP"       ,l_cIP)
+                                    :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
+                                    :Field("LoginLogs.Status"   ,1)
+                                    :Field("LoginLogs.Signature",l_cSignature)
+                                    if :Add()
+                                        l_nLoginLogsPk := :Key()
+                                        l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
+                                        ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
+                                        l_lLoggedIn := .t.
+                                    endif
+                                else
+                                    //Invalid Password
+                                    l_cBody += GetPageHeader(.f.,l_cPageName)
+                                    l_cBody += BuildPageLoginScreen(l_cUserID,"","Invalid ID or Password.1")
                                 endif
                             else
-                                //Invalid Password
+                                //Invalid Active ID
                                 l_cBody += GetPageHeader(.f.,l_cPageName)
-                                l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.1")
+                                l_cBody += BuildPageLoginScreen(l_cUserID,"","Invalid ID or Password.2")
                             endif
-                        else
-                            //Invalid Active ID
-                            l_cBody += GetPageHeader(.f.,l_cPageName)
-                            l_cBody += BuildPageLoginScreen(l_cID,"","Invalid ID or Password.2")
-                        endif
 
-                    endwith
-
+                        endwith
+                    
+                    endif
+#ifdef __PLATFORM__LINUX
                 endif
+#endif
             endif
         endif
 
@@ -1112,18 +1204,80 @@ local l_cErrorInfo
     BREAK
 return nil
 //=================================================================================================================
+//=================================================================================================================
+#ifdef __PLATFORM__LINUX
+    method isOAuth() class MyFcgi
+    return oFcgi:GetAppConfig("AUTH_METHOD") == "oauth"
+
+    //=================================================================================================================
+    method OnCallback(p_code) class MyFcgi
+        local l_tokenURL := ::GetAppConfig("OAUTH_TOKEN_URL")
+        local l_aHeaderParameter := {}
+        local l_cPostFields
+        local l_cResult
+
+        local l_cURL
+        local l_oAPIReturn
+        local l_oToken
+
+        local l_oJWT
+
+        /*
+        We want to do this:
+        curl --location --request POST 'http://localhost:8080/realms/avabase/protocol/openid-connect/token' \
+                --header 'Content-Type: application/x-www-form-urlencoded' \
+                --data-urlencode 'grant_type=authorization_code' \
+                --data-urlencode 'client_id=avabase' \
+                --data-urlencode 'client_secret=vdmHpu0pQbOvZIjbIUmD1m6Mo4TLONrJ' \
+                --data-urlencode 'code=15aaa4f3-74b5-413e-b750-ace0e032d16a.7fbe83da-b765-4a5f-8bd9-6bec36e596b5.95e224a4-9ca5-4b24-b46c-94cb92fa8114' \
+                --data-urlencode 'redirect_uri=http://localhost:8081/callback'
+        */
+        
+        AAdd(l_aHeaderParameter,"Content-Type: application/x-www-form-urlencoded")
+        l_cPostFields =  "grant_type=" + "authorization_code" +;
+            "&client_id=" + ::GetAppConfig("OAUTH_CLIENT_ID") +;
+            "&client_secret=" + ::GetAppConfig("OAUTH_CLIENT_SECRET") +;
+            "&code=" + p_code
+
+        l_cResult := CurlUrl(l_tokenURL, "POST", l_aHeaderParameter, l_cPostFields)
+        hb_jsonDecode(l_cResult,@l_oAPIReturn)
+        l_oToken := l_oAPIReturn["access_token"]
+
+
+        // Object
+        l_oJWT := JWT():new()
+        
+        //Verify will not yet work as RS256 is currently not supported
+        //oJWT:Verify(l_oToken)
+        l_oJWT:Decode(l_oToken)
+        if !empty(l_oJWT:GetError())
+            ::OnError(l_oJWT:GetError())
+        else
+            //succcesfull login
+            ::SetSessionCookieValue("SessionJWT",l_oToken,0)
+        endif
+        ::Redirect(::RequestSettings["SitePath"]+"home")
+    return nil
+
+    //=================================================================================================================
+    function ValidateToken(l_oJWT)
+        local l_bIsValid := .t.
+        //oJWT:SetSecret(publicKey)
+        //Verify will not yet work as RS256 is currently not supported in JWT.prg
+        //needs support for RSA verification which is not yet implemented in hbSSL library.
+        //oJWT:Verify(l_oToken)
+    return l_bIsValid
+#endif
+
+//=================================================================================================================
 function UpdateSchema(par_o_SQLConnection)
 local l_LastError := ""
 local l_hSchema
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
-// local l_cUpdateScript := ""
-
-//#include "Schema.txt"
 
 l_hSchema := Schema()
 
-// if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_LastError) > 0
 if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResult,,@l_LastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
@@ -1206,7 +1360,6 @@ endif
 
 l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
 
-
 l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
     l_cHtml += [<div id="app" class="container" >]
         l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]+l_cThisAppTitle+[</a>]
@@ -1244,8 +1397,11 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
                             l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                         endif
-                        l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
-                        
+#ifdef __PLATFORM__LINUX
+                        if !oFcgi:isOAuth()
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                        endif
+#endif
                     l_cHtml += [</ul>]
                     l_cHtml += [</li>]
 
@@ -1259,7 +1415,6 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
         endif
     l_cHtml += [</div>]    
 l_cHtml += [</header>]
-
 
 // l_cHtml += [<div class="m-3"></div>]   //Spacer
 
@@ -1343,9 +1498,9 @@ ENDTEXT
 
 return cHtml
 //=================================================================================================================
-function BuildPageLoginScreen(par_cId,par_cPassword,par_cErrorMessage)
+function BuildPageLoginScreen(par_cUserID,par_cPassword,par_cErrorMessage)
 local l_cHtml := ""
-local l_cID           := hb_DefaultValue(par_cId,"")
+local l_cUserID       := hb_DefaultValue(par_cUserID,"")
 local l_cPassword     := hb_DefaultValue(par_cPassword,"")
 local l_cErrorMessage := hb_DefaultValue(par_cErrorMessage,"")
 
@@ -1366,7 +1521,7 @@ l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-da
             l_cHtml += [<div class="form-group has-success">]
                 l_cHtml += [<label class="control-label" for="TextID">User ID</label>]
                 l_cHtml += [<div class="mt-2">]
-                    l_cHtml += [<input class="form-control" type="text" name="TextID" id="TextID" placeholder="Enter your User ID" maxlength="100" size="30" value="]+FcgiPrepFieldForValue(l_cID)+[" autocomplete="off">]
+                    l_cHtml += [<input class="form-control" type="text" name="TextID" id="TextID" placeholder="Enter your User ID" maxlength="100" size="30" value="]+FcgiPrepFieldForValue(l_cUserID)+[" autocomplete="off">]
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 
@@ -1692,6 +1847,121 @@ RDDSETDEFAULT(l_cPreviousDefaultRDD)
 select (l_select)
     
 return l_lSQLExecResult
+//=================================================================================================================
+#ifdef __PLATFORM__LINUX
+    function CurlUrl(p_cUrl, p_cMethod, p_aHeaders, p_cFormContent)
+    local l_pCurlHandle
+    local l_nResult
+    local l_cResult
+
+    if empty(Curl_Global_Init())
+        l_pCurlHandle := curl_easy_init()
+        if !hb_IsNil(l_pCurlHandle)
+
+            if !empty(p_aHeaders)
+                Curl_Easy_SetOpt(l_pCurlHandle, HB_CURLOPT_HTTPHEADER,p_aHeaders)
+            endif
+
+            if !empty(p_cFormContent)
+                CURL_EASY_SETOPT( l_pCurlHandle, HB_CURLOPT_COPYPOSTFIELDS,  p_cFormContent)
+            endif
+
+            Curl_Easy_SetOpt(l_pCurlHandle, HB_CURLOPT_URL, p_cUrl)
+            if p_cMethod == "POST"
+                Curl_Easy_SetOpt(l_pCurlHandle, HB_CURLOPT_POST, .t.)
+            endif
+            
+            Curl_Easy_SetOpt(l_pCurlHandle, HB_CURLOPT_DL_BUFF_SETUP , 100*1024)  // Max Buffer download size set to 100 Kb
+
+            l_nResult := Curl_Easy_Perform(l_pCurlHandle)
+
+            if empty(l_nResult)
+                l_cResult := curl_easy_dl_buff_get( l_pCurlHandle )
+            else
+                l_cResult := Alltrim(Str( l_nResult, 5 )) + " " + curl_easy_strerror( l_nResult )
+            endif
+
+            curl_easy_cleanup(l_pCurlHandle)
+        endif
+        Curl_Global_Cleanup()
+    endif
+
+    return l_cResult
+
+    function getLinuxEpochTime()
+    return (hb_datetime() - hb_ctot("1970-01-01","YYYY-MM-DD"))*24*60*60
+    //===========================================================================================================================
+    function AutoProvisionUser(p_cUserId, p_cUserGivenName, p_cUserFamilyName, l_pUserDescription)
+        local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        local l_iUserPk
+        local l_cErrorMessage
+
+        local l_nAccessLevelML := 2 //default access level for projects
+        local l_nAccessLevelDD := 2 //default access level for applications
+    
+        local l_oDB_ListOfCurrentApplicationForUser := hb_SQLData(oFcgi:p_o_SQLConnection)
+        local l_oDB_ListOfCurrentProjectForUser     := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+        local l_oDB_ListOfApplications              := hb_SQLData(oFcgi:p_o_SQLConnection)
+        local l_oDB_ListOfProjects                  := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+        with object l_oDB1
+            :Table("CFEFD791-A60C-48A8-9904-2CCEBCDB7D96","User")
+            :Field("User.FirstName",  p_cUserGivenName)
+            :Field("User.LastName" ,  p_cUserFamilyName)
+            :Field("User.ID"       ,  p_cUserId)
+            :Field("User.AccessMode", 2) //default is read access to everything
+            :Field("User.Status"    , 1)
+            :Field("User.Description",iif(empty(l_pUserDescription),NULL,l_pUserDescription))
+            if :Add()
+                l_iUserPk := :Key()
+            else
+                l_cErrorMessage := "Failed to add User."
+            endif
+
+
+            //Update the list selected Applications -----------------------------------------------
+            if empty(l_cErrorMessage)
+                with Object l_oDB_ListOfApplications
+                    :Table("1B2B5269-2B57-4D9F-926A-D10A99B6CAE4","Application")
+                    :Column("Application.pk","pk")
+                    :SQL("ListOfApplications")
+                endwith
+
+                if l_nAccessLevelDD > 1
+                    // Add the Application only if more than "None"
+                    :Table("46911A55-4267-4A1E-B267-FEEFA750B98C","UserAccessApplication")
+                    :Field("UserAccessApplication.fk_Application",ListOfApplications->pk)
+                    :Field("UserAccessApplication.fk_User"       ,l_iUserPk)
+                    :Field("UserAccessApplication.AccessLevelDD" ,l_nAccessLevelDD)
+                    if !:Add()
+                        l_cErrorMessage := "Failed to Save Application access rights."
+                    endif
+                endif
+            endif
+
+            //Update the list selected Projects -----------------------------------------------
+            if empty(l_cErrorMessage)
+                with Object l_oDB_ListOfProjects
+                    :Table("2B38794D-9960-498C-8B9E-B9A8C80EC26C","Project")
+                    :Column("Project.pk","pk")
+                    :SQL("ListOfProjects")
+                endwith
+
+                if l_nAccessLevelML > 1
+                    // Add the Project only if more than "None"
+                    :Table("3F775AF0-784F-46AF-BE5C-B19512AB91DD","UserAccessProject")
+                    :Field("UserAccessProject.fk_Project"   ,ListOfProjects->pk)
+                    :Field("UserAccessProject.fk_User"      ,l_iUserPk)
+                    :Field("UserAccessProject.AccessLevelML",l_nAccessLevelML)
+                    if !:Add()
+                        l_cErrorMessage := "Failed to Save Project access rights."
+                    endif
+                endif
+            endif
+        endwith
+    return l_iUserPk
+#endif
 //=================================================================================================================
 function GetTRStyleBackgroundColor(par_nUseStatus,par_cOpacity)
 local l_cHtml

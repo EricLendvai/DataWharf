@@ -3,10 +3,19 @@
 #include "hb_vfp.ch"
 #include "dbinfo.ch"
 
-#define BUILDVERSION "2.43"
+#ifdef __PLATFORM__LINUX
+#include "hbcurl.ch"
+#endif
+
+#define BUILDVERSION "2.44"
+
+// #ifdef __PLATFORM__WINDOWS
+// #endif
+
+
 #define MIN_HARBOUR_ORM_VERSION  "3.5"
 #define MIN_HARBOUR_VFP_VERSION  "3.3"
-#define MIN_HARBOUR_FCGI_VERSION "1.2"
+#define MIN_HARBOUR_FCGI_VERSION "1.3"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"

@@ -13,7 +13,7 @@ if %BuildMode%. == . goto MissingEnvironmentVariables
 if %SiteRootFolder%. ==. goto MissingEnvironmentVariables
 if %HB_COMPILER%. ==. goto MissingEnvironmentVariables
 
-if not exist %EXEName%_windows.hbp (
+if not exist src\%EXEName%_windows.hbp (
     echo Invalid Workspace Folder. Missing file %EXEName%_windows.hbp
     goto End
 )
@@ -50,7 +50,7 @@ md build\win64\%HB_COMPILER%\%BuildMode%\hbmk2 2>nul
 rem the following will output the current datetime
 for /F "tokens=2" %%i in ('date /t') do set mydate=%%i
 set mytime=%time%
-echo local l_cBuildInfo := "%HB_COMPILER% %BuildMode% %mydate% %mytime%">BuildInfo.txt
+echo local l_cBuildInfo := "%HB_COMPILER% %BuildMode% %mydate% %mytime%">src\BuildInfo.txt
 
 del build\win64\%HB_COMPILER%\%BuildMode%\%EXEName%.exe 2>nul
 if exist build\win64\%HB_COMPILER%\%BuildMode%\%EXEName%.exe (
@@ -67,11 +67,11 @@ if exist build\win64\%HB_COMPILER%\%BuildMode%\%EXEName%.exe (
 if %BuildMode% == debug (
 rem  cannot used -shared due to some libs. Still researching into this matter.
 rem    hbmk2 %EXEName%_windows.hbp -b -p -w3 -dDEBUGVIEW
-    hbmk2 %EXEName%_windows.hbp vscode_debugger.prg %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm -b -p -w3 -dDEBUGVIEW -dCLIPBOARDSUPPORT
+    hbmk2 src\%EXEName%_windows.hbp src\vscode_debugger.prg %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm -b -p -w3 -dDEBUGVIEW -dCLIPBOARDSUPPORT
 ) else (
     rem can not do -fullstatic due to libfcgi
 rem    hbmk2 %EXEName%_windows.hbp -w3  -static -dDEBUGVIEW
-    hbmk2 %EXEName%_windows.hbp %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm  -w3  -static -dDEBUGVIEW -dCLIPBOARDSUPPORT
+    hbmk2 src\%EXEName%_windows.hbp %HB_FASTCGI_ROOT%\hb_fcgi\hb_fcgi_windows.hbm  -w3  -static -dDEBUGVIEW -dCLIPBOARDSUPPORT
 )
 
 echo Current time is %mydate% %mytime%

@@ -1,0 +1,27 @@
+ReloadConfigAtEveryRequest=true             //"true" or "false"
+MaxRequestPerFCGIProcess=0                  //0 for Unlimited
+
+POSTGRESDRIVER=PostgreSQL Unicode
+POSTGRESHOST=host.docker.internal
+POSTGRESPORT=5432
+POSTGRESID=datawharf
+POSTGRESPASSWORD=main
+POSTGRESDATABASE=DataWharf
+
+ShowDevelopmentInfo=No                      //No or Yes
+APPLICATION_TITLE=DataWharf In Docker
+--COLOR_HEADER_BACKGROUND=E3F2FD
+--COLOR_HEADER_TEXT_WHITE=.f.
+
+SECURITY_DEFAULT_PASSWORD=password
+SECURITY_SALT=0123456789ABCDEFG
+
+CYANAUDIT_TRAC_USER=No                      //No or Yes
+
+//AUTH_METHOD=oauth
+//OAUTH_WELL_KNOWN_SERVER_URL=localhost:8080/realms/datawharf/.well-known/openid-configuration
+//OAUTH_AUTH_URL=http://localhost:8080/realms/datawharf/protocol/openid-connect/auth
+//OAUTH_TOKEN_URL=host.lima.internal:8080/realms/datawharf/protocol/openid-connect/token
+//OAUTH_LOGOUT_URL=http://localhost:8080/realms/datawharf/protocol/openid-connect/logout
+//OAUTH_CLIENT_ID=datawharf
+//OAUTH_CLIENT_SECRET=vdmHpu0pQbOvZIjbIUmD1m6Mo4TLONrJ

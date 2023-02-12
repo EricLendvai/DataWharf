@@ -613,7 +613,7 @@ do while l_nLineCounter < l_nNumberOfLines
 
                 l_cLine := l_aLines[l_nLineCounter]
             enddo
-            ExportTableToHtmlFile("ImportSource"+l_cTableName,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
+            //ExportTableToHtmlFile("ImportSource"+l_cTableName,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
         endwith
 
     endif

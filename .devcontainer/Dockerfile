@@ -23,6 +23,8 @@ RUN apt-get install -y \
         psmisc \
         libcurl4-openssl-dev
 
+# Had to run the following dependency install separatly
+RUN apt-get install -y libssl-dev
 
 # install harbour from src
 RUN mkdir /src
@@ -30,14 +32,13 @@ WORKDIR /src
 RUN git clone --branch master https://github.com/harbour/core.git harbour
 WORKDIR /src/harbour
 ENV HB_WITH_CURL=/usr/include/x86_64-linux-gnu/
+ENV HB_WITH_OPENSSL=/usr/include/openssl/
+
 # Will request the make app to use up to 8 core.
 RUN make -j 8 install
 
 #To fix symlinks
 RUN ldconfig
-
-#Fake command to force not using a cache from this point on.
-ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 4
 
 #- RUN chmod -R a+rwx /src
 
@@ -78,7 +79,12 @@ COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-
 COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-available/
 
 COPY ./FilesForPublishedWebsites/backend  /var/www/Harbour_websites/fcgi_DataWharf/backend
-COPY ./FilesForPublishedWebsites/backend/config_docker.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+
+#Fake command to force not using a cache from this point on.
+ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 12
+COPY ./.devcontainer/config*.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/
+#COPY ./FilesForPublishedWebsites/backend/config_docker.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+
 
 #RUN cp /src/build/lin64/gcc/release/FCGIDataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website

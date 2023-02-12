@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 02/11/2023 v 2.44
+* Moved source code files to "src" folder.
+* Support for Single Sign On, only in Linux. Using code from tgold, Thank you!.
+* Requires Harbour_FastCGI 1.3
+
 ## 02/10/2023 v 2.43
 * Fix of Import/Export when deploying on AWS RDS. The issue is related to RDS blocking use of PostgreSQL Large Objects. If using RDS and using multiple web servers, a balancer needs to be used to route all traffic to the same server for a logged in user. This requirement is only needed for import/exports.
 

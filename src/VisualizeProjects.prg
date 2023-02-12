@@ -13,7 +13,7 @@ local l_oDB_ListOfEdgesEntityEntity          := hb_SQLData(oFcgi:p_o_SQLConnecti
 local l_cSitePath := oFcgi:RequestSettings["SitePath"]
 local l_cNodePositions
 local l_hNodePositions := {=>}
-local l_hNodePosition := {=>}
+local l_hNodePosition  := {=>}
 local l_nMinX := 0
 local l_nMinY := 0
 local l_nLengthDecoded
@@ -378,7 +378,7 @@ with object l_oDB_ListOfEdgesEntityEntity
                 endif
             endif
         endscan
-ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
+        // ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     endif
 endwith

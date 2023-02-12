@@ -15,7 +15,7 @@ elif [ "${BuildMode}" != "debug" ] && [ "${BuildMode}" != "release" ] ; then
 elif [ "${HB_COMPILER}" != "gcc" ]; then
     echo "You must set Environment Variable HB_COMPILER to \"gcc\""
 else
-    if [ ! -f "${EXEName}_linux.hbp" ]; then
+    if [ ! -f "src/${EXEName}_linux.hbp" ]; then
         echo "Invalid Workspace Folder. Missing file ${EXEName}_linux.hbp"
     else
         #The following command most likely will do nothing if the SoftKill task was called first.
@@ -30,7 +30,7 @@ else
         mkdir "build/lin64/${HB_COMPILER}/${BuildMode}/hbmk2" 2>/dev/null
 
         now=$(date +'%m/%d/%Y %H:%M:%S')
-        echo local l_cBuildInfo := \"${HB_COMPILER} ${BuildMode} ${now}\">BuildInfo.txt
+        echo local l_cBuildInfo := \"${HB_COMPILER} ${BuildMode} ${now}\">src/BuildInfo.txt
 
         rm build/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe 2>/dev/null
         if [ -f "build/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe" ] ; then
@@ -44,9 +44,9 @@ else
             #  -p        = Leave generated ppo files
 
             if [ "${BuildMode}" = "debug" ] ; then
-                hbmk2 "${EXEName}_linux.hbp" "vscode_debugger.prg" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -b  -p -w3 -shared
+                hbmk2 "src/${EXEName}_linux.hbp" "src/vscode_debugger.prg" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -b  -p -w3 -shared
             else
-                hbmk2 "${EXEName}_linux.hbp" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -w3 -static
+                hbmk2 "src/${EXEName}_linux.hbp" "${HB_FASTCGI_ROOT}/hb_fcgi/hb_fcgi_linux.hbm" -w3 -static
                 # -static
                 # -fullstatic
             fi

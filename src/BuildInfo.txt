@@ -1,0 +1,1 @@
+local l_cBuildInfo := "gcc release 02/12/2023 07:15:07"
