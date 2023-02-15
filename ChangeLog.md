@@ -1,5 +1,15 @@
 # DataWharf - Change Log
 
+## 02/15/2023 v 2.46
+* Simplified linking of libraries hb_vfp and hb_orm. Update those related libraries.
+
+## 02/12/2023 v 2.45
+* Fixed bug in load schema.
+* Fixed bug on editing enumerations.
+* Delta and Load in Applications are Interger and Numeric Enumeration aware.
+* DataWharf Schema definition available for import in DataWharf itself. Removed DataWharfSchema.vsd since will not be maintained.
+* Fix stripped list background colors when Use Status is used.
+
 ## 02/11/2023 v 2.44
 * Moved source code files to "src" folder.
 * Support for Single Sign On, only in Linux. Using code from tgold, Thank you!.

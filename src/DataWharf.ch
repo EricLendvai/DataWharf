@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.45"
+#define BUILDVERSION "2.46"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -12,8 +12,8 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "3.5"
-#define MIN_HARBOUR_VFP_VERSION  "3.3"
+#define MIN_HARBOUR_ORM_VERSION  "3.7"
+#define MIN_HARBOUR_VFP_VERSION  "3.4"
 #define MIN_HARBOUR_FCGI_VERSION "1.3"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"

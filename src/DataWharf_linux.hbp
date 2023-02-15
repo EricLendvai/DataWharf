@@ -15,29 +15,11 @@
 -prgflag=-DUSING_HB_VFP
 -cflag=-DUSING_HB_VFP
 
-#To include the hb_vfp module, and even allow its debugging
--incpath=${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
-#Update the path where the HB_VFP package is installed
 -L${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
--lhb_vfp
-#The following will force the linking of all functions in hb_vfp module
-${HB_VFP_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}/hb_vfp.hbx
-hbunix.hbc
+hb_vfp.hbc
 
-#To include the hb_orm module, and even allow its debugging
--incpath=${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
-#Update the path where the HB_ORM package is installed
 -L${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}
--lhb_orm
-#The following will force the linking of all functions in hb_orm module
-${HB_ORM_ROOT}/build/lin64/${HB_COMPILER}/${BuildMode}/hb_orm.hbx
-#The following are includes used by the HB_ORM
-sddodbc.hbc
-
-#Following is not needed anymore
-#xhb.hbc
-
-hbunix.hbc
+hb_orm.hbc
 
 -o../build/lin64/${HB_COMPILER}/${BuildMode}/${EXEName}.exe
 
