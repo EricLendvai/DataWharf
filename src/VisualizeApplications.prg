@@ -1174,7 +1174,7 @@ with Object l_oDB1
     :OrderBy("tag1")
     :OrderBy("tag2")
     :SQL("ListOfAllTablesInApplication")
-
+//SendToDebugView(:GetLastEventId(),:LastSQL())
     if :Tally > 0
         
         l_cHtml += [<div class="ms-3"><span>Filter on Table Name</span><input type="text" id="TableSearch" value="" size="40" class="ms-2"><span class="ms-3"> (Press Enter)</span></div>]

@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.46"
+#define BUILDVERSION "2.47"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,7 +14,7 @@
 
 #define MIN_HARBOUR_ORM_VERSION  "3.7"
 #define MIN_HARBOUR_VFP_VERSION  "3.4"
-#define MIN_HARBOUR_FCGI_VERSION "1.3"
+#define MIN_HARBOUR_FCGI_VERSION "1.4"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"

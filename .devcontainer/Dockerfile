@@ -81,7 +81,7 @@ COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-avail
 COPY ./FilesForPublishedWebsites/backend  /var/www/Harbour_websites/fcgi_DataWharf/backend
 
 #Fake command to force not using a cache from this point on.
-ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 12
+ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 13
 COPY ./.devcontainer/config*.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/
 #COPY ./FilesForPublishedWebsites/backend/config_docker.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 

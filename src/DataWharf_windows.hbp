@@ -3,7 +3,7 @@
 -trace
 
 #To enabled progressing recompilation uncomment the following line
-#-inc
+-inc
 
 -workdir=..\build\win64\${HB_COMPILER}\${BuildMode}\hbmk2\
 
