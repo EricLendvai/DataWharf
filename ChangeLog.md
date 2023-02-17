@@ -1,7 +1,7 @@
 # DataWharf - Change Log
 
 ## 02/17/2023 v 2.47
-* Single Sign On support (Initial release).
+* Single Sign On support (Release after successful test).
 * Update the Harbour_FastCGI v 1.4 to fix "scan all" commands.
 
 ## 02/15/2023 v 2.46
