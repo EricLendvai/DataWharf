@@ -48,6 +48,15 @@ local l_cTags
 local l_cLinkUID
 local l_cJavaScript
 
+local l_nFk_Deployment
+local l_nSyncBackendType
+local l_cSyncServer
+local l_nSyncPort
+local l_cSyncUser
+local l_cSyncDatabase
+local l_cSyncNameSpaces
+local l_nSyncSetForeignKey
+
 local l_nAccessLevelDD := 1   // None by default
 // As per the info in Schema.prg
 //     1 - None
@@ -55,7 +64,7 @@ local l_nAccessLevelDD := 1   // None by default
 //     3 - Edit Description and Information Entries
 //     4 - Edit Description and Information Entries and Diagrams
 //     5 - Edit Anything and Import/Export
-//     6 - Edit Anything and Load/Sync Schema
+//     6 - Edit Anything and Load Schema
 //     7 - Full Access
 
 
@@ -75,7 +84,7 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/DataDictionarySettings/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryImport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
-// DataDictionaries/DataDictionaryLoadSchema/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryDeltaLoadSchema/<ApplicationLinkCode>/
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
 
@@ -184,7 +193,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportForDataWharfImports")
         l_cApplicationElement := "EXPORT"
 
-    case vfp_Inlist(l_cURLAction,"DataDictionaryLoadSchema")
+    case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema")
         l_cApplicationElement := "LOADSCHEMA"
 
     case vfp_Inlist(l_cURLAction,"Visualize")
@@ -375,8 +384,8 @@ case l_cURLAction == "DataDictionaryExportForDataWharfImports"
         l_cHtml += l_cHtmlUnderHeader
     endif
 
-case l_cURLAction == "DataDictionaryLoadSchema"
-    if oFcgi:p_nAccessLevelDD >= 6
+case l_cURLAction == "DataDictionaryDeltaLoadSchema"
+    // if oFcgi:p_nAccessLevelDD >= 6
         // l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         //Will Build the header after new entities are created.
         l_cHtmlUnderHeader := []
@@ -385,29 +394,65 @@ case l_cURLAction == "DataDictionaryLoadSchema"
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
             with object l_oDB1
-                :Table("87efb98c-f94f-4202-b97b-c41d8522e288","public.Application")
-                :Column("Application.SyncBackendType"  ,"Application_SyncBackendType")
-                :Column("Application.SyncServer"       ,"Application_SyncServer")
-                :Column("Application.SyncPort"         ,"Application_SyncPort")
-                :Column("Application.SyncUser"         ,"Application_SyncUser")
-                :Column("Application.SyncDatabase"     ,"Application_SyncDatabase")
-                :Column("Application.SyncNameSpaces"   ,"Application_SyncNameSpaces")
-                :Column("Application.SyncSetForeignKey","Application_SyncSetForeignKey")
-                l_oData := :Get(l_iApplicationPk)
+                :Table("87efb98c-f94f-4202-b97b-c41d8522e288","public.UserSettingApplication")
+                :Column("UserSettingApplication.fk_Deployment"    ,"fk_Deployment")
+                :Column("UserSettingApplication.SyncBackendType"  ,"SyncBackendType")
+                :Column("UserSettingApplication.SyncServer"       ,"SyncServer")
+                :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
+                :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
+                :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
+                :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
+                :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
+                :Where("UserSettingApplication.fk_Application = ^",l_iApplicationPk)
+                :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+                :SQL("ListOfUserSettingApplication")
+
+                do case
+                case :Tally == 0 .or. :Tally > 1
+                    if :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+                        //More than one setting on file, delete them all
+                        select ListOfUserSettingApplication
+                        scan all
+                            :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
+                        endscan
+                    endif
+
+                    //No settings on file
+                    l_nFk_Deployment     := 0
+                    l_nSyncBackendType   := 0
+                    l_cSyncServer        := ""
+                    l_nSyncPort          := 0
+                    l_cSyncUser          := ""
+                    l_cSyncDatabase      := ""
+                    l_cSyncNameSpaces    := ""
+                    l_nSyncSetForeignKey := 0
+
+                case :Tally == 1
+                    //settings on file
+                    l_nFk_Deployment     := ListOfUserSettingApplication->Fk_Deployment
+                    l_nSyncBackendType   := ListOfUserSettingApplication->SyncBackendType
+                    l_cSyncServer        := ListOfUserSettingApplication->SyncServer
+                    l_nSyncPort          := ListOfUserSettingApplication->SyncPort
+                    l_cSyncUser          := ListOfUserSettingApplication->SyncUser
+                    l_cSyncDatabase      := ListOfUserSettingApplication->SyncDatabase
+                    l_cSyncNameSpaces    := ListOfUserSettingApplication->SyncNameSpaces
+                    l_nSyncSetForeignKey := ListOfUserSettingApplication->SyncSetForeignKey
+
+                endcase
+
             endwith
 
-            if l_oDB1:Tally == 1
-                l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
-                                                            l_oData:Application_SyncBackendType,;
-                                                            l_oData:Application_SyncServer,;
-                                                            l_oData:Application_SyncPort,;
-                                                            l_oData:Application_SyncUser,;
-                                                            "",;
-                                                            l_oData:Application_SyncDatabase,;
-                                                            l_oData:Application_SyncNameSpaces,;
-                                                            l_oData:Application_SyncSetForeignKey,;
-                                                            {})
-            endif
+            l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+                                                        l_nFk_Deployment,;
+                                                        l_nSyncBackendType,;
+                                                        l_cSyncServer,;
+                                                        l_nSyncPort,;
+                                                        l_cSyncUser,;
+                                                        "",;
+                                                        l_cSyncDatabase,;
+                                                        l_cSyncNameSpaces,;
+                                                        l_nSyncSetForeignKey,;
+                                                        {})
         else
             if l_iApplicationPk > 0
                 l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
@@ -415,7 +460,7 @@ case l_cURLAction == "DataDictionaryLoadSchema"
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
-    endif
+    // endif
 
 case l_cURLAction == "Visualize"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -1262,11 +1307,13 @@ l_cHtml += [<ul class="nav nav-tabs">]
         l_cHtml += [</li>]
     endif
     //--------------------------------------------------------------------------------------
-    if oFcgi:p_nAccessLevelDD >= 6
-        l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryLoadSchema/]+par_cURLApplicationLinkCode+[/">Load/Sync Schema</a>]
-        l_cHtml += [</li>]
-    endif
+    l_cHtml += [<li class="nav-item">]
+        if oFcgi:p_nAccessLevelDD >= 6
+            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeltaLoadSchema/]+par_cURLApplicationLinkCode+[/">Delta/Load Schema</a>]
+        else
+            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeltaLoadSchema/]+par_cURLApplicationLinkCode+[/">Delta Schema</a>]
+        endif
+    l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
         //Will check if we have a previously accessed diagram.
@@ -1274,7 +1321,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
             :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
             :Column("UserSettingApplication.pk","pk")
             :Column("Diagram.LinkUID"          ,"Diagram_LinkUID")
-            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")
+            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
             :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
             :SQL("ListOfUserSettingApplication")
@@ -1478,7 +1525,7 @@ l_cHtml += [<div class="m-3">]
             :Table("620799a2-adb9-40dc-8136-5a6007fead0f","UserSettingApplication")
             :Column("UserSettingApplication.fk_Application","ApplicationPk")
             :Column("Diagram.LinkUID"                      ,"Diagram_LinkUID")
-            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")
+            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
             :SQL("ListOfUserSettingApplicationDefaultDiagram")
             with object :p_oCursor
@@ -5728,14 +5775,16 @@ endif
 return l_cHtml
 //=================================================================================================================
 static function DataDictionaryLoadSchemaStep1FormBuild(par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
-                                                    par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey,;
-                                                    par_aDeltaMessages)
+                                                       par_nFk_Deployment,;
+                                                       par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey,;
+                                                       par_aDeltaMessages)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
 local l_cApplicationName   := hb_DefaultValue(par_cApplicationName,"")
 local l_cLinkCode          := hb_DefaultValue(par_cLinkCode,"")
 
+local l_nFk_Deployment     := hb_DefaultValue(par_nFk_Deployment,0)
 local l_nSyncBackendType   := hb_DefaultValue(par_nSyncBackendType,0)
 local l_cSyncServer        := hb_DefaultValue(par_cSyncServer,"")
 local l_nSyncPort          := hb_DefaultValue(par_nSyncPort,0)
@@ -5747,7 +5796,22 @@ local l_nSyncSetForeignKey := hb_DefaultValue(par_nSyncSetForeignKey,1)
 
 local l_cMessageLine
 
+local l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nNumberOfDeployments
+
 oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormBuild")
+
+with object l_oDB_ListOfDeployments
+    :Table("622f65ec-3a70-4f96-9bd2-a55386c9e2b8","Deployment")
+    :Where("Deployment.fk_Application = ^",par_iPk)
+    :Where("Deployment.Status = 1")
+    :Column("Deployment.pk"         ,"Pk")
+    :Column("Deployment.Name"       ,"Deployment_Name")
+    :Column("Upper(Deployment.Name)","tag1")
+    :OrderBy("tag1")
+    :SQL("ListOfDeployments")
+    l_nNumberOfDeployments := :Tally
+endwith
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Step1">]
@@ -5762,10 +5826,12 @@ if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">Load Schema - Enter Connection Information</span>]   //navbar-text
+
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
 
-            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" data-bs-target="#ConfirmLoadModal" value="Load" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();" role="button">]
-            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmLoadModal">Load</button>]
+            if oFcgi:p_nAccessLevelDD >= 6
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmLoadModal">Load</button>]
+            endif
 
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
@@ -5774,7 +5840,47 @@ if !empty(par_iPk)
     l_cHtml += [<div class="m-3"></div>]
 
     l_cHtml += [<div class="m-3">]
-        l_cHtml += [<table>]
+
+        if l_nNumberOfDeployments > 0
+
+            l_cHtml += [<script language="javascript">]
+            l_cHtml += [function OnChangeDeployment(par_Value) {]
+
+            l_cHtml += [switch(par_Value) {]
+            l_cHtml += [  case '0':]
+            l_cHtml += [  $('#TableCustomDeployment').show();]
+            l_cHtml += [    break;]
+            l_cHtml += [  default:]
+            l_cHtml += [  $('#TableCustomDeployment').hide();]
+            l_cHtml += [};]
+
+            l_cHtml += [};]
+            l_cHtml += [</script>] 
+            oFcgi:p_cjQueryScript += [OnChangeDeployment($("#ComboFk_Deployment").val());]
+
+            l_cHtml += [<table>]
+                l_cHtml += [<tr class="pb-5">]
+                    l_cHtml += [<td class="pe-2 pb-3">Deployment</td>]
+                    l_cHtml += [<td class="pb-3">]
+                        l_cHtml += [<select name="ComboFk_Deployment" id="ComboFk_Deployment" onchange="OnChangeDeployment(this.value);">]
+                        l_cHtml += [<option value="0"]+iif(0 == l_nFk_Deployment,[ selected],[])+[>My Custom Settings</option>]
+                        select ListOfDeployments
+                        scan all
+                            l_cHtml += [<option value="]+trans(ListOfDeployments->pk)+["]+iif(ListOfDeployments->pk == l_nFk_Deployment,[ selected],[])+[>]+Alltrim(ListOfDeployments->Deployment_Name)+[</option>]
+                        endscan
+                        l_cHtml += [</select>]
+                    l_cHtml += [</td>]
+            l_cHtml += [</tr>]
+            l_cHtml += [</table>]
+        else
+            l_cHtml += [<input type="hidden" name="ComboFk_Deployment" value="0">]
+        endif
+
+        if l_nNumberOfDeployments > 0
+            l_cHtml += [<table id="TableCustomDeployment" style="display: none;">]
+        else
+            l_cHtml += [<table id="TableCustomDeployment">]
+        endif
 
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">Server Type</td>]
@@ -5784,7 +5890,7 @@ if !empty(par_iPk)
                     l_cHtml += [<option value="1"]+iif(l_nSyncBackendType==1,[ selected],[])+[>MariaDB</option>]
                     l_cHtml += [<option value="2"]+iif(l_nSyncBackendType==2,[ selected],[])+[>MySQL</option>]
                     l_cHtml += [<option value="3"]+iif(l_nSyncBackendType==3,[ selected],[])+[>PostgreSQL</option>]
-                    l_cHtml += [<option value="4"]+iif(l_nSyncBackendType==4,[ selected],[])+[>MS SQL</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nSyncBackendType==4,[ selected],[])+[>MSSQL</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
@@ -5796,7 +5902,7 @@ if !empty(par_iPk)
 
             l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">Port (If not default)</td>]
-                l_cHtml += [<td class="pb-3"><input type="text" name="SyncPort" id="SyncPort" value="]+iif(empty(l_nSyncPort),"",Trans(l_nSyncPort))+[" maxlength="10" size="10"></td>]
+                l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncPort" id="TextSyncPort" value="]+iif(empty(l_nSyncPort),"",Trans(l_nSyncPort))+[" maxlength="10" size="10"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
@@ -5832,7 +5938,6 @@ if !empty(par_iPk)
                 l_cHtml += [</td>]
             l_cHtml += [</tr>]
 
-
         l_cHtml += [</table>]
 
     l_cHtml += [</div>]
@@ -5861,6 +5966,7 @@ static function DataDictionaryLoadSchemaStep1FormOnSubmit(par_iApplicationPk,par
 local l_cHtml := []
 local l_cActionOnSubmit
 
+local l_nFk_Deployment
 local l_nSyncBackendType
 local l_cSyncServer
 local l_nSyncPort
@@ -5870,9 +5976,22 @@ local l_cSyncDatabase
 local l_cSyncNameSpaces
 local l_nSyncSetForeignKey
 
+local l_nConnectBackendType
+local l_cConnectServer
+local l_nConnectPort
+local l_cConnectUser
+local l_cConnectPassword
+local l_cConnectDatabase
+local l_cConnectNameSpaces
+local l_nConnectSetForeignKey
+local l_nConnectPasswordStorage
+local l_cConnectPasswordConfigKey
+local l_cConnectPasswordEnvVarName
+
 
 local l_cErrorMessage := ""
 local l_oDB1
+local l_oDB_ListOfDeployments
 
 local l_cPreviousDefaultRDD
 local l_cConnectionString
@@ -5881,14 +6000,16 @@ local l_iPort
 local l_cDriver
 local l_SQLHandle
 local l_aDeltaMessages := {}
+local l_oData
 
 oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
+l_nFk_Deployment     := Val(oFcgi:GetInputValue("ComboFk_Deployment"))
 l_nSyncBackendType   := Val(oFcgi:GetInputValue("ComboSyncBackendType"))
 l_cSyncServer        := SanitizeInput(oFcgi:GetInputValue("TextSyncServer"))
-l_nSyncPort          := Val(oFcgi:GetInputValue("SyncPort"))
+l_nSyncPort          := Val(oFcgi:GetInputValue("TextSyncPort"))
 l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
 l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
 l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
@@ -5901,89 +6022,253 @@ do case
 case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
 
     do case
-    case empty(l_nSyncBackendType)
+    case empty(l_nFk_Deployment) .and. empty(l_nSyncBackendType)
         l_cErrorMessage := "Missing Backend Type"
 
-    case empty(l_cSyncServer)
+    case empty(l_nFk_Deployment) .and. empty(l_cSyncServer)
         l_cErrorMessage := "Missing Server Host Address"
 
-    case empty(l_cSyncUser)
+    case empty(l_nFk_Deployment) .and. empty(l_cSyncUser)
         l_cErrorMessage := "Missing User Name"
 
-    case empty(l_cSyncPassword)
+    case empty(l_nFk_Deployment) .and. empty(l_cSyncPassword)
         l_cErrorMessage := "Missing Password"
 
-    case empty(l_cSyncDatabase)
+    case empty(l_nFk_Deployment) .and. empty(l_cSyncDatabase)
         l_cErrorMessage := "Missing Database"
 
     otherwise
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
         with object l_oDB1
-            :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c5","Application")
-            :Field("Application.SyncBackendType"  ,l_nSyncBackendType)
-            :Field("Application.SyncServer"       ,l_cSyncServer)
-            :Field("Application.SyncPort"         ,l_nSyncPort)
-            :Field("Application.SyncUser"         ,l_cSyncUser)
-            :Field("Application.SyncDatabase"     ,l_cSyncDatabase)
-            :Field("Application.SyncNameSpaces"   ,l_cSyncNameSpaces)
-            :Field("Application.SyncSetForeignKey",l_nSyncSetForeignKey)
-            :Update(par_iApplicationPk)
+            :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c5","UserSettingApplication")
+            :Column("UserSettingApplication.pk"               ,"pk")
+            :Column("UserSettingApplication.fk_Deployment"    ,"fk_Deployment")
+            :Column("UserSettingApplication.SyncBackendType"  ,"SyncBackendType")
+            :Column("UserSettingApplication.SyncServer"       ,"SyncServer")
+            :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
+            :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
+            :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
+            :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
+            :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
+            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+            :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
+            :SQL("ListOfUserSettingApplication")
+
+            do case
+            case :Tally == 0 .or. :Tally > 1
+                if :Tally > 1  //Some bad data, simply delete all records.
+                    select ListOfUserSettingApplication
+                    scan all
+                        :Delete("ed077f50-c5c2-4ed0-bb97-5b9aedc081c8","UserSettingApplication",ListOfUserSettingApplication->pk)
+                    endscan
+                endif
+
+                //Add a new record
+                :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c6","UserSettingApplication")
+                :Field("UserSettingApplication.fk_Deployment"    ,l_nFk_Deployment)
+                :Field("UserSettingApplication.SyncBackendType"  ,l_nSyncBackendType)
+                :Field("UserSettingApplication.SyncServer"       ,l_cSyncServer)
+                :Field("UserSettingApplication.SyncPort"         ,l_nSyncPort)
+                :Field("UserSettingApplication.SyncUser"         ,l_cSyncUser)
+                :Field("UserSettingApplication.SyncDatabase"     ,l_cSyncDatabase)
+                :Field("UserSettingApplication.SyncNameSpaces"   ,l_cSyncNameSpaces)
+                :Field("UserSettingApplication.SyncSetForeignKey",l_nSyncSetForeignKey)
+                :Field("UserSettingApplication.fk_User"       ,oFcgi:p_iUserPk)
+                :Field("UserSettingApplication.fk_Application",par_iApplicationPk)
+                :Add()
+
+            case :Tally == 1
+                if ListOfUserSettingApplication->fk_Deployment     <> l_nFk_Deployment     .or. ;
+                   ListOfUserSettingApplication->SyncBackendType   <> l_nSyncBackendType   .or. ;
+                   ListOfUserSettingApplication->SyncServer        <> l_cSyncServer        .or. ;
+                   ListOfUserSettingApplication->SyncPort          <> l_nSyncPort          .or. ;
+                   ListOfUserSettingApplication->SyncUser          <> l_cSyncUser          .or. ;
+                   ListOfUserSettingApplication->SyncDatabase      <> l_cSyncDatabase      .or. ;
+                   ListOfUserSettingApplication->SyncNameSpaces    <> l_cSyncNameSpaces    .or. ;
+                   ListOfUserSettingApplication->SyncSetForeignKey <> l_nSyncSetForeignKey
+                    :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c7","UserSettingApplication")
+                    :Field("UserSettingApplication.fk_Deployment"    ,l_nFk_Deployment)
+                    :Field("UserSettingApplication.SyncBackendType"  ,l_nSyncBackendType)
+                    :Field("UserSettingApplication.SyncServer"       ,l_cSyncServer)
+                    :Field("UserSettingApplication.SyncPort"         ,l_nSyncPort)
+                    :Field("UserSettingApplication.SyncUser"         ,l_cSyncUser)
+                    :Field("UserSettingApplication.SyncDatabase"     ,l_cSyncDatabase)
+                    :Field("UserSettingApplication.SyncNameSpaces"   ,l_cSyncNameSpaces)
+                    :Field("UserSettingApplication.SyncSetForeignKey",l_nSyncSetForeignKey)
+                    :Update(ListOfUserSettingApplication->pk)
+                endif
+            endcase
         endwith
 
+
 //config
-        switch l_nSyncBackendType
-        case HB_ORM_BACKENDTYPE_MARIADB
-            l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-            l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
-            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MARIADB")
-            if empty(l_cDriver)
-                l_cDriver := "MariaDB ODBC 3.1 Driver"
-            endif
-            exit
-        case HB_ORM_BACKENDTYPE_MYSQL
-            l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-            l_iPort         := iif(empty(l_nSyncPort),3306,l_nSyncPort)
-            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MYSQL")
-            if empty(l_cDriver)
-                l_cDriver := "MySQL ODBC 8.0 Unicode Driver"
-            endif
-            exit
-        case HB_ORM_BACKENDTYPE_POSTGRESQL
-            l_SQLEngineType := HB_ORM_ENGINETYPE_POSTGRESQL
-            l_iPort         := iif(empty(l_nSyncPort),5432,l_nSyncPort)
-            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_POSTGRESQL")
-            if empty(l_cDriver)
-                l_cDriver := "PostgreSQL Unicode"
-            endif
-            exit
-        case HB_ORM_BACKENDTYPE_MSSQL
-            l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
-            l_iPort         := iif(empty(l_nSyncPort),1433,l_nSyncPort)
-            l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MSSQL")
-            if empty(l_cDriver)
-                l_cDriver := "SQL Server"
-            endif
-            exit
-        otherwise
-            l_iPort := -1
-        endswitch
 
 
-        do case
-        case l_iPort == -1
-            l_cErrorMessage := "Unknown Server Type"
+        if empty(l_nFk_Deployment)
+            l_nConnectBackendType   := l_nSyncBackendType
+            l_cConnectServer        := l_cSyncServer
+            l_nConnectPort          := l_nSyncPort
+            l_cConnectUser          := l_cSyncUser
+            l_cConnectPassword      := l_cSyncPassword
+            l_cConnectDatabase      := l_cSyncDatabase
+            l_cConnectNameSpaces    := l_cSyncNameSpaces
+            l_nConnectSetForeignKey := l_nSyncSetForeignKey
 
-        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_nSyncBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
-            // To enable multi statements to be executed, meaning multiple SQL commands separated by ";", had to use the OPTION= setting.
-            // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
-            l_cConnectionString := "SERVER="+l_cSyncServer+";Driver={"+l_cDriver+"};USER="+l_cSyncUser+";PASSWORD="+l_cSyncPassword+";DATABASE="+l_cSyncDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
-        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
-            l_cConnectionString := "Server="+l_cSyncServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Database="+l_cSyncDatabase+";BoolsAsChar=0;"
-        case l_nSyncBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
-            l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cSyncServer+","+AllTrim(str(l_iPort))+";Database="+l_cSyncDatabase+";Uid="+l_cSyncUser+";Pwd="+l_cSyncPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
-        otherwise
-            l_cErrorMessage := "Invalid 'Backend Type'"
-        endcase
+        else
+            l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
+            
+            with object l_oDB_ListOfDeployments
+                :Table("d4e737d0-d8a3-4f5e-b05a-aa87e17522b1","public.Deployment")
+
+                :Column("Deployment.BackendType"        , "BackendType")
+                :Column("Deployment.Server"             , "Server")
+                :Column("Deployment.Port"               , "Port")
+                :Column("Deployment.User"               , "User")
+                :Column("Deployment.Database"           , "Database")
+                :Column("Deployment.NameSpaces"         , "NameSpaces")
+                :Column("Deployment.SetForeignKey"      , "SetForeignKey")
+                :Column("Deployment.PasswordStorage"    , "PasswordStorage")
+                // :Column("Deployment.PasswordCrypt"      , "PasswordCrypt")
+                :Column("Deployment.PasswordConfigKey"  , "PasswordConfigKey")
+                :Column("Deployment.PasswordEnvVarName" , "PasswordEnvVarName")
+
+                l_oData := :Get(l_nFk_Deployment)
+                if :Tally == 1
+                    l_nConnectBackendType     := nvl(l_oData:BackendType,0)
+                    l_cConnectServer          := nvl(l_oData:Server,"")
+                    l_nConnectPort            := nvl(l_oData:Port,0)
+                    l_cConnectUser            := nvl(l_oData:User,"")
+                    l_cConnectDatabase        := nvl(l_oData:Database,"")
+                    l_cConnectNameSpaces      := nvl(l_oData:NameSpaces,"")
+                    l_nConnectSetForeignKey   := nvl(l_oData:SetForeignKey,0)
+                    l_nConnectPasswordStorage := nvl(l_oData:PasswordStorage,0)  //1 = Encrypted, 2 = In config.txt, 3 = In Environment Variable, 4 = User is AWS iam account. (Coming Soon)
+
+                    do case
+                    case empty(l_nConnectBackendType)
+                        l_cErrorMessage := "Missing Backend Type"
+
+                    case empty(l_cConnectServer)
+                        l_cErrorMessage := "Missing Server Host Address"
+
+                    case empty(l_cConnectUser)
+                        l_cErrorMessage := "Missing User Name"
+
+                    // case empty(l_cSyncPassword)
+                    //     l_cErrorMessage := "Missing Password"
+
+                    case empty(l_cConnectDatabase)
+                        l_cErrorMessage := "Missing Database"
+
+                    endcase
+
+                    if empty(l_cErrorMessage)
+                        do case
+                        case l_nConnectPasswordStorage == 1 // Encrypted
+                            :Table("d4e737d0-d8a3-4f5e-b05a-aa87e17522b2","public.Deployment")
+                            :Column([pgp_sym_decrypt(Deployment.PasswordCrypt,']+oFcgi:GetAppConfig("DEPLOYMENT_CRYPT_KEY")+[','compress-algo=0, cipher-algo=aes256')],"Password")
+                            l_oData := :Get(l_nFk_Deployment)
+                            if :Tally == 1
+                                l_cConnectPassword := nvl(l_oData:Password,"")
+                            else
+                                // l_cErrorMessage := :ErrorMessage()
+                                l_cErrorMessage := :LastSQL()
+                            endif
+
+                        case l_nConnectPasswordStorage == 2 // In config.txt
+                            l_cConnectPasswordConfigKey := nvl(l_oData:PasswordConfigKey,"")
+                            if empty(l_cConnectPasswordConfigKey)
+                                l_cErrorMessage := "Missing configuration file key name."
+                            else
+                                l_cConnectPassword := oFcgi:GetAppConfig(l_cConnectPasswordConfigKey)
+                                if empty(l_cConnectPassword)
+                                    l_cErrorMessage := "Missing password in config.txt file."
+                                endif
+                            endif
+                            
+                        case l_nConnectPasswordStorage == 3 // In Environment Variable
+                            l_cConnectPasswordEnvVarName := nvl(l_oData:PasswordEnvVarName,"")
+                            if empty(l_cConnectPasswordEnvVarName)
+                                l_cErrorMessage := "Missing environment variable name."
+                            else
+                                l_cConnectPassword := oFcgi:GetEnvironment(l_cConnectPasswordEnvVarName)
+                                if empty(l_cConnectPassword)
+                                    l_cErrorMessage := "Missing password in environment variable."
+                                endif
+                            endif
+
+                        case l_nConnectPasswordStorage == 4 // User is AWS iam account
+                            l_cErrorMessage := "AWS iam authentication not yet supported."
+
+                        endcase
+//Finish the coding to set the l_cConnectPassword
+                    //l_cConnectPassword      := l_cSyncPassword
+                    endif
+
+                else
+                    l_nSyncBackendType := 0
+                endif
+                
+            endwith
+
+        endif
+
+
+        if empty(l_cErrorMessage)
+            switch l_nConnectBackendType
+            case HB_ORM_BACKENDTYPE_MARIADB
+                l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
+                l_iPort         := iif(empty(l_nConnectPort),3306,l_nConnectPort)
+                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MARIADB")
+                if empty(l_cDriver)
+                    l_cDriver := "MariaDB ODBC 3.1 Driver"
+                endif
+                exit
+            case HB_ORM_BACKENDTYPE_MYSQL
+                l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
+                l_iPort         := iif(empty(l_nConnectPort),3306,l_nConnectPort)
+                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MYSQL")
+                if empty(l_cDriver)
+                    l_cDriver := "MySQL ODBC 8.0 Unicode Driver"
+                endif
+                exit
+            case HB_ORM_BACKENDTYPE_POSTGRESQL
+                l_SQLEngineType := HB_ORM_ENGINETYPE_POSTGRESQL
+                l_iPort         := iif(empty(l_nConnectPort),5432,l_nConnectPort)
+                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_POSTGRESQL")
+                if empty(l_cDriver)
+                    l_cDriver := "PostgreSQL Unicode"
+                endif
+                exit
+            case HB_ORM_BACKENDTYPE_MSSQL
+                l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
+                l_iPort         := iif(empty(l_nConnectPort),1433,l_nConnectPort)
+                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MSSQL")
+                if empty(l_cDriver)
+                    l_cDriver := "SQL Server"
+                endif
+                exit
+            otherwise
+                l_iPort := -1
+            endswitch
+
+            do case
+            case l_iPort == -1
+                l_cErrorMessage := "Unknown Server Type"
+            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_nConnectBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
+                // To enable multi statements to be executed, meaning multiple SQL commands separated by ";", had to use the OPTION= setting.
+                // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
+                l_cConnectionString := "SERVER="+l_cConnectServer+";Driver={"+l_cDriver+"};USER="+l_cConnectUser+";PASSWORD="+l_cConnectPassword+";DATABASE="+l_cConnectDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
+            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
+                l_cConnectionString := "Server="+l_cConnectServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Database="+l_cConnectDatabase+";BoolsAsChar=0;"
+            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
+                l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+AllTrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
+            otherwise
+                l_cErrorMessage := "Invalid 'Backend Type'"
+            endcase
+        endif
+
+//Sync
         if !empty(l_cConnectionString)
             l_SQLHandle := hb_RDDInfo( RDDI_CONNECT, { "ODBC", l_cConnectionString })
 
@@ -5995,7 +6280,11 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
 // SendToDebugView(l_cConnectionString)
                 do case
                 case l_cActionOnSubmit == "Load"
-                    l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
+                    if oFcgi:p_nAccessLevelDD >= 6
+                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
+                    else
+                        l_cErrorMessage := "No Access."
+                    endif
                     
                 case l_cActionOnSubmit == "Delta"
                     el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
@@ -6016,15 +6305,16 @@ endcase
 
 if !empty(l_cErrorMessage)
     l_cHtml += DataDictionaryLoadSchemaStep1FormBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
-                                                   l_nSyncBackendType,;
-                                                   l_cSyncServer,;
-                                                   l_nSyncPort,;
-                                                   l_cSyncUser,;
-                                                   l_cSyncPassword,;
-                                                   l_cSyncDatabase,;
-                                                   l_cSyncNameSpaces,;
-                                                   l_nSyncSetForeignKey,;
-                                                   l_aDeltaMessages)
+                                                      l_nFk_Deployment,;
+                                                      l_nSyncBackendType,;
+                                                      l_cSyncServer,;
+                                                      l_nSyncPort,;
+                                                      l_cSyncUser,;
+                                                      l_cSyncPassword,;
+                                                      l_cSyncDatabase,;
+                                                      l_cSyncNameSpaces,;
+                                                      l_nSyncSetForeignKey,;
+                                                      l_aDeltaMessages)
 endif
 
 return l_cHtml

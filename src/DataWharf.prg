@@ -1988,6 +1988,21 @@ otherwise
 endcase
 return l_cHtml
 //=================================================================================================================
+function GetTRStyleBackgroundColorDeploymentStatus(par_iRecno,par_nUseStatus,par_cOpacity)
+local l_cHtml
+local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
+do case
+case par_nUseStatus == 2  // On Hold
+    l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cHtml := [ style="background-color:#f2f2f2;"]
+    else
+        l_cHtml := ""
+    endif
+endcase
+return l_cHtml
+//=================================================================================================================
 function GetTRStyleBackgroundColorStage(par_iRecno,par_nStage,par_cOpacity)
 local l_cHtml
 local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")

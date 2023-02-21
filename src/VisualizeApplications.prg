@@ -65,7 +65,14 @@ with object l_oDB1
     :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
     :SQL("ListOfUserSettingApplication")
     do case
-    case :Tally == 0
+    case :Tally == 0 .or. :Tally > 1
+        if :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+            select ListOfUserSettingApplication
+            scan all
+                :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
+            endscan
+        endif
+
         //Add a new record
         :Table("37aa71df-4025-4f88-bd67-29cdee691d34","UserSettingApplication")
         :Field("UserSettingApplication.fk_Diagram"    ,par_iDiagramPk)
@@ -78,14 +85,8 @@ with object l_oDB1
             :Field("UserSettingApplication.fk_Diagram",par_iDiagramPk)
             :Update(ListOfUserSettingApplication->pk)
         endif
-    case :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
-        select ListOfUserSettingApplication
-        scan all
-            :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
-        endscan
     endcase
 endwith
-
 
 //See https://github.com/markedjs/marked for the JS library  _M_ Make this generic to be used in other places
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/marked_]+MARKED_SCRIPT_VERSION+[/marked.min.js"></script>]

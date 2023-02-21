@@ -295,7 +295,7 @@ l_cHtml += [<div class="m-3">]
                             select ListOfApplicationAccess
                             scan all for ListOfApplicationAccess->User_Pk == l_iUserPk
                                 l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load/Sync Schema","Full Access"}[iif(vfp_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
+                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load Schema","Full Access"}[iif(vfp_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
                                 l_cHtml += [</div>]
                             endscan
                         l_cHtml += [</td>]
@@ -494,7 +494,7 @@ l_cHtml += [<div id="DivApplicationSecurity">]
                     l_cHtml += [<option value="3"]+iif(l_nAccessLevelDD == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
                     l_cHtml += [<option value="4"]+iif(l_nAccessLevelDD == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
                     l_cHtml += [<option value="5"]+iif(l_nAccessLevelDD == 5,[ selected],[])+[>Edit Anything and Import/Export</option>]
-                    l_cHtml += [<option value="6"]+iif(l_nAccessLevelDD == 6,[ selected],[])+[>Edit Anything and Load/Sync Schema</option>]
+                    l_cHtml += [<option value="6"]+iif(l_nAccessLevelDD == 6,[ selected],[])+[>Edit Anything and Load Schema</option>]
                     l_cHtml += [<option value="7"]+iif(l_nAccessLevelDD == 7,[ selected],[])+[>Full Access</option>]
                 l_cHtml += [</select></td>]
 
@@ -534,7 +534,7 @@ l_cHtml += [<div id="DivProjectSecurity">]
                     // l_cHtml += [<option value="3"]+iif(l_nAccessLevelML == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
                     // l_cHtml += [<option value="4"]+iif(l_nAccessLevelML == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
                     l_cHtml += [<option value="5"]+iif(l_nAccessLevelML == 5,[ selected],[])+[>Edit Anything and Import/Export</option>]
-                    // l_cHtml += [<option value="6"]+iif(l_nAccessLevelML == 6,[ selected],[])+[>Edit Anything and Load/Sync Schema</option>]
+                    // l_cHtml += [<option value="6"]+iif(l_nAccessLevelML == 6,[ selected],[])+[>Edit Anything and Load Schema</option>]
                     l_cHtml += [<option value="7"]+iif(l_nAccessLevelML == 7,[ selected],[])+[>Full Access</option>]
                 l_cHtml += [</select></td>]
 

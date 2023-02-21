@@ -1204,7 +1204,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
-    //MS SQL Does not support Enumeration
+    //MSSQL Does not support Enumeration
     l_cSQLCommandEnums := []
 
     // l_cSQLCommandFields  := [SELECT columns.TABLE_SCHEMA             AS schema_name,]

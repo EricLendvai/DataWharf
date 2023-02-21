@@ -231,6 +231,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :Column("upper(Enumeration.Name)" , "tag2")
             :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
             :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
+            :Where("Enumeration.ImplementAs = 1")  // Only test on Native SQL Enum
             :OrderBy("tag1")
             :OrderBy("tag2")
             :SQL("ListOfEnumerations")

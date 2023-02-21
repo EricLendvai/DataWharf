@@ -85,7 +85,14 @@ with object l_oDB1
     :Where("UserSettingModel.fk_Model = ^",par_oDataHeader:Model_pk)
     :SQL("ListOfUserSettingModel")
     do case
-    case :Tally == 0
+    case :Tally == 0 .or. :Tally > 1
+        if :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+            select ListOfUserSettingModel
+            scan all
+                :Delete("c1765610-ad27-4fc2-97e6-e0c4c47dbac4","UserSettingModel",ListOfUserSettingModel->pk)
+            endscan
+        endif
+
         //Add a new record
         :Table("c1765610-ad27-4fc2-97e6-e0c4c47dbac2","UserSettingModel")
         :Field("UserSettingModel.fk_ModelingDiagram"    ,par_iModelingDiagramPk)
@@ -98,11 +105,6 @@ with object l_oDB1
             :Field("UserSettingModel.fk_ModelingDiagram",par_iModelingDiagramPk)
             :Update(ListOfUserSettingModel->pk)
         endif
-    case :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
-        select ListOfUserSettingModel
-        scan all
-            :Delete("c1765610-ad27-4fc2-97e6-e0c4c47dbac4","UserSettingModel",ListOfUserSettingModel->pk)
-        endscan
     endcase
 endwith
 

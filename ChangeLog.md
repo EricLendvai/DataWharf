@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 02/21/2023 v 2.48
+* Added Application Deployment settings. Also available in Delta/Load Data Dictionary feature.
+
 ## 02/17/2023 v 2.47
 * Single Sign On support (Release after successful test).
 * Update the Harbour_FastCGI v 1.4 to fix "scan all" commands.
