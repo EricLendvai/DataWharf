@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 02/22/2023 v 2.49
+* Fix on Delta when selecting a Deployment.
+* Fix on manual delete of column.
+
 ## 02/21/2023 v 2.48
 * Added Application Deployment settings. Also available in Delta/Load Data Dictionary feature.
 
@@ -13,7 +17,7 @@
 ## 02/12/2023 v 2.45
 * Fixed bug in load schema.
 * Fixed bug on editing enumerations.
-* Delta and Load in Applications are Interger and Numeric Enumeration aware.
+* Delta and Load in Applications are Integer and Numeric Enumeration aware.
 * DataWharf Schema definition available for import in DataWharf itself. Removed DataWharfSchema.vsd since will not be maintained.
 * Fix stripped list background colors when Use Status is used.
 

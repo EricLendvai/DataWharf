@@ -5,7 +5,6 @@ return ;
    ,"sysc"                  =>{, "DT",   0,  6,"N"};
    ,"sysm"                  =>{, "DT",   0,  6,"N"};
    ,"LinkCode"              =>{, "CV",  10,  0,};         // Used to create direct link to the Application for data dic management
-   ,"BogusInt"              =>{,  "I",   0,  0,,"1"};
    ,"Name"                  =>{, "CV", 200,  0,};
    ,"UseStatus"             =>{,  "N",   1,  0,,"1"};     // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"             =>{,  "N",   1,  0,,"1"};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete

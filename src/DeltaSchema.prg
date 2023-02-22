@@ -89,6 +89,8 @@ local l_iParentTableKey
 local l_iChildColumnKey
 
 local l_aListOfMessages := {}
+local l_cExpressionNameSpaces
+
 
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
@@ -130,8 +132,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandEnums += [ FROM pg_type types]
     l_cSQLCommandEnums += [ JOIN pg_enum enums on types.oid = enums.enumtypid]
     l_cSQLCommandEnums += [ JOIN pg_catalog.pg_namespace namespaces ON namespaces.oid = types.typnamespace]
+// altd()
     if !empty(par_cSyncNameSpaces)
-        l_cSQLCommandFields  += [ AND lower(namespaces.nspname) in (]
+        l_cSQLCommandEnums  += [ AND lower(namespaces.nspname) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
         l_iFirstNameSpace := .t.
         for l_iPosition := 1 to len(l_aNameSpaces)
@@ -140,14 +143,15 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if l_iFirstNameSpace
                     l_iFirstNameSpace := .f.
                 else
-                    l_cSQLCommandFields += [,]
+                    l_cSQLCommandEnums += [,]
                 endif
-                l_cSQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
+                l_cSQLCommandEnums += [']+lower(l_aNameSpaces[l_iPosition])+[']
             endif
         endfor
-        l_cSQLCommandFields  += [)]
+        l_cSQLCommandEnums  += [)]
     endif
     l_cSQLCommandEnums += [ ORDER BY schema_name,enum_name;]
+hb_orm_SendToDebugView("l_cSQLCommandEnums",l_cSQLCommandEnums)
 
     l_cSQLCommandFields  := [SELECT columns.table_schema             AS schema_name,]
     l_cSQLCommandFields  += [       columns.table_name               AS table_name,]
@@ -200,6 +204,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         l_cSQLCommandFields  += [)]
     endif
     l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
+hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
 
 // SendToClipboard(l_cSQLCommandFields)
 
@@ -222,6 +227,27 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     else
         // ExportTableToHtmlFile("ListOfEnumsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
 
+        l_cExpressionNameSpaces := ""
+        if !empty(par_cSyncNameSpaces)
+            l_cExpressionNameSpaces := [lower(NameSpace.Name) in (]
+            l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
+            l_iFirstNameSpace := .t.
+            for l_iPosition := 1 to len(l_aNameSpaces)
+                l_aNameSpaces[l_iPosition] := strtran(l_aNameSpaces[l_iPosition],['],[])
+                if !empty(l_aNameSpaces[l_iPosition])
+                    if l_iFirstNameSpace
+                        l_iFirstNameSpace := .f.
+                    else
+                        l_cExpressionNameSpaces += [,]
+                    endif
+                    l_cExpressionNameSpaces += [']+lower(l_aNameSpaces[l_iPosition])+[']
+                endif
+            endfor
+            l_cExpressionNameSpaces  += [)]
+        endif
+
+
+
         with object l_oDB1
             :Table("77f9c695-656a-4f08-9f3b-0b9f255cae6d","NameSpace")
             :Column("Enumeration.Pk"          , "Enumeration_Pk")
@@ -232,6 +258,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
             :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
             :Where("Enumeration.ImplementAs = 1")  // Only test on Native SQL Enum
+            if !empty(l_cExpressionNameSpaces)
+                :Where(l_cExpressionNameSpaces)
+            endif
             :OrderBy("tag1")
             :OrderBy("tag2")
             :SQL("ListOfEnumerations")
@@ -248,6 +277,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :Column("upper(Table.Name)"     , "tag2")
             :Join("inner","Table","","Table.fk_NameSpace = NameSpace.pk")
             :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
+            if !empty(l_cExpressionNameSpaces)
+                :Where(l_cExpressionNameSpaces)
+            endif
             :OrderBy("tag1")
             :OrderBy("tag2")
             :SQL("ListOfTables")

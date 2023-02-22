@@ -1462,7 +1462,12 @@ case l_cActionOnSubmit == "Delete"   // Deployment
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
         with object l_oDB1
+
+            //Clear all 
+
+
             if l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Deployment",l_iDeploymentPk)
+
                 oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
             else
                 l_cErrorMessage := "Unable to delete deployment."

@@ -3864,8 +3864,8 @@ local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
 local l_lArray           := hb_HGetDef(par_hValues,"Array",.f.)
-local l_cLength          := Trans(hb_HGetDef(par_hValues,"Length",""))
-local l_cScale           := Trans(hb_HGetDef(par_hValues,"Scale",""))
+local l_cLength          := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
+local l_cScale           := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
 local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
 local l_nRequired        := max(1,hb_HGetDef(par_hValues,"Required",1))
 local l_cDefault         := nvl(hb_HGetDef(par_hValues,"Default",""),"")
@@ -5798,6 +5798,7 @@ local l_cMessageLine
 
 local l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfDeployments
+local l_cNameSpaces
 
 oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormBuild")
 
@@ -5807,6 +5808,7 @@ with object l_oDB_ListOfDeployments
     :Where("Deployment.Status = 1")
     :Column("Deployment.pk"         ,"Pk")
     :Column("Deployment.Name"       ,"Deployment_Name")
+    :Column("Deployment.NameSpaces" ,"Deployment_NameSpaces")
     :Column("Upper(Deployment.Name)","tag1")
     :OrderBy("tag1")
     :SQL("ListOfDeployments")
@@ -5866,7 +5868,14 @@ if !empty(par_iPk)
                         l_cHtml += [<option value="0"]+iif(0 == l_nFk_Deployment,[ selected],[])+[>My Custom Settings</option>]
                         select ListOfDeployments
                         scan all
-                            l_cHtml += [<option value="]+trans(ListOfDeployments->pk)+["]+iif(ListOfDeployments->pk == l_nFk_Deployment,[ selected],[])+[>]+Alltrim(ListOfDeployments->Deployment_Name)+[</option>]
+                            l_cHtml += [<option value="]+trans(ListOfDeployments->pk)+["]+iif(ListOfDeployments->pk == l_nFk_Deployment,[ selected],[])+[>]+Alltrim(ListOfDeployments->Deployment_Name)
+                            
+                            l_cNameSpaces := nvl(ListOfDeployments->Deployment_NameSpaces,"")
+                            if !empty(l_cNameSpaces)
+                                l_cHtml += " - Namespace"+iif("," $ l_cNameSpaces,"s","")+[: ]+nvl(ListOfDeployments->Deployment_NameSpaces,"")
+                            endif
+                            
+                            l_cHtml += [</option>]
                         endscan
                         l_cHtml += [</select>]
                     l_cHtml += [</td>]
@@ -6281,13 +6290,13 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
                 do case
                 case l_cActionOnSubmit == "Load"
                     if oFcgi:p_nAccessLevelDD >= 6
-                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey)
+                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNameSpaces,l_nConnectSetForeignKey)
                     else
                         l_cErrorMessage := "No Access."
                     endif
                     
                 case l_cActionOnSubmit == "Delta"
-                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cSyncDatabase,l_cSyncNameSpaces,l_nSyncSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNameSpaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
 
                 endcase
 

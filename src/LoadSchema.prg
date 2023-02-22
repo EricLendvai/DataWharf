@@ -530,7 +530,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandEnums += [ JOIN pg_enum enums on types.oid = enums.enumtypid]
     l_cSQLCommandEnums += [ JOIN pg_catalog.pg_namespace namespaces ON namespaces.oid = types.typnamespace]
     if !empty(par_cSyncNameSpaces)
-        l_cSQLCommandFields  += [ AND lower(namespaces.nspname) in (]
+        l_cSQLCommandEnums  += [ AND lower(namespaces.nspname) in (]
         l_aNameSpaces := hb_ATokens(par_cSyncNameSpaces,",",.f.)
         l_iFirstNameSpace := .t.
         for l_iPosition := 1 to len(l_aNameSpaces)
@@ -539,12 +539,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if l_iFirstNameSpace
                     l_iFirstNameSpace := .f.
                 else
-                    l_cSQLCommandFields += [,]
+                    l_cSQLCommandEnums += [,]
                 endif
-                l_cSQLCommandFields += [']+lower(l_aNameSpaces[l_iPosition])+[']
+                l_cSQLCommandEnums += [']+lower(l_aNameSpaces[l_iPosition])+[']
             endif
         endfor
-        l_cSQLCommandFields  += [)]
+        l_cSQLCommandEnums  += [)]
     endif
     l_cSQLCommandEnums += [ ORDER BY schema_name,enum_name;]
 
