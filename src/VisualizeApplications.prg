@@ -7,7 +7,7 @@ local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTables   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDiagrams := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfLinks    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath          := oFcgi:p_cSitePath
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_hNodePosition := {=>}
@@ -362,7 +362,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .and. l_nPort == 443))
             l_cURL += ":"+Trans(l_nPort)
         endif
-        l_cURL += oFcgi:RequestSettings["SitePath"]
+        l_cURL += oFcgi:p_cSitePath
         l_cURL += oFcgi:RequestSettings["Path"]
         l_cURL += [?InitialDiagram=]+l_cDiagram_LinkUID
 
@@ -1443,7 +1443,7 @@ case l_cActionOnSubmit == "Delete"
         endscan
         l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagramPk)
     endwith
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/Visualize/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/Visualize/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
     if !empty(l_iDiagramPk)
@@ -1955,7 +1955,7 @@ local l_oDB_ListOfEnumValues             := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfOtherDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_TableCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cApplicationLinkCode
 local l_cNameSpaceName
 local l_cTableName

@@ -10,7 +10,7 @@ local l_oDB_ListOfModelingDiagrams           := hb_SQLData(oFcgi:p_o_SQLConnecti
 local l_oDB_ListOfAssociationNodes           := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEdgesEntityAssociationNode := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEdgesEntityEntity          := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cNodePositions
 local l_hNodePositions := {=>}
 local l_hNodePosition  := {=>}
@@ -483,7 +483,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .and. l_nPort == 443))
             l_cURL += ":"+Trans(l_nPort)
         endif
-        l_cURL += oFcgi:RequestSettings["SitePath"]
+        l_cURL += oFcgi:p_cSitePath
         // l_cURL += [Modeling/Visualize/]+par_cModelLinkUID+[/]
         l_cURL += oFcgi:RequestSettings["Path"]
         l_cURL += [?InitialDiagram=]+l_cModelingDiagram_LinkUID
@@ -1615,7 +1615,7 @@ case l_cActionOnSubmit == "Delete"
         endscan
         l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagramPk)
     endwith
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
     with object l_oDB1
@@ -2072,7 +2072,7 @@ local l_oDB_ListOfOtherModelingDiagrams
 local l_oDB_EntityCustomFields
 local l_oDB_UserAccessProject
 local l_aSQLResult := {}
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cEntityLinkUID
 local l_cPackageFullName
 
@@ -2734,7 +2734,7 @@ local l_hOptionValueToDescriptionMapping := {=>}
 local l_cHtml_AssociationCustomFields := ""
 local l_aSQLResult := {}
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cPackageFullName
 local l_cZoomInfo
 

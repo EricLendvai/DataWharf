@@ -26,7 +26,7 @@ local l_aSQLResult := {}
 local l_cURLAction              := "ListCustomFields"
 local l_cURLCustomFieldCode := ""
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("BuildPageCustomFields")
 
@@ -171,7 +171,7 @@ return l_cHtml
 static function CustomFieldListFormBuild()
 local l_cHtml := []
 local l_oDB_ListOfCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfCustomFields
 
 oFcgi:TraceAdd("CustomFieldListFormBuild")
@@ -375,7 +375,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<span class="pe-5">]
                     l_iType := hb_HGetDef(par_hValues,"Type",1)
                     // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboType" id="ComboType">]
-                    l_cHtml += [<select name="ComboType" id="ComboType" onchange="OnChangeType(this.value);$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');">]
+                    l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);'>]
                         l_cHtml += [<option value="1"]+iif(l_iType==1,[ selected],[])+[>Logical</option>]
                         l_cHtml += [<option value="2"]+iif(l_iType==2,[ selected],[])+[>Multi Choice</option>]
                         l_cHtml += [<option value="3"]+iif(l_iType==3,[ selected],[])+[>String</option>]
@@ -389,15 +389,15 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanLength" style="display: none;">]
-                    l_cHtml += [<span class="pe-2">Length</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextLength" id="TextLength" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Length",""),""))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Length</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextLength" id="TextLength" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanWidth" style="display: none;">]
-                    l_cHtml += [<span class="pe-2">Width</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextWidth" id="TextWidth" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Width",""),""))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Width</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextWidth" id="TextWidth" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Width",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanHeight" style="display: none;" >]
-                    l_cHtml += [<span class="pe-2">Height</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextHeight" id="TextHeight" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Height",""),""))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Height</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextHeight" id="TextHeight" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Height",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
             l_cHtml += [</td>]
@@ -837,7 +837,7 @@ case l_cActionOnSubmit == "Save"
                     //-----------------------------------------------
 
                     if empty(l_cErrorMessage)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/ListCustomFields/")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/ListCustomFields/")
                     endif
                 endwith
             endif
@@ -846,9 +846,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(l_iCustomFieldPk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/ListCustomFields/")  // +par_cURLCustomFieldCode+"/"
+        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/ListCustomFields/")  // +par_cURLCustomFieldCode+"/"
     endif
 
 case l_cActionOnSubmit == "Delete"   // CustomField
@@ -868,7 +868,7 @@ case l_cActionOnSubmit == "Delete"   // CustomField
                 :SQL()
                 if :Tally == 0
                     :Delete("7245a056-83cb-4b8e-aed7-0b3cfa3cb458","CustomField",l_iCustomFieldPk)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"CustomFields/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/")
                 else
                     l_cErrorMessage := "Related CustomFieldValue record on file"
                 endif

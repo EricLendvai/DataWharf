@@ -29,7 +29,7 @@ local l_cURLAction              := "ListApplications"
 local l_cURLApplicationLinkCode := ""
 local l_cURLVersionCode         := ""
 local l_cURLLinkUID             := ""
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nAccessLevelDD := 1   // None by default
 // As per the info in Schema.prg
@@ -258,7 +258,7 @@ case l_cURLAction == "EditDeployment"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListDeployments/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
             l_iDeploymentPk                 := l_aSQLResult[1,1]
@@ -294,7 +294,7 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("ApplicationHeaderBuild")
 
@@ -438,7 +438,7 @@ local l_cHtml := []
 local l_oDB_ListOfApplications       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -782,14 +782,14 @@ case l_cActionOnSubmit == "Save"
                         if empty(l_iApplicationPk)
                             if :Add()
                                 l_iApplicationPk := :Key()
-                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
+                                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to add Application."
                             endif
                         else
                             if :Update(l_iApplicationPk)
                                 CustomFieldsSave(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
-                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
+                                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to update Application."
                             endif
@@ -802,9 +802,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(l_iApplicationPk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ApplicationInfo/"+par_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+par_cURLApplicationLinkCode+"/")
     endif
 
 case l_cActionOnSubmit == "Delete"   // Application
@@ -812,7 +812,7 @@ case l_cActionOnSubmit == "Delete"   // Application
         if CheckIfAllowDestructiveApplicationDelete(l_iApplicationPk)
             l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -855,7 +855,7 @@ case l_cActionOnSubmit == "Delete"   // Application
                                 l_cErrorMessage := "Failed to clear related DiagramTable records."
                             endif
 
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/")
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
                         else
                             l_cErrorMessage := "Related Version record on file"
                         endif
@@ -969,7 +969,7 @@ return l_cErrorMessage
 static function DeploymentListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfDeployments
 
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -1194,7 +1194,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Server Type</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select name="ComboBackendType" id="ComboBackendType">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboBackendType" id="ComboBackendType">]
                 l_cHtml += [<option value="0"]+iif(l_nBackendType==0,[ selected],[])+[></option>]
                 l_cHtml += [<option value="1"]+iif(l_nBackendType==1,[ selected],[])+[>MariaDB</option>]
                 l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL</option>]
@@ -1206,17 +1206,17 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Server Address/IP</td>]
-            l_cHtml += [<td class="pb-3"><input type="text" name="TextServer" id="TextServer" value="]+FcgiPrepFieldForValue(l_cServer)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextServer" id="TextServer" value="]+FcgiPrepFieldForValue(l_cServer)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Port (If not default)</td>]
-            l_cHtml += [<td class="pb-3"><input type="text" name="TextPort" id="TextPort" value="]+iif(empty(l_nPort),"",Trans(l_nPort))+[" maxlength="10" size="10"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextPort" id="TextPort" value="]+iif(empty(l_nPort),"",Trans(l_nPort))+[" maxlength="10" size="10"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">User Name</td>]
-            l_cHtml += [<td class="pb-3"><input type="text" name="TextUser" id="TextUser" value="]+FcgiPrepFieldForValue(l_cUser)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextUser" id="TextUser" value="]+FcgiPrepFieldForValue(l_cUser)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -1224,7 +1224,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
 
                 l_cHtml += [<span class="pe-5">]
-                    l_cHtml += [<select name="ComboPasswordStorage" id="ComboPasswordStorage" onchange="OnChangePasswordStorage(this.value);">]
+                    l_cHtml += [<select name="ComboPasswordStorage" id="ComboPasswordStorage" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangePasswordStorage(this.value);'>]
                     l_cHtml += [<option value="0"]+iif(l_nPasswordStorage==0,[ selected],[])+[></option>]
                     l_cHtml += [<option value="1"]+iif(l_nPasswordStorage==1,[ selected],[])+[>Encrypted</option>]
                     l_cHtml += [<option value="2"]+iif(l_nPasswordStorage==2,[ selected],[])+[>In config.txt</option>]
@@ -1259,18 +1259,18 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Database</td>]
-            l_cHtml += [<td class="pb-3"><input type="text" name="TextDatabase" id="TextDatabase" value="]+FcgiPrepFieldForValue(l_cDatabase)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDatabase" id="TextDatabase" value="]+FcgiPrepFieldForValue(l_cDatabase)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name Spaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
-            l_cHtml += [<td class="pb-3"><input type="text" name="TextNameSpaces" id="TextNameSpaces" value="]+FcgiPrepFieldForValue(l_cNameSpaces)+[" maxlength="400" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNameSpaces" id="TextNameSpaces" value="]+FcgiPrepFieldForValue(l_cNameSpaces)+[" maxlength="400" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Set Foreign Key</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select name="ComboSetForeignKey" id="ComboSetForeignKey">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboSetForeignKey" id="ComboSetForeignKey">]
                 l_cHtml += [<option value="0"]+iif(l_nSetForeignKey==0,[ selected],[])+[></option>]
                 l_cHtml += [<option value="1"]+iif(l_nSetForeignKey==1,[ selected],[])+[>Not</option>]
                 l_cHtml += [<option value="2"]+iif(l_nSetForeignKey==2,[ selected],[])+[>Foreign Key Restrictions</option>]
@@ -1354,6 +1354,7 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
+local l_oDB2
 
 oFcgi:TraceAdd("DeploymentEditFormOnSubmit")
 
@@ -1449,26 +1450,40 @@ case l_cActionOnSubmit == "Save"
 
                 endwith
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
             endif
         endif
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "Delete"   // Deployment
     if oFcgi:p_nAccessLevelDD >= 7
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
         with object l_oDB1
 
-            //Clear all 
-
+            //Clear all related pointers in UserSettingApplication
+            :Table("5971e8c9-769d-43f4-9168-7263e4541c06","public.UserSettingApplication")
+            :Column("UserSettingApplication.pk" , "pk")
+            :Where("UserSettingApplication.fk_Deployment = ^" , l_iDeploymentPk)
+            :SQL("ListOfUserSettingApplication")
+            if :Tally > 0
+                select ListOfUserSettingApplication
+                scan all
+                    with object l_oDB2
+                        :Table("8535fa71-ff0d-4a06-9a97-eb7886662e21","public.UserSettingApplication")
+                        :Field("UserSettingApplication.fk_Deployment" , 0)
+                        :Update(ListOfUserSettingApplication->pk)
+                    endwith
+                endscan
+            endif
 
             if l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Deployment",l_iDeploymentPk)
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
             else
                 l_cErrorMessage := "Unable to delete deployment."
             endif

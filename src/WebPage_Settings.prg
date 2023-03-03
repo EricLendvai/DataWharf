@@ -38,7 +38,7 @@ local l_cErrorMessage := hb_DefaultValue(par_cErrorMessage,"")
 local l_cCurrentPassword := []
 local l_cNewPassword1    := []
 local l_cNewPassword2    := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 
 l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
@@ -177,13 +177,13 @@ case l_cActionOnSubmit == "Change"
 
     endcase
     if empty(l_cErrorMessage)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Home")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Home")
     else
         l_cHtml += BuildPageChangePasswordFormBuild(l_cErrorMessage)
     endif
 
 otherwise
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Home")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Home")
 
 endcase
 

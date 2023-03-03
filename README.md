@@ -22,7 +22,7 @@ The following is the list of additional open source projects used to design, bui
 DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
 
 Sample screen of Data Dictionary Visualization 
-![Sample screen of Data Dictionary Visualization](Sample001.png "Sample screen of Data Dictionary Visualization")
+![Sample screen of Data Dictionary Visualization](images/Sample001.png "Sample screen of Data Dictionary Visualization")
 
 View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
 

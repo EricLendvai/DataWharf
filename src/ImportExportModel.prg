@@ -433,13 +433,13 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
 
 endcase
 
 if empty(l_cErrorMessage)
     //To force the tallies to be refreshed
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
 else
     l_cHtml += ModelImportStep1FormBuild(par_iModelPk,l_cErrorMessage)
 endif

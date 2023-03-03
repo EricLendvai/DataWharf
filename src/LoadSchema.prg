@@ -1071,6 +1071,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_nColumnScale  := NIL
                         exit
 
+                    case "oid"
+                        l_cColumnType   := "OID"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "USER-DEFINED"
                         l_cColumnType   := "E"
                         l_nColumnLength := NIL

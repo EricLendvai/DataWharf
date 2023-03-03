@@ -37,7 +37,7 @@ return l_cHtml
 static function InterAppMappingSelectApplicationsBuild(par_cErrorText,par_hValues)
 local l_cHtml := []
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nNumberOfApplications
 local l_iApplicationFromPk := hb_HGetDef(par_hValues,"ApplicationFromPk",0)
@@ -156,18 +156,18 @@ case l_cActionOnSubmit == "MapTables"
     end
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"InterAppMapping/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"InterAppMapping/")
 
 otherwise
     //Invalid Action. Reset to start of process
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"InterAppMapping/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"InterAppMapping/")
 endcase
 
 return l_cHtml
 //=================================================================================================================
 static function InterAppMappingMapTablesBuild(par_cErrorText,par_hValues)
 local l_cHtml := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 local l_iApplicationFromPk := hb_HGetDef(par_hValues,"ApplicationFromPk",0)
 local l_iApplicationToPk   := hb_HGetDef(par_hValues,"ApplicationToPk"  ,0)
@@ -527,7 +527,7 @@ case l_cActionOnSubmit == "Cancel"
 
 otherwise
     //Invalid Action. Reset to start of process
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"InterAppMapping/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"InterAppMapping/")
 endcase
 
 return l_cHtml
@@ -535,7 +535,7 @@ return l_cHtml
 //=================================================================================================================
 static function InterAppMappingMapColumnsBuild(par_cErrorText,par_hValues)
 local l_cHtml := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 local l_iApplicationFromPk := hb_HGetDef(par_hValues,"ApplicationFromPk",0)
 local l_iApplicationToPk   := hb_HGetDef(par_hValues,"ApplicationToPk"  ,0)
@@ -1002,7 +1002,7 @@ case l_cActionOnSubmit == "Cancel"
 
 otherwise
     //Invalid Action. Reset to start of process
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"InterAppMapping/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"InterAppMapping/")
 endcase
 
 return l_cHtml

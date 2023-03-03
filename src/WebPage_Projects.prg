@@ -28,7 +28,7 @@ local l_cURLAction      := "ListProjects"
 local l_cURLLinkUID     := ""
 local l_cURLVersionCode := ""
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_lFoundHeaderInfo := .f.
 
 local l_nAccessLevelML := 1   // None by default
@@ -265,7 +265,7 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
  
 oFcgi:TraceAdd("ProjectHeaderBuild")
 
@@ -311,7 +311,7 @@ static function ProjectListFormBuild()
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfProjects
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -729,16 +729,16 @@ case l_cActionOnSubmit == "Save"
                         :Field("Project.LinkUID" , l_cProjectLinkUID)
                         if :Add()
                             l_iProjectPk := :Key()
-                            // oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+                            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
                         else
                             l_cErrorMessage := "Failed to add Project."
                         endif
                     else
                         if :Update(l_iProjectPk)
                             CustomFieldsSave(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
-                            // oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+                            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
                         else
                             l_cErrorMessage := "Failed to update Project."
                         endif
@@ -750,10 +750,10 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(l_iProjectPk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Projects")
     else
-        // oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ProjectSettings/"+par_cURLProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+        // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+par_cURLProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
     endif
 
 case l_cActionOnSubmit == "Delete"   // Project
@@ -775,7 +775,7 @@ case l_cActionOnSubmit == "Delete"   // Project
                     CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
                     :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
 
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
                 else
                     l_cErrorMessage := "Related Primitive Type record on file"
                 endif
@@ -819,7 +819,7 @@ return l_cHtml
 static function PrimitiveTypesListFormBuild(par_iProjectPk,par_Project_LinkUID)
 local l_cHtml := []
 local l_oDB_ListOfPrimitiveTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 // local l_oCursor
 local l_nNumberOfPrimitiveTypes
 local l_iPrimitiveTypePk
@@ -916,7 +916,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-local l_cSitePath   := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath   := oFcgi:p_cSitePath
 local l_oDB1        := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 oFcgi:TraceAdd("PrimitiveTypeEditFormBuild")
@@ -1065,7 +1065,7 @@ case l_cActionOnSubmit == "Delete"   // PrimitiveType
             if l_oDB1:Tally == 0
                 l_oDB1:Delete("04faf037-bff8-461a-9d57-c3317b4e10b9","PrimitiveType",l_iPrimitiveTypePk)
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
             else
                 l_cErrorMessage := "Related Data Type record on file"
             endif
@@ -1086,7 +1086,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += PrimitiveTypeEditFormBuild(par_iProjectPk,l_cErrorMessage,l_iPrimitiveTypePk,l_hValues)
 
 otherwise
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
 
 endcase
 

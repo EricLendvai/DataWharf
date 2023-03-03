@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.49"
+#define BUILDVERSION "2.50"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -39,6 +39,7 @@
 #define COLOR_HEADER_TEXT_WHITE .f.
 
 #define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();"]
+#define UPDATESAVEBUTTON_COMBOWITHONCHANGE [$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();]
 
 #define USEDON_APPLICATION 1
 #define USEDON_NAMESPACE   2
@@ -119,3 +120,7 @@
 #define USESTATUS_6_EDGE_HIGHLIGHT  SELECTED_NODE_BORDER
 
 #define OUTPUT_FOLDER "Output"  //Folder will be relative to the Backend Folder where the FastCGI EXE in placed.
+
+//#define LOGO_THEME_NAME "RainierSailBoat"
+#define LOGO_THEME_NAME "RainierKayak"
+

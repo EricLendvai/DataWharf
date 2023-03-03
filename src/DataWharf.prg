@@ -59,6 +59,7 @@ class MyFcgi from hb_Fcgi
     data p_nUserAccessMode      init 0   // User based access level. Comes from "User.AccessMode"
     data p_nAccessLevelDD       init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     data p_nAccessLevelML       init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
+    data p_cSitePath            init ""  // Used to help with site relative path
     
     //Used in Modeling. ANF stands for "AlternateNameFor"
     data p_ANFModel             init "Model"
@@ -103,6 +104,7 @@ class MyFcgi from hb_Fcgi
                                   {  "E","Enumeration"                                  ,.f.,.f.,.t.,.f.,"enum"                       ,"ENUM"},;
                                   {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,.f.,"uuid"                       ,"VARCHAR(36)"},;   // In DBF VarChar 36
                                   { "JS","JSON"                                         ,.f.,.f.,.f.,.f.,"json"                       ,"LONGTEXT"},;
+                                  {"OID","Object Identifier"                            ,.f.,.f.,.f.,.f.,"oid"                        ,"BIGINT COMMENT 'Type=OID'"},;
                                   {  "?","Other"                                        ,.f.,.f.,.f.,.f.,""                           ,""};
                                  }
     method OnFirstRequest()
@@ -561,6 +563,9 @@ SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
 ::p_cUserName       := ""
 ::p_nUserAccessMode := 0
 ::p_nAccessLevelDD  := 0
+::p_cSitePath       := ::RequestSettings["SitePath"]
+
+l_cSitePath := ::p_cSitePath
 
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
 l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
@@ -675,7 +680,6 @@ otherwise
         // ::GetQueryString("p")
 
         ::p_URLPathElements := {}
-        l_cSitePath := ::RequestSettings["SitePath"]
 
         l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
         l_aPathElements := hb_ATokens(l_cPageName,"/",.f.)
@@ -734,6 +738,8 @@ otherwise
                 l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
                 l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
 
+                l_cPageHeaderHtml += [<link rel="icon" href="images/favicon_]+LOGO_THEME_NAME+[.ico" type="image/x-icon">]
+
                 l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]
 
                 l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/icons/font/bootstrap-icons.css">]
@@ -778,7 +784,7 @@ otherwise
 #ifdef __PLATFORM__LINUX
                 if ::isOAuth()
                     ::DeleteCookie("SessionJWT")
-                    //::Redirect(::RequestSettings["SitePath"]+"home")
+                    //::Redirect(l_cSitePath+"home")
                     ::Redirect(oFcgi:GetAppConfig("OAUTH_LOGOUT_URL"))
                     return nil
                 else
@@ -821,7 +827,7 @@ otherwise
                         endif
                     endif
                     ::DeleteCookie("SessionID")
-                    ::Redirect(::RequestSettings["SitePath"]+"home")
+                    ::Redirect(l_cSitePath+"home")
                     return nil
 #ifdef __PLATFORM__LINUX
                 endif
@@ -996,7 +1002,7 @@ otherwise
             //Since we now know the current user access mode, will check if this would be an invalid access right.
             if ((::p_nUserAccessMode < 4) .and. lower(l_cPageName) == "users")         .or. ;  // block from going to "Users" web page, unless "Root Admin" access right.
             ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
-                ::Redirect(::RequestSettings["SitePath"]+"home")
+                ::Redirect(l_cSitePath+"home")
                 return nil
             endif
 
@@ -1256,7 +1262,7 @@ return nil
             //succcesfull login
             ::SetSessionCookieValue("SessionJWT",l_oToken,0)
         endif
-        ::Redirect(::RequestSettings["SitePath"]+"home")
+        ::Redirect(::p_cSitePath+"home")
     return nil
 
     //=================================================================================================================
@@ -1299,7 +1305,7 @@ return nil
 //=================================================================================================================
 function GetPageHeader(par_LoggedIn,par_cCurrentPage)
 local l_cHtml := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_cThisAppTitle                 := oFcgi:GetAppConfig("APPLICATION_TITLE")
 local l_cThisAppColorHeaderBackground := oFcgi:GetAppConfig("COLOR_HEADER_BACKGROUND")
@@ -1360,9 +1366,16 @@ endif
 
 l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
 
+// hb_orm_SendToDebugView("Called GetPageHeader",l_cExtraClass)
+
 l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
-    l_cHtml += [<div id="app" class="container" >]
-        l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]+l_cThisAppTitle+[</a>]
+
+    l_cHtml += [<div id="app" class="container">]
+        l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]
+        l_cHtml += [<img src="]+l_cSitePath+[images/Logo_]+LOGO_THEME_NAME+[.png" alt="" height="60" class="d-inline-block" style="vertical-align: middle;">&nbsp;]
+        l_cHtml += l_cThisAppTitle+[</a>]
+
+
         if par_LoggedIn
             //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
@@ -1684,10 +1697,9 @@ function SetSelect2Support()
 
 //Code in progress see WebPage_InterAppMapping.prg
 
-local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
 local l_ScriptFolder
 
-l_ScriptFolder := l_cSitePath+[scripts/jQuerySelect2_]+JQUERYSELECT2_SCRIPT_VERSION+[/]
+l_ScriptFolder := oFcgi:p_cSitePath+[scripts/jQuerySelect2_]+JQUERYSELECT2_SCRIPT_VERSION+[/]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2.min.css">]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[select2-bootstrap-5-theme.min.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[select2.full.min.js"></script>]

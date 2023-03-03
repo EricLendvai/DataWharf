@@ -41,7 +41,7 @@ local l_cURLEnumValueName       := ""
 
 local l_cTableAKA
 local l_cEnumerationAKA
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfPrimaryColumns
 local l_oDBListOfTagsOnFile
 local l_cTags
@@ -569,7 +569,7 @@ case l_cURLAction == "EditTable"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
             l_iTablePk    := l_aSQLResult[1,1]
@@ -748,7 +748,7 @@ case l_cURLAction == "EditColumn"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+l_cURLApplicationLinkCode+"/")
     else
         l_iColumnPk    := l_aSQLResult[1,1]
         l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
@@ -875,7 +875,7 @@ case l_cURLAction == "EditEnumeration"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumerations/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
             l_iEnumerationPk    := l_aSQLResult[1,1]
@@ -1005,7 +1005,7 @@ case l_cURLAction == "EditEnumValue"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
     else
         l_iEnumValuePk    := l_aSQLResult[1,1]
         l_iNameSpacePk    := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
@@ -1059,7 +1059,7 @@ case l_cURLAction == "EditNameSpace"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListNameSpaces/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
             l_iNameSpacePk    := l_aSQLResult[1,1]
@@ -1111,7 +1111,7 @@ case l_cURLAction == "EditTag"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTags/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
             l_iTagPk    := l_aSQLResult[1,1]
@@ -1233,7 +1233,7 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cInitialDiagram
  
 oFcgi:TraceAdd("DataDictionaryHeaderBuild")
@@ -1355,7 +1355,7 @@ local l_oDB_ListOfEnumerationCounts                    := hb_SQLData(oFcgi:p_o_S
 local l_oDB_ListOfIndexCounts                          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDiagramCounts                        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfUserSettingApplicationDefaultDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfDataDictionaries
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -1732,7 +1732,7 @@ case l_cActionOnSubmit == "Save"
                 //Should never happen
             else
                 if :Update(l_iApplicationPk)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
                 else
                     l_cErrorMessage := "Failed to update Application."
                 endif
@@ -1742,9 +1742,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(l_iApplicationPk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
     endif
 endcase
 
@@ -1762,7 +1762,7 @@ static function NameSpaceListFormBuild(par_iApplicationPk,par_cURLApplicationLin
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfNameSpaces
 local l_nNumberOfCustomFieldValues := 0
 
@@ -2086,20 +2086,20 @@ case l_cActionOnSubmit == "Save"
                     endif
                 endwith
 
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")  //+l_cNameSpaceName+"/"
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")  //+l_cNameSpaceName+"/"
             endif
         endif
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "Delete"   // NameSpace
     if oFcgi:p_nAccessLevelDD >= 5
         if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,l_iNameSpacePk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2120,7 +2120,7 @@ case l_cActionOnSubmit == "Delete"   // NameSpace
                     CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
                     l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
 
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
                 else
                     l_cErrorMessage := "Related Enumeration record on file"
                 endif
@@ -2197,7 +2197,7 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription","")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTags"      ,"")
 
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/"
+    l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/"
     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -2216,7 +2216,7 @@ local l_oDB_CustomField              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTags              := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_TableTags               := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_AnyTags                 := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_oCursor
 local l_iTablePk
 local l_nColumnCount
@@ -2696,7 +2696,7 @@ local l_nDocStatus   := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
-local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath    := oFcgi:p_cSitePath
 
 local l_oDB1           := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTags := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3080,13 +3080,13 @@ case l_cActionOnSubmit == "Cancel"
     l_cFrom := oFcgi:GetQueryString('From')
     // switch l_cFrom
     // case 'Columns'
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
     //     exit
     // case 'Indexes'
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
     //     exit
     // otherwise
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
     // endswitch
 
 case l_cActionOnSubmit == "Delete"   // Table
@@ -3094,7 +3094,7 @@ case l_cActionOnSubmit == "Delete"   // Table
         if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,l_iTablePk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
                 l_cFrom := "Redirect"
             endif
         else
@@ -3172,7 +3172,7 @@ case l_cActionOnSubmit == "Delete"   // Table
 
                                     CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
                                     if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
-                                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+                                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
                                         l_cFrom := "Redirect"
                                     else
                                         l_cErrorMessage := "Failed to delete Table"
@@ -3217,7 +3217,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += TableEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iTablePk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iTablePk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
 
 otherwise
     with object l_oDB1
@@ -3232,14 +3232,14 @@ otherwise
     endwith
     switch l_cFrom
     case 'Columns'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
         exit
     case 'Indexes'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
     endswitch
 endcase
 
@@ -3253,7 +3253,7 @@ local l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomField      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfColumns := 0
 local l_nNumberOfColumnsInSearch := 0
 local l_nNumberOfCustomFieldValues := 0
@@ -3701,7 +3701,7 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,"")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription","")
 
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/"
+    l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/"
     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -3715,7 +3715,7 @@ return l_cHtml
 static function ColumnOrderFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
 local l_cHtml := []
 local l_oDB_ListOfColumns
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("ColumnOrderFormBuild")
 
@@ -3845,7 +3845,7 @@ case l_cActionOnSubmit == "Save"
         endfor
     endif
 
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
 
 endcase
 
@@ -3885,7 +3885,7 @@ local l_oDBEnumeration  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDBTable        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTags := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_ScriptFolder
 local l_json_Tags
 local l_cTagInfo
@@ -4047,7 +4047,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3">]
 
             l_cHtml += [<span class="pe-5">]
-                l_cHtml += [<select name="ComboType" id="ComboType" onchange="OnChangeType(this.value);$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
                 for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
                     l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,1],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,2]+[</option>]
                 endfor
@@ -4570,12 +4570,12 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
     endif
 
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
 
 case l_cActionOnSubmit == "Delete"   // Column
     if oFcgi:p_nAccessLevelDD >= 5
@@ -4590,7 +4590,7 @@ case l_cActionOnSubmit == "Delete"   // Column
             CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
             l_oDB1:Delete("57e4ebae-00bf-4438-9c47-18e21601260a","Column",l_iColumnPk)
 
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
 
         else
             l_cErrorMessage := "Related Index Expression record on file"
@@ -4634,7 +4634,7 @@ return l_cHtml
 static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB1
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfIndexes
 
 oFcgi:TraceAdd("IndexListFormBuild")
@@ -4777,7 +4777,7 @@ static function EnumerationListFormBuild(par_iApplicationPk,par_cURLApplicationL
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_iEnumValueCount
 local l_nNumberOfEnumerations
 
@@ -4910,7 +4910,7 @@ return l_cHtml
 //=================================================================================================================
 static function EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
 local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
@@ -5023,7 +5023,7 @@ else
             l_cHtml += [<td class="pb-3">]
 
                 l_cHtml += [<span class="pe-5">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboImplementAs" id="ComboImplementAs" onchange="OnChangeImplementAs(this.value);"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                    l_cHtml += [<select name="ComboImplementAs" id="ComboImplementAs" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeImplementAs(this.value);']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
                         l_cHtml += [<option value="1"]+iif(l_iImplementAs==1,[ selected],[])+[>SQL Enum</option>]
                         l_cHtml += [<option value="2"]+iif(l_iImplementAs==2,[ selected],[])+[>Integer</option>]
                         l_cHtml += [<option value="3"]+iif(l_iImplementAs==3,[ selected],[])+[>Numeric</option>]
@@ -5177,7 +5177,7 @@ case l_cActionOnSubmit == "Save"
             if empty(l_iEnumerationPk)
                 if :Add()
                     l_iEnumerationPk := :Key()
-                    l_cFrom := oFcgi:GetQueryString('From')
+                    l_cFrom := "Values"  //oFcgi:GetQueryString('From')
                 else
                     l_cErrorMessage := "Failed to add Enumeration."
                 endif
@@ -5212,7 +5212,7 @@ case l_cActionOnSubmit == "Delete"   // Enumeration
 
             if l_oDB1:Tally == 0
                 if l_oDB1:Delete("8f1c66fc-38df-4b14-a43d-5cb8049944e3","Enumeration",l_iEnumerationPk)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
                     l_cFrom := "Redirect"
                 else
                     l_cErrorMessage := "Failed to delete Enumeration"
@@ -5246,7 +5246,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iEnumerationPk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iEnumerationPk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
 otherwise
     with object l_oDB1
         :Table("da356f83-c733-465e-a73c-e0af9e06d192","Enumeration")
@@ -5260,11 +5260,11 @@ otherwise
     endwith
     switch l_cFrom
     case 'Values'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Enumeration_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Enumeration_Name+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
     endswitch
 endcase
 
@@ -5274,7 +5274,7 @@ return l_cHtml
 //=================================================================================================================
 static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cEnumerationAKA)
 local l_cHtml := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfEnumValues
 local l_oDB1
 
@@ -5386,7 +5386,7 @@ return l_cHtml
 static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName)
 local l_cHtml := []
 local l_oDB1
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("EnumValueOrderFormBuild")
 
@@ -5521,7 +5521,7 @@ case l_cActionOnSubmit == "Save"
             endif
         endfor
     endif
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
 
 endcase
 
@@ -5537,7 +5537,7 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",""))
+local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",0))
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -5745,18 +5745,18 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
     endif
 
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
 
 case l_cActionOnSubmit == "Delete"   // EnumValue
     if oFcgi:p_nAccessLevelDD >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         l_oDB1:Delete("7f3486e6-6bbc-4307-b617-5ff00f0ac3ad","EnumValue",l_iEnumValuePk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
     endif
 
 endcase
@@ -6308,7 +6308,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
     endcase
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
 
 endcase
 
@@ -6332,7 +6332,7 @@ return l_cHtml
 static function TagListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfTags
 
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -6617,7 +6617,7 @@ case l_cActionOnSubmit == "Save"
 
                         endwith
 
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")  //+l_cTagName+"/"
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")  //+l_cTagName+"/"
                     endif
                 endif
             endif
@@ -6625,14 +6625,14 @@ case l_cActionOnSubmit == "Save"
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "Delete"   // Tag
     if oFcgi:p_nAccessLevelDD >= 5
         if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteTag(par_iApplicationPk,l_iTagPk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -6652,7 +6652,7 @@ case l_cActionOnSubmit == "Delete"   // Tag
                 if l_oDB1:Tally == 0
 
                     l_oDB1:Delete("8b98caf8-3c1e-47f9-8f2e-975f2c5757a4","Tag",l_iTagPk)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
 
                 else
                     l_cErrorMessage := "Related Column Tag record on file"

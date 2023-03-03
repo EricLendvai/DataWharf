@@ -725,7 +725,7 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"DataDictionaries/DataDictionaryImport/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryImport/"+par_cURLApplicationLinkCode+"/")
 
 endcase
 

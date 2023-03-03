@@ -23,7 +23,7 @@ local l_cURLSubAction
 local l_cURLLinkUID := ""
 local l_cURLEnumValueName := ""
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cLinkUID
 local l_lFoundHeaderInfo := .f.
 
@@ -1167,7 +1167,7 @@ local l_cHtml := ""
 // local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 // local l_aSQLResult := {}
 // local l_iReccount
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient sticky-top shadow">]
 l_cHtml +=    [<button type="button" id="sidebarCollapse" class="btn btn-secondary"><i class="bi bi-list"></i></button>]
@@ -1193,7 +1193,7 @@ local l_aSQLResult := {}
 local l_oDB2  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult2 := {}
 local l_iReccount
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_lSideBarMenuOpen := (oFcgi:GetCookieValue("sidebarMenu") == "false")
 local l_cInitialDiagram
 
@@ -1335,7 +1335,7 @@ local l_cHtml := []
 local l_oDB_ListOfProjects    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfProjects
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -1505,7 +1505,7 @@ local l_oDB_ListOfModelsLinkedModelCounts2               := hb_SQLData(oFcgi:p_o
 local l_oDB_ListOfModelsModelingDiagramCounts            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfUserSettingModelDefaultModelingDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfModels
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -1867,7 +1867,7 @@ static function ModelEditFormBuild(par_iProjectPk,par_cErrorText,par_iPk,par_hVa
 
 local l_cHtml := ""
 local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
-local l_cSitePath      := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath      := oFcgi:p_cSitePath
 
 local l_ScriptFolder
 
@@ -2154,7 +2154,7 @@ case l_cActionOnSubmit == "Save"
                         endif
                     else
                         if :Update(l_iModelPk)
-                            //oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditModel/"+par_cModelLinkUID+"/")
+                            //oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditModel/"+par_cModelLinkUID+"/")
                             l_cModelLinkUID := par_cModelLinkUID
                         else
                             l_cErrorMessage := "Failed to update Project."
@@ -2250,9 +2250,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(par_cModelLinkUID)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
     endif
 
 case l_cActionOnSubmit == "Delete"   // Model
@@ -2260,7 +2260,7 @@ case l_cActionOnSubmit == "Delete"   // Model
         if CheckIfAllowDestructiveModelDelete(l_iModelPk)
             l_cErrorMessage := CascadeDeleteModel(par_iProjectPk,l_iModelPk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2301,7 +2301,7 @@ case l_cActionOnSubmit == "Delete"   // Model
                                 //     CustomFieldsDelete(par_iProjectPk,USEDON_MODEL,l_iModelPk)
                                 //     :Delete("8c45bacb-78dd-46e5-ab34-38b0ff7c30b8","Model",l_iModelPk)
 
-                                //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+                                //     oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
                                 // else
                                 //     l_cErrorMessage := [Related Diagrams record on file.]
                                 // endif
@@ -2333,9 +2333,9 @@ if !empty(l_cErrorMessage)
     l_cHtml += ModelEditFormBuild(l_iProjectPk,l_cErrorMessage,l_iModelPk,l_hValues)
 else
     if l_lDeletedCurrentMode
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+l_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+l_cModelLinkUID+"/")
     endif
 endif
 
@@ -2350,7 +2350,7 @@ local l_cHtml := []
 local l_oDB_ListOfEntities                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntitiesAttributeCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields                  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_iEntityPk
 local l_nAttributeCount
 
@@ -2705,9 +2705,9 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_EntitySearch_AttributeDescription","")
 
     if !empty(par_cPackageLinkUID)
-        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities/"
+        l_cURL := oFcgi:p_cSitePath+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities/"
     else
-        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/"
+        l_cURL := oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/"
     endif
         
     oFcgi:Redirect(l_cURL)
@@ -2786,7 +2786,7 @@ local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
-local l_cSitePath    := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath    := oFcgi:p_cSitePath
 
 local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1               := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3029,10 +3029,10 @@ case l_cActionOnSubmit == "Cancel"
 
     // switch l_cFrom
     // case 'Attributes'
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cURLProjectLinkCode+"/"+par_cEnumerationName+"/"+par_cURLEntityName+"/")
+    //     oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAttributes/"+par_cURLProjectLinkCode+"/"+par_cEnumerationName+"/"+par_cURLEntityName+"/")
     //     exit
     // otherwise
-    //     oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cURLProjectLinkCode+"/")
+    //     oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cURLProjectLinkCode+"/")
     // endswitch
 
 case l_cActionOnSubmit == "Delete"   // Entity
@@ -3040,7 +3040,7 @@ case l_cActionOnSubmit == "Delete"   // Entity
         if CheckIfAllowDestructiveModelDelete(par_iModelPk)
             l_cErrorMessage := CascadeDeleteEntity(par_iProjectPk,l_iEntityPk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
                 l_cFrom := "Redirect"
             endif
         else
@@ -3071,7 +3071,7 @@ case l_cActionOnSubmit == "Delete"   // Entity
 
                             CustomFieldsDelete(par_iProjectPk,USEDON_ENTITY,l_iEntityPk)
                             if :Delete("6818930c-2486-49b9-a2b6-df7d50dd020f","Entity",l_iEntityPk)
-                                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+                                oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
                                 l_cFrom := "Redirect"
                             else
                                 l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFEntity+[.]
@@ -3108,9 +3108,9 @@ case !empty(l_cErrorMessage)
 
 case empty(l_cFrom) .or. empty(l_iEntityPk)
     if !empty(par_cPackageLinkUID)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListEntities")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
     endif
 
 otherwise
@@ -3124,11 +3124,11 @@ otherwise
     endwith
     switch l_cFrom
     case 'Attributes'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAttributes/"+par_cEntityLinkUID+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
     endswitch
 endcase
 
@@ -3147,7 +3147,7 @@ local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEntities := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAssociations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cSelectedPackageFullPk := []
 local l_cSelectedPackagePk
 local l_cSelectedEntityPk
@@ -3311,7 +3311,7 @@ local l_cHtml := []
 local l_oDB_ListOfDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cTreeIdPrefix := "dataTypesTree"
 local l_cSelectedDataTypeFullPk := []
 local l_cSelectedDataTypePk
@@ -3431,7 +3431,7 @@ static function PackageListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkU
 local l_cHtml := []
 local l_oDB_ListOfPackages := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields   := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nNumberOfPackages
 local l_nNumberOfCustomFieldValues := 0
@@ -3786,7 +3786,7 @@ case l_cActionOnSubmit == "Delete"   // Package
                         CustomFieldsDelete(par_iProjectPk,USEDON_PACKAGE,l_iPackagePk)
                         if :Delete("118f7bd4-c4fe-4057-8f3f-cd1808808f81","Package",l_iPackagePk)
                             FixNonNormalizeFieldsInPackage(par_iModelPk)
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListPackages/"+par_cModelLinkUID+"/")
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListPackages/"+par_cModelLinkUID+"/")
                             l_cFrom := "Redirect"
                         else
                             l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFPackage+[.]
@@ -3819,7 +3819,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += PackageEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cPackageLinkUID,l_cErrorMessage,l_iPackagePk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iPackagePk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListPackages/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListPackages/"+par_cModelLinkUID+"/")
 
 otherwise
     //Should not happen. Failed :Get.
@@ -3854,7 +3854,7 @@ local l_oDB_ListOfDataTypes                         := hb_SQLData(oFcgi:p_o_SQLC
 local l_oDB_CustomFields                            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB1
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nNumberOfDataTypes
 local l_nNumberOfCustomFieldValues := 0
@@ -4325,7 +4325,7 @@ case l_cActionOnSubmit == "Delete"   // DataType
                     CustomFieldsDelete(par_iProjectPk,USEDON_DATATYPE,l_iDataTypePk)
                     if :Delete("d95ff462-fd11-4ea8-abde-368ad8c0abd2","DataType",l_iDataTypePk)
                         FixNonNormalizeFieldsInDataType(par_iModelPk)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListDataTypes/"+par_cModelLinkUID+"/")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListDataTypes/"+par_cModelLinkUID+"/")
                         l_cFrom := "Redirect"
                     else
                         l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFDataType+[.]
@@ -4357,7 +4357,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += DataTypeEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cDataTypeLinkUID,l_cErrorMessage,l_iDataTypePk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iDataTypePk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListDataTypes/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListDataTypes/"+par_cModelLinkUID+"/")
 
 otherwise
     //Should not happen. Failed :Get.
@@ -4390,7 +4390,7 @@ static function EnumerationListFormBuild(par_iProjectPk,par_iModelPk,par_cModelL
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_iEnumValueCount
 local l_nNumberOfEnumerations
 
@@ -4504,7 +4504,7 @@ return l_cHtml
 //=================================================================================================================
 static function EnumerationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
@@ -4689,7 +4689,7 @@ case l_cActionOnSubmit == "Delete"   // Enumeration
 
             if l_oDB1:Tally == 0
                 if l_oDB1:Delete("478DE490-9954-49DB-9F19-ED05C2AEFFB4","ModelEnumeration",l_iEnumerationPk)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")     
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")     
                     l_cFrom := "Redirect"
                 else
                     l_cErrorMessage := "Failed to delete Enumeration"
@@ -4718,7 +4718,7 @@ case !empty(l_cErrorMessage)
     l_cHtml += EnumerationEditFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_cEnumerationLinkUID,l_cErrorMessage,l_iEnumerationPk,l_hValues)
 
 case empty(l_cFrom) .or. empty(l_iEnumerationPk)
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")
 otherwise
     with object l_oDB1
         :Table("932965C2-BCA4-4643-B1BD-241AA6D7FF17","ModelEnumeration")
@@ -4730,11 +4730,11 @@ otherwise
     endwith
     switch l_cFrom
     case 'Values'
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEnumValues/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumValues/"+par_cModelLinkUID+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")
     endswitch
 endcase
 
@@ -4744,7 +4744,7 @@ return l_cHtml
 //=================================================================================================================
 static function EnumValueListFormBuild(par_iProjectPk,par_iModelPk,par_cModelLinkUID,par_iEnumerationPk,par_cEnumerationLinkUID,par_cEnumerationName)
 local l_cHtml := []
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfEnumValues
 local l_oDB1
 
@@ -4836,7 +4836,7 @@ return l_cHtml
 static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cModelLinkUID,par_cEnumerationName,par_cEnumerationLinkUID)
 local l_cHtml := []
 local l_oDB1
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("EnumValueOrderFormBuild")
 
@@ -4969,7 +4969,7 @@ case l_cActionOnSubmit == "Save"
             endif
         endfor
     endif
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/")
 
 endcase
 
@@ -5144,18 +5144,18 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
     endif
 
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
 
 case l_cActionOnSubmit == "Delete"   // EnumValue
     if oFcgi:p_nAccessLevelML >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         l_oDB1:Delete("04DF0A61-DEF8-44AB-9866-54BA2BB315CA","ModelEnumValue",l_iEnumValuePk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEnumeration/"+par_cEnumerationLinkUID+"/ListEnumValues/"+par_cEnumerationLinkUID+"/")
     endif
 
 endcase
@@ -5180,7 +5180,7 @@ local l_oDB_ListOfAssociations               := hb_SQLData(oFcgi:p_o_SQLConnecti
 local l_oDB_ListOfAssociationsEndpoints      := hb_SQLData(oFcgi:p_o_SQLConnection)
 // local l_oDB_ListOfAssociationsEndpointCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields                     := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_iAssociationPk
 
 local l_cSearchAssociationName
@@ -5535,11 +5535,11 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointName"       ,"")
     SaveUserSetting("Model_"+Trans(par_iModelPk)+"_AssociationSearch_EndpointDescription","")
     if !empty(par_cEntityLinkUID)
-        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAssociations/"
+        l_cURL := oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAssociations/"
     elseif !empty(par_cPackageLinkUID)
-        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations/"
+        l_cURL := oFcgi:p_cSitePath+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations/"
     else
-        l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/"
+        l_cURL := oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/"
     endif
     
     oFcgi:Redirect(l_cURL)
@@ -6144,7 +6144,7 @@ case l_cActionOnSubmit == "Delete"   // Association
         if CheckIfAllowDestructiveModelDelete(par_iModelPk)
             l_cErrorMessage := CascadeDeleteAssociation(par_iProjectPk,l_iAssociationPk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
                 l_cFrom := "Redirect"
             endif
         else
@@ -6156,7 +6156,7 @@ case l_cActionOnSubmit == "Delete"   // Association
                 if :Tally == 0
                     CustomFieldsDelete(par_iProjectPk,USEDON_ASSOCIATION,l_iAssociationPk)
                     if :Delete("357adb48-e4ab-4f96-9b37-d738806cefc9","Association",l_iAssociationPk)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
                         l_cFrom := "Redirect"
                     else
                         l_cErrorMessage := [Failed to delete ]+oFcgi:p_ANFAssociation+[.]
@@ -6200,13 +6200,13 @@ case !empty(l_cErrorMessage)
 
 case empty(l_cFrom) .or. empty(l_iAssociationPk)
     if !empty(par_cPackageLinkUID)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditPackage/"+par_cPackageLinkUID+"/ListAssociations")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
     endif
 
 otherwise
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")
 
 endcase
 
@@ -6221,7 +6221,7 @@ static function AttributeListFormBuild(par_iEntityPk,par_cEntityLinkUID,par_cEnt
 local l_cHtml := []
 local l_oDB_ListOfAttributes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomField      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfAttributes
 local l_nNumberOfAttributesInSearch
 local l_nNumberOfCustomFieldValues  := 0
@@ -6509,7 +6509,7 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Entity_"+Trans(par_iEntityPk)+"_AttributeSearch_AttributeName"       ,"")
     SaveUserSetting("Entity_"+Trans(par_iEntityPk)+"_AttributeSearch_AttributeDescription","")
 
-    l_cURL := oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes/"+par_cEntityLinkUID+"/"
+    l_cURL := oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes/"+par_cEntityLinkUID+"/"
     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -6901,11 +6901,11 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 
 case l_cActionOnSubmit == "Delete"   // Attribute
     if oFcgi:p_nAccessLevelML >= 5
@@ -6919,7 +6919,7 @@ case l_cActionOnSubmit == "Delete"   // Attribute
                 CustomFieldsDelete(par_iProjectPk,USEDON_ATTRIBUTE,l_iAttributePk)
                 :Delete("f47695cf-ff12-4c3f-8e12-3b4a17bc306b","Attribute",l_iAttributePk)
                 FixNonNormalizeFieldsInAttribute(par_iEntityPk)
-                oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
             else
                 l_cErrorMessage := [Related ]+oFcgi:p_ANFAttribute+[ record on file.]
             endif
@@ -6951,7 +6951,7 @@ return l_cHtml
 static function AttributeOrderFormBuild(par_iEntityPk,par_cEntityLinkUID,par_cEntityName)
 local l_cHtml := []
 local l_oDB_ListOfAttributes
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("AttributeOrderFormBuild")
 
@@ -7084,7 +7084,7 @@ case l_cActionOnSubmit == "Save"
 
     FixNonNormalizeFieldsInAttribute(l_iEntityPk)
 
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListAttributes")
 
 endcase
 
@@ -7099,7 +7099,7 @@ static function LinkedEntityListFormBuild(par_iEntityPk,par_cEntityLinkUID)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfLinkedEntities
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -7240,7 +7240,7 @@ static function LinkedEntityEditFormBuild(par_iModelPk,par_iPk,par_cLinkedEntity
 
 local l_cHtml := ""
 local l_cErrorText     := hb_DefaultValue(par_cErrorText,"")
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 local l_ScriptFolder
 
@@ -7444,14 +7444,14 @@ case l_cActionOnSubmit == "Save"
                         :Field("LinkedEntity.LinkUID" , l_cLinkedEntityLinkUID)
                         if :Add()
                             l_iLinkedEntityPk := :Key()
-                            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                         else
                             l_cErrorMessage := [Failed to add ]+oFcgi:p_ANFLinkedEntity+[.]
                         endif
                     endif
                 else
                     if :Update(par_cLinkedEntityPk)
-                        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
                     else
                         l_cErrorMessage := [Failed to update ]+oFcgi:p_ANFLinkedEntity+[.]
                     endif
@@ -7461,14 +7461,14 @@ case l_cActionOnSubmit == "Save"
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
 
 case l_cActionOnSubmit == "Delete"   // Model
     if oFcgi:p_nAccessLevelML >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         l_oDB1:Delete("E184F683-C71F-4AAB-9227-3576C17AC4BA","LinkedEntity",par_cLinkedEntityPk)
     endif
-    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+par_cEntityLinkUID+"/ListLinkedEntities")
 endcase
 
 if !empty(l_cErrorMessage)

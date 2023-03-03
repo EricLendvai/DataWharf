@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 03/03/2023 v 2.50
+* Fix crash on editing of custom field settings.
+* Added support to oid data types.
+* New application logo in nav bar and About page.
+* On manual add of new enumeration, go to add enumeration values.
+
 ## 02/22/2023 v 2.49
 * Fix on Delta when selecting a Deployment.
 * Fix on manual delete of column.

@@ -31,7 +31,7 @@ local l_aSQLResult := {}
 local l_cURLAction := "ListUsers"
 local l_cURLUserID := ""
 
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 
 oFcgi:TraceAdd("BuildPageUsers")
 
@@ -168,7 +168,7 @@ local l_cHtml := []
 local l_oDB_ListOfUsers             := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjectAccess     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfApplicationAccess := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:RequestSettings["SitePath"]
+local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfUsers
 local l_iUserPk
 
@@ -416,7 +416,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<span class="pe-5">]
                     l_iAccessMode := hb_HGetDef(par_hValues,"AccessMode",1)
                     // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboAccessMode" id="ComboAccessMode">]
-                    l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange="OnChangeAccessMode(this.value);$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');">]
+                    l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeAccessMode(this.value);'>]
                         l_cHtml += [<option value="1"]+iif(l_iAccessMode==1,[ selected],[])+[>Project and Application Specific</option>]
                         l_cHtml += [<option value="2"]+iif(l_iAccessMode==2,[ selected],[])+[>All Projects and Applications Read Only</option>]
                         l_cHtml += [<option value="3"]+iif(l_iAccessMode==3,[ selected],[])+[>All Projects and Applications Full Access</option>]
@@ -791,7 +791,7 @@ case l_cActionOnSubmit == "Save"
                 //-----------------------------------------------
 
                 if empty(l_cErrorMessage)
-                    oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/ListUsers/")
+                    oFcgi:Redirect(oFcgi:p_cSitePath+"Users/ListUsers/")
                 endif
             endwith
         endif
@@ -799,9 +799,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     if empty(l_iUserPk)
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Users")
     else
-        oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/ListUsers/")  // +par_cURLUserID+"/"
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Users/ListUsers/")  // +par_cURLUserID+"/"
     endif
 
 case l_cActionOnSubmit == "Delete"   // User
@@ -870,7 +870,7 @@ case l_cActionOnSubmit == "Delete"   // User
 
         if empty(l_cErrorMessage)
             l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
-            oFcgi:Redirect(oFcgi:RequestSettings["SitePath"]+"Users/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Users/")
         endif
     endif
 
