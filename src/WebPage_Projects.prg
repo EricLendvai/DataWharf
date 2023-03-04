@@ -157,6 +157,7 @@ case l_cURLAction == "ProjectSettings"
                 :Table("a11b7e98-4717-40e1-8c81-451656153c5a","public.Project")
                 :Column("Project.UseStatus"                     , "Project_UseStatus")
                 :Column("Project.Description"                   , "Project_Description")
+                :Column("Project.DestructiveDelete"             , "Project_DestructiveDelete")
                 :Column("Project.AlternateNameForModel"         , "Project_AlternateNameForModel")
                 :Column("Project.AlternateNameForModels"        , "Project_AlternateNameForModels")
                 :Column("Project.AlternateNameForEntity"        , "Project_AlternateNameForEntity")
@@ -181,6 +182,7 @@ case l_cURLAction == "ProjectSettings"
                 l_hValues["Name"]                          := l_cProjectName
                 l_hValues["UseStatus"]                     := l_oData:Project_UseStatus
                 l_hValues["Description"]                   := l_oData:Project_Description
+                l_hValues["DestructiveDelete"]             := l_oData:Project_DestructiveDelete
                 l_hValues["AlternateNameForModel"]         := l_oData:Project_AlternateNameForModel
                 l_hValues["AlternateNameForModels"]        := l_oData:Project_AlternateNameForModels
                 l_hValues["AlternateNameForEntity"]        := l_oData:Project_AlternateNameForEntity
@@ -323,11 +325,12 @@ l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
     :Table("be95fd34-cf27-4c9a-9f59-195f5f3f6bc1","Project")
-    :Column("Project.pk"         ,"pk")
-    :Column("Project.Name"       ,"Project_Name")
-    :Column("Project.LinkUID"    ,"Project_LinkUID")
-    :Column("Project.UseStatus"  ,"Project_UseStatus")
-    :Column("Project.Description","Project_Description")
+    :Column("Project.pk"                ,"pk")
+    :Column("Project.Name"              ,"Project_Name")
+    :Column("Project.LinkUID"           ,"Project_LinkUID")
+    :Column("Project.UseStatus"         ,"Project_UseStatus")
+    :Column("Project.Description"       ,"Project_Description")
+    :Column("Project.DestructiveDelete" ,"Project_DestructiveDelete")
     :Column("Upper(Project.Name)","tag1")
     :OrderBy("tag1")
 
@@ -391,13 +394,14 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"3","4")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Name/Manage</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Destructive<br>Deletes</th>]
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                     endif
@@ -417,6 +421,10 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,1,6),ListOfProjects->Project_UseStatus,1)]
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(vfp_between(ListOfProjects->Project_DestructiveDelete,1,3),ListOfProjects->Project_DestructiveDelete,1)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -446,6 +454,7 @@ local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 local l_cName                          := hb_HGetDef(par_hValues,"Name","")
 local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_cDescription                   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_nDestructiveDelete             := hb_HGetDef(par_hValues,"DestructiveDelete",1)
 local l_cAlternateNameForModel         := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"         ,""),"")
 local l_cAlternateNameForModels        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"        ,""),"")
 local l_cAlternateNameForEntity        := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"        ,""),"")
@@ -522,6 +531,16 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr>]
+            l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
+                    l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Entities/Associations</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>Can Delete Model</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td colspan="2">]
@@ -620,6 +639,7 @@ local l_cProjectName
 local l_cProjectLinkUID := par_cURLProjectLinkUID  //It will be overridden in case of add  - Not used for now since only 1 tab
 local l_nProjectUseStatus
 local l_cProjectDescription
+local l_nProjectDestructiveDelete
 
 local l_cProjectAlternateNameForModel
 local l_cProjectAlternateNameForModels
@@ -657,6 +677,7 @@ l_iProjectPk                            := Val(oFcgi:GetInputValue("TableKey"))
 l_cProjectName                          := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_nProjectUseStatus                     := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_cProjectDescription                   := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_nProjectDestructiveDelete             := Val(oFcgi:GetInputValue("ComboDestructiveDelete"))
 l_cProjectAlternateNameForModel         := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModel"))
 l_cProjectAlternateNameForModels        := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForModels"))
 l_cProjectAlternateNameForEntity        := SanitizeInput(oFCGI:GetInputValue("TextAlternateNameForEntity"))
@@ -707,6 +728,7 @@ case l_cActionOnSubmit == "Save"
                     :Field("Project.Name"                          , l_cProjectName)
                     :Field("Project.UseStatus"                     , l_nProjectUseStatus)
                     :Field("Project.Description"                   , iif(empty(l_cProjectDescription),NULL,l_cProjectDescription))
+                    :Field("Project.DestructiveDelete"             , l_nProjectDestructiveDelete)
                     :Field("Project.AlternateNameForModel"         , iif(empty(l_cProjectAlternateNameForModel)             ,NULL,l_cProjectAlternateNameForModel))
                     :Field("Project.AlternateNameForModels"        , iif(empty(l_cProjectAlternateNameForModels)            ,NULL,l_cProjectAlternateNameForModels))
                     :Field("Project.AlternateNameForEntity"        , iif(empty(l_cProjectAlternateNameForEntity)            ,NULL,l_cProjectAlternateNameForEntity))

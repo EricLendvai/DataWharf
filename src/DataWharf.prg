@@ -268,10 +268,6 @@ with object ::p_o_SQLConnection
                 ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
             endif
 
-            if ::p_o_SQLConnection:FieldExists("public.Attribute","fk_Association")
-                ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
-            endif
-
             l_iCurrentDataVersion := 7
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
@@ -387,7 +383,6 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
-        
         if l_iCurrentDataVersion < 15
             with object l_oDB1
                 :Table("6a473090-8c14-47f7-a1dc-95f79a4e45b4","Diagram")
@@ -456,11 +451,28 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 19
+            if ::p_o_SQLConnection:FieldExists("public.Application","AllowDestructiveDelete")
+                ::p_o_SQLConnection:DeleteField("public.Application","AllowDestructiveDelete")
+            endif
+
+            l_iCurrentDataVersion := 19
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 20
+            if ::p_o_SQLConnection:FieldExists("public.Model","AllowDestructiveDelete")
+                ::p_o_SQLConnection:DeleteField("public.Model","AllowDestructiveDelete")
+            endif
+
+            l_iCurrentDataVersion := 20
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
-
         l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
         l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
 
@@ -1322,6 +1334,8 @@ local l_oData
 
 local l_cExtraClass
 
+local l_lShowChangePassword
+
 if empty(l_cThisAppTitle)
     l_cThisAppTitle := APPLICATION_TITLE
 endif
@@ -1377,6 +1391,15 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 
 
         if par_LoggedIn
+
+#ifdef __PLATFORM__LINUX
+    l_lShowChangePassword := !oFcgi:isOAuth()
+#endif
+#ifdef __PLATFORM__WINDOWS
+    l_lShowChangePassword := .t.
+#endif
+
+
             //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
                     l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
@@ -1393,30 +1416,31 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     endif
 
-                    l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                    l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
-                        if l_lShowMenuProjects
-                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
-                        endif
+                    if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
+                        l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
+                            if l_lShowMenuProjects
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                            endif
 
-                        if l_lShowMenuApplications
-                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
-                        endif
+                            if l_lShowMenuApplications
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                            endif
 
-                        if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
-                        endif
+                            if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "customfields"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[CustomFields">Custom Fields</a></li>]
+                            endif
 
-                        if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
-                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
-                        endif
-#ifdef __PLATFORM__LINUX
-                        if !oFcgi:isOAuth()
-                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
-                        endif
-#endif
-                    l_cHtml += [</ul>]
-                    l_cHtml += [</li>]
+                            if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
+                            endif
+                            if l_lShowChangePassword
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
+                            endif
+
+                        l_cHtml += [</ul>]
+                        l_cHtml += [</li>]
+                    endif
 
                     l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[About">About</a></li>]
 
@@ -1501,6 +1525,33 @@ TEXT TO VAR cHtml
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Delete');document.form.submit();">Yes</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ENDTEXT
+
+return cHtml
+//=================================================================================================================
+function GetConfirmationModalFormsPurge()
+local cHtml
+
+TEXT TO VAR cHtml
+
+<div class="modal fade" id="ConfirmPurgeModal" tabindex="-1" aria-labelledby="ConfirmPurgeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ConfirmPurgeModalLabel">Confirm Purge</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This action cannot be undone
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Purge');document.form.submit();">Yes</button>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
       </div>
     </div>
@@ -1664,34 +1715,100 @@ return l_cValue
 //=================================================================================================================
 //=================================================================================================================
 function CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
-local l_AllowDestructiveDelete := .f.
+local l_lResult := .f.
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oData
-//Check if the application as AllowDestructiveDelete set to true
+
 with object l_oDB1
     :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c91","Application")
-    :Column("Application.AllowDestructiveDelete" , "Application_AllowDestructiveDelete")
+    :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_AllowDestructiveDelete := l_oData:Application_AllowDestructiveDelete
+        l_lResult := (l_oData:Application_DestructiveDelete == 5)
     endif
 endwith
-return l_AllowDestructiveDelete
+
+return l_lResult
 //=================================================================================================================
-function CheckIfAllowDestructiveModelDelete(par_iModelPk)
-local l_AllowDestructiveDelete := .f.
+function CheckIfAllowDestructiveNameSpaceDelete(par_iApplicationPk)
+local l_lResult := .f.
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oData
-//Check if the model as AllowDestructiveDelete set to true
+
 with object l_oDB1
-    :Table("4c418c2f-79a1-40cf-ac79-21d17a0edc57","Model")
-    :Column("Model.AllowDestructiveDelete" , "Model_AllowDestructiveDelete")
-    l_oData := :Get(par_iModelPk)
+    :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c92","Application")
+    :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_AllowDestructiveDelete := l_oData:Model_AllowDestructiveDelete
+        l_lResult := (l_oData:Application_DestructiveDelete == 3)
     endif
 endwith
-return l_AllowDestructiveDelete
+
+return l_lResult
+//=================================================================================================================
+function CheckIfAllowDestructiveTableDelete(par_iApplicationPk)
+local l_lResult := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
+with object l_oDB1
+    :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c93","Application")
+    :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        l_lResult := (l_oData:Application_DestructiveDelete == 2)
+    endif
+endwith
+
+return l_lResult
+//=================================================================================================================
+function CheckIfAllowDestructivePurgeApplication(par_iApplicationPk)
+local l_lResult := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
+with object l_oDB1
+    :Table("599b29b4-8bd9-4380-bd51-8ad5a6c35c94","Application")
+    :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        l_lResult := (l_oData:Application_DestructiveDelete == 4)
+    endif
+endwith
+
+return l_lResult
+//=================================================================================================================
+function CheckIfAllowDestructiveModelDelete(par_iProjectPk)
+local l_lResult := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
+with object l_oDB1
+    :Table("4c418c2f-79a1-40cf-ac79-21d17a0edc52","Project")
+    :Column("Project.DestructiveDelete" , "Project_DestructiveDelete")
+    l_oData := :Get(par_iProjectPk)
+    if :Tally == 1
+        l_lResult := (l_oData:Project_DestructiveDelete == 3)
+    endif
+endwith
+
+return l_lResult
+//=================================================================================================================
+function CheckIfAllowDestructiveEntityAssociationDelete(par_iProjectPk)
+local l_lResult := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
+with object l_oDB1
+    :Table("4c418c2f-79a1-40cf-ac79-21d17a0edc53","Project")
+    :Column("Project.DestructiveDelete" , "Project_DestructiveDelete")
+    l_oData := :Get(par_iProjectPk)
+    if :Tally == 1
+        l_lResult := (l_oData:Project_DestructiveDelete == 2)
+    endif
+endwith
+
+return l_lResult
 //=================================================================================================================
 function SetSelect2Support()
 

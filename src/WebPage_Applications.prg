@@ -162,18 +162,20 @@ case l_cURLAction == "ApplicationInfo"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("33728b1f-3db2-4902-b337-d14f91f61b62","public.Application")
-        :Column("Application.UseStatus"      , "Application_UseStatus")
-        :Column("Application.DocStatus"      , "Application_DocStatus")
-        :Column("Application.Description"    , "Application_Description")
+        :Column("Application.UseStatus"         , "Application_UseStatus")
+        :Column("Application.DocStatus"         , "Application_DocStatus")
+        :Column("Application.Description"       , "Application_Description")
+        :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
         l_oData := :Get(l_iApplicationPk)
     endwith
 
     if l_oDB1:Tally == 1
-        l_hValues["Name"]          := l_cApplicationName
-        l_hValues["LinkCode"]      := l_cURLApplicationLinkCode
-        l_hValues["UseStatus"]     := l_oData:Application_UseStatus
-        l_hValues["DocStatus"]     := l_oData:Application_DocStatus
-        l_hValues["Description"]   := l_oData:Application_Description
+        l_hValues["Name"]              := l_cApplicationName
+        l_hValues["LinkCode"]          := l_cURLApplicationLinkCode
+        l_hValues["UseStatus"]         := l_oData:Application_UseStatus
+        l_hValues["DocStatus"]         := l_oData:Application_DocStatus
+        l_hValues["Description"]       := l_oData:Application_Description
+        l_hValues["DestructiveDelete"] := l_oData:Application_DestructiveDelete
 
         CustomFieldsLoad(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk,@l_hValues)
 
@@ -188,18 +190,20 @@ case l_cURLAction == "ApplicationSettings"
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("2ce4d4b4-2ee3-42bf-91d1-5fa29a4c9b07","public.Application")
-                :Column("Application.UseStatus"      , "Application_UseStatus")
-                :Column("Application.DocStatus"      , "Application_DocStatus")
-                :Column("Application.Description"    , "Application_Description")
+                :Column("Application.UseStatus"         , "Application_UseStatus")
+                :Column("Application.DocStatus"         , "Application_DocStatus")
+                :Column("Application.Description"       , "Application_Description")
+                :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
                 l_oData := :Get(l_iApplicationPk)
             endwith
 
             if l_oDB1:Tally == 1
-                l_hValues["Name"]          := l_cApplicationName
-                l_hValues["LinkCode"]      := l_cURLApplicationLinkCode
-                l_hValues["UseStatus"]     := l_oData:Application_UseStatus
-                l_hValues["DocStatus"]     := l_oData:Application_DocStatus
-                l_hValues["Description"]   := l_oData:Application_Description
+                l_hValues["Name"]              := l_cApplicationName
+                l_hValues["LinkCode"]          := l_cURLApplicationLinkCode
+                l_hValues["UseStatus"]         := l_oData:Application_UseStatus
+                l_hValues["DocStatus"]         := l_oData:Application_DocStatus
+                l_hValues["Description"]       := l_oData:Application_Description
+                l_hValues["DestructiveDelete"] := l_oData:Application_DestructiveDelete
 
                 CustomFieldsLoad(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk,@l_hValues)
 
@@ -351,13 +355,14 @@ return l_cHtml
 static function ApplicationInfoFormBuild(par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
-local l_cName           := hb_HGetDef(par_hValues,"Name","")
-local l_cLinkCode       := hb_HGetDef(par_hValues,"LinkCode","")
-local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_nDocStatus      := hb_HGetDef(par_hValues,"DocStatus",1)
-local l_cDescription    := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cName              := hb_HGetDef(par_hValues,"Name","")
+local l_cLinkCode          := hb_HGetDef(par_hValues,"LinkCode","")
+local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription       := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",1)
 
 oFcgi:TraceAdd("ApplicationInfoFormBuild")
 
@@ -416,6 +421,19 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80" disabled>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr>]
+            l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete" disabled>]
+                    l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On NameSpaces</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nDestructiveDelete==4,[ selected],[])+[>Entire Application Content (Needed to PURGE)</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nDestructiveDelete==5,[ selected],[])+[>Can Delete Application</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
         if !empty(par_iPk)
             l_cHtml += CustomFieldsBuild(par_iPk,USEDON_APPLICATION,par_iPk,par_hValues,[disabled])
         endif
@@ -435,9 +453,9 @@ return l_cHtml
 //=================================================================================================================
 static function ApplicationListFormBuild()
 local l_cHtml := []
-local l_oDB_ListOfApplications       := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfApplications      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
@@ -448,12 +466,13 @@ oFcgi:TraceAdd("ApplicationListFormBuild")
 
 with object l_oDB_ListOfApplications
     :Table("70a13bfd-f9b0-4c36-a8d7-af8ed062d781","Application")
-    :Column("Application.pk"         ,"pk")
-    :Column("Application.Name"       ,"Application_Name")
-    :Column("Application.LinkCode"   ,"Application_LinkCode")
-    :Column("Application.UseStatus"  ,"Application_UseStatus")
-    :Column("Application.DocStatus"  ,"Application_DocStatus")
-    :Column("Application.Description","Application_Description")
+    :Column("Application.pk"               ,"pk")
+    :Column("Application.Name"             ,"Application_Name")
+    :Column("Application.LinkCode"         ,"Application_LinkCode")
+    :Column("Application.UseStatus"        ,"Application_UseStatus")
+    :Column("Application.DocStatus"        ,"Application_DocStatus")
+    :Column("Application.Description"      ,"Application_Description")
+    :Column("Application.DestructiveDelete","Application_DestructiveDelete")
     :Column("Upper(Application.Name)","tag1")
     :OrderBy("tag1")
 
@@ -536,7 +555,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -546,6 +565,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Destructive<br>Deletes</th>]
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
                     endif
@@ -583,6 +603,10 @@ l_cHtml += [<div class="m-3">]
                             l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,1,4),ListOfApplications->Application_DocStatus,1)]
                         l_cHtml += [</td>]
 
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += {"None","On Tables/Tags","On NameSpaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,1,5),ListOfApplications->Application_DestructiveDelete,1)]
+                        l_cHtml += [</td>]
+
                         if l_nNumberOfCustomFieldValues > 0
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                 l_cHtml += CustomFieldsBuildGridOther(ListOfApplications->pk,l_hOptionValueToDescriptionMapping)
@@ -605,13 +629,14 @@ return l_cHtml
 static function ApplicationEditFormBuild(par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
-local l_cName           := hb_HGetDef(par_hValues,"Name","")
-local l_cLinkCode       := hb_HGetDef(par_hValues,"LinkCode","")
-local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_nDocStatus      := hb_HGetDef(par_hValues,"DocStatus",1)
-local l_cDescription    := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cName              := hb_HGetDef(par_hValues,"Name","")
+local l_cLinkCode          := hb_HGetDef(par_hValues,"LinkCode","")
+local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_cDescription       := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",1)
 
 oFcgi:TraceAdd("ApplicationEditFormBuild")
 
@@ -637,6 +662,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 7
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmPurgeModal">Purge All Content (Keep Access Rights)</button>]
                 l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
         endif
@@ -684,9 +710,22 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
-        l_cHtml += [<tr>]
+        l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
             l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr>]
+            l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
+                    l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On NameSpaces</option>]
+                    l_cHtml += [<option value="4"]+iif(l_nDestructiveDelete==4,[ selected],[])+[>Entire Application Content (Needed to PURGE)</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nDestructiveDelete==5,[ selected],[])+[>Can Delete Application</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         if !empty(par_iPk)
@@ -704,6 +743,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 l_cHtml += [</form>]
 
 l_cHtml += GetConfirmationModalFormsDelete()
+l_cHtml += GetConfirmationModalFormsPurge()
 
 return l_cHtml
 //=================================================================================================================
@@ -717,6 +757,7 @@ local l_cApplicationLinkCode
 local l_nApplicationUseStatus
 local l_nApplicationDocStatus
 local l_cApplicationDescription
+local l_nApplicationDestructiveDelete
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
@@ -728,12 +769,13 @@ oFcgi:TraceAdd("ApplicationEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iApplicationPk             := Val(oFcgi:GetInputValue("TableKey"))
-l_cApplicationName           := SanitizeInput(oFcgi:GetInputValue("TextName"))
-l_cApplicationLinkCode       := Upper(SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextLinkCode")))
-l_nApplicationUseStatus      := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_nApplicationDocStatus      := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cApplicationDescription    := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iApplicationPk                := Val(oFcgi:GetInputValue("TableKey"))
+l_cApplicationName              := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cApplicationLinkCode          := Upper(SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextLinkCode")))
+l_nApplicationUseStatus         := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nApplicationDocStatus         := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cApplicationDescription       := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_nApplicationDestructiveDelete := Val(oFcgi:GetInputValue("ComboDestructiveDelete"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -773,12 +815,13 @@ case l_cActionOnSubmit == "Save"
                     //Save the Application
                     with object l_oDB1
                         :Table("775d6628-4c99-40d4-8955-50805adf7aa9","Application")
-                        :Field("Application.Name"           , l_cApplicationName)
-                        :Field("Application.LinkCode"       , l_cApplicationLinkCode)
-                        :Field("Application.UseStatus"      , l_nApplicationUseStatus)
-                        :Field("Application.DocStatus"      , l_nApplicationDocStatus)
-                        :Field("Application.Description"    , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
-                        
+                        :Field("Application.Name"              , l_cApplicationName)
+                        :Field("Application.LinkCode"          , l_cApplicationLinkCode)
+                        :Field("Application.UseStatus"         , l_nApplicationUseStatus)
+                        :Field("Application.DocStatus"         , l_nApplicationDocStatus)
+                        :Field("Application.Description"       , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
+                        :Field("Application.DestructiveDelete" , l_nApplicationDestructiveDelete)
+                                                
                         if empty(l_iApplicationPk)
                             if :Add()
                                 l_iApplicationPk := :Key()
@@ -810,7 +853,7 @@ case l_cActionOnSubmit == "Cancel"
 case l_cActionOnSubmit == "Delete"   // Application
     if oFcgi:p_nUserAccessMode >= 3
         if CheckIfAllowDestructiveApplicationDelete(l_iApplicationPk)
-            l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk)
+            l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk,.f.)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
             endif
@@ -825,7 +868,7 @@ case l_cActionOnSubmit == "Delete"   // Application
 
                 if :Tally == 0
                     :Table("72419462-2523-45a3-8f86-4cdca0da52c0","Deployment")
-                    :Where("Version.fk_Application = ^",l_iApplicationPk)
+                    :Where("Deployment.fk_Application = ^",l_iApplicationPk)
                     :SQL()
 
                     if :Tally == 0
@@ -869,14 +912,25 @@ case l_cActionOnSubmit == "Delete"   // Application
         endif
     endif
 
+case l_cActionOnSubmit == "Purge"   // Application
+    if oFcgi:p_nUserAccessMode >= 3
+        if CheckIfAllowDestructivePurgeApplication(l_iApplicationPk) .or. CheckIfAllowDestructiveApplicationDelete(l_iApplicationPk)
+            l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk,.t.)
+            if empty(l_cErrorMessage)
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
+            endif
+        endif
+    endif
+
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["Name"]           := l_cApplicationName
-    l_hValues["LinkCode"]       := l_cApplicationLinkCode
-    l_hValues["UseStatus"]      := l_nApplicationUseStatus
-    l_hValues["DocStatus"]      := l_nApplicationDocStatus
-    l_hValues["Description"]    := l_cApplicationDescription
+    l_hValues["Name"]              := l_cApplicationName
+    l_hValues["LinkCode"]          := l_cApplicationLinkCode
+    l_hValues["UseStatus"]         := l_nApplicationUseStatus
+    l_hValues["DocStatus"]         := l_nApplicationDocStatus
+    l_hValues["Description"]       := l_cApplicationDescription
+    l_hValues["DestructiveDelete"] := l_nApplicationDestructiveDelete
 
     CustomFieldsFormToHash(l_iApplicationPk,USEDON_APPLICATION,@l_hValues)
 
@@ -890,7 +944,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-function CascadeDeleteApplication(par_iApplicationPk)
+function CascadeDeleteApplication(par_iApplicationPk,par_lPurgeOnly)
 
 local l_oDB1                      := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
 local l_oDB_ListOfRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -949,11 +1003,12 @@ with object l_oDB1
         endfor
     endwith
 
-
     if empty(l_cErrorMessage)
         CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
-        if !l_oDB_RecordToDelete:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
-            l_cErrorMessage := "Failed to delete Application. Error 14."
+        if !par_lPurgeOnly
+            if !l_oDB_RecordToDelete:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
+                l_cErrorMessage := "Failed to delete Application. Error 14."
+            endif
         endif
     endif
 

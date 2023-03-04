@@ -2257,7 +2257,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Model
     if oFcgi:p_nAccessLevelML >= 7
-        if CheckIfAllowDestructiveModelDelete(l_iModelPk)
+        if CheckIfAllowDestructiveModelDelete(par_iProjectPk)
             l_cErrorMessage := CascadeDeleteModel(par_iProjectPk,l_iModelPk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListModels/"+par_cProjectLinkUID+"/")
@@ -3037,7 +3037,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Entity
     if oFcgi:p_nAccessLevelML >= 5
-        if CheckIfAllowDestructiveModelDelete(par_iModelPk)
+        if CheckIfAllowDestructiveEntityAssociationDelete(par_iProjectPk)
             l_cErrorMessage := CascadeDeleteEntity(par_iProjectPk,l_iEntityPk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEntities/"+par_cModelLinkUID+"/")
@@ -6141,7 +6141,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Association
     if oFcgi:p_nAccessLevelML >= 5
-        if CheckIfAllowDestructiveModelDelete(par_iModelPk)
+        if CheckIfAllowDestructiveEntityAssociationDelete(par_iProjectPk)
             l_cErrorMessage := CascadeDeleteAssociation(par_iProjectPk,l_iAssociationPk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListAssociations/"+par_cModelLinkUID+"/")

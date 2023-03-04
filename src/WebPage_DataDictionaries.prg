@@ -2096,7 +2096,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // NameSpace
     if oFcgi:p_nAccessLevelDD >= 5
-        if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
+        if CheckIfAllowDestructiveNameSpaceDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,l_iNameSpacePk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
@@ -3091,7 +3091,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Table
     if oFcgi:p_nAccessLevelDD >= 5
-        if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
+        if CheckIfAllowDestructiveTableDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,l_iTablePk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
@@ -6629,7 +6629,7 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // Tag
     if oFcgi:p_nAccessLevelDD >= 5
-        if CheckIfAllowDestructiveApplicationDelete(par_iApplicationPk)
+        if CheckIfAllowDestructiveTableDelete(par_iApplicationPk)
             l_cErrorMessage := CascadeDeleteTag(par_iApplicationPk,l_iTagPk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")

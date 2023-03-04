@@ -550,7 +550,7 @@ if l_lContinue
     endwith
 
     //_M_ Add a Sanitizing function for l_oInfo:Application_Name
-    l_cFileName := "ExportApplication_"+strtran(l_oInfo:Application_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
+    l_cFileName := "ExportDataDictionary_"+strtran(l_oInfo:Application_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
 
     //Try to find if we already have a streamfile
     with object l_oDB_ListOfFileStream

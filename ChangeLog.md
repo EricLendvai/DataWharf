@@ -1,5 +1,12 @@
 # DataWharf - Change Log
 
+## 03/04/2023 v 2.51
+* Update DataWharf Self-Documentation Import. Meaning can import the entire data dictionary of DataWharf itself.
+* New option on Applications and Projects settings to set "Destructive Delete" levels. 
+* "Destructive Delete" settings enables the following features: 
+  * Purge a data dictionary and keep access rights settings
+  * Depending of "Destructive Delete" setting: Delete a table, name space, entity, association, model, without the need to remove dependencies first.
+
 ## 03/03/2023 v 2.50
 * Fix crash on editing of custom field settings.
 * Added support to oid data types.
