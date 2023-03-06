@@ -26,9 +26,35 @@ Sample screen of Data Dictionary Visualization
 
 View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
 
+# Running a Demo of DataWharf using Docker
+For Windows and Mac users, the easiest is to Install Docker Desktop.   
+For Windows users you can use the following article to learn how to [setup WSL, Docker Desktop](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=221022022831&sig=9123873596)   
+If you don't already have access to a PostgreSQL server, install version 14 or above on your local machine.   
+Create an empty database "DataWharfDemo" for example and update the file "config_demo.txt" with PostgreSQL connection and login information.   
+There are 4 different ways to build a docker container. The slowest, but most up to date method is to use the docker file "Dockerfile_Demo_Complete".   
+"Dockerfile_Demo_Complete_With_Builder" will create a smaller image.   
+The fastest method to build a docker image is to use "Dockerfile_Demo_Using_DockerHub_With_Builder". DataWharf will use less than 30 Mb of ram at first.   
+The current builds are using Ubuntu 22.04.   
+The following commands can be used to create a docker image and start it, assigning port 8080.   
+
+```
+docker build . -f Dockerfile_Demo_Complete_With_Builder -t datawharf_demo_complete_with_builder:latest --no-cache
+docker run -d -p 8080:80 datawharf_demo_complete_with_builder:latest
+```
+
+The --no-cache is used to ensure new git clone will be done.   
+Open a browser to "http://localhost:8080"   
+The initial login ID is "main" and the password is "password".   
+Once you logged in, to see DataWharf's own data dictionary use the following steps:   
+1. Go to "Settings" and add an "Application", "DataWharf".   
+2. Go to "Data Dictionary", select "DataWharf", use the "Import" option, and from the repo use the latest ExportDataDictionary_DataWharf_*.zip   
+You can do the same for "Projects" and "Models".   
+
+
 # VS Code Devcontainer
 In order to develop in any environement you can use the VS Code devcontainer provided in this repo.
 Install remote containers extension: https://aka.ms/vscode-remote/download/containers
+For Windows users you can use the following article to learn how to [setup WSL, Docker Desktop](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=221022022831&sig=9123873596)
 
 ## How to setup on a Mac with Lima instead of Docker Desktop
 Source: [here](https://georgik.rocks/how-to-develop-for-esp32-c3-with-rust-on-macos-with-lima-using-dev-container-in-vs-code/)

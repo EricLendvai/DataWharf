@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/06/2023 v 2.51
+* No Application change. Updated README.md to assist in running a demo of DataWharf using Docker. New Dockerfile_* and config_demo.txt files.
+
 ## 03/04/2023 v 2.51
 * Update DataWharf Self-Documentation Import. Meaning can import the entire data dictionary of DataWharf itself.
 * New option on Applications and Projects settings to set "Destructive Delete" levels. 
