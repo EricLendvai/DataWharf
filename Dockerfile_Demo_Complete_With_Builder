@@ -30,9 +30,12 @@ RUN apt-get install -y libssl-dev
 # install Postgresql odbc driver
 RUN apt-get -y install odbc-postgresql
 
+# "ADD https://api.github.com/repos/...." Logic to help avoid cache on git clone commands
+
 # install harbour from src
 RUN mkdir /src
 WORKDIR /src
+ADD https://api.github.com/repos/harbour/core/git/refs/heads/master RepoVersionHarbourCore.json
 RUN git clone --branch master https://github.com/harbour/core.git harbour
 WORKDIR /src/harbour
 
@@ -47,8 +50,14 @@ RUN ldconfig
 
 # Make some additional supporting libs
 WORKDIR /src
+
+ADD https://api.github.com/repos/EricLendvai/Harbour_FastCGI/git/refs/heads/main RepoVersionHarbour_FastCGI.json
 RUN git clone https://github.com/EricLendvai/Harbour_FastCGI/
+
+ADD https://api.github.com/repos/EricLendvai/Harbour_VFP/git/refs/heads/main RepoVersionHarbour_VFP.json
 RUN git clone https://github.com/EricLendvai/Harbour_VFP/
+
+ADD https://api.github.com/repos/EricLendvai/Harbour_ORM/git/refs/heads/main RepoVersionHarbour_ORM.json
 RUN git clone https://github.com/EricLendvai/Harbour_ORM/
 
 #Will be used for future web apps builds and when building hb_orm
@@ -82,8 +91,9 @@ ENV LIBName hb_orm
 RUN ./BuildLIB.sh
 
 
-#ARG FakeOptionToForceReDownloadingRepos_ChangeTheFollowingValue 100
 WORKDIR /src
+
+ADD https://api.github.com/repos/EricLendvai/DataWharf/git/refs/heads/main RepoVersionDataWharf.json
 RUN git clone https://github.com/EricLendvai/DataWharf.git
 
 ENV HB_COMPILER gcc

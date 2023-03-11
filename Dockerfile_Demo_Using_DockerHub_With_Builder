@@ -1,7 +1,10 @@
 FROM ericlendvai/harbour_curl_hb-orm_hb-vfp_hb-fastcgi_apache_odbc-postgresql:latest AS builder
 
-#ARG FakeOptionToForceReDownloadingRepos_ChangeTheFollowingValue 100
+# "ADD https://api.github.com/repos/...." Logic to help avoid cache on git clone commands
+
 WORKDIR /src
+
+ADD https://api.github.com/repos/EricLendvai/DataWharf/git/refs/heads/main RepoVersionDataWharf.json
 RUN git clone https://github.com/EricLendvai/DataWharf.git
 
 ENV HB_COMPILER gcc

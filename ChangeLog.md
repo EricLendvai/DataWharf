@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/11/2023 v 2.51
+* Update Dockerfiles and create one to be used as Base Image by a GitHub Action Workflow. (Not complete)
+
 ## 03/06/2023 v 2.51
 * No Application change. Updated README.md to assist in running a demo of DataWharf using Docker. New Dockerfile_* and config_demo.txt files.
 
