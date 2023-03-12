@@ -155,7 +155,7 @@ RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
 COPY ./config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 
 #RUN cp /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
- COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
+COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 

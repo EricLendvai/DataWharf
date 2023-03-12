@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS builder
 
 ## for apt to be noninteractive
 ENV DEBIAN_FRONTEND noninteractive
@@ -106,3 +106,49 @@ ENV BuildMode release
 ENV SiteRootFolder /var/www/Harbour_websites/fcgi_DataWharf/
 RUN chmod +x ./BuildEXE.sh
 RUN ./BuildEXE.sh
+
+# ----------------------------------------------------------------------------------------------
+FROM ubuntu:22.04
+
+## for apt to be noninteractive
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+
+# Used by running apps to detect if inside a docker container. Testing for existence of /.dockerenv may not always work.
+ENV InDocker=True
+
+RUN apt-get update && apt-get install -y apt-utils
+
+RUN apt-get install -y \
+        libfcgi-dev \
+        libapache2-mod-fcgid \
+        git \
+        build-essential \
+        unixodbc-dev \
+        apache2 \
+        libgpm2 \
+        gnupg \
+        wget \
+        psmisc \
+        libcurl4-openssl-dev
+
+RUN apt-get update && apt-get -y upgrade
+
+# Had to run the following dependency install separatly
+RUN apt-get install -y libssl-dev
+
+# install Postgresql odbc driver
+RUN apt-get -y install odbc-postgresql
+
+RUN a2enmod rewrite
+RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/
+RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
+
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+
+COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
