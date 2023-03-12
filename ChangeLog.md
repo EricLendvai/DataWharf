@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 03/12/2023 v 2.51
+* Updated Dockerfiles and update README.md demo installation instructions.
+* Completed GitHub Action Workflow for CI/CD of docker base image.
+
 ## 03/11/2023 v 2.51
 * New build_dockerhub_image_ubuntu_22_04 workflow.
 
