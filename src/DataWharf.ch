@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.51"
+#define BUILDVERSION "2.52"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -34,9 +34,13 @@
 
 #define COLOR_ON_LINK_NEWPAGE "198754"
 
-#define APPLICATION_TITLE "DataWharf"
-#define COLOR_HEADER_BACKGROUND "E3F2FD"
-#define COLOR_HEADER_TEXT_WHITE .f.
+#define APPLICATION_TITLE "DataWharf"           // Default Value, Can be overwritten in config.txt
+#define COLOR_HEADER_BACKGROUND "E3F2FD"        // Default Value, Can be overwritten in config.txt
+#define COLOR_HEADER_TEXT_WHITE .f.             // Default Value, Can be overwritten in config.txt
+
+//#define LOGO_THEME_NAME "RainierSailBoat"
+#define LOGO_THEME_NAME "RainierKayak"        // Default Value, Can be overwritten in config.txt
+
 
 #define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();"]
 #define UPDATESAVEBUTTON_COMBOWITHONCHANGE [$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();]
@@ -120,7 +124,4 @@
 #define USESTATUS_6_EDGE_HIGHLIGHT  SELECTED_NODE_BORDER
 
 #define OUTPUT_FOLDER "Output"  //Folder will be relative to the Backend Folder where the FastCGI EXE in placed.
-
-//#define LOGO_THEME_NAME "RainierSailBoat"
-#define LOGO_THEME_NAME "RainierKayak"
 

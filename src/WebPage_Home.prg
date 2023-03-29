@@ -53,7 +53,7 @@ l_cHtml += [<div class="container">]
         l_cHtml += [</div>]
 
         l_cHtml += [<div class="col-md-8 col-xs-8">]
-            l_cHtml += [<img src="images/Logo_]+LOGO_THEME_NAME+[.png" class="img-fluid">]
+            l_cHtml += [<img src="images/Logo_]+oFcgi:p_cThisAppLogoThemeName+[.png" class="img-fluid">]
         l_cHtml += [</div>]
 
 

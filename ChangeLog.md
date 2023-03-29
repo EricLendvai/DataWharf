@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 03/29/2023 v 2.52
+* Added support to LOGO_THEME_NAME in config.txt, name of image files in "images" folder.
+* Added support to COLOR_HEADER_TEXT_WHITE in config.txt to use values "No" and "Yes" instead of ".t./.f."
+
 ## 03/12/2023 v 2.51
 * Updated Dockerfiles and update README.md demo installation instructions.
 * Completed GitHub Action Workflow for CI/CD of docker base image.

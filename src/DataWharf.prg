@@ -107,6 +107,13 @@ class MyFcgi from hb_Fcgi
                                   {"OID","Object Identifier"                            ,.f.,.f.,.f.,.f.,"oid"                        ,"BIGINT COMMENT 'Type=OID'"},;
                                   {  "?","Other"                                        ,.f.,.f.,.f.,.f.,""                           ,""};
                                  }
+    
+    data p_cThisAppTitle                 init ""
+    data p_cThisAppColorHeaderBackground init ""
+    data p_cThisAppColorHeaderTextWhite  init ""
+    data p_lThisAppColorHeaderTextWhite  init .f.
+    data p_cThisAppLogoThemeName         init ""
+
     method OnFirstRequest()
     method OnRequest()
     method OnShutdown()
@@ -542,7 +549,6 @@ local l_aWebPageHandle
 local l_aPathElements
 local l_iLoop
 local l_cAjaxAction
-local l_cThisAppTitle
 local l_cSecuritySalt
 local l_lCyanAuditAware         := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
 local l_cPostgresDriver         := ::GetAppConfig("POSTGRESDRIVER")
@@ -566,6 +572,25 @@ local l_oJWT
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
+
+::p_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
+if empty(::p_cThisAppTitle)
+    ::p_cThisAppTitle := APPLICATION_TITLE
+endif
+::p_cThisAppColorHeaderBackground := ::GetAppConfig("COLOR_HEADER_BACKGROUND")
+if empty(::p_cThisAppColorHeaderBackground)
+    ::p_cThisAppColorHeaderBackground := COLOR_HEADER_BACKGROUND
+endif
+::p_cThisAppColorHeaderTextWhite := ::GetAppConfig("COLOR_HEADER_TEXT_WHITE")
+if empty(::p_cThisAppColorHeaderTextWhite)
+    ::p_lThisAppColorHeaderTextWhite := COLOR_HEADER_TEXT_WHITE
+else
+    ::p_lThisAppColorHeaderTextWhite := ("T" $ upper(::p_cThisAppColorHeaderTextWhite)) .or. ("Y" $ upper(::p_cThisAppColorHeaderTextWhite)) 
+endif
+::p_cThisAppLogoThemeName := ::GetAppConfig("LOGO_THEME_NAME")
+if empty(::p_cThisAppLogoThemeName)
+    ::p_cThisAppLogoThemeName := LOGO_THEME_NAME
+endif
 
 ::SetHeaderValue("X-Frame-Options","DENY")  // To help prevent clickhacking, meaning to place the web site into an frame of another site.
 
@@ -741,16 +766,11 @@ otherwise
 
                 // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
-                l_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
-                if empty(l_cThisAppTitle)
-                    l_cThisAppTitle := APPLICATION_TITLE
-                endif
-
                 l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
                 l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-                l_cPageHeaderHtml += [<title>]+l_cThisAppTitle+[</title>]
+                l_cPageHeaderHtml += [<title>]+oFcgi:p_cThisAppTitle+[</title>]
 
-                l_cPageHeaderHtml += [<link rel="icon" href="images/favicon_]+LOGO_THEME_NAME+[.ico" type="image/x-icon">]
+                l_cPageHeaderHtml += [<link rel="icon" href="images/favicon_]+::p_cThisAppLogoThemeName+[.ico" type="image/x-icon">]
 
                 l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]
 
@@ -1319,11 +1339,6 @@ function GetPageHeader(par_LoggedIn,par_cCurrentPage)
 local l_cHtml := []
 local l_cSitePath := oFcgi:p_cSitePath
 
-local l_cThisAppTitle                 := oFcgi:GetAppConfig("APPLICATION_TITLE")
-local l_cThisAppColorHeaderBackground := oFcgi:GetAppConfig("COLOR_HEADER_BACKGROUND")
-local l_cThisAppColorHeaderTextWhite  := oFcgi:GetAppConfig("COLOR_HEADER_TEXT_WHITE")
-local l_lThisAppColorHeaderTextWhite
-
 local l_lShowMenuProjects         := par_LoggedIn .and. (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
 local l_lShowMenuApplications     := par_LoggedIn .and. (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
 local l_lShowMenuModeling         := l_lShowMenuProjects
@@ -1335,18 +1350,6 @@ local l_oData
 local l_cExtraClass
 
 local l_lShowChangePassword
-
-if empty(l_cThisAppTitle)
-    l_cThisAppTitle := APPLICATION_TITLE
-endif
-if empty(l_cThisAppColorHeaderBackground)
-    l_cThisAppColorHeaderBackground := COLOR_HEADER_BACKGROUND
-endif
-if empty(l_cThisAppColorHeaderTextWhite)
-    l_lThisAppColorHeaderTextWhite := COLOR_HEADER_TEXT_WHITE
-else
-    l_lThisAppColorHeaderTextWhite := ("T" $ upper(l_cThisAppColorHeaderTextWhite))
-endif
 
 if par_LoggedIn
     if !l_lShowMenuProjects
@@ -1378,17 +1381,16 @@ if par_LoggedIn
     endif
 endif
 
-l_cExtraClass := iif(l_lThisAppColorHeaderTextWhite," text-white","")
+l_cExtraClass := iif(oFcgi:p_lThisAppColorHeaderTextWhite," text-white","")
 
 // hb_orm_SendToDebugView("Called GetPageHeader",l_cExtraClass)
 
-l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+l_cThisAppColorHeaderBackground+[;">]
+l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+oFcgi:p_cThisAppColorHeaderBackground+[;">]
 
     l_cHtml += [<div id="app" class="container">]
         l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]
-        l_cHtml += [<img src="]+l_cSitePath+[images/Logo_]+LOGO_THEME_NAME+[.png" alt="" height="60" class="d-inline-block" style="vertical-align: middle;">&nbsp;]
-        l_cHtml += l_cThisAppTitle+[</a>]
-
+        l_cHtml += [<img src="]+l_cSitePath+[images/Logo_]+oFcgi:p_cThisAppLogoThemeName+[.png" alt="" height="60" class="d-inline-block" style="vertical-align: middle;">&nbsp;]
+        l_cHtml += oFcgi:p_cThisAppTitle+[</a>]
 
         if par_LoggedIn
 
@@ -1398,7 +1400,6 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 #ifdef __PLATFORM__WINDOWS
     l_lShowChangePassword := .t.
 #endif
-
 
             //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]

@@ -5,14 +5,8 @@
 function GetApplicationInformation()
 
 local l_cResponse := {=>}
-local l_cThisAppTitle
 
-l_cThisAppTitle := oFcgi:GetAppConfig("APPLICATION_TITLE")
-if empty(l_cThisAppTitle)
-    l_cThisAppTitle := APPLICATION_TITLE
-endif
-
-l_cResponse["ApplicationName"]    := l_cThisAppTitle
+l_cResponse["ApplicationName"]    := oFcgi:p_cThisAppTitle
 l_cResponse["ApplicationVersion"] := BUILDVERSION
 l_cResponse["SiteBuildInfo"]      :=hb_buildinfo()
 
