@@ -16,7 +16,7 @@ ShowDevelopmentInfo=No                      //No or Yes
 APPLICATION_TITLE=DataWharf Demo
 //COLOR_HEADER_BACKGROUND=E3F2FD
 //COLOR_HEADER_TEXT_WHITE=No                //No or Yes
-//LOGO_THEME_NAME=RainierSailBoat
+//LOGO_THEME_NAME=RainierSailBoat           //Images available from Repo: Earth_001, Blocks_001, Blocks_002, Blocks_003, RainierKayak, RainierSailBoat
 
 SECURITY_DEFAULT_PASSWORD=password
 SECURITY_SALT=0123456789ABCDEFG

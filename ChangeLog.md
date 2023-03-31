@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/29/2023 v 2.53
+* Added new logo and favicon images for LOGO_THEME_NAME: Earth_001, Blocks_001, Blocks_002, Blocks_003. 
+
 ## 03/29/2023 v 2.52
 * Added support to LOGO_THEME_NAME in config.txt, name of image files in "images" folder.
 * Added support to COLOR_HEADER_TEXT_WHITE in config.txt to use values "No" and "Yes" instead of ".t./.f."
