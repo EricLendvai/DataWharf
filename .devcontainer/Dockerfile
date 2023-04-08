@@ -9,6 +9,10 @@ ENV DEBCONF_NONINTERACTIVE_SEEN true
 ENV InDocker=True
 
 RUN apt-get update && apt-get install -y apt-utils
+
+# Run update again to work around git install failure introduced around April 2023
+RUN apt-get update
+
 RUN apt-get install -y \
         libfcgi-dev \
         libapache2-mod-fcgid \
@@ -81,7 +85,6 @@ COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-avail
 COPY ./FilesForPublishedWebsites/backend  /var/www/Harbour_websites/fcgi_DataWharf/backend
 
 #Fake command to force not using a cache from this point on.
-ARG FakeOptionToForceDockerImageRebuildFromThisPointOn_ChangeTheFollowingValue 13
 COPY ./.devcontainer/config*.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/
 #COPY ./FilesForPublishedWebsites/backend/config_docker.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 

@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 04/08/2023 v 2.53
+* Changed Dockerfile of devcontainer to work around git install failure introduced around April 2023
+
 ## 03/29/2023 v 2.53
 * Added new logo and favicon images for LOGO_THEME_NAME: Earth_001, Blocks_001, Blocks_002, Blocks_003. 
 
