@@ -3,6 +3,8 @@ DataWharf is a Database Designer/Modeler/Analyzer Tool web application.
 
 View [ChangeLog.md](ChangeLog.md) for list of enhancements and fixes.
 
+View [Data Architecture and Modeling with DataWharf Article](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=230224232407&sig=5928045156) for User and Developer documentation
+
 The following is the list of additional open source projects used to design, build and deploy DataWharf:
 
 | Repo / Website  | Use |
