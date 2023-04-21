@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 04/21/2023 v 2.54
+* Fix issue on edit of Enumerations, due to incomplete data loads.
+
 ## 04/08/2023 v 2.53
 * Changed Dockerfile of devcontainer to work around git install failure introduced around April 2023
 

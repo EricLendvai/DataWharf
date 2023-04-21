@@ -4919,8 +4919,8 @@ local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",1)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",1)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_iImplementAs     := hb_HGetDef(par_hValues,"ImplementAs",1)
-local l_iImplementLength := hb_HGetDef(par_hValues,"ImplementLength",1)
+local l_iImplementAs     := nvl(hb_HGetDef(par_hValues,"ImplementAs",1),1)
+local l_iImplementLength := nvl(hb_HGetDef(par_hValues,"ImplementLength",1),1)
 
 local l_oDataTableInfo
 local l_oDB1
@@ -5032,6 +5032,7 @@ else
                 l_cHtml += [</span>]
 
             l_cHtml += [<span class="pe-5" id="ImplementLengthEntry" style="display: none;">]
+altd()
                 l_cHtml += [<span class="pe-2">Length</span><input]+UPDATESAVEBUTTON+[ type="text" size="5" maxlength="5" name="TextImplementLength" id="TextImplementLength" value="]+Trans(l_iImplementLength)+["]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [</span>]
 
