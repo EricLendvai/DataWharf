@@ -14,11 +14,12 @@ APPLICATION_TITLE=DataWharf In Docker
 //COLOR_HEADER_TEXT_WHITE=No                //No or Yes
 //LOGO_THEME_NAME=RainierSailBoat           //Images available from Repo: Earth_001, Blocks_001, Blocks_002, Blocks_003, RainierKayak, RainierSailBoat
 
-
 SECURITY_DEFAULT_PASSWORD=password
 SECURITY_SALT=0123456789ABCDEFG
 
 CYANAUDIT_TRAC_USER=No                      //No or Yes
+
+DEPLOYMENT_CRYPT_KEY=1234
 
 //AUTH_METHOD=oauth
 //OAUTH_WELL_KNOWN_SERVER_URL=localhost:8080/realms/datawharf/.well-known/openid-configuration
@@ -27,3 +28,8 @@ CYANAUDIT_TRAC_USER=No                      //No or Yes
 //OAUTH_LOGOUT_URL=http://localhost:8080/realms/datawharf/protocol/openid-connect/logout
 //OAUTH_CLIENT_ID=datawharf
 //OAUTH_CLIENT_SECRET=vdmHpu0pQbOvZIjbIUmD1m6Mo4TLONrJ
+
+ODBC_DRIVER_POSTGRESQL=PostgreSQL Unicode
+ODBC_DRIVER_MARIADB=MariaDB Unicode
+ODBC_DRIVER_MYSQL=MySQL ODBC 8.0 Unicode Driver
+ODBC_DRIVER_MSSQL=ODBC Driver 18 for SQL Server

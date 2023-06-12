@@ -67,6 +67,7 @@ local l_nAccessLevelDD := 1   // None by default
 //     6 - Edit Anything and Load Schema
 //     7 - Full Access
 
+local l_cMode
 
 oFcgi:TraceAdd("BuildPageDataDictionaries")
 
@@ -85,6 +86,7 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/DataDictionaryImport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryDeltaLoadSchema/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryMigrationScript/<ApplicationLinkCode>/
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
 
@@ -195,6 +197,9 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
     case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema")
         l_cApplicationElement := "LOADSCHEMA"
+
+    case vfp_Inlist(l_cURLAction,"DataDictionaryMigrationScript")
+        l_cApplicationElement := "MIGRATIONSCRIPT"
 
     case vfp_Inlist(l_cURLAction,"Visualize")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
@@ -384,83 +389,83 @@ case l_cURLAction == "DataDictionaryExportForDataWharfImports"
         l_cHtml += l_cHtmlUnderHeader
     endif
 
-case l_cURLAction == "DataDictionaryDeltaLoadSchema"
-    // if oFcgi:p_nAccessLevelDD >= 6
-        // l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-        //Will Build the header after new entities are created.
-        l_cHtmlUnderHeader := []
+case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigrationScript")
+    l_cMode := iif(l_cURLAction == "DataDictionaryDeltaLoadSchema","DeltaLoad","")+iif(l_cURLAction == "DataDictionaryMigrationScript","GenScript","")
 
-        if oFcgi:isGet()
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    //Will Build the header after new entities are created.
+    l_cHtmlUnderHeader := []
 
-            with object l_oDB1
-                :Table("87efb98c-f94f-4202-b97b-c41d8522e288","public.UserSettingApplication")
-                :Column("UserSettingApplication.fk_Deployment"    ,"fk_Deployment")
-                :Column("UserSettingApplication.SyncBackendType"  ,"SyncBackendType")
-                :Column("UserSettingApplication.SyncServer"       ,"SyncServer")
-                :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
-                :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
-                :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
-                :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
-                :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
-                :Where("UserSettingApplication.fk_Application = ^",l_iApplicationPk)
-                :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
-                :SQL("ListOfUserSettingApplication")
+    if oFcgi:isGet()
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-                do case
-                case :Tally == 0 .or. :Tally > 1
-                    if :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
-                        //More than one setting on file, delete them all
-                        select ListOfUserSettingApplication
-                        scan all
-                            :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
-                        endscan
-                    endif
+        with object l_oDB1
+            :Table("87efb98c-f94f-4202-b97b-c41d8522e288","public.UserSettingApplication")
+            :Column("UserSettingApplication.fk_Deployment"    ,"fk_Deployment")
+            :Column("UserSettingApplication.SyncBackendType"  ,"SyncBackendType")
+            :Column("UserSettingApplication.SyncServer"       ,"SyncServer")
+            :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
+            :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
+            :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
+            :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
+            :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
+            :Where("UserSettingApplication.fk_Application = ^",l_iApplicationPk)
+            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+            :SQL("ListOfUserSettingApplication")
 
-                    //No settings on file
-                    l_nFk_Deployment     := 0
-                    l_nSyncBackendType   := 0
-                    l_cSyncServer        := ""
-                    l_nSyncPort          := 0
-                    l_cSyncUser          := ""
-                    l_cSyncDatabase      := ""
-                    l_cSyncNameSpaces    := ""
-                    l_nSyncSetForeignKey := 0
+            do case
+            case :Tally == 0 .or. :Tally > 1
+                if :Tally > 1  //Some bad data, simply delete all records. The next time will select  diagram it will be saved properly.
+                    //More than one setting on file, delete them all
+                    select ListOfUserSettingApplication
+                    scan all
+                        :Delete("f6e73639-7ab3-4a10-bb96-50c60cc7bd14","UserSettingApplication",ListOfUserSettingApplication->pk)
+                    endscan
+                endif
 
-                case :Tally == 1
-                    //settings on file
-                    l_nFk_Deployment     := ListOfUserSettingApplication->Fk_Deployment
-                    l_nSyncBackendType   := ListOfUserSettingApplication->SyncBackendType
-                    l_cSyncServer        := ListOfUserSettingApplication->SyncServer
-                    l_nSyncPort          := ListOfUserSettingApplication->SyncPort
-                    l_cSyncUser          := ListOfUserSettingApplication->SyncUser
-                    l_cSyncDatabase      := ListOfUserSettingApplication->SyncDatabase
-                    l_cSyncNameSpaces    := ListOfUserSettingApplication->SyncNameSpaces
-                    l_nSyncSetForeignKey := ListOfUserSettingApplication->SyncSetForeignKey
+                //No settings on file
+                l_nFk_Deployment     := 0
+                l_nSyncBackendType   := 0
+                l_cSyncServer        := ""
+                l_nSyncPort          := 0
+                l_cSyncUser          := ""
+                l_cSyncDatabase      := ""
+                l_cSyncNameSpaces    := ""
+                l_nSyncSetForeignKey := 0
 
-                endcase
+            case :Tally == 1
+                //settings on file
+                l_nFk_Deployment     := ListOfUserSettingApplication->Fk_Deployment
+                l_nSyncBackendType   := ListOfUserSettingApplication->SyncBackendType
+                l_cSyncServer        := ListOfUserSettingApplication->SyncServer
+                l_nSyncPort          := ListOfUserSettingApplication->SyncPort
+                l_cSyncUser          := ListOfUserSettingApplication->SyncUser
+                l_cSyncDatabase      := ListOfUserSettingApplication->SyncDatabase
+                l_cSyncNameSpaces    := ListOfUserSettingApplication->SyncNameSpaces
+                l_nSyncSetForeignKey := ListOfUserSettingApplication->SyncSetForeignKey
 
-            endwith
+            endcase
 
-            l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormBuild(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
-                                                        l_nFk_Deployment,;
-                                                        l_nSyncBackendType,;
-                                                        l_cSyncServer,;
-                                                        l_nSyncPort,;
-                                                        l_cSyncUser,;
-                                                        "",;
-                                                        l_cSyncDatabase,;
-                                                        l_cSyncNameSpaces,;
-                                                        l_nSyncSetForeignKey,;
-                                                        {})
-        else
-            if l_iApplicationPk > 0
-                l_cHtmlUnderHeader += DataDictionaryLoadSchemaStep1FormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
-            endif
+        endwith
+
+        l_cHtmlUnderHeader += DataDictionaryDeltaLoadGenScriptFormBuild(l_cMode,;
+                                                    l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
+                                                    l_nFk_Deployment,;
+                                                    l_nSyncBackendType,;
+                                                    l_cSyncServer,;
+                                                    l_nSyncPort,;
+                                                    l_cSyncUser,;
+                                                    "",;
+                                                    l_cSyncDatabase,;
+                                                    l_cSyncNameSpaces,;
+                                                    l_nSyncSetForeignKey,;
+                                                    {},"")
+    else
+        if l_iApplicationPk > 0
+            l_cHtmlUnderHeader += DataDictionaryDeltaLoadGenScriptFormOnSubmit(l_cMode,l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
         endif
-        l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-        l_cHtml += l_cHtmlUnderHeader
-    // endif
+    endif
+    l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += l_cHtmlUnderHeader
 
 case l_cURLAction == "Visualize"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -1248,6 +1253,27 @@ l_cHtml += [<div class="m-3"></div>]
 l_cHtml += [<ul class="nav nav-tabs">]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
+        //Will check if we have a previously accessed diagram.
+        with object l_oDB1
+            :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
+            :Column("UserSettingApplication.pk","pk")
+            :Column("Diagram.LinkUID"          ,"Diagram_LinkUID")
+            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
+            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
+            :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
+            :SQL("ListOfUserSettingApplication")
+            // hb_orm_SendToDebugView(:GetLastEventId(),:LastSQL())
+            if :Tally == 1
+                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplication->Diagram_LinkUID
+            else
+                l_cInitialDiagram := ""
+            endif
+        endwith
+
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/]+l_cInitialDiagram+[">Visualize</a>]
+    l_cHtml += [</li>]
+    //--------------------------------------------------------------------------------------
+    l_cHtml += [<li class="nav-item">]
         with object l_oDB1
             :Table("72e2bd5d-4bd3-41a0-92e4-cf1a33c58489","Table")
             :Column("Count(*)","Total")
@@ -1315,26 +1341,10 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endif
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
-    l_cHtml += [<li class="nav-item">]
-        //Will check if we have a previously accessed diagram.
-        with object l_oDB1
-            :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
-            :Column("UserSettingApplication.pk","pk")
-            :Column("Diagram.LinkUID"          ,"Diagram_LinkUID")
-            :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
-            :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
-            :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
-            :SQL("ListOfUserSettingApplication")
-            // hb_orm_SendToDebugView(:GetLastEventId(),:LastSQL())
-            if :Tally == 1
-                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplication->Diagram_LinkUID
-            else
-                l_cInitialDiagram := ""
-            endif
-        endwith
-
-        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VISUALIZE",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/]+l_cInitialDiagram+[">Visualize</a>]
-    l_cHtml += [</li>]
+//On Hold Change
+    // l_cHtml += [<li class="nav-item">]
+    //     l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "MIGRATIONSCRIPT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryMigrationScript/]+par_cURLApplicationLinkCode+[/">Migration Script</a>]
+    // l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
 l_cHtml += [</ul>]
 
@@ -5775,10 +5785,10 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function DataDictionaryLoadSchemaStep1FormBuild(par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
+static function DataDictionaryDeltaLoadGenScriptFormBuild(par_cMode,par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
                                                        par_nFk_Deployment,;
                                                        par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey,;
-                                                       par_aDeltaMessages)
+                                                       par_aDeltaMessages,par_cScript)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
@@ -5801,7 +5811,7 @@ local l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfDeployments
 local l_cNameSpaces
 
-oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormBuild")
+oFcgi:TraceAdd("DataDictionaryDeltaLoadGenScriptFormBuild")
 
 with object l_oDB_ListOfDeployments
     :Table("622f65ec-3a70-4f96-9bd2-a55386c9e2b8","Deployment")
@@ -5828,12 +5838,20 @@ endif
 if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Load Schema - Enter Connection Information</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3">Enter Connection Information</span>]   //navbar-text
 
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
+            if "Delta" $ par_cMode
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
+            endif
 
-            if oFcgi:p_nAccessLevelDD >= 6
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmLoadModal">Load</button>]
+            if "Load" $ par_cMode
+                if oFcgi:p_nAccessLevelDD >= 6
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmLoadModal">Load</button>]
+                endif
+            endif
+
+            if "GenScript" $ par_cMode
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Generate Script" onclick="$('#ActionOnSubmit').val('GenerateScript');document.form.submit();" role="button">]
             endif
 
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
@@ -5964,6 +5982,14 @@ if !empty(par_iPk)
         l_cHtml += [</div>]
     endif
 
+    if !empty(par_cScript)
+        l_cHtml += [<div class="m-3">]
+            l_cHtml += [<div class="fs-4">Generate Script:</div>]
+                l_cHtml += [<div>]+par_cScript+[</div>]
+            l_cHtml += [<div class="m-5"></div>]
+        l_cHtml += [</div>]
+    endif
+
     l_cHtml += [</form>]
 
     l_cHtml += GetConfirmationModalFormsLoad()
@@ -5972,7 +5998,7 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function DataDictionaryLoadSchemaStep1FormOnSubmit(par_iApplicationPk,par_cApplicationName,par_cURLApplicationLinkCode)
+static function DataDictionaryDeltaLoadGenScriptFormOnSubmit(par_cMode,par_iApplicationPk,par_cApplicationName,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_cActionOnSubmit
 
@@ -6011,8 +6037,9 @@ local l_cDriver
 local l_SQLHandle
 local l_aDeltaMessages := {}
 local l_oData
+local l_cScript
 
-oFcgi:TraceAdd("DataDictionaryLoadSchemaStep1FormOnSubmit")
+oFcgi:TraceAdd("DataDictionaryDeltaLoadGenScriptFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
@@ -6029,7 +6056,7 @@ l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
+case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
 
     do case
     case empty(l_nFk_Deployment) .and. empty(l_nSyncBackendType)
@@ -6272,7 +6299,8 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
             case l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
                 l_cConnectionString := "Server="+l_cConnectServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Database="+l_cConnectDatabase+";BoolsAsChar=0;"
             case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
-                l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+AllTrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=No"  // Due to an issue with certificates had to turn off Encrypt
+                l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+AllTrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=no;Trusted_Connection=no;TrustServerCertificate=yes"  // Due to an issue with certificates had to turn off Encrypt and Trusted_Connection had to set to "no" since not using Windows Account.
+                //"Driver=ODBC Driver 17 for SQL Server;Server=192.168.4.105;Uid=sa;PWD=rndrnd;Encrypt=no;Database=test001;Trusted_Connection=no;TrustServerCertificate=yes"
             otherwise
                 l_cErrorMessage := "Invalid 'Backend Type'"
             endcase
@@ -6285,6 +6313,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
             if l_SQLHandle == 0
                 l_SQLHandle := -1
                 l_cErrorMessage := "Unable connect to the server!"+Chr(13)+Chr(10)+Str(hb_RDDInfo( RDDI_ERRORNO ))+Chr(13)+Chr(10)+hb_RDDInfo( RDDI_ERROR )
+                // l_cErrorMessage += Chr(13)+Chr(10)+l_cConnectionString
 
             else
 // SendToDebugView(l_cConnectionString)
@@ -6298,6 +6327,11 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta")
                     
                 case l_cActionOnSubmit == "Delta"
                     el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNameSpaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+
+                case l_cActionOnSubmit == "GenerateScript"
+
+l_cErrorMessage := "No Error"
+l_cScript := "Generate Script"
 
                 endcase
 
@@ -6314,7 +6348,7 @@ case l_cActionOnSubmit == "Cancel"
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += DataDictionaryLoadSchemaStep1FormBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
+    l_cHtml += DataDictionaryDeltaLoadGenScriptFormBuild(par_cMode,par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
                                                       l_nFk_Deployment,;
                                                       l_nSyncBackendType,;
                                                       l_cSyncServer,;
@@ -6324,7 +6358,8 @@ if !empty(l_cErrorMessage)
                                                       l_cSyncDatabase,;
                                                       l_cSyncNameSpaces,;
                                                       l_nSyncSetForeignKey,;
-                                                      l_aDeltaMessages)
+                                                      l_aDeltaMessages,;
+                                                      l_cScript)
 endif
 
 return l_cHtml
@@ -6940,3 +6975,19 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -2342,6 +2342,9 @@ if len(l_aNodes) == 1
             l_nTableUseStatus      := l_aSQLResult[1,7]
             l_nTableDocStatus      := l_aSQLResult[1,8]
 
+            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,1,6),l_nTableUseStatus,1)]
+            l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,1,4),l_nTableDocStatus,1)]
+
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
             do case
             case l_nTableUseStatus <= 1
@@ -2365,8 +2368,11 @@ if len(l_aNodes) == 1
 
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">Table: ]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+;
-                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]+;
-                                [</span>]
+                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]
+                                if !empty(l_cUseStatus) // .and. l_cUseStatus != "Active"
+                                    l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
+                                endif
+                    l_cHtml += [</span>]
                 l_cHtml += [</div>]
 
             l_cHtml += [</nav>]
@@ -2703,9 +2709,6 @@ if len(l_aNodes) == 1
                 endif
                 //---------------------------------------------------------------------------
                 l_cHtml += [<input type="hidden" name="TextTablePkToRemove" value="]+Trans(l_iTablePk)+[">]
-
-                l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,1,6),l_nTableUseStatus,1)]
-                l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,1,4),l_nTableDocStatus,1)]
 
                 if !empty(l_cUseStatus)
                     l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]

@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 06/12/2023 v 2.55
+* Display of "Usage Status" in headings on right panels in Diagrams.
+* In Application management, moved Visualize Tab to leftmost position.
+* Fix connection to MSSQL 2022
+* Added to Dockerfiles loading of MariaDB, MySQL and MSSQL odbc drivers. The docker base image is ready for all supported backend while under Ubuntu 22:04.
+
 ## 04/21/2023 v 2.54
 * Fix issue on edit of Enumerations, due to incomplete data loads.
 

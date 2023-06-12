@@ -1,8 +1,7 @@
 # DataWharf - Upcoming fixes, changes and enhancements
 
 ## Short Term Fixes
-- Finish setup of User Security Global and Application Restrictions. Currently all users have full access. In progress.
-- Forbid to change CustomField.UsedOn once related values are present.
+- Forbid to change CustomField.Used once related values are present.
 
 ## Pending Development
 - In Table Search, if Tags are available add "And/Or" option to be used in case of multiple tags.
@@ -19,7 +18,6 @@
 - In Data dictionaries have total counts of tables, name spaces, columns ...
 
 ## Conceptual Modeling
-- Deletion of Models.
 - Manage Entity Properties.
 - Manage Associations for a particular model.
 - Visualization / Representation of a model
@@ -28,12 +26,6 @@
 ## Allow for an application to be viewable without user login
 - Add support to flag type of information to be publish publicly.
 - Implement public viewing.
-
-## Linux Support (Via Ubuntu)
-- Update VSCode task and launch to support Linux. Will be tested in Ubuntu. In progress.
-
-## Docker Support
-- Create docker file and documentation. In progress.
 
 ## Documentation
 - Installation notes and how to setup initial users.
@@ -47,9 +39,6 @@
 - Allow to map tables and columns across application. In Progress.
 - Add support in Visualization for cross application mapping.
 - Auto-Predict option on Table and Column name matching, with "Soundex" or "Edit Distance" logic. Option will require user approval.
-
-## Harbour Specific
-- Generation of Hash Array code to be used by Harbour_ORM.
 
 ## Migrations
 - Generate Migration scripts again a specific installed database.

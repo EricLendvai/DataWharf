@@ -126,6 +126,32 @@ COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWhar
 
 RUN chown -R www-data:www-data /var/www/Harbour_websites
 
+# To make it possible to Delta/Load Datadictionary install additional ODBC drivers
+RUN apt-get -y install curl
+
+# Install MSSQL odbc driver
+WORKDIR ~
+RUN apt-get update && apt-get install -y lsb-release && apt-get clean all
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
+#RUN echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
+ENV PATH="${PATH}:/opt/mssql-tools18/bin"
+
+
+# Install mariadb odbc driver
+RUN apt-get -y install odbc-mariadb
+
+# Install MySQL odbc driver
+WORKDIR /etc
+RUN rm -f ./mysql-community-client-plugins.deb
+RUN wget -O ./mysql-community-client-plugins.deb  https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-client-plugins_8.0.33-1ubuntu22.04_amd64.deb
+RUN apt install ./mysql-community-client-plugins.deb
+RUN rm -f ./mysqlodbc.deb
+RUN wget -O ./mysqlodbc.deb https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-odbc_8.0.33-1ubuntu22.04_amd64.deb
+RUN apt install ./mysqlodbc.deb
+
 EXPOSE 80 
 
 CMD apache2ctl start & sleep infinity
