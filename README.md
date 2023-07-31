@@ -19,6 +19,7 @@ The following is the list of additional open source projects used to design, bui
 | https://jquery.com/                            | Browser independent JavaScript library |
 | https://jqueryui.com/                          | UI toolkit for jQuery |
 | https://github.com/visjs/vis-network           | JavaScript Library used to make interactive diagrams (visualize) |
+| https://github.com/maxGraph/maxGraph           | JavaScript Library used to make interactive diagrams (visualize) |
 | https://code.visualstudio.com/                 | Also used to automate compilation |
 
 DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
@@ -27,6 +28,11 @@ Sample screen of Data Dictionary Visualization
 ![Sample screen of Data Dictionary Visualization](images/Sample001.png "Sample screen of Data Dictionary Visualization")
 
 View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
+
+# Video "Data Architecture and Modeling with DataWharf" 
+[YouTube Channel: https://www.youtube.com/@EricLendvai](https://www.youtube.com/@EricLendvai)   
+[YouTube Video: https://www.youtube.com/watch?v=8GfwKYA4Agc](https://www.youtube.com/watch?v=8GfwKYA4Agc)   
+
 
 # Running a Demo of DataWharf using Docker
 For Windows and Mac users, the easiest is to Install Docker Desktop.   
