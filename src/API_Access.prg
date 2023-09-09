@@ -25,7 +25,7 @@ endwith
 return l_nTokenAccessMode
 //=================================================================================================================
 function APIAccessCheck_Token_EndPoint_Application_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cApplicationLinkCode)
-local l_lResult := .f.
+local l_lResult
 local l_oDB_ListOfAPIToken := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfAPIToken
@@ -44,14 +44,14 @@ with object l_oDB_ListOfAPIToken
     :Where("APITokenAccessApplication.AccessLevelDD >= ^",2)   //ReadOnly and Above
 
     :SQL("ListOfAPIToken")
-    SendToClipboard(:LastSQL())
+    // SendToClipboard(:LastSQL())
     l_lResult := (:Tally > 0)
 endwith
 
 return l_lResult
 //=================================================================================================================
 function APIAccessCheck_Token_EndPoint_Project_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cProjectLinkUID)
-local l_lResult := .f.
+local l_lResult
 local l_oDB_ListOfAPIToken := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfAPIToken
@@ -69,14 +69,14 @@ with object l_oDB_ListOfAPIToken
     :Where("APITokenAccessProject.AccessLevelML >= ^",2)   //ReadOnly and Above
 
     :SQL("ListOfAPIToken")
-    SendToClipboard(:LastSQL())
+    // SendToClipboard(:LastSQL())
     l_lResult := (:Tally > 0)
 endwith
 
 return l_lResult
 //=================================================================================================================
 function APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
-local l_lResult := .f.
+local l_lResult
 local l_oDB_ListOfAPIToken := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfAPIToken
@@ -95,7 +95,7 @@ with object l_oDB_ListOfAPIToken
     :Where("APITokenAccessProject.AccessLevelML >= ^",2)   //ReadOnly and Above
 
     :SQL("ListOfAPIToken")
-    SendToClipboard(:LastSQL())
+    // SendToClipboard(:LastSQL())
     l_lResult := (:Tally > 0)
 endwith
 

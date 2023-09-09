@@ -63,9 +63,9 @@ ADD https://api.github.com/repos/EricLendvai/Harbour_ORM/git/refs/heads/main Rep
 RUN git clone https://github.com/EricLendvai/Harbour_ORM/
 
 #Will be used for future web apps builds and when building hb_orm
-ENV HB_VFP_ROOT /src/Harbour_VFP/
-ENV HB_ORM_ROOT /src/Harbour_ORM/
-ENV HB_FASTCGI_ROOT /src/Harbour_FastCGI/
+ENV HB_VFP_ROOT /src/Harbour_VFP
+ENV HB_ORM_ROOT /src/Harbour_ORM
+ENV HB_FASTCGI_ROOT /src/Harbour_FastCGI
 
 ENV HB_COMPILER gcc
 

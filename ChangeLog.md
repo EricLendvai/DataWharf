@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 09/09/2023 v 2.57
+* Fix to Docker file relative to dependency paths.
+* Minor tweak to API code.
+
 ## 09/09/2023 v 2.56
 * Requirement: Get New Harbour_ORM and Harbour_FastCGI first.
 * New Settings / API Tokens menu option to configure API Tokens and specify their access rights.
