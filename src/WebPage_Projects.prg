@@ -420,11 +420,11 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,1,6),ListOfProjects->Project_UseStatus,1)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(vfp_between(ListOfProjects->Project_DestructiveDelete,1,3),ListOfProjects->Project_DestructiveDelete,1)]
+                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(vfp_between(ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE,PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS),ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -452,9 +452,9 @@ local l_cHtml := ""
 local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName                          := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_cDescription                   := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_nDestructiveDelete             := hb_HGetDef(par_hValues,"DestructiveDelete",1)
+local l_nDestructiveDelete             := hb_HGetDef(par_hValues,"DestructiveDelete",PROJECTDESTRUCTIVEDELETE_NONE)
 local l_cAlternateNameForModel         := nvl(hb_HGetDef(par_hValues,"AlternateNameForModel"         ,""),"")
 local l_cAlternateNameForModels        := nvl(hb_HGetDef(par_hValues,"AlternateNameForModels"        ,""),"")
 local l_cAlternateNameForEntity        := nvl(hb_HGetDef(par_hValues,"AlternateNameForEntity"        ,""),"")

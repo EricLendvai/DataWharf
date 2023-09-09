@@ -9,3 +9,4 @@ WebPage_Users.prg
 WebPage_About.prg
 WebPage_Health.prg
 WebPage_Settings.prg
+WebPage_APITokens.prg

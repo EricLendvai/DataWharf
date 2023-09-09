@@ -1,5 +1,23 @@
 # DataWharf - Change Log
 
+## 09/09/2023 v 2.56
+* Requirement: Get New Harbour_ORM and Harbour_FastCGI first.
+* New Settings / API Tokens menu option to configure API Tokens and specify their access rights.
+* New API "Applications" and "ApplicationHarbourSchemaExport", aware of API Tokens access rights.   
+   You must set AccessToken in the request header.   
+   Example of API Call: {{base_url}}api/applications   
+   Example of API Call: {{base_url}}api/ApplicationHarbourSchemaExport?application=WF   
+* API names, used in API calls, are now case-insensitive.
+* New Template Tables in Data Dictionaries. They can be used when adding a new table to initialize a list of columns.
+* Updated Main Menu UI for consistency and color highlight.
+* Changed search options on Data Dictionary Tables to have an "Advanced" flag and search on Enumerations.
+* Search options on the Data Dictionary Enumeration List.
+* Under PostgreSQL, Load of Schema will not import indexes on Primary keys and Foreign keys of type "I","IB","UUI" (previously defined in DataWharf).
+* Only define indexes that are not used on Primary and Foreign Keys, of type Integer, Integer Big or UUID. The export to HB_ORM will automatically add them.   
+    Since there is no manual edit of indexes, as they get created via the "Load Schema", and fewer are needed, you may want to purge the following 2 tables and re-run "Load Schema":   
+    truncate table "Index";   
+    truncate table "IndexColumn";   
+
 ## 06/12/2023 v 2.55
 * Display of "Usage Status" in headings on right panels in Diagrams.
 * In Application management, moved Visualize Tab to leftmost position.

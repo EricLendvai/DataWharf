@@ -2,7 +2,7 @@
 
 //=================================================================================================================
 // Example: /api/GetApplicationInformation
-function GetApplicationInformation()
+function GetApplicationInformation(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := {=>}
 
@@ -17,7 +17,7 @@ return hb_jsonEncode(l_cResponse)
 
 //=================================================================================================================
 // Example: /api/projects/v1
-function APIGetListOfProjects()
+function APIGetListOfProjects(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cProjectId  := GetAPIURIElement(2)
@@ -25,6 +25,8 @@ local l_oDB_ListOfProjects := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfProjects
 local l_aListOfProjects := {}
 local l_hProjectInfo    := {=>}
+
+//_M_ Refactor to check API Token Access
 
 with object l_oDB_ListOfProjects
     :Table("493f214c-aa5a-4d63-a465-9d5a4adeaa48","Project")
@@ -84,7 +86,7 @@ return l_cResponse
 
 //=================================================================================================================
 // Example: GET /api/classes/
-function APIGetListOfEntities()
+function APIGetListOfEntities(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cEntityId  := GetAPIURIElement(2)
@@ -101,6 +103,8 @@ local l_xSubDataAttributes
 local l_aListOfLinkedEntitiesFrom := {}
 local l_aListOfLinkedEntitiesTo   := {}
 local l_cModelId                  := oFcgi:GetQueryString("model")
+
+//_M_ Refactor to check API Token Access
 
 with object l_oDB_ListOfEntities
     :Table("9C052CE0-BD88-49B4-B5BD-A85C5A89B549","Entity")
@@ -283,7 +287,7 @@ return l_cResponse
 
 //=================================================================================================================
 // Example: /api/models/
-function APIGetListOfModels()
+function APIGetListOfModels(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cModelId  := GetAPIURIElement(2)
@@ -293,6 +297,9 @@ local l_nNumberOfModels
 local l_aListOfModels := {}
 local l_aListOfLinkedModels := {}
 local l_hModelInfo    := {=>}
+
+//_M_ Refactor to check API Token Access
+//_M_ using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
 
 with object l_oDB_ListOfModels
     :Table("d498c464-b815-43eb-8649-5b609219fdba","Model")
@@ -372,7 +379,7 @@ return l_cResponse
 
 //=================================================================================================================
 // Example: /api/Packages/
-function APIGetListOfPackages()
+function APIGetListOfPackages(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cPackageId  := GetAPIURIElement(2)
@@ -380,17 +387,21 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfPackages
 local l_aListOfPackages := {}
 local l_hPackageInfo    := {=>}
-local l_cModelId         := oFcgi:GetQueryString("model")
+local l_cModelId        := oFcgi:GetQueryString("model")
+
+//_M_ Refactor to check API Token Access
+//_M_ ?? using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+
 
 with object l_oDB1
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","Package")
     :Column("Package.pk"         ,"pk")
     :Column("Package.Name"       ,"Package_Name")
     :Column("Package.LinkUID"    ,"Package_LinkUID")
-    :Column("Package.fk_Package"  ,"Package_Parent")
-    :Column("Package.fk_Model"  ,"Package_Model")
-    :Column("parent.LinkUID"  ,"ParentPackage_LinkUID")
-    :Column("Model.LinkUID"  ,"Model_LinkUID")
+    :Column("Package.fk_Package" ,"Package_Parent")
+    :Column("Package.fk_Model"   ,"Package_Model")
+    :Column("parent.LinkUID"     ,"ParentPackage_LinkUID")
+    :Column("Model.LinkUID"      ,"Model_LinkUID")
     //:Column("Package.Description","Package_Description")
     :Join("left outer","Package","parent","Package.fk_Package = parent.pk")
     :Join("inner","Model","","Package.fk_Model = Model.pk")
@@ -454,7 +465,7 @@ return l_cResponse
 
 //=================================================================================================================
 // Example: /api/Associations/
-function APIGetListOfAssociations()
+function APIGetListOfAssociations(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cAssociationId  := GetAPIURIElement(2)
@@ -467,6 +478,9 @@ local l_aListOfAssociationEnds := {}
 local l_hAssociationInfo    := {=>}
 local l_hAssociationEndsInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
+
+//_M_ Refactor to check API Token Access
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
 
 with object l_oDB_ListOfAssociations
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Association")
@@ -586,7 +600,7 @@ return l_cResponse
 //=================================================================================================================
 //=================================================================================================================
 // Example: /api/enumerations/
-function APIGetListOfEnumerations()
+function APIGetListOfEnumerations(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cModelEnumerationId  := GetAPIURIElement(2)
@@ -595,6 +609,9 @@ local l_nNumberOfModelEnumerations
 local l_aListOfModelEnumerations := {}
 local l_hModelEnumerationInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
+
+//_M_ Refactor to check API Token Access
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
 
 with object l_oDB_ListOfTopModelEnumerations
     :Table("D1DC2101-984B-4901-BBA7-C7E258B5A23A","ModelEnumeration")
@@ -661,7 +678,7 @@ return l_cResponse
 //=================================================================================================================
 //=================================================================================================================
 // Example: /api/datatypes/
-function APIGetListOfDataTypes()
+function APIGetListOfDataTypes(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 
 local l_cResponse := ""
 local l_cDataTypeId  := GetAPIURIElement(2)
@@ -671,6 +688,9 @@ local l_aListOfDataTypes := {}
 local l_hDataTypeInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
 local l_xSubDataTypes
+
+//_M_ Refactor to check API Token Access
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
 
 with object l_oDB_ListOfTopDataTypes
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","DataType")

@@ -130,7 +130,7 @@ case l_cURLAction == "EditUser"
 
                 l_oDB_ListOfSelectedProjects := hb_SQLData(oFcgi:p_o_SQLConnection)
                 with object l_oDB_ListOfSelectedProjects
-                    :Table("64841551-4f11-43cf-bfd8-b742150b8dc2","UserAccessProject")
+                    :Table("64841551-4f11-43cf-bfd8-b742150b8dc3","UserAccessProject")
                     :Column("UserAccessProject.fk_Project","fk_Project")
                     :Column("UserAccessProject.AccessLevelML" ,"AccessLevelML")
                     :Where("UserAccessProject.fk_User = ^",l_iUserPk)
@@ -325,8 +325,8 @@ static function UserEditFormBuild(par_iPk,par_cErrorText,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
-local l_iAccessMode
-local l_iStatus
+local l_nAccessMode
+local l_nStatus
 local l_oDB_ListOfAllApplications := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAllProjects     := hb_SQLData(oFcgi:p_o_SQLConnection)
 // local l_CheckBoxId
@@ -414,13 +414,13 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3" valign="top" style="vertical-align: top; ">]
 
                 l_cHtml += [<span class="pe-5">]
-                    l_iAccessMode := hb_HGetDef(par_hValues,"AccessMode",1)
+                    l_nAccessMode := hb_HGetDef(par_hValues,"AccessMode",1)
                     // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboAccessMode" id="ComboAccessMode">]
                     l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeAccessMode(this.value);'>]
-                        l_cHtml += [<option value="1"]+iif(l_iAccessMode==1,[ selected],[])+[>Project and Application Specific</option>]
-                        l_cHtml += [<option value="2"]+iif(l_iAccessMode==2,[ selected],[])+[>All Projects and Applications Read Only</option>]
-                        l_cHtml += [<option value="3"]+iif(l_iAccessMode==3,[ selected],[])+[>All Projects and Applications Full Access</option>]
-                        l_cHtml += [<option value="4"]+iif(l_iAccessMode==4,[ selected],[])+[>Root Admin (User Control)</option>]
+                        l_cHtml += [<option value="1"]+iif(l_nAccessMode==1,[ selected],[])+[>Project and Application Specific</option>]
+                        l_cHtml += [<option value="2"]+iif(l_nAccessMode==2,[ selected],[])+[>All Projects and Applications Read Only</option>]
+                        l_cHtml += [<option value="3"]+iif(l_nAccessMode==3,[ selected],[])+[>All Projects and Applications Full Access</option>]
+                        l_cHtml += [<option value="4"]+iif(l_nAccessMode==4,[ selected],[])+[>Root Admin (User Control)</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</span>]
 
@@ -430,10 +430,10 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_iStatus := hb_HGetDef(par_hValues,"Status",1)
+                l_nStatus := hb_HGetDef(par_hValues,"Status",1)
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-                    l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nStatus==1,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -465,13 +465,43 @@ with Object l_oDB_ListOfAllProjects
     :SQL("ListOfAllProjects")
 endwith
 
+
+// Projects -------------------------------------------------------------------------
+l_cHtml += [<div id="DivProjectSecurity">]
+    l_cHtml += [<table class="ms-4 table" style="width:auto;">]   // table-striped
+        l_cHtml += [<tr class="table-dark">]
+            l_cHtml += [<td class="pb-2">Projects</td>]
+            l_cHtml += [<td class="pb-2">Access Rights</td>]
+        l_cHtml += [</tr>]
+
+        select ListOfAllProjects
+        scan all
+            l_cObjectDDID := "ComboProjectSecLevelML"+Trans(ListOfAllProjects->pk)
+
+            l_nAccessLevelML := hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),1)
+
+            l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                l_cHtml += [<td class="pb-2">]+ListOfAllProjects->Project_Name+[</td>]
+                
+                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                    l_cHtml += [<option value="1"]+iif(l_nAccessLevelML == 1,[ selected],[])+[>None</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nAccessLevelML == 2,[ selected],[])+[>Read Only</option>]
+                    // l_cHtml += [<option value="3"]+iif(l_nAccessLevelML == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
+                    // l_cHtml += [<option value="4"]+iif(l_nAccessLevelML == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
+                    l_cHtml += [<option value="5"]+iif(l_nAccessLevelML == 5,[ selected],[])+[>Edit Anything and Import/Export</option>]
+                    // l_cHtml += [<option value="6"]+iif(l_nAccessLevelML == 6,[ selected],[])+[>Edit Anything and Load Schema</option>]
+                    l_cHtml += [<option value="7"]+iif(l_nAccessLevelML == 7,[ selected],[])+[>Full Access</option>]
+                l_cHtml += [</select></td>]
+
+            l_cHtml += [</td></tr>]
+        endscan
+    l_cHtml += [</table>]
+
+l_cHtml += [</div>]
+
 // Applications -------------------------------------------------------------------------
 l_cHtml += [<div id="DivApplicationSecurity">]
-    // l_cHtml += [<div>]
-    //     l_cHtml += [<span class="ms-3">Application Level Access Right</span>]
-    // l_cHtml += [</div>]
-
-    // l_cHtml += [<div class="m-3"></div>]
+    l_cHtml += [<div class="m-5"></div>]
 
     l_cHtml += [<table class="ms-4 table" style="width:auto;">]   // table-striped
         l_cHtml += [<tr class="table-dark">]
@@ -504,45 +534,6 @@ l_cHtml += [<div id="DivApplicationSecurity">]
 
 l_cHtml += [</div>]
 
-
-// Projects -------------------------------------------------------------------------
-l_cHtml += [<div id="DivProjectSecurity">]
-    // l_cHtml += [<div>]
-    //     l_cHtml += [<span class="ms-3">Project Level Access Right</span>]
-    // l_cHtml += [</div>]
-
-    l_cHtml += [<div class="m-5"></div>]
-
-    l_cHtml += [<table class="ms-4 table" style="width:auto;">]   // table-striped
-        l_cHtml += [<tr class="table-dark">]
-            l_cHtml += [<td class="pb-2">Projects</td>]
-            l_cHtml += [<td class="pb-2">Access Rights</td>]
-        l_cHtml += [</tr>]
-
-        select ListOfAllProjects
-        scan all
-            l_cObjectDDID := "ComboProjectSecLevelML"+Trans(ListOfAllProjects->pk)
-
-            l_nAccessLevelML := hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),1)
-
-            l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-                l_cHtml += [<td class="pb-2">]+ListOfAllProjects->Project_Name+[</td>]
-                
-                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
-                    l_cHtml += [<option value="1"]+iif(l_nAccessLevelML == 1,[ selected],[])+[>None</option>]
-                    l_cHtml += [<option value="2"]+iif(l_nAccessLevelML == 2,[ selected],[])+[>Read Only</option>]
-                    // l_cHtml += [<option value="3"]+iif(l_nAccessLevelML == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
-                    // l_cHtml += [<option value="4"]+iif(l_nAccessLevelML == 4,[ selected],[])+[>Edit Description and Information Entries and Diagrams</option>]
-                    l_cHtml += [<option value="5"]+iif(l_nAccessLevelML == 5,[ selected],[])+[>Edit Anything and Import/Export</option>]
-                    // l_cHtml += [<option value="6"]+iif(l_nAccessLevelML == 6,[ selected],[])+[>Edit Anything and Load Schema</option>]
-                    l_cHtml += [<option value="7"]+iif(l_nAccessLevelML == 7,[ selected],[])+[>Full Access</option>]
-                l_cHtml += [</select></td>]
-
-            l_cHtml += [</td></tr>]
-        endscan
-    l_cHtml += [</table>]
-
-l_cHtml += [</div>]
 // -------------------------------------------------------------------------
 
 l_cHtml += [</form>]

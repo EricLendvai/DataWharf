@@ -5,6 +5,8 @@ function ExportApplicationToHbORM(par_iApplicationPk)
 local l_lContinue := .t.
 local l_oDB_ListOfTables
 local l_oDB_ListOfColumns
+local l_oDB_ListOfIndexes_OnForeignKey
+local l_oDB_ListOfIndexes_Defined
 local l_oDB_ListOfIndexes
 
 local l_iTablePk := 0
@@ -28,17 +30,21 @@ local l_lFieldAllowNull
 local l_lFieldAutoIncrement
 local l_lFieldArray
 local l_cFieldAttributes
+local l_cIndexPrefix
 local l_cIndexName
 local l_cSourceCodeIndexes
 local l_cIndexExpression
 local l_nIndexRecno
-
 local lnEnumerationImplementAs
 local lnEnumerationImplementLength
 
 l_oDB_ListOfTables  := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfIndexes := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+l_oDB_ListOfIndexes_OnForeignKey := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfIndexes_Defined      := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfIndexes              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
+
 
 with object l_oDB_ListOfTables
     :Table("299a129d-dab1-4dad-afcf-000000000001","NameSpace")
@@ -62,9 +68,9 @@ with object l_oDB_ListOfTables
     :GroupBy("tag1")
     :GroupBy("tag2")
 
-    :Where("NameSpace.UseStatus <= 5")
-    :Where("Table.UseStatus     <= 5")
-    :Where("Column.UseStatus    <= 5")
+    :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+    :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+    :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
 
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -99,9 +105,9 @@ if l_lContinue
         :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
         :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
 
-        :Where("NameSpace.UseStatus <= 5")
-        :Where("Table.UseStatus <= 5")
-        :Where("Column.UseStatus <= 5")
+        :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
         :SQL("ListOfColumns")
         if :Tally < 0
             l_lContinue := .f.
@@ -115,32 +121,56 @@ if l_lContinue
 endif
 
 if l_lContinue
-    with object l_oDB_ListOfIndexes
-        :Table("299a129d-dab1-4dad-afcf-000000000003","NameSpace")
+
+    with object l_oDB_ListOfIndexes_Defined
+        :Table("c5450b4d-8d2a-418e-8d56-75ac97d57ceb","NameSpace")
         :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
         :Join("inner","Table"      ,"","Table.fk_NameSpace = NameSpace.pk")
         :Join("inner","Index"      ,"","Index.fk_Table = Table.pk")
-        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
-        :Join("inner","Column"     ,"","IndexColumn.fk_Column = Column.pk")
-
-        // :Column("max(length(Index.Name))" , "MaxIndexNameLength")
+//Future Use        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
+//Future Use        :Join("inner","Column"     ,"","IndexColumn.fk_Column = Column.pk")
 
         :Column("Table.Pk"         ,"Table_Pk")
         :Column("Index.Name"       ,"Index_Name")
         :Column("Index.Expression" ,"Index_Expression")
         :Column("Index.Unique"     ,"Index_Unique")
         :Column("Index.Algo"       ,"Index_Algo")
-        :Column("upper(Index.Name)","tag1")
 
-        :Where("NameSpace.UseStatus <= 5")
-        :Where("Table.UseStatus <= 5")
-        :Where("Index.UseStatus <= 5")
-        :Where("Column.UseStatus <= 5")
-        
+        :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+//Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+    endwith
+
+    with object l_oDB_ListOfIndexes_OnForeignKey
+        :Table("90dd4f9c-8910-4cd7-913d-dacff9f5c115","Column")
+
+        :Column("Table.Pk"           ,"Table_Pk")
+        :Column("lower(Column.Name)" ,"Index_Name")
+        :Column("Column.Name"        ,"Index_Expression")
+        :Column("false"              ,"Index_Unique")
+        :Column("1"                  ,"Index_Algo")
+
+        :Join("inner","Table","","Column.fk_Table = Table.pk")
+        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
+    endwith
+
+    with object l_oDB_ListOfIndexes
+        :AnchorAlias("26cfaf58-cc3a-4456-a707-2379863acdf8","CombinedListOfIndexes")
+        :AddSQLDataQuery("ListOfIndexesDefined"                  ,l_oDB_ListOfIndexes_Defined)
+        :AddSQLDataQuery("AllTableColumnsChildrenForForeignKeys" ,l_oDB_ListOfIndexes_OnForeignKey)
+        :CombineQueries(COMBINE_ACTION_UNION,"CombinedListOfIndexes",.t.,"ListOfIndexesDefined","AllTableColumnsChildrenForForeignKeys")
         :SQL("ListOfIndexes")
+
+//1234567890
+// SendToClipboard(:LastSQL())
+
         if :Tally < 0
             l_lContinue := .f.
         else
+// ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
             with object :p_oCursor
                 :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
                 :CreateIndexes()
@@ -168,7 +198,7 @@ if l_lContinue
         if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
             select ListOfColumns
             scan while ListOfColumns->Table_Pk = l_iTablePk
-                l_nNumberOfFields++  //Just to test if the following code works
+                l_nNumberOfFields++   //Just to test if the following code works
 
                 l_cFieldName        := ListOfColumns->Column_Name
                 l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cIndent+"{" , ";"+CRLF+l_cIndent+"," )
@@ -182,9 +212,9 @@ if l_lContinue
                 l_lFieldArray         := ListOfColumns->Column_Array
                 l_cFieldAttributes    := iif(l_lFieldAllowNull,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
-//             if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
-//                 l_lFieldAutoIncrement := .t.
-//             endif
+                // if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
+                //     l_lFieldAutoIncrement := .t.
+                // endif
 
                 if l_cFieldType == "E"
                     lnEnumerationImplementAs     := nvl(ListOfColumns->Enumeration_ImplementAs,0)
@@ -192,11 +222,11 @@ if l_lContinue
 
                     // EnumerationImplementAs   1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
                     do case
-                    case lnEnumerationImplementAs == 2
+                    case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_INTEGER
                         l_cFieldType := "I"
                         l_nFieldLen  := nil
                         l_nFieldDec  := nil
-                    case lnEnumerationImplementAs == 3
+                    case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_NUMERIC
                         l_cFieldType := "N"
                         l_nFieldLen  := lnEnumerationImplementLength
                         l_nFieldDec  := 0
@@ -237,11 +267,22 @@ if l_lContinue
             select ListOfIndexes
             l_nIndexRecno := Recno()
             scan while ListOfIndexes->Table_Pk = l_iTablePk  // Pre scan the index to help determine the l_nMaxNameLength
-                l_nMaxNameLength       := max(l_nMaxNameLength      ,len(ListOfIndexes->Index_Name))
+
+                l_cIndexName := ListOfIndexes->Index_Name
+                // Clean up index name
+                if right(l_cIndexName,4) == "_idx"
+                    l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
+                    l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                    if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
+                        l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
+                    endif
+                endif
+                l_nMaxNameLength := max(l_nMaxNameLength,len(l_cIndexName))
 
                 l_cIndexExpression     := ListOfIndexes->Index_Expression
                 l_cIndexExpression     := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
                 l_cIndexExpression     := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+
                 l_nMaxExpressionLength := max(l_nMaxExpressionLength,len(l_cIndexExpression))
             endscan
             dbGoTo(l_nIndexRecno)
@@ -249,7 +290,15 @@ if l_lContinue
             scan while ListOfIndexes->Table_Pk = l_iTablePk
                 l_nNumberOfIndexes++  //Just to test if the following code works
 
-                l_cIndexName       := ListOfIndexes->Index_Name
+                l_cIndexName := ListOfIndexes->Index_Name
+                // Clean up index name
+                if right(l_cIndexName,4) == "_idx"
+                    l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
+                    l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                    if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
+                        l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
+                    endif
+                endif
 
                 l_cIndexExpression := ListOfIndexes->Index_Expression
                 l_cIndexExpression := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
@@ -477,9 +526,37 @@ with object l_oDB_ListOfRecords
     endif
 endwith
 
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-afcf-000000000016","TemplateTable")
+    :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateTable")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TemplateTable","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-afcf-000000000017","TemplateTable")
+    :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","TemplateColumn" ,"","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateColumn")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TemplateColumn","ListOfRecords")
+    endif
+endwith
+
 // ----- Custom Field Begin ------------------------------------------------------
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000016","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-afcf-000000000018","ApplicationCustomField")
     :Distinct(.t.)
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
     :Join("inner","CustomField" ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
@@ -497,7 +574,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000016","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-afcf-000000000019","ApplicationCustomField")
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
 
     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
@@ -514,7 +591,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000017","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-afcf-000000000020","ApplicationCustomField")
     :Distinct(.t.)
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
     :Join("inner","CustomFieldValue" ,"","CustomFieldValue.fk_CustomField = ApplicationCustomField.fk_CustomField")
@@ -759,14 +836,15 @@ local l_cCursorFieldDec
 local l_oDB_ListOfCurrentRecords := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDBImport                := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_hNameSpacePkOldToNew   := {=>}
-local l_hTablePkOldToNew       := {=>}
-local l_hColumnPkOldToNew      := {=>}
-local l_hEnumerationPkOldToNew := {=>}
-local l_hIndexPkOldToNew       := {=>}
-local l_hDiagramPkOldToNew     := {=>}
-local l_hTagPkOldToNew         := {=>}
-local l_hCustomFieldPkOldToNew := {=>}
+local l_hNameSpacePkOldToNew     := {=>}
+local l_hTablePkOldToNew         := {=>}
+local l_hColumnPkOldToNew        := {=>}
+local l_hEnumerationPkOldToNew   := {=>}
+local l_hIndexPkOldToNew         := {=>}
+local l_hDiagramPkOldToNew       := {=>}
+local l_hTagPkOldToNew           := {=>}
+local l_hTemplateTablePkOldToNew := {=>}
+local l_hCustomFieldPkOldToNew   := {=>}
 
 local l_iParentKeyCurrent  // In Current database
 local l_iParentKeyImport   // In data used for import
@@ -1578,6 +1656,84 @@ scan all
         endif
     endif
 endscan
+
+
+
+
+
+
+
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// Import TemplateTables
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-000000000030","TemplateTable")
+    :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
+    :Column("TemplateTable.Pk"    ,"pk")
+    :Column("TemplateTable.Name"  ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("TemplateTable1","padr(upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceTemplateTable
+scan all
+    if vfp_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+        l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := ListOfCurrentRecords->pk
+    else
+        with object l_oDBImport
+            :Table("df873645-94d3-4ba5-85cf-000000000031","TemplateTable")
+            :Field("fk_Application",par_iApplicationPk)
+            ImportAddRecordSetField(l_oDBImport,"TemplateTable","*fk_Application*")
+            if :Add()
+                l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := :Key()
+            endif
+            
+        endwith
+    endif
+endscan
+
+//-------------------------------------------------------------------------------------------------------------------------
+// Import TemplateColumn
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-000000000032","TemplateTable")
+    :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","TemplateColumn","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
+    :Column("TemplateColumn.fk_TemplateTable"  ,"fk_TemplateTable")
+    :Column("TemplateColumn.Pk"                ,"pk")
+    :Column("TemplateColumn.Name"              ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("TemplateTable1","padr(alltrim(str(fk_TemplateTable))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceTemplateColumn
+scan all
+    l_iParentKeyImport  := ImportSourceTemplateColumn->fk_TemplateTable
+    l_iParentKeyCurrent := hb_HGetDef(l_hTemplateTablePkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find TemplateTable Parent Key on TemplateColumn Import" ,l_iParentKeyImport)
+    else
+        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTemplateColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+            // SendToDebugView("Import: Table Already on file in TemplateTable (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-000000000033","TemplateColumn")
+                :Field("fk_TemplateTable"    ,l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"TemplateColumn","*fk_TemplateTable*")
+                if :Add()
+                endif
+            endwith
+        endif
+    endif
+endscan
+
 
 //-------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------

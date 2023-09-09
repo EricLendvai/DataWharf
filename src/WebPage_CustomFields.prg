@@ -269,12 +269,12 @@ static function CustomFieldEditFormBuild(par_iPk,par_cErrorText,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
-local l_iType
+local l_nType
 local l_iLength
 local l_iWidth
 local l_iHeight
 local l_iUsedOn
-local l_iStatus
+local l_nStatus
 local l_oDB_ListOfApplications := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjects     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_CheckBoxId
@@ -373,14 +373,14 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3" valign="top" style="vertical-align: top; ">]
 
                 l_cHtml += [<span class="pe-5">]
-                    l_iType := hb_HGetDef(par_hValues,"Type",1)
+                    l_nType := hb_HGetDef(par_hValues,"Type",1)
                     // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboType" id="ComboType">]
                     l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);'>]
-                        l_cHtml += [<option value="1"]+iif(l_iType==1,[ selected],[])+[>Logical</option>]
-                        l_cHtml += [<option value="2"]+iif(l_iType==2,[ selected],[])+[>Multi Choice</option>]
-                        l_cHtml += [<option value="3"]+iif(l_iType==3,[ selected],[])+[>String</option>]
-                        l_cHtml += [<option value="4"]+iif(l_iType==4,[ selected],[])+[>Text Area</option>]
-                        l_cHtml += [<option value="5"]+iif(l_iType==5,[ selected],[])+[>Date</option>]
+                        l_cHtml += [<option value="1"]+iif(l_nType==1,[ selected],[])+[>Logical</option>]
+                        l_cHtml += [<option value="2"]+iif(l_nType==2,[ selected],[])+[>Multi Choice</option>]
+                        l_cHtml += [<option value="3"]+iif(l_nType==3,[ selected],[])+[>String</option>]
+                        l_cHtml += [<option value="4"]+iif(l_nType==4,[ selected],[])+[>Text Area</option>]
+                        l_cHtml += [<option value="5"]+iif(l_nType==5,[ selected],[])+[>Date</option>]
                     l_cHtml += [</select>]
                 l_cHtml += [</span>]
 
@@ -426,11 +426,11 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_iStatus := hb_HGetDef(par_hValues,"Status",1)
+                l_nStatus := hb_HGetDef(par_hValues,"Status",1)
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
-                    l_cHtml += [<option value="1"]+iif(l_iStatus==1,[ selected],[])+[>Active</option>]
-                    l_cHtml += [<option value="2"]+iif(l_iStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
-                    l_cHtml += [<option value="3"]+iif(l_iStatus==3,[ selected],[])+[>Hidden</option>]
+                    l_cHtml += [<option value="1"]+iif(l_nStatus==1,[ selected],[])+[>Active</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nStatus==3,[ selected],[])+[>Hidden</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]

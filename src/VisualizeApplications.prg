@@ -135,7 +135,7 @@ with object l_oDB1
     l_oDataDiagram := :Get(l_iDiagramPk)
 
     l_nRenderMode          := max(1,l_oDataDiagram:Diagram_RenderMode)
-    if l_nRenderMode == 2
+    if l_nRenderMode == RENDERMODE_MXGRAPH
         l_cNodePositions := l_oDataDiagram:Diagram_MxgPos
     else
         l_cNodePositions := l_oDataDiagram:Diagram_VisPos
@@ -262,7 +262,7 @@ if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
 endif
 
 // if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == 2
+if l_nRenderMode == RENDERMODE_MXGRAPH
     oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/css/common.css">]
     oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/mxClient.js"></script>]
 //elseif GRAPH_LIB_DD == "visjs"
@@ -307,7 +307,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             // l_cHtml += [});]
 
             // if GRAPH_LIB_DD == "mxgraph"
-            if l_nRenderMode == 2
+            if l_nRenderMode == RENDERMODE_MXGRAPH
                 l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
             // elseif GRAPH_LIB_DD == "visjs"
             else
@@ -393,7 +393,7 @@ l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
 if l_nLengthDecoded > 0
     //migrate from x,y coordinates that may be negative
     // if GRAPH_LIB_DD == "mxgraph"
-    if l_nRenderMode == 2
+    if l_nRenderMode == RENDERMODE_MXGRAPH
         for each l_hNodePosition in l_hNodePositions
             l_cHashKey := l_hNodePosition:__enumkey
             if left(l_cHashKey, 1) == "T"
@@ -528,26 +528,26 @@ scan all
     // 6 Discontinued
 
     do case
-    case ListOfTables->Table_UseStatus <= 1
+    case ListOfTables->Table_UseStatus <= USESTATUS_UNKNOWN
         if l_lUnknownInGray
             l_cHtml += [,color:{background:'#]+USESTATUS_1_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_1_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
         else
             l_cHtml += [,color:{background:'#]+USESTATUS_4_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_4_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
         endif
 
-    case ListOfTables->Table_UseStatus == 2  // Proposed
+    case ListOfTables->Table_UseStatus == USESTATUS_PROPOSED
         l_cHtml += [,color:{background:'#]+USESTATUS_2_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_2_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
-    case ListOfTables->Table_UseStatus == 3  // Under Development
+    case ListOfTables->Table_UseStatus == USESTATUS_UNDERDEVELOPMENT
         l_cHtml += [,color:{background:'#]+USESTATUS_3_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_3_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
-    case ListOfTables->Table_UseStatus == 4  // Active
+    case ListOfTables->Table_UseStatus == USESTATUS_ACTIVE
         l_cHtml += [,color:{background:'#]+USESTATUS_4_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_4_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
-    case ListOfTables->Table_UseStatus == 5  // To Be Discontinued
+    case ListOfTables->Table_UseStatus == USESTATUS_TOBEDISCONTINUED
         l_cHtml += [,color:{background:'#]+USESTATUS_5_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_5_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
-    case ListOfTables->Table_UseStatus >= 6  // Discontinued
+    case ListOfTables->Table_UseStatus >= USESTATUS_DISCONTINUED
         l_cHtml += [,color:{background:'#]+USESTATUS_6_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_6_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
 
     endcase
@@ -617,21 +617,21 @@ scan all
     l_cHtml += [{id:"C]+Trans(ListOfLinks->Column_Pk)+[",from:"T]+Trans(ListOfLinks->pkFrom)+[",to:"T]+Trans(ListOfLinks->pkTo)+[",arrows:{from:{enabled: true,type:"classic"}}]
 
     do case
-    case ListOfLinks->Column_UseStatus <= 1
+    case ListOfLinks->Column_UseStatus <= USESTATUS_UNKNOWN
         if l_lUnknownInGray
             l_cHtml += [,color:{color:'#]+USESTATUS_1_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_1_EDGE_HIGHLIGHT+['}]
         else
             l_cHtml += [,color:{color:'#]+USESTATUS_4_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_4_EDGE_HIGHLIGHT+['}]
         endif
-    case ListOfLinks->Column_UseStatus == 2
+    case ListOfLinks->Column_UseStatus == USESTATUS_PROPOSED
         l_cHtml += [,color:{color:'#]+USESTATUS_2_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_2_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == 3
+    case ListOfLinks->Column_UseStatus == USESTATUS_UNDERDEVELOPMENT
         l_cHtml += [,color:{color:'#]+USESTATUS_3_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_3_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == 4
+    case ListOfLinks->Column_UseStatus == USESTATUS_ACTIVE
         l_cHtml += [,color:{color:'#]+USESTATUS_4_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_4_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == 5
+    case ListOfLinks->Column_UseStatus == USESTATUS_TOBEDISCONTINUED
         l_cHtml += [,color:{color:'#]+USESTATUS_5_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_5_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus >= 6
+    case ListOfLinks->Column_UseStatus >= USESTATUS_DISCONTINUED
         l_cHtml += [,color:{color:'#]+USESTATUS_6_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_6_EDGE_HIGHLIGHT+['}]
     endcase
 
@@ -668,7 +668,7 @@ l_cHtml += '];'
 l_cHtml += [  var container = document.getElementById("mynetwork");]
 
 // if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == 2
+if l_nRenderMode == RENDERMODE_MXGRAPH
 
 // See visualization.js .. function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout, resetEdges) {
     l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
@@ -739,7 +739,7 @@ l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk
 l_cHtml += '      });'
 
 // if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == 2
+if l_nRenderMode == RENDERMODE_MXGRAPH
     l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '    var changes = evt.getProperty("edit").changes;'
     l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
@@ -814,19 +814,19 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
     if empty(l_iDiagramPk)
-        l_nRenderMode := 2
+        l_nRenderMode := RENDERMODE_MXGRAPH
     else
         with object l_oDB_Diagram
             :Table("edbccb15-007b-4de6-8281-5cfaf5f452cf","Diagram")
             :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
             l_oDataDiagram := :Get(l_iDiagramPk)
-            l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+            l_nRenderMode := max(RENDERMODE_VISJS,l_oDataDiagram:Diagram_RenderMode)
         endwith
     endif
 
     with object l_oDB1
         :Table("617ce583-369e-468b-9227-63bb429564a0","Diagram")
-        if l_nRenderMode == 2
+        if l_nRenderMode == RENDERMODE_MXGRAPH
             :Field("Diagram.MxgPos",l_cNodePositions)
         else
             :Field("Diagram.VisPos",l_cNodePositions)
@@ -835,9 +835,9 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
             //Add an initial Diagram File this should not happen, since record was already added
             :Field("Diagram.fk_Application",par_iApplicationPk)
             :Field("Diagram.Name"          ,"All Tables")
-            :Field("Diagram.UseStatus"     ,1)
-            :Field("Diagram.DocStatus"     ,1)
-            :Field("Diagram.RenderMode"    ,2)
+            :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
+            :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
+            :Field("Diagram.RenderMode"    ,RENDERMODE_MXGRAPH)
             :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iDiagramPk := :Key()
@@ -1113,7 +1113,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
-        l_nRenderMode := hb_HGetDef(l_hValues,"RenderMode",2)
+        l_nRenderMode := hb_HGetDef(l_hValues,"RenderMode",RENDERMODE_MXGRAPH)
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Render Mode</td>]
             l_cHtml += [<td class="pb-3">]
@@ -1328,7 +1328,7 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Field("Diagram.Name"               ,l_cDiagram_Name)
             :Field("Diagram.NodeDisplayMode"    ,l_nDiagram_NodeDisplayMode)
             :Field("Diagram.RenderMode"         ,l_nDiagram_RenderMode)
-            if l_nRenderMode_OnFile == 1 .and. l_nDiagram_RenderMode == 2 .and. hb_IsNIL(l_cMxgPos_OnFile) .and. !hb_IsNIL(l_cVisPos_OnFile)
+            if l_nRenderMode_OnFile == RENDERMODE_VISJS .and. l_nDiagram_RenderMode == RENDERMODE_MXGRAPH .and. hb_IsNIL(l_cMxgPos_OnFile) .and. !hb_IsNIL(l_cVisPos_OnFile)
                 //If switching from visjs to mxgraph rendering mode with no MxgPos value and existing VisPos value
                 :Field("Diagram.MxgPos",l_cVisPos_OnFile)
             endif
@@ -1337,8 +1337,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             :Field("Diagram.NodeMaxWidth"       ,l_lDiagram_NodeMaxWidth)
             if empty(l_iDiagramPk)  // Should not happen
                 :Field("Diagram.fk_Application",par_iApplicationPk)
-                :Field("Diagram.UseStatus"     , 1)
-                :Field("Diagram.DocStatus"     , 1)
+                :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
+                :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
                 :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iDiagramPk := :Key()
@@ -1451,10 +1451,10 @@ case l_cActionOnSubmit == "ResetLayout"
             :Table("bdb0a61a-0bb1-48b0-8d6a-5e29e96414f2","Diagram")
             :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
             l_oDataDiagram := :Get(l_iDiagramPk)
-            l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+            l_nRenderMode := max(RENDERMODE_VISJS,l_oDataDiagram:Diagram_RenderMode)
 
             :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
-            if l_nRenderMode == 2
+            if l_nRenderMode == RENDERMODE_MXGRAPH
                 :Field("Diagram.MxgPos",NIL)
             else
                 :Field("Diagram.VisPos",NIL)
@@ -2016,7 +2016,7 @@ with object l_oDB_Diagram
     :Table("f8632e51-09a7-4ee7-bc76-517c490f505a","Diagram")
     :Column("Diagram.RenderMode"         ,"Diagram_RenderMode")
     l_oDataDiagram := :Get(l_iDiagramPk)
-    l_nRenderMode := max(1,l_oDataDiagram:Diagram_RenderMode)
+    l_nRenderMode := max(RENDERMODE_VISJS,l_oDataDiagram:Diagram_RenderMode)
 endwith
 
 hb_HKeepOrder(l_hRelatedTables,.f.) // Will order the hash by its key, with will be entered as upper case. For Keys stored as Strings they will need to be the same length
@@ -2342,26 +2342,26 @@ if len(l_aNodes) == 1
             l_nTableUseStatus      := l_aSQLResult[1,7]
             l_nTableDocStatus      := l_aSQLResult[1,8]
 
-            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,1,6),l_nTableUseStatus,1)]
-            l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,1,4),l_nTableDocStatus,1)]
+            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nTableUseStatus,USESTATUS_UNKNOWN)]
+            l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),l_nTableDocStatus,DOCTATUS_MISSING)]
 
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
             do case
-            case l_nTableUseStatus <= 1
+            case l_nTableUseStatus <= USESTATUS_UNKNOWN
                 if l_lUnknownInGray
                     l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
                 else
                     l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
                 endif
-            case l_nTableUseStatus == 2
+            case l_nTableUseStatus == USESTATUS_PROPOSED
                 l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
-            case l_nTableUseStatus == 3
+            case l_nTableUseStatus == USESTATUS_UNDERDEVELOPMENT
                 l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
-            case l_nTableUseStatus == 4
+            case l_nTableUseStatus == USESTATUS_ACTIVE
                 l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
-            case l_nTableUseStatus == 5
+            case l_nTableUseStatus == USESTATUS_TOBEDISCONTINUED
                 l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
-            case l_nTableUseStatus >= 6
+            case l_nTableUseStatus >= USESTATUS_DISCONTINUED
                 l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
             endcase
             l_cHtml += [;">]
@@ -2578,12 +2578,12 @@ if len(l_aNodes) == 1
 
                                     // Use Status
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfColumns->Column_UseStatus,1,6),ListOfColumns->Column_UseStatus,1)]
+                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)]
                                     l_cHtml += [</td>]
 
                                     // Doc Status
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(vfp_between(ListOfColumns->Column_DocStatus,1,4),ListOfColumns->Column_DocStatus,1)]
+                                        l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(vfp_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
                                     l_cHtml += [</td>]
 
                                     // Used By
@@ -2618,7 +2618,7 @@ if len(l_aNodes) == 1
                     if l_nAccessLevelDD >= 4
                         l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
                         // if GRAPH_LIB_DD == "mxgraph"
-                        if l_nRenderMode == 2
+                        if l_nRenderMode == RENDERMODE_MXGRAPH
                             l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
                         // elseif GRAPH_LIB_DD == "visjs"
                         else
@@ -2697,7 +2697,7 @@ if len(l_aNodes) == 1
                 if l_nAccessLevelDD >= 4
                     l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
                     // if GRAPH_LIB_DD == "mxgraph"
-                    if l_nRenderMode == 2
+                    if l_nRenderMode == RENDERMODE_MXGRAPH
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
                     // elseif GRAPH_LIB_DD == "visjs"
                     else
@@ -2809,17 +2809,17 @@ else
 
                         l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
                         do case
-                        case l_nColumnUseStatus <= 1
+                        case l_nColumnUseStatus <= USESTATUS_UNKNOWN
                             l_cHtml += USESTATUS_4_NODE_HIGHLIGHT 
-                        case l_nColumnUseStatus == 2
+                        case l_nColumnUseStatus == USESTATUS_PROPOSED
                             l_cHtml += USESTATUS_2_NODE_HIGHLIGHT 
-                        case l_nColumnUseStatus == 3
+                        case l_nColumnUseStatus == USESTATUS_UNDERDEVELOPMENT
                             l_cHtml += USESTATUS_3_NODE_HIGHLIGHT 
-                        case l_nColumnUseStatus == 4
+                        case l_nColumnUseStatus == USESTATUS_ACTIVE
                             l_cHtml += USESTATUS_4_NODE_HIGHLIGHT 
-                        case l_nColumnUseStatus == 5
+                        case l_nColumnUseStatus == USESTATUS_TOBEDISCONTINUED
                             l_cHtml += USESTATUS_5_NODE_HIGHLIGHT 
-                        case l_nColumnUseStatus >= 6
+                        case l_nColumnUseStatus >= USESTATUS_DISCONTINUED
                             l_cHtml += USESTATUS_6_NODE_HIGHLIGHT 
                         endcase
                         l_cHtml += [;">]

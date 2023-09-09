@@ -70,6 +70,13 @@ local l_hColumns      := {=>}  // The key is <NameSpace>.<TableName>.<ColumnName
 local l_iParentTableKey
 local l_iChildColumnKey
 
+local l_hForeignKeys := {=>}
+local l_lExpressionOnForeignKey
+
+hb_HCaseMatch(l_hTables,.f.)
+hb_HCaseMatch(l_hColumns,.f.)
+hb_HCaseMatch(l_hForeignKeys,.f.)
+
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
@@ -194,7 +201,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                                 :Table("1b1a174d-4717-4452-b346-fe29ca359c6d","NameSpace")
                                 :Field("NameSpace.Name"          ,l_cLastNameSpace)
                                 :Field("NameSpace.fk_Application",par_iApplicationPk)
-                                :Field("NameSpace.UseStatus"     ,1)
+                                :Field("NameSpace.UseStatus"     ,USESTATUS_UNKNOWN)
                                 if :Add()
                                     l_iNewNameSpace += 1
                                     l_iNameSpacePk := :Key()
@@ -427,12 +434,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
                                 ListOfColumnsInDataDictionary->Column_Type           := "I"
                                 ListOfColumnsInDataDictionary->Column_Length         := nil
                                 ListOfColumnsInDataDictionary->Column_Scale          := nil
                                 ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
                                 ListOfColumnsInDataDictionary->Column_Type           := "N"
                                 ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
                                 ListOfColumnsInDataDictionary->Column_Scale          := 0
@@ -451,7 +458,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                            nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
 
                         else
-                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
                                 //_M_ report data was not updated
                             else
                                 if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
@@ -485,7 +492,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             :Field("Column.Name"          ,l_cColumnName)
                             :Field("Column.Order"         ,l_LastColumnOrder)
                             :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,1)
+                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
                             :Field("Column.Type"          ,l_cColumnType)
                             :Field("Column.Array"         ,l_lColumnArray)
                             :Field("Column.Length"        ,l_nColumnLength)
@@ -495,7 +502,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             :Field("Column.Unicode"       ,l_lColumnUnicode)
                             :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
                             :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                            :Field("Column.UsedBy"        ,1)
+                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -603,7 +610,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
 // SendToClipboard(l_cSQLCommandFields)
 
-
     l_cSQLCommandIndexes := [SELECT pg_indexes.schemaname        AS schema_name,]
     l_cSQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
     l_cSQLCommandIndexes += [       pg_indexes.indexname         AS index_name,]
@@ -611,10 +617,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandIndexes += [       upper(pg_indexes.schemaname) AS tag1,]
     l_cSQLCommandIndexes += [       upper(pg_indexes.tablename)  AS tag2]
     l_cSQLCommandIndexes += [ FROM pg_indexes]
-    l_cSQLCommandIndexes += [ WHERE NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog'))]
+    l_cSQLCommandIndexes += [ WHERE (NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog')))]
+    l_cSQLCommandIndexes += [ AND pg_indexes.indexname != concat(pg_indexes.tablename,'_pkey')]   // PostgreSQL always creates an index on the primary key named "<TableName>_pkey"
     l_cSQLCommandIndexes += [ ORDER BY tag1,tag2,index_name]
-
-
 
 //--Load Enumerations-----------
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
@@ -670,7 +675,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Table("1e4d6164-d02d-4590-b143-02ab9e9aac2b","NameSpace")
                             :Field("NameSpace.Name"          ,l_cLastNameSpace)
                             :Field("NameSpace.fk_Application",par_iApplicationPk)
-                            :Field("NameSpace.UseStatus"     ,1)
+                            :Field("NameSpace.UseStatus"     ,USESTATUS_UNKNOWN)
                             if :Add()
                                 l_iNewNameSpace += 1
                                 l_iNameSpacePk := :Key()
@@ -688,8 +693,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Table("4f5a321c-e9fd-4e3f-af6f-9e956b697ed7","Enumeration")
                             :Field("Enumeration.Name"        ,l_cLastEnumerationName)
                             :Field("Enumeration.fk_NameSpace",l_iNameSpacePk)
-                            :Field("Enumeration.ImplementAs" ,1)
-                            :Field("Enumeration.UseStatus"   ,1)
+                            :Field("Enumeration.ImplementAs" ,ENUMERATIONIMPLEMENTAS_NATIVESQLENUM)
+                            :Field("Enumeration.UseStatus"   ,USESTATUS_UNKNOWN)
                             if :Add()
                                 l_iNewEnumerations += 1
                                 l_iEnumerationPk := :Key()
@@ -757,7 +762,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Field("EnumValue.Name"          ,l_cEnumValueName)
                         :Field("EnumValue.Order"         ,l_LastEnumValueOrder)
                         :Field("EnumValue.fk_Enumeration",l_iEnumerationPk)
-                        :Field("EnumValue.UseStatus"     ,1)
+                        :Field("EnumValue.UseStatus"     ,USESTATUS_UNKNOWN)
                         if :Add()
                             l_iNewEnumValues += 1
                         else
@@ -829,7 +834,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 :Table("1d4e6580-fc99-4002-aa7a-5734e311b947","NameSpace")
                                 :Field("NameSpace.Name"          ,l_cLastNameSpace)
                                 :Field("NameSpace.fk_Application",par_iApplicationPk)
-                                :Field("NameSpace.UseStatus"     ,1)
+                                :Field("NameSpace.UseStatus"     ,USESTATUS_UNKNOWN)
                                 if :Add()
                                     l_iNewNameSpace += 1
                                     l_iNameSpacePk := :Key()
@@ -1114,12 +1119,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
                                 ListOfColumnsInDataDictionary->Column_Type           := "I"
                                 ListOfColumnsInDataDictionary->Column_Length         := nil
                                 ListOfColumnsInDataDictionary->Column_Scale          := nil
                                 ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
                                 ListOfColumnsInDataDictionary->Column_Type           := "N"
                                 ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
                                 ListOfColumnsInDataDictionary->Column_Scale          := 0
@@ -1140,7 +1145,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                         else
 // altd()
-                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
                                 //_M_ report data was not updated
                             else
                                 if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
@@ -1175,7 +1180,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Field("Column.Name"          ,l_cColumnName)
                             :Field("Column.Order"         ,l_LastColumnOrder)
                             :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,1)
+                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
                             :Field("Column.Type"          ,l_cColumnType)
                             :Field("Column.Array"         ,l_lColumnArray)
                             :Field("Column.Length"        ,l_nColumnLength)
@@ -1186,7 +1191,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
                             :Field("Column.LastNativeType",l_cColumnLastNativeType)
                             :Field("Column.fk_Enumeration",l_iFk_Enumeration)
-                            :Field("Column.UsedBy"        ,1)
+                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -1342,7 +1347,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                 :Table("8874a9cb-ceba-4fa2-9f4c-ef0f72e06567","NameSpace")
                                 :Field("NameSpace.Name"          ,l_cLastNameSpace)
                                 :Field("NameSpace.fk_Application",par_iApplicationPk)
-                                :Field("NameSpace.UseStatus"     ,1)
+                                :Field("NameSpace.UseStatus"     ,USESTATUS_UNKNOWN)
                                 if :Add()
                                     l_iNewNameSpace += 1
                                     l_iNameSpacePk := :Key()
@@ -1360,7 +1365,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                 :Table("8921c96e-9bc6-443a-b6bb-56cb73efce0e","Table")
                                 :Field("Table.Name"        ,l_cLastTableName)
                                 :Field("Table.fk_NameSpace",l_iNameSpacePk)
-                                :Field("Table.UseStatus"   ,1)
+                                :Field("Table.UseStatus"   ,USESTATUS_UNKNOWN)
                                 if :Add()
                                     l_iNewTables += 1
                                     l_iTablePk := :Key()
@@ -1615,12 +1620,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 2
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
                                 ListOfColumnsInDataDictionary->Column_Type           := "I"
                                 ListOfColumnsInDataDictionary->Column_Length         := nil
                                 ListOfColumnsInDataDictionary->Column_Scale          := nil
                                 ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
-                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == 3
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
                                 ListOfColumnsInDataDictionary->Column_Type           := "N"
                                 ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
                                 ListOfColumnsInDataDictionary->Column_Scale          := 0
@@ -1639,7 +1644,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                            nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
 
                         else
-                            if ListOfColumnsInDataDictionary->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
                                 //_M_ report data was not updated
                             else
                                 if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type))
@@ -1673,7 +1678,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             :Field("Column.Name"          ,l_cColumnName)
                             :Field("Column.Order"         ,l_LastColumnOrder)
                             :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,1)
+                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
                             :Field("Column.Type"          ,l_cColumnType)
                             :Field("Column.Array"         ,l_lColumnArray)
                             :Field("Column.Length"        ,l_nColumnLength)
@@ -1683,7 +1688,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             :Field("Column.Unicode"       ,l_lColumnUnicode)
                             :Field("Column.Default"       ,iif(empty(l_cColumnDefault),NIL,l_cColumnDefault))
                             :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                            :Field("Column.UsedBy"        ,1)
+                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -1709,6 +1714,53 @@ endcase
 
 
 //--Try to setup Foreign Links----------------
+
+//Get the list of specified Foreign Keys, to auto-detect Foreign Keys and reduce indexes on foreign keys
+
+l_oDB_AllTableColumnsChildrenForForeignKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB_AllTableColumnsChildrenForForeignKeys
+    :Table("0a3abf33-c882-4909-babf-8f917e326bca","Column")
+    :Column("Column.pk"              , "Pk")
+    :Column("Column.fk_TableForeign" , "Column_fk_TableForeign")
+    :Column("Column.UseStatus"       , "Column_UseStatus")
+
+    :Column("concat(lower(NameSpace.Name),'.',lower(Table.Name))","SchemaTableName")
+    :Column("lower(Column.Name)"                                 ,"ColumnName")
+    :Column("Column.Type"                                        ,"ColumnType")
+
+    :Column("cast(concat('*',lower(NameSpace.Name),'*',lower(Table.Name),'*',lower(Column.Name),'*') as char(240))", "tag1")
+    :Join("inner","Table","","Column.fk_Table = Table.pk")
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
+    :SQL("AllTableColumnsChildrenForForeignKeys")
+
+// SendToClipboard(:LastSQL())
+// break
+// altd()
+//1234567890
+
+    with object :p_oCursor
+        :Index("tag1","padr(tag1,240)")
+        :CreateIndexes()
+        // :SetOrder("tag1")
+    endwith
+
+endwith
+
+// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
+// Pre-load the list of foreign keys in such a matter if can be tested when comparing indexes.
+select AllTableColumnsChildrenForForeignKeys
+scan all for vfp_inlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
+    if empty(hb_HPos(l_hForeignKeys,alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)))
+        l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)] := {}           // Initialize list of Foreign key fields for the list of Hash Tables
+    endif
+    AAdd(l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)],alltrim(AllTableColumnsChildrenForForeignKeys->ColumnName))
+endscan
+
+// DebugHashToFile(l_hForeignKeys,"d:\DebugHashToFile.txt")
+// break
+
 if par_nSyncSetForeignKey > 1
     with object l_oDB1
         if par_nSyncSetForeignKey == 2
@@ -1721,9 +1773,9 @@ if par_nSyncSetForeignKey > 1
 
             if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
                 l_cErrorMessage := "Failed to retrieve Fields Meta data."
+
             else
                 l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
-                l_oDB_AllTableColumnsChildrenForForeignKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
 
                 with object l_oDB_AllTablesAsParentsForForeignKeys
                     :Table("8c90e531-cac1-4ee8-9d9c-722eec3fa47e","Table")
@@ -1742,26 +1794,6 @@ if par_nSyncSetForeignKey > 1
                 endwith
 // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
 
-                with object l_oDB_AllTableColumnsChildrenForForeignKeys
-                    :Table("0a3abf33-c882-4909-babf-8f917e326bca","Column")
-                    :Column("Column.pk"              , "Pk")
-                    :Column("Column.fk_TableForeign" , "Column_fk_TableForeign")
-                    :Column("Column.UseStatus"       , "Column_UseStatus")
-                    :Column("cast(concat('*',lower(NameSpace.Name),'*',lower(Table.Name),'*',lower(Column.Name),'*') as char(255))", "tag1")
-                    :Join("inner","Table","","Column.fk_Table = Table.pk")
-                    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-                    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-                    :SQL("AllTableColumnsChildrenForForeignKeys")
-
-                    with object :p_oCursor
-                        :Index("tag1","padr(tag1,240)")
-                        :CreateIndexes()
-                        // :SetOrder("tag1")
-                    endwith
-
-                endwith
-// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
-
 
                 select ListOfFieldsForeignKeys
                 scan all
@@ -1773,7 +1805,7 @@ if par_nSyncSetForeignKey > 1
 
                     if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
                         if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey
-                            if AllTableColumnsChildrenForForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
+                            if AllTableColumnsChildrenForForeignKeys->Column_UseStatus <= USESTATUS_PROPOSED  // Only  1 = Unknown and 2 = Proposed" can be auto linked
                                 :Table("088fd706-ec0f-445f-9c06-bfd6fe20a80d","Column")
                                 :Field("Column.fk_TableForeign",l_iParentTableKey)
                                 if :Update(l_iChildColumnKey)
@@ -1813,7 +1845,7 @@ if par_nSyncSetForeignKey > 1
             endcase
                 
             :Where("Column.Type = ^ or Column.Type = ^ " , "I","IB","IS")
-            :Where("Column.DocStatus <= 1")
+            :Where("Column.DocStatus <= ^" ,DOCTATUS_MISSING)
 
             :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
             :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
@@ -1827,7 +1859,7 @@ if par_nSyncSetForeignKey > 1
             if :Tally > 0
                 with object l_oDB2
                     select FieldToMarkAsForeignKeys
-                    scan for FieldToMarkAsForeignKeys->Column_UseStatus <= 2  // Only  1 = Unknown and 2 = Proposed" can be auto linked
+                    scan for FieldToMarkAsForeignKeys->Column_UseStatus <= USESTATUS_PROPOSED  // Only  1 = Unknown and 2 = Proposed" can be auto linked
                         :Table("606f3256-52c4-4e12-ada1-33a7f48d327c","Column")
                         :Field("Column.fk_TableForeign" , FieldToMarkAsForeignKeys->Table_pk)
                         if :Update(FieldToMarkAsForeignKeys->Column_pk)
@@ -1848,25 +1880,26 @@ do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
-
+// altd()
     //--Load Indexes----------------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfIndexesForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+            ExportTableToHtmlFile("ListOfIndexesForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNameSpace  := ""
             l_cLastTableName  := ""
             l_cIndexName      := ""
-
+// altd()
             select ListOfIndexesForLoads
             scan all while empty(l_cErrorMessage)
                 if !(ListOfIndexesForLoads->schema_name == l_cLastNameSpace .and. ListOfIndexesForLoads->table_name == l_cLastTableName)
-                    l_cLastNameSpace := ListOfIndexesForLoads->schema_name
-                    l_cLastTableName := ListOfIndexesForLoads->table_name
+                    l_cLastNameSpace := lower(ListOfIndexesForLoads->schema_name)
+                    l_cLastTableName := lower(ListOfIndexesForLoads->table_name)
                     l_iTablePk       := hb_HGetDef(l_hTables,l_cLastNameSpace+"."+l_cLastTableName,0)
 
+                    //_M_ this method could be slow on larger databases
                     with object l_oDB2
                         :Table("9888318c-7195-4f75-9fbb-c102440aacd3","Index")
                         :Column("Index.Pk"         ,"Pk")
@@ -1893,6 +1926,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     l_cIndexName       := ListOfIndexesForLoads->index_name
                     l_cIndexExpression := ListOfIndexesForLoads->index_definition
 
+// if lower(l_cIndexName) == "public_application_linkcode_idx"
+//     altd()
+// endif
+
                     l_lIndexUnique := ("CREATE UNIQUE INDEX" $ l_cIndexExpression)
                     if "USING btree" $ l_cIndexExpression
                         l_iIndexAlgo := 1
@@ -1908,7 +1945,23 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_cIndexExpression := left(l_cIndexExpression,l_nPos-1)
                         endif
                     endif
+
+                    //Check if should skip loading the index on Foreign keys
+                    l_lExpressionOnForeignKey := .f.
+                    if !empty(hb_HPos(l_hForeignKeys,l_cLastNameSpace+"."+l_cLastTableName))
+                        for each l_cColumnName in l_hForeignKeys[l_cLastNameSpace+"."+l_cLastTableName]
+                            if lower(strtran(l_cIndexExpression,["],[])) == l_cColumnName
+                                l_lExpressionOnForeignKey := .t.
+                                exit
+                            endif
+                        endfor
+                    endif
+                    if l_lExpressionOnForeignKey
+                        loop
+                    endif
                     
+//Check if is an index on a single column, and see if it is a Foreign key of type Integer or Interger Big or UUID
+
                     if vfp_Seek(upper(l_cIndexName)+'*',"ListOfIndexesInDataDictionary","tag1")
                         l_iIndexPk := ListOfIndexesInDataDictionary->Pk
 
@@ -1917,6 +1970,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             ListOfIndexesInDataDictionary->Index_Algo <> l_iIndexAlgo                 .or. ;
                             ListOfIndexesInDataDictionary->Index_Expression <> l_cIndexExpression
 
+                            //Update the Index definition
                             with object l_oDB1
                                 :Table("200c26df-5127-4d07-b381-0d44ccd7aee7","Index")
                                 :Field("Index.Name"       ,l_cIndexName)
@@ -1940,8 +1994,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             :Table("a785c331-8a68-4f1e-b86a-2df09140d1a6","Index")
                             :Field("Index.Name"      ,l_cIndexName)
                             :Field("Index.fk_Table"  ,l_iTablePk)
-                            :Field("Index.UseStatus" ,1)
-                            :Field("Index.UsedBy"    ,1)
+                            :Field("Index.UseStatus" ,USESTATUS_UNKNOWN)
+                            :Field("Index.UsedBy"    ,USEDBY_ALLSERVERS)
                             :Field("Index.Unique"    ,l_lIndexUnique)
                             :Field("Index.Algo"      ,l_iIndexAlgo)
                             :Field("Index.Expression",l_cIndexExpression)

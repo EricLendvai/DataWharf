@@ -204,10 +204,10 @@ hb_orm_SendToDebugView("l_cSQLCommandEnums",l_cSQLCommandEnums)
         l_cSQLCommandFields  += [)]
     endif
     l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
-hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
+
+//hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
 
 // SendToClipboard(l_cSQLCommandFields)
-
 
     l_cSQLCommandIndexes := [SELECT pg_indexes.schemaname        AS schema_name,]
     l_cSQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
@@ -216,10 +216,9 @@ hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
     l_cSQLCommandIndexes += [       upper(pg_indexes.schemaname) AS tag1,]
     l_cSQLCommandIndexes += [       upper(pg_indexes.tablename)  AS tag2]
     l_cSQLCommandIndexes += [ FROM pg_indexes]
-    l_cSQLCommandIndexes += [ WHERE NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog'))]
+    l_cSQLCommandIndexes += [ WHERE (NOT (lower(left(pg_indexes.tablename,11)) = 'schemacache' OR lower(pg_indexes.schemaname) in ('information_schema','pg_catalog')))]
+    l_cSQLCommandIndexes += [ AND pg_indexes.indexname != concat(pg_indexes.tablename,'_pkey')]   // PostgreSQL always creates an index on the primary key named "<TableName>_pkey"
     l_cSQLCommandIndexes += [ ORDER BY tag1,tag2,index_name]
-
-
 
 //--Load Enumerations-----------
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
@@ -257,7 +256,7 @@ hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
             :Column("upper(Enumeration.Name)" , "tag2")
             :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
             :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
-            :Where("Enumeration.ImplementAs = 1")  // Only test on Native SQL Enum
+            :Where("Enumeration.ImplementAs = ^", ENUMERATIONIMPLEMENTAS_NATIVESQLENUM)  // Only test on Native SQL Enum
             if !empty(l_cExpressionNameSpaces)
                 :Where(l_cExpressionNameSpaces)
             endif
@@ -352,7 +351,7 @@ hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
                         l_iEnumerationPk := l_aSQLResult[1,2]
                         l_hEnumerations[l_cLastNameSpace+"."+l_cLastEnumerationName] := l_iEnumerationPk   //_M_ is this needed?
 
-hb_HDel(l_hCurrentListOfEnumerations,l_cLastNameSpace+"*"+l_cLastEnumerationName+"*")
+                        hb_HDel(l_hCurrentListOfEnumerations,l_cLastNameSpace+"*"+l_cLastEnumerationName+"*")
 
                     otherwise
                         l_cErrorMessage := "Failed to Query Meta database. Error 104."
@@ -404,7 +403,7 @@ hb_HDel(l_hCurrentListOfEnumerations,l_cLastNameSpace+"*"+l_cLastEnumerationName
                 //Get the EnumValue Name
                 l_cEnumValueName := alltrim(ListOfEnumsForLoads->enum_value)
 
-hb_HDel(l_hCurrentListOfEnumValues,l_cLastNameSpace+"*"+l_cLastEnumerationName+"*"+l_cEnumValueName+"*")
+                hb_HDel(l_hCurrentListOfEnumValues,l_cLastNameSpace+"*"+l_cLastEnumerationName+"*"+l_cEnumValueName+"*")
 
                 if !used("ListOfEnumValuesInEnumeration") .or. !vfp_Seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInEnumeration","tag1")
                     //Missing EnumValue, Add it
@@ -495,7 +494,7 @@ hb_HDel(l_hCurrentListOfEnumValues,l_cLastNameSpace+"*"+l_cLastEnumerationName+"
                             l_iTablePk       := l_aSQLResult[1,2]
                             l_hTables[l_cLastNameSpace+"."+l_cLastTableName] := l_iTablePk
 
-hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
+                            hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
 
                         otherwise
                             l_cErrorMessage := "Failed to Query Meta database. Error 104."
@@ -539,7 +538,7 @@ hb_HDel(l_hCurrentListOfTables,l_cLastNameSpace+"*"+l_cLastTableName+"*")
                             else
                                 select ListOfColumnsInTable
                                 scan all
-l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfColumnsInTable->Pk,l_cLastNameSpace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name}
+                                    l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfColumnsInTable->Pk,l_cLastNameSpace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name}
                                     l_LastColumnOrder := ListOfColumnsInTable->Column_Order   // since Ascending now, the last loop will have the biggest value
                                 endscan
                             endif
@@ -559,7 +558,7 @@ l_hCurrentListOfColumns[l_cLastNameSpace+"*"+l_cLastTableName+"*"+ListOfColumnsI
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
                     l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
-hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cColumnName+"*")
+                    hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cColumnName+"*")
 
                     l_lColumnNullable       := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
                     l_lColumnPrimary        := ListOfFieldsForLoads->field_is_identity
@@ -754,12 +753,12 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                         // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
                         if trim(nvl(ListOfColumnsInTable->Column_Type,"")) == "E"
                             do case
-                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == 2
+                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
                                 ListOfColumnsInTable->Column_Type           := "I"
                                 ListOfColumnsInTable->Column_Length         := nil
                                 ListOfColumnsInTable->Column_Scale          := nil
                                 ListOfColumnsInTable->Column_fk_Enumeration := 0
-                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == 3
+                            case nvl(ListOfColumnsInTable->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
                                 ListOfColumnsInTable->Column_Type           := "N"
                                 ListOfColumnsInTable->Column_Length         := nvl(ListOfColumnsInTable->Enumeration_ImplementLength,0)
                                 ListOfColumnsInTable->Column_Scale          := 0
@@ -779,7 +778,7 @@ hb_HDel(l_hCurrentListOfColumns,l_cLastNameSpace+"*"+l_cLastTableName+"*"+l_cCol
                            ListOfColumnsInTable->Column_fk_Enumeration        == l_iFk_Enumeration
 
                         else
-                            if ListOfColumnsInTable->Column_UseStatus >= 3  // Meaning at least marked as "Under Development"
+                            if ListOfColumnsInTable->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
                                 //_M_ report data was not updated
                             else
                                 if l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInTable","Column_Type") .or. empty(ListOfColumnsInTable->Column_Type))

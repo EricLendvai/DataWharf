@@ -1507,8 +1507,8 @@ case l_cActionOnSubmit == "SaveDiagram"
             
             if empty(l_iModelingDiagramPk)
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
-                :Field("ModelingDiagram.UseStatus"     , 1)
-                :Field("ModelingDiagram.DocStatus"     , 1)
+                :Field("ModelingDiagram.UseStatus"     ,USESTATUS_UNKNOWN)
+                :Field("ModelingDiagram.DocStatus"     ,DOCTATUS_MISSING)
                 :Field("ModelingDiagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iModelingDiagramPk := :Key()
@@ -2344,6 +2344,8 @@ if len(l_aNodes) == 1
             l_cEntityInformation    := nvl(l_aSQLResult[1,5],"")
             l_nEntityUseStatus      := l_aSQLResult[1,6]
 
+            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nEntityUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nEntityUseStatus,USESTATUS_UNKNOWN)]
+
             if !empty(l_cPackageFullName)
                 l_cZoomInfo := l_cPackageFullName+" / "+l_cEntityName
             else
@@ -2353,29 +2355,32 @@ if len(l_aNodes) == 1
             l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
             // l_cHtml += MODELING_ENTITY_NODE_BACKGROUND
             do case
-            case l_nEntityUseStatus <= 1
+            case l_nEntityUseStatus <= USESTATUS_UNKNOWN
                 if l_lUnknownInGray
                     l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
                 else
                     l_cHtml += MODELING_ENTITY_NODE_BACKGROUND // USESTATUS_4_NODE_HIGHLIGHT
                 endif
-            case l_nEntityUseStatus == 2
+            case l_nEntityUseStatus == USESTATUS_PROPOSED
                 l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
-            case l_nEntityUseStatus == 3
+            case l_nEntityUseStatus == USESTATUS_UNDERDEVELOPMENT
                 l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
-            case l_nEntityUseStatus == 4
+            case l_nEntityUseStatus == USESTATUS_ACTIVE
                 l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
-            case l_nEntityUseStatus == 5
+            case l_nEntityUseStatus == USESTATUS_TOBEDISCONTINUED
                 l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
-            case l_nEntityUseStatus >= 6
+            case l_nEntityUseStatus >= USESTATUS_DISCONTINUED
                 l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
             endcase
             l_cHtml += [;">]
 
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFEntity+[: ]+l_cZoomInfo+;
-                                   [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditEntity/]+l_cEntityLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]+;
-                               [</span>]
+                                   [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditEntity/]+l_cEntityLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]
+                                    if !empty(l_cUseStatus)
+                                        l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
+                                    endif
+                    l_cHtml += [</span>]
                 l_cHtml += [</div>]
 
             l_cHtml += [</nav>]
@@ -2507,7 +2512,7 @@ if len(l_aNodes) == 1
 
                                     // Use Status
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,1,6),ListOfAttributes->Attribute_UseStatus,1)]
+                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
                                     l_cHtml += [</td>]
 
                                     if l_nNumberOfCustomFieldValues > 0
@@ -2611,7 +2616,6 @@ if len(l_aNodes) == 1
                 //---------------------------------------------------------------------------
                 l_cHtml += [<input type="hidden" name="TextEntityPkToRemove" value="]+Trans(l_iEntityPk)+[">]
 
-                l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nEntityUseStatus,1,6),l_nEntityUseStatus,1)]
                 if !empty(l_cUseStatus)
                     l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
                 endif
@@ -2838,6 +2842,8 @@ if l_oDB_InArray:Tally == 1
     l_nAssociationNumberOfEndpoints := l_aSQLResult[1,5]
     l_nAssociationUseStatus         := l_aSQLResult[1,6]
 
+    l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nAssociationUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nAssociationUseStatus,USESTATUS_UNKNOWN)]
+
     if !empty(l_cPackageFullName)
         l_cZoomInfo := l_cPackageFullName+" / "+l_cAssociationName
     else
@@ -2847,29 +2853,32 @@ if l_oDB_InArray:Tally == 1
     l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
     // l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND
     do case
-    case l_nAssociationUseStatus <= 1
+    case l_nAssociationUseStatus <= USESTATUS_UNKNOWN
         if l_lUnknownInGray
             l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
         else
             l_cHtml += MODELING_ASSOCIATION_NODE_BACKGROUND  //USESTATUS_4_NODE_HIGHLIGHT
         endif
-    case l_nAssociationUseStatus == 2
+    case l_nAssociationUseStatus == USESTATUS_PROPOSED
         l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
-    case l_nAssociationUseStatus == 3
+    case l_nAssociationUseStatus == USESTATUS_UNDERDEVELOPMENT
         l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
-    case l_nAssociationUseStatus == 4
+    case l_nAssociationUseStatus == USESTATUS_ACTIVE
         l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
-    case l_nAssociationUseStatus == 5
+    case l_nAssociationUseStatus == USESTATUS_TOBEDISCONTINUED
         l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
-    case l_nAssociationUseStatus >= 6
+    case l_nAssociationUseStatus >= USESTATUS_DISCONTINUED
         l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
     endcase
     l_cHtml += [;">]
 
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFAssociation+[: ]+l_cZoomInfo+;
-                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditAssociation/]+l_cAssociationLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]+;
-                        [</span>]
+                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditAssociation/]+l_cAssociationLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]
+                            if !empty(l_cUseStatus)
+                                l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
+                            endif
+            l_cHtml += [</span>]
         l_cHtml += [</div>]
 
     l_cHtml += [</nav>]
@@ -2880,7 +2889,6 @@ if l_oDB_InArray:Tally == 1
 
     l_cHtml += [<div class="m-3">]
 
-        l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nAssociationUseStatus,1,6),l_nAssociationUseStatus,1)]
         if !empty(l_cUseStatus)
             l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
         endif

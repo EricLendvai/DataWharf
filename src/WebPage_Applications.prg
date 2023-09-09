@@ -359,10 +359,10 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName              := hb_HGetDef(par_hValues,"Name","")
 local l_cLinkCode          := hb_HGetDef(par_hValues,"LinkCode","")
-local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
+local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription       := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",1)
+local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",APPLICATIONDESTRUCTIVEDELETE_NONE)
 
 oFcgi:TraceAdd("ApplicationInfoFormBuild")
 
@@ -596,15 +596,15 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfApplications->Application_UseStatus,1,6),ListOfApplications->Application_UseStatus,1)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,1,4),ListOfApplications->Application_DocStatus,1)]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfApplications->Application_DocStatus,DOCTATUS_MISSING)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Tables/Tags","On NameSpaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,1,5),ListOfApplications->Application_DestructiveDelete,1)]
+                            l_cHtml += {"None","On Tables/Tags","On NameSpaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -633,10 +633,10 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName              := hb_HGetDef(par_hValues,"Name","")
 local l_cLinkCode          := hb_HGetDef(par_hValues,"LinkCode","")
-local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",1)
-local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",1)
+local l_nUseStatus         := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
+local l_nDocStatus         := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription       := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",1)
+local l_nDestructiveDelete := hb_HGetDef(par_hValues,"DestructiveDelete",APPLICATIONDESTRUCTIVEDELETE_NONE)
 
 oFcgi:TraceAdd("ApplicationEditFormBuild")
 
@@ -973,35 +973,56 @@ with object l_oDB1
         endscan
     endif
     
-    //Due to the deleting all Deployment, only a few directly related tables need to be cleared
+    if empty(l_cErrorMessage)
+        //Since TemplateTable+TemplateColumn are not NameSpace specific, delete the related TemplateColumn record, then we can delete the TemplateTable records
+        :Table("7d901c55-377c-4899-bb9c-b4942eb910e3","TemplateTable")
+        :Join("inner","TemplateColumn","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
+        :Column("TemplateColumn.pk","pk")
+        :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+        if :Tally < 0
+            l_cErrorMessage := "Failed to delete Application. Error 2."
+        else
+            select ListOfRecordsToDeleteInCascadeDeleteApplication
+            scan all
+                if !:Delete("ad507bad-d68b-41ce-b119-cb0174629aeb","TemplateColumn",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                    l_cErrorMessage := "Failed to delete Application. Error 3."
+                    exit
+                endif
+            endscan
+        endif
+    endif
 
-    // Deleted all directly related records
-    with object l_oDB_ListOfRecordsToDelete
-        for each l_cTableName,l_cTableDescription in {"Diagram" ,"Version" ,"ApplicationCustomField"   ,"Tag" ,"UserAccessApplication"   ,"UserSettingApplication"     ,"Deployment" },;
-                                                     {"Diagrams","Versions","Application Custom Fields","Tags","User Access Application ","Last Diagrams Used by Users","Deployments"}
-            if empty(l_cErrorMessage)
-                :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b3",l_cTableName)
-                :Column(l_cTableName+".pk","pk")
-                :Where(l_cTableName+".fk_Application = ^",par_iApplicationPk)
-                :SQL("ListOfRecordsToDelete")
-                do case
-                case :Tally < 0
-                    l_cErrorMessage := "Failed to query "+l_cTableName+"."
-                case :Tally > 0
-                    select ListOfRecordsToDelete
-                    scan all
-                        if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6f",l_cTableName,ListOfRecordsToDelete->pk)
-                            l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
-                            exit
-                        endif
-                    endscan
-                endcase
-            else
-                exit
-            endif
+    if empty(l_cErrorMessage)
+        //Due to the deleting all Deployment, only a few directly related tables need to be cleared
+        // Deleted all directly related records
+        with object l_oDB_ListOfRecordsToDelete
+            for each l_cTableName,l_cTableDescription in {"Diagram" ,"Version" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"UserAccessApplication"   ,"UserSettingApplication"     ,"Deployment" },;
+                                                         {"Diagrams","Versions","Application Custom Fields","Tags","Template Tables","User Access Application ","Last Diagrams Used by Users","Deployments"}
+                if empty(l_cErrorMessage)
+                    :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b3",l_cTableName)
+                    :Column(l_cTableName+".pk","pk")
+                    :Where(l_cTableName+".fk_Application = ^",par_iApplicationPk)
+                    :SQL("ListOfRecordsToDelete")
+                    do case
+                    case :Tally < 0
+                        l_cErrorMessage := "Failed to query "+l_cTableName+"."
+                    case :Tally > 0
+                        select ListOfRecordsToDelete
+                        scan all
+                            if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6f",l_cTableName,ListOfRecordsToDelete->pk)
+                                l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
+                                exit
+                            endif
+                        endscan
+                    endcase
+                else
+                    exit
+                endif
 
-        endfor
-    endwith
+            endfor
+        endwith
+    endif
 
     if empty(l_cErrorMessage)
         CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)

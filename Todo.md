@@ -1,9 +1,13 @@
 # DataWharf - Upcoming fixes, changes and enhancements
 
-## Short Term Fixes
+## Short Term Fixes and todos
+- Refactor Project APIs to use API Token access rights settings. Already validates a Token to the Endpoint exists.
+- Setup and use table "IndexColumn".
 - Forbid to change CustomField.Used once related values are present.
+- Implement AWS iam authentication method for Data Dictionary Deployments.
 
 ## Pending Development
+- See MIGRATIONSCRIPT in source code
 - In Table Search, if Tags are available add "And/Or" option to be used in case of multiple tags.
 - Load in table IndexColumn during structure imports.
 - Load/Sync support to MySQL. In progress.
@@ -18,9 +22,6 @@
 - In Data dictionaries have total counts of tables, name spaces, columns ...
 
 ## Conceptual Modeling
-- Manage Entity Properties.
-- Manage Associations for a particular model.
-- Visualization / Representation of a model
 - Mapping of Model Entities, Properties and Associations to actual Tables and Columns
 
 ## Allow for an application to be viewable without user login
@@ -46,6 +47,7 @@
 ## Export / Import
 - Export entire application meta data and allow to import in another instance.
 - Support for JSON imports/exports. Specifications to be defined.
+- During Data migrations, (hb_orm) also setup constraints on foreign keys
 
 ## Management of Indexes
 - Complete management of indexes.

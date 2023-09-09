@@ -29,6 +29,7 @@ private v_hPageMapping := {"home"             => {"Home"                     ,1,
                            "InterAppMapping"  => {"Inter Application Mapping",1,.t.,@BuildPageInterAppMapping()},;
                            "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
                            "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
+                           "APITokens"        => {"API Tokens"               ,1,.t.,@BuildPageAPITokens()},;
                            "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
 
 hb_HCaseMatch(v_hPageMapping,.f.)
@@ -42,6 +43,9 @@ set century on
 hb_DirCreate(OUTPUT_FOLDER+hb_ps())
 
 oFcgi := MyFcgi():New()    // Used a subclass of hb_Fcgi
+
+hb_HCaseMatch(oFcgi:p_APIs,.f.)
+
 do while oFcgi:Wait()
     oFcgi:OnRequest()
 enddo
@@ -400,7 +404,7 @@ with object ::p_o_SQLConnection
                 scan all
                     with object l_oDB2
                         :Table("ed08301f-15d4-4ae4-b7b1-838974333135","Diagram")
-                        :Field("Diagram.RenderMode" , 1)
+                        :Field("Diagram.RenderMode" , RENDERMODE_VISJS)
                         :Update(ListOfDiagramToUpdate->pk)
                     endwith
                 endscan
@@ -422,7 +426,7 @@ with object ::p_o_SQLConnection
                     scan all
                         with object l_oDB2
                             :Table("091cf769-4ced-4276-be6b-cf7dc50dd546",l_cTableName)
-                            :Field(l_cTableName+".UseStatus" , 1)
+                            :Field(l_cTableName+".UseStatus" , USESTATUS_UNKNOWN)
                             :Update(ListOfRecordsToUpdate->pk)
                         endwith
                     endscan
@@ -514,6 +518,9 @@ with object ::p_o_SQLConnection
             endif
 
         endwith
+
+        UpdateAPIEndpoint()
+
     else
         ::p_o_SQLConnection := NIL
     endif
@@ -562,6 +569,7 @@ local l_TimeStamp2
 local l_lShowDevelopmentInfo := .f.
 static l_lGetUUIDSupported := .f.  // Used to ensure the PostgreSQL database has the "pgcrypto" extension installed.
 local l_cAccessToken
+local l_cAPIEndpointName
 local l_sAPIFunction
 local l_cLinkUID
 local l_oDB_ListOfFileStream
@@ -569,6 +577,7 @@ local l_oDB_FileStream
 local l_cFilePath
 local l_cFileName
 local l_oJWT
+local l_nTokenAccessMode
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
@@ -1136,21 +1145,33 @@ otherwise
             elseif l_cPageName == "api"
                 // Check for tocken
                 l_cAccessToken := oFcgi:GetHeaderValue("AccessToken")
+                l_cAPIEndpointName := GetAPIURIElement(1)
+//123456
                 l_cBody := [UNBUFFERED]
 
-                if l_cAccessToken <> "0123456789"
-                    l_cBody += [Invalid Access Token]
+                l_nTokenAccessMode := APIAccessCheck_Token_EndPoint(l_cAccessToken,l_cAPIEndpointName)
+                if l_nTokenAccessMode <= 0
+                    oFcgi:SetHeaderValue("Status","403 Forbidden")
+                    oFcgi:SetContentType("text/html")
+                    l_cBody += [Access Denied]
 
                 else
-                    l_sAPIFunction := hb_HGetDef(oFcgi:p_APIs,GetAPIURIElement(1),NIL)   // Use the first URL element after /api/
+                    l_sAPIFunction := hb_HGetDef(oFcgi:p_APIs,l_cAPIEndpointName,NIL)   // Use the first URL element after /api/
                     if hb_IsNIL(l_sAPIFunction)
-                        l_cBody += [Invalid API Call]
+                        oFcgi:SetHeaderValue("Status","403 Forbidden")
+                        oFcgi:SetContentType("text/html")
+                        l_cBody += [Invalid API Call]  //This should never happen in the list of p_APIs values are used to build the list of APIEndpoint(s)
                     else
                         oFcgi:SetContentType("application/json")
-                        l_cBody += l_sAPIFunction:exec()
+                        oFcgi:SetHeaderValue("Status","403 Forbidden")
+                        l_cBody += l_sAPIFunction:exec(l_cAccessToken,l_cAPIEndpointName,l_nTokenAccessMode)
+                        if upper(right(l_cBody,len("ACCESS DENIED"))) == "ACCESS DENIED"
+                            oFcgi:SetHeaderValue("Status","403 Forbidden")
+                            oFcgi:SetContentType("text/html")
+                        endif
                     endif
-
                 endif
+
             elseif l_cPageName == "streamfile"
                 //_M_ Should it be allowed to stream a file while not logged in ?
             else
@@ -1351,6 +1372,8 @@ local l_cExtraClass
 
 local l_lShowChangePassword
 
+local l_cBootstrapCurrentPageClasses := [ active border border-2 border-white" aria-current="page]
+
 if par_LoggedIn
     if !l_lShowMenuProjects
         with object l_oDB1
@@ -1403,29 +1426,33 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 
             //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
                     if l_lShowMenuModeling
-                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Modeling">Modeling</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="text-center nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Modeling">Modeling<br>Projects</a></li>]
                     endif
 
                     if l_lShowMenuDataDictionaries
-                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataDictionaries">Data Dictionaries</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="text-center nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[DataDictionaries">Applications<br>Data Dictionaries</a></li>]
                     endif
 
                     if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
                     endif
 
                     if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
-                        l_cHtml += [<li class="nav-item dropdown "><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                        l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
+//                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(vfp_inlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+
+
+
+                        l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;top: 70%;left: -50%;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
                             if l_lShowMenuProjects
-                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Projects</a></li>]
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "projects"       ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Projects">Modeling / Projects</a></li>]
                             endif
 
                             if l_lShowMenuApplications
-                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications</a></li>]
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "applications"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Applications">Applications / Data Dictionaries</a></li>]
                             endif
 
                             if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
@@ -1433,6 +1460,9 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                             endif
 
                             if (oFcgi:p_nUserAccessMode >= 4) // "Root Admin" access right.
+                                if APIUSE
+                                    l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "apitokens"  ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[APITokens">API Tokens</a></li>]
+                                endif
                                 l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                             endif
                             if l_lShowChangePassword
@@ -1443,7 +1473,7 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         l_cHtml += [</li>]
                     endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[About">About</a></li>]
+                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[About">About</a></li>]
 
                 l_cHtml += [</ul>]
                 l_cHtml += [<div class="text-end">]
@@ -1725,7 +1755,7 @@ with object l_oDB1
     :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_lResult := (l_oData:Application_DestructiveDelete == 5)
+        l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION)
     endif
 endwith
 
@@ -1741,7 +1771,7 @@ with object l_oDB1
     :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_lResult := (l_oData:Application_DestructiveDelete == 3)
+        l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_ONNAMESPACES)
     endif
 endwith
 
@@ -1757,7 +1787,7 @@ with object l_oDB1
     :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_lResult := (l_oData:Application_DestructiveDelete == 2)
+        l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_ONTABLESTAGS)
     endif
 endwith
 
@@ -1773,7 +1803,7 @@ with object l_oDB1
     :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
-        l_lResult := (l_oData:Application_DestructiveDelete == 4)
+        l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_ENTIREAPPLICATIONCONTENT)
     endif
 endwith
 
@@ -1789,7 +1819,7 @@ with object l_oDB1
     :Column("Project.DestructiveDelete" , "Project_DestructiveDelete")
     l_oData := :Get(par_iProjectPk)
     if :Tally == 1
-        l_lResult := (l_oData:Project_DestructiveDelete == 3)
+        l_lResult := (l_oData:Project_DestructiveDelete >= PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS)
     endif
 endwith
 
@@ -1805,7 +1835,7 @@ with object l_oDB1
     :Column("Project.DestructiveDelete" , "Project_DestructiveDelete")
     l_oData := :Get(par_iProjectPk)
     if :Tally == 1
-        l_lResult := (l_oData:Project_DestructiveDelete == 2)
+        l_lResult := (l_oData:Project_DestructiveDelete >= PROJECTDESTRUCTIVEDELETE_ONENTITIESASSOCIATIONS)
     endif
 endwith
 
@@ -2097,16 +2127,16 @@ function GetTRStyleBackgroundColorUseStatus(par_iRecno,par_nUseStatus,par_cOpaci
 local l_cHtml
 local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
 do case
-case par_nUseStatus == 2  // Proposed
+case par_nUseStatus == USESTATUS_PROPOSED
     // l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
-case par_nUseStatus == 3  // Under Development
+case par_nUseStatus == USESTATUS_UNDERDEVELOPMENT
     // l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
-case par_nUseStatus == 5  // To be Discontinued
+case par_nUseStatus == USESTATUS_TOBEDISCONTINUED
     // l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
-case par_nUseStatus == 6  // To be Discontinued
+case par_nUseStatus == USESTATUS_DISCONTINUED
     // l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
 otherwise
@@ -2199,4 +2229,63 @@ function GetZuluTimeStampForFileNameSuffix()
 local l_cTimeStamp := hb_TSToStr(hb_TSToUTC(hb_DateTime()))
 l_cTimeStamp := left(l_cTimeStamp,len(l_cTimeStamp)-4)
 return hb_StrReplace( l_cTimeStamp , {" "=>"-",":"=>"-"})+"-Zulu"
+//=================================================================================================================
+function UpdateAPIEndpoint()
+local l_oDB_ListOfAPIEndpoint := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_APIEndpoint       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_pAPITokens
+local l_cAPITokenName
+local l_cAPITokenNameOnFile
+
+with object l_oDB_ListOfAPIEndpoint
+    :Table("319b73ad-958b-4a27-b331-2556059ec31b","APIEndpoint")
+    :Column("APIEndpoint.pk"    ,"pk")
+    :Column("APIEndpoint.Name"  ,"APIEndpoint_Name")
+    :Column("APIEndpoint.Status","APIEndpoint_Status")
+    :Column("Upper(APIEndpoint.Name)","tag1")
+    :OrderBy("tag1")
+
+    :SQL("ListOfAPIEndpoint")
+    if :Tally >= 0
+        with object :p_oCursor
+            :Index("tag1","padr(tag1+'*',240)")
+            :CreateIndexes()
+        endwith
+
+        for each l_pAPITokens in oFcgi:p_APIs
+            l_cAPITokenName := l_pAPITokens:__enumkey
+
+            // if vfp_Seek(padr(upper(l_cAPITokenName)+'*',240),"ListOfAPIEndpoint","tag1")
+            if vfp_Seek(upper(l_cAPITokenName)+'*',"ListOfAPIEndpoint","tag1")
+                l_cAPITokenNameOnFile := alltrim(ListOfAPIEndpoint->APIEndpoint_Name)
+                if !(l_cAPITokenNameOnFile == l_cAPITokenName) .or. ListOfAPIEndpoint->APIEndpoint_Status != 1
+                    //Casing or Status changed
+                    :Table("ba56a297-8097-4414-81b7-7d796f42ebfe","APIEndpoint")
+                    :Field("APIEndpoint.Name"   , l_cAPITokenName)
+                    :Field("APIEndpoint.Status" , 1)
+                    :Update(ListOfAPIEndpoint->Pk)
+                endif
+                l_oDB_ListOfAPIEndpoint:p_oCursor:SetFieldValue("APIEndpoint_Status",0)  //To mark as processed
+            else
+                with object l_oDB_APIEndpoint
+                    :Table("ba56a297-8097-4414-81b7-7d796f42ebfd","APIEndpoint")
+                    :Field("APIEndpoint.Name"   , l_cAPITokenName)
+                    :Field("APIEndpoint.Status" , 1)
+                    :Add()
+                endwith
+            endif
+        endfor
+
+        //Disable any no longer defined Endpoints
+        select ListOfAPIEndpoint
+        scan all for ListOfAPIEndpoint->APIEndpoint_Status != 0
+            :Table("ba56a297-8097-4414-81b7-7d796f42ebfb","APIEndpoint")
+            :Field("APIEndpoint.Status" , 2)
+            :Update(ListOfAPIEndpoint->Pk)
+        endscan
+
+    endif
+endwith
+
+return nil
 //=================================================================================================================

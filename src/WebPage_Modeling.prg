@@ -1430,7 +1430,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
+                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Modeling / Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -1463,7 +1463,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,1,6),ListOfProjects->Project_UseStatus,1)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -2649,7 +2649,7 @@ if !empty(l_nNumberOfEntities)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEntities->Entity_UseStatus,1,6),ListOfEntities->Entity_UseStatus,1)]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -2782,7 +2782,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation := nvl(hb_HGetDef(par_hValues,"Information",""),"")
 
@@ -3548,7 +3548,7 @@ if !empty(l_nNumberOfPackages)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfPackages->Package_UseStatus,1,6),ListOfPackages->Package_UseStatus,1)]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -3573,7 +3573,7 @@ local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName       := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus  := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus  := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_ifk_Package := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_oDB1        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfOtherPackages
@@ -4051,7 +4051,7 @@ if !empty(l_nNumberOfDataTypes)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfDataTypes->DataType_UseStatus,1,6),ListOfDataTypes->DataType_UseStatus,1)]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -4078,7 +4078,7 @@ local l_cErrorText    := hb_DefaultValue(par_cErrorText,"")
 local l_ifk_DataType      := nvl(hb_HGetDef(par_hValues,"fk_DataType",0),0)
 local l_ifk_PrimitiveType := nvl(hb_HGetDef(par_hValues,"fk_PrimitiveType",0),0)
 local l_cName             := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfOtherDataTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -4487,7 +4487,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEnumerations->Enumeration_UseStatus,1,6),ListOfEnumerations->Enumeration_UseStatus,1)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
                     
                     l_cHtml += [</tr>]
@@ -4508,7 +4508,7 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDataTableInfo
@@ -5480,7 +5480,7 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAssociations->Association_UseStatus,1,6),ListOfAssociations->Association_UseStatus,1)]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -5601,7 +5601,7 @@ local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_ifk_Package  := nvl(hb_HGetDef(par_hValues,"fk_Package",0),0)
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
 local l_oDB_ListOfPackages    := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -6462,7 +6462,7 @@ else
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,1,6),ListOfAttributes->Attribute_UseStatus,1)]
+                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
@@ -6525,7 +6525,7 @@ static function AttributeEditFormBuild(par_iProjectPk,par_iEntityPk,par_cEntityN
 local l_cHtml := ""
 local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 local l_cName           := hb_HGetDef(par_hValues,"Name","")
-local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",1)
+local l_nUseStatus      := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_ifk_Attribute   := hb_HGetDef(par_hValues,"fk_Attribute",0)
 local l_ifk_DataType    := hb_HGetDef(par_hValues,"fk_DataType",0)
 local l_ifk_Enumeration := hb_HGetDef(par_hValues,"fk_Enumeration",0)
