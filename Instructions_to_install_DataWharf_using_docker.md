@@ -23,6 +23,18 @@ As stated in the Prerequisites, you will need administrative(root) access to an 
 1. [Download one of the latest versions](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads) and install PostgreSQL. Avoid Beta versions.   
 2. Install PostgreSQL. When the list of Components is presented, unless needed, unselect "Stack Builder". If you have more than one version of PostgreSQL, select a different port when prompted. Remember the install location (in case you would like to run PostgreSQL backups and restores.), port number and initial password of the "postgres" admin account.
 
+## Create an empty database
+You will need to create an empty database in a PostgreSQL server. If you followed the instructions above, you will be able to start the "pgAdmin" application.
+1. Start pgAdmin
+2. You may need to create a "Server Group..." on the left panel using a right click
+3. Use Register (right click), "Server..."
+4. On the "General" tab enter a "Name", for example: "localhost15"
+5. On the "Connection" tab enter a "Host name/address": "localhost", and change the "Port" if the non default was used during the install.
+6. On the same "Connection" tab you may want to enter the "postgres" account password you specified during install and select "Save password?"
+7. On the right panel, go to the new registered server and right click to "Create" / "Database..."
+8. Give a name for your database, for example: DataWharf
+9. You may close down pgAdmin or leave it on to later see what the DataWharf application created for you.
+
 ## Install DataWharf
 1. Start Docker Desktop
 2. Create a local folder on your machine, for example: C:\DataWharfDocker
