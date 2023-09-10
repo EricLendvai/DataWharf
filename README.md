@@ -35,6 +35,7 @@ View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
 
 
 # Running a Demo of DataWharf using Docker
+## Overview
 For Windows and Mac users, the easiest is to Install Docker Desktop.   
 For Windows users you can use the following article to learn how to [setup WSL, Docker Desktop](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=221022022831&sig=9123873596)   
 If you don't already have access to a PostgreSQL server, install version 14 or above on your local machine.   
@@ -50,7 +51,7 @@ docker build . -f Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04 -t datawharf_demo
 docker run -d -p 8080:80 datawharf_demo_using_dockerhub_baseimage:latest
 ```
 
-Optionally you could add  "--no-cache" to force about complete builds.
+Optionally you could add  "--no-cache" to force complete rebuilds.
 
 Open a browser to "http://localhost:8080"   
 The initial login ID is "main" and the password is "password".   
@@ -59,6 +60,9 @@ Once you logged in, to see DataWharf's own data dictionary use the following ste
 2. Go to "Data Dictionary", select "DataWharf", use the "Import" option, and from the repo use the latest ExportDataDictionary_DataWharf_*.zip   
 You can do the same for "Projects" and "Models".   
 
+## Step by Step instructions
+Review the following [Instructions to install DataWharf using docker](Instructions_to_install_DataWharf_using_docker.md)   
+This method will require access to https://hub.docker.com/ since it will download the latest build version of DataWharf.   
 
 # VS Code Devcontainer
 In order to develop in any environement you can use the VS Code devcontainer provided in this repo.
