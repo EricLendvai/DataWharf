@@ -10,6 +10,7 @@ For the purpose of these step by step instructions, we are focusing on Microsoft
 2. Docker Desktop.
 3. An empty PostgreSQL database, with full administrative access rights.
 4. Any modern browser like FireFox, Chrome, Microsoft Edge.
+5. Access to http://datawharf.org, which will redirect you to https://github.com/EricLendvai/DataWharf
 
 ## Installation of Docker Desktop
 As stated in the Prerequisites we need to use Docker Desktop. It is free for personal use or for small businesses (fewer than 250 employees and less than $10 millions in annual revenue).   
@@ -25,8 +26,10 @@ As stated in the Prerequisites, you will need administrative(root) access to an 
 ## Install DataWharf
 1. Start Docker Desktop
 2. Create a local folder on your machine, for example: C:\DataWharfDocker
-3. Get the following file from the official DataWharf Repo [Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04](https://github.com/EricLendvai/DataWharf/blob/main/Dockerfile_DockerHub_Base_Image_Ubuntu_22_04) and place in C:\DataWharfDocker
-4. Get the following file from the official DataWharf Repo [config_demo.txt](https://github.com/EricLendvai/DataWharf/blob/main/config_demo.txt) and place in C:\DataWharfDocker
+3. Get the following file from the official DataWharf Repo and place them in C:\DataWharfDocker. On the upper left corner you can use the "Download Raw File" icon.
+    * [Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04](https://github.com/EricLendvai/DataWharf/blob/main/Dockerfile_DockerHub_Base_Image_Ubuntu_22_04)
+    * [config_demo.txt](https://github.com/EricLendvai/DataWharf/blob/main/config_demo.txt)
+4. Optionally, also get the file named like ExportDataDictionary_DataWharf_*.zip from the same repo and place it in C:\DataWharfDocker.
 5. Edit the file config_demo.txt and update the following lines as needed:
     * POSTGRESPORT
     * POSTGRESPASSWORD
