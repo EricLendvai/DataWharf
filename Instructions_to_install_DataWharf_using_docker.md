@@ -39,7 +39,7 @@ You will need to create an empty database in a PostgreSQL server. If you followe
 1. Start Docker Desktop
 2. Create a local folder on your machine, for example: C:\DataWharfDocker
 3. Get the following file from the official DataWharf Repo and place them in C:\DataWharfDocker. On the upper left corner you can use the "Download Raw File" icon.
-    * [Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04](https://github.com/EricLendvai/DataWharf/blob/main/Dockerfile_DockerHub_Base_Image_Ubuntu_22_04)
+    * [Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04](https://github.com/EricLendvai/DataWharf/blob/main/Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04)
     * [config_demo.txt](https://github.com/EricLendvai/DataWharf/blob/main/config_demo.txt)
 4. Optionally, also get the file named like ExportDataDictionary_DataWharf_*.zip from the same repo and place it in C:\DataWharfDocker.
 5. Edit the file config_demo.txt and update the following lines as needed:
