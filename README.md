@@ -1,40 +1,23 @@
 # DataWharf
 DataWharf is a Database Designer/Modeler/Analyzer Tool web application.  
 
-View [ChangeLog.md](ChangeLog.md) for list of enhancements and fixes.
+View [ChangeLog.md](ChangeLog.md) for list of enhancements and fixes.   
 
-View [Data Architecture and Modeling with DataWharf Article](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=230224232407&sig=5928045156) for User and Developer documentation
+View [Data Architecture and Modeling with DataWharf Article](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=230224232407&sig=5928045156) for User and Developer documentation   
 
-The following is the list of additional open source projects used to design, build and deploy DataWharf:
+View [Data Architecture and Modeling with DataWharf Presentation Deck (Slides)](https://github.com/EricLendvai/DataWharf/blob/main/Presentation/Intro_To_DataWharf.pdf)   
 
-| Repo / Website  | Use |
-| ------------- | ------------- |
-| https://github.com/harbour/core                | The Habour to C Compiler |
-| https://github.com/EricLendvai/Harbour_FastCGI | FastCGI web framework |
-| https://github.com/EricLendvai/Harbour_ORM     | Database framework |
-| https://github.com/EricLendvai/Harbour_VFP     | Additional Harbour/VFP Language Libraries |
-| https://www.postgresql.org/                    | Main data store of the web app |
-| https://httpd.apache.org/                      | Apache Web server |
-| https://getbootstrap.com/                      | Bootstrap 5 |
-| https://jquery.com/                            | Browser independent JavaScript library |
-| https://jqueryui.com/                          | UI toolkit for jQuery |
-| https://github.com/visjs/vis-network           | JavaScript Library used to make interactive diagrams (visualize) |
-| https://github.com/maxGraph/maxGraph           | JavaScript Library used to make interactive diagrams (visualize) |
-| https://code.visualstudio.com/                 | Also used to automate compilation |
+# YouTube Videos
+  * [Data Architecture and Modeling with DataWharf](https://www.youtube.com/watch?v=8GfwKYA4Agc)
+  * [Tutorial - Installing DataWharf Locally](https://www.youtube.com/watch?v=Gc_Vib6_3is)
 
-DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
+# YouTube Channel
+[https://www.youtube.com/@EricLendvai](https://www.youtube.com/@EricLendvai)   
 
 Sample screen of Data Dictionary Visualization 
 ![Sample screen of Data Dictionary Visualization](images/Sample001.png "Sample screen of Data Dictionary Visualization")
 
-View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
-
-# Video "Data Architecture and Modeling with DataWharf" 
-[YouTube Channel: https://www.youtube.com/@EricLendvai](https://www.youtube.com/@EricLendvai)   
-[YouTube Video: https://www.youtube.com/watch?v=8GfwKYA4Agc](https://www.youtube.com/watch?v=8GfwKYA4Agc)   
-
-
-# Running a Demo of DataWharf using Docker
+# Running DataWharf using Docker
 ## Overview
 For Windows and Mac users, the easiest is to Install Docker Desktop.   
 For Windows users you can use the following article to learn how to [setup WSL, Docker Desktop](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=221022022831&sig=9123873596)   
@@ -63,6 +46,28 @@ You can do the same for "Projects" and "Models".
 ## Step by Step instructions
 Review the following [Instructions to install DataWharf using docker](Instructions_to_install_DataWharf_using_docker.md)   
 This method will require access to https://hub.docker.com/ since it will download the latest build version of DataWharf.   
+
+# Open Source
+The following is the list of additional open source projects used to design, build and deploy DataWharf:
+
+| Repo / Website  | Use |
+| ------------- | ------------- |
+| https://github.com/harbour/core                | The Habour to C Compiler |
+| https://github.com/EricLendvai/Harbour_FastCGI | FastCGI web framework |
+| https://github.com/EricLendvai/Harbour_ORM     | Database framework |
+| https://github.com/EricLendvai/Harbour_VFP     | Additional Harbour/VFP Language Libraries |
+| https://www.postgresql.org/                    | Main data store of the web app |
+| https://httpd.apache.org/                      | Apache Web server |
+| https://getbootstrap.com/                      | Bootstrap 5 |
+| https://jquery.com/                            | Browser independent JavaScript library |
+| https://jqueryui.com/                          | UI toolkit for jQuery |
+| https://github.com/visjs/vis-network           | JavaScript Library used to make interactive diagrams (visualize) |
+| https://github.com/maxGraph/maxGraph           | JavaScript Library used to make interactive diagrams (visualize) |
+| https://code.visualstudio.com/                 | Also used to automate compilation |
+
+DataWharf can run on Windows, Linux or any platforms supported by the above list of repos/products.
+
+View [Todo.md](Todo.md) for list of upcoming fixes and enhancements.
 
 # VS Code Devcontainer
 In order to develop in any environement you can use the VS Code devcontainer provided in this repo.
