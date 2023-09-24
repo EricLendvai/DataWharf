@@ -4,8 +4,16 @@
 function BuildPageAbout()
 local l_cHtml := []
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cDataServer
 
 oFcgi:TraceAdd("BuildPageAbout")
+
+if !oFcgi:p_o_SQLConnection:SQLExec("select version() as version","VersionInfo")
+    l_cDataServer := "Failed to connect to data server."
+else
+    l_cDataServer := VersionInfo->version
+endif
+CloseAlias("VersionInfo")
 
 l_cHtml += [<div class="m-3"></div>]   //Spacer
 
@@ -32,6 +40,7 @@ l_cHtml += [<div class="row justify-content-center">]
         l_cHtml += [<tr><td>Site Build Info</td>]     +[<td>]+hb_buildinfo()                      +[</td></tr>]
         l_cHtml += [<tr><td>ORM Build Info</td>]      +[<td>]+hb_orm_buildinfo()                  +[</td></tr>]
         l_cHtml += [<tr><td>VFP Build Info</td>]      +[<td>]+hb_vfp_buildinfo()                  +[</td></tr>]
+        l_cHtml += [<tr><td>Data Server</td>]         +[<td>]+l_cDataServer                       +[</td></tr>]
 
         l_cHtml += [</table>]
 

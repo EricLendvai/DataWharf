@@ -832,32 +832,35 @@ case l_cActionOnSubmit == "Delete"   // User
 
 
         // Deleted all related records
-        with object l_oDB_ListOfRecordsToDelete
-            for each l_cTableName,l_cTableDescription in {"UserAccessApplication"     ,"UserAccessProject"     ,"LoginLogs" ,"UserSetting"  ,"UserSettingApplication","UserSettingModel"},;
-                                                         {"Application security setup","Project security setup","Login Logs","User Settings","Last Diagrams Used"    ,"Last Modeling Diagrams Used"}
-                if empty(l_cErrorMessage)
-                    :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b2",l_cTableName)
-                    :Column(l_cTableName+".pk","pk")
-                    :Where(l_cTableName+".fk_User = ^",l_iUserPk)
-                    :SQL("ListOfRecordsToDelete")
-                    do case
-                    case :Tally < 0
-                        l_cErrorMessage := "Failed to query "+l_cTableName+"."
-                    case :Tally > 0
-                        select ListOfRecordsToDelete
-                        scan all
-                            if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6e",l_cTableName,ListOfRecordsToDelete->pk)
-                                l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
-                                exit
-                            endif
-                        endscan
-                    endcase
-                else
-                    exit
-                endif
-
-            endfor
-        endwith
+        if empty(l_cErrorMessage)
+            with object l_oDB_ListOfRecordsToDelete
+                // for each l_cTableName,l_cTableDescription in {"UserAccessApplication"     ,"UserAccessProject"     ,"LoginLogs" ,"UserSetting"  ,"UserSettingApplication","UserSettingModel"},;
+                //                                              {"Application security setup","Project security setup","Login Logs","User Settings","Last Diagrams Used"    ,"Last Modeling Diagrams Used"}
+                for each l_cTableName,l_cTableDescription in {"LoginLogs" ,"UserSetting"  ,"UserSettingApplication","UserSettingModel"},;
+                                                             {"Login Logs","User Settings","Last Diagrams Used"    ,"Last Modeling Diagrams Used"}
+                    if empty(l_cErrorMessage)
+                        :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b2",l_cTableName)
+                        :Column(l_cTableName+".pk","pk")
+                        :Where(l_cTableName+".fk_User = ^",l_iUserPk)
+                        :SQL("ListOfRecordsToDelete")
+                        do case
+                        case :Tally < 0
+                            l_cErrorMessage := "Failed to query "+l_cTableName+"."
+                        case :Tally > 0
+                            select ListOfRecordsToDelete
+                            scan all
+                                if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6e",l_cTableName,ListOfRecordsToDelete->pk)
+                                    l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
+                                    exit
+                                endif
+                            endscan
+                        endcase
+                    else
+                        exit
+                    endif
+                endfor
+            endwith
+        endif
 
         if empty(l_cErrorMessage)
             l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)

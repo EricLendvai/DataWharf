@@ -787,22 +787,38 @@ case l_cActionOnSubmit == "Delete"   // Project
             :Table("f0d7e892-f938-48b2-9da5-58ac40b1e3e6","Model")
             :Where("Model.fk_Project = ^",l_iProjectPk)
             :SQL()
+            if :Tally != 0
+                l_cErrorMessage := "Related Model record on file"
+            else
 
-            if :Tally == 0
                 :Table("f9d28e3f-2f8d-409f-8711-1d0a4715c77d","PrimitiveType")
                 :Where("PrimitiveType.fk_Project = ^",l_iProjectPk)
                 :SQL()
-
-                if :Tally == 0
-                    CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
-                    :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
-
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
-                else
+                if :Tally != 0
                     l_cErrorMessage := "Related Primitive Type record on file"
+                else
+
+                    :Table("f9d28e3f-2f8d-409f-8711-1d0a4715c77e","UserAccessProject")
+                    :Where("UserAccessProject.fk_Project = ^",l_iProjectPk)
+                    :SQL()
+                    if :Tally != 0
+                        l_cErrorMessage := "Related UserAccessProject record on file"
+                    else
+                    
+                        :Table("f9d28e3f-2f8d-409f-8711-1d0a4715c77f","APITokenAccessProject")
+                        :Where("APITokenAccessProject.fk_Project = ^",l_iProjectPk)
+                        :SQL()
+                        if :Tally != 0
+                            l_cErrorMessage := "Related APITokenAccessProject record on file"
+                        else
+                        
+                            CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
+                            :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
+
+                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
+                        endif
+                    endif
                 endif
-            else
-                l_cErrorMessage := "Related Model record on file"
             endif
         endwith
     endif

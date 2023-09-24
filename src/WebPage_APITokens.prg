@@ -921,32 +921,35 @@ case l_cActionOnSubmit == "Delete"   // APIToken
 
 
     // Deleted all related records
-    with object l_oDB_ListOfRecordsToDelete
-        for each l_cTableName,l_cTableDescription in {"APITokenAccessApplication"     ,"APITokenAccessProject" ,"APIAccessEndpoint"   },;
-                                                     {"Application security setup"    ,"Project security setup","API Access Endpoints"}
-            if empty(l_cErrorMessage)
-                :Table("3c3bdcb1-1eb0-43e0-af81-ea978e7eecf4",l_cTableName)
-                :Column(l_cTableName+".pk","pk")
-                :Where(l_cTableName+".fk_APIToken = ^",l_iAPITokenPk)
-                :SQL("ListOfRecordsToDelete")
-                do case
-                case :Tally < 0
-                    l_cErrorMessage := "Failed to query "+l_cTableName+"."
-                case :Tally > 0
-                    select ListOfRecordsToDelete
-                    scan all
-                        if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6e",l_cTableName,ListOfRecordsToDelete->pk)
-                            l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
-                            exit
-                        endif
-                    endscan
-                endcase
-            else
-                exit
-            endif
-
-        endfor
-    endwith
+    if empty(l_cErrorMessage)
+        with object l_oDB_ListOfRecordsToDelete
+            // for each l_cTableName,l_cTableDescription in {"APITokenAccessApplication"     ,"APITokenAccessProject" ,"APIAccessEndpoint"   },;
+            //                                              {"Application security setup"    ,"Project security setup","API Access Endpoints"}
+            for each l_cTableName,l_cTableDescription in {"APIAccessEndpoint"   },;
+                                                         {"API Access Endpoints"}
+                if empty(l_cErrorMessage)
+                    :Table("3c3bdcb1-1eb0-43e0-af81-ea978e7eecf4",l_cTableName)
+                    :Column(l_cTableName+".pk","pk")
+                    :Where(l_cTableName+".fk_APIToken = ^",l_iAPITokenPk)
+                    :SQL("ListOfRecordsToDelete")
+                    do case
+                    case :Tally < 0
+                        l_cErrorMessage := "Failed to query "+l_cTableName+"."
+                    case :Tally > 0
+                        select ListOfRecordsToDelete
+                        scan all
+                            if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6e",l_cTableName,ListOfRecordsToDelete->pk)
+                                l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
+                                exit
+                            endif
+                        endscan
+                    endcase
+                else
+                    exit
+                endif
+            endfor
+        endwith
+    endif
 
     if empty(l_cErrorMessage)
         l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","APIToken",l_iAPITokenPk)

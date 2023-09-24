@@ -865,48 +865,79 @@ case l_cActionOnSubmit == "Delete"   // Application
                 :Table("f67dd895-a6c9-4082-81d4-19204bf153c8","NameSpace")
                 :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
                 :SQL()
+                if :Tally != 0
+                    l_cErrorMessage := "Related Name Space record on file"
+                else
 
-                if :Tally == 0
                     :Table("72419462-2523-45a3-8f86-4cdca0da52c0","Deployment")
                     :Where("Deployment.fk_Application = ^",l_iApplicationPk)
                     :SQL()
-
-                    if :Tally == 0
-                        :Table("2ec589c5-3e9f-4835-81f2-2d595387421f","Version")
-                        :Where("Version.fk_Application = ^",l_iApplicationPk)
-                        :SQL()
-
-                        if :Tally == 0
-                            //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
-                            //But we may have some left over Table less diagrams. Remove them
-
-                            :Table("49de7c69-9e71-4174-9fec-de21b79f0245","Diagram")
-                            :Column("Diagram.pk" , "pk")
-                            :Where("Diagram.fk_Application = ^",l_iApplicationPk)
-                            :SQL("ListOfDiagramRecordsToDelete")
-                            if :Tally >= 0
-                                if :Tally > 0
-                                    select ListOfDiagramRecordsToDelete
-                                    scan
-                                        l_oDB2:Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0a","Diagram",ListOfDiagramRecordsToDelete->pk)
-                                    endscan
-                                endif
-
-                                CustomFieldsDelete(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
-                                :Delete("fe1f5393-2e12-436c-b1b0-924344efc1b9","Application",l_iApplicationPk)
-                            else
-                                l_cErrorMessage := "Failed to clear related DiagramTable records."
-                            endif
-
-                            oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
-                        else
-                            l_cErrorMessage := "Related Version record on file"
-                        endif
-                    else
+                    if :Tally != 0
                         l_cErrorMessage := "Related Deployment record on file"
+                    else
+
+                        :Table("72419462-2523-45a3-8f86-4cdca0da52c1","UserSettingApplication")
+                        :Where("UserSettingApplication.fk_Application = ^",l_iApplicationPk)
+                        :SQL()
+                        if :Tally != 0
+                            l_cErrorMessage := "Related UserSettingApplication record on file"
+                        else
+
+                            :Table("72419462-2523-45a3-8f86-4cdca0da52c2","APITokenAccessApplication")
+                            :Where("APITokenAccessApplication.fk_Application = ^",l_iApplicationPk)
+                            :SQL()
+                            if :Tally != 0
+                                l_cErrorMessage := "Related APITokenAccessApplication record on file"
+                            else
+
+                                :Table("72419462-2523-45a3-8f86-4cdca0da52c2","TemplateTable")
+                                :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
+                                :SQL()
+                                if :Tally != 0
+                                    l_cErrorMessage := "Related TemplateTable record on file"
+                                else
+
+                                    :Table("72419462-2523-45a3-8f86-4cdca0da52c3","Tag")
+                                    :Where("Tag.fk_Application = ^",l_iApplicationPk)
+                                    :SQL()
+                                    if :Tally != 0
+                                        l_cErrorMessage := "Related Tag record on file"
+                                    else
+
+                                        :Table("2ec589c5-3e9f-4835-81f2-2d595387421f","Version")
+                                        :Where("Version.fk_Application = ^",l_iApplicationPk)
+                                        :SQL()
+                                        if :Tally != 0
+                                            l_cErrorMessage := "Related Version record on file"
+                                        else
+                                            //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
+                                            //But we may have some left over Table less diagrams. Remove them
+
+                                            :Table("49de7c69-9e71-4174-9fec-de21b79f0245","Diagram")
+                                            :Column("Diagram.pk" , "pk")
+                                            :Where("Diagram.fk_Application = ^",l_iApplicationPk)
+                                            :SQL("ListOfDiagramRecordsToDelete")
+                                            if :Tally >= 0
+                                                if :Tally > 0
+                                                    select ListOfDiagramRecordsToDelete
+                                                    scan
+                                                        l_oDB2:Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0a","Diagram",ListOfDiagramRecordsToDelete->pk)
+                                                    endscan
+                                                endif
+
+                                                CustomFieldsDelete(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
+                                                :Delete("fe1f5393-2e12-436c-b1b0-924344efc1b9","Application",l_iApplicationPk)
+                                            else
+                                                l_cErrorMessage := "Failed to clear related DiagramTable records."
+                                            endif
+
+                                            oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
+                                        endif
+                                    endif
+                                endif
+                            endif
+                        endif
                     endif
-                else
-                    l_cErrorMessage := "Related Name Space record on file"
                 endif
             endwith
         endif
@@ -997,8 +1028,8 @@ with object l_oDB1
         //Due to the deleting all Deployment, only a few directly related tables need to be cleared
         // Deleted all directly related records
         with object l_oDB_ListOfRecordsToDelete
-            for each l_cTableName,l_cTableDescription in {"Diagram" ,"Version" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"UserAccessApplication"   ,"UserSettingApplication"     ,"Deployment" },;
-                                                         {"Diagrams","Versions","Application Custom Fields","Tags","Template Tables","User Access Application ","Last Diagrams Used by Users","Deployments"}
+            for each l_cTableName,l_cTableDescription in {"Diagram" ,"Version" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"UserAccessApplication"   ,"APITokenAccessApplication"   ,"UserSettingApplication"     ,"Deployment" },;
+                                                         {"Diagrams","Versions","Application Custom Fields","Tags","Template Tables","User Access Application ","API Token Access Application","Last Diagrams Used by Users","Deployments"}
                 if empty(l_cErrorMessage)
                     :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b3",l_cTableName)
                     :Column(l_cTableName+".pk","pk")

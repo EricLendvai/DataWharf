@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 09/24/2023 v 2.58
+* On delete of Application, Projects, API Tokens, also test or cleanup on related tables.
+* Manual Edit pages of Indexes.
+* Update hb_orm to allow to search on "_" characters, instead of being a wildcard character.
+
 ## 09/09/2023 v 2.57
 * Fix to Docker file relative to dependency paths.
 * Minor tweak to API code.
