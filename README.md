@@ -1,4 +1,4 @@
-# DataWharf
+# DataWharf&trade;
 DataWharf is a Database Designer/Modeler/Analyzer Tool web application.  
 
 View [ChangeLog.md](ChangeLog.md) for list of enhancements and fixes.   
