@@ -1,5 +1,14 @@
 # DataWharf - Change Log
 
+## 11/05/2023 v 2.59
+* Minor Enhancement to make it easier to select and copy to clipboard table and link names in Application Visualization.
+* Enhancements to integrate with WharfSystems.
+* Removed the "Version" table, since schema management will be done via WharfSystems Stories.
+* Added field UserSetting.ValueType to align with WharfSystems.
+* "Export for DataWharf Imports" option at the level of a single table. For now only related NameSpace, Columns, Index and Enumerations are exported only. Foreign key links will not be set during imports. 
+* Added prefix to Cookies, needed to avoid conflicts with WharfSystems while sharing a host.
+* Added filter Name Space in the Tables Advanced mode search.
+
 ## 09/24/2023 v 2.58
 * On delete of Application, Projects, API Tokens, also test or cleanup on related tables.
 * Manual Edit pages of Indexes.

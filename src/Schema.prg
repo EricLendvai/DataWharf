@@ -4,7 +4,7 @@ return ;
    {"pk"                          =>{,  "I",   0,  0,"+"};
    ,"sysc"                        =>{, "DT",   0,  6,"N"};
    ,"sysm"                        =>{, "DT",   0,  6,"N"};
-   ,"LinkCode"                    =>{, "CV",  10,  0,};         // Used to create direct link to the Application for data dic management
+   ,"LinkCode"                    =>{, "CV",  20,  0,};         // Used to create direct link to the Application for data dic management
    ,"Name"                        =>{, "CV", 200,  0,};
    ,"UseStatus"                   =>{,  "N",   1,  0,,"1"};     // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"                   =>{,  "N",   1,  0,,"1"};     // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
@@ -45,8 +45,8 @@ return ;
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_Table"       =>{,  "I",   0,  0,};
-   ,"fk_TableForeign"=>{,  "I",   0,  0,};        // Parent Table if this is a foreign key.
-   ,"fk_Enumeration" =>{,  "I",   0,  0,};
+   ,"fk_TableForeign"=>{,  "I",   0,  0,,"0"};        // Parent Table if this is a foreign key.
+   ,"fk_Enumeration" =>{,  "I",   0,  0,,"0"};
    ,"Order"          =>{,  "I",   0,  0,};        // Display Order
    ,"Name"           =>{, "CV", 200,  0,};
    ,"AKA"            =>{, "CV", 200,  0,"N"};     // Used for display only, not in physical implementation.
@@ -57,14 +57,14 @@ return ;
    ,"Length"         =>{,  "I",   0,  0,"N"};
    ,"Scale"          =>{,  "I",   0,  0,"N"};
    ,"Nullable"       =>{,  "L",   0,  0,};
-   ,"Required"       =>{,  "N",   1,  0,};       // 0 or 1 - Unknown, 2 = Yes, 3 = No
+   ,"Required"       =>{,  "N",   1,  0,,"1"};       // 0 or 1 - Unknown, 2 = Yes, 3 = No
    ,"Primary"        =>{,  "L",   0,  0,};
    ,"Unicode"        =>{,  "L",   0,  0,};       // Only Applicable to Character types,
    ,"Default"        =>{,  "M",   0,  0,"N"};    // Text version of the default value/expression
    ,"LastNativeType" =>{,  "M",   0,  0,"N"};    // Last Loaded/Synced Column Type from the backend Server
    ,"ForeignKeyUse"  =>{, "CV", 120,  0,"N"};    // Short Description used during Visualization
    ,"Description"    =>{,  "M",   0,  0,"N"};
-   ,"UsedBy"         =>{,  "N",   1,  0,}};      // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
+   ,"UsedBy"         =>{,  "N",   1,  0,,"1"}};      // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,;   //Index Definition
    {"fk_Table"       =>{,"fk_Table"       ,.f.,"BTREE"};
    ,"fk_TableForeign"=>{,"fk_TableForeign",.f.,"BTREE"};
@@ -146,17 +146,6 @@ return ;
    ,"Information" =>{,  "M",   0,  0,"N"}};    // More any engineering notes.
    ,;   //Index Definition
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
-,"public.Version"=>{;   //Field Definition
-   {"pk"            =>{,  "I",   0,  0,"+"};
-   ,"sysc"          =>{, "DT",   0,  6,"N"};
-   ,"sysm"          =>{, "DT",   0,  6,"N"};
-   ,"fk_Application"=>{,  "I",   0,  0,};
-   ,"Code"          =>{, "CV",  20,  0,};
-   ,"UseStatus"     =>{,  "N",   1,  0,,"1"};   // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
-   ,"DocStatus"     =>{,  "N",   1,  0,,"1"};   // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,"Description"   =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
-   {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
 ,"public.Diagram"=>{;   //Field Definition
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
@@ -579,8 +568,9 @@ return ;
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_User"        =>{,  "I",   0,  0,};
-   ,"KeyC"           =>{, "CV", 100,  0,};     // Any Text that will be know in the app
-   ,"ValueC"         =>{,  "M",   0,  0,}};    // Text representation of the value
+   ,"KeyC"           =>{, "CV", 100,  0,};         // Any Text that will be know in the app
+   ,"ValueC"         =>{,  "M",   0,  0,};         // Text representation of the value
+   ,"ValueType"      =>{,  "N",   1,  0,,"1"}};    // 1 - String, 2 - Integer, 3 - Date, 4 - Blob (Memo)
    ,;   //Index Definition
    {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
    ,"KeyC"          =>{,"KeyC"    ,.f.,"BTREE"}}};
@@ -682,9 +672,10 @@ return ;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
-   ,"type"               =>{,  "I",   0,  6,"N"};      // 1 = Application Export, 2 = Application Import, 3 = Model Export, 4 = Model Import
+   ,"type"               =>{,  "I",   0,  6,"N"};      // 1 = Application Export, 2 = Application Import, 3 = Model Export, 4 = Model Import, 5 = Table Export
    ,"fk_User"            =>{,  "I",   0,  0,};
    ,"fk_Application"     =>{,  "I",   0,  0,"N"};
+   ,"fk_Table"           =>{,  "I",   0,  0,"N"};
    ,"fk_Model"           =>{,  "I",   0,  0,"N"};
    ,"LinkUID"            =>{,  "C",  36,  0,};
    ,"oid"                =>{,"OID",   0,  0,"N"};     // To the PostgreSQL Large Object;
@@ -692,6 +683,7 @@ return ;
    ,;   //Index Definition
    {"fk_User"            =>{,"fk_User"       ,.f.,"BTREE"};
    ,"fk_Application"     =>{,"fk_Application",.f.,"BTREE"};
+   ,"fk_Table"           =>{,"fk_Application",.f.,"BTREE"};
    ,"fk_Model"           =>{,"fk_Model"      ,.f.,"BTREE"}}};
 ,"public.TemplateTable"=>{;   //Field Definition
    {"pk"             =>{,  "I",   0,  0,"+"};

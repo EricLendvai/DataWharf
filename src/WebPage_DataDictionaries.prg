@@ -101,6 +101,8 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
 
+// DataDictionaries/TableExportForDataWharfImports/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
+
 // DataDictionaries/ListNameSpaces/<ApplicationLinkCode>/
 // DataDictionaries/NewNameSpace/<ApplicationLinkCode>/
 // DataDictionaries/EditNameSpace/<ApplicationLinkCode>/<NameSpaceName>/
@@ -151,13 +153,13 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cURLApplicationLinkCode := oFcgi:p_URLPathElements[3]
     endif
 
-    if vfp_Inlist(l_cURLAction,"EditNameSpace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
+    if vfp_Inlist(l_cURLAction,"TableExportForDataWharfImports","EditNameSpace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
             l_cURLNameSpaceName := oFcgi:p_URLPathElements[4]
         endif
     endif
 
-    if vfp_Inlist(l_cURLAction,"EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex")
+    if vfp_Inlist(l_cURLAction,"TableExportForDataWharfImports","EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex")
         if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
             l_cURLTableName := oFcgi:p_URLPathElements[5]
         endif
@@ -206,7 +208,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     endif
 
     do case
-    case vfp_Inlist(l_cURLAction,"ListTables","NewTable","EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex")
+    case vfp_Inlist(l_cURLAction,"ListTables","NewTable","EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","TableExportForDataWharfImports")
         l_cApplicationElement := "TABLES"
 
     case vfp_Inlist(l_cURLAction,"ListTemplateTables","NewTemplateTable","EditTemplateTable","ListTemplateColumns","OrderTemplateColumns","NewTemplateColumn","EditTemplateColumn")
@@ -590,7 +592,6 @@ case l_cURLAction == "NewTable"
 
 case l_cURLAction == "EditTable"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
-    
 
     //Executing the following even for POST to ensure the record is still present.
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1471,6 +1472,90 @@ case l_cURLAction == "EditTemplateColumn"
             l_cHtml += TemplateColumnEditFormBuild(l_iApplicationPk,l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName,"",l_iTemplateColumnPk,l_hValues)
         else
             l_cHtml += TemplateColumnEditFormOnSubmit(l_iApplicationPk,l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName)
+        endif
+    endif
+
+case l_cURLAction == "TableExportForDataWharfImports"
+    if oFcgi:p_nAccessLevelDD >= 5
+        l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+
+        //Executing the following even for POST to ensure the record is still present.
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("d3d94c58-d8eb-44e6-b014-762c372ca0fc","Table")
+            :Column("Table.pk"          , "Pk")             // 1
+            :Column("NameSpace.Name"    , "NameSpaceName")  // 2
+            :Column("Table.Name"        , "TableName")      // 3
+            :Column("Table.AKA"         , "TableAKA")       // 4
+            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+            :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
+            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
+            :SQL(@l_aSQLResult)
+        endwith
+
+        if l_oDB1:Tally != 1
+            // SendToClipboard(l_oDB1:LastSQL())
+            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+l_cURLApplicationLinkCode+"/")
+        else
+
+            l_iTablePk := l_aSQLResult[1,1]
+            if !empty(l_iTablePk)
+                // if !empty(l_cErrorText)
+                //     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+                // endif
+
+                l_cHtml += [<nav class="navbar navbar-light bg-light">]
+                    l_cHtml += [<div class="input-group">]
+
+                        l_cHtml += [<span class="navbar-brand ms-3">Table: "]+AllTrim(l_aSQLResult[1,2])+[.]+AllTrim(l_aSQLResult[1,3])+FormatAKAForDisplay(l_aSQLResult[1,4])+["</span>]
+
+                        // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(l_iTablePk),"New","Edit")+[ Table</span>]   //navbar-text
+
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+l_cURLApplicationLinkCode+[/">Back To Tables</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Edit Table</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Columns</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Indexes</a>]
+                        // if oFcgi:p_nAccessLevelDD >= 5
+                        //     l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Export for DataWharf Imports</a>]
+                        // endif
+                    l_cHtml += [</div>]
+                l_cHtml += [</nav>]
+
+                l_cHtml += [<div class="m-3"></div>]
+
+
+                l_cHtml += [<nav class="navbar navbar-light bg-light">]
+                    l_cHtml += [<div class="input-group">]
+                        // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
+
+                        if oFcgi:isGet()
+    //123456789
+                            l_cLinkUID := ExportTableForImports(l_iTablePk)
+
+                            if !empty(l_cLinkUID)
+                                l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+[">Download Export File</a>]
+                            endif
+                        else
+                            l_cLinkUID := ""
+                        endif
+
+                    l_cHtml += [</div>]
+                l_cHtml += [</nav>]
+
+                if empty(l_cLinkUID)
+                    l_cHtml += [<p class="ms-3">Failed to create an Export file.</p>]
+                else
+                    l_cHtml += [<p class="ms-3">The Export file was created as a ZIP file. Use the "Download Export File" button.</p>]
+                endif
+
+            endif
+
+
+
+
+
+
         endif
     endif
 
@@ -2531,6 +2616,8 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_lSearchAdvancedMode
+local l_cSearchNameSpaceName
+local l_cSearchNameSpaceDescription
 local l_cSearchTableName
 local l_cSearchTableDescription
 local l_cSearchTableTags
@@ -2546,6 +2633,9 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_lSearchAdvancedMode     := (oFcgi:GetInputValue("CheckSearchAdvancedMode") == "1")
 
+l_cSearchNameSpaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNameSpaceName"))
+l_cSearchNameSpaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNameSpaceDescription"))
+
 l_cSearchTableName              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableName"))
 l_cSearchTableDescription       := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDescription"))
 l_cSearchTableTags              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableTags"))
@@ -2560,6 +2650,9 @@ l_cSearchEnumerationDescription := SanitizeInput(oFcgi:GetInputValue("TextSearch
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode"          ,iif(l_lSearchAdvancedMode,"T","F"))
+
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName"         ,l_cSearchNameSpaceName)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription"  ,l_cSearchNameSpaceDescription)
 
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,l_cSearchTableName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,l_cSearchTableDescription)
@@ -2583,6 +2676,8 @@ case l_cActionOnSubmit == "Search"
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode"          ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName"         ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription"  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags"             ,"")
@@ -2619,6 +2714,9 @@ local l_nIndexCount
 
 local l_lSearchAdvancedMode
 
+local l_cSearchNameSpaceName
+local l_cSearchNameSpaceDescription
+
 local l_cSearchTableName
 local l_cSearchTableDescription
 local l_cSearchTableTags
@@ -2645,6 +2743,9 @@ local l_ScriptFolder
 oFcgi:TraceAdd("TableListFormBuild")
 
 l_lSearchAdvancedMode           := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode") == "T")
+
+l_cSearchNameSpaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName")
+l_cSearchNameSpaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription")
 
 l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
@@ -2699,7 +2800,17 @@ with object l_oDB_ListOfTables
     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
 
-    TableListFormAddFiltering(l_oDB_ListOfTables,l_lSearchAdvancedMode,l_cSearchTableName,l_cSearchTableDescription,l_cSearchColumnName,l_cSearchColumnDescription,l_cSearchEnumerationName,l_cSearchEnumerationDescription,l_cSearchTableTags)
+    TableListFormAddFiltering(l_oDB_ListOfTables,;
+                              l_lSearchAdvancedMode,;
+                              l_cSearchNameSpaceName,;
+                              l_cSearchNameSpaceDescription,;
+                              l_cSearchTableName,;
+                              l_cSearchTableDescription,;
+                              l_cSearchColumnName,;
+                              l_cSearchColumnDescription,;
+                              l_cSearchEnumerationName,;
+                              l_cSearchEnumerationDescription,;
+                              l_cSearchTableTags)
 
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -2727,7 +2838,17 @@ if l_nNumberOfTables > 0
         :Where("CustomField.Status <= 2")
         :Where("CustomField.Type = 2")   // Multi Choice
 
-        TableListFormAddFiltering(l_oDB_CustomField,l_lSearchAdvancedMode,l_cSearchTableName,l_cSearchTableDescription,l_cSearchColumnName,l_cSearchColumnDescription,l_cSearchEnumerationName,l_cSearchEnumerationDescription,l_cSearchTableTags)
+        TableListFormAddFiltering(l_oDB_CustomField,;
+                                  l_lSearchAdvancedMode,;
+                                  l_cSearchNameSpaceName,;
+                                  l_cSearchNameSpaceDescription,;
+                                  l_cSearchTableName,;
+                                  l_cSearchTableDescription,;
+                                  l_cSearchColumnName,;
+                                  l_cSearchColumnDescription,;
+                                  l_cSearchEnumerationName,;
+                                  l_cSearchEnumerationDescription,;
+                                  l_cSearchTableTags)
 
         :SQL("ListOfCustomFieldOptionDefinition")
         if :Tally > 0
@@ -2754,7 +2875,17 @@ if l_nNumberOfTables > 0
         :Where("CustomField.UsedOn = ^",USEDON_TABLE)
         :Where("CustomField.Status <= 2")
 
-        TableListFormAddFiltering(l_oDB_CustomField,l_lSearchAdvancedMode,l_cSearchTableName,l_cSearchTableDescription,l_cSearchColumnName,l_cSearchColumnDescription,l_cSearchEnumerationName,l_cSearchEnumerationDescription,l_cSearchTableTags)
+        TableListFormAddFiltering(l_oDB_CustomField,;
+                                  l_lSearchAdvancedMode,;
+                                  l_cSearchNameSpaceName,;
+                                  l_cSearchNameSpaceDescription,;
+                                  l_cSearchTableName,;
+                                  l_cSearchTableDescription,;
+                                  l_cSearchColumnName,;
+                                  l_cSearchColumnDescription,;
+                                  l_cSearchEnumerationName,;
+                                  l_cSearchEnumerationDescription,;
+                                  l_cSearchTableTags)
 
         :OrderBy("tag1")
         :SQL("ListOfCustomFieldValues")
@@ -2898,6 +3029,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             if l_nNumberOfUsedTags > 0
                                 l_cHtml += [<td class="justify-content-center AdvancedSearch" align="center">Tags</td>]
                             endif
+                        l_cHtml += [</tr>]
+                        l_cHtml += [<tr class="AdvancedSearch">]
+                            l_cHtml += [<td><span class="me-2">Name Space</span></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchNameSpaceName" id="TextSearchNameSpaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNameSpaceName)+[" class="form-control"></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchNameSpaceDescription" id="TextSearchNameSpaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNameSpaceDescription)+[" class="form-control"></td>]
+                            l_cHtml += [<td class="AdvancedSearch"></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td><span class="me-2">Table</span></td>]
@@ -3054,9 +3191,26 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function TableListFormAddFiltering(par_oDB,par_lSearchAdvancedMode,par_cSearchTableName,par_cSearchTableDescription,par_cSearchColumnName,par_cSearchColumnDescription,par_cSearchEnumerationName,par_cSearchEnumerationDescription,par_cSearchTableTags)
+static function TableListFormAddFiltering(par_oDB,;
+                                          par_lSearchAdvancedMode,;
+                                          par_cSearchNameSpaceName,;
+                                          par_cSearchNameSpaceDescription,;
+                                          par_cSearchTableName,;
+                                          par_cSearchTableDescription,;
+                                          par_cSearchColumnName,;
+                                          par_cSearchColumnDescription,;
+                                          par_cSearchEnumerationName,;
+                                          par_cSearchEnumerationDescription,;
+                                          par_cSearchTableTags)
 
 with object par_oDB
+    if !empty(par_cSearchNameSpaceName)
+        :KeywordCondition(par_cSearchNameSpaceName,"CONCAT(NameSpace.Name,' ',NameSpace.AKA)")
+    endif
+    if !empty(par_cSearchNameSpaceDescription)
+        :KeywordCondition(par_cSearchNameSpaceDescription,"NameSpace.Description")
+    endif
+
     if !empty(par_cSearchTableName)
         :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA)")
     endif
@@ -3244,6 +3398,9 @@ else
                 endif
                 l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
                 l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
+                if oFcgi:p_nAccessLevelDD >= 5
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Export for DataWharf Imports</a>]
+                endif
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -3338,21 +3495,6 @@ else
                 l_cHtml += [</td>]
                 l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
             l_cHtml += [</tr>]
-
-            if l_nNumberOfTemplateTables > 0
-                l_cHtml += [<tr class="pb-5">]
-                    l_cHtml += [<td class="pe-2 pb-3">Template Table</td>]
-                    l_cHtml += [<td class="pb-3">]
-                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboTemplateTable" id="ComboTemplateTable"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[ class="form-select">]
-                            l_cHtml += [<option value="0"]+iif(l_iTemplateTablePk==0,[ selected],[])+[></option>]
-                            select ListOfTemplateTables
-                            scan all
-                                l_cHtml += [<option value="]+trans(ListOfTemplateTables->pk)+["]+iif(l_iTemplateTablePk==ListOfTemplateTables->pk,[ selected],[])+[>]+ListOfTemplateTables->TemplateTable_Name+[</option>]
-                            endscan
-                        l_cHtml += [</select>]
-                    l_cHtml += [</td>]
-                l_cHtml += [</tr>]
-            endif
 
             l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_TABLE,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelDD >= 5,[],[disabled]))
 
@@ -3978,6 +4120,9 @@ if l_nNumberOfColumns <= 0
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
+            if oFcgi:p_nAccessLevelDD >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+            endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3993,6 +4138,9 @@ else
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
+            if oFcgi:p_nAccessLevelDD >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+            endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -5199,6 +5347,9 @@ if l_nNumberOfIndexes <= 0
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+            if oFcgi:p_nAccessLevelDD >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+            endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -5225,6 +5376,9 @@ else
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+            if oFcgi:p_nAccessLevelDD >= 5
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+            endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 

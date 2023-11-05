@@ -619,7 +619,7 @@ with object l_oDB_ListOfTopModelEnumerations
     :Column("ModelEnumeration.Name"       ,"ModelEnumeration_Name")
     :Column("ModelEnumeration.LinkUID"    ,"ModelEnumeration_LinkUID")
     :Column("ModelEnumeration.Description","ModelEnumeration_Description")
-    :Column("Model.LinkUID"       ,"Model_LinkUID")
+    :Column("Model.LinkUID"               ,"Model_LinkUID")
     //:Column("ModelEnumeration.Description","ModelEnumeration_Description")
     :Join("inner","Model","","ModelEnumeration.fk_Model = Model.pk")
     // :Column("Upper(ModelEnumeration.Name)","tag1")

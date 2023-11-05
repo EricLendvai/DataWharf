@@ -416,7 +416,7 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 16
             with object l_oDB1
-                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","NameSpace","Project","Table","Version","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
+                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","NameSpace","Project","Table","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
                     :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
                     :Column(l_cTableName+".pk" , "pk")
 
@@ -477,6 +477,35 @@ with object ::p_o_SQLConnection
             endif
 
             l_iCurrentDataVersion := 20
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 21
+            if ::p_o_SQLConnection:TableExists("public.Version")
+                ::p_o_SQLConnection:DeleteTable("public.Version")
+            endif
+
+            l_iCurrentDataVersion := 21
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 22
+            with object l_oDB1
+                :Table("6dd31de7-15fb-4388-ae7b-9578fb8407b2","UserSetting")
+                :Column("UserSetting.pk" , "pk")
+                :Where([UserSetting.ValueType = 0])
+                :SQL("ListOfUserSettingToUpdate")
+                select ListOfUserSettingToUpdate
+                scan all
+                    with object l_oDB2
+                        :Table("c35a9c9b-eced-4121-aabe-3adf4fa73678","UserSetting")
+                        :Field("UserSetting.ValueType" , 1)
+                        :Update(ListOfUserSettingToUpdate->pk)
+                    endwith
+                endscan
+            endwith
+
+            l_iCurrentDataVersion := 22
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
@@ -802,12 +831,12 @@ otherwise
 
 #ifdef __PLATFORM__LINUX
         if ::isOAuth()
-            l_cSessionID := ::GetCookieValue("SessionJWT")
+            l_cSessionID := ::GetCookieValue(COOKIE_PREFIX+"SessionJWT")
         else
-            l_cSessionID := ::GetCookieValue("SessionID")
+            l_cSessionID := ::GetCookieValue(COOKIE_PREFIX+"SessionID")
         endif
 #else
-    l_cSessionID := ::GetCookieValue("SessionID")
+    l_cSessionID := ::GetCookieValue(COOKIE_PREFIX+"SessionID")
 #endif
 
         l_cAction    := ::GetQueryString("action")
@@ -824,7 +853,7 @@ otherwise
 
 #ifdef __PLATFORM__LINUX
                 if ::isOAuth()
-                    ::DeleteCookie("SessionJWT")
+                    ::DeleteCookie(COOKIE_PREFIX+"SessionJWT")
                     //::Redirect(l_cSitePath+"home")
                     ::Redirect(oFcgi:GetAppConfig("OAUTH_LOGOUT_URL"))
                     return nil
@@ -867,7 +896,7 @@ otherwise
                         // else
                         endif
                     endif
-                    ::DeleteCookie("SessionID")
+                    ::DeleteCookie(COOKIE_PREFIX+"SessionID")
                     ::Redirect(l_cSitePath+"home")
                     return nil
 #ifdef __PLATFORM__LINUX
@@ -919,7 +948,7 @@ otherwise
 
                     endwith
                 else
-                    ::DeleteCookie("SessionJWT")
+                    ::DeleteCookie(COOKIE_PREFIX+"SessionJWT")
                 endif
             else
 #endif
@@ -946,7 +975,7 @@ otherwise
                         l_nUserAccessMode := ListOfResults->User_AccessMode
                     else
                         // Clear the cookie
-                        ::DeleteCookie("SessionID")
+                        ::DeleteCookie(COOKIE_PREFIX+"SessionID")
                     endif
                     CloseAlias("ListOfResults")
                 endif
@@ -1012,7 +1041,7 @@ otherwise
                                     if :Add()
                                         l_nLoginLogsPk := :Key()
                                         l_cSessionCookie := trans(l_nLoginLogsPk)+"-"+l_cSignature
-                                        ::SetSessionCookieValue("SessionID",l_cSessionCookie,0)
+                                        ::SetSessionCookieValue(COOKIE_PREFIX+"SessionID",l_cSessionCookie,0)
                                         l_lLoggedIn := .t.
                                     endif
                                 else
@@ -1313,7 +1342,7 @@ return nil
             ::OnError(l_oJWT:GetError())
         else
             //succcesfull login
-            ::SetSessionCookieValue("SessionJWT",l_oToken,0)
+            ::SetSessionCookieValue(COOKIE_PREFIX+"SessionJWT",l_oToken,0)
         endif
         ::Redirect(::p_cSitePath+"home")
     return nil
@@ -1701,9 +1730,10 @@ with object l_oDB1
         case :Tally  < 0
         case :Tally == 0
             :Table("cc66e1c9-cc6d-4442-812e-0711e02a5811","UserSetting")
-            :Field("UserSetting.fk_User",oFcgi:p_iUserPk)
-            :Field("UserSetting.KeyC"   ,par_cName)
-            :Field("UserSetting.ValueC" ,par_cValue)
+            :Field("UserSetting.fk_User"   ,oFcgi:p_iUserPk)
+            :Field("UserSetting.KeyC"      ,par_cName)
+            :Field("UserSetting.ValueC"    ,par_cValue)
+            :Field("UserSetting.ValueType" ,1)
             :Add()
         case :Tally == 1
             if l_aSQLResult[1,2] <> par_cValue

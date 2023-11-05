@@ -2367,7 +2367,8 @@ if len(l_aNodes) == 1
             l_cHtml += [;">]
 
                 l_cHtml += [<div class="input-group">]
-                    l_cHtml += [<span class="navbar-brand ms-3">Table: ]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+;
+                    //Added extra double quotes around table names it easier to select text on double click.
+                    l_cHtml += [<span class="navbar-brand ms-3">Table: "]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+["]+;
                                 [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]
                                 if !empty(l_cUseStatus) // .and. l_cUseStatus != "Active"
                                     l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
@@ -2824,9 +2825,10 @@ else
                         endcase
                         l_cHtml += [;">]
                             l_cHtml += [<div class="input-group">]
-                                l_cHtml += [<span class="navbar-brand ms-3">From: ]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+FormatAKAForDisplay(l_cFrom_Table_AKA)+[</span>]
-                                l_cHtml += [<span class="navbar-brand ms-3">To: ]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+FormatAKAForDisplay(l_cTo_Table_AKA)+[</span>]
-                                l_cHtml += [<span class="navbar-brand ms-3">Column: ]+l_cColumnName+FormatAKAForDisplay(l_cColumnAKA)+[</span>]
+                                //Added extra double quotes around table and column names it easier to select text on double click.
+                                l_cHtml += [<span class="navbar-brand ms-3">From: "]+l_cFrom_NameSpace_Name+[.]+l_cFrom_Table_Name+FormatAKAForDisplay(l_cFrom_Table_AKA)+["</span>]
+                                l_cHtml += [<span class="navbar-brand ms-3">To: "]+l_cTo_NameSpace_Name+[.]+l_cTo_Table_Name+FormatAKAForDisplay(l_cTo_Table_AKA)+["</span>]
+                                l_cHtml += [<span class="navbar-brand ms-3">Column: "]+l_cColumnName+FormatAKAForDisplay(l_cColumnAKA)+["</span>]
                             l_cHtml += [</div>]
                         l_cHtml += [</nav>]
 

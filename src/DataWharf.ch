@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.58"
+#define BUILDVERSION "2.59"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -8,6 +8,8 @@
 #ifdef __PLATFORM__LINUX
 #include "hbcurl.ch"
 #endif
+
+#define COOKIE_PREFIX "DataWharf_"   // Cookies Prefix needed in case running other website on same host while using a virtual folder
 
 // #ifdef __PLATFORM__WINDOWS
 // #endif

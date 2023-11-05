@@ -47,7 +47,7 @@ l_oDB_ListOfIndexes              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
 
 
 with object l_oDB_ListOfTables
-    :Table("299a129d-dab1-4dad-afcf-000000000001","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000001","NameSpace")
     // :Distinct(.t.)  // Needed since joining on columns to not use discontinued fields
 
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
@@ -85,7 +85,7 @@ endwith
 
 if l_lContinue
     with object l_oDB_ListOfColumns
-        :Table("299a129d-dab1-4dad-afcf-000000000002","NameSpace")
+        :Table("299a129d-dab1-4dad-0001-000000000002","NameSpace")
         :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
         :Join("inner","Table" ,"","Table.fk_NameSpace = NameSpace.pk")
         :Join("inner","Column","","Column.fk_Table = Table.pk")
@@ -357,7 +357,7 @@ local l_oInfo
 hb_HCaseMatch(l_hSchema,.f.)  // Case Insensitive search
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000004","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000004","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"NameSpace")
     :OrderBy("pk")
@@ -370,7 +370,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000005","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000005","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Table" ,"","Table.fk_NameSpace = NameSpace.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Table")
@@ -384,7 +384,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000006","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000006","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Table"  ,"","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
@@ -399,7 +399,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000007","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000007","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Enumeration" ,"","Enumeration.fk_NameSpace = NameSpace.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Enumeration")
@@ -413,7 +413,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000008","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000008","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Enumeration"  ,"","Enumeration.fk_NameSpace = NameSpace.pk")
     :Join("inner","EnumValue" ,"","EnumValue.fk_Enumeration = Enumeration.pk")
@@ -428,7 +428,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000009","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000009","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Table"  ,"","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
@@ -443,7 +443,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000010","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000010","NameSpace")
     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Table"       ,"","Table.fk_NameSpace = NameSpace.pk")
     :Join("inner","Index"       ,"","Index.fk_Table = Table.pk")
@@ -459,7 +459,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000011","Diagram")
+    :Table("299a129d-dab1-4dad-0001-000000000011","Diagram")
     :Where("Diagram.fk_Application = ^",par_iApplicationPk)
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Diagram")
     :OrderBy("pk")
@@ -472,7 +472,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000012","Diagram")
+    :Table("299a129d-dab1-4dad-0001-000000000012","Diagram")
     :Where("Diagram.fk_Application = ^",par_iApplicationPk)
     :Join("inner","DiagramTable" ,"","DiagramTable.fk_Diagram = Diagram.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"DiagramTable")
@@ -486,7 +486,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000013","Tag")
+    :Table("299a129d-dab1-4dad-0001-000000000013","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Tag")
     :OrderBy("pk")
@@ -499,7 +499,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000014","Tag")
+    :Table("299a129d-dab1-4dad-0001-000000000014","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TagTable" ,"","TagTable.fk_Tag = Tag.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TagTable")
@@ -513,7 +513,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000015","Tag")
+    :Table("299a129d-dab1-4dad-0001-000000000015","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TagColumn" ,"","TagColumn.fk_Tag = Tag.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TagColumn")
@@ -528,7 +528,7 @@ endwith
 
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000016","TemplateTable")
+    :Table("299a129d-dab1-4dad-0001-000000000016","TemplateTable")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateTable")
     :OrderBy("pk")
@@ -541,7 +541,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000017","TemplateTable")
+    :Table("299a129d-dab1-4dad-0001-000000000017","TemplateTable")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TemplateColumn" ,"","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateColumn")
@@ -556,7 +556,7 @@ endwith
 
 // ----- Custom Field Begin ------------------------------------------------------
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000018","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-0001-000000000018","ApplicationCustomField")
     :Distinct(.t.)
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
     :Join("inner","CustomField" ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
@@ -574,7 +574,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000019","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-0001-000000000019","ApplicationCustomField")
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
 
     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
@@ -591,7 +591,7 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-afcf-000000000020","ApplicationCustomField")
+    :Table("299a129d-dab1-4dad-0001-000000000020","ApplicationCustomField")
     :Distinct(.t.)
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
     :Join("inner","CustomFieldValue" ,"","CustomFieldValue.fk_CustomField = ApplicationCustomField.fk_CustomField")
@@ -875,6 +875,8 @@ local l_cJSONMxgPos
 
 local l_hImportSourceCustomFieldUsedOn := {=>}
 local lnUsedOn
+
+local l_cValidNameChars
 
 // Parse the file line by line
 
@@ -1168,12 +1170,18 @@ with object l_oDB_ListOfCurrentRecords
     :Column("EnumValue.fk_Enumeration","fk_Enumeration")
     :Column("EnumValue.Pk"  ,"pk")
     :Column("EnumValue.Name","name")
+    :Column( e"upper(regexp_replace(\"enumvalue\".\"Name\", '[^a-zA-Z0-9_]+', '', 'g'))" , "name_for_index" )
     :SQL("ListOfCurrentRecords")
+    // SendToClipboard(:LastSQL())
     with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_Enumeration))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+    //clipboard
+        // :Index("tag1","padr(alltrim(str(fk_Enumeration))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :Index("tag1","padr(alltrim(str(fk_Enumeration))+'*'+name_for_index+'*',240)")
         :CreateIndexes()
     endwith
 endwith
+
+l_cValidNameChars := [01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_']
 
 select ImportSourceEnumValue
 scan all
@@ -1183,8 +1191,8 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Enumeration Parent Key on EnumValue Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumValue->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: EnumValue Already on file in Enumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(hb_StrReplace(ImportSourceEnumValue->Name,hb_StrReplace(ImportSourceEnumValue->Name,l_cValidNameChars,'') ,''))+'*' ,"ListOfCurrentRecords","tag1")
+            SendToDebugView("Import: EnumValue Already on file in Enumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000010","EnumValue")
@@ -1288,456 +1296,737 @@ endscan
 
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Diagrams
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000015","Diagram")
-    :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
-    :Column("Diagram.Pk"    ,"pk")
-    :Column("Diagram.Name"  ,"name")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(upper(strtran(Name,' ',''))+'*',240)")
-        :CreateIndexes()
-    endwith
-endwith
-
-select ImportSourceDiagram
-scan all
-    if vfp_seek( upper(strtran(ImportSourceDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-        // SendToDebugView("Import: Diagram Already on file",ListOfCurrentRecords->Name)
-        l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := ListOfCurrentRecords->pk
-    else
-
-        //Fix Graph JSON content
-        l_cJSONVisPos := ImportSourceDiagram->VisPos
-        l_cJSONMxgPos := ImportSourceDiagram->MxgPos
-
-        //Loop on all possible source table, regardless if table is included or not in the diagram. A little brute force, but works.
-        for each l_ifk_TableCurrent in l_hTablePkOldToNew
-            l_ifk_TableImport := l_ifk_TableCurrent:__enumkey
-            
-            if !hb_IsNil(l_cJSONVisPos)
-                l_cJSONVisPos := strtran(l_cJSONVisPos,"\u0022T"+trans(l_ifk_TableImport)+"\u0022","\u0022T"+trans(l_ifk_TableCurrent)+"\u0022")
-            endif
-            if !hb_IsNil(l_cJSONMxgPos)
-                l_cJSONMxgPos := strtran(l_cJSONMxgPos,"\u0022T"+trans(l_ifk_TableImport)+"\u0022","\u0022T"+trans(l_ifk_TableCurrent)+"\u0022")
-            endif
-        endfor
-
-
-        //Loop on all possible source foreign key columns, regardless if table is included or not in the diagram. A little brute force, but works.
-        for each l_ifk_ColumCurrent in l_hColumnPkOldToNew
-            l_ifk_ColumImport := l_ifk_ColumCurrent:__enumkey
-            
-            if !hb_IsNil(l_cJSONVisPos)
-                l_cJSONVisPos := strtran(l_cJSONVisPos,"\u0022C"+trans(l_ifk_ColumImport)+"\u0022","\u0022C"+trans(l_ifk_ColumCurrent)+"\u0022")
-            endif
-            if !hb_IsNil(l_cJSONMxgPos)
-                l_cJSONMxgPos := strtran(l_cJSONMxgPos,"\u0022C"+trans(l_ifk_ColumImport)+"\u0022","\u0022C"+trans(l_ifk_ColumCurrent)+"\u0022")
-            endif
-        endfor
-
-        with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000016","Diagram")
-            :Field("fk_Application",par_iApplicationPk)
-            if !hb_IsNil(l_cJSONVisPos)
-                :FieldExpression("VisPos","E'"+l_cJSONVisPos+"'")
-            endif
-            if !hb_IsNil(l_cJSONMxgPos)
-                :FieldExpression("MxgPos","E'"+l_cJSONMxgPos+"'")
-            endif
-            ImportAddRecordSetField(l_oDBImport,"Diagram","*fk_Application*VisPos*MxgPos*")
-            if :Add()
-                //Log the old key, new key
-                l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := :Key()
-            endif
-            
+if used("ImportSourceDiagram")   // Should skip this in case this is a Table Import
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000015","Diagram")
+        :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
+        :Column("Diagram.Pk"    ,"pk")
+        :Column("Diagram.Name"  ,"name")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(upper(strtran(Name,' ',''))+'*',240)")
+            :CreateIndexes()
         endwith
-    endif
-endscan
-
-//-------------------------------------------------------------------------------------------------------------------------
-// Import DiagramTable
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000017","Diagram")
-    :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
-    :Column("DiagramTable.fk_Diagram" ,"fk_Diagram")
-    :Column("DiagramTable.Pk"       ,"pk")
-    :Column("DiagramTable.Fk_Table","Fk_Table")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_Diagram))+'*'+alltrim(str(Fk_Table))+'*',40)")
-        :CreateIndexes()
     endwith
-endwith
 
-select ImportSourceDiagramTable
-scan all
-    l_iParentKeyImport  := ImportSourceDiagramTable->fk_Diagram
-    l_iParentKeyCurrent := hb_HGetDef(l_hDiagramPkOldToNew,l_iParentKeyImport,0)
-
-    l_ifk_TableImport:= ImportSourceDiagramTable->fk_Table
-    if hb_IsNil(l_ifk_TableImport) .or. hb_IsNil(l_ifk_TableImport)
-        l_ifk_TableCurrent := 0
-    else
-        l_ifk_TableCurrent := hb_HGetDef(l_hTablePkOldToNew,l_ifk_TableImport,0)
-    endif
-
-    if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find Diagram Parent Key on DiagramTable Import" ,l_iParentKeyImport)
-    else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: Table Already on file in Diagram (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+    select ImportSourceDiagram
+    scan all
+        if vfp_seek( upper(strtran(ImportSourceDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+            // SendToDebugView("Import: Diagram Already on file",ListOfCurrentRecords->Name)
+            l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := ListOfCurrentRecords->pk
         else
-            with object l_oDBImport
-                :Table("df873645-94d3-4ba5-85cf-000000000018","DiagramTable")
-                :Field("fk_Diagram",l_iParentKeyCurrent)
-                :Field("fk_Table"  ,l_ifk_TableCurrent)
-                ImportAddRecordSetField(l_oDBImport,"DiagramTable","*fk_Diagram*fk_Table*")   // No other field exists but leaving this in case we add some.
-                if :Add()
+
+            //Fix Graph JSON content
+            l_cJSONVisPos := ImportSourceDiagram->VisPos
+            l_cJSONMxgPos := ImportSourceDiagram->MxgPos
+
+            //Loop on all possible source table, regardless if table is included or not in the diagram. A little brute force, but works.
+            for each l_ifk_TableCurrent in l_hTablePkOldToNew
+                l_ifk_TableImport := l_ifk_TableCurrent:__enumkey
+                
+                if !hb_IsNil(l_cJSONVisPos)
+                    l_cJSONVisPos := strtran(l_cJSONVisPos,"\u0022T"+trans(l_ifk_TableImport)+"\u0022","\u0022T"+trans(l_ifk_TableCurrent)+"\u0022")
                 endif
+                if !hb_IsNil(l_cJSONMxgPos)
+                    l_cJSONMxgPos := strtran(l_cJSONMxgPos,"\u0022T"+trans(l_ifk_TableImport)+"\u0022","\u0022T"+trans(l_ifk_TableCurrent)+"\u0022")
+                endif
+            endfor
+
+
+            //Loop on all possible source foreign key columns, regardless if table is included or not in the diagram. A little brute force, but works.
+            for each l_ifk_ColumCurrent in l_hColumnPkOldToNew
+                l_ifk_ColumImport := l_ifk_ColumCurrent:__enumkey
+                
+                if !hb_IsNil(l_cJSONVisPos)
+                    l_cJSONVisPos := strtran(l_cJSONVisPos,"\u0022C"+trans(l_ifk_ColumImport)+"\u0022","\u0022C"+trans(l_ifk_ColumCurrent)+"\u0022")
+                endif
+                if !hb_IsNil(l_cJSONMxgPos)
+                    l_cJSONMxgPos := strtran(l_cJSONMxgPos,"\u0022C"+trans(l_ifk_ColumImport)+"\u0022","\u0022C"+trans(l_ifk_ColumCurrent)+"\u0022")
+                endif
+            endfor
+
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-000000000016","Diagram")
+                :Field("fk_Application",par_iApplicationPk)
+                if !hb_IsNil(l_cJSONVisPos)
+                    :FieldExpression("VisPos","E'"+l_cJSONVisPos+"'")
+                endif
+                if !hb_IsNil(l_cJSONMxgPos)
+                    :FieldExpression("MxgPos","E'"+l_cJSONMxgPos+"'")
+                endif
+                ImportAddRecordSetField(l_oDBImport,"Diagram","*fk_Application*VisPos*MxgPos*")
+                if :Add()
+                    //Log the old key, new key
+                    l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := :Key()
+                endif
+                
             endwith
         endif
-    endif
-endscan
+    endscan
 
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import DiagramTable
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000017","Diagram")
+        :Where("Diagram.fk_Application = ^" , par_iApplicationPk)
+        :Join("inner","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
+        :Column("DiagramTable.fk_Diagram" ,"fk_Diagram")
+        :Column("DiagramTable.Pk"       ,"pk")
+        :Column("DiagramTable.Fk_Table","Fk_Table")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(alltrim(str(fk_Diagram))+'*'+alltrim(str(Fk_Table))+'*',40)")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    select ImportSourceDiagramTable
+    scan all
+        l_iParentKeyImport  := ImportSourceDiagramTable->fk_Diagram
+        l_iParentKeyCurrent := hb_HGetDef(l_hDiagramPkOldToNew,l_iParentKeyImport,0)
+
+        l_ifk_TableImport:= ImportSourceDiagramTable->fk_Table
+        if hb_IsNil(l_ifk_TableImport) .or. hb_IsNil(l_ifk_TableImport)
+            l_ifk_TableCurrent := 0
+        else
+            l_ifk_TableCurrent := hb_HGetDef(l_hTablePkOldToNew,l_ifk_TableImport,0)
+        endif
+
+        if empty(l_iParentKeyCurrent)
+            SendToDebugView("Failure to find Diagram Parent Key on DiagramTable Import" ,l_iParentKeyImport)
+        else
+            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+                // SendToDebugView("Import: Table Already on file in Diagram (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            else
+                with object l_oDBImport
+                    :Table("df873645-94d3-4ba5-85cf-000000000018","DiagramTable")
+                    :Field("fk_Diagram",l_iParentKeyCurrent)
+                    :Field("fk_Table"  ,l_ifk_TableCurrent)
+                    ImportAddRecordSetField(l_oDBImport,"DiagramTable","*fk_Diagram*fk_Table*")   // No other field exists but leaving this in case we add some.
+                    if :Add()
+                    endif
+                endwith
+            endif
+        endif
+    endscan
+endif
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Tags
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000019","Tag")
-    :Where("Tag.fk_Application = ^" , par_iApplicationPk)
-    :Column("Tag.Pk"    ,"pk")
-    :Column("Tag.Name"  ,"name")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(upper(strtran(Name,' ',''))+'*',240)")
-        :CreateIndexes()
-    endwith
-endwith
-
-select ImportSourceTag
-scan all
-    if vfp_seek( upper(strtran(ImportSourceTag->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-        l_hTagPkOldToNew[ImportSourceTag->pk] := ListOfCurrentRecords->pk
-    else
-        with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000020","Tag")
-            :Field("fk_Application",par_iApplicationPk)
-            ImportAddRecordSetField(l_oDBImport,"Tag","*fk_Application*")
-            if :Add()
-                l_hTagPkOldToNew[ImportSourceTag->pk] := :Key()
-            endif
-            
+if used("ImportSourceTag")   // Should skip this in case this is a Table Import
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000019","Tag")
+        :Where("Tag.fk_Application = ^" , par_iApplicationPk)
+        :Column("Tag.Pk"    ,"pk")
+        :Column("Tag.Name"  ,"name")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(upper(strtran(Name,' ',''))+'*',240)")
+            :CreateIndexes()
         endwith
-    endif
-endscan
-
-//-------------------------------------------------------------------------------------------------------------------------
-// Import TagTable
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000021","Tag")
-    :Where("Tag.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","TagTable","","TagTable.fk_Tag = Tag.pk")
-    :Column("TagTable.fk_Tag"  ,"fk_Tag")
-    :Column("TagTable.Pk"      ,"pk")
-    :Column("TagTable.Fk_Table","Fk_Table")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_Tag))+'*'+alltrim(str(Fk_Table))+'*',40)")
-        :CreateIndexes()
     endwith
-endwith
 
-select ImportSourceTagTable
-scan all
-    l_iParentKeyImport  := ImportSourceTagTable->fk_Tag
-    l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
-
-    l_ifk_TableImport:= ImportSourceTagTable->fk_Table
-    if hb_IsNil(l_ifk_TableImport) .or. hb_IsNil(l_ifk_TableImport)
-        l_ifk_TableCurrent := 0
-    else
-        l_ifk_TableCurrent := hb_HGetDef(l_hTablePkOldToNew,l_ifk_TableImport,0)
-    endif
-
-    if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find Tag Parent Key on TagTable Import" ,l_iParentKeyImport)
-    else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: Table Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+    select ImportSourceTag
+    scan all
+        if vfp_seek( upper(strtran(ImportSourceTag->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+            l_hTagPkOldToNew[ImportSourceTag->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
-                :Table("df873645-94d3-4ba5-85cf-000000000022","TagTable")
-                :Field("fk_Tag"    ,l_iParentKeyCurrent)
-                :Field("fk_Table"  ,l_ifk_TableCurrent)
-                ImportAddRecordSetField(l_oDBImport,"TagTable","*fk_Tag*fk_Table*")   // No other field exists but leaving this in case we add some.
+                :Table("df873645-94d3-4ba5-85cf-000000000020","Tag")
+                :Field("fk_Application",par_iApplicationPk)
+                ImportAddRecordSetField(l_oDBImport,"Tag","*fk_Application*")
                 if :Add()
+                    l_hTagPkOldToNew[ImportSourceTag->pk] := :Key()
                 endif
+                
             endwith
         endif
-    endif
-endscan
+    endscan
 
-//-------------------------------------------------------------------------------------------------------------------------
-// Import TagColumn
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000023","Tag")
-    :Where("Tag.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","TagColumn","","TagColumn.fk_Tag = Tag.pk")
-    :Column("TagColumn.fk_Tag" ,"fk_Tag")
-    :Column("TagColumn.Pk"       ,"pk")
-    :Column("TagColumn.Fk_Column","Fk_Column")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_Tag))+'*'+alltrim(str(Fk_Column))+'*',40)")
-        :CreateIndexes()
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import TagTable
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000021","Tag")
+        :Where("Tag.fk_Application = ^" , par_iApplicationPk)
+        :Join("inner","TagTable","","TagTable.fk_Tag = Tag.pk")
+        :Column("TagTable.fk_Tag"  ,"fk_Tag")
+        :Column("TagTable.Pk"      ,"pk")
+        :Column("TagTable.Fk_Table","Fk_Table")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(alltrim(str(fk_Tag))+'*'+alltrim(str(Fk_Table))+'*',40)")
+            :CreateIndexes()
+        endwith
     endwith
-endwith
 
-select ImportSourceTagColumn
-scan all
-    l_iParentKeyImport  := ImportSourceTagColumn->fk_Tag
-    l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
+    select ImportSourceTagTable
+    scan all
+        l_iParentKeyImport  := ImportSourceTagTable->fk_Tag
+        l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
 
-    l_ifk_ColumnImport:= ImportSourceTagColumn->fk_Column
-    if hb_IsNil(l_ifk_ColumnImport) .or. hb_IsNil(l_ifk_ColumnImport)
-        l_ifk_ColumnCurrent := 0
-    else
-        l_ifk_ColumnCurrent := hb_HGetDef(l_hColumnPkOldToNew,l_ifk_ColumnImport,0)
-    endif
-
-    if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find Tag Parent Key on TagColumn Import" ,l_iParentKeyImport)
-    else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: Column Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+        l_ifk_TableImport:= ImportSourceTagTable->fk_Table
+        if hb_IsNil(l_ifk_TableImport) .or. hb_IsNil(l_ifk_TableImport)
+            l_ifk_TableCurrent := 0
         else
-            with object l_oDBImport
-                :Table("df873645-94d3-4ba5-85cf-000000000024","TagColumn")
-                :Field("fk_Tag"    ,l_iParentKeyCurrent)
-                :Field("fk_Column" ,l_ifk_ColumnCurrent)
-                ImportAddRecordSetField(l_oDBImport,"TagColumn","*fk_Tag*fk_Column*")   // No other field exists but leaving this in case we add some.
-                if :Add()
-                endif
-            endwith
+            l_ifk_TableCurrent := hb_HGetDef(l_hTablePkOldToNew,l_ifk_TableImport,0)
         endif
-    endif
-endscan
 
+        if empty(l_iParentKeyCurrent)
+            SendToDebugView("Failure to find Tag Parent Key on TagTable Import" ,l_iParentKeyImport)
+        else
+            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+                // SendToDebugView("Import: Table Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            else
+                with object l_oDBImport
+                    :Table("df873645-94d3-4ba5-85cf-000000000022","TagTable")
+                    :Field("fk_Tag"    ,l_iParentKeyCurrent)
+                    :Field("fk_Table"  ,l_ifk_TableCurrent)
+                    ImportAddRecordSetField(l_oDBImport,"TagTable","*fk_Tag*fk_Table*")   // No other field exists but leaving this in case we add some.
+                    if :Add()
+                    endif
+                endwith
+            endif
+        endif
+    endscan
+
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import TagColumn
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000023","Tag")
+        :Where("Tag.fk_Application = ^" , par_iApplicationPk)
+        :Join("inner","TagColumn","","TagColumn.fk_Tag = Tag.pk")
+        :Column("TagColumn.fk_Tag" ,"fk_Tag")
+        :Column("TagColumn.Pk"       ,"pk")
+        :Column("TagColumn.Fk_Column","Fk_Column")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(alltrim(str(fk_Tag))+'*'+alltrim(str(Fk_Column))+'*',40)")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    select ImportSourceTagColumn
+    scan all
+        l_iParentKeyImport  := ImportSourceTagColumn->fk_Tag
+        l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
+
+        l_ifk_ColumnImport:= ImportSourceTagColumn->fk_Column
+        if hb_IsNil(l_ifk_ColumnImport) .or. hb_IsNil(l_ifk_ColumnImport)
+            l_ifk_ColumnCurrent := 0
+        else
+            l_ifk_ColumnCurrent := hb_HGetDef(l_hColumnPkOldToNew,l_ifk_ColumnImport,0)
+        endif
+
+        if empty(l_iParentKeyCurrent)
+            SendToDebugView("Failure to find Tag Parent Key on TagColumn Import" ,l_iParentKeyImport)
+        else
+            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+                // SendToDebugView("Import: Column Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            else
+                with object l_oDBImport
+                    :Table("df873645-94d3-4ba5-85cf-000000000024","TagColumn")
+                    :Field("fk_Tag"    ,l_iParentKeyCurrent)
+                    :Field("fk_Column" ,l_ifk_ColumnCurrent)
+                    ImportAddRecordSetField(l_oDBImport,"TagColumn","*fk_Tag*fk_Column*")   // No other field exists but leaving this in case we add some.
+                    if :Add()
+                    endif
+                endwith
+            endif
+        endif
+    endscan
+endif
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Custom Fields
+if used("ImportSourceCustomField")   // Should skip this in case this is a Table Import
 
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000025","CustomField")
-    :Column("CustomField.Pk"    ,"pk")
-    :Column("CustomField.Code"  ,"Code")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(upper(strtran(Code,' ',''))+'*',240)")
-        :CreateIndexes()
-    endwith
-endwith
-
-select ImportSourceCustomField
-scan all
-
-    l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
-
-    if vfp_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-        l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := ListOfCurrentRecords->pk
-    else
-        with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000026","CustomField")
-            ImportAddRecordSetField(l_oDBImport,"CustomField","")
-            if :Add()
-                l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := :Key()
-            endif
-            
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000025","CustomField")
+        :Column("CustomField.Pk"    ,"pk")
+        :Column("CustomField.Code"  ,"Code")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(upper(strtran(Code,' ',''))+'*',240)")
+            :CreateIndexes()
         endwith
-    endif
-endscan
-
-//-------------------------------------------------------------------------------------------------------------------------
-// Import ApplicationCustomField
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000026","ApplicationCustomField")
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
-    :Column("ApplicationCustomField.Pk"            ,"pk")
-    :Column("ApplicationCustomField.Fk_CustomField","Fk_CustomField")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","Fk_CustomField")
-        :CreateIndexes()
     endwith
-endwith
 
-select ImportSourceApplicationCustomField
-scan all
+    select ImportSourceCustomField
+    scan all
 
-    l_ifk_CustomFieldImport:= ImportSourceApplicationCustomField->fk_CustomField
-    if hb_IsNil(l_ifk_CustomFieldImport) .or. hb_IsNil(l_ifk_CustomFieldImport)
-        l_ifk_CustomFieldCurrent := 0
-    else
-        l_ifk_CustomFieldCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_ifk_CustomFieldImport,0)
-    endif
+        l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
 
-    if vfp_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
-        // Record already on file
-    else
-        with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000027","ApplicationCustomField")
-            :Field("fk_Application" ,par_iApplicationPk)
-            :Field("fk_CustomField" ,l_ifk_CustomFieldCurrent)
-            ImportAddRecordSetField(l_oDBImport,"ApplicationCustomField","*fk_Application*fk_CustomField*")   // No other field exists but leaving this in case we add some.
-            if :Add()
-            endif
-        endwith
-    endif
-endscan
-
-//-------------------------------------------------------------------------------------------------------------------------
-// Import CustomFieldValues
-
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000028","ApplicationCustomField")
-    :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","CustomField"      ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
-    :Join("inner","CustomFieldValue" ,"" ,"CustomFieldValue.fk_CustomField = CustomField.pk")
-
-    :Column("CustomFieldValue.fk_CustomField","fk_CustomField")
-    // :Column("CustomField.UsedOn"             ,"CustomField_UsedOn")
-    :Column("CustomFieldValue.fk_Entity"     ,"fk_Entity")
-    :Column("CustomFieldValue.Pk"            ,"pk")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_CustomField))+'*'+alltrim(str(fk_Entity))+'*',240)")
-        :CreateIndexes()
-    endwith
-endwith
-
-select ImportSourceCustomFieldValue
-scan all
-    l_iParentKeyImport  := ImportSourceCustomFieldValue->fk_CustomField
-    l_iParentKeyCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_iParentKeyImport,0)
-
-    l_ifk_EntityImport:= ImportSourceCustomFieldValue->fk_Entity
-    if hb_IsNil(l_ifk_EntityImport) .or. hb_IsNil(l_ifk_EntityImport)
-        l_ifk_EntityCurrent := 0
-    else
-        lnUsedOn := hb_HGetDef(l_hImportSourceCustomFieldUsedOn,l_iParentKeyImport,0)
-        do case
-        case lnUsedOn == USEDON_APPLICATION  // 1
-            l_ifk_EntityCurrent := par_iApplicationPk
-        case lnUsedOn == USEDON_NAMESPACE    // 2
-            l_ifk_EntityCurrent := hb_HGetDef(l_hNameSpacePkOldToNew,l_ifk_EntityImport,0)
-        case lnUsedOn == USEDON_TABLE        // 3
-            l_ifk_EntityCurrent := hb_HGetDef(l_hTablePkOldToNew    ,l_ifk_EntityImport,0)
-        case lnUsedOn == USEDON_COLUMN       // 4
-            l_ifk_EntityCurrent := hb_HGetDef(l_hColumnPkOldToNew   ,l_ifk_EntityImport,0)
-        otherwise
-            loop // Do not import the custom field value
-        endcase
-    endif
-
-    if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find CustomField Parent Key on CustomFieldValue Import" ,l_iParentKeyImport)
-    else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: CustomFieldValue Already on file in CustomField (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+        if vfp_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+            l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
-                :Table("df873645-94d3-4ba5-85cf-000000000029","CustomFieldValue")
-                :Field("fk_CustomField" ,l_iParentKeyCurrent)
-                :Field("fk_Entity"      ,l_ifk_EntityCurrent)
-                ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*")
+                :Table("df873645-94d3-4ba5-85cf-000000000026","CustomField")
+                ImportAddRecordSetField(l_oDBImport,"CustomField","")
+                if :Add()
+                    l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := :Key()
+                endif
+                
+            endwith
+        endif
+    endscan
+
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import ApplicationCustomField
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000026","ApplicationCustomField")
+        :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+        :Column("ApplicationCustomField.Pk"            ,"pk")
+        :Column("ApplicationCustomField.Fk_CustomField","Fk_CustomField")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","Fk_CustomField")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    select ImportSourceApplicationCustomField
+    scan all
+
+        l_ifk_CustomFieldImport:= ImportSourceApplicationCustomField->fk_CustomField
+        if hb_IsNil(l_ifk_CustomFieldImport) .or. hb_IsNil(l_ifk_CustomFieldImport)
+            l_ifk_CustomFieldCurrent := 0
+        else
+            l_ifk_CustomFieldCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_ifk_CustomFieldImport,0)
+        endif
+
+        if vfp_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
+            // Record already on file
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-000000000027","ApplicationCustomField")
+                :Field("fk_Application" ,par_iApplicationPk)
+                :Field("fk_CustomField" ,l_ifk_CustomFieldCurrent)
+                ImportAddRecordSetField(l_oDBImport,"ApplicationCustomField","*fk_Application*fk_CustomField*")   // No other field exists but leaving this in case we add some.
                 if :Add()
                 endif
             endwith
         endif
-    endif
-endscan
+    endscan
 
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import CustomFieldValues
 
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000028","ApplicationCustomField")
+        :Where("ApplicationCustomField.fk_Application = ^" , par_iApplicationPk)
+        :Join("inner","CustomField"      ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
+        :Join("inner","CustomFieldValue" ,"" ,"CustomFieldValue.fk_CustomField = CustomField.pk")
 
-
-
-
-
-
-
-//-------------------------------------------------------------------------------------------------------------------------
-// Import TemplateTables
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000030","TemplateTable")
-    :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
-    :Column("TemplateTable.Pk"    ,"pk")
-    :Column("TemplateTable.Name"  ,"name")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("TemplateTable1","padr(upper(strtran(Name,' ',''))+'*',240)")
-        :CreateIndexes()
-    endwith
-endwith
-
-select ImportSourceTemplateTable
-scan all
-    if vfp_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
-        l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := ListOfCurrentRecords->pk
-    else
-        with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000031","TemplateTable")
-            :Field("fk_Application",par_iApplicationPk)
-            ImportAddRecordSetField(l_oDBImport,"TemplateTable","*fk_Application*")
-            if :Add()
-                l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := :Key()
-            endif
-            
+        :Column("CustomFieldValue.fk_CustomField","fk_CustomField")
+        // :Column("CustomField.UsedOn"             ,"CustomField_UsedOn")
+        :Column("CustomFieldValue.fk_Entity"     ,"fk_Entity")
+        :Column("CustomFieldValue.Pk"            ,"pk")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("tag1","padr(alltrim(str(fk_CustomField))+'*'+alltrim(str(fk_Entity))+'*',240)")
+            :CreateIndexes()
         endwith
-    endif
-endscan
+    endwith
+
+    select ImportSourceCustomFieldValue
+    scan all
+        l_iParentKeyImport  := ImportSourceCustomFieldValue->fk_CustomField
+        l_iParentKeyCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_iParentKeyImport,0)
+
+        l_ifk_EntityImport:= ImportSourceCustomFieldValue->fk_Entity
+        if hb_IsNil(l_ifk_EntityImport) .or. hb_IsNil(l_ifk_EntityImport)
+            l_ifk_EntityCurrent := 0
+        else
+            lnUsedOn := hb_HGetDef(l_hImportSourceCustomFieldUsedOn,l_iParentKeyImport,0)
+            do case
+            case lnUsedOn == USEDON_APPLICATION  // 1
+                l_ifk_EntityCurrent := par_iApplicationPk
+            case lnUsedOn == USEDON_NAMESPACE    // 2
+                l_ifk_EntityCurrent := hb_HGetDef(l_hNameSpacePkOldToNew,l_ifk_EntityImport,0)
+            case lnUsedOn == USEDON_TABLE        // 3
+                l_ifk_EntityCurrent := hb_HGetDef(l_hTablePkOldToNew    ,l_ifk_EntityImport,0)
+            case lnUsedOn == USEDON_COLUMN       // 4
+                l_ifk_EntityCurrent := hb_HGetDef(l_hColumnPkOldToNew   ,l_ifk_EntityImport,0)
+            otherwise
+                loop // Do not import the custom field value
+            endcase
+        endif
+
+        if empty(l_iParentKeyCurrent)
+            SendToDebugView("Failure to find CustomField Parent Key on CustomFieldValue Import" ,l_iParentKeyImport)
+        else
+            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+                // SendToDebugView("Import: CustomFieldValue Already on file in CustomField (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            else
+                with object l_oDBImport
+                    :Table("df873645-94d3-4ba5-85cf-000000000029","CustomFieldValue")
+                    :Field("fk_CustomField" ,l_iParentKeyCurrent)
+                    :Field("fk_Entity"      ,l_ifk_EntityCurrent)
+                    ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*")
+                    if :Add()
+                    endif
+                endwith
+            endif
+        endif
+    endscan
+
+endif
 
 //-------------------------------------------------------------------------------------------------------------------------
-// Import TemplateColumn
-with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000032","TemplateTable")
-    :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","TemplateColumn","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
-    :Column("TemplateColumn.fk_TemplateTable"  ,"fk_TemplateTable")
-    :Column("TemplateColumn.Pk"                ,"pk")
-    :Column("TemplateColumn.Name"              ,"name")
-    :SQL("ListOfCurrentRecords")
-    with object :p_oCursor
-        :Index("TemplateTable1","padr(alltrim(str(fk_TemplateTable))+'*'+upper(strtran(Name,' ',''))+'*',240)")
-        :CreateIndexes()
+if used("ImportSourceTemplateTable")   // Should skip this in case this is a Table Import
+
+    // Import TemplateTables
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000030","TemplateTable")
+        :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
+        :Column("TemplateTable.Pk"    ,"pk")
+        :Column("TemplateTable.Name"  ,"name")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("TemplateTable1","padr(upper(strtran(Name,' ',''))+'*',240)")
+            :CreateIndexes()
+        endwith
     endwith
-endwith
 
-select ImportSourceTemplateColumn
-scan all
-    l_iParentKeyImport  := ImportSourceTemplateColumn->fk_TemplateTable
-    l_iParentKeyCurrent := hb_HGetDef(l_hTemplateTablePkOldToNew,l_iParentKeyImport,0)
-
-    if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find TemplateTable Parent Key on TemplateColumn Import" ,l_iParentKeyImport)
-    else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTemplateColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
-            // SendToDebugView("Import: Table Already on file in TemplateTable (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+    select ImportSourceTemplateTable
+    scan all
+        if vfp_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+            l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
-                :Table("df873645-94d3-4ba5-85cf-000000000033","TemplateColumn")
-                :Field("fk_TemplateTable"    ,l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"TemplateColumn","*fk_TemplateTable*")
+                :Table("df873645-94d3-4ba5-85cf-000000000031","TemplateTable")
+                :Field("fk_Application",par_iApplicationPk)
+                ImportAddRecordSetField(l_oDBImport,"TemplateTable","*fk_Application*")
                 if :Add()
+                    l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := :Key()
                 endif
+                
             endwith
         endif
-    endif
-endscan
+    endscan
 
+    //-------------------------------------------------------------------------------------------------------------------------
+    // Import TemplateColumn
+    with object l_oDB_ListOfCurrentRecords
+        :Table("df873645-94d3-4ba5-85cf-000000000032","TemplateTable")
+        :Where("TemplateTable.fk_Application = ^" , par_iApplicationPk)
+        :Join("inner","TemplateColumn","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
+        :Column("TemplateColumn.fk_TemplateTable"  ,"fk_TemplateTable")
+        :Column("TemplateColumn.Pk"                ,"pk")
+        :Column("TemplateColumn.Name"              ,"name")
+        :SQL("ListOfCurrentRecords")
+        with object :p_oCursor
+            :Index("TemplateTable1","padr(alltrim(str(fk_TemplateTable))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    select ImportSourceTemplateColumn
+    scan all
+        l_iParentKeyImport  := ImportSourceTemplateColumn->fk_TemplateTable
+        l_iParentKeyCurrent := hb_HGetDef(l_hTemplateTablePkOldToNew,l_iParentKeyImport,0)
+
+        if empty(l_iParentKeyCurrent)
+            SendToDebugView("Failure to find TemplateTable Parent Key on TemplateColumn Import" ,l_iParentKeyImport)
+        else
+            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTemplateColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+                // SendToDebugView("Import: Table Already on file in TemplateTable (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            else
+                with object l_oDBImport
+                    :Table("df873645-94d3-4ba5-85cf-000000000033","TemplateColumn")
+                    :Field("fk_TemplateTable"    ,l_iParentKeyCurrent)
+                    ImportAddRecordSetField(l_oDBImport,"TemplateColumn","*fk_TemplateTable*")
+                    if :Add()
+                    endif
+                endwith
+            endif
+        endif
+    endscan
+endif
 
 //-------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------
 
 return nil
+//=================================================================================================================
+
+
+
+//=================================================================================================================
+function ExportTableForImports(par_iTablePk)
+local l_cBackupCode := ""
+
+local l_lContinue := .t.
+local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_hSchema := Schema()
+
+local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_TableInfo        := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_cFilePathPID
+local l_cFilePathUser
+local l_iKey
+local l_cLinkUID
+local l_cFileName
+local l_oInfo
+
+local l_iNameSpacePk
+local l_iApplicationPk
+
+
+hb_HCaseMatch(l_hSchema,.f.)  // Case Insensitive search
+
+with object l_oDB_TableInfo
+    :Table("c2d4720b-d8fe-4540-b43a-ac60bc55f601","Table")
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+    :Column("Application.Pk"  ,"Application_Pk")
+    :Column("Application.Name","Application_Name")
+    :Column("NameSpace.Pk"    ,"NameSpace_Pk")
+    :Column("NameSpace.Name"  ,"NameSpace_Name")
+    :Column("Table.Name"      ,"Table_Name")
+    l_oInfo := :Get(par_iTablePk)
+endwith
+
+//l_oInfo:Application_Pk
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000004","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"NameSpace")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"NameSpace","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000005","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Table")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Table","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000006","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Column")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Column","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000007","Table")
+    :Distinct(.t.)
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
+    :Join("inner","Enumeration" ,"","Column.fk_Enumeration = Enumeration.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Enumeration")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Enumeration","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000008","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
+    :Join("inner","Enumeration" ,"","Column.fk_Enumeration = Enumeration.pk")
+    :Join("inner","EnumValue" ,"","EnumValue.fk_Enumeration = Enumeration.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"EnumValue")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"EnumValue","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000009","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Index")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Index","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000010","Table")
+    :Where("Table.pk = ^",par_iTablePk)
+    :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
+    :Join("inner","IndexColumn" ,"","IndexColumn.fk_Index = Index.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"IndexColumn")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"IndexColumn","ListOfRecords")
+    endif
+endwith
+
+//For now don't export custom fields
+//----- Custom Field Begin ------------------------------------------------------
+// with object l_oDB_ListOfRecords
+//     :Table("299a129d-dab1-4dad-0002-000000000018","ApplicationCustomField")
+//     :Distinct(.t.)
+//     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
+//     :Join("inner","CustomField" ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomField")
+
+//     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
+
+//     :OrderBy("pk")
+//     :SQL("ListOfRecords")
+//     if :Tally < 0
+//         l_lContinue := .f.
+//     else
+//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomField","ListOfRecords")
+//     endif
+// endwith
+
+// with object l_oDB_ListOfRecords
+//     :Table("299a129d-dab1-4dad-0002-000000000019","ApplicationCustomField")
+//     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
+
+//     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+//     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
+
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ApplicationCustomField")
+//     :OrderBy("pk")
+//     :SQL("ListOfRecords")
+//     if :Tally < 0
+//         l_lContinue := .f.
+//     else
+//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ApplicationCustomField","ListOfRecords")
+//     endif
+// endwith
+
+// with object l_oDB_ListOfRecords
+//     :Table("299a129d-dab1-4dad-0002-000000000020","ApplicationCustomField")
+//     :Distinct(.t.)
+//     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
+//     :Join("inner","CustomFieldValue" ,"","CustomFieldValue.fk_CustomField = ApplicationCustomField.fk_CustomField")
+
+//     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
+//     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
+
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomFieldValue")
+//     :OrderBy("pk")
+//     :SQL("ListOfRecords")
+//     if :Tally < 0
+//         l_lContinue := .f.
+//     else
+//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomFieldValue","ListOfRecords")
+//     endif
+// endwith
+// ----- Custom Field End ------------------------------------------------------
+
+if l_lContinue
+    l_cBackupCode += CRLF
+
+    l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
+
+    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
+
+    hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
+    DeleteFile(l_cFilePathPID+"Export.txt")
+
+    //_M_ Add a Sanitizing function for l_oInfo:Application_Name
+    l_cFileName := "ExportTable_"+strtran(l_oInfo:NameSpace_Name," ","_")+"_"+strtran(l_oInfo:Table_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
+
+    //Try to find if we already have a streamfile
+    with object l_oDB_ListOfFileStream
+        :Table("299a129d-dab1-4dad-0002-000000000200","volatile.FileStream","FileStream")
+        :Column("FileStream.pk"     ,"pk")
+        :Column("FileStream.LinkUID","LinkUID")
+        :Where("FileStream.fk_User = ^"  , oFCgi:p_iUserPk)
+        :Where("FileStream.fk_Table = ^" , par_iTablePk)
+        :Where("FileStream.type = 5")
+        :SQL("ListOfFileStream")
+        do case
+        case :Tally < 0
+            //Error
+            l_iKey := 0
+        case :Tally == 1
+            l_iKey     := ListOfFileStream->pk
+            l_cLinkUID := ListOfFileStream->LinkUID
+            if !l_oDB_FileStream:SaveFile("299a129d-dab1-4dad-0002-000000000201","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+            endif
+            with object l_oDB_FileStream
+                :Table("2c5183d2-9aad-4f72-8cfe-f4ad411e6c74","volatile.FileStream","FileStream")
+                :Field("FileName" , l_cFileName)
+                if :Update(l_iKey)
+                endif
+            endwith
+        otherwise
+            if :Tally > 1 //Bad data.
+                select ListOfFileStream
+                scan all
+                    l_oDB_FileStream:Delete("299a129d-dab1-4dad-0002-000000000202","volatile.FileStream",ListOfFileStream->pk)
+                endscan
+            endif
+
+            with object l_oDB_FileStream
+                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                :Table("299a129d-dab1-4dad-0002-000000000203","volatile.FileStream","FileStream")
+                :Field("fk_User"        , oFCgi:p_iUserPk)
+                :Field("fk_Table"       , par_iTablePk)
+                :Field("type"           , 5)
+                :Field("LinkUID"        , l_cLinkUID)
+                :Field("FileName"       , l_cFileName)
+                if :Add()
+                    l_iKey := :Key()
+                    if !l_oDB_FileStream:SaveFile("299a129d-dab1-4dad-0002-000000000204","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
+                        l_cFilePathUser := GetStreamFileFolderForCurrentUser()
+                        hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
+                    endif
+                else
+                    l_iKey := 0
+                endif
+            endwith
+        endcase
+    endwith
+    DeleteFile(l_cFilePathPID+"Export.zip")
+else
+    l_iKey := 0
+endif
+
+if l_iKey == 0
+    //Report error
+    l_cLinkUID    := ""
+    l_cBackupCode := "Export Failed"
+endif
+
+return l_cLinkUID
 //=================================================================================================================
