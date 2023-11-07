@@ -30,7 +30,7 @@ The current builds are using Ubuntu 22.04.
 The following commands can be used to create a docker image and start it, assigning port 8080.   
 
 ```
-docker build . -f Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04 -t datawharf_demo_using_dockerhub_baseimage:latest
+docker build . -f build/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf
 docker run -d -p 8080:80 datawharf_demo_using_dockerhub_baseimage:latest
 ```
 
