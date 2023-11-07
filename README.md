@@ -17,12 +17,16 @@ View [Data Architecture and Modeling with DataWharf Presentation Deck (Slides)](
 Sample screen of Data Dictionary Visualization 
 ![Sample screen of Data Dictionary Visualization](images/Sample001.png "Sample screen of Data Dictionary Visualization")
 
+# Running DataWharf using docker-compose
+
+docker-compose --project-directory . --file hosting/docker/docker-compose.yml --env-file hosting/docker/environment.env up -d
+
 # Running DataWharf using Docker
 ## Overview
 For Windows and Mac users, the easiest is to Install Docker Desktop.   
 For Windows users you can use the following article to learn how to [setup WSL, Docker Desktop](https://harbour.wiki/index.asp?page=PublicArticles&mode=show&id=221022022831&sig=9123873596)   
 If you don't already have access to a PostgreSQL server, install version 14 or above on your local machine.   
-Create an empty database "DataWharfDemo" for example and update the file "config_demo.txt" with PostgreSQL connection and login information.   
+Create an empty database "DataWharfDemo" for example and update the file "hosting/config/docker/config.txt" with PostgreSQL connection and login information.   
 There are 3 different ways to build a docker container. The slowest, but most up to date method is to use the docker file "Dockerfile_Demo_Complete_Ubuntu_Latest".   
 "Dockerfile_Demo_Complete_Ubuntu_Latest_With_Builder" will create a smaller image.   
 The fastest method to build a docker image is to use "Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04". DataWharf will use less than 30 Mb of ram at first.   
@@ -30,7 +34,7 @@ The current builds are using Ubuntu 22.04.
 The following commands can be used to create a docker image and start it, assigning port 8080.   
 
 ```
-docker build . -f build/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf
+docker build . -f hosting/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf
 docker run -d -p 8080:80 datawharf_demo_using_dockerhub_baseimage:latest
 ```
 

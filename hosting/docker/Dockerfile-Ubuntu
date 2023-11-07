@@ -131,9 +131,9 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
 
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
-COPY ./config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+COPY ./hosting/config/docker/config.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 
-COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
+COPY --from=datawharf-builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 
