@@ -1,17 +1,12 @@
 # Could pass in 22.04
 ARG UBUNTU_VERSION=latest
 # Set to true to get the main image to start with the builder image instead of the base image
-ARG INCLUDE_BUILDER
-
-# If INCLUDE_BUILDER isn't empty, then the main image starts with the builder image
-ENV main_image=${INCLUDE_BUILDER:+datawharf-builder}
-# If INCLUDE_BUILDER is empty, then the main image starts with the base image
-ENV main_image=${main_image:-datawharf-base}
-
-ENV config_file=./hosting/docker/config.txt
+ARG MAIN_IMAGE_BASE=datawharf-base
 
 #-------------------- base image --------------------
 FROM ubuntu:$UBUNTU_VERSION AS datawharf-base
+
+ENV config_file=./hosting/docker/config.txt
 
 ## for apt to be noninteractive
 ENV DEBIAN_FRONTEND noninteractive
@@ -125,7 +120,7 @@ RUN chmod +x ./BuildEXE.sh
 RUN ./BuildEXE.sh
 
 #-------------------- main image --------------------
-FROM ${main_image} AS datawharf
+FROM ${MAIN_IMAGE_BASE} AS datawharf
 
 RUN a2enmod rewrite
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/

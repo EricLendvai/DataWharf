@@ -16,9 +16,9 @@ There are 3 different ways to build a docker container
 
 | Ubuntu Version | Image Source | Image type 			| Command |
 |---------------|---------------|-------------------------------|---------|
-| Latest	| Build		| Builder (for development)	| `docker build . -f hosting/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf --build-arg INCLUDE_BUILDER=1`	|
-| Latest	| Build		| Main (for use)		| `docker build . -f hosting/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf`					|
-| 22.04		| Download	| Main (for use)		| `docker build . -f hosting/docker/Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04 -t datawharf_demo_using_dockerhub_baseimage:latest --target datawharf`		|
+| Latest	| Build		| Builder (for development)	| `docker build . -f hosting/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest --build-arg MAIN_IMAGE_BASE=datawharf-builder`	|
+| Latest	| Build		| Main (for use)		| `docker build . -f hosting/docker/Dockerfile-Ubuntu -t datawharf_demo_using_dockerhub_baseimage:latest`				|
+| 22.04		| Download	| Main (for use)		| `docker build . -f hosting/docker/Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04 -t datawharf_demo_using_dockerhub_baseimage:latest`	|
 
 DataWharf will use less than 30 Mb of ram at first.   
 The current builds are using Ubuntu 22.04.   
