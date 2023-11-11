@@ -1,0 +1,4 @@
+-	To get equivalent of `Dockerfile_Demo_Complete_Ubuntu_Latest_With_Builder`, just build using the Dockerfile
+-	To get equivalent of `Dockerfile_Demo_Complete_Ubuntu_Latest`, build using `--build-arg INCLUDE_BUILDER=1`
+-	To get equivalent of `Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04`, build using `--build-arg UBUNTU_VERSION=22.04`
+-	`Dockerfile_Demo_Using_DockerHub_Ubuntu_22_04` is still its own thing
