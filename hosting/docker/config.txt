@@ -1,8 +1,9 @@
+
 ReloadConfigAtEveryRequest=true             //"true" or "false"
 MaxRequestPerFCGIProcess=0                  //0 for Unlimited
 
 POSTGRESDRIVER=PostgreSQL Unicode
-POSTGRESHOST=datawharf-postgres
+POSTGRESHOST=host.docker.internal
 POSTGRESPORT=5432
 
 //Database Login ID and Password
@@ -10,7 +11,7 @@ POSTGRESID=datawharf
 POSTGRESPASSWORD=main
 
 //Name of Database. Initially if could be simply an empty database.
-POSTGRESDATABASE=datawharf_example
+POSTGRESDATABASE=DataWharfDemo
 
 ShowDevelopmentInfo=No                      //No or Yes
 APPLICATION_TITLE=DataWharf Demo
@@ -27,3 +28,4 @@ ODBC_DRIVER_POSTGRESQL=PostgreSQL Unicode
 ODBC_DRIVER_MARIADB=MariaDB Unicode
 ODBC_DRIVER_MYSQL=MySQL ODBC 8.0 Unicode Driver
 ODBC_DRIVER_MSSQL=ODBC Driver 18 for SQL Server
+

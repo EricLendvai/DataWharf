@@ -6,8 +6,6 @@ ARG MAIN_IMAGE_BASE=datawharf-base
 #-------------------- base image --------------------
 FROM ubuntu:$UBUNTU_VERSION AS datawharf-base
 
-ENV config_file=./hosting/docker/config.txt
-
 ## for apt to be noninteractive
 ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN true
@@ -135,7 +133,9 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
 
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
-COPY $config_file /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+COPY ./hosting/docker/datawharf/scripts/all/* /usr/local/bin
+COPY ./hosting/docker/datawharf/scripts/ubuntu/* /usr/local/bin
+RUN chmod a+x /usr/local/bin/*
 
 COPY --from=datawharf-builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 
@@ -173,4 +173,4 @@ RUN apt install ./mysqlodbc.deb
 
 EXPOSE 80 
 
-CMD apache2ctl start & tail -f /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/error.log
+CMD datawharf-run

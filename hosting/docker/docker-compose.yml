@@ -8,7 +8,6 @@ services:
     container_name: ${PROJECT_NAME}-postgres
     image: postgres:13-alpine
     environment:
-      # Might be real POSTGRES variables
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -23,11 +22,18 @@ services:
   #############
   datawharf:
     container_name: ${PROJECT_NAME}-datawharf
+    depends_on:
+      - postgres
     build:
       context: .
       dockerfile: hosting/docker/Dockerfile-Ubuntu
       target: datawharf
     image: datawharf_demo_using_dockerhub_baseimage:latest
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=datawharf-postgres
     ports:
       - "8080:80"
     networks:
