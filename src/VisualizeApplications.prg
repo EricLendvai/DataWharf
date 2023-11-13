@@ -33,11 +33,14 @@ local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 local l_iDiagramPk
 
-local l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
-local l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
-local l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
-local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
-local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+local l_cUserSetting
+local l_lThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",par_iDiagramPk) == "T")
+local l_iCanvasWidth
+local l_iCanvasHeight
+local l_lNavigationControl
+local l_lUnknownInGray
+local l_lNeverShowDescriptionOnHover
+
 local l_cDiagram_LinkUID
 local l_cURL
 local l_cProtocol
@@ -54,6 +57,52 @@ local l_nMultiEdgeCount
 local l_cHashKey
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
+
+if l_lThisDiagramOnly
+    l_cUserSetting := GetUserSetting("CanvasWidth",par_iDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("CanvasWidth")
+    endif
+    l_iCanvasWidth := val(l_cUserSetting)
+
+    l_cUserSetting := GetUserSetting("CanvasHeight",par_iDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("CanvasHeight")
+    endif
+    l_iCanvasHeight := val(l_cUserSetting)
+
+    l_cUserSetting := GetUserSetting("NavigationControl",par_iDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("NavigationControl")
+    endif
+    l_lNavigationControl := (l_cUserSetting == "T")
+
+    l_cUserSetting := GetUserSetting("UnknownInGray",par_iDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("UnknownInGray")
+    endif
+    l_lUnknownInGray := (l_cUserSetting == "T")
+
+    l_cUserSetting := GetUserSetting("NeverShowDescriptionOnHover",par_iDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("NeverShowDescriptionOnHover")
+    endif
+    l_lNeverShowDescriptionOnHover := (l_cUserSetting == "T")
+   
+    l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale",par_iDiagramPk)
+    if empty(l_cDiagramInfoScale)
+        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+    endif
+
+else
+    l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
+    l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
+    l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
+    l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
+    l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+    l_cDiagramInfoScale            := GetUserSetting("DiagramInfoScale")
+
+endif
 
 //Save current diagram being used by current user in current application
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -161,6 +210,7 @@ with object l_oDB_ListOfTables
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
+        :Column("Table.Unlogged"   ,"Table_Unlogged")
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
@@ -176,6 +226,7 @@ with object l_oDB_ListOfTables
         :Column("NameSpace.Name"   ,"NameSpace_Name")
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
+        :Column("Table.Unlogged"   ,"Table_Unlogged")
         :Column("Table.UseStatus"  ,"Table_UseStatus")
         :Column("Table.DocStatus"  ,"Table_DocStatus")
         :Column("Table.Description","Table_Description")
@@ -425,7 +476,6 @@ l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
 
-l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
 if empty(l_cDiagramInfoScale)
     l_nDiagramInfoScale := 1
 else
@@ -440,7 +490,7 @@ l_cHtml += [<td valign="top">]  // width="100%"
 if l_nDiagramInfoScale == 1
     l_cHtml += [<div id="GraphInfo"></div>]
 else
-    l_cHtml += [<div id="GraphInfo" style="transform: scale(]+Trans(l_nDiagramInfoScale)+[);transform-origin: 0 0;"></div>]
+    l_cHtml += [<div id="GraphInfo" style="transform: scale(]+alltrim(str(l_nDiagramInfoScale,10,2))+[);transform-origin: 0 0;"></div>]
 endif
 l_cHtml += [</td>]
 //-------------------------------------
@@ -475,19 +525,34 @@ scan all
     do case
     case l_nNodeDisplayMode == 1 //Table Name and Alias
         l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
+        if ListOfTables->Table_Unlogged
+            l_cNodeLabel += [\n<small><mark>UNLOGGED</mark></small>]
+        endif
         if !hb_orm_isnull("ListOfTables","Table_AKA")
             l_cNodeLabel += [</b>\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
         else
             l_cNodeLabel += [</b>]
         endif
     case l_nNodeDisplayMode == 2 //Table Alias or Name
-        if !hb_orm_isnull("ListOfTables","Table_AKA")
-            l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[</b>]
+        if ListOfTables->Table_Unlogged
+            if !hb_orm_isnull("ListOfTables","Table_AKA")
+                l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[\n<small><mark>UNLOGGED</mark></small></b>]
+            else
+                l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
+            endif
+        else
+            if !hb_orm_isnull("ListOfTables","Table_AKA")
+                l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[</b>]
+            else
+                l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
+            endif
+        endif
+    case l_nNodeDisplayMode == 3 //Table Name
+        if ListOfTables->Table_Unlogged
+            l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
         else
             l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
         endif
-    case l_nNodeDisplayMode == 3 //Table Name
-        l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
     endcase
     l_cNodeLabel := [<b>]+l_cNodeLabel
 
@@ -580,25 +645,6 @@ scan all
     l_cHtml += [},]
 endscan
 l_cHtml += '];'
-
-// // create an array with edges
-// with object l_oDB_ListOfLinks
-//     :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
-//     :Column("Table.pk"              ,"pkFrom")
-//     :Column("Column.fk_TableForeign","pkTo")
-//     :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
-//     :Column("Column.UseStatus"      ,"Column_UseStatus")
-//     // :Column("Column.DocStatus"      ,"Column_DocStatus")
-//     :Column("Column.pk"             ,"Column_Pk")
-//     :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-//     :Join("inner","Column","","Column.fk_Table = Table.pk")
-//     :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-//     :Where("Column.fk_TableForeign <> 0")
-//     :OrderBy("pkFrom")
-//     :OrderBy("pkTo")
-//     :SQL("ListOfLinks")
-// endwith
-// l_nNumberOfLinksInDiagram := :Tally
 
 //Pre-Determine multi-links
 select ListOfLinks
@@ -767,7 +813,6 @@ oFcgi:p_cjQueryScript += [MakeVis();]
 // oFcgi:p_cjQueryScript += [$(document).on("keydown", "form", function(event) { return event.key != "Enter";});] // To prevent enter key from submitting form
 
 return l_cHtml
-
 //=================================================================================================================
 function DataDictionaryVisualizeDiagramOnSubmit(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode)
 local l_cHtml := []
@@ -787,7 +832,6 @@ local l_cTablePk
 local l_iTablePk
 local l_oDataDiagram
 local l_nRenderMode
-
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramOnSubmit")
 
@@ -1439,9 +1483,20 @@ case l_cActionOnSubmit == "Delete"
         :SQL("ListOfDiagramTableToDelete")
         select ListOfDiagramTableToDelete
         scan all
-            l_oDB2:Delete("469afb28-2829-4400-9670-a3e6acfd592a","DiagramTable",ListOfDiagramTableToDelete->pk)
+            :Delete("469afb28-2829-4400-9670-a3e6acfd592a","DiagramTable",ListOfDiagramTableToDelete->pk)
         endscan
-        l_oDB2:Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagramPk)
+        
+        //Delete related records in UserSetting
+        :Table("c4d616b9-9f17-47f2-a536-42ec624b3d47","UserSetting")
+        :Column("UserSetting.pk","pk")
+        :Where("UserSetting.fk_Diagram = ^" , l_iDiagramPk)
+        :SQL("ListOfUserSettingToDelete")
+        select ListOfUserSettingToDelete
+        scan all
+            :Delete("469afb28-2829-4400-9670-a3e6acfd592b","UserSetting",ListOfUserSettingToDelete->pk)
+        endscan
+        
+        :Delete("a9a53831-eceb-4280-ba8d-23decf60c87c","Diagram",l_iDiagramPk)
     endwith
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/Visualize/"+par_cURLApplicationLinkCode+"/")
 
@@ -1680,10 +1735,11 @@ local l_hValues      := hb_DefaultValue(par_hValues,{=>})
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 
+local l_lPreviousThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",par_iDiagramPk) == "T")
+local l_lThisDiagramOnly
 local l_nSize
 local l_iCanvasWidth
 local l_iCanvasHeight
-
 local l_lNavigationControl
 local l_lUnknownInGray
 local l_lNeverShowDescriptionOnHover
@@ -1692,8 +1748,18 @@ oFcgi:TraceAdd("DataDictionaryVisualizeMyDiagramSettingsBuild")
 
 if pcount() < 6
     if par_iDiagramPk > 0
+        l_lThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",par_iDiagramPk) == "T")
+        l_hValues["ThisDiagramOnly"]  := l_lThisDiagramOnly
 
-        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+
+        if l_lThisDiagramOnly
+            l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale",par_iDiagramPk)
+            if empty(l_cDiagramInfoScale)
+                l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+            endif
+        else
+            l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+        endif
         if empty(l_cDiagramInfoScale)
             l_nDiagramInfoScale := 1
         else
@@ -1704,25 +1770,65 @@ if pcount() < 6
         endif
         l_hValues["DiagramInfoScale"]  := l_nDiagramInfoScale   // 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4
 
-        l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+
+        if l_lThisDiagramOnly
+            l_iCanvasWidth  := val(GetUserSetting("CanvasWidth",par_iDiagramPk))
+            if empty(l_cDiagramInfoScale)
+                l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+            endif
+        else
+            l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+        endif
         if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
             l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
         endif
         l_hValues["CanvasWidth"]  := l_iCanvasWidth
 
-        l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+
+        if l_lThisDiagramOnly
+            l_iCanvasHeight := val(GetUserSetting("CanvasHeight",par_iDiagramPk))
+            if empty(l_cDiagramInfoScale)
+                l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+            endif
+        else
+            l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+        endif
         if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
             l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
         endif
         l_hValues["CanvasHeight"]  := l_iCanvasHeight
 
-        l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+
+        if l_lThisDiagramOnly
+            l_lNavigationControl := (GetUserSetting("NavigationControl",par_iDiagramPk) == "T")
+            if empty(l_cDiagramInfoScale)
+                l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+            endif
+        else
+            l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+        endif
         l_hValues["NavigationControl"]  := l_lNavigationControl
 
-        l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
+
+        if l_lThisDiagramOnly
+            l_lUnknownInGray := (GetUserSetting("UnknownInGray",par_iDiagramPk) == "T")
+            if empty(l_cDiagramInfoScale)
+                l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
+            endif
+        else
+            l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
+        endif
         l_hValues["UnknownInGray"]  := l_lUnknownInGray
 
-        l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+
+        if l_lThisDiagramOnly
+            l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover",par_iDiagramPk) == "T")
+            if empty(l_cDiagramInfoScale)
+                l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+            endif
+        else
+            l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+        endif
         l_hValues["NeverShowDescriptionOnHover"]  := l_lNeverShowDescriptionOnHover
 
     endif
@@ -1751,8 +1857,22 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
-        l_nDiagramInfoScale := hb_HGetDef(l_hValues,"DiagramInfoScale",1)
+        l_lThisDiagramOnly := hb_HGetDef(l_hValues,"ThisDiagramOnly",.f.)
         l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">For Current Diagram Only</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input type="hidden" id="CheckPreviousThisDiagramOnly" name="CheckPreviousThisDiagramOnly" value="]+iif(l_lPreviousThisDiagramOnly,"1","0")+[">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
+                if l_lThisDiagramOnly  //If turning off the setting, hide all the other settings.
+                    l_cHtml += [ onclick='$(".DiagramSettings").toggleClass("d-none",!$("#CheckThisDiagramOnly").is(":checked"));']
+                endif
+                l_cHtml += [>]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+
+        l_nDiagramInfoScale := hb_HGetDef(l_hValues,"DiagramInfoScale",1)
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Right Panel Scale</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
@@ -1772,7 +1892,7 @@ l_cHtml += [<div class="m-3">]
         if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
             l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
         endif
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Width</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
@@ -1788,7 +1908,7 @@ l_cHtml += [<div class="m-3">]
         if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
             l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
         endif
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Height</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
@@ -1801,7 +1921,7 @@ l_cHtml += [<div class="m-3">]
 
 
         l_lNavigationControl := hb_HGetDef(l_hValues,"NavigationControl",.f.)
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Display Navigation Controls</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
@@ -1810,7 +1930,7 @@ l_cHtml += [<div class="m-3">]
 
 
         l_lUnknownInGray := hb_HGetDef(l_hValues,"UnknownInGray",.f.)
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Unknown Usage Status in Gray</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckUnknownInGray" id="CheckUnknownInGray" value="1"]+iif(l_lUnknownInGray," checked","")+[ class="form-check-input">]
@@ -1819,7 +1939,7 @@ l_cHtml += [<div class="m-3">]
 
 
         l_lNeverShowDescriptionOnHover := hb_HGetDef(l_hValues,"NeverShowDescriptionOnHover",.f.)
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Never Show Description On Hover</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
@@ -1847,6 +1967,9 @@ local l_cHtml := []
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 local l_iDiagramPk
 
+local l_lPreviousThisDiagramOnly
+local l_lThisDiagramOnly
+local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 local l_iCanvasWidth
 local l_iCanvasHeight
@@ -1860,71 +1983,89 @@ local l_hValues := {=>}
 
 oFcgi:TraceAdd("DataDictionaryVisualizeMyDiagramSettingsOnSubmit")
 
-l_iDiagramPk       := Val(oFcgi:GetInputValue("TextDiagramPk"))
-l_nDiagramInfoScale := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
-if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
-    l_nDiagramInfoScale := 1
-endif
-
-l_iCanvasWidth := val(oFcgi:GetInputValue("ComboCanvasWidth"))
-if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
-    l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
-endif
-
-l_iCanvasHeight := val(oFcgi:GetInputValue("ComboCanvasHeight"))
-if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
-    l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
-endif
-
-l_lNavigationControl           := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
-l_lUnknownInGray               := (oFcgi:GetInputValue("CheckUnknownInGray") == "1")
-l_lNeverShowDescriptionOnHover := (oFcgi:GetInputValue("CheckNeverShowDescriptionOnHover") == "1")
+l_iDiagramPk               := Val(oFcgi:GetInputValue("TextDiagramPk"))
+l_lPreviousThisDiagramOnly := (oFcgi:GetInputValue("CheckPreviousThisDiagramOnly") == "1")
+l_lThisDiagramOnly         := (oFcgi:GetInputValue("CheckThisDiagramOnly") == "1")
 
 do case
 case l_cActionOnSubmit == "SaveMySettings"
+    SaveUserSetting("ThisDiagramOnly",iif(l_lThisDiagramOnly,"T","F"),l_iDiagramPk)
 
-    if l_nDiagramInfoScale == 1
-        SaveUserSetting("DiagramInfoScale","")  // No need to save the default value
-    else
-        SaveUserSetting("DiagramInfoScale",Trans(l_nDiagramInfoScale))
-    endif
+    if l_lPreviousThisDiagramOnly .and. !l_lThisDiagramOnly
+        // Turning off "For Current Diagram Only" setting, so will not apply the settings globally.
+        // Go back and allow to edit global settings by fetching again the current non current diagram specific settings.
 
-    if l_iCanvasWidth == CANVAS_WIDTH_DEFAULT
-        SaveUserSetting("CanvasWidth","")  // No need to save the default value
-    else
-        SaveUserSetting("CanvasWidth",Trans(l_iCanvasWidth))
-    endif
+        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+        if empty(l_cDiagramInfoScale)
+            l_nDiagramInfoScale := 1
+        else
+            l_nDiagramInfoScale := val(l_cDiagramInfoScale)
+            if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+                l_nDiagramInfoScale := 1
+            endif
+        endif
 
-    if l_iCanvasHeight == CANVAS_HEIGHT_DEFAULT
-        SaveUserSetting("CanvasHeight","")  // No need to save the default value
-    else
-        SaveUserSetting("CanvasHeight",Trans(l_iCanvasHeight))
-    endif
+        l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+        if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
+            l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
+        endif
 
-    if l_lNavigationControl
-        SaveUserSetting("NavigationControl","T")
-    else
-        SaveUserSetting("NavigationControl","")
-    endif
+        l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+        if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
+            l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
+        endif
 
-    if l_lUnknownInGray
-        SaveUserSetting("UnknownInGray","T")
-    else
-        SaveUserSetting("UnknownInGray","")
-    endif
-
-    if l_lNeverShowDescriptionOnHover
-        SaveUserSetting("NeverShowDescriptionOnHover","T")
-    else
-        SaveUserSetting("NeverShowDescriptionOnHover","")
-    endif
-
-    if empty(l_cErrorMessage)
-        l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
-    else
-        l_hValues["DiagramInfoScale"] := l_nDiagramInfoScale
+        l_hValues["ThisDiagramOnly"]              := l_lThisDiagramOnly   //.f.
+        l_hValues["DiagramInfoScale"]             := l_nDiagramInfoScale
+        l_hValues["CanvasWidth"]                  := l_iCanvasWidth
+        l_hValues["CanvasHeight"]                 := l_iCanvasHeight
+        l_hValues["NavigationControl"]            := (GetUserSetting("NavigationControl") == "T")
+        l_hValues["UnknownInGray"]                := (GetUserSetting("UnknownInGray") == "T")
+        l_hValues["NeverShowDescriptionOnHover"]  := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
         l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
+
+    else
+        l_nDiagramInfoScale            := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
+        l_iCanvasWidth                 := val(oFcgi:GetInputValue("ComboCanvasWidth"))
+        l_iCanvasHeight                := val(oFcgi:GetInputValue("ComboCanvasHeight"))
+        l_lNavigationControl           := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
+        l_lUnknownInGray               := (oFcgi:GetInputValue("CheckUnknownInGray") == "1")
+        l_lNeverShowDescriptionOnHover := (oFcgi:GetInputValue("CheckNeverShowDescriptionOnHover") == "1")
+
+        if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+            l_nDiagramInfoScale := 1
+        endif
+
+        if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
+            l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
+        endif
+
+        if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
+            l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
+        endif
+
+        //May not simply store blanks on default values, since we have a 2 tiers approach (Diagram Specific, than any Diagrams)
+        SaveUserSetting("DiagramInfoScale"           ,alltrim(str(l_nDiagramInfoScale,10,2))     ,iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+        SaveUserSetting("CanvasWidth"                ,Trans(l_iCanvasWidth)                      ,iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+        SaveUserSetting("CanvasHeight"               ,Trans(l_iCanvasHeight)                     ,iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+        SaveUserSetting("NavigationControl"          ,iif(l_lNavigationControl,"T","F")          ,iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+        SaveUserSetting("UnknownInGray"              ,iif(l_lUnknownInGray,"T","F")              ,iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+        SaveUserSetting("NeverShowDescriptionOnHover",iif(l_lNeverShowDescriptionOnHover,"T","F"),iif(l_lThisDiagramOnly,l_iDiagramPk,0))
+
+        if empty(l_cErrorMessage)  // Currently there are no scenarios that would create an error, but kept the logic in case in the future will need to handle this.
+            l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
+        else
+            l_hValues["ThisDiagramOnly"]             := l_lThisDiagramOnly
+            l_hValues["DiagramInfoScale"]            := l_nDiagramInfoScale
+            l_hValues["CanvasWidth"]                 := l_iCanvasWidth
+            l_hValues["CanvasHeight"]                := l_iCanvasHeight
+            l_hValues["NavigationControl"]           := l_lNavigationControl
+            l_hValues["UnknownInGray"]               := l_lUnknownInGray
+            l_hValues["NeverShowDescriptionOnHover"] := l_lNeverShowDescriptionOnHover
+
+            l_cHtml := DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
+        endif
     endif
 
 case l_cActionOnSubmit == "Cancel"
@@ -1960,6 +2101,7 @@ local l_cApplicationLinkCode
 local l_cNameSpaceName
 local l_cTableName
 local l_cTableAKA
+local l_lTableUnlogged
 local l_cTableDescription
 local l_cTableInformation
 local l_nTableUseStatus
@@ -2322,10 +2464,11 @@ if len(l_aNodes) == 1
             :Column("NameSpace.name"      ,"NameSpace_Name")        // 2
             :Column("Table.Name"          ,"Table_Name")            // 3
             :Column("Table.AKA"           ,"Table_AKA")             // 4
-            :Column("Table.Description"   ,"Table_Description")     // 5
-            :Column("Table.Information"   ,"Table_Information")     // 6
-            :Column("Table.UseStatus"     ,"Table_UseStatus")       // 7
-            :Column("Table.DocStatus"     ,"Table_DocStatus")       // 8
+            :Column("Table.Unlogged"      ,"Table_Unlogged")        // 5
+            :Column("Table.Description"   ,"Table_Description")     // 6
+            :Column("Table.Information"   ,"Table_Information")     // 7
+            :Column("Table.UseStatus"     ,"Table_UseStatus")       // 8
+            :Column("Table.DocStatus"     ,"Table_DocStatus")       // 9
             :join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
             :join("inner","Application","","NameSpace.fk_Application = Application.pk")
             :Where("Table.pk = ^" , l_iTablePk)
@@ -2337,10 +2480,11 @@ if len(l_aNodes) == 1
             l_cNameSpaceName       := AllTrim(l_aSQLResult[1,2])
             l_cTableName           := AllTrim(l_aSQLResult[1,3])
             l_cTableAKA            := AllTrim(nvl(l_aSQLResult[1,4],""))
-            l_cTableDescription    := nvl(l_aSQLResult[1,5],"")
-            l_cTableInformation    := nvl(l_aSQLResult[1,6],"")
-            l_nTableUseStatus      := l_aSQLResult[1,7]
-            l_nTableDocStatus      := l_aSQLResult[1,8]
+            l_lTableUnlogged       := l_aSQLResult[1,5]
+            l_cTableDescription    := nvl(l_aSQLResult[1,6],"")
+            l_cTableInformation    := nvl(l_aSQLResult[1,7],"")
+            l_nTableUseStatus      := l_aSQLResult[1,8]
+            l_nTableDocStatus      := l_aSQLResult[1,9]
 
             l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nTableUseStatus,USESTATUS_UNKNOWN)]
             l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),l_nTableDocStatus,DOCTATUS_MISSING)]
@@ -2368,7 +2512,9 @@ if len(l_aNodes) == 1
 
                 l_cHtml += [<div class="input-group">]
                     //Added extra double quotes around table names it easier to select text on double click.
-                    l_cHtml += [<span class="navbar-brand ms-3">Table: "]+l_cNameSpaceName+[.]+l_cTableName+FormatAKAForDisplay(l_cTableAKA)+["]+;
+                    l_cHtml += [<span class="navbar-brand ms-3">Table: "]+l_cNameSpaceName+[.]+l_cTableName+["]+;
+                                iif(l_lTableUnlogged,[ UNLOGGED],[])+;
+                                FormatAKAForDisplay(l_cTableAKA)+;
                                 [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNameSpaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]
                                 if !empty(l_cUseStatus) // .and. l_cUseStatus != "Active"
                                     l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
@@ -2506,30 +2652,30 @@ if len(l_aNodes) == 1
                                     // Type
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
 
-            // Prepare the tooltip text for enumeration type fields
-            if allt(ListOfColumns->Column_Type) == "E" .and. vfp_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
-                l_cTooltipEnumValues := [<table>]
-                select ListOfEnumValues
-                scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
-                    l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
-                                {[ ]=>[&nbsp;],;
-                                ["]=>[&#34;],;
-                                [']=>[&#39;],;
-                                [<]=>[&lt;],;
-                                [>]=>[&gt;]})+[</td>]
-                    l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
-                    if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
-                        l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
-                    else
-                        l_cTooltipEnumValues += [<td></td>]
-                    endif
-                    l_cTooltipEnumValues += [</tr>]
-                endscan
-                l_cTooltipEnumValues += [</table>]
-            else
-                l_cTooltipEnumValues := ""
-            endif
+                                        // Prepare the tooltip text for enumeration type fields
+                                        if allt(ListOfColumns->Column_Type) == "E" .and. vfp_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                                            l_cTooltipEnumValues := [<table>]
+                                            select ListOfEnumValues
+                                            scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                                l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                                            {[ ]=>[&nbsp;],;
+                                                            ["]=>[&#34;],;
+                                                            [']=>[&#39;],;
+                                                            [<]=>[&lt;],;
+                                                            [>]=>[&gt;]})+[</td>]
+                                                l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                                                if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                                                    l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                                                else
+                                                    l_cTooltipEnumValues += [<td></td>]
+                                                endif
+                                                l_cTooltipEnumValues += [</tr>]
+                                            endscan
+                                            l_cTooltipEnumValues += [</table>]
+                                        else
+                                            l_cTooltipEnumValues := ""
+                                        endif
 
                                         l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
                                                                         ListOfColumns->Column_Length,;
@@ -2736,7 +2882,6 @@ if len(l_aNodes) == 1
                     l_cHtml += [</div>]
 
                 endif
-
 
                 if !empty(l_cHtml_TableCustomFields)
                     l_cHtml += [<div class="mt-3">]

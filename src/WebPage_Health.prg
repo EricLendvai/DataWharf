@@ -20,7 +20,7 @@ l_hStatus["build Info"] := {"datawharf"   => hb_buildinfo(),;
                             "harbour_vfp" => hb_vfp_buildinfo();
                            }
 
-if !oFcgi:p_o_SQLConnection:SQLExec("select version() as version","VersionInfo")
+if !oFcgi:p_o_SQLConnection:SQLExec("BuildPageHealth","select version() as version","VersionInfo")
     l_hStatus["data_server"] := "Failed to connect to data server."
 else
     l_hStatus["data_server"] := VersionInfo->version

@@ -392,7 +392,7 @@ case l_cURLAction == "DataDictionaryExportToHarbourORM"
         l_cHtml += [</script>]+CRLF
 
         if oFcgi:isGet()
-            l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportApplicationToHbORM(l_iApplicationPk)+[</pre>]
+            l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportApplicationToHbORM(l_iApplicationPk,2)+[</pre>]
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
@@ -605,6 +605,7 @@ case l_cURLAction == "EditTable"
         :Column("Table.DocStatus"   , "DocStatus")     // 6
         :Column("Table.Description" , "Description")   // 7
         :Column("Table.Information" , "Information")   // 8
+        :Column("Table.Unlogged"    , "Unlogged")      // 9
         :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
         :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
         :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
@@ -625,6 +626,7 @@ case l_cURLAction == "EditTable"
             l_hValues["DocStatus"]       := l_aSQLResult[1,6]
             l_hValues["Description"]     := l_aSQLResult[1,7]
             l_hValues["Information"]     := l_aSQLResult[1,8]
+            l_hValues["Unlogged"]        := l_aSQLResult[1,9]
  
             CustomFieldsLoad(l_iApplicationPk,USEDON_TABLE,l_iTablePk,@l_hValues)
 
@@ -2571,26 +2573,24 @@ case l_cActionOnSubmit == "Delete"   // NameSpace
                 :Table("910d6dd3-4bcb-4d96-a092-61730e83380c","Table")
                 :Where("table.fk_NameSpace = ^",l_iNameSpacePk)
                 :SQL()
-            endwith
 
-            if l_oDB1:Tally == 0
-                with object l_oDB1
+                if :Tally == 0
                     :Table("1228e164-50b6-447a-81c3-e2e0430983fc","Enumeration")
                     :Where("Enumeration.fk_NameSpace = ^",l_iNameSpacePk)
                     :SQL()
-                endwith
 
-                if l_oDB1:Tally == 0
-                    CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
-                    l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
+                    if :Tally == 0
+                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
+                        :Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
 
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                    else
+                        l_cErrorMessage := "Related Enumeration record on file"
+                    endif
                 else
-                    l_cErrorMessage := "Related Enumeration record on file"
+                    l_cErrorMessage := "Related Table record on file"
                 endif
-            else
-                l_cErrorMessage := "Related Table record on file"
-            endif
+            endwith
         endif
     endif
 
@@ -2791,6 +2791,7 @@ with object l_oDB_ListOfTables
     :Column("NameSpace.Name"   ,"NameSpace_Name")
     :Column("Table.Name"       ,"Table_Name")
     :Column("Table.AKA"        ,"Table_AKA")
+    :Column("Table.Unlogged"   ,"Table_Unlogged")
     :Column("Table.UseStatus"  ,"Table_UseStatus")
     :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
@@ -3091,7 +3092,7 @@ if !empty(l_nNumberOfTables)
 
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
-            l_nColspan := 8
+            l_nColspan := 9
             if l_nNumberOfCustomFieldValues > 0
                 l_nColspan += 1
             endif
@@ -3111,6 +3112,7 @@ if !empty(l_nNumberOfTables)
                 if l_nNumberOfTags > 0
                     l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tags</th>]
                 endif
+                l_cHtml += [<th class="GridHeaderRowCells text-white">Unlogged</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white">Info</th>]
                 l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
@@ -3158,6 +3160,10 @@ if !empty(l_nNumberOfTables)
                         l_cHtml += [</td>]
                     endif
 
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += iif(ListOfTables->Table_Unlogged,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                    l_cHtml += [</td>]
+
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
                     l_cHtml += [</td>]
@@ -3188,6 +3194,8 @@ if !empty(l_nNumberOfTables)
     l_cHtml += [</div>]
 
 endif
+
+// VFP_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_TableListFormBuild.txt")
 
 return l_cHtml
 //=================================================================================================================
@@ -3263,6 +3271,7 @@ local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cTags            := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
+local l_lUnlogged        := hb_HGetDef(par_hValues,"Unlogged",.f.)
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
@@ -3459,6 +3468,14 @@ else
             endif
 
             l_cHtml += [<tr class="pb-5">]
+                l_cHtml += [<td class="pe-2 pb-3">Unlogged</td>]
+                l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                    l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckUnlogged" id="CheckUnlogged" value="1"]+iif(l_lUnlogged," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                    l_cHtml += [<span class="ps-3">(PostgreSQL Only)</span>]
+                l_cHtml += [</div></td>]
+            l_cHtml += [</tr>]
+
+            l_cHtml += [<tr class="pb-5">]
                 l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
                 l_cHtml += [<td class="pb-3">]
                     l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[ class="form-select">]
@@ -3523,6 +3540,7 @@ local l_iTemplateTablePk
 local l_iNameSpacePk
 local l_cTableName
 local l_cTableAKA
+local l_lUnlogged
 local l_nTableUseStatus
 local l_nTableDocStatus
 local l_cTableDescription
@@ -3534,7 +3552,6 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
 local l_oDBListOfTemplateColumns
 
 local l_oDBListOfTagsOnFile
@@ -3559,6 +3576,8 @@ l_cTableAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
     l_cTableAKA := NIL
 endif
+l_lUnlogged         := (oFcgi:GetInputValue("CheckUnlogged") == "1")
+
 l_nTableUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
 l_nTableDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
@@ -3602,6 +3621,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Table.Name"        ,l_cTableName)
                 :Field("Table.AKA"         ,l_cTableAKA)
                 :Field("Table.UseStatus"   ,l_nTableUseStatus)
+                :Field("Table.Unlogged"    ,l_lUnlogged)
             endif
             :Field("Table.DocStatus"   ,l_nTableDocStatus)
             :Field("Table.Description" ,iif(empty(l_cTableDescription),NULL,l_cTableDescription))
@@ -3765,7 +3785,6 @@ case l_cActionOnSubmit == "Delete"   // Table
                 l_cFrom := "Redirect"
             endif
         else
-            l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("c0dabef1-454d-4665-8cac-cc42192cdc6c","Column")
                 :Where("Column.fk_Table = ^",l_iTablePk)
@@ -3820,7 +3839,7 @@ case l_cActionOnSubmit == "Delete"   // Table
                                 if :Tally > 0
                                     select ListOfDiagramTableRecordsToDelete
                                     scan
-                                        l_oDB2:Delete("e1d662cd-cbad-4402-96f6-c387aaf6077b","DiagramTable",ListOfDiagramTableRecordsToDelete->pk)
+                                        :Delete("e1d662cd-cbad-4402-96f6-c387aaf6077b","DiagramTable",ListOfDiagramTableRecordsToDelete->pk)
                                     endscan
                                 endif
 
@@ -3833,7 +3852,7 @@ case l_cActionOnSubmit == "Delete"   // Table
                                     if :Tally > 0
                                         select ListOfTagTableRecordsToDelete
                                         scan
-                                            l_oDB2:Delete("a9c2e2d2-e7ec-4345-9307-4033d7bb4fb3","TagTable",ListOfTagTableRecordsToDelete->pk)
+                                            :Delete("a9c2e2d2-e7ec-4345-9307-4033d7bb4fb3","TagTable",ListOfTagTableRecordsToDelete->pk)
                                         endscan
                                     endif
 
@@ -4766,6 +4785,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pe-2 pb-3">Array</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckArray" id="CheckArray" value="1"]+iif(l_lArray," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<span class="ps-3">(PostgreSQL Only)</span>]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
@@ -5673,7 +5693,6 @@ local l_hValues := {=>}
 
 local l_cErrorMessage := ""
 local l_oDB1
-local l_oDB2
 local l_oDB_ListOfAllColumns
 
 oFcgi:TraceAdd("IndexEditFormOnSubmit")
@@ -5795,23 +5814,22 @@ case l_cActionOnSubmit == "Delete"   // Index
             :Column("IndexColumn.pk","pk")
             :Where("IndexColumn.fk_Index = ^",l_iPk)
             :SQL("ListOfRecordsToDelete")
+
+            if l_oDB1:Tally >= 0
+                select ListOfRecordsToDelete
+                scan all
+                    :Delete("8b6d4b8e-5800-482e-87d4-a00246e2c7e5","IndexColumn",ListOfRecordsToDelete->pk)
+                endscan
+
+                :Delete("3ae994e1-b216-4869-b884-b372e5e24c2f","Index",l_iPk)
+
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+
+            else
+                l_cErrorMessage := "Unable to find related columns."
+
+            endif
         endwith
-
-        if l_oDB1:Tally >= 0
-            l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            select ListOfRecordsToDelete
-            scan all
-                l_oDB2:Delete("8b6d4b8e-5800-482e-87d4-a00246e2c7e5","IndexColumn",ListOfRecordsToDelete->pk)
-            endscan
-
-            l_oDB1:Delete("3ae994e1-b216-4869-b884-b372e5e24c2f","Index",l_iPk)
-
-            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
-
-        else
-            l_cErrorMessage := "Unable to find related columns."
-
-        endif
     endif
 
 endcase
@@ -6981,8 +6999,12 @@ case l_cActionOnSubmit == "Cancel"
 case l_cActionOnSubmit == "Delete"   // EnumValue
     if oFcgi:p_nAccessLevelDD >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-        l_oDB1:Delete("7f3486e6-6bbc-4307-b617-5ff00f0ac3ad","EnumValue",l_iEnumValuePk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+altd()
+        if l_oDB1:Delete("7f3486e6-6bbc-4307-b617-5ff00f0ac3ad","EnumValue",l_iEnumValuePk)
+            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+        else
+            l_cErrorMessage := "Failed to delete value."
+        endif
     endif
 
 endcase
@@ -7894,26 +7916,23 @@ case l_cActionOnSubmit == "Delete"   // Tag
                 :Table("cff1bf6d-698a-4497-891e-4f435abca65c","TagTable")
                 :Where("TagTable.fk_Tag = ^",l_iTagPk)
                 :SQL()
-            endwith
 
-            if l_oDB1:Tally == 0
-                with object l_oDB1
+                if :Tally == 0
                     :Table("cff1bf6d-698a-4497-891e-4f435abca65c","TagColumn")
                     :Where("TagColumn.fk_Tag = ^",l_iTagPk)
                     :SQL()
-                endwith
 
-                if l_oDB1:Tally == 0
+                    if :Tally == 0
+                        :Delete("8b98caf8-3c1e-47f9-8f2e-975f2c5757a4","Tag",l_iTagPk)
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
 
-                    l_oDB1:Delete("8b98caf8-3c1e-47f9-8f2e-975f2c5757a4","Tag",l_iTagPk)
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
-
+                    else
+                        l_cErrorMessage := "Related Column Tag record on file"
+                    endif
                 else
-                    l_cErrorMessage := "Related Column Tag record on file"
+                    l_cErrorMessage := "Related Table Tag record on file"
                 endif
-            else
-                l_cErrorMessage := "Related Table Tag record on file"
-            endif
+            endwith
         endif
     endif
 
@@ -9335,7 +9354,7 @@ with object l_oDB1
     endif
 
     if empty(l_cErrorMessage)
-        if !:Delete("Tag",par_iTagPk)
+        if !:Delete("4fbd589c-5121-4041-bf7c-5aad0712ad56","Tag",par_iTagPk)
             l_cErrorMessage := "Failed to delete Tag. Error 5."
         endif
     endif

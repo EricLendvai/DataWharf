@@ -1026,7 +1026,6 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
 
 oFcgi:TraceAdd("PrimitiveTypeEditFormOnSubmit")
 
@@ -1077,8 +1076,7 @@ case l_cActionOnSubmit == "Save"
                     l_cErrorMessage := "Failed to add PrimitiveType."
                 endif
             else
-                if :Update(l_iPrimitiveTypePk)
-                else
+                if !:Update(l_iPrimitiveTypePk)
                     l_cErrorMessage := "Failed to update Primitive Type."
                 endif
             endif
@@ -1090,18 +1088,13 @@ case l_cActionOnSubmit == "Cancel"
 
 case l_cActionOnSubmit == "Delete"   // PrimitiveType
     if oFcgi:p_nAccessLevelML >= 7
-        l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
+            :Table("6eac4014-651f-43cc-af7e-976a77a89e75","DataType")
+            :Where("DataType.fk_PrimitiveType = ^",l_iPrimitiveTypePk)
+            :SQL()
 
-            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            with object l_oDB1
-                :Table("6eac4014-651f-43cc-af7e-976a77a89e75","DataType")
-                :Where("DataType.fk_PrimitiveType = ^",l_iPrimitiveTypePk)
-                :SQL()
-            endwith
-
-            if l_oDB1:Tally == 0
-                l_oDB1:Delete("04faf037-bff8-461a-9d57-c3317b4e10b9","PrimitiveType",l_iPrimitiveTypePk)
+            if :Tally == 0
+                :Delete("04faf037-bff8-461a-9d57-c3317b4e10b9","PrimitiveType",l_iPrimitiveTypePk)
 
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
             else

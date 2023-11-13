@@ -8,7 +8,7 @@ local l_cDataServer
 
 oFcgi:TraceAdd("BuildPageAbout")
 
-if !oFcgi:p_o_SQLConnection:SQLExec("select version() as version","VersionInfo")
+if !oFcgi:p_o_SQLConnection:SQLExec("BuildPageAbout","select version() as version","VersionInfo")
     l_cDataServer := "Failed to connect to data server."
 else
     l_cDataServer := VersionInfo->version

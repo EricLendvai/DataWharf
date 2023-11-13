@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 11/12/2023 v 2.60
+* REQUIRES hb_orm version 3.14 minimum.
+* Added in Visualizations (Diagrams) "My Settings" the option to be current diagram (Application and Modeling) specific.
+* Fix saving "Right Panel Scale" in "My Settings".
+* Added support for PostgreSQL UNLOGGED table setting.
+
 ## 11/05/2023 v 2.59
 * Minor Enhancement to make it easier to select and copy to clipboard table and link names in Application Visualization.
 * Enhancements to integrate with WharfSystems.

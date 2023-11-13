@@ -684,12 +684,10 @@ case l_cActionOnSubmit == "Save"
                         if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForUser","pk")
                             if l_nAccessLevelDD <= 1
                                 // Remove the Application
-                                with Object l_oDB1
-                                    if !l_oDB1:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
-                                        l_cErrorMessage := "Failed to Save Application selection."
-                                        exit
-                                    endif
-                                endwith
+                                if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
+                                    l_cErrorMessage := "Failed to Save Application selection."
+                                    exit
+                                endif
                             else
                                 if ListOfCurrentApplicationForUser->UserAccessApplication_AccessLevelDD <> l_nAccessLevelDD
                                     :Table("d6b0a424-ada8-4efd-a1e5-49821463d334","UserAccessApplication")
@@ -747,12 +745,10 @@ case l_cActionOnSubmit == "Save"
                         if VFP_Seek(ListOfProjects->pk,"ListOfCurrentProjectForUser","pk")
                             if l_nAccessLevelML <= 1
                                 // Remove the Project
-                                with Object l_oDB1
-                                    if !:Delete("7ffef7e4-582c-4f30-a7d6-eb46011b963c","UserAccessProject",ListOfCurrentProjectForUser->UserAccessProject_pk)
-                                        l_cErrorMessage := "Failed to Save Project selection."
-                                        exit
-                                    endif
-                                endwith
+                                if !:Delete("7ffef7e4-582c-4f30-a7d6-eb46011b963c","UserAccessProject",ListOfCurrentProjectForUser->UserAccessProject_pk)
+                                    l_cErrorMessage := "Failed to Save Project selection."
+                                    exit
+                                endif
                             else
                                 if ListOfCurrentProjectForUser->UserAccessProject_AccessLevelML <> l_nAccessLevelML
                                     :Table("f3d240d2-1df5-4de0-b7e5-f4be79b5f7f5","UserAccessProject")

@@ -42,10 +42,12 @@ local l_lShowPackage
 local l_cLabelLower
 local l_cLabelUpper
 
-local l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
-local l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
-local l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
-local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+local l_cUserSetting
+local l_lThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",,par_iModelingDiagramPk) == "T")
+local l_iCanvasWidth
+local l_iCanvasHeight
+local l_lNavigationControl
+local l_lNeverShowDescriptionOnHover
 local l_cModelingDiagram_LinkUID
 local l_cURL
 local l_cProtocol
@@ -74,6 +76,45 @@ local l_nMultiEdgeCount
 local l_cHashKey
 
 oFcgi:TraceAdd("ModelingVisualizeDiagramBuild")
+
+if l_lThisDiagramOnly
+    l_cUserSetting := GetUserSetting("CanvasWidth",,par_iModelingDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("CanvasWidth")
+    endif
+    l_iCanvasWidth := val(l_cUserSetting)
+
+    l_cUserSetting := GetUserSetting("CanvasHeight",,par_iModelingDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("CanvasHeight")
+    endif
+    l_iCanvasHeight := val(l_cUserSetting)
+
+    l_cUserSetting := GetUserSetting("NavigationControl",,par_iModelingDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("NavigationControl")
+    endif
+    l_lNavigationControl := (l_cUserSetting == "T")
+
+    l_cUserSetting := GetUserSetting("NeverShowDescriptionOnHover",,par_iModelingDiagramPk)
+    if empty(l_cUserSetting)
+        l_cUserSetting := GetUserSetting("NeverShowDescriptionOnHover")
+    endif
+    l_lNeverShowDescriptionOnHover := (l_cUserSetting == "T")
+   
+    l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale",,par_iModelingDiagramPk)
+    if empty(l_cDiagramInfoScale)
+        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+    endif
+
+else
+    l_iCanvasWidth                 := val(GetUserSetting("CanvasWidth"))
+    l_iCanvasHeight                := val(GetUserSetting("CanvasHeight"))
+    l_lNavigationControl           := (GetUserSetting("NavigationControl") == "T")
+    l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+    l_cDiagramInfoScale            := GetUserSetting("DiagramInfoScale")
+
+endif
 
 //Save current diagram being used by current user in current model
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -369,7 +410,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         endscan
 
         //Loop Again to remove the opposite endpoints (E <- A -> E). One side deleted so remove the other which has the same association
-// altd()
+
         select ListOfEdgesEntityEntity
         scan all //for !Deleted()
             if "*"+trans(ListOfEdgesEntityEntity->Association_pk)+"*" $ l_cListOfAssociationWhereAnEndpointWasDeleted
@@ -537,7 +578,6 @@ l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
 l_cHtml += [</td>]
 //-------------------------------------
 
-l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
 if empty(l_cDiagramInfoScale)
     l_nDiagramInfoScale := 1
 else
@@ -551,7 +591,7 @@ l_cHtml += [<td valign="top">]  // width="100%"
 if l_nDiagramInfoScale == 1
     l_cHtml += [<div id="GraphInfo"></div>]
 else
-    l_cHtml += [<div id="GraphInfo" style="transform: scale(]+Trans(l_nDiagramInfoScale)+[);transform-origin: 0 0;"></div>]
+    l_cHtml += [<div id="GraphInfo" style="transform: scale(]+alltrim(str(l_nDiagramInfoScale,10,2))+[);transform-origin: 0 0;"></div>]
 endif
 l_cHtml += [</td>]
 //-------------------------------------
@@ -687,7 +727,6 @@ endscan
 l_cHtml += '];'
 
 // SendToClipboard(l_cHtml)
-
 // create an array with edges
 
 l_cHtml += 'var edges = ['
@@ -759,7 +798,6 @@ scan all
     l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
 endscan
 
-
 // Edges between Two Entities
 
 hb_HClear(l_hMultiEdgeCounters)
@@ -791,7 +829,7 @@ l_cEndpointBoundUpper_Previous    := ""
 l_lEndpointIsContainment_Previous := .f.
 l_cEndpointName_Previous          := ""
 l_cEndpointDescription_Previous   := ""
-// Altd()
+
 scan all
     if ListOfEdgesEntityEntity->Association_pk == l_iAssociationPk_Previous
         //Build the edge between 2 entities
@@ -1022,7 +1060,6 @@ do case
 case l_cActionOnSubmit == "Show"
     l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
                                             
-//Stopped below.
 case l_cActionOnSubmit == "DiagramSettings" .and. oFcgi:p_nAccessLevelML >= 4
     l_cHtml := ModelingVisualizeDiagramSettingsBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
@@ -1613,8 +1650,20 @@ case l_cActionOnSubmit == "Delete"
         scan all
             l_oDB2:Delete("1419a855-311f-410f-8ec1-ed5978b06cd6","DiagramEntity",ListOfDiagramEntityToDelete->pk)
         endscan
+        
+        //Delete related records in UserSetting
+        :Table("a317b1a2-0cad-48f9-8f0f-892af023c9d5","UserSetting")
+        :Column("UserSetting.pk","pk")
+        :Where("UserSetting.fk_ModelingDiagram = ^" , l_iModelingDiagramPk)
+        :SQL("ListOfUserSettingToDelete")
+        select ListOfUserSettingToDelete
+        scan all
+            l_oDB2:Delete("1419a855-311f-410f-8ec1-ed5978b06cd7","UserSetting",ListOfUserSettingToDelete->pk)
+        endscan
+        
         l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagramPk)
     endwith
+    
     oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
@@ -1816,6 +1865,8 @@ local l_hValues      := hb_DefaultValue(par_hValues,{=>})
 local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 
+local l_lPreviousThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",,par_iModelingDiagramPk) == "T")
+local l_lThisDiagramOnly
 local l_nSize
 local l_iCanvasWidth
 local l_iCanvasHeight
@@ -1828,7 +1879,18 @@ oFcgi:TraceAdd("ModelingVisualizeMyDiagramSettingsBuild")
 if pcount() < 4
     if par_iModelingDiagramPk > 0
 
-        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+        l_lThisDiagramOnly := (GetUserSetting("ThisDiagramOnly",,par_iModelingDiagramPk) == "T")
+        l_hValues["ThisDiagramOnly"]  := l_lThisDiagramOnly
+
+
+        if l_lThisDiagramOnly
+            l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale",,par_iModelingDiagramPk)
+            if empty(l_cDiagramInfoScale)
+                l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+            endif
+        else
+            l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+        endif
         if empty(l_cDiagramInfoScale)
             l_nDiagramInfoScale := 1
         else
@@ -1839,22 +1901,54 @@ if pcount() < 4
         endif
         l_hValues["DiagramInfoScale"]  := l_nDiagramInfoScale   // 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4
 
-        l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+
+        if l_lThisDiagramOnly
+            l_iCanvasWidth  := val(GetUserSetting("CanvasWidth",,par_iModelingDiagramPk))
+            if empty(l_cDiagramInfoScale)
+                l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+            endif
+        else
+            l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+        endif
         if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
             l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
         endif
         l_hValues["CanvasWidth"]  := l_iCanvasWidth
 
-        l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+
+        if l_lThisDiagramOnly
+            l_iCanvasHeight := val(GetUserSetting("CanvasHeight",,par_iModelingDiagramPk))
+            if empty(l_cDiagramInfoScale)
+                l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+            endif
+        else
+            l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+        endif
         if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
             l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
         endif
         l_hValues["CanvasHeight"]  := l_iCanvasHeight
 
-        l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+
+        if l_lThisDiagramOnly
+            l_lNavigationControl := (GetUserSetting("NavigationControl",,par_iModelingDiagramPk) == "T")
+            if empty(l_cDiagramInfoScale)
+                l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+            endif
+        else
+            l_lNavigationControl := (GetUserSetting("NavigationControl") == "T")
+        endif
         l_hValues["NavigationControl"]  := l_lNavigationControl
 
-        l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+
+        if l_lThisDiagramOnly
+            l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover",,par_iModelingDiagramPk) == "T")
+            if empty(l_cDiagramInfoScale)
+                l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+            endif
+        else
+            l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
+        endif
         l_hValues["NeverShowDescriptionOnHover"]  := l_lNeverShowDescriptionOnHover
 
     endif
@@ -1883,8 +1977,22 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
-        l_nDiagramInfoScale := hb_HGetDef(l_hValues,"DiagramInfoScale",1)
+        l_lThisDiagramOnly := hb_HGetDef(l_hValues,"ThisDiagramOnly",.f.)
         l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">For Current Diagram Only</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input type="hidden" id="CheckPreviousThisDiagramOnly" name="CheckPreviousThisDiagramOnly" value="]+iif(l_lPreviousThisDiagramOnly,"1","0")+[">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
+                if l_lThisDiagramOnly  //If turning off the setting, hide all the other settings.
+                    l_cHtml += [ onclick='$(".DiagramSettings").toggleClass("d-none",!$("#CheckThisDiagramOnly").is(":checked"));']
+                endif
+                l_cHtml += [>]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
+
+        l_nDiagramInfoScale := hb_HGetDef(l_hValues,"DiagramInfoScale",1)
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Right Panel Scale</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
@@ -1904,7 +2012,7 @@ l_cHtml += [<div class="m-3">]
         if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
             l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
         endif
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Width</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
@@ -1920,7 +2028,7 @@ l_cHtml += [<div class="m-3">]
         if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
             l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
         endif
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Height</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
@@ -1933,7 +2041,7 @@ l_cHtml += [<div class="m-3">]
 
 
         l_lNavigationControl := hb_HGetDef(l_hValues,"NavigationControl",.f.)
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Display Navigation Controls</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
@@ -1942,7 +2050,7 @@ l_cHtml += [<div class="m-3">]
 
 
         l_lNeverShowDescriptionOnHover := hb_HGetDef(l_hValues,"NeverShowDescriptionOnHover",.f.)
-        l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Never Show Description On Hover</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
@@ -1971,6 +2079,9 @@ local l_cHtml := []
 local l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 local l_iModelingDiagramPk
 
+local l_lPreviousThisDiagramOnly
+local l_lThisDiagramOnly
+local l_cDiagramInfoScale
 local l_nDiagramInfoScale
 local l_iCanvasWidth
 local l_iCanvasHeight
@@ -1984,62 +2095,85 @@ local l_hValues := {=>}
 oFcgi:TraceAdd("ModelingVisualizeMyDiagramSettingsOnSubmit")
 
 l_iModelingDiagramPk       := Val(oFcgi:GetInputValue("TextModelingDiagramPk"))
-l_nDiagramInfoScale := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
-if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
-    l_nDiagramInfoScale := 1
-endif
+l_lPreviousThisDiagramOnly := (oFcgi:GetInputValue("CheckPreviousThisDiagramOnly") == "1")
+l_lThisDiagramOnly         := (oFcgi:GetInputValue("CheckThisDiagramOnly") == "1")
 
-l_iCanvasWidth := val(oFcgi:GetInputValue("ComboCanvasWidth"))
-if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
-    l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
-endif
-
-l_iCanvasHeight := val(oFcgi:GetInputValue("ComboCanvasHeight"))
-if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
-    l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
-endif
-
-l_lNavigationControl           := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
-l_lNeverShowDescriptionOnHover := (oFcgi:GetInputValue("CheckNeverShowDescriptionOnHover") == "1")
 
 do case
 case l_cActionOnSubmit == "SaveMySettings"
+    SaveUserSetting("ThisDiagramOnly",iif(l_lThisDiagramOnly,"T","F"),,l_iModelingDiagramPk)
 
-    if l_nDiagramInfoScale == 1
-        SaveUserSetting("DiagramInfoScale","")  // No need to save the default value
-    else
-        SaveUserSetting("DiagramInfoScale",Trans(l_nDiagramInfoScale))
-    endif
+    if l_lPreviousThisDiagramOnly .and. !l_lThisDiagramOnly
+        // Turning off "For Current Diagram Only" setting, so will not apply the settings globally.
+        // Go back and allow to edit global settings by fetching again the current non current diagram specific settings.
 
-    if l_iCanvasWidth == CANVAS_WIDTH_DEFAULT
-        SaveUserSetting("CanvasWidth","")  // No need to save the default value
-    else
-        SaveUserSetting("CanvasWidth",Trans(l_iCanvasWidth))
-    endif
+        l_cDiagramInfoScale := GetUserSetting("DiagramInfoScale")
+        if empty(l_cDiagramInfoScale)
+            l_nDiagramInfoScale := 1
+        else
+            l_nDiagramInfoScale := val(l_cDiagramInfoScale)
+            if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+                l_nDiagramInfoScale := 1
+            endif
+        endif
 
-    if l_iCanvasHeight == CANVAS_HEIGHT_DEFAULT
-        SaveUserSetting("CanvasHeight","")  // No need to save the default value
-    else
-        SaveUserSetting("CanvasHeight",Trans(l_iCanvasHeight))
-    endif
+        l_iCanvasWidth  := val(GetUserSetting("CanvasWidth"))
+        if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
+            l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
+        endif
 
-    if l_lNavigationControl
-        SaveUserSetting("NavigationControl","T")
-    else
-        SaveUserSetting("NavigationControl","")
-    endif
+        l_iCanvasHeight := val(GetUserSetting("CanvasHeight"))
+        if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
+            l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
+        endif
 
-    if l_lNeverShowDescriptionOnHover
-        SaveUserSetting("NeverShowDescriptionOnHover","T")
-    else
-        SaveUserSetting("NeverShowDescriptionOnHover","")
-    endif
+        l_hValues["ThisDiagramOnly"]              := l_lThisDiagramOnly   //.f.
+        l_hValues["DiagramInfoScale"]             := l_nDiagramInfoScale
+        l_hValues["CanvasWidth"]                  := l_iCanvasWidth
+        l_hValues["CanvasHeight"]                 := l_iCanvasHeight
+        l_hValues["NavigationControl"]            := (GetUserSetting("NavigationControl") == "T")
+        l_hValues["NeverShowDescriptionOnHover"]  := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 
-    if empty(l_cErrorMessage)
-        l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk)
-    else
-        l_hValues["DiagramInfoScale"] := l_nDiagramInfoScale
         l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
+
+    else
+        l_nDiagramInfoScale            := val(oFcgi:GetInputValue("ComboDiagramInfoScale"))
+        l_iCanvasWidth                 := val(oFcgi:GetInputValue("ComboCanvasWidth"))
+        l_iCanvasHeight                := val(oFcgi:GetInputValue("ComboCanvasHeight"))
+        l_lNavigationControl           := (oFcgi:GetInputValue("CheckNavigationControl") == "1")
+        l_lNeverShowDescriptionOnHover := (oFcgi:GetInputValue("CheckNeverShowDescriptionOnHover") == "1")
+
+        if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+            l_nDiagramInfoScale := 1
+        endif
+
+        if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
+            l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
+        endif
+
+        if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
+            l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
+        endif
+
+        //May not simply store blanks on default values, since we have a 2 tiers approach (Diagram Specific, than any Diagrams)
+        SaveUserSetting("DiagramInfoScale"           ,alltrim(str(l_nDiagramInfoScale,10,2))     ,,iif(l_lThisDiagramOnly,l_iModelingDiagramPk,0))
+        SaveUserSetting("CanvasWidth"                ,Trans(l_iCanvasWidth)                      ,,iif(l_lThisDiagramOnly,l_iModelingDiagramPk,0))
+        SaveUserSetting("CanvasHeight"               ,Trans(l_iCanvasHeight)                     ,,iif(l_lThisDiagramOnly,l_iModelingDiagramPk,0))
+        SaveUserSetting("NavigationControl"          ,iif(l_lNavigationControl,"T","F")          ,,iif(l_lThisDiagramOnly,l_iModelingDiagramPk,0))
+        SaveUserSetting("NeverShowDescriptionOnHover",iif(l_lNeverShowDescriptionOnHover,"T","F"),,iif(l_lThisDiagramOnly,l_iModelingDiagramPk,0))
+
+        if empty(l_cErrorMessage)  // Currently there are no scenarios that would create an error, but kept the logic in case in the future will need to handle this.
+            l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk)
+        else
+            l_hValues["ThisDiagramOnly"]             := l_lThisDiagramOnly
+            l_hValues["DiagramInfoScale"]            := l_nDiagramInfoScale
+            l_hValues["CanvasWidth"]                 := l_iCanvasWidth
+            l_hValues["CanvasHeight"]                := l_iCanvasHeight
+            l_hValues["NavigationControl"]           := l_lNavigationControl
+            l_hValues["NeverShowDescriptionOnHover"] := l_lNeverShowDescriptionOnHover
+
+            l_cHtml := ModelingVisualizeMyDiagramSettingsBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
+        endif
     endif
 
 case l_cActionOnSubmit == "Cancel"

@@ -611,6 +611,8 @@ local l_nTokenAccessMode
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
 
+// VFP_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestStart.txt")
+
 ::p_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
 if empty(::p_cThisAppTitle)
     ::p_cThisAppTitle := APPLICATION_TITLE
@@ -644,19 +646,30 @@ l_cSitePath := ::p_cSitePath
 
 //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
 l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
-if l_lPostgresLostConnection                                    .or.;
-   (::p_o_SQLConnection:GetServer()   <> l_cPostgresHost)     .or.;
-   (::p_o_SQLConnection:GetPort()     <> l_iPostgresPort)     .or.;
-   (::p_o_SQLConnection:GetDatabase() <> l_cPostgresDatabase) .or.;
-   (::p_o_SQLConnection:GetUser()     <> l_cPostgresId)
 
-    if !l_lPostgresLostConnection
-        ::p_o_SQLConnection:Disconnect()
+if !l_lPostgresLostConnection
+    if (::p_o_SQLConnection:GetServer()   <> l_cPostgresHost)     .or.;
+       (::p_o_SQLConnection:GetPort()     <> l_iPostgresPort)     .or.;
+       (::p_o_SQLConnection:GetDatabase() <> l_cPostgresDatabase) .or.;
+       (::p_o_SQLConnection:GetUser()     <> l_cPostgresId)
+        l_lPostgresLostConnection := .t.
     endif
+endif
 
-// l_cPostgresDriver := "PostgreSQL Unicode"
+if !l_lPostgresLostConnection  //If still possibly connected, test if the ORM schema is present
+    if ::p_o_SQLConnection:SQLExec("a37e465d-1a15-48bb-aa4f-c2542b76effa","select exists (select nspname from pg_catalog.pg_namespace where nspname = 'ORM');","ListOfNameSpaces")
+        if !ListOfNameSpaces->exists
+            l_lPostgresLostConnection := .t.
+        endif
+    else
+        l_lPostgresLostConnection := .t.
+    endif
+endif
 
-////    SendToDebugView("Reconnecting to SQL Server")
+if l_lPostgresLostConnection
+    ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
+
+    // SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                         l_cPostgresDriver,;
                                         l_cPostgresHost,;
@@ -745,7 +758,7 @@ otherwise
     else
         if l_lCyanAuditAware
             //Ensure no user specific cyanaudit is being identified
-            ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( 0 );")
+            ::p_o_SQLConnection:SQLExec("6d20b707-04df-47c1-85b1-2f3e73570680","SELECT cyanaudit.fn_set_current_uid( 0 );")
         endif
 
         // l_cSitePath := ::GetEnvironment("CONTEXT_PREFIX")
@@ -845,6 +858,7 @@ otherwise
         with object l_oDB1
             :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
             :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
+// altd()
             :Update(v_iFastCGIRunLogPk)
         endwith
 
@@ -1078,7 +1092,7 @@ otherwise
 
             if l_lCyanAuditAware
                 //Tell Cyanaudit to log future entries as the current user.
-                ::p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
+                ::p_o_SQLConnection:SQLExec("6b78107a-1717-4366-9000-bb7d2e5fafd0","SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
             endif
             
             if l_cPageName == "ajax"
@@ -1247,6 +1261,8 @@ endcase
 
 ::Print(l_cHtml)
 
+// VFP_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestEnd.txt")
+
 return nil
 //=================================================================================================================
 method OnShutdown() class MyFcgi
@@ -1371,7 +1387,7 @@ if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResu
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
             //Ensure Cyanaudit is up to date
-            oFcgi:p_o_SQLConnection:SQLExec("SELECT cyanaudit.fn_update_audit_fields('public');")
+            oFcgi:p_o_SQLConnection:SQLExec("a1bf5168-18e2-42ee-b0bd-6bfd252fa7a8","SELECT cyanaudit.fn_update_audit_fields('public');")
             //SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
         endif
     endif
@@ -1708,18 +1724,32 @@ return left(par_cText,l_nPos)
 function FormatAKAForDisplay(par_cAKA)
 return iif(!hb_IsNIL(par_cAKA) .and. !empty(par_cAKA),[&nbsp;(]+Strtran(par_cAKA,[ ],[&nbsp;])+[)],[])
 //=================================================================================================================
-function SaveUserSetting(par_cName,par_cValue)
+function SaveUserSetting(par_cName,par_cValue,par_iFk_Diagram,par_iFk_ModelingDiagram)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
+local l_iFk_Diagram         := nvl(par_iFk_Diagram,0)
+local l_iFk_ModelingDiagram := nvl(par_iFk_ModelingDiagram,0)
+local l_nCounter
+local l_nTally
 
 with object l_oDB1
     :Table("0afe8937-b79b-4359-b630-dc58ef6aed78","UserSetting")
     :Column("UserSetting.pk" , "pk")
     :Column("UserSetting.ValueC" , "ValueC")
-    :Where("UserSetting.fk_User = ^" , oFcgi:p_iUserPk)
-    :Where("UserSetting.KeyC = ^" , par_cName)
+    :Where("UserSetting.fk_User = ^"            , oFcgi:p_iUserPk)
+    :Where("UserSetting.KeyC = ^"               , par_cName)
+    :Where("UserSetting.fk_Diagram = ^"         , l_iFk_Diagram)
+    :Where("UserSetting.fk_ModelingDiagram = ^" , l_iFk_ModelingDiagram)
     :SQL(@l_aSQLResult)
     
+    if :Tally > 1  //Bad data, more than 1 record, will delete all records first.
+        l_nTally := :Tally
+        for l_nCounter := 1 to l_nTally
+            :Delete("808518b2-81c6-460b-96ae-27c7cd550446","UserSetting",l_aSQLResult[l_nCounter,1])
+        endfor
+        :SQL(@l_aSQLResult) // Rerun query on l_oDB1
+    endif
+
     if empty(par_cValue)
         //To delete the Setting
         if :Tally == 1
@@ -1730,10 +1760,12 @@ with object l_oDB1
         case :Tally  < 0
         case :Tally == 0
             :Table("cc66e1c9-cc6d-4442-812e-0711e02a5811","UserSetting")
-            :Field("UserSetting.fk_User"   ,oFcgi:p_iUserPk)
-            :Field("UserSetting.KeyC"      ,par_cName)
-            :Field("UserSetting.ValueC"    ,par_cValue)
-            :Field("UserSetting.ValueType" ,1)
+            :Field("UserSetting.fk_User"           ,oFcgi:p_iUserPk)
+            :Field("UserSetting.fk_Diagram"        ,l_iFk_Diagram)
+            :Field("UserSetting.fk_ModelingDiagram",l_iFk_ModelingDiagram)
+            :Field("UserSetting.KeyC"              ,par_cName)
+            :Field("UserSetting.ValueC"            ,par_cValue)
+            :Field("UserSetting.ValueType"         ,1)
             :Add()
         case :Tally == 1
             if l_aSQLResult[1,2] <> par_cValue
@@ -1742,25 +1774,29 @@ with object l_oDB1
                 :Update(l_aSQLResult[1,1])
             endif
         otherwise
-            // Bad data, more than 1 record.
+            // Bad data, more than 1 record. This should not happen since duplicate records just got removed.
         endcase
     endif
 endwith
 
 return NIL
 //=================================================================================================================
-function GetUserSetting(par_cName)
+function GetUserSetting(par_cName,par_iFk_Diagram,par_iFk_ModelingDiagram)
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_cValue := ""
+local l_iFk_Diagram         := nvl(par_iFk_Diagram,0)
+local l_iFk_ModelingDiagram := nvl(par_iFk_ModelingDiagram,0)
 
 with object l_oDB1
     :Table("fbfc0172-e47a-4bce-b798-9eff0344c3a5","UserSetting")
     :Column("UserSetting.ValueC" , "ValueC")
-    :Where("UserSetting.fk_User = ^" , oFcgi:p_iUserPk)
-    :Where("UserSetting.KeyC = ^" , par_cName)
+    :Where("UserSetting.KeyC = ^"               , par_cName)
+    :Where("UserSetting.fk_User = ^"            , oFcgi:p_iUserPk)
+    :Where("UserSetting.fk_Diagram = ^"         , l_iFk_Diagram)
+    :Where("UserSetting.fk_ModelingDiagram = ^" , l_iFk_ModelingDiagram)
     :SQL(@l_aSQLResult)
-    
+
     do case
     case :Tally  < 0
     case :Tally == 0

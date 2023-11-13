@@ -1,6 +1,6 @@
 #include "DataWharf.ch"
 //=================================================================================================================
-function ExportApplicationToHbORM(par_iApplicationPk)
+function ExportApplicationToHbORM(par_iApplicationPk,par_nVersion)
 
 local l_lContinue := .t.
 local l_oDB_ListOfTables
@@ -12,7 +12,10 @@ local l_oDB_ListOfIndexes
 local l_iTablePk := 0
 
 local l_cIndent := space(3)
+local l_cIndentHashElement
 local l_cSchemaAndTableName
+
+local l_nNumberOfTables
 
 local l_nNumberOfFields
 local l_nNumberOfIndexes
@@ -61,7 +64,7 @@ with object l_oDB_ListOfTables
     :Column("Table.Pk"              ,"Table_pk")
     :Column("upper(NameSpace.Name)" ,"tag1")
     :Column("upper(Table.Name)"     ,"tag2")
-
+    :Column("Table.Unlogged"        ,"Table_Unlogged")
     :GroupBy("NameSpace_Name")
     :GroupBy("Table_Name")
     :GroupBy("Table_pk")
@@ -76,7 +79,8 @@ with object l_oDB_ListOfTables
     :OrderBy("tag2")
 
     :SQL("ListOfTables")
-    if :Tally < 0
+    l_nNumberOfTables := :Tally
+    if l_nNumberOfTables < 0
         l_lContinue := .f.
         l_cSourceCode += :LastSQL() + CRLF
     endif
@@ -181,151 +185,183 @@ endif
 
 if l_lContinue
 
-    select ListOfTables
-    scan all
-        l_iTablePk := ListOfTables->Table_Pk
+    if l_nNumberOfTables == 0
+        l_cSourceCode := "{=>}"+CRLF
+    else
+        select ListOfTables
+        scan all
+            l_iTablePk := ListOfTables->Table_Pk
 
-        l_cSchemaAndTableName := alltrim(ListOfTables->NameSpace_Name)+"."+alltrim(ListOfTables->Table_Name)
+            l_cSchemaAndTableName := alltrim(ListOfTables->NameSpace_Name)+"."+alltrim(ListOfTables->Table_Name)
 
-        l_cSourceCode += iif(empty(l_cSourceCode),"{",",")
-        l_cSourceCode += '"'+l_cSchemaAndTableName+'"'+"=>{;   /"+"/Field Definition"
-        
-        //Get Field Definitions
-        l_cSourceCodeFields := ""
-        l_nMaxNameLength := ListOfTables->MaxColumnNameLength
+            if par_nVersion == 2
+                l_cIndentHashElement := space(len([{"]+l_cSchemaAndTableName+["=>]))
+            endif
 
-        l_nNumberOfFields := 0
-        if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
-            select ListOfColumns
-            scan while ListOfColumns->Table_Pk = l_iTablePk
-                l_nNumberOfFields++   //Just to test if the following code works
-
-                l_cFieldName        := ListOfColumns->Column_Name
-                l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cIndent+"{" , ";"+CRLF+l_cIndent+"," )
+            l_cSourceCode += iif(empty(l_cSourceCode),"{",",")  // Start the next table hash element
             
-                l_cFieldType          := allt(ListOfColumns->Column_Type)
-                l_nFieldLen           := nvl(ListOfColumns->Column_Length,0)
-                l_nFieldDec           := nvl(ListOfColumns->Column_Scale,0)
-                l_cFieldDefault       := nvl(ListOfColumns->Column_Default,"")
-                l_lFieldAllowNull     := ListOfColumns->Column_Nullable
-                l_lFieldAutoIncrement := ListOfColumns->Column_Primary
-                l_lFieldArray         := ListOfColumns->Column_Array
-                l_cFieldAttributes    := iif(l_lFieldAllowNull,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
+            //Get Field Definitions
+            l_cSourceCodeFields := ""
+            l_nNumberOfFields   := 0
 
-                // if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
-                //     l_lFieldAutoIncrement := .t.
-                // endif
+            l_nMaxNameLength := ListOfTables->MaxColumnNameLength
 
-                if l_cFieldType == "E"
-                    lnEnumerationImplementAs     := nvl(ListOfColumns->Enumeration_ImplementAs,0)
-                    lnEnumerationImplementLength := nvl(ListOfColumns->Enumeration_ImplementLength,0)
+            if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+                //At lease one field could exists
+                select ListOfColumns
+                scan while ListOfColumns->Table_Pk = l_iTablePk
+                    l_nNumberOfFields++
 
-                    // EnumerationImplementAs   1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
-                    do case
-                    case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_INTEGER
-                        l_cFieldType := "I"
-                        l_nFieldLen  := nil
-                        l_nFieldDec  := nil
-                    case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_NUMERIC
-                        l_cFieldType := "N"
-                        l_nFieldLen  := lnEnumerationImplementLength
-                        l_nFieldDec  := 0
-                    endcase
-                endif
-
-                if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
-                    l_lFieldAutoIncrement := .f.
-                endif
-                if l_lFieldAutoIncrement .and. l_lFieldAllowNull  //Auto-Increment fields may not be null (and not have a default)
-                    l_lFieldAllowNull := .f.
-                endif
-
-                l_cSourceCodeFields += padr('"'+l_cFieldName+'"',l_nMaxNameLength+2)+"=>{"
-                l_cSourceCodeFields += ","  // Null Value for the HB_ORM_SCHEMA_INDEX_BACKEND_TYPES 
-                l_cSourceCodeFields += padl('"'+l_cFieldType+'"',5)+","+;
-                                    str(nvl(l_nFieldLen,0),4)+","+;
-                                    str(nvl(l_nFieldDec,0),3)+","+;
-                                    iif(empty(l_cFieldAttributes),"",'"'+l_cFieldAttributes+'"')
-                if !empty(l_cFieldDefault)
-                    l_cSourceCodeFields += ',"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
-                endif
-                l_cSourceCodeFields += "}"
-
-            endscan
-
-            l_cSourceCodeFields += "}"
-            l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndent+",;   /"+"/Index Definition"
-
-        endif
-
-        l_nNumberOfIndexes := 0
-        if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfIndexes","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
-            l_cSourceCodeIndexes   := ""
-            l_nMaxNameLength       := 0
-            l_nMaxExpressionLength := 0
-
-            select ListOfIndexes
-            l_nIndexRecno := Recno()
-            scan while ListOfIndexes->Table_Pk = l_iTablePk  // Pre scan the index to help determine the l_nMaxNameLength
-
-                l_cIndexName := ListOfIndexes->Index_Name
-                // Clean up index name
-                if right(l_cIndexName,4) == "_idx"
-                    l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
-                    l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
-                    if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
-                        l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
-                    endif
-                endif
-                l_nMaxNameLength := max(l_nMaxNameLength,len(l_cIndexName))
-
-                l_cIndexExpression     := ListOfIndexes->Index_Expression
-                l_cIndexExpression     := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
-                l_cIndexExpression     := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
-
-                l_nMaxExpressionLength := max(l_nMaxExpressionLength,len(l_cIndexExpression))
-            endscan
-            dbGoTo(l_nIndexRecno)
-
-            scan while ListOfIndexes->Table_Pk = l_iTablePk
-                l_nNumberOfIndexes++  //Just to test if the following code works
-
-                l_cIndexName := ListOfIndexes->Index_Name
-                // Clean up index name
-                if right(l_cIndexName,4) == "_idx"
-                    l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
-                    l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
-                    if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
-                        l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
-                    endif
-                endif
-
-                l_cIndexExpression := ListOfIndexes->Index_Expression
-                l_cIndexExpression := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
-                l_cIndexExpression := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+                    l_cFieldName        := ListOfColumns->Column_Name
+                    l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cIndent+"{" , ";"+CRLF+l_cIndent+"," )
                 
-                l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , CRLF+l_cIndent+"{" , ";"+CRLF+l_cIndent+",")
+                    l_cFieldType          := allt(ListOfColumns->Column_Type)
+                    l_nFieldLen           := nvl(ListOfColumns->Column_Length,0)
+                    l_nFieldDec           := nvl(ListOfColumns->Column_Scale,0)
+                    l_cFieldDefault       := nvl(ListOfColumns->Column_Default,"")
+                    l_lFieldAllowNull     := ListOfColumns->Column_Nullable
+                    l_lFieldAutoIncrement := ListOfColumns->Column_Primary
+                    l_lFieldArray         := ListOfColumns->Column_Array
+                    l_cFieldAttributes    := iif(l_lFieldAllowNull,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
-                l_cSourceCodeIndexes += padr('"'+l_cIndexName+'"',l_nMaxNameLength+2)+"=>{"
-                l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
-                l_cSourceCodeIndexes += '"'+l_cIndexExpression+'"'+space(l_nMaxExpressionLength-len(l_cIndexExpression))+','+;
-                                    iif(ListOfIndexes->Index_Unique,".t.",".f.")+","+;
-                                    '"'+"BTREE"+'"'    //Later make this aware of ListOfIndexes->Index_Algo
+                    // if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
+                    //     l_lFieldAutoIncrement := .t.
+                    // endif
+
+                    if l_cFieldType == "E"
+                        lnEnumerationImplementAs     := nvl(ListOfColumns->Enumeration_ImplementAs,0)
+                        lnEnumerationImplementLength := nvl(ListOfColumns->Enumeration_ImplementLength,0)
+
+                        // EnumerationImplementAs   1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        do case
+                        case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_INTEGER
+                            l_cFieldType := "I"
+                            l_nFieldLen  := nil
+                            l_nFieldDec  := nil
+                        case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_NUMERIC
+                            l_cFieldType := "N"
+                            l_nFieldLen  := lnEnumerationImplementLength
+                            l_nFieldDec  := 0
+                        endcase
+                    endif
+
+                    if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
+                        l_lFieldAutoIncrement := .f.
+                    endif
+                    if l_lFieldAutoIncrement .and. l_lFieldAllowNull  //Auto-Increment fields may not be null (and not have a default)
+                        l_lFieldAllowNull := .f.
+                    endif
+
+                    l_cSourceCodeFields += padr('"'+l_cFieldName+'"',l_nMaxNameLength+2)+"=>{"
+                    l_cSourceCodeFields += ","  // Null Value for the HB_ORM_SCHEMA_INDEX_BACKEND_TYPES 
+                    l_cSourceCodeFields += padl('"'+l_cFieldType+'"',5)+","+;
+                                        str(nvl(l_nFieldLen,0),4)+","+;
+                                        str(nvl(l_nFieldDec,0),3)+","+;
+                                        iif(empty(l_cFieldAttributes),"",'"'+l_cFieldAttributes+'"')
+                    if !empty(l_cFieldDefault)
+                        l_cSourceCodeFields += ',"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
+                    endif
+                    l_cSourceCodeFields += "}"
+
+                endscan
+
+            endif
+            if l_nNumberOfFields == 0
+                l_cSourceCodeFields := "NIL"
+            else
+                l_cSourceCodeFields += "}"
+            endif
+
+
+            //Get Index Definitions
+            l_cSourceCodeIndexes := ""
+            l_nNumberOfIndexes   := 0
+
+            if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfIndexes","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+                l_nMaxNameLength       := 0
+                l_nMaxExpressionLength := 0
+
+                select ListOfIndexes
+                l_nIndexRecno := Recno()
+                scan while ListOfIndexes->Table_Pk = l_iTablePk  // Pre scan the index to help determine the l_nMaxNameLength
+
+                    l_cIndexName := ListOfIndexes->Index_Name
+                    // Clean up index name
+                    if right(l_cIndexName,4) == "_idx"
+                        l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
+                        l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                        if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
+                            l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
+                        endif
+                    endif
+                    l_nMaxNameLength := max(l_nMaxNameLength,len(l_cIndexName))
+
+                    l_cIndexExpression     := ListOfIndexes->Index_Expression
+                    l_cIndexExpression     := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
+                    l_cIndexExpression     := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+
+                    l_nMaxExpressionLength := max(l_nMaxExpressionLength,len(l_cIndexExpression))
+                endscan
+                dbGoTo(l_nIndexRecno)
+
+                scan while ListOfIndexes->Table_Pk = l_iTablePk
+                    l_nNumberOfIndexes++
+
+                    l_cIndexName := ListOfIndexes->Index_Name
+                    // Clean up index name
+                    if right(l_cIndexName,4) == "_idx"
+                        l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
+                        l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                        if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
+                            l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
+                        endif
+                    endif
+
+                    l_cIndexExpression := ListOfIndexes->Index_Expression
+                    l_cIndexExpression := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
+                    l_cIndexExpression := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+                    
+                    l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , l_cIndent+"{" , ";"+CRLF+l_cIndent+",")
+
+                    l_cSourceCodeIndexes += padr('"'+l_cIndexName+'"',l_nMaxNameLength+2)+"=>{"
+                    l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
+                    l_cSourceCodeIndexes += '"'+l_cIndexExpression+'"'+space(l_nMaxExpressionLength-len(l_cIndexExpression))+','+;
+                                        iif(ListOfIndexes->Index_Unique,".t.",".f.")+","+;
+                                        '"'+"BTREE"+'"'    //Later make this aware of ListOfIndexes->Index_Algo
+                    l_cSourceCodeIndexes += "}"
+
+                endscan
+
+            endif
+            if l_nNumberOfIndexes == 0
+                l_cSourceCodeIndexes := l_cIndent+"NIL"
+            else
                 l_cSourceCodeIndexes += "}"
+            endif
 
-            endscan
-            l_cSourceCode += l_cSourceCodeIndexes+"}};"+CRLF
-        else
-            l_cSourceCode += CRLF+l_cIndent+"NIL};"+CRLF
-        endif
+            // l_cSourceCode += "Table "+ListOfTables->Table_Name+" has "+trans(l_nNumberOfFields)+" fields and has "+trans(l_nNumberOfIndexes)+" indexes. MaxColumnNameLength = "+trans(ListOfTables->MaxColumnNameLength)+CRLF
 
-        // l_cSourceCode += "Table "+ListOfTables->Table_Name+" has "+trans(l_nNumberOfFields)+" fields and has "+trans(l_nNumberOfIndexes)+" indexes. MaxColumnNameLength = "+trans(ListOfTables->MaxColumnNameLength)+CRLF
+            if par_nVersion == 1
+                l_cSourceCode += '"'+l_cSchemaAndTableName+'"'+"=>{;   /"+"/Field Definition"
+                l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndent+",;   /"+"/Index Definition"+CRLF
+                l_cSourceCode += l_cSourceCodeIndexes+"};"+CRLF
+            else
+                //par_nVersion == 2
+                l_cSourceCode += '"'+l_cSchemaAndTableName+'"=>{"Fields"=>;'
+                if l_cSourceCodeIndexes == l_cIndent+"NIL"
+                    l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndentHashElement+',"Indexes"=>NIL'+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
+                else
+                    l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndentHashElement+',"Indexes"=>;'+CRLF
+                    l_cSourceCode += l_cSourceCodeIndexes
+                    l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
+                endif
+                l_cSourceCode += '};'+CRLF
+            endif
 
-    endscan
-
-    if !empty(l_cSourceCode)
+        endscan
         l_cSourceCode += "}"
     endif
+
 
 endif
 

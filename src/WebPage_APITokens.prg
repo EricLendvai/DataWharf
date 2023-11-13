@@ -724,7 +724,7 @@ case l_cActionOnSubmit == "Save"
                             if l_nAccessLevelDD <= 1
                                 // Remove the Application
                                 with Object l_oDB1
-                                    if !l_oDB1:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","APITokenAccessApplication",ListOfCurrentApplicationForAPIToken->APITokenAccessApplication_pk)
+                                    if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","APITokenAccessApplication",ListOfCurrentApplicationForAPIToken->APITokenAccessApplication_pk)
                                         l_cErrorMessage := "Failed to Save Application selection."
                                         exit
                                     endif

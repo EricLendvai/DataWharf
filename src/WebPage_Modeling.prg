@@ -2114,7 +2114,6 @@ l_cModelName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
 l_nModelStage       := Val(oFcgi:GetInputValue("ComboStage"))
 l_cModelDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
-AltD()
 do case
 case l_cActionOnSubmit == "Save"
     if oFcgi:p_nAccessLevelML >= 7
@@ -2189,7 +2188,7 @@ case l_cActionOnSubmit == "Save"
                             endif
 
                         endwith
-                        AltD()
+                        
                         l_cListOfLinkedModelsPks := SanitizeInput(oFcgi:GetInputValue("LinkedModels"))
                         if !empty(l_cListOfLinkedModelsPks)
                             l_aLinkedModelsSelected := hb_aTokens(l_cListOfLinkedModelsPks,",",.f.)
@@ -2238,7 +2237,7 @@ case l_cActionOnSubmit == "Save"
 
                             //Go through what is left in l_hLinkedModelsOnFile and remove it, since was not keep as selected linked model
                             for each l_iLinkedModelsFk in l_hLinkedModelsOnFile
-                                l_oDB1:Delete("CD306E98-E1C7-4954-A226-C045F29731BB","LinkedModel",l_iLinkedModelsFk)
+                                :Delete("CD306E98-E1C7-4954-A226-C045F29731BB","LinkedModel",l_iLinkedModelsFk)
                             endfor
                         endif
                         //Save Linked Models - End
@@ -2948,8 +2947,6 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
-
 oFcgi:TraceAdd("EntityEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
@@ -3044,7 +3041,6 @@ case l_cActionOnSubmit == "Delete"   // Entity
                 l_cFrom := "Redirect"
             endif
         else
-            l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("d8f4ccf0-5cd0-410e-9137-ba452d10904c","Attribute")
                 :Where("Attribute.fk_Entity = ^",l_iEntityPk)
@@ -3065,7 +3061,7 @@ case l_cActionOnSubmit == "Delete"   // Entity
                             if :Tally > 0
                                 select ListOfDiagramEntityRecordsToDelete
                                 scan
-                                    l_oDB2:Delete("a29d2506-9044-497e-8de3-06a08120e9bf","DiagramEntity",ListOfDiagramEntityRecordsToDelete->pk)
+                                    :Delete("a29d2506-9044-497e-8de3-06a08120e9bf","DiagramEntity",ListOfDiagramEntityRecordsToDelete->pk)
                                 endscan
                             endif
 
@@ -4678,28 +4674,26 @@ case l_cActionOnSubmit == "Delete"   // Enumeration
             :Table("D2BA23E6-1CDE-4976-A01F-C7855C2FEB43","Attribute")
             :Where("Attribute.fk_ModelEnumeration = ^",l_iEnumerationPk)
             :SQL()
-        endwith
 
-        if l_oDB1:Tally == 0
-            with object l_oDB1
+            if :Tally == 0
                 :Table("12AD9032-FC12-48C2-BDAC-9B3B641FB0E3","ModelEnumValue")
                 :Where("ModelEnumValue.fk_ModelEnumeration = ^",l_iEnumerationPk)
                 :SQL()
-            endwith
 
-            if l_oDB1:Tally == 0
-                if l_oDB1:Delete("478DE490-9954-49DB-9F19-ED05C2AEFFB4","ModelEnumeration",l_iEnumerationPk)
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")     
-                    l_cFrom := "Redirect"
+                if :Tally == 0
+                    if :Delete("478DE490-9954-49DB-9F19-ED05C2AEFFB4","ModelEnumeration",l_iEnumerationPk)
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ListEnumerations/"+par_cModelLinkUID+"/")     
+                        l_cFrom := "Redirect"
+                    else
+                        l_cErrorMessage := "Failed to delete Enumeration"
+                    endif
                 else
-                    l_cErrorMessage := "Failed to delete Enumeration"
+                    l_cErrorMessage := "Related Enumeration Value record on file"
                 endif
             else
-                l_cErrorMessage := "Related Enumeration Value record on file"
+                l_cErrorMessage := "Related Attribute record on file"
             endif
-        else
-            l_cErrorMessage := "Related Attribute record on file"
-        endif
+        endwith
     endif
 
 otherwise
@@ -6119,7 +6113,7 @@ case l_cActionOnSubmit == "Save"
                             endif
 
                         else
-                            l_oDB2:Delete("9f70d7d5-7464-4fb9-87d3-94af7b0b65ba","Endpoint",l_iEndpoint_pk)
+                            :Delete("9f70d7d5-7464-4fb9-87d3-94af7b0b65ba","Endpoint",l_iEndpoint_pk)
                         endif
 
                     endif
@@ -7487,7 +7481,6 @@ return l_cHtml
 function CascadeDeleteAssociation(par_iProjectPk,par_iAssociationPk)
 local l_cErrorMessage := ""
 local l_oDB_ListOfEndpointRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfEndpointRecordsToDelete
     //Delete any Endpoint related records
@@ -7500,7 +7493,7 @@ with object l_oDB_ListOfEndpointRecordsToDelete
     else
         select ListOfEndpointRecordsToDelete
         scan
-            l_oDB1:Delete("35929f02-bfa8-41b1-bbad-8dbcb50c1de2","Endpoint",ListOfEndpointRecordsToDelete->pk)
+            :Delete("35929f02-bfa8-41b1-bbad-8dbcb50c1de2","Endpoint",ListOfEndpointRecordsToDelete->pk)
         endscan
 
         //Delete the related custom fields
@@ -7518,7 +7511,6 @@ function CascadeDeleteEntity(par_iProjectPk,par_iEntityPk)
 local l_cErrorMessage := ""
 local l_oDB_ListOfEndpointRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfLinkedEntityRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB_ListOfEndpointRecordsToDelete
     //Delete any Endpoint related records
@@ -7531,7 +7523,7 @@ with object l_oDB_ListOfEndpointRecordsToDelete
     else
         select ListOfEndpointRecordsToDelete
         scan
-            l_oDB1:Delete("83256a1d-a0a0-4682-bdcd-a7b14c40034d","Endpoint",ListOfEndpointRecordsToDelete->pk)
+            :Delete("83256a1d-a0a0-4682-bdcd-a7b14c40034d","Endpoint",ListOfEndpointRecordsToDelete->pk)
         endscan
 
         //Delete any Attribute related records
@@ -7544,7 +7536,7 @@ with object l_oDB_ListOfEndpointRecordsToDelete
         else
             select ListOfAttributeRecordsToDelete
             scan
-                l_oDB1:Delete("c10bfea1-5496-4990-8b71-7e4f8479aa1b","Attribute",ListOfAttributeRecordsToDelete->pk)
+                :Delete("c10bfea1-5496-4990-8b71-7e4f8479aa1b","Attribute",ListOfAttributeRecordsToDelete->pk)
             endscan
 
             //Delete the related custom fields
@@ -7567,7 +7559,7 @@ with object l_oDB_ListOfLinkedEntityRecordsToDelete
     else
         select ListOfLinkedEntityRecordsToDelete
         scan
-            l_oDB1:Delete("04E9FDAB-7D37-4C47-B3AD-C5F4D139997C","LinkedEntity",ListOfLinkedEntityRecordsToDelete->pk)
+            :Delete("04E9FDAB-7D37-4C47-B3AD-C5F4D139997C","LinkedEntity",ListOfLinkedEntityRecordsToDelete->pk)
         endscan
     endif
 endwith
@@ -7601,6 +7593,23 @@ with object l_oDB_ListOfRecordsToDelete
             l_cErrorMessage := [Failed to delete Diagram ]+oFcgi:p_ANFEntity+[.]
         endif
     endscan
+
+//_M_123 Delete related UserSetting records
+    //Delete the indirectly linked UserSetting records
+    :Table("34bc4f62-e088-4900-8997-804c5f1e8e08","ModelingDiagram")
+    :Column("UserSetting.pk" , "pk")
+    :Where("ModelingDiagram.fk_Model = ^" , par_iModelPk)
+    :Join("inner","UserSetting","","UserSetting.fk_ModelingDiagram = ModelingDiagram.pk")
+    :SQL("CascadeDeleteModelListOfRecordsToDelete")
+    select CascadeDeleteModelListOfRecordsToDelete
+    scan all while empty(l_cErrorMessage)
+        if !l_oDB_RecordToDelete:Delete("0fabbf02-25e5-4821-b46c-0a7c47cf8956","UserSetting",CascadeDeleteModelListOfRecordsToDelete->pk)
+            l_cErrorMessage := [Failed to delete Diagram ]+oFcgi:p_ANFEntity+[.]
+        endif
+    endscan
+
+
+
 
     if empty(l_cErrorMessage)
         :Table("2ff2a1bf-b3e3-4646-b9c2-c6fbd2d6069b","ModelingDiagram")

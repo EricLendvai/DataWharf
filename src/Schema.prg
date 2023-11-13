@@ -1,6 +1,6 @@
 function Schema()
 return ;
-{"public.Application"=>{;   //Field Definition
+{"public.Application"=>{"Fields"=>;
    {"pk"                          =>{,  "I",   0,  0,"+"};
    ,"sysc"                        =>{, "DT",   0,  6,"N"};
    ,"sysm"                        =>{, "DT",   0,  6,"N"};
@@ -16,9 +16,9 @@ return ;
    ,"PublishingUseStatus3"        =>{,  "L",   0,  0,};         // If should publish to the public elements with Use Status "Inactive (Read Only)"     (Upcoming Feature)
    ,"PublishingUseStatus4"        =>{,  "L",   0,  0,};         // If should publish to the public elements with Use Status "Archived"                 (Upcoming Feature)
    ,"DestructiveDelete"           =>{,  "N",   1,  0,,"1"}};    // 1 - None, 2 = On Tables/Tags, 3 = On NameSpaces, 4 = Entire Application Content (Needed to PURGE),5 = Can Delete Application
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"LinkCode" =>{,"LinkCode",.f.,"BTREE"}}};
-,"public.Deployment"=>{;   //Field Definition
+,"public.Deployment"=>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
@@ -38,9 +38,9 @@ return ;
    ,"Database"           =>{, "CV", 200,  0,"N"};      // Connection Info  Database to connect to.
    ,"NameSpaces"         =>{, "CV", 400,  0,"N"};      // Connection Info  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
    ,"SetForeignKey"      =>{,  "N",   1,  0,"N"}};     // Connection Info  1 - Not, 2- Foreign Key Restrictions, 3 - On p_<TableName>, 4 - on fk_<TableName>, 5 - on <TableName>_id
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Application" =>{,"fk_Application"       ,.f.,"BTREE"}}};
-,"public.Column"=>{;   //Field Definition
+,"public.Column"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
@@ -65,11 +65,11 @@ return ;
    ,"ForeignKeyUse"  =>{, "CV", 120,  0,"N"};    // Short Description used during Visualization
    ,"Description"    =>{,  "M",   0,  0,"N"};
    ,"UsedBy"         =>{,  "N",   1,  0,,"1"}};      // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Table"       =>{,"fk_Table"       ,.f.,"BTREE"};
    ,"fk_TableForeign"=>{,"fk_TableForeign",.f.,"BTREE"};
    ,"fk_Enumeration" =>{,"fk_Enumeration" ,.f.,"BTREE"}}};
-,"public.Enumeration"=>{;   //Field Definition
+,"public.Enumeration"=>{"Fields"=>;
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
    ,"sysm"            =>{, "DT",   0,  6,"N"};
@@ -81,9 +81,9 @@ return ;
    ,"Description"     =>{,  "M",   0,  0,"N"};
    ,"UseStatus"       =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"       =>{,  "N",   1,  0,,"1"}};   // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
-,"public.EnumValue"=>{;   //Field Definition
+,"public.EnumValue"=>{"Fields"=>;
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
@@ -95,9 +95,9 @@ return ;
    ,"Description"   =>{,  "M",   0,  0,"N"};
    ,"UseStatus"     =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"     =>{,  "N",   1,  0,,"1"}};   // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Enumeration"=>{,"fk_Enumeration",.f.,"BTREE"}}};
-,"public.Index"=>{;   //Field Definition
+,"public.Index"=>{"Fields"=>;
    {"pk"         =>{,  "I",   0,  0,"+"};
    ,"sysc"       =>{, "DT",   0,  6,"N"};
    ,"sysm"       =>{, "DT",   0,  6,"N"};
@@ -110,18 +110,18 @@ return ;
    ,"UsedBy"     =>{,  "N",   1,  0,};           // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
    ,"UseStatus"  =>{,  "N",   1,  0,,"1"};       // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"  =>{,  "N",   1,  0,,"1"}};      // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Table"=>{,"fk_Table",.f.,"BTREE"}}};
-,"public.IndexColumn"=>{;   //Field Definition
+,"public.IndexColumn"=>{"Fields"=>;
    {"pk"       =>{,  "I",   0,  0,"+"};
    ,"sysc"     =>{, "DT",   0,  6,"N"};
    ,"sysm"     =>{, "DT",   0,  6,"N"};
    ,"fk_Index" =>{,  "I",   0,  0,};
    ,"fk_Column"=>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Index" =>{,"fk_Index",.f.,"BTREE"};
    ,"fk_Column"=>{,"fk_Column",.f.,"BTREE"}}};
-,"public.NameSpace"=>{;   //Field Definition
+,"public.NameSpace"=>{"Fields"=>;
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
@@ -131,9 +131,9 @@ return ;
    ,"UseStatus"     =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"     =>{,  "N",   1,  0,,"1"};    // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description"   =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.Table"=>{;   //Field Definition
+,"public.Table"=>{"Fields"=>;
    {"pk"          =>{,  "I",   0,  0,"+"};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
    ,"sysm"        =>{, "DT",   0,  6,"N"};
@@ -143,10 +143,11 @@ return ;
    ,"UseStatus"   =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"DocStatus"   =>{,  "N",   1,  0,,"1"};    // 1 = Missing, 2 = Not Needed, 3 = In Progress, 4 = Complete
    ,"Description" =>{,  "M",   0,  0,"N"};
-   ,"Information" =>{,  "M",   0,  0,"N"}};    // More any engineering notes.
-   ,;   //Index Definition
+   ,"Information" =>{,  "M",   0,  0,"N"};     // More any engineering notes.
+   ,"Unlogged"    =>{,  "L",   0,  0,}};       // Used for PostgreSQL. Data written to unlogged tables is not written to the write-ahead log, and no replication occurs.
+        ,"Indexes"=>;
    {"fk_NameSpace"=>{,"fk_NameSpace",.f.,"BTREE"}}};
-,"public.Diagram"=>{;   //Field Definition
+,"public.Diagram"=>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
@@ -163,18 +164,18 @@ return ;
    ,"RenderMode"         =>{,  "N",   1,  0,};        // 1 = VisJs, 2 = mxgraph
    ,"VisPos"             =>{,  "M",   0,  0,"N"};     // Last Visualization Positions for VisJs mode
    ,"MxgPos"             =>{,  "M",   0,  0,"N"}};    // Last Visualization Positions for mxgraph mode
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.DiagramTable"=>{;   //Field Definition
+,"public.DiagramTable"=>{"Fields"=>;
    {"pk"        =>{,  "I",   0,  0,"+"};
    ,"sysc"      =>{, "DT",   0,  6,"N"};
    ,"sysm"      =>{, "DT",   0,  6,"N"};
    ,"fk_Diagram"=>{,  "I",   0,  0,};
    ,"fk_Table"  =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Diagram"=>{,"fk_Diagram",.f.,"BTREE"};
    ,"fk_Table"  =>{,"fk_Table"  ,.f.,"BTREE"}}};
-,"public.CustomField"=>{;   //Field Definition
+,"public.CustomField"=>{"Fields"=>;
    {"pk"                =>{,  "I",   0,  0,"+"};
    ,"sysc"              =>{, "DT",   0,  6,"N"};
    ,"sysm"              =>{, "DT",   0,  6,"N"};
@@ -189,29 +190,28 @@ return ;
    ,"Description"       =>{,  "M",   0,  0,"N"};
    ,"UsedOn"            =>{,  "N",   2,  0,};       // 1 = Application, 2 = Name Space, 3 = Table, 4 = Column, 5 = Model, 6 = Entity, 7 = Association, 8 = Package, 9 = DataType, 10=Attribute
    ,"Status"            =>{,  "N",   1,  0,}};      // 1 = Active, 2 = Inactive (Read Only), 3 = Hidden
-   ,;   //Index Definition
-   NIL};
-,"public.ApplicationCustomField"=>{;   //Field Definition.  To tell if the record is to be used in an application. The Order will also depend of public.CustomField.UsedOn
+        ,"Indexes"=>NIL};
+,"public.ApplicationCustomField"=>{"Fields"=>;   // To tell if the record is to be used in an application. The Order will also depend of public.CustomField.UsedOn
    {"pk"               =>{,  "I",   0,  0,"+"};
    ,"sysc"             =>{, "DT",   0,  6,"N"};
    ,"sysm"             =>{, "DT",   0,  6,"N"};
    ,"fk_CustomField"   =>{,  "I",   0,  0,};
    ,"fk_Application"   =>{,  "I",   0,  0,};
    ,"Order"            =>{,  "I",   0,  0,}};       // Display Order
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_CustomField"=>{,"fk_CustomField",.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.ProjectCustomField"=>{;   //Field Definition.  To tell if the record is to be used in a Project. The Order will also depend of public.CustomField.UsedOn
+,"public.ProjectCustomField"=>{"Fields"=>;   // To tell if the record is to be used in a Project. The Order will also depend of public.CustomField.UsedOn
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_CustomField"=>{,  "I",   0,  0,};
    ,"fk_Project"    =>{,  "I",   0,  0,};
    ,"Order"         =>{,  "I",   0,  0,}};       // Display Order
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_CustomField"=>{,"fk_CustomField",.f.,"BTREE"};
    ,"fk_Project"    =>{,"fk_Project",.f.,"BTREE"}}};
-,"public.CustomFieldValue"=>{;   //Field Definition
+,"public.CustomFieldValue"=>{"Fields"=>;
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
@@ -220,30 +220,30 @@ return ;
    ,"ValueI"        =>{,  "I",   0,  0,"N"};     // Used if public.CustomField.Type = 2
    ,"ValueM"        =>{,  "M",   0,  0,"N"};     // Used if public.CustomField.Type = 3 or 4
    ,"ValueD"        =>{,  "D",   0,  0,"N"}};    // Used if public.CustomField.Type = 5
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_CustomField" =>{,"fk_CustomField",.f.,"BTREE"};
    ,"fk_Entity"      =>{,"fk_Entity"  ,.f.,"BTREE"}}};
-,"public.TableMapping"=>{;   //Field Definition
+,"public.TableMapping"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_TableFrom"   =>{,  "I",   0,  0,};
    ,"fk_TableTo"     =>{,  "I",   0,  0,};
    ,"Description"    =>{,  "M",   0,  0,}};   // Text representation of the value
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_TableFrom"   =>{,"fk_TableFrom" ,.f.,"BTREE"};
    ,"fk_TableTo"     =>{,"fk_TableTo"   ,.f.,"BTREE"}}};
-,"public.ColumnMapping"=>{;   //Field Definition
+,"public.ColumnMapping"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_ColumnFrom"  =>{,  "I",   0,  0,};
    ,"fk_ColumnTo"    =>{,  "I",   0,  0,};
    ,"Description"    =>{,  "M",   0,  0,"N"}};   // Text representation of the value
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_ColumnFrom"   =>{,"fk_ColumnFrom" ,.f.,"BTREE"};
    ,"fk_ColumnTo"     =>{,"fk_ColumnTo"   ,.f.,"BTREE"}}};
-,"public.Tag"=>{;   //Field Definition
+,"public.Tag"=>{"Fields"=>;
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
    ,"sysm"            =>{, "DT",   0,  6,"N"};
@@ -253,27 +253,27 @@ return ;
    ,"TableUseStatus"  =>{,  "N",   1,  0,};     // 1 = Do Not Use, 2 = Active, 3 = Discontinued
    ,"ColumnUseStatus" =>{,  "N",   1,  0,};     // 1 = Do Not Use, 2 = Active, 3 = Discontinued
    ,"Description"     =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.TagTable"=>{;   //Field Definition
+,"public.TagTable"=>{"Fields"=>;
    {"pk"       =>{,  "I",   0,  0,"+"};
    ,"sysc"     =>{, "DT",   0,  6,"N"};
    ,"sysm"     =>{, "DT",   0,  6,"N"};
    ,"fk_Tag"   =>{,  "I",   0,  0,};
    ,"fk_Table" =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Tag"   =>{,"fk_Tag"  ,.f.,"BTREE"};
    ,"fk_Table" =>{,"fk_Table",.f.,"BTREE"}}};
-,"public.TagColumn"=>{;   //Field Definition
+,"public.TagColumn"=>{"Fields"=>;
    {"pk"        =>{,  "I",   0,  0,"+"};
    ,"sysc"      =>{, "DT",   0,  6,"N"};
    ,"sysm"      =>{, "DT",   0,  6,"N"};
    ,"fk_Tag"    =>{,  "I",   0,  0,};
    ,"fk_Column" =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Tag"    =>{,"fk_Tag"   ,.f.,"BTREE"};
    ,"fk_Column" =>{,"fk_Column",.f.,"BTREE"}}};
-,"public.Project"=>{;   //Field Definition
+,"public.Project"=>{"Fields"=>;
    {"pk"                             =>{,  "I",   0,  0,"+"};
    ,"sysc"                           =>{, "DT",   0,  6,"N"};
    ,"sysm"                           =>{, "DT",   0,  6,"N"};
@@ -299,9 +299,8 @@ return ;
    ,"ValidEndpointBoundLowerValues"  =>{,  "M",   0,  0,"N"};     // Association Endpoint List of Valid Bound Lower
    ,"ValidEndpointBoundUpperValues"  =>{,  "M",   0,  0,"N"};     // Association Endpoint List of Valid Bound Upper
    };
-   ,;   //Index Definition
-   NIL};
-,"public.Model"=>{;   //Field Definition
+        ,"Indexes"=>NIL};
+,"public.Model"=>{"Fields"=>;
    {"pk"                    =>{,  "I",   0,  0,"+"};
    ,"sysc"                  =>{, "DT",   0,  6,"N"};
    ,"sysm"                  =>{, "DT",   0,  6,"N"};
@@ -310,18 +309,18 @@ return ;
    ,"Name"                  =>{, "CV", 100,  0,};         // Inique in application
    ,"Stage"                 =>{,  "N",   1,  0,};         // 1 = Proposed, 2 = Draft, 3 = Beta, 4 = Stable, 5 = In Use, 6 = Discontinued
    ,"Description"           =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Project"=>{,"fk_Project",.f.,"BTREE"}}};
-,"public.LinkedModel"=>{;   // To assist in setting up Entity "Aspect Of" settings
+,"public.LinkedModel"=>{"Fields"=>;   // To assist in setting up Entity "Aspect Of" settings
    {"pk"                    =>{,  "I",   0,  0,"+"};
    ,"sysc"                  =>{, "DT",   0,  6,"N"};
    ,"sysm"                  =>{, "DT",   0,  6,"N"};
    ,"fk_Model1"             =>{,  "I",   0,  0,};    // From / To
    ,"fk_Model2"             =>{,  "I",   0,  0,}};   // From / To
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Model1"=>{,"fk_Model1",.f.,"BTREE"};
    ,"fk_Model2"=>{,"fk_Model2",.f.,"BTREE"}}};
-,"public.LinkedEntity"=>{;   // Used for Entity "Aspect Of" settings
+,"public.LinkedEntity"=>{"Fields"=>;   // Used for Entity "Aspect Of" settings
    {"pk"                    =>{,  "I",   0,  0,"+"};
    ,"sysc"                  =>{, "DT",   0,  6,"N"};
    ,"sysm"                  =>{, "DT",   0,  6,"N"};
@@ -329,10 +328,10 @@ return ;
    ,"Description"           =>{,  "M",   0,  0,"N"};
    ,"fk_Entity1"            =>{,  "I",   0,  0,};    // From / To
    ,"fk_Entity2"            =>{,  "I",   0,  0,}};   // From / To
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Entity1"=>{,"fk_Entity1",.f.,"BTREE"};
    ,"fk_Entity2"=>{,"fk_Entity2",.f.,"BTREE"}}};
-,"public.Package"=>{;   //Field Definition
+,"public.Package"=>{"Fields"=>;
    {"pk"        =>{,  "I",   0,  0,"+"};
    ,"sysc"      =>{, "DT",   0,  6,"N"};
    ,"sysm"      =>{, "DT",   0,  6,"N"};
@@ -345,10 +344,10 @@ return ;
    ,"FullPk"    =>{,  "M",   0,  0,};        // Denormalized sum of all the pk fields separated by '*'
    ,"TreeLevel" =>{,  "I",   0,  0,};        // Denormalized Tree dept. Can be used to assist indentation on display.Unique in Model.
    ,"TreeOrder1"=>{,  "I",   0,  0,}};       // Denormalized used to order full list. Unique in Model.
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Package"=>{,"fk_Package",.f.,"BTREE"};
    ,"fk_Model"  =>{,"fk_Model"  ,.f.,"BTREE"}}};
-,"public.Entity"=>{;   //Field Definition
+,"public.Entity"=>{"Fields"=>;
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
    ,"sysm"            =>{, "DT",   0,  6,"N"};
@@ -359,10 +358,10 @@ return ;
    ,"UseStatus"       =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"Description"     =>{,  "M",   0,  0,"N"};     // AKA Definition
    ,"Information"     =>{,  "M",   0,  0,"N"}};    // should support mark down (md)
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Model"  =>{,"fk_Model"  ,.f.,"BTREE"};
    ,"fk_Package"=>{,"fk_Package",.f.,"BTREE"}}};
-,"public.Association"=>{;   //Field Definition
+,"public.Association"=>{"Fields"=>;
    {"pk"               =>{,  "I",   0,  0,"+"};
    ,"sysc"             =>{, "DT",   0,  6,"N"};
    ,"sysm"             =>{, "DT",   0,  6,"N"};
@@ -373,10 +372,10 @@ return ;
    ,"UseStatus"        =>{,  "N",   1,  0,,"1"};    // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"NumberOfEndpoints"=>{,  "N",   2,  0,};        // Must more than 1 and less than 99. This will assist in visualization
    ,"Description"      =>{,  "M",   0,  0,"N"}};    // Meaning of the association. Display when clicking on the association
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Model"  =>{,"fk_Model"  ,.f.,"BTREE"};
    ,"fk_Package"=>{,"fk_Package",.f.,"BTREE"}}};
-,"public.Endpoint"=>{;   //Field Definition
+,"public.Endpoint"=>{"Fields"=>;
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
@@ -387,10 +386,10 @@ return ;
    ,"BoundUpper"    =>{, "CV",   4,  0,"N"};
    ,"IsContainment" =>{,  "L",   0,  0,};          // If should show a diamond.
    ,"Description"   =>{,  "M",   0,  0,"N"}};      // _M_ not certain if needed
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Entity"     =>{,"fk_Entity"     ,.f.,"BTREE"};
    ,"fk_Association"=>{,"fk_Association",.f.,"BTREE"}}};
-,"public.Attribute"=>{;   //Field Definition   should not include foreign keys.
+,"public.Attribute"=>{"Fields"=>;   // should not include foreign keys.
    {"pk"                  =>{,  "I",   0,  0,"+"};
    ,"sysc"                =>{, "DT",   0,  6,"N"};
    ,"sysm"                =>{, "DT",   0,  6,"N"};
@@ -409,12 +408,12 @@ return ;
    ,"FullPk"              =>{,  "M",   0,  0,};        // Denormalized sum of all the pk fields separated by '*'
    ,"TreeLevel"           =>{,  "I",   0,  0,};        // Denormalized Tree dept. Can be used to assist indentation on display.Unique in Entity.
    ,"TreeOrder1"          =>{,  "I",   0,  0,}};       // Order full list. Unique in Entity. (NOT Denormalized but actually used and fixed as needed.)
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Attribute"        =>{,"fk_Attribute"        ,.f.,"BTREE"};
    ,"fk_Entity"           =>{,"fk_Entity"           ,.f.,"BTREE"};
    ,"fk_DataType"         =>{,"fk_DataType"         ,.f.,"BTREE"};
    ,"fk_ModelEnumeration" =>{,"fk_ModelEnumeration" ,.f.,"BTREE"}}};
-,"public.PrimitiveType"=>{;   //Field Definition   should not include foreign keys.
+,"public.PrimitiveType"=>{"Fields"=>;   // should not include foreign keys.
    {"pk"         =>{,  "I",   0,  0,"+"};
    ,"sysc"       =>{, "DT",   0,  6,"N"};
    ,"sysm"       =>{, "DT",   0,  6,"N"};
@@ -422,9 +421,9 @@ return ;
    ,"LinkUID"    =>{,  "C",  36,  0,};     // Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()"
    ,"Name"       =>{, "CV", 200,  0,};
    ,"Description"=>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Project"=>{,"fk_Project",.f.,"BTREE"}}};
-,"public.DataType"=>{;   //Field Definition   should not include foreign keys.
+,"public.DataType"=>{"Fields"=>;   // should not include foreign keys.
    {"pk"               =>{,  "I",   0,  0,"+"};
    ,"sysc"             =>{, "DT",   0,  6,"N"};
    ,"sysm"             =>{, "DT",   0,  6,"N"};
@@ -439,11 +438,11 @@ return ;
    ,"FullPk"           =>{,  "M",   0,  0,};       // Denormalized sum of all the pk fields separated by '*'
    ,"TreeLevel"        =>{,  "I",   0,  0,};       // Denormalized Tree dept. Can be used to assist indentation on display.Unique in Model.
    ,"TreeOrder1"       =>{,  "I",   0,  0,}};      // Denormalized used to order full list. Unique in Model.
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_DataType"     =>{,"fk_DataType"     ,.f.,"BTREE"};
    ,"fk_PrimitiveType"=>{,"fk_PrimitiveType",.f.,"BTREE"};
    ,"fk_Model"        =>{,"fk_Model"        ,.f.,"BTREE"}}};
-,"public.ModelEnumeration"=>{;   //Field Definition
+,"public.ModelEnumeration"=>{"Fields"=>;
    {"pk"              =>{,  "I",   0,  0,"+"};
    ,"sysc"            =>{, "DT",   0,  6,"N"};
    ,"sysm"            =>{, "DT",   0,  6,"N"};
@@ -452,9 +451,9 @@ return ;
    ,"Name"            =>{, "CV", 200,  0,};
    ,"UseStatus"       =>{,  "N",   1,  0,,"1"};  // 1 = Unknown, 2 = Proposed, 3 = Under Development, 4 = Active, 5 = To Be Discontinued, 6 = Discontinued
    ,"Description"     =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Model"=>{,"fk_Model",.f.,"BTREE"}}};
-,"public.ModelEnumValue"=>{;   //Field Definition
+,"public.ModelEnumValue"=>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
@@ -463,36 +462,36 @@ return ;
    ,"Order"              =>{,  "I",   0,  0,};      // Display Order
    ,"Name"               =>{, "CV", 200,  0,};
    ,"Description"        =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_ModelEnumeration"=>{,"fk_ModelEnumeration",.f.,"BTREE"}}};
-,"public.AssociationTableMapping"=>{;   //Field Definition
+,"public.AssociationTableMapping"=>{"Fields"=>;
    {"pk"            =>{,  "I",   0,  0,"+"};
    ,"sysc"          =>{, "DT",   0,  6,"N"};
    ,"sysm"          =>{, "DT",   0,  6,"N"};
    ,"fk_Association"=>{,  "I",   0,  0,};
    ,"fk_Table"      =>{,  "I",   0,  0,}};   // Text representation of the value
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Association"=>{,"fk_Association",.f.,"BTREE"};
    ,"fk_Table"      =>{,"fk_Table"      ,.f.,"BTREE"}}};
-,"public.EntityTableMapping"=>{;   //Field Definition
+,"public.EntityTableMapping"=>{"Fields"=>;
    {"pk"       =>{,  "I",   0,  0,"+"};
    ,"sysc"     =>{, "DT",   0,  6,"N"};
    ,"sysm"     =>{, "DT",   0,  6,"N"};
    ,"fk_Entity"=>{,  "I",   0,  0,};
    ,"fk_Table" =>{,  "I",   0,  0,}};   // Text representation of the value
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Entity"=>{,"fk_Entity",.f.,"BTREE"};
    ,"fk_Table" =>{,"fk_Table" ,.f.,"BTREE"}}};
-,"public.AttributeColumnMapping"=>{;   //Field Definition
+,"public.AttributeColumnMapping"=>{"Fields"=>;
    {"pk"          =>{,  "I",   0,  0,"+"};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
    ,"sysm"        =>{, "DT",   0,  6,"N"};
    ,"fk_Attribute"=>{,  "I",   0,  0,};
    ,"fk_Column"   =>{,  "I",   0,  0,}};   // Text representation of the value
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Attribute"=>{,"fk_Attribute",.f.,"BTREE"};
    ,"fk_Column"   =>{,"fk_Column"   ,.f.,"BTREE"}}};
-,"public.ModelingDiagram"=>{;   //Field Definition
+,"public.ModelingDiagram"=>{"Fields"=>;
    {"pk"                    =>{,  "I",   0,  0,"+"};
    ,"sysc"                  =>{, "DT",   0,  6,"N"};
    ,"sysm"                  =>{, "DT",   0,  6,"N"};
@@ -506,18 +505,18 @@ return ;
    ,"NodeMinHeight"         =>{,  "I",   0,  0,};
    ,"NodeMaxWidth"          =>{,  "I",   0,  0,};
    ,"VisPos"                =>{,  "M",   0,  0,"N"}};      // Last Visualization Positions
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Model"=>{,"fk_Model",.f.,"BTREE"}}};
-,"public.DiagramEntity"=>{;   //Field Definition
+,"public.DiagramEntity"=>{"Fields"=>;
    {"pk"                =>{,  "I",   0,  0,"+"};
    ,"sysc"              =>{, "DT",   0,  6,"N"};
    ,"sysm"              =>{, "DT",   0,  6,"N"};
    ,"fk_ModelingDiagram"=>{,  "I",   0,  0,};
    ,"fk_Entity"         =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_ModelingDiagram"=>{,"fk_ModelingDiagram",.f.,"BTREE"};
    ,"fk_Entity"         =>{,"fk_Entity"         ,.f.,"BTREE"}}};
-,"public.FastCGIRunLog"  =>{;   //Field Definition
+,"public.FastCGIRunLog"  =>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
@@ -528,9 +527,8 @@ return ;
    ,"IP"                 =>{, "CV",  36,  0,};      //In case using IP6
    ,"OSInfo"             =>{,  "M",   0,  0,"N"};
    ,"HostInfo"           =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
-   NIL};
-,"public.User"=>{;   //Field Definition
+        ,"Indexes"=>NIL};
+,"public.User"=>{"Fields"=>;
    {"pk"          =>{,  "I",   0,  0,"+"};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
    ,"sysm"        =>{, "DT",   0,  6,"N"};
@@ -541,40 +539,43 @@ return ;
    ,"AccessMode"  =>{,  "N",   1,  0,};      // 1 = Project and Application Specific, 2 = All Projects and Applications Read Only, 3 = All Projects and Applications Full Access, 4 = Root Admin (User Control)
    ,"Status"      =>{,  "N",   1,  0,};      // 1 = Active, 2 = Inactive
    ,"Description" =>{,  "M",   0,  0,"N"}};
-   ,;   //Index Definition
-   NIL};
-,"public.UserAccessApplication"=>{;   //Field Definition
+        ,"Indexes"=>NIL};
+,"public.UserAccessApplication"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_User"        =>{,  "I",   0,  0,};
    ,"fk_Application" =>{,  "I",   0,  0,};
    ,"AccessLevelDD"  =>{,  "N",   1,  0,}};      // Data Dictionary Access Level: 1 - None,2 - Read Only,3 - Edit Description and Information Entries,4 - Edit Description and Information Entries and Diagrams,5 - Edit Anything and Import/Export,6 - Edit Anything and Sync Schema,7 - Full Access
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.UserAccessProject"=>{;   //Field Definition
+,"public.UserAccessProject"=>{"Fields"=>;
    {"pk"           =>{,  "I",   0,  0,"+"};
    ,"sysc"         =>{, "DT",   0,  6,"N"};
    ,"sysm"         =>{, "DT",   0,  6,"N"};
    ,"fk_User"      =>{,  "I",   0,  0,};
    ,"fk_Project"   =>{,  "I",   0,  0,};
    ,"AccessLevelML"=>{,  "N",   1,  0,}};       // Modeling        Access Level: 1 - None,2 - Read Only,3 - Edit Description and Information Entries,4 - Edit Description and Information Entries and Diagrams,5 - Edit Anything,                                      ,7 - Full Access
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"   =>{,"fk_User" ,.f.,"BTREE"};
    ,"fk_Project"=>{,"fk_Project",.f.,"BTREE"}}};
-,"public.UserSetting"=>{;   //Field Definition
-   {"pk"             =>{,  "I",   0,  0,"+"};
-   ,"sysc"           =>{, "DT",   0,  6,"N"};
-   ,"sysm"           =>{, "DT",   0,  6,"N"};
-   ,"fk_User"        =>{,  "I",   0,  0,};
-   ,"KeyC"           =>{, "CV", 100,  0,};         // Any Text that will be know in the app
-   ,"ValueC"         =>{,  "M",   0,  0,};         // Text representation of the value
-   ,"ValueType"      =>{,  "N",   1,  0,,"1"}};    // 1 - String, 2 - Integer, 3 - Date, 4 - Blob (Memo)
-   ,;   //Index Definition
-   {"fk_User"       =>{,"fk_User" ,.f.,"BTREE"};
-   ,"KeyC"          =>{,"KeyC"    ,.f.,"BTREE"}}};
-,"public.APIToken"=>{;   //Field Definition
+,"public.UserSetting"=>{"Fields"=>;
+   {"pk"                 =>{,  "I",   0,  0,"+"};
+   ,"sysc"               =>{, "DT",   0,  6,"N"};
+   ,"sysm"               =>{, "DT",   0,  6,"N"};
+   ,"fk_User"            =>{,  "I",   0,  0,};
+   ,"fk_Diagram"         =>{,  "I",   0,  0,};
+   ,"fk_ModelingDiagram" =>{,  "I",   0,  0,};
+   ,"KeyC"               =>{, "CV", 100,  0,};         // Any Text that will be know in the app
+   ,"ValueC"             =>{,  "M",   0,  0,};         // Text representation of the value
+   ,"ValueType"          =>{,  "N",   1,  0,,"1"}};    // 1 - String, 2 - Integer, 3 - Date, 4 - Blob (Memo)
+        ,"Indexes"=>;
+   {"fk_User"            =>{,"fk_User"    ,.f.,"BTREE"};
+   ,"fk_Diagram"         =>{,"fk_Diagram" ,.f.,"BTREE"};
+   ,"fk_ModelingDiagram" =>{,"fk_Diagram" ,.f.,"BTREE"};
+   ,"KeyC"               =>{,"KeyC"       ,.f.,"BTREE"}}};
+,"public.APIToken"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
@@ -584,46 +585,46 @@ return ;
    ,"Description"    =>{,  "M",   0,  0,"N"};  // Use Info (Visible to Assigned User)
    ,"AccessMode"     =>{,  "N",   1,  0,};     // Used if Type = 1. 1 = Project and Application Specific, 2 = All Projects and Applications Read Only, 3 = All Projects and Applications Full Access
    ,"Status"         =>{,  "N",   1,  0,}};    // 1 = Active, 2 = Inactive
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"Key"     =>{,"Key" ,.f.,"BTREE"}}};
-,"public.APIEndpoint"=>{;   //Field Definition  // Automatically set by DataWharf based on "api.txt" hash array.
+,"public.APIEndpoint"=>{"Fields"=>;   // Automatically set by DataWharf based on "api.txt" hash array.
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"Name"           =>{, "CV", 200,  0,};      // List of keys of p_APIs hash property
    ,"Status"         =>{,  "N",   1,  0,}};     // 1 - Active, 2 - Inactive/Removed
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"Name"       =>{,"Name" ,.f.,"BTREE"}}};
-,"public.APIAccessEndpoint"=>{;   //Field Definition   List of Endpoint a token may access
+,"public.APIAccessEndpoint"=>{"Fields"=>;   // List of Endpoint a token may access
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_APIToken"    =>{,  "I",   0,  0,};
    ,"fk_APIEndpoint" =>{,  "I",   0,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_APIToken"    =>{,"fk_APIToken"    ,.f.,"BTREE"};
    ,"fk_APIEndpoint" =>{,"fk_APIEndpoint" ,.f.,"BTREE"}}};
-,"public.APITokenAccessApplication"=>{;   //Field Definition   Used if related APIToken.Type = 1
+,"public.APITokenAccessApplication"=>{"Fields"=>;   // Used if related APIToken.Type = 1
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_APIToken"    =>{,  "I",   0,  0,};
    ,"fk_Application" =>{,  "I",   0,  0,};
    ,"AccessLevelDD"  =>{,  "N",   1,  0,}};      // Data Dictionary Access Level: 1 - None,2 - Read Only,3 - Update Description and Information Entries,4 - Update Description and Information Entries and Diagrams,5 - Update Anything and Import/Export,6 - Update Anything and Sync Schema
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_APIToken"       =>{,"fk_APIToken" ,.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.APITokenAccessProject"=>{;   //Field Definition   Used if related APIToken.Type = 1
+,"public.APITokenAccessProject"=>{"Fields"=>;   // Used if related APIToken.Type = 1
    {"pk"           =>{,  "I",   0,  0,"+"};
    ,"sysc"         =>{, "DT",   0,  6,"N"};
    ,"sysm"         =>{, "DT",   0,  6,"N"};
    ,"fk_APIToken"  =>{,  "I",   0,  0,};
    ,"fk_Project"   =>{,  "I",   0,  0,};
    ,"AccessLevelML"=>{,  "N",   1,  0,}};       // Modeling        Access Level: 1 - None,2 - Read Only,3 - Update Description and Information Entries,4 - Update Description and Information Entries and Diagrams,5 - Update Anything
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_APIToken" =>{,"fk_APIToken" ,.f.,"BTREE"};
    ,"fk_Project"  =>{,"fk_Project",.f.,"BTREE"}}};
-,"public.LoginLogs"=>{;   //Field Definition
+,"public.LoginLogs"=>{"Fields"=>;
    {"pk"          =>{,  "I",   0,  0,"+"};
    ,"sysc"        =>{, "DT",   0,  6,"N"};
    ,"sysm"        =>{, "DT",   0,  6,"N"};
@@ -634,9 +635,9 @@ return ;
    ,"Signature"   =>{, "CV",  50,  0,};     //Used To Verify the who is logged in
    ,"Attempts"    =>{,  "I",   0,  0,};
    ,"Status"      =>{,  "N",   1,  0,}};    // 1 = Logged In, 2 = User Logout, 3 = Implicit Logout
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"=>{,"fk_User",.f.,"BTREE"}}};
-,"public.UserSettingApplication"=>{;   //Field Definition
+,"public.UserSettingApplication"=>{"Fields"=>;
    {"pk"               =>{,  "I",   0,  0,"+"};
    ,"sysc"             =>{, "DT",   0,  6,"N"};
    ,"sysm"             =>{, "DT",   0,  6,"N"};
@@ -652,23 +653,23 @@ return ;
    ,"SyncNameSpaces"   =>{, "CV", 400,  0,"N"};      // Connection Info To Sync To.  If blank all Name Spaces (PostgreSQL schemas) will be loaded, otherwise list the schema names separated with ","
    ,"SyncSetForeignKey"=>{,  "N",   1,  0,"N"};      // Connection Info To Sync To.  1 - Not, 2- Foreign Key Restrictions, 3 - On p_<TableName>, 4 - on fk_<TableName>, 5 - on <TableName>_id
    };      //  Last Accessed Diagram, to help default the menu to restart on that diagram.
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"       =>{,"fk_User"       ,.f.,"BTREE"};
    ,"fk_Application"=>{,"fk_Application",.f.,"BTREE"};
    ,"fk_Deployment" =>{,"fk_Deployment" ,.f.,"BTREE"};
    ,"fk_Diagram"    =>{,"fk_Diagram"    ,.f.,"BTREE"}}};
-,"public.UserSettingModel"=>{;   //Field Definition
+,"public.UserSettingModel"=>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
    ,"fk_User"            =>{,  "I",   0,  0,};
    ,"fk_Model"           =>{,  "I",   0,  0,};
    ,"fk_ModelingDiagram" =>{,  "I",   0,  0,}};      //  Last Accessed Diagram, to help default the menu to restart on that diagram.
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"            =>{,"fk_User"           ,.f.,"BTREE"};
    ,"fk_Model"           =>{,"fk_Model"          ,.f.,"BTREE"};
    ,"fk_ModelingDiagram" =>{,"fk_ModelingDiagram",.f.,"BTREE"}}};
-,"volatile.FileStream"=>{;   //Field Definition
+,"volatile.FileStream"=>{"Fields"=>;
    {"pk"                 =>{,  "I",   0,  0,"+"};
    ,"sysc"               =>{, "DT",   0,  6,"N"};
    ,"sysm"               =>{, "DT",   0,  6,"N"};
@@ -680,20 +681,20 @@ return ;
    ,"LinkUID"            =>{,  "C",  36,  0,};
    ,"oid"                =>{,"OID",   0,  0,"N"};     // To the PostgreSQL Large Object;
    ,"FileName"           =>{, "CV", 200,  0,"N"}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_User"            =>{,"fk_User"       ,.f.,"BTREE"};
    ,"fk_Application"     =>{,"fk_Application",.f.,"BTREE"};
    ,"fk_Table"           =>{,"fk_Application",.f.,"BTREE"};
    ,"fk_Model"           =>{,"fk_Model"      ,.f.,"BTREE"}}};
-,"public.TemplateTable"=>{;   //Field Definition
+,"public.TemplateTable"=>{"Fields"=>;
    {"pk"             =>{,  "I",   0,  0,"+"};
    ,"sysc"           =>{, "DT",   0,  6,"N"};
    ,"sysm"           =>{, "DT",   0,  6,"N"};
    ,"fk_Application" =>{,  "I",   0,  0,};
    ,"Name"           =>{, "CV", 200,  0,}};
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_Application"=>{,"fk_Application",.f.,"BTREE"}}};
-,"public.TemplateColumn"=>{;   //Field Definition
+,"public.TemplateColumn"=>{"Fields"=>;
    {"pk"               =>{,  "I",   0,  0,"+"};
    ,"sysc"             =>{, "DT",   0,  6,"N"};
    ,"sysm"             =>{, "DT",   0,  6,"N"};
@@ -714,6 +715,6 @@ return ;
    ,"Default"          =>{,  "M",   0,  0,"N"};    // Text version of the default value/expression
    ,"Description"      =>{,  "M",   0,  0,"N"};
    ,"UsedBy"           =>{,  "N",   1,  0,}};      // 1 = All Servers, 2 = MySQL Only, 3 = PostgreSQL Only
-   ,;   //Index Definition
+        ,"Indexes"=>;
    {"fk_TemplateTable" =>{,"fk_TemplateTable",.f.,"BTREE"}}};
 }

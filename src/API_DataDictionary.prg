@@ -106,7 +106,7 @@ else
             l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 750c8b4a-11ad-4cb6-a805-dc6d45f1b1a1"})
             oFcgi:SetHeaderValue("Status","500 Internal Server Error")
         else
-            l_cResponse := ExportApplicationToHbORM(ListOfApplications->pk)
+            l_cResponse := ExportApplicationToHbORM(ListOfApplications->pk,2)
         endif
     endif
 endif

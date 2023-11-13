@@ -7,7 +7,7 @@ local l_cFieldName
 
 if hb_HHasKey(par_hSchema,"public."+par_cTableName)
     l_aTableInfo := par_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[1]
+    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_aFields:__enumkey
         if !vfp_inlist(l_cFieldName,'sysc','sysm')
             par_oDB_ListOfTables:Column(par_cTableName+"."+l_cFieldName ,l_cFieldName)
@@ -33,7 +33,7 @@ local l_xValue
 if hb_HHasKey(par_hSchema,"public."+par_cTableName)
     l_cBackupCode := "!"+par_cTableName+CRLF
     l_aTableInfo := par_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[1]
+    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_aFields:__enumkey
         if !vfp_inlist(l_cFieldName,'sysc','sysm')
             l_cFieldType  := l_aFields[HB_ORM_SCHEMA_FIELD_TYPE]
@@ -57,7 +57,7 @@ if hb_HHasKey(par_hSchema,"public."+par_cTableName)
     scan all
         l_cBackupCode += "^"
 
-        for each l_aFields in l_aTableInfo[1]
+        for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
             l_cFieldName := l_aFields:__enumkey
             if !vfp_inlist(l_cFieldName,'sysc','sysm')
                 l_cFieldType := l_aFields[HB_ORM_SCHEMA_FIELD_TYPE]
@@ -145,7 +145,7 @@ local l_hSchema := oFcgi:p_o_SQLConnection:p_Schema
 
 if hb_HHasKey(l_hSchema,"public."+par_cTableName)
     l_aTableInfo := l_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[1]
+    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_aFields:__enumkey
         if !vfp_inlist(lower(l_cFieldName),'pk','sysc','sysm') .and. !("*"+lower(l_cFieldName)+"*" $ lower(par_cFieldsToExclude))
             if lower(l_cFieldName) == "linkuid" //Always generate a new uuid for these named fields

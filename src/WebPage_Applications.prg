@@ -763,7 +763,6 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
-local l_oDB2
 
 oFcgi:TraceAdd("ApplicationEditFormOnSubmit")
 
@@ -859,7 +858,6 @@ case l_cActionOnSubmit == "Delete"   // Application
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-            l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
             with object l_oDB1
                 :Table("f67dd895-a6c9-4082-81d4-19204bf153c8","NameSpace")
@@ -907,6 +905,19 @@ case l_cActionOnSubmit == "Delete"   // Application
                                         //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
                                         //But we may have some left over Table less diagrams. Remove them
 
+//_M_123 Delete related UserSetting records
+                                        :Table("49de7c69-9e71-4174-9fec-de21b79f0244","Diagram")
+                                        :Column("UserSetting.pk" , "pk")
+                                        :Where("Diagram.fk_Application = ^",l_iApplicationPk)
+                                        :Join("inner","UserSetting","","UserSetting.fk_Diagram = Diagram.pk")
+                                        :SQL("ListOfUserSettingRecordsToDelete")
+                                        if :Tally > 0
+                                            select ListOfUserSettingRecordsToDelete
+                                            scan
+                                                :Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0b","UserSetting",ListOfUserSettingRecordsToDelete->pk)
+                                            endscan
+                                        endif
+
                                         :Table("49de7c69-9e71-4174-9fec-de21b79f0245","Diagram")
                                         :Column("Diagram.pk" , "pk")
                                         :Where("Diagram.fk_Application = ^",l_iApplicationPk)
@@ -915,7 +926,7 @@ case l_cActionOnSubmit == "Delete"   // Application
                                             if :Tally > 0
                                                 select ListOfDiagramRecordsToDelete
                                                 scan
-                                                    l_oDB2:Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0a","Diagram",ListOfDiagramRecordsToDelete->pk)
+                                                    :Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0a","Diagram",ListOfDiagramRecordsToDelete->pk)
                                                 endscan
                                             endif
 
@@ -972,8 +983,6 @@ function CascadeDeleteApplication(par_iApplicationPk,par_lPurgeOnly)
 
 local l_oDB1                      := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
 local l_oDB_ListOfRecordsToDelete := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_RecordToDelete        := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_Delete                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cTableName
 local l_cTableDescription
 
@@ -1017,6 +1026,26 @@ with object l_oDB1
         endif
     endif
 
+//_M_123 Delete related UserSetting records
+    if empty(l_cErrorMessage)
+        :Table("49de7c69-9e71-4174-9fec-de21b79f0243","Diagram")
+        :Column("UserSetting.pk" , "pk")
+        :Where("Diagram.fk_Application = ^",par_iApplicationPk)
+        :Join("inner","UserSetting","","UserSetting.fk_Diagram = Diagram.pk")
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
+        if :Tally < 0
+            l_cErrorMessage := "Failed to delete Application. Error 2."
+        else
+            select ListOfRecordsToDeleteInCascadeDeleteApplication
+            scan
+                if !:Delete("5e0d131b-c60c-4c49-bddd-21addd4cac0a","UserSetting",ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+                    l_cErrorMessage := "Failed to delete Application. Error 3."
+                    exit
+                endif
+            endscan
+        endif
+    endif
+
     if empty(l_cErrorMessage)
         //Due to the deleting all Deployment, only a few directly related tables need to be cleared
         // Deleted all directly related records
@@ -1034,7 +1063,7 @@ with object l_oDB1
                     case :Tally > 0
                         select ListOfRecordsToDelete
                         scan all
-                            if !l_oDB_Delete:Delete("093c524f-478e-4460-9525-19c5703aba6f",l_cTableName,ListOfRecordsToDelete->pk)
+                            if !:Delete("093c524f-478e-4460-9525-19c5703aba6f",l_cTableName,ListOfRecordsToDelete->pk)
                                 l_cErrorMessage := "Failed to delete related record in "+l_cTableName+" ("+l_cTableDescription+")."
                                 exit
                             endif
@@ -1051,7 +1080,7 @@ with object l_oDB1
     if empty(l_cErrorMessage)
         CustomFieldsDelete(par_iApplicationPk,USEDON_APPLICATION,par_iApplicationPk)
         if !par_lPurgeOnly
-            if !l_oDB_RecordToDelete:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
+            if !:Delete("535048f7-4dd6-4043-8bd5-278dd444ec7a","Application",par_iApplicationPk)
                 l_cErrorMessage := "Failed to delete Application. Error 14."
             endif
         endif
@@ -1564,7 +1593,6 @@ case l_cActionOnSubmit == "Delete"   // Deployment
         l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
         with object l_oDB1
-
             //Clear all related pointers in UserSettingApplication
             :Table("5971e8c9-769d-43f4-9168-7263e4541c06","public.UserSettingApplication")
             :Column("UserSettingApplication.pk" , "pk")
@@ -1581,8 +1609,7 @@ case l_cActionOnSubmit == "Delete"   // Deployment
                 endscan
             endif
 
-            if l_oDB1:Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Deployment",l_iDeploymentPk)
-
+            if :Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Deployment",l_iDeploymentPk)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
             else
                 l_cErrorMessage := "Unable to delete deployment."
