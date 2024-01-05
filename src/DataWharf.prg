@@ -1,4 +1,4 @@
-//Copyright (c) 2023 Eric Lendvai MIT License
+//Copyright (c) 2024 Eric Lendvai MIT License
 
 #include "DataWharf.ch"
 
@@ -47,7 +47,9 @@ oFcgi := MyFcgi():New()    // Used a subclass of hb_Fcgi
 hb_HCaseMatch(oFcgi:p_APIs,.f.)
 
 do while oFcgi:Wait()
-    oFcgi:OnRequest()
+    if !oFcgi:SkipRequest
+        oFcgi:OnRequest()
+    endif
 enddo
 
 SendToDebugView("Ending DataWharf FastCGI App")
@@ -55,6 +57,7 @@ SendToDebugView("Ending DataWharf FastCGI App")
 return nil
 //=================================================================================================================
 class MyFcgi from hb_Fcgi
+    data p_WharfConfig          init {=>}
     data p_o_SQLConnection
     data p_cHeader              init ""
     data p_cjQueryScript        init ""
@@ -88,28 +91,30 @@ class MyFcgi from hb_Fcgi
     data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
     data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
 
-    data p_ColumnTypes      init {{  "I","Integer (4 bytes)"                            ,.f.,.f.,.f.,.f.,"integer"                    ,"INT"},;      // {Code,Harbour Name,Show Length,Show Scale,Show Enums,PostgreSQL Name, MySQL Name}
-                                  { "IB","Integer Big (8 bytes)"                        ,.f.,.f.,.f.,.f.,"bigint"                     ,"BIGINT"},;
-                                  { "IS","Integer Small (2 bytes)"                      ,.f.,.f.,.f.,.f.,"smallint"                   ,"SMALLINT"},;
-                                  {  "N","Numeric"                                      ,.t.,.t.,.f.,.f.,"numeric"                    ,"DECIMAL"},;
-                                  {  "C","Character String"                             ,.t.,.f.,.f.,.t.,"character"                  ,"CHAR"},;
-                                  { "CV","Character String Varying"                     ,.t.,.f.,.f.,.t.,"character varying"          ,"VARCHAR"},;
-                                  {  "B","Binary String"                                ,.t.,.f.,.f.,.f.,"bit"                        ,"BINARY"},;
-                                  { "BV","Binary String Varying"                        ,.t.,.f.,.f.,.f.,"bit varying"                ,"VARBINARY"},;
-                                  {  "M","Memo / Long Text"                             ,.f.,.f.,.f.,.t.,"text"                       ,"LONGTEXT"},;
-                                  {  "R","Raw Binary"                                   ,.f.,.f.,.f.,.f.,"bytea"                      ,"LONGBLOB"},;
-                                  {  "L","Logical"                                      ,.f.,.f.,.f.,.f.,"boolean"                    ,"TINYINT(1)"},;
-                                  {  "D","Date"                                         ,.f.,.f.,.f.,.f.,"date"                       ,"DATE"},;
-                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.f.,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'Type=TOZ'"},;
-                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.f.,.f.,.f.,"time without time zone"     ,"TIME"},;
-                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.f.,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"},;
-                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.f.,.f.,.f.,"timestamp without time zone","DATETIME"},;
-                                  {  "Y","Money"                                        ,.f.,.f.,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'Type=Y'"},;
-                                  {  "E","Enumeration"                                  ,.f.,.f.,.t.,.f.,"enum"                       ,"ENUM"},;
-                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,.f.,.f.,"uuid"                       ,"VARCHAR(36)"},;   // In DBF VarChar 36
-                                  { "JS","JSON"                                         ,.f.,.f.,.f.,.f.,"json"                       ,"LONGTEXT"},;
-                                  {"OID","Object Identifier"                            ,.f.,.f.,.f.,.f.,"oid"                        ,"BIGINT COMMENT 'Type=OID'"},;
-                                  {  "?","Other"                                        ,.f.,.f.,.f.,.f.,""                           ,""};
+    //                            {Code,Name,Show Length,Show Scale,Max Scale,Show Enums,Show Unicode,PostgreSQL Name, MySQL Name}
+    data p_ColumnTypes      init {{  "I","Integer (4 bytes)"                            ,.f.,.f.,nil,.f.,.f.,"integer"                    ,"INT"                           },;
+                                  { "IB","Integer Big (8 bytes)"                        ,.f.,.f.,nil,.f.,.f.,"bigint"                     ,"BIGINT"                        },;
+                                  { "IS","Integer Small (2 bytes)"                      ,.f.,.f.,nil,.f.,.f.,"smallint"                   ,"SMALLINT"                      },;
+                                  {  "N","Numeric"                                      ,.t.,.t.,nil,.f.,.f.,"numeric"                    ,"DECIMAL"                       },;
+                                  {  "C","Character String"                             ,.t.,.f.,nil,.f.,.t.,"character"                  ,"CHAR"                          },;
+                                  { "CV","Character String Varying"                     ,.t.,.f.,nil,.f.,.t.,"character varying"          ,"VARCHAR"                       },;
+                                  {  "B","Binary String"                                ,.t.,.f.,nil,.f.,.f.,"bit"                        ,"BINARY"                        },;
+                                  { "BV","Binary String Varying"                        ,.t.,.f.,nil,.f.,.f.,"bit varying"                ,"VARBINARY"                     },;
+                                  {  "M","Memo / Long Text"                             ,.f.,.f.,nil,.f.,.t.,"text"                       ,"LONGTEXT"                      },;
+                                  {  "R","Raw Binary"                                   ,.f.,.f.,nil,.f.,.f.,"bytea"                      ,"LONGBLOB"                      },;
+                                  {  "L","Logical"                                      ,.f.,.f.,nil,.f.,.f.,"boolean"                    ,"TINYINT(1)"                    },;
+                                  {  "D","Date"                                         ,.f.,.f.,nil,.f.,.f.,"date"                       ,"DATE"                          },;
+                                  {"TOZ","Time Only With Time Zone Conversion"          ,.f.,.t.,  6,.f.,.f.,"time with time zone"        ,"TIME COMMENT 'Type=TOZ'"       },;
+                                  { "TO","Time Only Without Time Zone Conversion"       ,.f.,.t.,  6,.f.,.f.,"time without time zone"     ,"TIME"                          },;
+                                  {"DTZ","Date and Time With Time Zone Conversion (T)"  ,.f.,.t.,  6,.f.,.f.,"timestamp with time zone"   ,"TIMESTAMP"                     },;
+                                  { "DT","Date and Time Without Time Zone Conversion"   ,.f.,.t.,  6,.f.,.f.,"timestamp without time zone","DATETIME"                      },;
+                                  {  "Y","Money"                                        ,.f.,.f.,nil,.f.,.f.,"money"                      ,"DECIMAL(13,4) COMMENT 'Type=Y'"},;
+                                  {  "E","Enumeration"                                  ,.f.,.f.,nil,.t.,.f.,"enum"                       ,"ENUM"                          },;
+                                  {"UUI","UUID Universally Unique Identifier"           ,.f.,.f.,nil,.f.,.f.,"uuid"                       ,"VARCHAR(36)"                   },;   // In DBF VarChar 36
+                                  { "JS","JSON"                                         ,.f.,.f.,nil,.f.,.f.,"json"                       ,"LONGTEXT COMMENT 'Type=JS'"    },;
+                                  {"JSB","JSONB"                                        ,.f.,.f.,nil,.f.,.f.,"jsonb"                      ,"LONGTEXT COMMENT 'Type=JSB"    },;      // Enhanced version used natively in PostgreSQL
+                                  {"OID","Object Identifier"                            ,.f.,.f.,nil,.f.,.f.,"oid"                        ,"BIGINT COMMENT 'Type=OID'"     },;
+                                  {  "?","Other"                                        ,.f.,.f.,nil,.f.,.f.,""                           ,""                              };
                                  }
     
     data p_cThisAppTitle                 init ""
@@ -149,8 +154,10 @@ local l_cSecurityDefaultPassword
 local l_iCurrentDataVersion
 local l_cVisPos
 local l_cTableName
+local l_cColumnName
 local l_cName
 local l_cLastSQL
+local l_xValue
 
 // altd()
 
@@ -162,6 +169,8 @@ set delete on
 ::SetOnErrorDetailLevel(2)
 ::SetOnErrorProgramInfo(hb_BuildInfo())
 
+::p_WharfConfig := Config()
+
 ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                     ::GetAppConfig("POSTGRESDRIVER"),;
                                     ::GetAppConfig("POSTGRESHOST"),;
@@ -172,9 +181,13 @@ set delete on
                                     "public";
                                     )
 with object ::p_o_SQLConnection
-    :PostgreSQLHBORMSchemaName  := "ORM"
+    :LoadWharfConfiguration(oFcgi:p_WharfConfig)
+    :SetForeignKeyNullAndZeroParity(.t.)
+
+    :SetHarbourORMNamespace("ORM")
     :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
     :SetPrimaryKeyFieldName("pk")
+    :SetApplicationName("DataWharf")
 
     if :Connect() >= 0
         UpdateSchema(::p_o_SQLConnection)
@@ -194,8 +207,11 @@ with object ::p_o_SQLConnection
             :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
             if :Add()
                 v_iFastCGIRunLogPk := :Key()
+            else
+                v_iFastCGIRunLogPk := -1
             endif
         endwith
+        :SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
 
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 1
@@ -416,7 +432,7 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 16
             with object l_oDB1
-                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","NameSpace","Project","Table","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
+                For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","Namespace","Project","Table","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
                     :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
                     :Column(l_cTableName+".pk" , "pk")
 
@@ -509,7 +525,155 @@ with object ::p_o_SQLConnection
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 23
+            with object l_oDB1
+                For each l_cTableName in {"Column","Index","TemplateColumn"}
+                    :Table("288ea878-51a6-48b7-9fb0-1c417ff28276",l_cTableName)
+                    :Column(l_cTableName+".pk" , "pk")
+
+                    :Where(l_cTableName+[.UsedBy = 0])
+                    :SQL("ListOfRecordsToUpdate")
+                    select ListOfRecordsToUpdate
+                    scan all
+                        with object l_oDB2
+                            :Table("8f7f9c0d-b9db-42c7-ac9f-ee08085e59ea",l_cTableName)
+                            :Field(l_cTableName+".UsedBy" , USEDBY_ALLSERVERS)
+                            :Update(ListOfRecordsToUpdate->pk)
+                        endwith
+                    endscan
+                endfor
+            endwith
+
+            l_iCurrentDataVersion := 23
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
         //-----------------------------------------------------------------------------------
+        // Skipped Version 24 During Coding
+        if l_iCurrentDataVersion < 25
+            for each l_cTableName in {"Column","TemplateColumn"}
+                if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"Primary") .and. ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"UsedAs")
+
+                    with object l_oDB1
+
+                        :Table("6b7d02de-44b0-43a8-8830-2d51481c984f",l_cTableName)
+                        :Column(l_cTableName+".pk"     ,"pk")
+                        :Column(l_cTableName+".Primary","Primary")
+                        if l_cTableName == "Column"
+                            :Column(l_cTableName+".fk_TableForeign" ,"fk_TableForeign")
+                        endif
+                        :Column(l_cTableName+".UsedAs"     ,"UsedAs")
+                        :SQL("ListOfRecordsToFix")
+                        select ListOfRecordsToFix
+                        scan all for ListOfRecordsToFix->UsedAs = 0
+                            with object l_oDB2
+                                :Table("aa892b84-4e5d-44b3-aa8b-3295b845b79b",l_cTableName)
+
+                                if (l_cTableName == "Column") .and. nvl(ListOfRecordsToFix->fk_TableForeign,0) > 0
+                                    :Field(l_cTableName+".UsedAs" , 3)
+                                else
+                                    :Field(l_cTableName+".UsedAs" , iif(ListOfRecordsToFix->Primary,2,1))
+                                endif
+                                
+                                :Update(ListOfRecordsToFix->pk)
+                            endwith
+                        endscan
+
+                    endwith
+
+                    ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"Primary")
+                endif
+            endfor
+            l_iCurrentDataVersion := 25
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 26
+            for each l_cTableName in {"Column","TemplateColumn"}
+                if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"Default")       .and. ;
+                   ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultPreset") .and. ;
+                   ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultType")   .and. ;
+                   ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultCustom")
+
+                    with object l_oDB1
+
+                        :Table("c0032c60-0265-4d75-949b-769b5a77d140",l_cTableName)
+                        :Column(l_cTableName+".pk"           ,"pk")
+                        :Column(l_cTableName+".Type"         ,"Type")
+                        :Column(l_cTableName+".Default"      ,"Default")
+                        :Column(l_cTableName+".UsedAs"       ,"UsedAs")
+                        :SQL("ListOfRecordsToFix")
+                        select ListOfRecordsToFix
+                        scan all
+                            with object l_oDB2
+                                :Table("5454c915-b133-4f11-92d3-cc8c847ad2e4",l_cTableName)
+
+                                if !empty(nvl(ListOfRecordsToFix->Default,""))
+                                    :Field(l_cTableName+".DefaultType"   , 1)
+                                    :Field(l_cTableName+".DefaultCustom" , ListOfRecordsToFix->Default)
+                                else
+                                    :Field(l_cTableName+".DefaultType" , 0)
+                                endif
+                                
+                                :Update(ListOfRecordsToFix->pk)
+                            endwith
+                        endscan
+
+                    endwith
+
+                    ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"DefaultPreset")
+                    ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"Default")
+                endif
+            endfor
+            l_iCurrentDataVersion := 26
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 27
+            for each l_cTableName in {"TemplateColumn"}
+                for each l_cColumnName in {"ForeignKeyUse","ForeignKeyOptional","OnDelete","Required","Primary"}
+                    if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,l_cColumnName)
+                        ::p_o_SQLConnection:DeleteField("public."+l_cTableName,l_cColumnName)
+                    endif
+                endfor
+            endfor
+            l_iCurrentDataVersion := 27
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        // if l_iCurrentDataVersion < 28
+        //     l_iCurrentDataVersion := 28
+        //     :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        // endif
+        //Skipped Version 28 and merged all actions in Version 29
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 29
+
+            :ForeignKeyConvertAllZeroToNull(oFcgi:p_WharfConfig["TableSchema"])
+            :DeleteAllOrphanRecords( oFcgi:p_WharfConfig["TableSchema"] )
+
+            for each l_cTableName in {"Application"}
+                for each l_cColumnName in {"PrimaryKeyDefaultInteger","PrimaryKeyDefaultUUID","PrimaryKeyType","ForeignKeyTypeMatchPrimaryKey","ForeignKeyIsNullable","ForeignKeyNoDefault"}
+                    if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,l_cColumnName)
+                        ::p_o_SQLConnection:DeleteField("public."+l_cTableName,l_cColumnName)
+                    endif
+                endfor
+            endfor
+
+            if ::p_o_SQLConnection:FieldExists("public.Column","PrimaryMode")
+                ::p_o_SQLConnection:DeleteField("public.Column","PrimaryMode")
+            endif
+
+            if ::p_o_SQLConnection:FieldExists("public.TemplateColumn","PrimaryMode")
+                ::p_o_SQLConnection:DeleteField("public.TemplateColumn","PrimaryMode")
+            endif
+
+            l_iCurrentDataVersion := 29
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------
+//:RemoveWharfForeignKeyConstraints( oFcgi:p_WharfConfig["TableSchema"] )
+:AddUpdateWharfForeignKeyConstraints( oFcgi:p_WharfConfig["TableSchema"] )
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
@@ -657,8 +821,8 @@ if !l_lPostgresLostConnection
 endif
 
 if !l_lPostgresLostConnection  //If still possibly connected, test if the ORM schema is present
-    if ::p_o_SQLConnection:SQLExec("a37e465d-1a15-48bb-aa4f-c2542b76effa","select exists (select nspname from pg_catalog.pg_namespace where nspname = 'ORM');","ListOfNameSpaces")
-        if !ListOfNameSpaces->exists
+    if ::p_o_SQLConnection:SQLExec("a37e465d-1a15-48bb-aa4f-c2542b76effa","select exists (select nspname from pg_catalog.pg_namespace where nspname = 'ORM');","ListOfNamespaces")
+        if !ListOfNamespaces->exists
             l_lPostgresLostConnection := .t.
         endif
     else
@@ -667,7 +831,9 @@ if !l_lPostgresLostConnection  //If still possibly connected, test if the ORM sc
 endif
 
 if l_lPostgresLostConnection
-    ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
+    if !(::p_o_SQLConnection == NIL)
+        ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
+    endif
 
     // SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
@@ -680,9 +846,13 @@ if l_lPostgresLostConnection
                                         "public";
                                         )
     with object ::p_o_SQLConnection
-        :PostgreSQLHBORMSchemaName  := "ORM"
+        :LoadWharfConfiguration(oFcgi:p_WharfConfig)
+        :SetForeignKeyNullAndZeroParity(.t.)
+
+        :SetHarbourORMNamespace("ORM")
         :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
         :SetPrimaryKeyFieldName("pk")
+        :SetApplicationName("DataWharf")
 
         if :Connect() >= 0
             UpdateSchema(::p_o_SQLConnection)
@@ -721,21 +891,21 @@ case ::p_o_SQLConnection == NIL
 case CompareVersionsWithDecimals( val(::p_o_SQLConnection:p_hb_orm_version) , val(MIN_HARBOUR_ORM_VERSION) ) < 0
     l_cHtml := [<html>]
     l_cHtml += [<body>]
-    l_cHtml += [<h1>Harbour ORM must be version ]+MIN_HARBOUR_ORM_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [<h1>Harbour ORM must be version ]+MIN_HARBOUR_ORM_VERSION+[ or higher.</h1>]
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
 case CompareVersionsWithDecimals( VFP_GetCompatibilityPackVersion() , val(MIN_HARBOUR_VFP_VERSION) ) < 0
     l_cHtml := [<html>]
     l_cHtml += [<body>]
-    l_cHtml += [<h1>Harbour VFP must be version ]+MIN_HARBOUR_VFP_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [<h1>Harbour VFP must be version ]+MIN_HARBOUR_VFP_VERSION+[ or higher.</h1>]
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
 case CompareVersionsWithDecimals( vaL(::p_hb_fcgi_version) , val(MIN_HARBOUR_FCGI_VERSION) ) < 0
     l_cHtml := [<html>]
     l_cHtml += [<body>]
-    l_cHtml += [<h1>Harbour FastCGI must be version ]+MIN_HARBOUR_FCGI_VERSION+[ at the minimum.</h1>]
+    l_cHtml += [<h1>Harbour FastCGI must be version ]+MIN_HARBOUR_FCGI_VERSION+[ or higher.</h1>]
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
@@ -770,6 +940,13 @@ otherwise
         ::p_URLPathElements := {}
 
         l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
+
+        if vfp_inlist(lower(right(l_cPageName,4)),".ico",".txt",".css") .or. vfp_inlist(lower(right(l_cPageName,3)),".js")
+            //Should not happen in FastCGI 1.7+
+            SendToDebugView("Code should not happen ico,txt,css,js",::RequestCount)
+            return nil
+        endif
+
         l_aPathElements := hb_ATokens(l_cPageName,"/",.f.)
         if len(l_aPathElements) > 1
             l_cPageName := l_aPathElements[1]
@@ -785,7 +962,8 @@ otherwise
             l_cPageName := "home"
         endif
         
-        if l_cPageName == "favicon.ico" .or. l_cPageName == "scripts"
+        // if l_cPageName == "favicon.ico" .or. l_cPageName == "scripts"
+        if l_cPageName == "scripts"
             return nil
         endif
 
@@ -1188,8 +1366,10 @@ otherwise
             elseif l_cPageName == "api"
                 // Check for tocken
                 l_cAccessToken := oFcgi:GetHeaderValue("AccessToken")
+                if empty(l_cAccessToken)
+                    l_cAccessToken := oFcgi:GetQueryString("AccessToken")
+                endif
                 l_cAPIEndpointName := GetAPIURIElement(1)
-//123456
                 l_cBody := [UNBUFFERED]
 
                 l_nTokenAccessMode := APIAccessCheck_Token_EndPoint(l_cAccessToken,l_cAPIEndpointName)
@@ -1375,14 +1555,15 @@ return nil
 
 //=================================================================================================================
 function UpdateSchema(par_o_SQLConnection)
-local l_LastError := ""
-local l_hSchema
+local l_cLastError := ""
+local l_hTableSchema
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
+local l_cUpdateScript := ""
 
-l_hSchema := Schema()
+l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
 
-if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResult,,@l_LastError) > 0
+if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hTableSchema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
@@ -1392,12 +1573,14 @@ if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hSchema),@l_nMigrateSchemaResu
         endif
     endif
 else
-    if !empty(l_LastError)
+    if !empty(l_cLastError)
         SendToDebugView("PostgreSQL - Failed Migrate")
     endif
 endif
 
-// VFP_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript.txt")
+if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+    VFP_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
+endif
 
 return nil
 //=================================================================================================================
@@ -1741,7 +1924,8 @@ with object l_oDB1
     :Where("UserSetting.fk_Diagram = ^"         , l_iFk_Diagram)
     :Where("UserSetting.fk_ModelingDiagram = ^" , l_iFk_ModelingDiagram)
     :SQL(@l_aSQLResult)
-    
+    // SendToClipboard(:LastSQL())
+
     if :Tally > 1  //Bad data, more than 1 record, will delete all records first.
         l_nTally := :Tally
         for l_nCounter := 1 to l_nTally
@@ -1827,7 +2011,7 @@ endwith
 
 return l_lResult
 //=================================================================================================================
-function CheckIfAllowDestructiveNameSpaceDelete(par_iApplicationPk)
+function CheckIfAllowDestructiveNamespaceDelete(par_iApplicationPk)
 local l_lResult := .f.
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oData

@@ -1,6 +1,6 @@
 
 DataWharf.prg
-Schema.prg
+SelfConfiguration.prg
 LoadSchema.prg
 DeltaSchema.prg
 VisualizeApplications.prg
@@ -9,6 +9,7 @@ FixNonNormalizedFields.prg
 ImportExportAny.prg
 ImportExportApplication.prg
 ImportExportModel.prg
+DataDictionaryFixAndTest.prg
 
 WebPages.hbm
 API.hbm

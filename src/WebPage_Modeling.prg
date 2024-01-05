@@ -1430,16 +1430,16 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Modeling / Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Modeling / Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModels+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModels+[</th>]
+                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                        l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
                 l_cHtml += [</tr>]
 
@@ -1744,25 +1744,25 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">] // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"12","13")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"12","13")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Project</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModel+[ Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Stage</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackages+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntities+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAttributes+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAssociations+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataTypes+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFModelEnumerations+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Linked ]+oFcgi:p_ANFModel+[</th>]
-                    // l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Settings</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Visualize</th>]
+                    l_cHtml += [<th class="text-white">Project</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModel+[ Name</th>]
+                    l_cHtml += [<th class="text-white">Stage</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackages+[</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntities+[</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAttributes+[</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAssociations+[</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataTypes+[</th>]
+                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModelEnumerations+[</th>]
+                    l_cHtml += [<th class="text-white">Linked ]+oFcgi:p_ANFModel+[</th>]
+                    // l_cHtml += [<th class="text-white text-center">Settings</th>]
+                    l_cHtml += [<th class="text-white">Visualize</th>]
                     if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                        l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
                 l_cHtml += [</tr>]
 
@@ -2600,18 +2600,18 @@ if !empty(l_nNumberOfEntities)
             endif
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFEntities+[ (]+Trans(l_nNumberOfEntities)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFEntities+[ (]+Trans(l_nNumberOfEntities)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackage+[</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[ Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAttributes+[</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Information</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackage+[</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntity+[ Name</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAttributes+[</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white">Information</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -3524,14 +3524,14 @@ if !empty(l_nNumberOfPackages)
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
             
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white">Full Name</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -4017,16 +4017,16 @@ if !empty(l_nNumberOfDataTypes)
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
             
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Primitive Type</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white">Full Name</th>]
+                l_cHtml += [<th class="text-white">Primitive Type</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -4455,14 +4455,14 @@ else
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="4">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="4">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Enumeration Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Values</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="text-white">Enumeration Name</th>]
+                    l_cHtml += [<th class="text-white">Values</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfEnumerations
@@ -4785,13 +4785,13 @@ else
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cEnumerationName)+["</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cEnumerationName)+["</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                l_cHtml += [<th class="text-white">Name</th>]
+                l_cHtml += [<th class="text-white">Number</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
             l_cHtml += [</tr>]
 
             select ListOfEnumValues
@@ -5434,17 +5434,17 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
             endif
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFAssociations+[ (]+Trans(l_nNumberOfAssociations)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFAssociations+[ (]+Trans(l_nNumberOfAssociations)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFPackage+[</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFAssociation+[ Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntities+[</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackage+[</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAssociation+[ Name</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntities+[</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -6270,7 +6270,8 @@ with object l_oDB_ListOfAttributes
     :OrderBy("tag1")
     :SQL("ListOfAttributes")
     l_nNumberOfAttributesInSearch := :Tally
-
+// SendToClipboard(:LastSQL())
+//1234567
 endwith
 
 if l_nNumberOfAttributes > 0
@@ -6395,7 +6396,7 @@ else
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">]
+                l_cHtml += [<th class="text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">]
                     if l_nNumberOfAttributes == l_nNumberOfAttributesInSearch
                         l_cHtml += oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
                     else
@@ -6405,14 +6406,14 @@ else
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Full Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Use<br>Status</th>]
+                l_cHtml += [<th class="text-white">Full Name</th>]
+                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataType+[</th>]
+                l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
+                l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Use<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -7151,15 +7152,15 @@ endwith
                 l_cHtml += [<table class="table table-sm table-bordered table-striped">]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">]+oFcgi:p_ANFLinkedEntities+[</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="5">]+oFcgi:p_ANFLinkedEntities+[</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white" ></th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white" >From/To</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white" >]+oFcgi:p_ANFModel+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white" >]+oFcgi:p_ANFEntity+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                    l_cHtml += [<th class="text-white" ></th>]
+                    l_cHtml += [<th class="text-white" >From/To</th>]
+                    l_cHtml += [<th class="text-white" >]+oFcgi:p_ANFModel+[</th>]
+                    l_cHtml += [<th class="text-white" >]+oFcgi:p_ANFEntity+[</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfLinkedEntities
@@ -7594,7 +7595,6 @@ with object l_oDB_ListOfRecordsToDelete
         endif
     endscan
 
-//_M_123 Delete related UserSetting records
     //Delete the indirectly linked UserSetting records
     :Table("34bc4f62-e088-4900-8997-804c5f1e8e08","ModelingDiagram")
     :Column("UserSetting.pk" , "pk")
@@ -7607,9 +7607,6 @@ with object l_oDB_ListOfRecordsToDelete
             l_cErrorMessage := [Failed to delete Diagram ]+oFcgi:p_ANFEntity+[.]
         endif
     endscan
-
-
-
 
     if empty(l_cErrorMessage)
         :Table("2ff2a1bf-b3e3-4646-b9c2-c6fbd2d6069b","ModelingDiagram")

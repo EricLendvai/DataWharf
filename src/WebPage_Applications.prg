@@ -250,7 +250,7 @@ case l_cURLAction == "EditDeployment"
         :Column("Deployment.Port"               , "Port")                // 7
         :Column("Deployment.User"               , "User")                // 8
         :Column("Deployment.Database"           , "Database")            // 9
-        :Column("Deployment.NameSpaces"         , "NameSpaces")          // 10
+        :Column("Deployment.Namespaces"         , "Namespaces")          // 10
         :Column("Deployment.SetForeignKey"      , "SetForeignKey")       // 11
         :Column("Deployment.PasswordStorage"    , "PasswordStorage")     // 12
         :Column("Deployment.PasswordConfigKey"  , "PasswordConfigKey")   // 13
@@ -275,7 +275,7 @@ case l_cURLAction == "EditDeployment"
             l_hValues["Port"]               := nvl(l_aSQLResult[1, 7],0)
             l_hValues["User"]               := AllTrim(nvl(l_aSQLResult[1, 8],""))
             l_hValues["Database"]           := AllTrim(nvl(l_aSQLResult[1, 9],""))
-            l_hValues["NameSpaces"]         := AllTrim(nvl(l_aSQLResult[1,10],""))
+            l_hValues["Namespaces"]         := AllTrim(nvl(l_aSQLResult[1,10],""))
             l_hValues["SetForeignKey"]      := nvl(l_aSQLResult[1,11],0)
             l_hValues["PasswordStorage"]    := nvl(l_aSQLResult[1,12],0)
             l_hValues["PasswordConfigKey"]  := AllTrim(nvl(l_aSQLResult[1,13],""))
@@ -427,7 +427,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete" disabled>]
                     l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
-                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On NameSpaces</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On Namespaces</option>]
                     l_cHtml += [<option value="4"]+iif(l_nDestructiveDelete==4,[ selected],[])+[>Entire Application Content (Needed to PURGE)</option>]
                     l_cHtml += [<option value="5"]+iif(l_nDestructiveDelete==5,[ selected],[])+[>Can Delete Application</option>]
                 l_cHtml += [</select>]
@@ -526,8 +526,8 @@ with object l_oDB_ListOfTableCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"TableCount")
-    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
-    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
@@ -555,19 +555,19 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Link Code</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Destructive<br>Deletes</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Link Code</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Tables</th>]
+                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Destructive<br>Deletes</th>]
                     if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                        l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
                 l_cHtml += [</tr>]
 
@@ -604,7 +604,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Tables/Tags","On NameSpaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
+                            l_cHtml += {"None","On Tables/Tags","On Namespaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -721,7 +721,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
                     l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
-                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On NameSpaces</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On Namespaces</option>]
                     l_cHtml += [<option value="4"]+iif(l_nDestructiveDelete==4,[ selected],[])+[>Entire Application Content (Needed to PURGE)</option>]
                     l_cHtml += [<option value="5"]+iif(l_nDestructiveDelete==5,[ selected],[])+[>Can Delete Application</option>]
                 l_cHtml += [</select>]
@@ -860,11 +860,11 @@ case l_cActionOnSubmit == "Delete"   // Application
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
             with object l_oDB1
-                :Table("f67dd895-a6c9-4082-81d4-19204bf153c8","NameSpace")
-                :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
+                :Table("f67dd895-a6c9-4082-81d4-19204bf153c8","Namespace")
+                :Where("Namespace.fk_Application = ^",l_iApplicationPk)
                 :SQL()
                 if :Tally != 0
-                    l_cErrorMessage := "Related Name Space record on file"
+                    l_cErrorMessage := "Related Namespace record on file"
                 else
 
                     :Table("72419462-2523-45a3-8f86-4cdca0da52c0","Deployment")
@@ -902,10 +902,8 @@ case l_cActionOnSubmit == "Delete"   // Application
                                         l_cErrorMessage := "Related Tag record on file"
                                     else
 
-                                        //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and NameSpaces can no be removed with Tables
+                                        //Don't Have to test on related Table or DiagramTables since deleting Table would remove DiagramTables records and Namespaces can no be removed with Tables
                                         //But we may have some left over Table less diagrams. Remove them
-
-//_M_123 Delete related UserSetting records
                                         :Table("49de7c69-9e71-4174-9fec-de21b79f0244","Diagram")
                                         :Column("UserSetting.pk" , "pk")
                                         :Where("Diagram.fk_Application = ^",l_iApplicationPk)
@@ -989,16 +987,16 @@ local l_cTableDescription
 local l_cErrorMessage := ""
 
 with object l_oDB1
-    :Table("ff898367-8a10-41ac-ad1d-8eaaec72fe0d","NameSpace")
-    :Column("NameSpace.pk","pk")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+    :Table("ff898367-8a10-41ac-ad1d-8eaaec72fe0d","Namespace")
+    :Column("Namespace.pk","pk")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
     :SQL("ListOfRecordsToDeleteInCascadeDeleteApplication")
     if :Tally < 0
         l_cErrorMessage := "Failed to delete Application. Error 1."
     else
         select ListOfRecordsToDeleteInCascadeDeleteApplication
         scan all
-            l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
+            l_cErrorMessage := CascadeDeleteNamespace(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteApplication->pk)
             //This will also delete all the tables, column, index, tags ...
             if !empty(l_cErrorMessage)
                 exit
@@ -1007,7 +1005,7 @@ with object l_oDB1
     endif
     
     if empty(l_cErrorMessage)
-        //Since TemplateTable+TemplateColumn are not NameSpace specific, delete the related TemplateColumn record, then we can delete the TemplateTable records
+        //Since TemplateTable+TemplateColumn are not Namespace specific, delete the related TemplateColumn record, then we can delete the TemplateTable records
         :Table("7d901c55-377c-4899-bb9c-b4942eb910e3","TemplateTable")
         :Join("inner","TemplateColumn","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
         :Column("TemplateColumn.pk","pk")
@@ -1026,7 +1024,6 @@ with object l_oDB1
         endif
     endif
 
-//_M_123 Delete related UserSetting records
     if empty(l_cErrorMessage)
         :Table("49de7c69-9e71-4174-9fec-de21b79f0243","Diagram")
         :Column("UserSetting.pk" , "pk")
@@ -1123,7 +1120,7 @@ with object l_oDB1
     :Column("Deployment.PasswordConfigKey"  ,"Deployment_PasswordConfigKey")
     :Column("Deployment.PasswordEnvVarName" ,"Deployment_PasswordEnvVarName")
     :Column("Deployment.Database"           ,"Deployment_Database")
-    :Column("Deployment.NameSpaces"         ,"Deployment_NameSpaces")
+    :Column("Deployment.Namespaces"         ,"Deployment_Namespaces")
     :Column("Deployment.SetForeignKey"      ,"Deployment_SetForeignKey")
 
     :Column("Upper(Deployment.Name)","tag1")
@@ -1161,21 +1158,21 @@ else
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="11">Deployment (]+Trans(l_nNumberOfDeployments)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="11">Deployment (]+Trans(l_nNumberOfDeployments)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Server<br>Type</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Server<br>Address/IP</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Server<br>Port</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">User<br>Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Password<br>Mode</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Database</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Name Spaces</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Set Foreign Key</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Server<br>Type</th>]
+                    l_cHtml += [<th class="text-white text-center">Server<br>Address/IP</th>]
+                    l_cHtml += [<th class="text-white text-center">Server<br>Port</th>]
+                    l_cHtml += [<th class="text-white text-center">User<br>Name</th>]
+                    l_cHtml += [<th class="text-white text-center">Password<br>Mode</th>]
+                    l_cHtml += [<th class="text-white text-center">Database</th>]
+                    l_cHtml += [<th class="text-white text-center">Namespaces</th>]
+                    l_cHtml += [<th class="text-white text-center">Set Foreign Key</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfDeployments
@@ -1229,7 +1226,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += nvl(ListOfDeployments->Deployment_NameSpaces,"")
+                            l_cHtml += nvl(ListOfDeployments->Deployment_Namespaces,"")
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1265,7 +1262,7 @@ local l_nPasswordStorage   := hb_HGetDef(par_hValues,"PasswordStorage",0)
 local l_cPasswordConfigKey := hb_HGetDef(par_hValues,"PasswordConfigKey","")
 local l_cPasswordEnvVarName:= hb_HGetDef(par_hValues,"PasswordEnvVarName","")
 local l_cDatabase          := hb_HGetDef(par_hValues,"Database","")
-local l_cNameSpaces        := hb_HGetDef(par_hValues,"NameSpaces","")
+local l_cNamespaces        := hb_HGetDef(par_hValues,"Namespaces","")
 local l_nSetForeignKey     := hb_HGetDef(par_hValues,"SetForeignKey",0)
 
 oFcgi:TraceAdd("DeploymentEditFormBuild")
@@ -1392,8 +1389,8 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Name Spaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNameSpaces" id="TextNameSpaces" value="]+FcgiPrepFieldForValue(l_cNameSpaces)+[" maxlength="400" size="80"></td>]
+            l_cHtml += [<td class="pe-2 pb-3">Namespaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNamespaces" id="TextNamespaces" value="]+FcgiPrepFieldForValue(l_cNamespaces)+[" maxlength="400" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -1470,7 +1467,7 @@ local l_cDeploymentServer
 local l_nDeploymentPort
 local l_cDeploymentUser
 local l_cDeploymentDatabase
-local l_cDeploymentNameSpaces
+local l_cDeploymentNamespaces
 local l_nDeploymentSetForeignKey
 local l_nDeploymentPasswordStorage
 local l_cDeploymentPasswordCrypt
@@ -1499,7 +1496,7 @@ l_nDeploymentPort               := Val(oFcgi:GetInputValue("TextPort"))
 l_cDeploymentUser               := SanitizeInput(oFcgi:GetInputValue("TextUser"))
 l_nDeploymentPasswordStorage    := Val(oFcgi:GetInputValue("ComboPasswordStorage"))
 l_cDeploymentDatabase           := SanitizeInput(oFcgi:GetInputValue("TextDatabase"))
-l_cDeploymentNameSpaces         := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextNameSpaces"),[,_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+l_cDeploymentNamespaces         := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextNamespaces"),[,_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
 l_nDeploymentSetForeignKey      := Val(oFcgi:GetInputValue("ComboSetForeignKey"))
 l_cDeploymentPasswordCrypt      := SanitizeInput(oFcgi:GetInputValue("TextPasswordCrypt"))
 l_cDeploymentPasswordConfigKey  := SanitizeInput(oFcgi:GetInputValue("TextPasswordConfigKey"))
@@ -1555,7 +1552,7 @@ case l_cActionOnSubmit == "Save"
                     :Field("Deployment.PasswordConfigKey"  ,iif(empty(l_cDeploymentPasswordConfigKey) ,NULL,l_cDeploymentPasswordConfigKey))
                     :Field("Deployment.PasswordEnvVarName" ,iif(empty(l_cDeploymentPasswordEnvVarName),NULL,l_cDeploymentPasswordEnvVarName))
                     :Field("Deployment.Database"           ,iif(empty(l_cDeploymentDatabase)          ,NULL,l_cDeploymentDatabase))
-                    :Field("Deployment.NameSpaces"         ,iif(empty(l_cDeploymentNameSpaces)        ,NULL,l_cDeploymentNameSpaces))
+                    :Field("Deployment.Namespaces"         ,iif(empty(l_cDeploymentNamespaces)        ,NULL,l_cDeploymentNamespaces))
                     :Field("Deployment.SetForeignKey"      ,iif(l_nDeploymentSetForeignKey == 0       ,NULL,l_nDeploymentSetForeignKey))
                     if nvl(l_nDeploymentPasswordStorage,0) == 1 .and. !empty(nvl(l_cDeploymentPasswordCrypt,""))
                         :FieldExpression("Deployment.PasswordCrypt","pgp_sym_encrypt('"+l_cDeploymentPasswordCrypt+"','"+oFcgi:GetAppConfig("DEPLOYMENT_CRYPT_KEY")+"','compress-algo=0, cipher-algo=aes256')")
@@ -1632,7 +1629,7 @@ if !empty(l_cErrorMessage)
     l_hValues["PasswordConfigKey"]  := l_cDeploymentPasswordConfigKey
     l_hValues["PasswordEnvVarName"] := l_cDeploymentPasswordEnvVarName
     l_hValues["Database"]           := l_cDeploymentDatabase
-    l_hValues["NameSpaces"]         := l_cDeploymentNameSpaces
+    l_hValues["Namespaces"]         := l_cDeploymentNamespaces
     l_hValues["SetForeignKey"]      := l_nDeploymentSetForeignKey
 
     l_cHtml += DeploymentEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iDeploymentPk,l_hValues)

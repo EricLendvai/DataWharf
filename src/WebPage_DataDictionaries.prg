@@ -18,7 +18,7 @@ local l_iApplicationPk
 local l_cApplicationName
 local l_cApplicationDescription
 
-local l_iNameSpacePk
+local l_iNamespacePk
 local l_iTagPk
 local l_iTablePk
 local l_iColumnPk
@@ -34,17 +34,20 @@ local l_cApplicationElement := "TABLES"  //Default Element
 
 local l_aSQLResult := {}
 
-local l_cURLAction              := "ListDataDictionaries"
-local l_cURLApplicationLinkCode := ""
-local l_cURLNameSpaceName       := ""
-local l_cURLTagCode             := ""
-local l_cURLTableName           := ""
-local l_cURLEnumerationName     := ""
-local l_cURLColumnName          := ""
-local l_cURLEnumValueName       := ""
-local l_cURLTemplateTableName   := ""
-local l_cURLTemplateColumnName  := ""
-local l_cURLIndexName           := ""
+local l_cURLAction               := "ListDataDictionaries"
+local l_cURLApplicationLinkCode  := ""
+local l_cURLNamespaceName        := ""
+local l_cURLTagCode              := ""
+local l_cURLTableName            := ""
+local l_cURLEnumerationName      := ""
+local l_cURLColumnName           := ""
+local l_nURLColumnUsedBy         := 0
+local l_cURLEnumValueName        := ""
+local l_cURLTemplateTableName    := ""
+local l_cURLTemplateColumnName   := ""
+local l_nURLTemplateColumnUsedBy := 0
+local l_cURLIndexName            := ""
+local l_nURLIndexUsedBy          := 0
 
 local l_cTableAKA
 local l_cEnumerationAKA
@@ -61,8 +64,12 @@ local l_cSyncServer
 local l_nSyncPort
 local l_cSyncUser
 local l_cSyncDatabase
-local l_cSyncNameSpaces
+local l_cSyncNamespaces
 local l_nSyncSetForeignKey
+
+local l_cPrefix
+local l_cMacro
+local l_hTableSchema
 
 local l_nAccessLevelDD := 1   // None by default
 // As per the info in Schema.prg
@@ -76,16 +83,18 @@ local l_nAccessLevelDD := 1   // None by default
 
 local l_cMode
 
+local l_nPos
+
 oFcgi:TraceAdd("BuildPageDataDictionaries")
 
 // Variables
 // l_cURLAction
 // l_cURLApplicationLinkCode
-// l_cURLNameSpaceName
+// l_cURLNamespaceName
 // l_cURLTagCode
 // l_cURLTableName
 // l_cURLEnumerationName
-// l_cURLColumnName
+// l_cURLColumnName + l_nURLColumnUsedBy
 // l_cURLTemplateTableName
 // l_cURLTemplateColumnName
 // l_cURLIndexName
@@ -101,40 +110,41 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
 
-// DataDictionaries/TableExportForDataWharfImports/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
+// DataDictionaries/TableExportForDataWharfImports/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
 
-// DataDictionaries/ListNameSpaces/<ApplicationLinkCode>/
-// DataDictionaries/NewNameSpace/<ApplicationLinkCode>/
-// DataDictionaries/EditNameSpace/<ApplicationLinkCode>/<NameSpaceName>/
+// DataDictionaries/ListNamespaces/<ApplicationLinkCode>/
+// DataDictionaries/NewNamespace/<ApplicationLinkCode>/
+// DataDictionaries/EditNamespace/<ApplicationLinkCode>/<NamespaceName>/
 
 // DataDictionaries/ListTags/<ApplicationLinkCode>/
 // DataDictionaries/NewTag/<ApplicationLinkCode>/
-// DataDictionaries/EditTag/<ApplicationLinkCode>/<NameSpaceName>/
+// DataDictionaries/EditTag/<ApplicationLinkCode>/<NamespaceName>/
 
 // DataDictionaries/ListTables/<ApplicationLinkCode>/
 // DataDictionaries/NewTable/<ApplicationLinkCode>/
-// DataDictionaries/EditTable/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
+// DataDictionaries/EditTable/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
 
-// DataDictionaries/ListColumns/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
-// DataDictionaries/OrderColumns/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
-// DataDictionaries/NewColumn/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
-// DataDictionaries/EditColumn/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/<ColumnName>
+// DataDictionaries/ListColumns/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
+// DataDictionaries/OrderColumns/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
+// DataDictionaries/NewColumn/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
+// DataDictionaries/EditColumn/<ApplicationLinkCode>/<NamespaceName>/<TableName>/<ColumnName>
 
-// DataDictionaries/ListIndexes/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
-// DataDictionaries/NewIndex/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/
-// DataDictionaries/EditIndex/<ApplicationLinkCode>/<NameSpaceName>/<TableName>/<IndexName>
+// DataDictionaries/ListIndexes/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
+// DataDictionaries/NewIndex/<ApplicationLinkCode>/<NamespaceName>/<TableName>/
+// DataDictionaries/EditIndex/<ApplicationLinkCode>/<NamespaceName>/<TableName>/<IndexName>
 
 // DataDictionaries/ListEnumerations/<ApplicationLinkCode>/
 // DataDictionaries/NewEnumeration/<ApplicationLinkCode>/
-// DataDictionaries/EditEnumeration/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/
+// DataDictionaries/EditEnumeration/<ApplicationLinkCode>/<NamespaceName>/<EnumerationName>/
 
-// DataDictionaries/ListEnumValues/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/
-// DataDictionaries/OrderEnumValues/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/
-// DataDictionaries/NewEnumValue/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/
-// DataDictionaries/EditEnumValue/<ApplicationLinkCode>/<NameSpaceName>/<EnumerationName>/<EnumValue>/
+// DataDictionaries/ListEnumValues/<ApplicationLinkCode>/<NamespaceName>/<EnumerationName>/
+// DataDictionaries/OrderEnumValues/<ApplicationLinkCode>/<NamespaceName>/<EnumerationName>/
+// DataDictionaries/NewEnumValue/<ApplicationLinkCode>/<NamespaceName>/<EnumerationName>/
+// DataDictionaries/EditEnumValue/<ApplicationLinkCode>/<NamespaceName>/<EnumerationName>/<EnumValue>/
 
 // DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExportToHarbourORM/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryExportToJSON/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExportForDataWharfImports/<ApplicationLinkCode>/
 
 // DataDictionaries/ListTemplateTables/<ApplicationLinkCode>/
@@ -153,9 +163,9 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cURLApplicationLinkCode := oFcgi:p_URLPathElements[3]
     endif
 
-    if vfp_Inlist(l_cURLAction,"TableExportForDataWharfImports","EditNameSpace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
+    if vfp_Inlist(l_cURLAction,"TableExportForDataWharfImports","EditNamespace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cURLNameSpaceName := oFcgi:p_URLPathElements[4]
+            l_cURLNamespaceName := oFcgi:p_URLPathElements[4]
         endif
     endif
 
@@ -180,12 +190,26 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     if vfp_Inlist(l_cURLAction,"EditColumn")
         if len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6])
             l_cURLColumnName := oFcgi:p_URLPathElements[6]
+            l_nPos := at(":",l_cURLColumnName)
+            if empty(l_nPos)
+                l_nURLColumnUsedBy := 0
+            else
+                l_nURLColumnUsedBy := val(substr(l_cURLColumnName,l_nPos+1))
+                l_cURLColumnName   := left(l_cURLColumnName,l_nPos-1)
+            endif
         endif
     endif
 
     if vfp_Inlist(l_cURLAction,"EditIndex")
         if len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6])
             l_cURLIndexName := oFcgi:p_URLPathElements[6]
+            l_nPos := at(":",l_cURLIndexName)
+            if empty(l_nPos)
+                l_nURLIndexUsedBy := 0
+            else
+                l_nURLIndexUsedBy := val(substr(l_cURLIndexName,l_nPos+1))
+                l_cURLIndexName   := left(l_cURLIndexName,l_nPos-1)
+            endif
         endif
     endif
 
@@ -204,6 +228,13 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     if vfp_Inlist(l_cURLAction,"EditTemplateColumn")
         if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
             l_cURLTemplateColumnName := oFcgi:p_URLPathElements[5]
+            l_nPos := at(":",l_cURLTemplateColumnName)
+            if empty(l_nPos)
+                l_nURLTemplateColumnUsedBy := 0
+            else
+                l_nURLColumnUsedBy       := val(substr(l_cURLTemplateColumnName,l_nPos+1))
+                l_cURLTemplateColumnName := left(l_cURLTemplateColumnName,l_nPos-1)
+            endif
         endif
     endif
 
@@ -217,7 +248,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"ListEnumerations","NewEnumeration","EditEnumeration","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         l_cApplicationElement := "ENUMERATIONS"
 
-    case vfp_Inlist(l_cURLAction,"ListNameSpaces","NewNameSpace","EditNameSpace")
+    case vfp_Inlist(l_cURLAction,"ListNamespaces","NewNamespace","EditNamespace")
         l_cApplicationElement := "NAMESPACES"
 
     case vfp_Inlist(l_cURLAction,"ListTags","NewTag","EditTag")
@@ -229,7 +260,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionaryImport")
         l_cApplicationElement := "IMPORT"
 
-    case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportForDataWharfImports")
+    case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportToJSON","DataDictionaryExportForDataWharfImports")
         l_cApplicationElement := "EXPORT"
 
     case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema")
@@ -307,16 +338,44 @@ case l_cURLAction == "DataDictionarySettings"
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("62f3e291-c7c0-4da7-8874-c839c7c3938c","public.Application")
-                :Column("Application.SupportColumns"              , "Application_SupportColumns")
-                :Column("Application.AddForeignKeyIndexORMExport" , "Application_AddForeignKeyIndexORMExport")
+                :Column("Application.SupportColumns"                       , "Application_SupportColumns")
+                :Column("Application.AddForeignKeyIndexORMExport"          , "Application_AddForeignKeyIndexORMExport")
+                :Column("Application.KeyConfig"                            , "Application_KeyConfig")
+                :Column("Application.TestTableHasPrimaryKey"               , "Application_TestTableHasPrimaryKey")
+                :Column("Application.TestForeignKeyTypeMatchPrimaryKey"    , "Application_TestForeignKeyTypeMatchPrimaryKey")
+                :Column("Application.TestForeignKeyIsNullable"             , "Application_TestForeignKeyIsNullable")
+                :Column("Application.TestForeignKeyNoDefault"              , "Application_TestForeignKeyNoDefault")
+                :Column("Application.TestForeignKeyMissingOnDeleteSetting" , "Application_TestForeignKeyMissingOnDeleteSetting")
+                :Column("Application.TestNumericEnumerationWideEnough"     , "Application_TestNumericEnumerationWideEnough")
+                :Column("Application.TestMaxTableNameLength"               , "Application_TestMaxTableNameLength")
+                :Column("Application.TestMaxColumnNameLength"              , "Application_TestMaxColumnNameLength")
+                :Column("Application.TestMaxIndexNameLength"               , "Application_TestMaxIndexNameLength")
+                :Column("Application.TestMissingForeignKeyTable"           , "Application_TestMissingForeignKeyTable")
+                :Column("Application.TestMissingEnumerationValues"         , "Application_TestMissingEnumerationValues")
+                :Column("Application.TestUseOfDiscontinuedEnumeration"     , "Application_TestUseOfDiscontinuedEnumeration")
+                :Column("Application.TestUseOfDiscontinuedForeignTable"    , "Application_TestUseOfDiscontinuedForeignTable")
                 l_oData := :Get(l_iApplicationPk)
             endwith
 
             if l_oDB1:Tally == 1
-                l_hValues["Name"]                        := l_cApplicationName
-                l_hValues["LinkCode"]                    := l_cURLApplicationLinkCode
-                l_hValues["SupportColumns"]              := l_oData:Application_SupportColumns
-                l_hValues["AddForeignKeyIndexORMExport"] := l_oData:Application_AddForeignKeyIndexORMExport
+                l_hValues["Name"]                                 := l_cApplicationName
+                l_hValues["LinkCode"]                             := l_cURLApplicationLinkCode
+                l_hValues["SupportColumns"]                       := l_oData:Application_SupportColumns
+                l_hValues["AddForeignKeyIndexORMExport"]          := l_oData:Application_AddForeignKeyIndexORMExport
+                l_hValues["KeyConfig"]                            := l_oData:Application_KeyConfig
+                l_hValues["TestTableHasPrimaryKey"]               := l_oData:Application_TestTableHasPrimaryKey
+                l_hValues["TestForeignKeyTypeMatchPrimaryKey"]    := l_oData:Application_TestForeignKeyTypeMatchPrimaryKey
+                l_hValues["TestForeignKeyIsNullable"]             := l_oData:Application_TestForeignKeyIsNullable
+                l_hValues["TestForeignKeyNoDefault"]              := l_oData:Application_TestForeignKeyNoDefault
+                l_hValues["TestForeignKeyMissingOnDeleteSetting"] := l_oData:Application_TestForeignKeyMissingOnDeleteSetting
+                l_hValues["TestNumericEnumerationWideEnough"]     := l_oData:Application_TestNumericEnumerationWideEnough
+                l_hValues["TestMaxTableNameLength"]               := l_oData:Application_TestMaxTableNameLength
+                l_hValues["TestMaxColumnNameLength"]              := l_oData:Application_TestMaxColumnNameLength
+                l_hValues["TestMaxIndexNameLength"]               := l_oData:Application_TestMaxIndexNameLength
+                l_hValues["TestMissingForeignKeyTable"]           := l_oData:Application_TestMissingForeignKeyTable
+                l_hValues["TestMissingEnumerationValues"]         := l_oData:Application_TestMissingEnumerationValues
+                l_hValues["TestUseOfDiscontinuedEnumeration"]     := l_oData:Application_TestUseOfDiscontinuedEnumeration
+                l_hValues["TestUseOfDiscontinuedForeignTable"]    := l_oData:Application_TestUseOfDiscontinuedForeignTable
 
                 l_cHtml += DataDictionaryEditFormBuild("",l_iApplicationPk,l_hValues)
             endif
@@ -344,25 +403,28 @@ case l_cURLAction == "DataDictionaryImport"
 
 
 case l_cURLAction == "DataDictionaryExport"
-    if oFcgi:p_nAccessLevelDD >= 6
+    if oFcgi:p_nAccessLevelDD >= 6 .and. l_iApplicationPk > 0
+        
+        l_cHtmlUnderHeader := []
 
         if oFcgi:isGet()
-            l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
-                l_cHtmlUnderHeader += [<div class="input-group">]
-                    l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+l_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
-                    l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/">Export For DataWharf Imports</a>]
-                l_cHtmlUnderHeader += [</div>]
-            l_cHtmlUnderHeader += [</nav>]
-
+            l_cHtmlUnderHeader += DataDictionaryExportFormBuild(l_iApplicationPk,"")
         else
-            l_cHtmlUnderHeader := []
-
+            l_cHtmlUnderHeader += DataDictionaryExportFormOnSubmit(l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
+    
     endif
 
-case l_cURLAction == "DataDictionaryExportToHarbourORM"
+case vfp_inlist(l_cURLAction,"DataDictionaryExportToHarbourORM","DataDictionaryExportToJSON")
+    do case
+    case l_cURLAction == "DataDictionaryExportToHarbourORM"
+        l_cPrefix := "Harbour"
+    case l_cURLAction == "DataDictionaryExportToJSON"
+        l_cPrefix := "JSON"
+    endcase
+        
     if oFcgi:p_nAccessLevelDD >= 5
 
         l_cHtmlUnderHeader := [<nav class="navbar navbar-light bg-light">]
@@ -370,7 +432,7 @@ case l_cURLAction == "DataDictionaryExportToHarbourORM"
                 l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
 
                 l_cHtmlUnderHeader += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
-                l_cHtmlUnderHeader += [copyToClip(document.getElementById('HarbourCode').innerText);return false;">]
+                l_cHtmlUnderHeader += [copyToClip(document.getElementById(']+l_cPrefix+[Code').innerText);return false;">]
 
             l_cHtmlUnderHeader += [</div>]
         l_cHtmlUnderHeader += [</nav>]
@@ -392,7 +454,26 @@ case l_cURLAction == "DataDictionaryExportToHarbourORM"
         l_cHtml += [</script>]+CRLF
 
         if oFcgi:isGet()
-            l_cHtmlUnderHeader += [<pre id="HarbourCode" class="ms-3">]+ExportApplicationToHbORM(l_iApplicationPk,2)+[</pre>]
+            l_cHtmlUnderHeader += [<pre id="]+l_cPrefix+[Code" class="ms-3">]
+            do case
+            case l_cURLAction == "DataDictionaryExportToHarbourORM"
+                l_cHtmlUnderHeader += ExportApplicationToHarbour_ORM(l_iApplicationPk,3,.t.,oFcgi:GetQueryString("Backend"))
+            case l_cURLAction == "DataDictionaryExportToJSON"
+                l_cMacro := ExportApplicationToHarbour_ORM(l_iApplicationPk,3,.f.,oFcgi:GetQueryString("Backend"))
+                l_cMacro := Strtran(l_cMacro,chr(13),"")
+                l_cMacro := Strtran(l_cMacro,chr(10),"")
+                l_cMacro := Strtran(l_cMacro,[;],"")
+
+                l_hTableSchema := &( l_cMacro )
+                // if par_nVersion <= 2
+                //     l_hTableSchema := {"Version" => 1,;
+                //                        "GenerationTime" => strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z",;
+                //                        "TableSchema" => l_hTableSchema}
+                // endif
+                l_cHtmlUnderHeader += hb_jsonEncode(l_hTableSchema,.t.)
+            endcase
+            
+            l_cHtmlUnderHeader += [</pre>]
         endif
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
         l_cHtml += l_cHtmlUnderHeader
@@ -446,7 +527,7 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
             :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
             :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
             :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
-            :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
+            :Column("UserSettingApplication.SyncNamespaces"   ,"SyncNamespaces")
             :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
             :Where("UserSettingApplication.fk_Application = ^",l_iApplicationPk)
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
@@ -469,7 +550,7 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
                 l_nSyncPort          := 0
                 l_cSyncUser          := ""
                 l_cSyncDatabase      := ""
-                l_cSyncNameSpaces    := ""
+                l_cSyncNamespaces    := ""
                 l_nSyncSetForeignKey := 0
 
             case :Tally == 1
@@ -480,7 +561,7 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
                 l_nSyncPort          := ListOfUserSettingApplication->SyncPort
                 l_cSyncUser          := ListOfUserSettingApplication->SyncUser
                 l_cSyncDatabase      := ListOfUserSettingApplication->SyncDatabase
-                l_cSyncNameSpaces    := ListOfUserSettingApplication->SyncNameSpaces
+                l_cSyncNamespaces    := ListOfUserSettingApplication->SyncNamespaces
                 l_nSyncSetForeignKey := ListOfUserSettingApplication->SyncSetForeignKey
 
             endcase
@@ -496,7 +577,7 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
                                                     l_cSyncUser,;
                                                     "",;
                                                     l_cSyncDatabase,;
-                                                    l_cSyncNameSpaces,;
+                                                    l_cSyncNamespaces,;
                                                     l_nSyncSetForeignKey,;
                                                     {},"")
     else
@@ -555,11 +636,11 @@ case l_cURLAction == "Visualize"
         case l_cFormName == "Design"
             l_cHtml += DataDictionaryVisualizeDiagramOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "DiagramSettings"
-         l_cHtml += DataDictionaryVisualizeDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += DataDictionaryVisualizeDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "MyDiagramSettings"
-         l_cHtml += DataDictionaryVisualizeMyDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += DataDictionaryVisualizeMyDiagramSettingsOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         case l_cFormName == "DuplicateDiagram"
-         l_cHtml += DataDictionaryVisualizeDiagramDuplicateOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtml += DataDictionaryVisualizeDiagramDuplicateOnSubmit(l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode)
         endcase
     endif
 
@@ -586,7 +667,7 @@ case l_cURLAction == "NewTable"
         if oFcgi:isGet()
             l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
         else
-            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         endif
     endif
 
@@ -598,7 +679,7 @@ case l_cURLAction == "EditTable"
     with object l_oDB1
         :Table("a6af8449-79c8-488c-be62-507ef4f0696c","Table")
         :Column("Table.pk"          , "Pk")            // 1
-        :Column("Table.fk_NameSpace", "fk_NameSpace")  // 2
+        :Column("Table.fk_Namespace", "fk_Namespace")  // 2
         :Column("Table.Name"        , "Name")          // 3
         :Column("Table.AKA"         , "AKA")           // 4
         :Column("Table.UseStatus"   , "UseStatus")     // 5
@@ -606,9 +687,9 @@ case l_cURLAction == "EditTable"
         :Column("Table.Description" , "Description")   // 7
         :Column("Table.Information" , "Information")   // 8
         :Column("Table.Unlogged"    , "Unlogged")      // 9
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         :SQL(@l_aSQLResult)
     endwith
@@ -619,7 +700,7 @@ case l_cURLAction == "EditTable"
         if oFcgi:isGet()
             l_iTablePk    := l_aSQLResult[1,1]
 
-            l_hValues["Fk_NameSpace"]    := l_aSQLResult[1,2]
+            l_hValues["Fk_Namespace"]    := l_aSQLResult[1,2]
             l_hValues["Name"]            := AllTrim(l_aSQLResult[1,3])
             l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,4],""))
             l_hValues["UseStatus"]       := l_aSQLResult[1,5]
@@ -653,7 +734,7 @@ case l_cURLAction == "EditTable"
 
             l_cHtml += TableEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iTablePk,l_hValues)
         else
-            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += TableEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         endif
     endif
 
@@ -666,9 +747,9 @@ case l_cURLAction == "ListColumns"
         :Table("ce52204c-5a31-4d27-8983-2267a1e524af","Table")
         :Column("Table.pk"     ,"TablePk")  // 1
         :Column("Table.AKA"    ,"TableAKA") // 2
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
@@ -679,9 +760,9 @@ case l_cURLAction == "ListColumns"
         l_cTableAKA := l_aSQLResult[1,2]
 
         if oFcgi:isGet()
-            l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_cTableAKA)
+            l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
         else
-            l_cHtml += ColumnListFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_cTableAKA)
+            l_cHtml += ColumnListFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
         endif
 
 
@@ -695,9 +776,9 @@ case l_cURLAction == "OrderColumns"
     with object l_oDB1
         :Table("d156c11f-ceb4-4420-9a6c-fdcb4bed54eb","Table")
         :Column("Table.pk"     ,"TablePk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
@@ -706,9 +787,9 @@ case l_cURLAction == "OrderColumns"
     if l_oDB1:Tally == 1
         l_iTablePk := l_aSQLResult[1,1]
         if oFcgi:isGet()
-            l_cHtml += ColumnOrderFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += ColumnOrderFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         else
-            l_cHtml += ColumnOrderFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += ColumnOrderFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         endif
     endif
 
@@ -716,23 +797,23 @@ case l_cURLAction == "NewColumn"
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
         
-        //Find the iTablePk and iNameSpacePk (for Enumerations)
+        //Find the iTablePk and iNamespacePk (for Enumerations)
 
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("3c360029-4bda-47b1-bad0-b54c10655e39","Table")
-            :Column("NameSpace.pk" ,"NameSpacePk")
+            :Column("Namespace.pk" ,"NamespacePk")
             :Column("Table.pk"     ,"TablePk")
-            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
             l_aSQLResult := {}
             :SQL(@l_aSQLResult)
         endwith
 
         if l_oDB1:Tally == 1
-            l_iNameSpacePk := l_aSQLResult[1,1]  //Will be used to help get all the enumerations
+            l_iNamespacePk := l_aSQLResult[1,1]  //Will be used to help get all the enumerations
             l_iTablePk     := l_aSQLResult[1,2]
 
             if oFcgi:isGet()
@@ -740,14 +821,14 @@ case l_cURLAction == "NewColumn"
                 with object l_oDB1
                     :Table("87ad5f41-7f5d-46b1-8f3c-cf83dbcf10c1","Column")
                     :Where("Column.fk_Table = ^" , l_iTablePk)
-                    :Where("Column.Primary")
+                    :Where("Column.UsedAs = 2")
                     :SQL()
                     l_nNumberOfPrimaryColumns := :Tally
                 endwith
 
-                l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",0,iif(empty(l_nNumberOfPrimaryColumns),{"ShowPrimary"=>.t.},{=>}))
+                l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,"",0,iif(empty(l_nNumberOfPrimaryColumns),{"ShowPrimary"=>.t.},{=>}))
             else
-                l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+                l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
             endif
         endif
     endif
@@ -759,36 +840,42 @@ case l_cURLAction == "EditColumn"
     with object l_oDB1
         :Table("0f8ba8eb-5046-4183-97de-5182a7a0ef2a","Column")
 
-        :Column("Column.pk"              ,"Column_pk")              //  1
-        :Column("NameSpace.pk"           ,"NameSpace_pk")           //  2
-        :Column("Table.pk"               ,"Table_pk")               //  3
+        :Column("Column.pk"                 ,"Column_pk")                 //  1
+        :Column("Namespace.pk"              ,"Namespace_pk")              //  2
+        :Column("Table.pk"                  ,"Table_pk")                  //  3
 
-        :Column("Column.Name"            ,"Column_Name")            //  4
-        :Column("Column.AKA"             ,"Column_AKA")             //  5
-        :Column("Column.UseStatus"       ,"Column_UseStatus")       //  6
-        :Column("Column.DocStatus"       ,"Column_DocStatus")       //  7
-        :Column("Column.Description"     ,"Column_Description")     //  8
-        :Column("Column.Type"            ,"Column_Type")            //  9
-        :Column("Column.Array"           ,"Column_Array")           // 10
-        :Column("Column.Length"          ,"Column_Length")          // 11
-        :Column("Column.Scale"           ,"Column_Scale")           // 12
-        :Column("Column.Nullable"        ,"Column_Nullable")        // 13
-        :Column("Column.Required"        ,"Column_Required")        // 14
-        :Column("Column.Primary"         ,"Column_Primary")         // 15
-        :Column("Column.Unicode"         ,"Column_Unicode")         // 16
-        :Column("Column.Default"         ,"Column_Default")         // 17
-        :Column("Column.LastNativeType"  ,"Column_LastNativeType")  // 18
-        :Column("Column.UsedBy"          ,"Column_UsedBy")          // 19
-        :Column("Column.fk_TableForeign" ,"Column_fk_TableForeign") // 20
-        :Column("Column.ForeignKeyUse"   ,"Column_ForeignKeyUse")   // 21
-        :Column("Column.fk_Enumeration"  ,"Column_fk_Enumeration")  // 22
+        :Column("Column.Name"               ,"Column_Name")               //  4
+        :Column("Column.AKA"                ,"Column_AKA")                //  5
+        :Column("Column.UsedAs"             ,"Column_UsedAs")             //  6
+        :Column("Column.UsedBy"             ,"Column_UsedBy")             //  7
+        :Column("Column.UseStatus"          ,"Column_UseStatus")          //  8
+        :Column("Column.DocStatus"          ,"Column_DocStatus")          //  9
+        :Column("Column.Description"        ,"Column_Description")        // 10
+        :Column("Column.Type"               ,"Column_Type")               // 11
+        :Column("Column.Array"              ,"Column_Array")              // 12
+        :Column("Column.Length"             ,"Column_Length")             // 13
+        :Column("Column.Scale"              ,"Column_Scale")              // 14
+        :Column("Column.Nullable"           ,"Column_Nullable")           // 15
+        :Column("Column.Unicode"            ,"Column_Unicode")            // 16
+        :Column("Column.DefaultType"        ,"Column_DefaultType")        // 17
+        :Column("Column.DefaultCustom"      ,"Column_DefaultCustom")      // 18
+        :Column("Column.LastNativeType"     ,"Column_LastNativeType")     // 19
+        :Column("Column.fk_TableForeign"    ,"Column_fk_TableForeign")    // 20
+        :Column("Column.ForeignKeyUse"      ,"Column_ForeignKeyUse")      // 21
+        :Column("Column.ForeignKeyOptional" ,"Column_ForeignKeyOptional") // 22
+        :Column("Column.OnDelete"           ,"Column_OnDelete")           // 23
+        :Column("Column.fk_Enumeration"     ,"Column_fk_Enumeration")     // 24
+
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cURLColumnName," ","")))
+        if l_nURLColumnUsedBy > 0
+            :Where("Column.UsedBy = ^",l_nURLColumnUsedBy)
+        endif
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
     endwith
@@ -797,7 +884,7 @@ case l_cURLAction == "EditColumn"
         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+l_cURLApplicationLinkCode+"/")
     else
         l_iColumnPk    := l_aSQLResult[1,1]
-        l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
+        l_iNamespacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
         l_iTablePk     := l_aSQLResult[1,3]
 
         if oFcgi:isGet()
@@ -805,31 +892,33 @@ case l_cURLAction == "EditColumn"
             with object l_oDB1
                 :Table("6a919fef-8beb-4b57-9d58-17d34c332d11","Column")
                 :Where("Column.fk_Table = ^" , l_iTablePk)
-                :Where("Column.Primary")
+                :Where("Column.UsedAs = 2")
                 :Where("Column.pk <> ^" , l_iColumnPk)
                 :SQL()
                 l_hValues["ShowPrimary"] := empty(:Tally)
             endwith
 
-            l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
-            l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,5],""))
-            l_hValues["UseStatus"]       := l_aSQLResult[1, 6]
-            l_hValues["DocStatus"]       := l_aSQLResult[1, 7]
-            l_hValues["Description"]     := l_aSQLResult[1, 8]
-            l_hValues["Type"]            := AllTrim(l_aSQLResult[1, 9])
-            l_hValues["Array"]           := l_aSQLResult[1,10]
-            l_hValues["Length"]          := l_aSQLResult[1,11]
-            l_hValues["Scale"]           := l_aSQLResult[1,12]
-            l_hValues["Nullable"]        := l_aSQLResult[1,13]
-            l_hValues["Required"]        := l_aSQLResult[1,14]
-            l_hValues["Primary"]         := l_aSQLResult[1,15]
-            l_hValues["Unicode"]         := l_aSQLResult[1,16]
-            l_hValues["Default"]         := l_aSQLResult[1,17]
-            l_hValues["LastNativeType"]  := l_aSQLResult[1,18]
-            l_hValues["UsedBy"]          := l_aSQLResult[1,19]
-            l_hValues["Fk_TableForeign"] := l_aSQLResult[1,20]
-            l_hValues["ForeignKeyUse"]   := l_aSQLResult[1,21]
-            l_hValues["Fk_Enumeration"]  := l_aSQLResult[1,22]
+            l_hValues["Name"]               := AllTrim(l_aSQLResult[1, 4])
+            l_hValues["AKA"]                := AllTrim(nvl(l_aSQLResult[1,5],""))
+            l_hValues["UsedAs"]             := l_aSQLResult[1, 6]
+            l_hValues["UsedBy"]             := l_aSQLResult[1, 7]
+            l_hValues["UseStatus"]          := l_aSQLResult[1, 8]
+            l_hValues["DocStatus"]          := l_aSQLResult[1, 9]
+            l_hValues["Description"]        := l_aSQLResult[1,10]
+            l_hValues["Type"]               := AllTrim(l_aSQLResult[1,11])
+            l_hValues["Array"]              := l_aSQLResult[1,12]
+            l_hValues["Length"]             := l_aSQLResult[1,13]
+            l_hValues["Scale"]              := l_aSQLResult[1,14]
+            l_hValues["Nullable"]           := l_aSQLResult[1,15]
+            l_hValues["Unicode"]            := l_aSQLResult[1,16]
+            l_hValues["DefaultType"]        := l_aSQLResult[1,17]
+            l_hValues["DefaultCustom"]      := l_aSQLResult[1,18]
+            l_hValues["LastNativeType"]     := l_aSQLResult[1,19]
+            l_hValues["Fk_TableForeign"]    := l_aSQLResult[1,20]
+            l_hValues["ForeignKeyUse"]      := l_aSQLResult[1,21]
+            l_hValues["ForeignKeyOptional"] := l_aSQLResult[1,22]
+            l_hValues["OnDelete"]           := l_aSQLResult[1,23]
+            l_hValues["Fk_Enumeration"]     := l_aSQLResult[1,24]
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -854,9 +943,9 @@ case l_cURLAction == "EditColumn"
             endwith
             l_hValues["Tags"]  := l_cTags
 
-            l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",l_iColumnPk,l_hValues)
+            l_cHtml += ColumnEditFormBuild(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,"",l_iColumnPk,l_hValues)
         else
-            l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += ColumnEditFormOnSubmit(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         endif
     endif
 
@@ -869,9 +958,9 @@ case l_cURLAction == "ListIndexes"
         :Table("18dd5d01-b702-4b96-8c48-44b8323ffc69","Table")
         :Column("Table.pk"     ,"TablePk")   // 1
         :Column("Table.AKA"    ,"TableAKA")  // 2
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
@@ -880,36 +969,36 @@ case l_cURLAction == "ListIndexes"
     if l_oDB1:Tally == 1
         l_iTablePk  := l_aSQLResult[1,1]
         l_cTableAKA := l_aSQLResult[1,2]
-        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,l_cTableAKA)
+        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
     endif
 
 case l_cURLAction == "NewIndex"
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
         
-        //Find the iTablePk and iNameSpacePk (for Enumerations)
+        //Find the iTablePk and iNamespacePk (for Enumerations)
 
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("9539487d-53ab-4468-8c06-3638cc6a1f47","Table")
-            :Column("NameSpace.pk" ,"NameSpacePk")
+            :Column("Namespace.pk" ,"NamespacePk")
             :Column("Table.pk"     ,"TablePk")
-            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
             l_aSQLResult := {}
             :SQL(@l_aSQLResult)
         endwith
 
         if l_oDB1:Tally == 1
-            l_iNameSpacePk := l_aSQLResult[1,1]  //Will be used to help get enumerations info in case such type of column is used in index expression
+            l_iNamespacePk := l_aSQLResult[1,1]  //Will be used to help get enumerations info in case such type of column is used in index expression
             l_iTablePk     := l_aSQLResult[1,2]
 
             if oFcgi:isGet()
-                l_cHtml += IndexEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",0,{=>})
+                l_cHtml += IndexEditFormBuild(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,"",0,{=>})
             else
-                l_cHtml += IndexEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+                l_cHtml += IndexEditFormOnSubmit(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
             endif
         endif
     endif
@@ -922,23 +1011,26 @@ case l_cURLAction == "EditIndex"
         :Table("1e379604-714d-4cfc-98d7-4a2dad9a210f","Index")
 
         :Column("Index.pk"              ,"Index_pk")              //  1
-        :Column("NameSpace.pk"          ,"NameSpace_pk")          //  2
+        :Column("Namespace.pk"          ,"Namespace_pk")          //  2
         :Column("Table.pk"              ,"Table_pk")              //  3
         :Column("Index.Name"            ,"Index_Name")            //  4
-        :Column("Index.UseStatus"       ,"Index_UseStatus")       //  5
-        :Column("Index.DocStatus"       ,"Index_DocStatus")       //  6
-        :Column("Index.Description"     ,"Index_Description")     //  7
-        :Column("Index.Unique"          ,"Index_Unique")          //  8
-        :Column("Index.Expression"      ,"Index_Expression")      //  9
-        :Column("Index.Algo"            ,"Index_Algo")            // 10
-        :Column("Index.UsedBy"          ,"Index_UsedBy")          // 11
+        :Column("Index.UsedBy"          ,"Index_UsedBy")          //  5
+        :Column("Index.UseStatus"       ,"Index_UseStatus")       //  6
+        :Column("Index.DocStatus"       ,"Index_DocStatus")       //  7
+        :Column("Index.Description"     ,"Index_Description")     //  8
+        :Column("Index.Unique"          ,"Index_Unique")          //  9
+        :Column("Index.Expression"      ,"Index_Expression")      // 10
+        :Column("Index.Algo"            ,"Index_Algo")            // 11
 
         :Join("inner","Table"    ,"","Index.fk_Table = Table.pk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         :Where([lower(replace(Index.Name,' ','')) = ^],lower(StrTran(l_cURLIndexName," ","")))
+        if l_nURLIndexUsedBy > 0
+            :Where("Index.UsedBy = ^",l_nURLIndexUsedBy)
+        endif
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
     endwith
@@ -947,18 +1039,18 @@ case l_cURLAction == "EditIndex"
         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+l_cURLApplicationLinkCode+"/")
     else
         l_iIndexPk     := l_aSQLResult[1,1]
-        l_iNameSpacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
+        l_iNamespacePk := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
         l_iTablePk     := l_aSQLResult[1,3]
 
         if oFcgi:isGet()
             l_hValues["Name"]            := AllTrim(l_aSQLResult[1, 4])
-            l_hValues["UseStatus"]       := l_aSQLResult[1, 5]
-            l_hValues["DocStatus"]       := l_aSQLResult[1, 6]
-            l_hValues["Description"]     := l_aSQLResult[1, 7]
-            l_hValues["Unique"]          := l_aSQLResult[1, 8]
-            l_hValues["Expression"]      := l_aSQLResult[1,9]
-            l_hValues["Algo"]            := l_aSQLResult[1,10]
-            l_hValues["UsedBy"]          := l_aSQLResult[1,11]
+            l_hValues["UsedBy"]          := l_aSQLResult[1, 5]
+            l_hValues["UseStatus"]       := l_aSQLResult[1, 6]
+            l_hValues["DocStatus"]       := l_aSQLResult[1, 7]
+            l_hValues["Description"]     := l_aSQLResult[1, 8]
+            l_hValues["Unique"]          := l_aSQLResult[1, 9]
+            l_hValues["Expression"]      := l_aSQLResult[1,10]
+            l_hValues["Algo"]            := l_aSQLResult[1,11]
 
             l_oDB_ListOfAllColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB_ListOfAllColumns
@@ -972,9 +1064,9 @@ case l_cURLAction == "EditIndex"
                 endscan
             endwith
 
-            l_cHtml += IndexEditFormBuild(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName,"",l_iIndexPk,l_hValues)
+            l_cHtml += IndexEditFormBuild(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,"",l_iIndexPk,l_hValues)
         else
-            l_cHtml += IndexEditFormOnSubmit(l_iApplicationPk,l_iNameSpacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLTableName)
+            l_cHtml += IndexEditFormOnSubmit(l_iApplicationPk,l_iNamespacePk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName)
         endif
     endif
 
@@ -1004,7 +1096,7 @@ case l_cURLAction == "EditEnumeration"
     with object l_oDB1
         :Table("1c9e2373-6ded-4456-b4d2-bc63991fd0db","Enumeration")
         :Column("Enumeration.pk"              , "Enumeration_Pk")                //  1
-        :Column("Enumeration.fk_NameSpace"    , "Enumeration_fk_NameSpace")      //  2
+        :Column("Enumeration.fk_Namespace"    , "Enumeration_fk_Namespace")      //  2
         :Column("Enumeration.Name"            , "Enumeration_Name")              //  3
         :Column("Enumeration.AKA"             , "Enumeration_AKA")               //  4
         :Column("Enumeration.UseStatus"       , "Enumeration_UseStatus")         //  5
@@ -1012,9 +1104,9 @@ case l_cURLAction == "EditEnumeration"
         :Column("Enumeration.Description"     , "Enumeration_Description")       //  7
         :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")       //  8
         :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")   //  9
-        :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
         :SQL(@l_aSQLResult)
     endwith
@@ -1025,7 +1117,7 @@ case l_cURLAction == "EditEnumeration"
         if oFcgi:isGet()
             l_iEnumerationPk    := l_aSQLResult[1,1]
 
-            l_hValues["Fk_NameSpace"]    := l_aSQLResult[1,2]
+            l_hValues["Fk_Namespace"]    := l_aSQLResult[1,2]
             l_hValues["Name"]            := AllTrim(l_aSQLResult[1,3])
             l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,4],""))
             l_hValues["UseStatus"]       := l_aSQLResult[1,5]
@@ -1049,9 +1141,9 @@ case l_cURLAction == "ListEnumValues"
         :Table("8122e1ae-644c-4b30-bfa6-779400a520e0","Enumeration")
         :Column("Enumeration.pk"     ,"EnumerationPk")   // 1
         :Column("Enumeration.AKA"    ,"EnumerationAKA")  // 2
-        :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
@@ -1060,7 +1152,7 @@ case l_cURLAction == "ListEnumValues"
     if l_oDB1:Tally == 1
         l_iEnumerationPk  := l_aSQLResult[1,1]
         l_cEnumerationAKA := l_aSQLResult[1,2]
-        l_cHtml += EnumValueListFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,l_cEnumerationAKA)
+        l_cHtml += EnumValueListFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName,l_cEnumerationAKA)
     endif
 
 case l_cURLAction == "OrderEnumValues"
@@ -1072,9 +1164,9 @@ case l_cURLAction == "OrderEnumValues"
         with object l_oDB1
             :Table("0d12fc1c-3b02-4e00-ace2-21eb385eff84","Enumeration")
             :Column("Enumeration.pk"     ,"EnumerationPk")
-            :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
             l_aSQLResult := {}
             :SQL(@l_aSQLResult)
@@ -1083,9 +1175,9 @@ case l_cURLAction == "OrderEnumValues"
         if l_oDB1:Tally == 1
             l_iEnumerationPk := l_aSQLResult[1,1]
             if oFcgi:isGet()
-                l_cHtml += EnumValueOrderFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+                l_cHtml += EnumValueOrderFormBuild(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName)
             else
-                l_cHtml += EnumValueOrderFormOnSubmit(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+                l_cHtml += EnumValueOrderFormOnSubmit(l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName)
             endif
         endif
     endif
@@ -1094,29 +1186,29 @@ case l_cURLAction == "NewEnumValue"
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
         
-        //Find the iEnumerationPk and iNameSpacePk (for Enumerations)
+        //Find the iEnumerationPk and iNamespacePk (for Enumerations)
 
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("9a9489dd-bcf1-4688-b03e-6c706960e140","Enumeration")
-            :Column("NameSpace.pk"  ,"NameSpacePk")
+            :Column("Namespace.pk"  ,"NamespacePk")
             :Column("Enumeration.pk","EnumerationPk")
-            :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^",l_iApplicationPk)
-            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^",l_iApplicationPk)
+            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
             l_aSQLResult := {}
             :SQL(@l_aSQLResult)
         endwith
 
         if l_oDB1:Tally == 1
-            l_iNameSpacePk := l_aSQLResult[1,1]  //Will be used to help get all the enumerations
+            l_iNamespacePk := l_aSQLResult[1,1]  //Will be used to help get all the enumerations
             l_iEnumerationPk     := l_aSQLResult[1,2]
 
             if oFcgi:isGet()
-                l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",0,{=>})
+                l_cHtml += EnumValueEditFormBuild(l_iNamespacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName,"",0,{=>})
             else
-                l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+                l_cHtml += EnumValueEditFormOnSubmit(l_iNamespacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName)
             endif
         endif
     endif
@@ -1129,7 +1221,7 @@ case l_cURLAction == "EditEnumValue"
         :Table("b96a6a89-c1b6-4629-8d00-3ebf37e93845","EnumValue")
 
         :Column("EnumValue.pk"         ,"EnumValue_pk")             //  1
-        :Column("NameSpace.pk"         ,"NameSpace_pk")             //  2
+        :Column("Namespace.pk"         ,"Namespace_pk")             //  2
         :Column("Enumeration.pk"       ,"Enumeration_pk")           //  3
 
         :Column("EnumValue.Name"       ,"EnumValue_Name")           //  4
@@ -1140,9 +1232,9 @@ case l_cURLAction == "EditEnumValue"
         :Column("EnumValue.Description","EnumValue_Description")    //  9
 
         :Join("inner","Enumeration"    ,"","EnumValue.fk_Enumeration = Enumeration.pk")
-        :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+        :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
         :Where([lower(replace(EnumValue.Name,' ','')) = ^],lower(StrTran(l_cURLEnumValueName," ","")))
         l_aSQLResult := {}
@@ -1150,10 +1242,10 @@ case l_cURLAction == "EditEnumValue"
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNameSpaceName+"/"+l_cURLEnumerationName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+l_cURLApplicationLinkCode+"/"+l_cURLNamespaceName+"/"+l_cURLEnumerationName+"/")
     else
         l_iEnumValuePk    := l_aSQLResult[1,1]
-        l_iNameSpacePk    := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
+        l_iNamespacePk    := l_aSQLResult[1,2]  //Will be used to help get all the enumerations
         l_iEnumerationPk  := l_aSQLResult[1,3]
 
         if oFcgi:isGet()
@@ -1165,49 +1257,49 @@ case l_cURLAction == "EditEnumValue"
             l_hValues["DocStatus"]       := l_aSQLResult[1,8]
             l_hValues["Description"]     := l_aSQLResult[1,9]
 
-            l_cHtml += EnumValueEditFormBuild(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName,"",l_iEnumValuePk,l_hValues)
+            l_cHtml += EnumValueEditFormBuild(l_iNamespacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName,"",l_iEnumValuePk,l_hValues)
         else
-            l_cHtml += EnumValueEditFormOnSubmit(l_iNameSpacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNameSpaceName,l_cURLEnumerationName)
+            l_cHtml += EnumValueEditFormOnSubmit(l_iNamespacePk,l_iEnumerationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName)
         endif
     endif
 
-case l_cURLAction == "ListNameSpaces"
+case l_cURLAction == "ListNamespaces"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
-    l_cHtml += NameSpaceListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
+    l_cHtml += NamespaceListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
 
-case l_cURLAction == "NewNameSpace"
+case l_cURLAction == "NewNamespace"
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
         
         if oFcgi:isGet()
-            l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
+            l_cHtml += NamespaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
         else
-            l_cHtml += NameSpaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+            l_cHtml += NamespaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
         endif
     endif
 
-case l_cURLAction == "EditNameSpace"
+case l_cURLAction == "EditNamespace"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
     
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
-        :Table("f0f2eaea-8306-49c9-afef-d72afb41601c","NameSpace")
-        :Column("NameSpace.pk"          , "Pk")           // 1
-        :Column("NameSpace.Name"        , "Name")         // 2
-        :Column("NameSpace.AKA"         , "AKA")          // 3
-        :Column("NameSpace.UseStatus"   , "UseStatus")    // 4
-        :Column("NameSpace.DocStatus"   , "DocStatus")    // 5
-        :Column("NameSpace.Description" , "Description")  // 6
-        :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
-        :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
+        :Table("f0f2eaea-8306-49c9-afef-d72afb41601c","Namespace")
+        :Column("Namespace.pk"          , "Pk")           // 1
+        :Column("Namespace.Name"        , "Name")         // 2
+        :Column("Namespace.AKA"         , "AKA")          // 3
+        :Column("Namespace.UseStatus"   , "UseStatus")    // 4
+        :Column("Namespace.DocStatus"   , "DocStatus")    // 5
+        :Column("Namespace.Description" , "Description")  // 6
+        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
+        :Where([Namespace.fk_Application = ^],l_iApplicationPk)
         :SQL(@l_aSQLResult)
     endwith
 
     if l_oDB1:Tally != 1
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+l_cURLApplicationLinkCode+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+l_cURLApplicationLinkCode+"/")
     else
         if oFcgi:isGet()
-            l_iNameSpacePk    := l_aSQLResult[1,1]
+            l_iNamespacePk    := l_aSQLResult[1,1]
 
             l_hValues["Name"]         := AllTrim(l_aSQLResult[1,2])
             l_hValues["AKA"]          := AllTrim(nvl(l_aSQLResult[1,3],""))
@@ -1215,11 +1307,11 @@ case l_cURLAction == "EditNameSpace"
             l_hValues["DocStatus"]    := l_aSQLResult[1,5]
             l_hValues["Description"]  := l_aSQLResult[1,6]
 
-            CustomFieldsLoad(l_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk,@l_hValues)
+            CustomFieldsLoad(l_iApplicationPk,USEDON_NAMESPACE,l_iNamespacePk,@l_hValues)
 
-            l_cHtml += NameSpaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iNameSpacePk,l_hValues)
+            l_cHtml += NamespaceEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iNamespacePk,l_hValues)
         else
-            l_cHtml += NameSpaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
+            l_cHtml += NamespaceEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode)
         endif
     endif
 
@@ -1385,14 +1477,14 @@ case l_cURLAction == "NewTemplateColumn"
         endwith
 
         if l_oDB1:Tally == 1
-            l_iTemplateTablePk     := l_aSQLResult[1,1]
+            l_iTemplateTablePk := l_aSQLResult[1,1]
 
             if oFcgi:isGet()
                 //Check if any other fields is already marked as "Primary"
                 with object l_oDB1
                     :Table("2e78008d-dcae-4401-a519-a2825ff39bc4","TemplateColumn")
                     :Where("TemplateColumn.fk_TemplateTable = ^" , l_iTemplateTablePk)
-                    :Where("TemplateColumn.Primary")
+                    :Where("TemplateColumn.UsedAs = 2")
                     :SQL()
                     l_nNumberOfPrimaryColumns := :Tally
                 endwith
@@ -1411,29 +1503,31 @@ case l_cURLAction == "EditTemplateColumn"
     with object l_oDB1
         :Table("c653b363-86d2-483e-8745-e0e75437191f","TemplateColumn")
 
-        :Column("TemplateColumn.pk"              ,"TemplateColumn_pk")              //  1
-        :Column("TemplateTable.pk"               ,"TemplateTable_pk")               //  2
-
-        :Column("TemplateColumn.Name"            ,"TemplateColumn_Name")            //  3
-        :Column("TemplateColumn.AKA"             ,"TemplateColumn_AKA")             //  4
-        :Column("TemplateColumn.UseStatus"       ,"TemplateColumn_UseStatus")       //  5
-        :Column("TemplateColumn.DocStatus"       ,"TemplateColumn_DocStatus")       //  6
-        :Column("TemplateColumn.Description"     ,"TemplateColumn_Description")     //  7
-        :Column("TemplateColumn.Type"            ,"TemplateColumn_Type")            //  8
-        :Column("TemplateColumn.Array"           ,"TemplateColumn_Array")           //  9
-        :Column("TemplateColumn.Length"          ,"TemplateColumn_Length")          // 10
-        :Column("TemplateColumn.Scale"           ,"TemplateColumn_Scale")           // 11
-        :Column("TemplateColumn.Nullable"        ,"TemplateColumn_Nullable")        // 12
-        :Column("TemplateColumn.Required"        ,"TemplateColumn_Required")        // 13
-        :Column("TemplateColumn.Primary"         ,"TemplateColumn_Primary")         // 14
-        :Column("TemplateColumn.Unicode"         ,"TemplateColumn_Unicode")         // 15
-        :Column("TemplateColumn.Default"         ,"TemplateColumn_Default")         // 16
-        :Column("TemplateColumn.UsedBy"          ,"TemplateColumn_UsedBy")          // 17
+        :Column("TemplateColumn.pk"                 ,"TemplateColumn_pk")                 //  1
+        :Column("TemplateTable.pk"                  ,"TemplateTable_pk")                  //  2
+        :Column("TemplateColumn.Name"               ,"TemplateColumn_Name")               //  3
+        :Column("TemplateColumn.AKA"                ,"TemplateColumn_AKA")                //  4
+        :Column("TemplateColumn.UsedAs"             ,"TemplateColumn_UsedAs")             //  5
+        :Column("TemplateColumn.UsedBy"             ,"TemplateColumn_UsedBy")             //  6
+        :Column("TemplateColumn.UseStatus"          ,"TemplateColumn_UseStatus")          //  7
+        :Column("TemplateColumn.DocStatus"          ,"TemplateColumn_DocStatus")          //  8
+        :Column("TemplateColumn.Description"        ,"TemplateColumn_Description")        //  9
+        :Column("TemplateColumn.Type"               ,"TemplateColumn_Type")               // 10
+        :Column("TemplateColumn.Array"              ,"TemplateColumn_Array")              // 11
+        :Column("TemplateColumn.Length"             ,"TemplateColumn_Length")             // 12
+        :Column("TemplateColumn.Scale"              ,"TemplateColumn_Scale")              // 13
+        :Column("TemplateColumn.Nullable"           ,"TemplateColumn_Nullable")           // 14
+        :Column("TemplateColumn.Unicode"            ,"TemplateColumn_Unicode")            // 15
+        :Column("TemplateColumn.DefaultType"        ,"TemplateColumn_DefaultType")        // 16
+        :Column("TemplateColumn.DefaultCustom"      ,"TemplateColumn_DefaultCustom")      // 17
 
         :Join("inner","TemplateTable"    ,"","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
         :Where([TemplateTable.fk_Application = ^],l_iApplicationPk)
         :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
         :Where([lower(replace(TemplateColumn.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateColumnName," ","")))
+        if l_nURLTemplateColumnUsedBy > 0
+            :Where("TemplateColumn.UsedBy = ^",l_nURLTemplateColumnUsedBy)
+        endif
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
     endwith
@@ -1448,28 +1542,28 @@ case l_cURLAction == "EditTemplateColumn"
             //Check if any other fields is already marked as "Primary"
             with object l_oDB1
                 :Table("3d15f220-c78b-4d98-81ad-c11ef9cd9e77","TemplateColumn")
-                :Where("TemplateColumn.fk_TemplateTable = ^" , l_iTablePk)
-                :Where("TemplateColumn.Primary")
+                :Where("TemplateColumn.fk_TemplateTable = ^" , l_iTemplateTablePk)
+                :Where("TemplateColumn.UsedAs = 2")
                 :Where("TemplateColumn.pk <> ^" , l_iTemplateColumnPk)
                 :SQL()
                 l_hValues["ShowPrimary"] := empty(:Tally)
             endwith
 
-            l_hValues["Name"]        := AllTrim(l_aSQLResult[1, 3])
-            l_hValues["AKA"]         := AllTrim(nvl(l_aSQLResult[1,4],""))
-            l_hValues["UseStatus"]   := l_aSQLResult[1, 5]
-            l_hValues["DocStatus"]   := l_aSQLResult[1, 6]
-            l_hValues["Description"] := l_aSQLResult[1, 7]
-            l_hValues["Type"]        := AllTrim(l_aSQLResult[1, 8])
-            l_hValues["Array"]       := l_aSQLResult[1, 9]
-            l_hValues["Length"]      := l_aSQLResult[1,10]
-            l_hValues["Scale"]       := l_aSQLResult[1,11]
-            l_hValues["Nullable"]    := l_aSQLResult[1,12]
-            l_hValues["Required"]    := l_aSQLResult[1,13]
-            l_hValues["Primary"]     := l_aSQLResult[1,14]
-            l_hValues["Unicode"]     := l_aSQLResult[1,15]
-            l_hValues["Default"]     := l_aSQLResult[1,16]
-            l_hValues["UsedBy"]      := l_aSQLResult[1,17]
+            l_hValues["Name"]               := AllTrim(l_aSQLResult[1, 3])
+            l_hValues["AKA"]                := AllTrim(nvl(l_aSQLResult[1,4],""))
+            l_hValues["UsedAs"]             := l_aSQLResult[1, 5]
+            l_hValues["UsedBy"]             := l_aSQLResult[1, 6]
+            l_hValues["UseStatus"]          := l_aSQLResult[1, 7]
+            l_hValues["DocStatus"]          := l_aSQLResult[1, 8]
+            l_hValues["Description"]        := l_aSQLResult[1, 9]
+            l_hValues["Type"]               := AllTrim(l_aSQLResult[1,10])
+            l_hValues["Array"]              := l_aSQLResult[1,11]
+            l_hValues["Length"]             := l_aSQLResult[1,12]
+            l_hValues["Scale"]              := l_aSQLResult[1,13]
+            l_hValues["Nullable"]           := l_aSQLResult[1,14]
+            l_hValues["Unicode"]            := l_aSQLResult[1,15]
+            l_hValues["DefaultType"]        := l_aSQLResult[1,16]
+            l_hValues["DefaultCustom"]      := l_aSQLResult[1,17]
 
             l_cHtml += TemplateColumnEditFormBuild(l_iApplicationPk,l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName,"",l_iTemplateColumnPk,l_hValues)
         else
@@ -1486,12 +1580,12 @@ case l_cURLAction == "TableExportForDataWharfImports"
         with object l_oDB1
             :Table("d3d94c58-d8eb-44e6-b014-762c372ca0fc","Table")
             :Column("Table.pk"          , "Pk")             // 1
-            :Column("NameSpace.Name"    , "NameSpaceName")  // 2
+            :Column("Namespace.Name"    , "NamespaceName")  // 2
             :Column("Table.Name"        , "TableName")      // 3
             :Column("Table.AKA"         , "TableAKA")       // 4
-            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where([NameSpace.fk_Application = ^],l_iApplicationPk)
-            :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cURLNameSpaceName," ","")))
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Where([Namespace.fk_Application = ^],l_iApplicationPk)
+            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
             :SQL(@l_aSQLResult)
         endwith
@@ -1515,11 +1609,11 @@ case l_cURLAction == "TableExportForDataWharfImports"
                         // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(l_iTablePk),"New","Edit")+[ Table</span>]   //navbar-text
 
                         l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+l_cURLApplicationLinkCode+[/">Back To Tables</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Edit Table</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Columns</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Indexes</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Edit Table</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Columns</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Indexes</a>]
                         // if oFcgi:p_nAccessLevelDD >= 5
-                        //     l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/]+l_cURLNameSpaceName+[/]+l_cURLTableName+[/">Export for DataWharf Imports</a>]
+                        //     l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Export for DataWharf Imports</a>]
                         // endif
                     l_cHtml += [</div>]
                 l_cHtml += [</nav>]
@@ -1529,12 +1623,9 @@ case l_cURLAction == "TableExportForDataWharfImports"
 
                 l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<div class="input-group">]
-                        // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/">Other Export</a>]
 
                         if oFcgi:isGet()
-    //123456789
                             l_cLinkUID := ExportTableForImports(l_iTablePk)
-
                             if !empty(l_cLinkUID)
                                 l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+[">Download Export File</a>]
                             endif
@@ -1586,27 +1677,27 @@ return l_cResult
 //=================================================================================================================
 function FormatColumnTypeInfo(par_cColumnType,par_iColumnLength,par_iColumnScale,par_cEnumerationName,par_cEnumerationAKA,;
                               par_iEnumerationImplementAs,par_iEnumerationImplementLength,par_iColumnUnicode,;
-                              par_cSitePath,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cTooltipEnumValues)
+                              par_cSitePath,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cTooltipEnumValues)
 local l_cResult
 local l_iTypePos
 
-l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[1] == par_cColumnType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
+l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[COLUMN_TYPES_CODE] == par_cColumnType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
 if l_iTypePos > 0
-    l_cResult := par_cColumnType+" "+oFcgi:p_ColumnTypes[l_iTypePos,2]
+    l_cResult := par_cColumnType+" "+oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_NAME]
     do case
-    case oFcgi:p_ColumnTypes[l_iTypePos,4] .and. oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length and Scale
+    case oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE] .and. oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]  // Length and Scale
         l_cResult += [&nbsp;(]+iif(hb_IsNIL(par_iColumnLength),"",Trans(par_iColumnLength))+[,]+iif(hb_IsNIL(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
 
-    case oFcgi:p_ColumnTypes[l_iTypePos,4]  // Scale
+    case oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE]  // Scale
         l_cResult += [ (Scale: ]+iif(hb_IsNIL(par_iColumnScale),"",Trans(par_iColumnScale))+[)]
         
-    case oFcgi:p_ColumnTypes[l_iTypePos,3]  // Length
+    case oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]
         l_cResult += [&nbsp;(]+iif(hb_IsNIL(par_iColumnLength),"",Trans(par_iColumnLength))+[)]
         
-    case oFcgi:p_ColumnTypes[l_iTypePos,5]  // Enumeration
+    case oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS]  // Enumeration
         if !hb_IsNIL(par_cEnumerationName) .and. !hb_IsNIL(par_iEnumerationImplementAs) //.and. !hb_IsNIL(par_iEnumerationImplementLength)
             l_cResult += [&nbsp;(]
-            l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/"]
+            l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+[/]+par_cEnumerationName+[/"]
             if empty(par_cTooltipEnumValues)
                 l_cResult += [>]
             else
@@ -1632,9 +1723,9 @@ if l_iTypePos > 0
     endcase
 
     // // Not a native Enumeration but has a link to an enumeration - Following was a test to see if should allow to link to an enum without forcing it. Decided not to allow.
-    // if !oFcgi:p_ColumnTypes[l_iTypePos,5] .and. !hb_IsNIL(par_cEnumerationName)
+    // if !oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS] .and. !hb_IsNIL(par_cEnumerationName)
     //     l_cResult += [&nbsp;(]
-    //     l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+[/]+par_cEnumerationName+[/">]
+    //     l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+[/]+par_cEnumerationName+[/">]
     //     l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
     //     l_cResult += [</a>]
     //     l_cResult += [)]
@@ -1651,7 +1742,7 @@ if l_iTypePos > 0
     //     // endcase
     // endif
 
-    if par_iColumnUnicode .and. oFcgi:p_ColumnTypes[l_iTypePos,6]
+    if par_iColumnUnicode .and. oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_UNICODE]
         l_cResult += " Unicode"
     endif
 
@@ -1705,8 +1796,8 @@ l_cHtml += [<ul class="nav nav-tabs">]
         with object l_oDB1
             :Table("72e2bd5d-4bd3-41a0-92e4-cf1a33c58489","Table")
             :Column("Count(*)","Total")
-            :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
             :SQL(@l_aSQLResult)
         endwith
 
@@ -1718,8 +1809,8 @@ l_cHtml += [<ul class="nav nav-tabs">]
         with object l_oDB1
             :Table("a5b4d022-f670-4063-ba57-c5e0ae2c07c5","Enumeration")
             :Column("Count(*)","Total")
-            :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-            :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+            :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
             :SQL(@l_aSQLResult)
         endwith
 
@@ -1729,11 +1820,11 @@ l_cHtml += [<ul class="nav nav-tabs">]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
         with object l_oDB1
-            :Table("757edb64-9f3a-4f63-ada7-dbedf3e09fa7","NameSpace")
-            :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+            :Table("757edb64-9f3a-4f63-ada7-dbedf3e09fa7","Namespace")
+            :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
             l_iReccount := :Count()
         endwith
-        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "NAMESPACES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/ListNameSpaces/]+par_cURLApplicationLinkCode+[/">Name Spaces (]+Trans(l_iReccount)+[)</a>]
+        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "NAMESPACES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/ListNamespaces/]+par_cURLApplicationLinkCode+[/">Namespaces (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -1874,8 +1965,8 @@ with object l_oDB_ListOfTableCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"Count")
-    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
-    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
@@ -1892,8 +1983,8 @@ with object l_oDB_ListOfColumnCounts
     :Table("97ea0070-3ca0-4bf9-9634-aa2ae6913fd1","Application")
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"Count")
-    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
-    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
@@ -1911,8 +2002,8 @@ with object l_oDB_ListOfEnumerationCounts
     :Table("5d6d5a9f-5f0f-4c24-b112-d5faeed06a94","Application")
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"Count")
-    :Join("inner","NameSpace"  ,"","NameSpace.fk_Application = Application.pk")
-    :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace"  ,"","Namespace.fk_Application = Application.pk")
+    :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
         :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
@@ -1929,8 +2020,8 @@ with object l_oDB_ListOfIndexCounts
     :Table("0e2d5bee-76be-4b99-a898-7d9e26296c96","Application")
     :Column("Application.pk" ,"Application_pk")
     :Column("Count(*)" ,"Count")
-    :Join("inner","NameSpace","","NameSpace.fk_Application = Application.pk")
-    :Join("inner","Table"    ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index"   ,"","Index.fk_Table = Table.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
@@ -1989,21 +2080,21 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tables</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Columns</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Enumerations</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Indexes</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Visualize</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Tables</th>]
+                    l_cHtml += [<th class="text-white text-center">Columns</th>]
+                    l_cHtml += [<th class="text-white text-center">Enumerations</th>]
+                    l_cHtml += [<th class="text-white text-center">Indexes</th>]
+                    l_cHtml += [<th class="text-white text-center">Visualize</th>]
+                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                        l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
                 l_cHtml += [</tr>]
 
@@ -2095,8 +2186,23 @@ static function DataDictionaryEditFormBuild(par_cErrorText,par_iPk,par_hValues)
 local l_cHtml := ""
 local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 
-local l_cSupportColumns              := nvl(hb_HGetDef(par_hValues,"SupportColumns",""),"")
-local l_lAddForeignKeyIndexORMExport := hb_HGetDef(par_hValues,"AddForeignKeyIndexORMExport",.f.)
+local l_cSupportColumns                       := nvl(hb_HGetDef(par_hValues,"SupportColumns",""),"")
+local l_lAddForeignKeyIndexORMExport          := hb_HGetDef(par_hValues,"AddForeignKeyIndexORMExport"          ,.f.)
+local l_nKeyConfig                            := hb_HGetDef(par_hValues,"KeyConfig"                            ,1)
+local l_lTestTableHasPrimaryKey               := hb_HGetDef(par_hValues,"TestTableHasPrimaryKey"               ,.f.)
+local l_lTestForeignKeyTypeMatchPrimaryKey    := hb_HGetDef(par_hValues,"TestForeignKeyTypeMatchPrimaryKey"    ,.f.)
+local l_lTestForeignKeyIsNullable             := hb_HGetDef(par_hValues,"TestForeignKeyIsNullable"             ,.f.)
+local l_lTestForeignKeyNoDefault              := hb_HGetDef(par_hValues,"TestForeignKeyNoDefault"              ,.f.)
+local l_lTestForeignKeyMissingOnDeleteSetting := hb_HGetDef(par_hValues,"TestForeignKeyMissingOnDeleteSetting" ,.f.)
+local l_lTestNumericEnumerationWideEnough     := hb_HGetDef(par_hValues,"TestNumericEnumerationWideEnough"     ,.f.)
+local l_lTestMaxTableNameLength               := hb_HGetDef(par_hValues,"TestMaxTableNameLength"               ,.f.)
+local l_lTestMaxColumnNameLength              := hb_HGetDef(par_hValues,"TestMaxColumnNameLength"              ,.f.)
+local l_lTestMaxIndexNameLength               := hb_HGetDef(par_hValues,"TestMaxIndexNameLength"               ,.f.)
+local l_lTestMissingForeignKeyTable           := hb_HGetDef(par_hValues,"TestMissingForeignKeyTable"           ,.f.)
+local l_lTestMissingEnumerationValues         := hb_HGetDef(par_hValues,"TestMissingEnumerationValues"         ,.f.)
+local l_lTestUseOfDiscontinuedEnumeration     := hb_HGetDef(par_hValues,"TestUseOfDiscontinuedEnumeration"     ,.f.)
+local l_lTestUseOfDiscontinuedForeignTable    := hb_HGetDef(par_hValues,"TestUseOfDiscontinuedForeignTable"    ,.f.)
+
 local l_cObjectId
 
 oFcgi:TraceAdd("DataDictionaryEditFormBuild")
@@ -2134,7 +2240,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="TextSupportColumns" id="TextSupportColumns" value="]+FcgiPrepFieldForValue(l_cSupportColumns)+[" size="80">]
                 l_cHtml += [<br><span class="small">Comma separated list of column names</span>]
-                l_cHtml += [</td>]
+            l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
         l_cObjectId := "CheckAddForeignKeyIndexORMExport"
@@ -2146,16 +2252,68 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Key Configuration</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboKeyConfig" id="ComboKeyConfig">]
+                    l_cHtml += [<option value="1"]+iif(l_nKeyConfig==1,[ selected],[])+[>Primary and Foreign Keys can be of any types, any default.</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nKeyConfig==2,[ selected],[])+[>All keys are Integer. Primary keys are not nullable and auto-increment. Foreign keys are nullable with no default values.</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nKeyConfig==3,[ selected],[])+[>All keys are Integer Big. Primary keys are not nullable and auto-increment. Foreign keys are nullable with no default values.</option>]
+                l_cHtml += [</select>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3" valign="top">Integrity Test<br>(Warnings)</td>]
+            l_cHtml += [<td class="pb-3">]
+
+                // l_cObjectId := "CheckXXXXX"
+                // l_cHtml += [<div class="pb-1">]
+                //         l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectId+[" id="]+l_cObjectId+[" value="1"]+iif( l_lXXXXX," checked","")+[ class="form-check-input">]
+                //         l_cHtml += [<label class="form-check-label" for="]+l_cObjectId+[">&nbsp;Make all Foreign Keys same Type as related Primary Keys</label>]
+                // l_cHtml += [</div>]
+
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestTableHasPrimaryKey",               l_lTestTableHasPrimaryKey,               "Table must have a Primary Key")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyTypeMatchPrimaryKey",    l_lTestForeignKeyTypeMatchPrimaryKey,    "Foreign Key Type must match Primary Key Type")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyIsNullable",             l_lTestForeignKeyIsNullable,             "Foreign Key must be Nullable")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyNoDefault",              l_lTestForeignKeyNoDefault,              "Foreign Key may not have a default value")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyMissingOnDeleteSetting", l_lTestForeignKeyMissingOnDeleteSetting, [Foreign Key missing "On Delete" setting])
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestNumericEnumerationWideEnough",     l_lTestNumericEnumerationWideEnough,     "Numeric Enumerations must be large enough to handle largest Value")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMaxTableNameLength",               l_lTestMaxTableNameLength,               "Maximum Table Name length is 63 characters")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMaxColumnNameLength",              l_lTestMaxColumnNameLength,              "Maximum Column Name length is 59 characters")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMaxIndexNameLength",               l_lTestMaxIndexNameLength,               "Maximum Index Name (After adding Table Names and suffix) 63 characters (Postgresql)")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMissingForeignKeyTable",           l_lTestMissingForeignKeyTable,           "All Foreign Keys must point to a table")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMissingEnumerationValues",         l_lTestMissingEnumerationValues,         "All Enumeration Fields must point to a enumeration")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestUseOfDiscontinuedEnumeration",     l_lTestUseOfDiscontinuedEnumeration,     "Non Discontinued Fields may not point to a Discontinued Enumeration")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestUseOfDiscontinuedForeignTable",    l_lTestUseOfDiscontinuedForeignTable,    "Non Discontinued Foreign Keys may not point to a Discontinued Table")
+
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+
+
+
     l_cHtml += [</table>]
 
 l_cHtml += [</div>]
- 
+
+
+
 oFcgi:p_cjQueryScript += [$('#TextSupportColumns').focus();]
 
 l_cHtml += [</form>]
 
 l_cHtml += GetConfirmationModalFormsDelete()
 
+return l_cHtml
+//=================================================================================================================
+static function DataDictionaryEditFormBuildGroupCheckboxes(par_cCheckBoxName,par_lValue,par_cCheckBoxLabel)
+local l_cObjectId := "Check"+par_cCheckBoxName
+local l_cHtml
+l_cHtml := [<div class="pb-1">]
+        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectId+[" id="]+l_cObjectId+[" value="1"]+iif( par_lValue," checked","")+[ class="form-check-input">]
+        l_cHtml += [<label class="form-check-label" for="]+l_cObjectId+[">&nbsp;]+par_cCheckBoxLabel+[</label>]
+l_cHtml += [</div>]
 return l_cHtml
 //=================================================================================================================
 static function DataDictionaryEditFormOnSubmit(par_cURLApplicationLinkCode)
@@ -2165,6 +2323,20 @@ local l_cActionOnSubmit
 local l_iApplicationPk
 local l_cApplicationSupportColumns
 local l_lAddForeignKeyIndexORMExport
+local l_nKeyConfig
+local l_lTestTableHasPrimaryKey
+local l_lTestForeignKeyTypeMatchPrimaryKey
+local l_lTestForeignKeyIsNullable
+local l_lTestForeignKeyNoDefault
+local l_lTestForeignKeyMissingOnDeleteSetting
+local l_lTestNumericEnumerationWideEnough
+local l_lTestMaxTableNameLength
+local l_lTestMaxColumnNameLength
+local l_lTestMaxIndexNameLength
+local l_lTestMissingForeignKeyTable
+local l_lTestMissingEnumerationValues
+local l_lTestUseOfDiscontinuedEnumeration
+local l_lTestUseOfDiscontinuedForeignTable
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
@@ -2175,9 +2347,23 @@ oFcgi:TraceAdd("DataDictionaryEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iApplicationPk               := Val(oFcgi:GetInputValue("TableKey"))
-l_cApplicationSupportColumns   := SanitizeInput(oFcgi:GetInputValue("TextSupportColumns"))
-l_lAddForeignKeyIndexORMExport := (oFcgi:GetInputValue("CheckAddForeignKeyIndexORMExport") == "1")
+l_iApplicationPk                        := Val(oFcgi:GetInputValue("TableKey"))
+l_cApplicationSupportColumns            := SanitizeInput(oFcgi:GetInputValue("TextSupportColumns"))
+l_lAddForeignKeyIndexORMExport          := (oFcgi:GetInputValue("CheckAddForeignKeyIndexORMExport")          == "1")
+l_nKeyConfig                            := Val(oFcgi:GetInputValue("ComboKeyConfig"))
+l_lTestTableHasPrimaryKey               := (oFcgi:GetInputValue("CheckTestTableHasPrimaryKey")               == "1")
+l_lTestForeignKeyTypeMatchPrimaryKey    := (oFcgi:GetInputValue("CheckTestForeignKeyTypeMatchPrimaryKey")    == "1")
+l_lTestForeignKeyIsNullable             := (oFcgi:GetInputValue("CheckTestForeignKeyIsNullable")             == "1")
+l_lTestForeignKeyNoDefault              := (oFcgi:GetInputValue("CheckTestForeignKeyNoDefault")              == "1")
+l_lTestForeignKeyMissingOnDeleteSetting := (oFcgi:GetInputValue("CheckTestForeignKeyMissingOnDeleteSetting") == "1")
+l_lTestNumericEnumerationWideEnough     := (oFcgi:GetInputValue("CheckTestNumericEnumerationWideEnough")     == "1")
+l_lTestMaxTableNameLength               := (oFcgi:GetInputValue("CheckTestMaxTableNameLength")               == "1")
+l_lTestMaxColumnNameLength              := (oFcgi:GetInputValue("CheckTestMaxColumnNameLength")              == "1")
+l_lTestMaxIndexNameLength               := (oFcgi:GetInputValue("CheckTestMaxIndexNameLength")               == "1")
+l_lTestMissingForeignKeyTable           := (oFcgi:GetInputValue("CheckTestMissingForeignKeyTable")           == "1")
+l_lTestMissingEnumerationValues         := (oFcgi:GetInputValue("CheckTestMissingEnumerationValues")         == "1")
+l_lTestUseOfDiscontinuedEnumeration     := (oFcgi:GetInputValue("CheckTestUseOfDiscontinuedEnumeration")     == "1")
+l_lTestUseOfDiscontinuedForeignTable    := (oFcgi:GetInputValue("CheckTestUseOfDiscontinuedForeignTable")    == "1")
 
 l_cApplicationSupportColumns := Alltrim(strtran(l_cApplicationSupportColumns,[,],[ ]))
 do while space(2) $ l_cApplicationSupportColumns
@@ -2191,12 +2377,28 @@ case l_cActionOnSubmit == "Save"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("3cbf7dbb-cdec-483d-9660-a9043820b170","Application")
-            :Field("Application.SupportColumns"              , iif(empty(l_cApplicationSupportColumns),NULL,l_cApplicationSupportColumns))
-            :Field("Application.AddForeignKeyIndexORMExport" , l_lAddForeignKeyIndexORMExport)
+            :Field("Application.SupportColumns"                       , iif(empty(l_cApplicationSupportColumns),NULL,l_cApplicationSupportColumns))
+            :Field("Application.AddForeignKeyIndexORMExport"          , l_lAddForeignKeyIndexORMExport)
+            :Field("Application.KeyConfig"                            , l_nKeyConfig)
+            :Field("Application.TestTableHasPrimaryKey"               , l_lTestTableHasPrimaryKey)
+            :Field("Application.TestForeignKeyTypeMatchPrimaryKey"    , l_lTestForeignKeyTypeMatchPrimaryKey)
+            :Field("Application.TestForeignKeyIsNullable"             , l_lTestForeignKeyIsNullable)
+            :Field("Application.TestForeignKeyNoDefault"              , l_lTestForeignKeyNoDefault)
+            :Field("Application.TestForeignKeyMissingOnDeleteSetting" , l_lTestForeignKeyMissingOnDeleteSetting)
+            :Field("Application.TestNumericEnumerationWideEnough"     , l_lTestNumericEnumerationWideEnough)
+            :Field("Application.TestMaxTableNameLength"               , l_lTestMaxTableNameLength)
+            :Field("Application.TestMaxColumnNameLength"              , l_lTestMaxColumnNameLength)
+            :Field("Application.TestMaxIndexNameLength"               , l_lTestMaxIndexNameLength)
+            :Field("Application.TestMissingForeignKeyTable"           , l_lTestMissingForeignKeyTable)
+            :Field("Application.TestMissingEnumerationValues"         , l_lTestMissingEnumerationValues)
+            :Field("Application.TestUseOfDiscontinuedEnumeration"     , l_lTestUseOfDiscontinuedEnumeration)
+            :Field("Application.TestUseOfDiscontinuedForeignTable"    , l_lTestUseOfDiscontinuedForeignTable)
+
             if empty(l_iApplicationPk)
                 //Should never happen
             else
                 if :Update(l_iApplicationPk)
+                    DataDictionaryFixAndTest(l_iApplicationPk)
                     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
                 else
                     l_cErrorMessage := "Failed to update Application."
@@ -2214,8 +2416,22 @@ case l_cActionOnSubmit == "Cancel"
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["SupportColumns"]              := l_cApplicationSupportColumns
-    l_hValues["AddForeignKeyIndexORMExport"] := l_lAddForeignKeyIndexORMExport
+    l_hValues["SupportColumns"]                       := l_cApplicationSupportColumns
+    l_hValues["AddForeignKeyIndexORMExport"]          := l_lAddForeignKeyIndexORMExport
+    l_hValues["KeyConfig"]                            := l_nKeyConfig
+    l_hValues["TestTableHasPrimaryKey"]               := l_lTestTableHasPrimaryKey
+    l_hValues["TestForeignKeyTypeMatchPrimaryKey"]    := l_lTestForeignKeyTypeMatchPrimaryKey
+    l_hValues["TestForeignKeyIsNullable"]             := l_lTestForeignKeyIsNullable
+    l_hValues["TestForeignKeyNoDefault"]              := l_lTestForeignKeyNoDefault
+    l_hValues["TestForeignKeyMissingOnDeleteSetting"] := l_lTestForeignKeyMissingOnDeleteSetting
+    l_hValues["TestNumericEnumerationWideEnough"]     := l_lTestNumericEnumerationWideEnough
+    l_hValues["TestMaxTableNameLength"]               := l_lTestMaxTableNameLength
+    l_hValues["TestMaxColumnNameLength"]              := l_lTestMaxColumnNameLength
+    l_hValues["TestMaxIndexNameLength"]               := l_lTestMaxIndexNameLength
+    l_hValues["TestMissingForeignKeyTable"]           := l_lTestMissingForeignKeyTable
+    l_hValues["TestMissingEnumerationValues"]         := l_lTestMissingEnumerationValues
+    l_hValues["TestUseOfDiscontinuedEnumeration"]     := l_lTestUseOfDiscontinuedEnumeration
+    l_hValues["TestUseOfDiscontinuedForeignTable"]    := l_lTestUseOfDiscontinuedForeignTable
 
     l_cHtml += DataDictionaryEditFormBuild(l_cErrorMessage,l_iApplicationPk,l_hValues)
 endif
@@ -2224,45 +2440,45 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function NameSpaceListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function NamespaceListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
 local l_cSitePath := oFcgi:p_cSitePath
-local l_nNumberOfNameSpaces
+local l_nNumberOfNamespaces
 local l_nNumberOfCustomFieldValues := 0
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
-oFcgi:TraceAdd("NameSpaceListFormBuild")
+oFcgi:TraceAdd("NamespaceListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
-    :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","NameSpace")
-    :Column("NameSpace.pk"         ,"pk")
-    :Column("NameSpace.Name"       ,"NameSpace_Name")
-    :Column("NameSpace.AKA"        ,"NameSpace_AKA")
-    :Column("NameSpace.UseStatus"  ,"NameSpace_UseStatus")
-    :Column("NameSpace.DocStatus"  ,"NameSpace_DocStatus")
-    :Column("NameSpace.Description","NameSpace_Description")
-    :Column("Upper(NameSpace.Name)","tag1")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","Namespace")
+    :Column("Namespace.pk"         ,"pk")
+    :Column("Namespace.Name"       ,"Namespace_Name")
+    :Column("Namespace.AKA"        ,"Namespace_AKA")
+    :Column("Namespace.UseStatus"  ,"Namespace_UseStatus")
+    :Column("Namespace.DocStatus"  ,"Namespace_DocStatus")
+    :Column("Namespace.Description","Namespace_Description")
+    :Column("Upper(Namespace.Name)","tag1")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
-    :SQL("ListOfNameSpaces")
-    l_nNumberOfNameSpaces := :Tally
+    :SQL("ListOfNamespaces")
+    l_nNumberOfNamespaces := :Tally
 endwith
 
-if l_nNumberOfNameSpaces > 0
+if l_nNumberOfNamespaces > 0
     with object l_oDB2
-        :Table("713be6a6-ff44-4b10-893c-aa80400864bf","NameSpace")
+        :Table("713be6a6-ff44-4b10-893c-aa80400864bf","Namespace")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
         :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
-        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = NameSpace.pk")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Namespace.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
         :Where("CustomField.UsedOn = ^",USEDON_NAMESPACE)
         :Where("CustomField.Status <= 2")
         :Where("CustomField.Type = 2")   // Multi Choice
@@ -2271,8 +2487,8 @@ if l_nNumberOfNameSpaces > 0
             CustomFieldLoad_hOptionValueToDescriptionMapping(@l_hOptionValueToDescriptionMapping)
         endif
 
-        :Table("8e9d02fa-3cfe-41f2-b426-dbe222d62db2","NameSpace")
-        :Column("NameSpace.pk"           ,"fk_entity")
+        :Table("8e9d02fa-3cfe-41f2-b426-dbe222d62db2","Namespace")
+        :Column("Namespace.pk"           ,"fk_entity")
         :Column("CustomField.pk"         ,"CustomField_pk")
         :Column("CustomField.Label"      ,"CustomField_Label")
         :Column("CustomField.Type"       ,"CustomField_Type")
@@ -2280,9 +2496,9 @@ if l_nNumberOfNameSpaces > 0
         :Column("CustomFieldValue.ValueM","CustomFieldValue_ValueM")
         :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
         :Column("upper(CustomField.Name)","tag1")
-        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = NameSpace.pk")
+        :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Namespace.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
         :Where("CustomField.UsedOn = ^",USEDON_NAMESPACE)
         :Where("CustomField.Status <= 2")
         :OrderBy("tag1")
@@ -2293,12 +2509,12 @@ if l_nNumberOfNameSpaces > 0
 
 endif
 
-if empty(l_nNumberOfNameSpaces)
+if empty(l_nNumberOfNamespaces)
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<span class="navbar-brand ms-3">No Name Space on file for current application.</span>]
-                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[DataDictionaries/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+                l_cHtml += [<span class="navbar-brand ms-3">No Namespace on file for current application.</span>]
+                l_cHtml += [<a class="btn btn-primary rounded" href="]+l_cSitePath+[DataDictionaries/NewNamespace/]+par_cURLApplicationLinkCode+[/">New Namespace</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
     endif
@@ -2307,7 +2523,7 @@ else
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewNameSpace/]+par_cURLApplicationLinkCode+[/">New Name Space</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewNamespace/]+par_cURLApplicationLinkCode+[/">New Namespace</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -2321,42 +2537,42 @@ else
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Name Spaces (]+Trans(l_nNumberOfNameSpaces)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Namespaces (]+Trans(l_nNumberOfNamespaces)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                     if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                        l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
                 l_cHtml += [</tr>]
 
-                select ListOfNameSpaces
+                select ListOfNamespaces
                 scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfNameSpaces->NameSpace_UseStatus)+[>]
+                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfNamespaces->Namespace_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNameSpace/]+par_cURLApplicationLinkCode+[/]+ListOfNameSpaces->NameSpace_Name+[/">]+ListOfNameSpaces->NameSpace_Name+FormatAKAForDisplay(ListOfNameSpaces->NameSpace_AKA)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNamespace/]+par_cURLApplicationLinkCode+[/]+ListOfNamespaces->Namespace_Name+[/">]+ListOfNamespaces->Namespace_Name+FormatAKAForDisplay(ListOfNamespaces->Namespace_AKA)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfNameSpaces->NameSpace_Description,""))
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_Description,""))
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfNameSpaces->NameSpace_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfNameSpaces->NameSpace_UseStatus,USESTATUS_UNKNOWN)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfNameSpaces->NameSpace_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfNameSpaces->NameSpace_DocStatus,DOCTATUS_MISSING)]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfNameSpaces->pk,l_hOptionValueToDescriptionMapping)
+                                l_cHtml += CustomFieldsBuildGridOther(ListOfNamespaces->pk,l_hOptionValueToDescriptionMapping)
                             l_cHtml += [</td>]
                         endif
 
@@ -2373,7 +2589,7 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
+static function NamespaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
@@ -2384,7 +2600,7 @@ local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus   := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 
-oFcgi:TraceAdd("NameSpaceEditFormBuild")
+oFcgi:TraceAdd("NamespaceEditFormBuild")
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
@@ -2397,7 +2613,7 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Name Space</span>]   //navbar-text
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Namespace</span>]   //navbar-text
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         endif
@@ -2473,49 +2689,49 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function NameSpaceEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
+static function NamespaceEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
 
 local l_cActionOnSubmit
-local l_iNameSpacePk
-local l_cNameSpaceName
-local l_cNameSpaceAKA
-local l_iNameSpaceUseStatus
-local l_iNameSpaceDocStatus
-local l_cNameSpaceDescription
+local l_iNamespacePk
+local l_cNamespaceName
+local l_cNamespaceAKA
+local l_iNamespaceUseStatus
+local l_iNamespaceDocStatus
+local l_cNamespaceDescription
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
 
-oFcgi:TraceAdd("NameSpaceEditFormOnSubmit")
+oFcgi:TraceAdd("NamespaceEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iNameSpacePk          := Val(oFcgi:GetInputValue("TableKey"))
-l_cNameSpaceName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
-l_cNameSpaceAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
-if empty(l_cNameSpaceAKA)
-    l_cNameSpaceAKA := NIL
+l_iNamespacePk          := Val(oFcgi:GetInputValue("TableKey"))
+l_cNamespaceName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+l_cNamespaceAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+if empty(l_cNamespaceAKA)
+    l_cNamespaceAKA := NIL
 endif
-l_iNameSpaceUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_iNameSpaceDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cNameSpaceDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iNamespaceUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_iNamespaceDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cNamespaceDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
     if oFcgi:p_nAccessLevelDD >= 3
-        if empty(l_cNameSpaceName)
+        if empty(l_cNamespaceName)
             l_cErrorMessage := "Missing Name"
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
-                :Table("ff18156d-1501-4629-b1ca-a3db929d95ea","NameSpace")
-                :Where([lower(replace(NameSpace.Name,' ','')) = ^],lower(StrTran(l_cNameSpaceName," ","")))
-                :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
-                if l_iNameSpacePk > 0
-                    :Where([NameSpace.pk != ^],l_iNameSpacePk)
+                :Table("ff18156d-1501-4629-b1ca-a3db929d95ea","Namespace")
+                :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cNamespaceName," ","")))
+                :Where([Namespace.fk_Application = ^],par_iApplicationPk)
+                if l_iNamespacePk > 0
+                    :Where([Namespace.pk != ^],l_iNamespacePk)
                 endif
                 :SQL()
             endwith
@@ -2523,67 +2739,67 @@ case l_cActionOnSubmit == "Save"
             if l_oDB1:Tally <> 0
                 l_cErrorMessage := "Duplicate Name"
             else
-                //Save the Name Space
+                //Save the Namespace
                 with object l_oDB1
-                    :Table("baf7af76-6013-4b53-ba26-4006e22f52cb","NameSpace")
+                    :Table("baf7af76-6013-4b53-ba26-4006e22f52cb","Namespace")
                     if oFcgi:p_nAccessLevelDD >= 5
-                        :Field("NameSpace.Name"       ,l_cNameSpaceName)
-                        :Field("NameSpace.AKA"        ,l_cNameSpaceAKA)
-                        :Field("NameSpace.UseStatus"  ,l_iNameSpaceUseStatus)
+                        :Field("Namespace.Name"       ,l_cNamespaceName)
+                        :Field("Namespace.AKA"        ,l_cNamespaceAKA)
+                        :Field("Namespace.UseStatus"  ,l_iNamespaceUseStatus)
                     endif
-                    :Field("NameSpace.DocStatus"  ,l_iNameSpaceDocStatus)
-                    :Field("NameSpace.Description",iif(empty(l_cNameSpaceDescription),NULL,l_cNameSpaceDescription))
-                    if empty(l_iNameSpacePk)
-                        :Field("NameSpace.fk_Application" , par_iApplicationPk)
+                    :Field("Namespace.DocStatus"  ,l_iNamespaceDocStatus)
+                    :Field("Namespace.Description",iif(empty(l_cNamespaceDescription),NULL,l_cNamespaceDescription))
+                    if empty(l_iNamespacePk)
+                        :Field("Namespace.fk_Application" , par_iApplicationPk)
                         if :Add()
-                            l_iNameSpacePk := :Key()
+                            l_iNamespacePk := :Key()
                         else
-                            l_cErrorMessage := "Failed to add NameSpace."
+                            l_cErrorMessage := "Failed to add Namespace."
                         endif
                     else
-                        if !:Update(l_iNameSpacePk)
-                            l_cErrorMessage := "Failed to update NameSpace."
+                        if !:Update(l_iNamespacePk)
+                            l_cErrorMessage := "Failed to update Namespace."
                         endif
                         // SendToClipboard(:LastSQL())
                     endif
 
                     if empty(l_cErrorMessage)
-                        CustomFieldsSave(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
+                        CustomFieldsSave(par_iApplicationPk,USEDON_NAMESPACE,l_iNamespacePk)
                     endif
                 endwith
 
-                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")  //+l_cNameSpaceName+"/"
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+par_cURLApplicationLinkCode+"/")  //+l_cNamespaceName+"/"
             endif
         endif
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+par_cURLApplicationLinkCode+"/")
 
-case l_cActionOnSubmit == "Delete"   // NameSpace
+case l_cActionOnSubmit == "Delete"   // Namespace
     if oFcgi:p_nAccessLevelDD >= 5
-        if CheckIfAllowDestructiveNameSpaceDelete(par_iApplicationPk)
-            l_cErrorMessage := CascadeDeleteNameSpace(par_iApplicationPk,l_iNameSpacePk)
+        if CheckIfAllowDestructiveNamespaceDelete(par_iApplicationPk)
+            l_cErrorMessage := CascadeDeleteNamespace(par_iApplicationPk,l_iNamespacePk)
             if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+par_cURLApplicationLinkCode+"/")
             endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("910d6dd3-4bcb-4d96-a092-61730e83380c","Table")
-                :Where("table.fk_NameSpace = ^",l_iNameSpacePk)
+                :Where("table.fk_Namespace = ^",l_iNamespacePk)
                 :SQL()
 
                 if :Tally == 0
                     :Table("1228e164-50b6-447a-81c3-e2e0430983fc","Enumeration")
-                    :Where("Enumeration.fk_NameSpace = ^",l_iNameSpacePk)
+                    :Where("Enumeration.fk_Namespace = ^",l_iNamespacePk)
                     :SQL()
 
                     if :Tally == 0
-                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNameSpacePk)
-                        :Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","NameSpace",l_iNameSpacePk)
+                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,l_iNamespacePk)
+                        :Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Namespace",l_iNamespacePk)
 
-                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNameSpaces/"+par_cURLApplicationLinkCode+"/")
+                        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+par_cURLApplicationLinkCode+"/")
                     else
                         l_cErrorMessage := "Related Enumeration record on file"
                     endif
@@ -2597,15 +2813,15 @@ case l_cActionOnSubmit == "Delete"   // NameSpace
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["Name"]            := l_cNameSpaceName
-    l_hValues["AKA"]             := l_cNameSpaceAKA
-    l_hValues["UseStatus"]       := l_iNameSpaceUseStatus
-    l_hValues["DocStatus"]       := l_iNameSpaceDocStatus
-    l_hValues["Description"]     := l_cNameSpaceDescription
+    l_hValues["Name"]            := l_cNamespaceName
+    l_hValues["AKA"]             := l_cNamespaceAKA
+    l_hValues["UseStatus"]       := l_iNamespaceUseStatus
+    l_hValues["DocStatus"]       := l_iNamespaceDocStatus
+    l_hValues["Description"]     := l_cNamespaceDescription
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_NAMESPACE,@l_hValues)
 
-    l_cHtml += NameSpaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iNameSpacePk,l_hValues)
+    l_cHtml += NamespaceEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iNamespacePk,l_hValues)
 endif
 
 return l_cHtml
@@ -2616,8 +2832,8 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_lSearchAdvancedMode
-local l_cSearchNameSpaceName
-local l_cSearchNameSpaceDescription
+local l_cSearchNamespaceName
+local l_cSearchNamespaceDescription
 local l_cSearchTableName
 local l_cSearchTableDescription
 local l_cSearchTableTags
@@ -2633,8 +2849,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_lSearchAdvancedMode     := (oFcgi:GetInputValue("CheckSearchAdvancedMode") == "1")
 
-l_cSearchNameSpaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNameSpaceName"))
-l_cSearchNameSpaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNameSpaceDescription"))
+l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
+l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
 
 l_cSearchTableName              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableName"))
 l_cSearchTableDescription       := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDescription"))
@@ -2651,8 +2867,8 @@ do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode"          ,iif(l_lSearchAdvancedMode,"T","F"))
 
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName"         ,l_cSearchNameSpaceName)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription"  ,l_cSearchNameSpaceDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,l_cSearchNamespaceName)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
 
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,l_cSearchTableName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,l_cSearchTableDescription)
@@ -2671,13 +2887,12 @@ case l_cActionOnSubmit == "Search"
     // l_cURL += [&ColumnDescription=]+hb_StrToHex(l_cColumnDescription)
     // //SendToClipboard(l_cURL)
     // oFcgi:Redirect(l_cURL)
-
     l_cHtml += TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode"          ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName"         ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags"             ,"")
@@ -2714,8 +2929,8 @@ local l_nIndexCount
 
 local l_lSearchAdvancedMode
 
-local l_cSearchNameSpaceName
-local l_cSearchNameSpaceDescription
+local l_cSearchNamespaceName
+local l_cSearchNamespaceDescription
 
 local l_cSearchTableName
 local l_cSearchTableDescription
@@ -2739,13 +2954,14 @@ local l_nNumberOfUsedTags
 local l_json_Tags
 local l_cTagInfo
 local l_ScriptFolder
+local l_lWarnings := .f.
 
 oFcgi:TraceAdd("TableListFormBuild")
 
 l_lSearchAdvancedMode           := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode") == "T")
 
-l_cSearchNameSpaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceName")
-l_cSearchNameSpaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NameSpaceDescription")
+l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
+l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
 
 l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
@@ -2769,9 +2985,9 @@ endif
 with object l_oDB_AnyTags
     :Table("1f510c4e-d637-4803-814b-6bae91676385","TagTable")
     :Join("inner","Table","","TagTable.fk_Table = Table.pk")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Tag","","TagTable.fk_Tag = Tag.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     :Where("Tag.TableUseStatus = ^",TAGUSESTATUS_ACTIVE)
     l_nNumberOfUsedTags := :Count()
@@ -2788,7 +3004,7 @@ endwith
 with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
     :Column("Table.pk"         ,"pk")
-    :Column("NameSpace.Name"   ,"NameSpace_Name")
+    :Column("Namespace.Name"   ,"Namespace_Name")
     :Column("Table.Name"       ,"Table_Name")
     :Column("Table.AKA"        ,"Table_AKA")
     :Column("Table.Unlogged"   ,"Table_Unlogged")
@@ -2796,15 +3012,16 @@ with object l_oDB_ListOfTables
     :Column("Table.DocStatus"  ,"Table_DocStatus")
     :Column("Table.Description","Table_Description")
     :Column("Table.Information","Table_Information")
-    :Column("Upper(NameSpace.Name)","tag1")
+    :Column("Table.TestWarning","Table_TestWarning")
+    :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 
     TableListFormAddFiltering(l_oDB_ListOfTables,;
                               l_lSearchAdvancedMode,;
-                              l_cSearchNameSpaceName,;
-                              l_cSearchNameSpaceDescription,;
+                              l_cSearchNamespaceName,;
+                              l_cSearchNamespaceDescription,;
                               l_cSearchTableName,;
                               l_cSearchTableDescription,;
                               l_cSearchColumnName,;
@@ -2818,22 +3035,30 @@ with object l_oDB_ListOfTables
     :SQL("ListOfTables")
     l_nNumberOfTables := :Tally
 
-    // SendToClipboard(:LastSQL())
+    SendToClipboard(:LastSQL())
 
 endwith
 
 if l_nNumberOfTables > 0
+
+    select ListOfTables
+    scan all while !l_lWarnings
+        if !empty(nvl(ListOfTables->Table_TestWarning,""))
+            l_lWarnings := .t.
+        endif
+    endscan
+
     with object l_oDB_CustomField
         :Table("9002a459-657d-428b-b5e2-665851c7f853","Table")
         :Distinct(.t.)
         :Column("CustomField.pk"              ,"CustomField_pk")
         :Column("CustomField.OptionDefinition","CustomField_OptionDefinition")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
 
         :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Table.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
 
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 
         :Where("CustomField.UsedOn = ^",USEDON_TABLE)
         :Where("CustomField.Status <= 2")
@@ -2841,8 +3066,8 @@ if l_nNumberOfTables > 0
 
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_lSearchAdvancedMode,;
-                                  l_cSearchNameSpaceName,;
-                                  l_cSearchNameSpaceDescription,;
+                                  l_cSearchNamespaceName,;
+                                  l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
                                   l_cSearchTableDescription,;
                                   l_cSearchColumnName,;
@@ -2867,19 +3092,19 @@ if l_nNumberOfTables > 0
         :Column("CustomFieldValue.ValueD","CustomFieldValue_ValueD")
         :Column("upper(CustomField.Name)","tag1")
 
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
 
         :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Table.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
 
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
         :Where("CustomField.UsedOn = ^",USEDON_TABLE)
         :Where("CustomField.Status <= 2")
 
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_lSearchAdvancedMode,;
-                                  l_cSearchNameSpaceName,;
-                                  l_cSearchNameSpaceDescription,;
+                                  l_cSearchNamespaceName,;
+                                  l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
                                   l_cSearchTableDescription,;
                                   l_cSearchColumnName,;
@@ -2900,17 +3125,18 @@ if l_nNumberOfTables > 0
         :Column("Tag.Name","Tag_Name")
         :Column("Tag.Code","Tag_Code")
         :Column("upper(Tag.Name)","tag1")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         :Join("inner","TagTable","","TagTable.fk_Table = Table.pk")
         :Join("inner","Tag","","TagTable.fk_Tag = Tag.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
         :Where("Tag.fk_Application = ^",par_iApplicationPk)
         :Where("Tag.TableUseStatus = ^",TAGUSESTATUS_ACTIVE)
         :OrderBy("tag1")
         :SQL("ListOfTagTables")
         l_nNumberOfTags := :Tally
     endif
-
+else
+    l_lWarnings := .f.
 endif
 
 //For now will issue a separate SQL to get totals, later once ORM can handle WITH (Common Table Expressions), using a vfp_seek technic will not be needed.
@@ -2918,9 +3144,9 @@ with object l_oDB_ListOfColumnCounts
     :Table("30c4a441-523c-40ca-85eb-e4b30f6358cc","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"ColumnCount")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Table_pk")
     :SQL("ListOfColumnCounts")
     with object :p_oCursor
@@ -2933,9 +3159,9 @@ with object l_oDB_ListOfIndexCounts
     :Table("8ed29bff-8f51-4140-a889-d22dcca7c313","Table")
     :Column("Table.pk" ,"Table_pk")
     :Column("Count(*)" ,"IndexCount")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index","","Index.fk_Table = Table.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Table_pk")
     :SQL("ListOfIndexCounts")
     with object :p_oCursor
@@ -3032,9 +3258,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             endif
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr class="AdvancedSearch">]
-                            l_cHtml += [<td><span class="me-2">Name Space</span></td>]
-                            l_cHtml += [<td><input type="text" name="TextSearchNameSpaceName" id="TextSearchNameSpaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNameSpaceName)+[" class="form-control"></td>]
-                            l_cHtml += [<td><input type="text" name="TextSearchNameSpaceDescription" id="TextSearchNameSpaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNameSpaceDescription)+[" class="form-control"></td>]
+                            l_cHtml += [<td><span class="me-2">Namespace</span></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchNamespaceName" id="TextSearchNamespaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceName)+[" class="form-control"></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchNamespaceDescription" id="TextSearchNamespaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceDescription)+[" class="form-control"></td>]
                             l_cHtml += [<td class="AdvancedSearch"></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
@@ -3094,32 +3320,41 @@ if !empty(l_nNumberOfTables)
 
             l_nColspan := 9
             if l_nNumberOfCustomFieldValues > 0
-                l_nColspan += 1
+                l_nColspan++
             endif
             if l_nNumberOfTags > 0
-                l_nColspan += 1
+                l_nColspan++
+            endif
+            if l_lWarnings
+                l_nColspan++
             endif
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+Trans(l_nColspan)+[">Tables (]+Trans(l_nNumberOfTables)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">Tables (]+Trans(l_nNumberOfTables)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Indexes</th>]
+                l_cHtml += [<th class="text-white">Namespace</th>]
+                l_cHtml += [<th class="text-white">Table Name</th>]
+                l_cHtml += [<th class="text-white">Columns</th>]
+                l_cHtml += [<th class="text-white">Indexes</th>]
                 if l_nNumberOfTags > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Tags</th>]
+                    l_cHtml += [<th class="text-white text-center">Tags</th>]
                 endif
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Unlogged</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Info</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                l_cHtml += [<th class="text-white">Unlogged</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white">Info</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
+
+                if l_lWarnings
+                    // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
+                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
+                endif
+
             l_cHtml += [</tr>]
 
             select ListOfTables
@@ -3129,21 +3364,21 @@ if !empty(l_nNumberOfTables)
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTables->Table_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += Allt(ListOfTables->NameSpace_Name)
+                        l_cHtml += Allt(ListOfTables->Namespace_Name)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+ListOfTables->Table_Name+[/">]+ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->Namespace_Name)+[/]+ListOfTables->Table_Name+[/">]+ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                         l_nColumnCount := iif( VFP_Seek(l_iTablePk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->ColumnCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/]+l_cColumnSearchParameters+[">]+Trans(l_nColumnCount)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->Namespace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/]+l_cColumnSearchParameters+[">]+Trans(l_nColumnCount)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                         l_nIndexCount := iif( VFP_Seek(l_iTablePk,"ListOfIndexCounts","tag1") , ListOfIndexCounts->IndexCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->NameSpace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_nIndexCount)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTables->Namespace_Name)+[/]+Allt(ListOfTables->Table_Name)+[/">]+Trans(l_nIndexCount)+[</a>]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfTags > 0
@@ -3186,6 +3421,13 @@ if !empty(l_nNumberOfTables)
                             l_cHtml += CustomFieldsBuildGridOther(l_iTablePk,l_hOptionValueToDescriptionMapping)
                         l_cHtml += [</td>]
                     endif
+
+                    if l_lWarnings
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_TestWarning,""))
+                        l_cHtml += [</td>]
+                    endif
+
                 l_cHtml += [</tr>]
             endscan
             l_cHtml += [</table>]
@@ -3201,8 +3443,8 @@ return l_cHtml
 //=================================================================================================================
 static function TableListFormAddFiltering(par_oDB,;
                                           par_lSearchAdvancedMode,;
-                                          par_cSearchNameSpaceName,;
-                                          par_cSearchNameSpaceDescription,;
+                                          par_cSearchNamespaceName,;
+                                          par_cSearchNamespaceDescription,;
                                           par_cSearchTableName,;
                                           par_cSearchTableDescription,;
                                           par_cSearchColumnName,;
@@ -3212,11 +3454,11 @@ static function TableListFormAddFiltering(par_oDB,;
                                           par_cSearchTableTags)
 
 with object par_oDB
-    if !empty(par_cSearchNameSpaceName)
-        :KeywordCondition(par_cSearchNameSpaceName,"CONCAT(NameSpace.Name,' ',NameSpace.AKA)")
+    if !empty(par_cSearchNamespaceName)
+        :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA)")
     endif
-    if !empty(par_cSearchNameSpaceDescription)
-        :KeywordCondition(par_cSearchNameSpaceDescription,"NameSpace.Description")
+    if !empty(par_cSearchNamespaceDescription)
+        :KeywordCondition(par_cSearchNamespaceDescription,"Namespace.Description")
     endif
 
     if !empty(par_cSearchTableName)
@@ -3267,7 +3509,7 @@ local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 
 local l_iTemplateTablePk := nvl(hb_HGetDef(par_hValues,"TemplateTablePk",0),0)
-local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
+local l_iNamespacePk     := hb_HGetDef(par_hValues,"Fk_Namespace",0)
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_cTags            := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
@@ -3352,19 +3594,19 @@ endwith
 with object l_oDB1
     if !empty(par_iPk)
         :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
-        :Column("NameSpace.Name"     ,"NameSpace_Name")
+        :Column("Namespace.Name"     ,"Namespace_Name")
         :Column("Table.Name"         ,"Table_Name")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oDataTableInfo := :Get(par_iPk)
     endif
 
-    :Table("46e97041-1a30-466a-93ed-2172c7dcfedd","NameSpace")
-    :Column("NameSpace.pk"         ,"pk")
-    :Column("NameSpace.Name"       ,"NameSpace_Name")
-    :Column("Upper(NameSpace.Name)","tag1")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Table("46e97041-1a30-466a-93ed-2172c7dcfedd","Namespace")
+    :Column("Namespace.pk"         ,"pk")
+    :Column("Namespace.Name"       ,"Namespace_Name")
+    :Column("Upper(Namespace.Name)","tag1")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
-    :SQL("ListOfNameSpaces")
+    :SQL("ListOfNamespaces")
 
 endwith
 
@@ -3374,7 +3616,7 @@ if l_oDB1:Tally <= 0
     l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
     l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+[You must setup at least one Name Space first]+[</div>]
+    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+[You must setup at least one Namespace first]+[</div>]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
@@ -3405,10 +3647,10 @@ else
                 if oFcgi:p_nAccessLevelDD >= 5
                     l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
-                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Export for DataWharf Imports</a>]
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Export for DataWharf Imports</a>]
                 endif
             endif
         l_cHtml += [</div>]
@@ -3421,12 +3663,12 @@ else
         l_cHtml += [<table>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
+                l_cHtml += [<td class="pe-2 pb-3">Namespace</td>]
                 l_cHtml += [<td class="pb-3">]
-                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[ class="form-select">]
-                    select ListOfNameSpaces
+                    l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNamespacePk" id="ComboNamespacePk"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[ class="form-select">]
+                    select ListOfNamespaces
                     scan all
-                        l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
+                        l_cHtml += [<option value="]+Trans(ListOfNamespaces->pk)+["]+iif(ListOfNamespaces->pk = l_iNamespacePk,[ selected],[])+[>]+AllTrim(ListOfNamespaces->Namespace_Name)+[</option>]
                     endscan
                     l_cHtml += [</select>]
                 l_cHtml += [</td>]
@@ -3531,13 +3773,13 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function TableEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function TableEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iTablePk
 local l_iTemplateTablePk
-local l_iNameSpacePk
+local l_iNamespacePk
 local l_cTableName
 local l_cTableAKA
 local l_lUnlogged
@@ -3570,7 +3812,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
 
 l_iTemplateTablePk  := Val(oFcgi:GetInputValue("ComboTemplateTablePk"))
-l_iNameSpacePk      := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
+l_iNamespacePk      := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 l_cTableName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 l_cTableAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
@@ -3595,9 +3837,9 @@ case l_cActionOnSubmit == "Save"
             with object l_oDB1
                 :Table("51c9a533-665a-4533-82f3-847bd84bed74","Table")
                 :Column("Table.pk","pk")
-                :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-                :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
-                :Where([Table.fk_NameSpace = ^],l_iNameSpacePk)
+                :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                :Where([Namespace.fk_Application = ^],par_iApplicationPk)
+                :Where([Table.fk_Namespace = ^],l_iNamespacePk)
                 :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cTableName," ","")))
                 if l_iTablePk > 0
                     :Where([Table.pk != ^],l_iTablePk)
@@ -3617,7 +3859,7 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("895da8f1-8cdb-4792-a5b9-3d3b6e646430","Table")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("Table.fk_NameSpace",l_iNameSpacePk)
+                :Field("Table.fk_Namespace",l_iNamespacePk)
                 :Field("Table.Name"        ,l_cTableName)
                 :Field("Table.AKA"         ,l_cTableAKA)
                 :Field("Table.UseStatus"   ,l_nTableUseStatus)
@@ -3706,22 +3948,22 @@ case l_cActionOnSubmit == "Save"
                     with object l_oDBListOfTemplateColumns
                         :Table("f2d217df-edfa-452b-850b-f555a401a570","TemplateColumn")
 
-                        :Column("TemplateColumn.Order"       , "TemplateColumn_Order")
-                        :Column("TemplateColumn.Name"        , "TemplateColumn_Name")
-                        :Column("TemplateColumn.AKA"         , "TemplateColumn_AKA")
-                        :Column("TemplateColumn.UseStatus"   , "TemplateColumn_UseStatus")
-                        :Column("TemplateColumn.Type"        , "TemplateColumn_Type")
-                        :Column("TemplateColumn.Array"       , "TemplateColumn_Array")
-                        :Column("TemplateColumn.Length"      , "TemplateColumn_Length")
-                        :Column("TemplateColumn.Scale"       , "TemplateColumn_Scale")
-                        :Column("TemplateColumn.Nullable"    , "TemplateColumn_Nullable")
-                        :Column("TemplateColumn.Required"    , "TemplateColumn_Required")
-                        :Column("TemplateColumn.Default"     , "TemplateColumn_Default")
-                        :Column("TemplateColumn.Unicode"     , "TemplateColumn_Unicode")
-                        :Column("TemplateColumn.Primary"     , "TemplateColumn_Primary")
-                        :Column("TemplateColumn.UsedBy"      , "TemplateColumn_UsedBy")
-                        :Column("TemplateColumn.DocStatus"   , "TemplateColumn_DocStatus")
-                        :Column("TemplateColumn.Description" , "TemplateColumn_Description")
+                        :Column("TemplateColumn.Order"              , "TemplateColumn_Order")
+                        :Column("TemplateColumn.Name"               , "TemplateColumn_Name")
+                        :Column("TemplateColumn.AKA"                , "TemplateColumn_AKA")
+                        :Column("TemplateColumn.UsedAs"             , "TemplateColumn_UsedAs")
+                        :Column("TemplateColumn.UsedBy"             , "TemplateColumn_UsedBy")
+                        :Column("TemplateColumn.UseStatus"          , "TemplateColumn_UseStatus")
+                        :Column("TemplateColumn.DocStatus"          , "TemplateColumn_DocStatus")
+                        :Column("TemplateColumn.Type"               , "TemplateColumn_Type")
+                        :Column("TemplateColumn.Array"              , "TemplateColumn_Array")
+                        :Column("TemplateColumn.Length"             , "TemplateColumn_Length")
+                        :Column("TemplateColumn.Scale"              , "TemplateColumn_Scale")
+                        :Column("TemplateColumn.Nullable"           , "TemplateColumn_Nullable")
+                        :Column("TemplateColumn.DefaultType"        , "TemplateColumn_DefaultType")
+                        :Column("TemplateColumn.DefaultCustom"      , "TemplateColumn_DefaultCustom")
+                        :Column("TemplateColumn.Unicode"            , "TemplateColumn_Unicode")
+                        :Column("TemplateColumn.Description"        , "TemplateColumn_Description")
 
                         :Where("TemplateColumn.fk_TemplateTable = ^" , l_iTemplateTablePk)
                         :OrderBy("TemplateColumn_Order")
@@ -3732,24 +3974,23 @@ case l_cActionOnSubmit == "Save"
                                 select ListOfTemplateColumns
                                 scan all
                                     :Table("ab1b0120-bb64-4cfb-b6bc-e6a740594915","Column")
-                                    // :Field("Column.Name" , ListOfTemplateColumns->Name)
-                                    :Field("Column.fk_Table"        , l_iTablePk)
-                                    :Field("Column.Order"           , ListOfTemplateColumns->TemplateColumn_Order)
-                                    :Field("Column.Name"            , ListOfTemplateColumns->TemplateColumn_Name)
-                                    :Field("Column.AKA"             , ListOfTemplateColumns->TemplateColumn_AKA)
-                                    :Field("Column.UseStatus"       , ListOfTemplateColumns->TemplateColumn_UseStatus)
-                                    :Field("Column.Type"            , ListOfTemplateColumns->TemplateColumn_Type)
-                                    :Field("Column.Array"           , ListOfTemplateColumns->TemplateColumn_Array)
-                                    :Field("Column.Length"          , ListOfTemplateColumns->TemplateColumn_Length)
-                                    :Field("Column.Scale"           , ListOfTemplateColumns->TemplateColumn_Scale)
-                                    :Field("Column.Nullable"        , ListOfTemplateColumns->TemplateColumn_Nullable)
-                                    :Field("Column.Required"        , ListOfTemplateColumns->TemplateColumn_Required)
-                                    :Field("Column.Default"         , ListOfTemplateColumns->TemplateColumn_Default)
-                                    :Field("Column.Unicode"         , ListOfTemplateColumns->TemplateColumn_Unicode)
-                                    :Field("Column.Primary"         , ListOfTemplateColumns->TemplateColumn_Primary)
-                                    :Field("Column.UsedBy"          , ListOfTemplateColumns->TemplateColumn_UsedBy)
-                                    :Field("Column.DocStatus"       , ListOfTemplateColumns->TemplateColumn_DocStatus)
-                                    :Field("Column.Description"     , iif(empty(ListOfTemplateColumns->TemplateColumn_Description),NULL,ListOfTemplateColumns->TemplateColumn_Description))
+                                    :Field("Column.fk_Table"           , l_iTablePk)
+                                    :Field("Column.Order"              , ListOfTemplateColumns->TemplateColumn_Order)
+                                    :Field("Column.Name"               , ListOfTemplateColumns->TemplateColumn_Name)
+                                    :Field("Column.AKA"                , ListOfTemplateColumns->TemplateColumn_AKA)
+                                    :Field("Column.UsedAs"             , ListOfTemplateColumns->TemplateColumn_UsedAs)
+                                    :Field("Column.UsedBy"             , ListOfTemplateColumns->TemplateColumn_UsedBy)
+                                    :Field("Column.UseStatus"          , ListOfTemplateColumns->TemplateColumn_UseStatus)
+                                    :Field("Column.DocStatus"          , ListOfTemplateColumns->TemplateColumn_DocStatus)
+                                    :Field("Column.Type"               , ListOfTemplateColumns->TemplateColumn_Type)
+                                    :Field("Column.Array"              , ListOfTemplateColumns->TemplateColumn_Array)
+                                    :Field("Column.Length"             , ListOfTemplateColumns->TemplateColumn_Length)
+                                    :Field("Column.Scale"              , ListOfTemplateColumns->TemplateColumn_Scale)
+                                    :Field("Column.Nullable"           , ListOfTemplateColumns->TemplateColumn_Nullable)
+                                    :Field("Column.DefaultType"        , ListOfTemplateColumns->TemplateColumn_DefaultType)
+                                    :Field("Column.DefaultCustom"      , ListOfTemplateColumns->TemplateColumn_DefaultCustom)
+                                    :Field("Column.Unicode"            , ListOfTemplateColumns->TemplateColumn_Unicode)
+                                    :Field("Column.Description"        , iif(empty(ListOfTemplateColumns->TemplateColumn_Description),NULL,ListOfTemplateColumns->TemplateColumn_Description))
 
                                     :Add()
                                 endscan
@@ -3761,20 +4002,11 @@ case l_cActionOnSubmit == "Save"
             endif
 
         endwith
+        DataDictionaryFixAndTest(par_iApplicationPk)
     endif
 
 case l_cActionOnSubmit == "Cancel"
     l_cFrom := oFcgi:GetQueryString('From')
-    // switch l_cFrom
-    // case 'Columns'
-    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
-    //     exit
-    // case 'Indexes'
-    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
-    //     exit
-    // otherwise
-    //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
-    // endswitch
 
 case l_cActionOnSubmit == "Delete"   // Table
     if oFcgi:p_nAccessLevelDD >= 5
@@ -3858,6 +4090,7 @@ case l_cActionOnSubmit == "Delete"   // Table
 
                                     CustomFieldsDelete(par_iApplicationPk,USEDON_TABLE,l_iTablePk)
                                     if :Delete("dd06ea56-67f7-4175-ad06-4b0f302c402a","Table",l_iTablePk)
+                                        DataDictionaryFixAndTest(par_iApplicationPk)
                                         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
                                         l_cFrom := "Redirect"
                                     else
@@ -3891,7 +4124,7 @@ do case
 case l_cFrom == "Redirect"
 case !empty(l_cErrorMessage)
     l_hValues["TemplateTablePk"] := l_iTemplateTablePk
-    l_hValues["Fk_NameSpace"]    := l_iNameSpacePk
+    l_hValues["Fk_Namespace"]    := l_iNamespacePk
     l_hValues["Name"]            := l_cTableName
     l_hValues["AKA"]             := l_cTableAKA
     l_hValues["UseStatus"]       := l_nTableUseStatus
@@ -3909,9 +4142,9 @@ case empty(l_cFrom) .or. empty(l_iTablePk)
 otherwise
     with object l_oDB1
         :Table("95c1f7a1-500d-4451-95bd-2c4d9df9114a","Table")
-        :Column("NameSpace.Name","NameSpace_Name")
+        :Column("Namespace.Name","Namespace_Name")
         :Column("Table.Name"    ,"Table_Name")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iTablePk)
         if :Tally <> 1
             l_cFrom := ""
@@ -3919,10 +4152,10 @@ otherwise
     endwith
     switch l_cFrom
     case 'Columns'
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+l_oData:Namespace_Name+"/"+l_oData:Table_Name+"/")
         exit
     case 'Indexes'
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Table_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:Namespace_Name+"/"+l_oData:Table_Name+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
@@ -3934,7 +4167,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
+static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -3954,6 +4187,10 @@ local l_cSearchColumnName
 local l_cSearchColumnDescription
 
 local l_cTooltipEnumValues
+local l_cURL
+local l_cName
+local l_nColspan
+local l_lWarnings := .f.
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
@@ -3969,8 +4206,8 @@ endif
 with object l_oDB_Application
     :Table("526421bf-2c80-465b-b858-8b485d1a20d0","Table")
     :Column("Application.SupportColumns" , "Application_SupportColumns")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Application","","Namespace.fk_Application = Application.pk")
     l_oData_Application := :Get(par_iTablePk)
     l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
 endwith
@@ -3981,28 +4218,31 @@ with object l_oDB_ListOfColumns
     l_nNumberOfColumns := :Count()
 
     :Table("27682ad7-bafd-409f-b6ab-1057770ec119","Column")
-    :Column("Column.pk"             ,"pk")
-    :Column("Column.Name"           ,"Column_Name")
-    :Column("Column.AKA"            ,"Column_AKA")
-    :Column("Column.UseStatus"      ,"Column_UseStatus")
-    :Column("Column.DocStatus"      ,"Column_DocStatus")
-    :Column("Column.Description"    ,"Column_Description")
-    :Column("Column.Order"          ,"Column_Order")
-    :Column("Column.Type"           ,"Column_Type")
-    :Column("Column.Array"          ,"Column_Array")
-    :Column("Column.Length"         ,"Column_Length")
-    :Column("Column.Scale"          ,"Column_Scale")
-    :Column("Column.Nullable"       ,"Column_Nullable")
-    :Column("Column.Required"       ,"Column_Required")
-    :Column("Column.Default"        ,"Column_Default")
-    :Column("Column.Unicode"        ,"Column_Unicode")
-    :Column("Column.Primary"        ,"Column_Primary")
-    :Column("Column.UsedBy"         ,"Column_UsedBy")
-    :Column("Column.fk_TableForeign","Column_fk_TableForeign")
-    :Column("Column.ForeignKeyUse"  ,"Column_ForeignKeyUse")
-    :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
+    :Column("Column.pk"                 ,"pk")
+    :Column("Column.Name"               ,"Column_Name")
+    :Column("Column.AKA"                ,"Column_AKA")
+    :Column("Column.UsedAs"             ,"Column_UsedAs")
+    :Column("Column.UsedBy"             ,"Column_UsedBy")
+    :Column("Column.UseStatus"          ,"Column_UseStatus")
+    :Column("Column.DocStatus"          ,"Column_DocStatus")
+    :Column("Column.Description"        ,"Column_Description")
+    :Column("Column.Order"              ,"Column_Order")
+    :Column("Column.Type"               ,"Column_Type")
+    :Column("Column.Array"              ,"Column_Array")
+    :Column("Column.Length"             ,"Column_Length")
+    :Column("Column.Scale"              ,"Column_Scale")
+    :Column("Column.Nullable"           ,"Column_Nullable")
+    :Column("Column.DefaultType"        ,"Column_DefaultType")
+    :Column("Column.DefaultCustom"      ,"Column_DefaultCustom")
+    :Column("Column.Unicode"            ,"Column_Unicode")
+    :Column("Column.fk_TableForeign"    ,"Column_fk_TableForeign")
+    :Column("Column.ForeignKeyUse"      ,"Column_ForeignKeyUse")
+    :Column("Column.ForeignKeyOptional" ,"Column_ForeignKeyOptional")
+    :Column("Column.OnDelete"           ,"Column_OnDelete")
+    :Column("Column.fk_Enumeration"     ,"Column_fk_Enumeration")
+    :Column("Column.TestWarning"        ,"Column_TestWarning")
 
-    :Column("NameSpace.Name"                ,"NameSpace_Name")
+    :Column("Namespace.Name"                ,"Namespace_Name")
     :Column("Table.Name"                    ,"Table_Name")
     :Column("Table.AKA"                     ,"Table_AKA")
     :Column("Enumeration.Pk"                ,"Enumeration_Pk")
@@ -4012,7 +4252,7 @@ with object l_oDB_ListOfColumns
     :Column("Enumeration.ImplementLength"   ,"Enumeration_ImplementLength")
     
     :Join("left","Table"      ,"","Column.fk_TableForeign = Table.pk")
-    :Join("left","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Join("left","Namespace"  ,"","Table.fk_Namespace = Namespace.pk")
     :Join("left","Enumeration","","Column.fk_Enumeration  = Enumeration.pk")
     :Where("Column.fk_Table = ^",par_iTablePk)
 
@@ -4032,6 +4272,14 @@ with object l_oDB_ListOfColumns
 endwith
 
 if l_nNumberOfColumns > 0
+
+    select ListOfColumns
+    scan all while !l_lWarnings
+        if !empty(nvl(ListOfColumns->Column_TestWarning,""))
+            l_lWarnings := .t.
+        endif
+    endscan
+
     with object l_oDB_ListOfEnumValues
         :Table("3784d627-8099-4966-b66e-d177304a3309","Column")
         :Column("Column.pk"                     ,"Column_pk")
@@ -4132,15 +4380,15 @@ l_cHtml += [</style>]
 if l_nNumberOfColumns <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Column</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Indexes</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -4149,16 +4397,16 @@ else
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Column</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Indexes</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Indexes</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -4206,30 +4454,43 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
+            l_nColspan := 10
+            if l_nNumberOfCustomFieldValues > 0
+                l_nColspan++
+            endif
+            if l_lWarnings
+                l_nColspan++
+            endif
+
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">]
+                l_cHtml += [<th class="text-center text-white" colspan="]+trans(l_nColspan)+[">]
                     if l_nNumberOfColumns == l_nNumberOfColumnsInSearch
-                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
+                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                     else
-                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumnsInSearch)+[ out of ]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
+                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumnsInSearch)+[ out of ]+Trans(l_nNumberOfColumns)+[) for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                     endif
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white"></th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Required</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To<br>And Use</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Used By</th>]
+                l_cHtml += [<th class="text-white"></th>]
+                l_cHtml += [<th class="text-white">Name</th>]
+                l_cHtml += [<th class="text-white">Type</th>]
+                l_cHtml += [<th class="text-white">Nullable</th>]
+                l_cHtml += [<th class="text-white">Default</th>]
+                l_cHtml += [<th class="text-white">Foreign Key<br>To/Use/Optional</th>]
+                l_cHtml += [<th class="text-white">On Delete</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                // l_cHtml += [<th class="text-white text-center">Used By</th>]
                 if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                    l_cHtml += [<th class="text-white text-center">Other</th>]
+                endif
+
+                if l_lWarnings
+                    // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
+                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                 endif
             l_cHtml += [</tr>]
 
@@ -4239,19 +4500,35 @@ else
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                         do case
-                        case ListOfColumns->Column_Primary
+                        case ListOfColumns->Column_UsedAs = 2
                             l_cHtml += [<i class="bi bi-key"></i>]
-                        case " "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" "
+                        case ListOfColumns->Column_UsedAs = 3   // !hb_IsNIL(ListOfColumns->Table_Name)
+                            // l_cHtml += [<i class="bi-arrow-left"></i>]
+                            if ListOfColumns->Column_ForeignKeyOptional
+                                l_cHtml += [<i class="bi-arrow-bar-right"></i>]
+                            else
+                                l_cHtml += [<i class="bi-arrow-right"></i>]
+                            endi
+                        case (ListOfColumns->Column_UsedAs = 4) .or. (" "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
                             l_cHtml += [<i class="bi bi-tools"></i>]
-                        case !hb_IsNIL(ListOfColumns->Table_Name)
-                            l_cHtml += [<i class="bi-arrow-left"></i>]
                         endcase
                     l_cHtml += [</td>]
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+ListOfColumns->Column_Name+[/">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</a>]
+                        l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+[/]+ListOfColumns->Column_Name
+                        l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
+                        if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
+                            l_cURL  += [:]+trans(ListOfColumns->Column_UsedBy)
+                            l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                        endif
+                        l_cHtml += [<a href="]+l_cURL+[/">]+l_cName+[</a>]
                     l_cHtml += [</td>]
+
+                    // // Used By
+                    // l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                    //     l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                    // l_cHtml += [</td>]
 
                     // Type
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -4291,7 +4568,7 @@ else
                                                         ListOfColumns->Column_Unicode,;
                                                         l_cSitePath,;
                                                         par_cURLApplicationLinkCode,;
-                                                        par_cURLNameSpaceName,;
+                                                        par_cURLNamespaceName,;
                                                         l_cTooltipEnumValues)
                         if ListOfColumns->Column_Array
                             l_cHtml += " [Array]"
@@ -4303,26 +4580,36 @@ else
                         l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
-                    // Required
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
-                    l_cHtml += [</td>]
-
                     // Default
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += nvl(ListOfColumns->Column_Default,"")
+                        l_cHtml += GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
                     l_cHtml += [</td>]
 
-                    // Foreign Key To and Use
+                    // Foreign Key To/Use/Optional
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         if !hb_IsNIL(ListOfColumns->Table_Name)
-                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->NameSpace_Name+"/"+ListOfColumns->Table_Name+[/">]
-                            l_cHtml += ListOfColumns->NameSpace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
+                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+ListOfColumns->Namespace_Name+"/"+ListOfColumns->Table_Name+[/">]
+                            l_cHtml += ListOfColumns->Namespace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
                             l_cHtml += [</a>]
                             if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
                                 l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
                             endif
+                            if ListOfColumns->Column_ForeignKeyOptional
+                                l_cHtml += [<br>Optional]
+                            endif
                         endif
+                    l_cHtml += [</td>]
+
+                    // // Foreign Key Required
+                    // l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                    //     if ListOfColumns->Column_UsedAs == COLUMN_USEDAS_FOREIGN_KEY
+                    //         l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
+                    //     endif
+                    // l_cHtml += [</td>]
+
+                    // OnDelete
+                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
                     l_cHtml += [</td>]
 
                     // Description
@@ -4340,14 +4627,15 @@ else
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
                     l_cHtml += [</td>]
 
-                    // Used By
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
-                    l_cHtml += [</td>]
-
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
+                        l_cHtml += [</td>]
+                    endif
+
+                    if l_lWarnings
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
                         l_cHtml += [</td>]
                     endif
 
@@ -4365,7 +4653,7 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnListFormOnSubmit(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
+static function ColumnListFormOnSubmit(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -4387,27 +4675,28 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cColumnName)
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cColumnDescription)
 
-    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
+    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,"")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription","")
 
-    l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/"
+    l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/"
     oFcgi:Redirect(l_cURL)
 
 otherwise
-    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
+    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnOrderFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function ColumnOrderFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName)
 local l_cHtml := []
 local l_oDB_ListOfColumns
 local l_cSitePath := oFcgi:p_cSitePath
+local l_cName
 
 oFcgi:TraceAdd("ColumnOrderFormBuild")
 
@@ -4423,6 +4712,8 @@ with object l_oDB_ListOfColumns
     :Column("Column.pk"         ,"pk")
     :Column("Column.Name"       ,"Column_Name")
     :Column("Column.AKA"        ,"Column_AKA")
+    :Column("Column.UsedAs"     ,"Column_UsedAs")
+    :Column("Column.UsedBy"     ,"Column_UsedBy")
     :Column("Column.Order"      ,"Column_Order")
     :Where("Column.fk_Table = ^",par_iTablePk)
     :OrderBy("Column_order")
@@ -4460,11 +4751,11 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Order Columns for Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">Order Columns for Table "]+par_cURLNamespaceName+[.]+par_cURLTableName+["</span>]
             if oFcgi:p_nAccessLevelDD >= 3
                 l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Cancel</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Cancel</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -4475,7 +4766,11 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<ul id="sortable">]
         scan all
-            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></li>]
+            l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
+            if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
+                l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+            endif
+            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+l_cName+[</span></li>]
         endscan
         l_cHtml += [</ul>]
 
@@ -4488,7 +4783,7 @@ l_cHtml += [</form>]
 
 return l_cHtml
 //=================================================================================================================
-static function ColumnOrderFormOnSubmit(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function ColumnOrderFormOnSubmit(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -4516,7 +4811,7 @@ case l_cActionOnSubmit == "Save"
             :Column("Column.pk","pk")
             :Column("Column.Order","order")
             :Where([Column.fk_Table = ^],l_iTablePk)
-            :SQL("ListOfColumn")
+            :SQL("ListOfColumns")
     
             with object :p_oCursor
                 :Index("pk","pk")
@@ -4527,7 +4822,7 @@ case l_cActionOnSubmit == "Save"
         endwith
 
         for l_Counter := 1 to len(l_aOrderedPks)
-            if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfColumn","pk") .and. ListOfColumn->order <> l_Counter
+            if VFP_Seek(val(l_aOrderedPks[l_Counter]),"ListOfColumns","pk") .and. ListOfColumns->order <> l_Counter
                 with object l_oDB_ListOfColumns
                     :Table("ae13b924-6f6c-4241-bbaf-f840225b7057","Column")
                     :Field("Column.order",l_Counter)
@@ -4537,44 +4832,47 @@ case l_cActionOnSubmit == "Save"
         endfor
     endif
 
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cErrorText,par_iPk,par_hValues)
+static function ColumnEditFormBuild(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
-local l_cName            := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_cTags            := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
-local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
-local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
-local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
-local l_lArray           := hb_HGetDef(par_hValues,"Array",.f.)
-local l_cLength          := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
-local l_cScale           := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
-local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
-local l_nRequired        := max(1,hb_HGetDef(par_hValues,"Required",1))
-local l_cDefault         := nvl(hb_HGetDef(par_hValues,"Default",""),"")
-local l_lUnicode         := hb_HGetDef(par_hValues,"Unicode",.t.)
-local l_lPrimary         := hb_HGetDef(par_hValues,"Primary",.f.)
-local l_nUsedBy          := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
-local l_iFk_TableForeign := nvl(hb_HGetDef(par_hValues,"Fk_TableForeign",0),0)
-local l_cForeignKeyUse   := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
-local l_iFk_Enumeration  := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
-local l_cLastNativeType  := hb_HGetDef(par_hValues,"LastNativeType","")
-local l_lShowPrimary     := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
+local l_cErrorText          := hb_DefaultValue(par_cErrorText,"")
+local l_cName               := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA                := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
+local l_nUsedAs             := hb_HGetDef(par_hValues,"UsedAs",1)
+local l_nUsedBy             := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
+local l_cTags               := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
+local l_nUseStatus          := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
+local l_nDocStatus          := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
+local l_cDescription        := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cType               := Alltrim(hb_HGetDef(par_hValues,"Type",""))
+local l_lArray              := hb_HGetDef(par_hValues,"Array",.f.)
+local l_cLength             := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
+local l_cScale              := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
+local l_lNullable           := hb_HGetDef(par_hValues,"Nullable",.t.)
+local l_lForeignKeyOptional := hb_HGetDef(par_hValues,"ForeignKeyOptional",.f.)
+local l_nOnDelete           := max(1,hb_HGetDef(par_hValues,"OnDelete",2))
+local l_nDefaultType        := nvl(hb_HGetDef(par_hValues,"DefaultType",0),0)
+local l_cDefaultCustom      := nvl(hb_HGetDef(par_hValues,"DefaultCustom",""),"")
+local l_lUnicode            := hb_HGetDef(par_hValues,"Unicode",.t.)
+local l_iFk_TableForeign    := nvl(hb_HGetDef(par_hValues,"Fk_TableForeign",0),0)
+local l_cForeignKeyUse      := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
+local l_iFk_Enumeration     := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
+local l_cLastNativeType     := hb_HGetDef(par_hValues,"LastNativeType","")
+local l_lShowPrimary        := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
 
 local l_iTypeCount
 local l_aSQLResult   := {}
 
-local l_oDBEnumeration  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDBTable        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Application := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Enumeration := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_Table       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTags  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:p_cSitePath
@@ -4588,7 +4886,32 @@ local l_hEntityNames := {=>}
 local l_cEntityInfo
 local l_cObjectName
 
+local l_nOptionNumber
+local l_cCallOnChangeSettings := [OnChangeSettings($("#ComboUsedAs").val(),$("#ComboType").val(),$("#ComboDefaultType").val())]
+
+local l_oData_Application
+local l_lUseApplicationSettingsForKeys
+local l_cKeyType
+
 oFcgi:TraceAdd("ColumnEditFormBuild")
+
+with object l_oDB_Application
+    :Table("8c4bfb41-a22c-4534-8a6c-5d96323c8e7e","Application")
+    :Column("Application.KeyConfig" ,"Application_KeyConfig")
+    l_oData_Application := :Get(par_iApplicationPk)
+endwith
+
+do case
+case l_oData_Application:Application_KeyConfig == 2
+    l_lUseApplicationSettingsForKeys := .t.
+    l_cKeyType := "I"
+case l_oData_Application:Application_KeyConfig == 3
+    l_lUseApplicationSettingsForKeys := .t.
+    l_cKeyType := "IB"
+otherwise
+    l_lUseApplicationSettingsForKeys := .f.
+    l_cKeyType := "?"
+endcase
 
 with object l_oDB_ListOfTags
     :Table("21c76ae7-77cb-4fc3-8438-b6226711a6f9","Tag")
@@ -4635,7 +4958,7 @@ with object l_oDB_ListOfTags
     endif
 endwith
 
-with object l_oDBEnumeration
+with object l_oDB_Enumeration
     :Table("6a8f483d-5d48-40ed-a293-e54add5f1790","Enumeration")
     :Column("Enumeration.pk"              ,"Enumeration_pk")
     :Column("Enumeration.Name"            ,"Enumeration_Name")
@@ -4643,43 +4966,178 @@ with object l_oDBEnumeration
     :Column("Enumeration.ImplementLength" ,"Enumeration_ImplementLength")
     :Column("upper(Enumeration.Name)" , "tag1")
     :OrderBy("tag1")
-    :Where("Enumeration.fk_NameSpace = ^" , par_iNameSpacePk)
+    :Where("Enumeration.fk_Namespace = ^" , par_iNamespacePk)
     :SQL("ListOfEnumeration")
 endwith
 
-with object l_oDBTable
+with object l_oDB_Table
     :Table("3889c7c9-38c5-4ba5-a023-839bde5e07fd","Table")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Column("Table.pk"              , "Table_pk")
-    :Column("NameSpace.Name"        , "NameSpace_Name")
+    :Column("Namespace.Name"        , "Namespace_Name")
     :Column("Table.Name"            , "Table_Name")
-    :Column("upper(NameSpace.Name)" , "tag1")
+    :Column("upper(Namespace.Name)" , "tag1")
     :Column("upper(Table.Name)"     , "tag2")
     :OrderBy("tag1")
     :OrderBy("tag2")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
     :SQL("ListOfTable")
 endwith
 
 l_cHtml += [<script language="javascript">]
-l_cHtml += [function OnChangeType(par_Value) {]
+//----------------------------------------------------------------------------
+l_cHtml += [function OnChangeSettings(par_cUsedAs,par_cType,par_cDefaultType) {]
 
-l_cHtml += [switch(par_Value) {]
-for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
-    l_cHtml += [  case ']+oFcgi:p_ColumnTypes[l_iTypeCount,1]+[':]
-    l_cHtml += [  $('#SpanLength').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,3],[show],[hide])+[();]
-    l_cHtml +=   [$('#SpanScale').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,4],[show],[hide])+[();]
-    l_cHtml +=   [$('#SpanEnumeration').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,5],[show],[hide])+[();]
-    l_cHtml +=   [$('#TRUnicode').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,6],[show],[hide])+[();]
+    l_cHtml += [switch(par_cUsedAs) {]
+
+    l_cHtml += [  case '2': ]  // PrimaryKey
+    l_cHtml +=   [$('#EntryNullable').hide();]
+    l_cHtml +=   [$('#CheckNullable').prop('checked', false);]
+
+    l_cHtml +=   [$('#EntryArray').hide();]
+    l_cHtml +=   [$('#CheckArray').prop('checked', false);]
+
+    l_cHtml +=   [$('#EntryFk_TableForeign').hide();]
+    l_cHtml +=   [$('#ComboFk_TableForeign').val('0');]
+
+    l_cHtml +=   [$('#EntryForeignKeyUse').hide();]
+    l_cHtml +=   [$('#TextForeignKeyUse').val('');]
+
+    l_cHtml +=   [$('#EntryOnDelete').hide();]
+    // l_cHtml +=   [$('#ComboOnDelete').val('1');]
+
+    if l_lUseApplicationSettingsForKeys
+        l_cHtml +=   [$('#EntryType').hide();]
+        l_cHtml +=   [par_cType = ']+l_cKeyType+[';]
+        l_cHtml +=   [$('#EntryType').val(']+l_cKeyType+[');]
+
+        l_cHtml +=   [$('#EntryDefaultType').hide();]
+        l_cHtml +=   [par_cDefaultType = '15';]
+        l_cHtml +=   [$('#EntryDefaultType').val('15');]
+    else
+        l_cHtml +=   [$('#EntryType').show();]
+        l_cHtml +=   [$('#EntryDefaultType').show();]
+    endif
     l_cHtml += [    break;]
-endfor
-l_cHtml += [  default:]
-l_cHtml += [  $('#SpanLength').hide();$('#SpanScale').hide();$('#SpanEnumeration').hide();]
-l_cHtml += [};]
+
+    l_cHtml += [  case '3': ]  // ForeignKey
+    if l_lUseApplicationSettingsForKeys
+        l_cHtml +=   [$('#EntryNullable').hide();]
+        l_cHtml +=   [$('#CheckNullable').prop('checked', true);]
+
+        l_cHtml +=   [$('#EntryType').hide();]
+        l_cHtml +=   [par_cType = ']+l_cKeyType+[';]
+        l_cHtml +=   [$('#EntryType').val(']+l_cKeyType+[');]
+
+        l_cHtml +=   [$('#EntryDefaultType').hide();]
+        l_cHtml +=   [par_cDefaultType = '0';]
+        l_cHtml +=   [$('#EntryDefaultType').val('0');]
+    else
+        l_cHtml +=   [$('#EntryNullable').show();]
+        l_cHtml +=   [$('#EntryType').show();]
+        l_cHtml +=   [$('#EntryDefaultType').show();]
+    endif
+    
+    l_cHtml +=   [$('#EntryArray').hide();]
+    l_cHtml +=   [$('#CheckArray').prop('checked', false);]
+
+    l_cHtml +=   [$('#EntryFk_TableForeign').show();]
+    l_cHtml +=   [$('#EntryForeignKeyUse').show();]
+    l_cHtml +=   [$('#EntryOnDelete').show();]
+    l_cHtml += [    break;]
+
+    l_cHtml += [  default:]  //Regular or Support
+    l_cHtml +=   [$('#EntryNullable').show();]
+    l_cHtml +=   [$('#EntryType').show();]
+    l_cHtml +=   [$('#EntryArray').show();]
+
+    l_cHtml +=   [$('#EntryFk_TableForeign').hide();]
+    l_cHtml +=   [$('#ComboFk_TableForeign').val('0');]
+
+    l_cHtml +=   [$('#EntryForeignKeyUse').hide();]
+    l_cHtml +=   [$('#TextForeignKeyUse').val('');]
+
+    l_cHtml +=   [$('#EntryOnDelete').hide();]
+    // l_cHtml +=   [$('#ComboOnDelete').val('1');]
+
+    l_cHtml +=   [$('#EntryDefaultType').show();]
+    l_cHtml += [};]
+
+    l_cHtml += [switch(par_cType) {]
+    for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
+        l_cHtml += [  case ']+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+[':]
+        l_cHtml += [  $('#SpanLength').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_LENGTH],[show],[hide])+[();]
+        l_cHtml +=   [$('#SpanScale').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_SCALE],[show],[hide])+[();]
+        l_cHtml +=   [$('#SpanEnumeration').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_ENUMS],[show],[hide])+[();]
+        l_cHtml +=   [$('#EntryUnicode').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_UNICODE],[show],[hide])+[();]
+        l_cHtml += [    break;]
+    endfor
+    l_cHtml += [  default:]
+    l_cHtml += [  $('#SpanLength').hide();$('#SpanScale').hide();$('#SpanEnumeration').hide();]
+    l_cHtml += [};]
+
+    l_cHtml += [switch(par_cType) {]
+    l_cHtml += [  case 'L':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="13">False</option>')]
+        l_cHtml += [.append('<option value="14">True</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'D':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="10">Today</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'TOZ':]
+    l_cHtml += [  case 'TO':]
+    l_cHtml += [  case 'DTZ':]
+    l_cHtml += [  case 'DT':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="11">Now</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'I':]
+    l_cHtml += [  case 'IB':]
+    l_cHtml += [  case 'IS':]
+    l_cHtml += [  case 'N':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="15">Auto Increment</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'UUI':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="12">Random uuid</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  default:]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [;]
+    l_cHtml += [};]
+
+    l_cHtml += [$('#ComboDefaultType').val(par_cDefaultType);]  // Since we called .remove().end() we need to reset the value
+
+    l_cHtml += [switch(par_cDefaultType) {]
+    l_cHtml += [  case '1':]  // Custom Default
+    l_cHtml +=   [ $('#EntryDefaultCustom').show();]
+    l_cHtml +=   [ break;]
+
+    l_cHtml += [  default:]
+    l_cHtml +=   [ $('#EntryDefaultCustom').hide();]
+    l_cHtml +=   [ break;]
+    l_cHtml += [};]
 
 l_cHtml += [};]
+//----------------------------------------------------------------------------
 l_cHtml += [</script>] 
-oFcgi:p_cjQueryScript += [OnChangeType($("#ComboType").val());]
+
+oFcgi:p_cjQueryScript += l_cCallOnChangeSettings+[;]
 
 SetSelect2Support()
 
@@ -4696,7 +5154,7 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Column in Table "]+par_cURLNamespaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         endif
@@ -4709,9 +5167,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-
 l_cHtml += [<div class="m-3"></div>]
-
 
 l_cHtml += [<div class="m-3">]
 
@@ -4727,6 +5183,34 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Used As</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select name="ComboUsedAs" id="ComboUsedAs" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedAs==1,[ selected],[])+[></option>]
+            if l_lShowPrimary
+                l_cHtml += [<option value="2"]+iif(l_nUsedAs==2,[ selected],[])+[>Primary Key</option>]
+            endif
+            l_cHtml += [<option value="3"]+iif(l_nUsedAs==3,[ selected],[])+[>Foreign Key</option>]
+            l_cHtml += [<option value="4"]+iif(l_nUsedAs==4,[ selected],[])+[>Support</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    // if l_lShowPrimary
+    // endif
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
+            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
     if l_nNumberOfTags > 0
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Tags</td>]
@@ -4734,14 +5218,14 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</tr>]
     endif
 
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryType">]
         l_cHtml += [<td class="pe-2 pb-3">Type</td>]
         l_cHtml += [<td class="pb-3">]
 
             l_cHtml += [<span class="pe-5">]
-                l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
                 for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
-                    l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,1],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,2]+[</option>]
+                    l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_NAME]+[</option>]
                 endfor
                 l_cHtml += [</select>]
             l_cHtml += [</span>]
@@ -4772,16 +5256,14 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
-
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryNullable">]
         l_cHtml += [<td class="pe-2 pb-3">Nullable</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNullable" id="CheckNullable" value="1"]+iif(l_lNullable," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
-
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryArray">]
         l_cHtml += [<td class="pe-2 pb-3">Array</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckArray" id="CheckArray" value="1"]+iif(l_lArray," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
@@ -4789,60 +5271,31 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
-
-    l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Required</td>]
+    l_cHtml += [<tr class="pb-5" id="EntryDefaultType">]
+        l_cHtml += [<td class="pe-2 pb-3">Default Options</td>]
         l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRequired" id="ComboRequired"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_nRequired==1,[ selected],[])+[>Unknown</option>]
-            l_cHtml += [<option value="2"]+iif(l_nRequired==2,[ selected],[])+[>Yes</option>]
-            l_cHtml += [<option value="3"]+iif(l_nRequired==3,[ selected],[])+[>No</option>]
+            l_cHtml += [<select name="ComboDefaultType" id="ComboDefaultType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="0"]+iif(l_nDefaultType==0,[ selected],[])+[></option>]
+            l_cHtml += [<option value="1"]+iif(l_nDefaultType==1,[ selected],[])+[></option>]
+            for l_nOptionNumber := 10 to 30   //Originally have to list all possible values, so that the initial OnChangeDefaultType() will position on the correct option.
+                l_cHtml += [<option value="]+trans(l_nOptionNumber)+["]+iif(l_nDefaultType==l_nOptionNumber,[ selected],[])+[></option>]
+            endfor
+            
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
-
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryDefaultCustom">]
         l_cHtml += [<td class="pe-2 pb-3">Default</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDefault" id="TextDefault" value="]+FcgiPrepFieldForValue(l_cDefault)+[" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDefaultCustom" id="TextDefaultCustom" value="]+FcgiPrepFieldForValue(l_cDefaultCustom)+[" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5" id="TRUnicode">]
+    l_cHtml += [<tr class="pb-5" id="EntryUnicode">]
         l_cHtml += [<td class="pe-2 pb-3">Unicode</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckUnicode" id="CheckUnicode" value="1"]+iif(l_lUnicode," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
-
-    if l_lShowPrimary
-        l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Primary</td>]
-            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckPrimary" id="CheckPrimary" value="1"]+iif(l_lPrimary," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [</div></td>]
-        l_cHtml += [</tr>]
-    endif
-
-
-
-
-    // l_cHtml += [<tr class="pb-5">]
-    //     l_cHtml += [<td class="pe-2 pb-3">Foreign Key To</td>]
-    //     l_cHtml += [<td class="pb-3">]
-    //         //fk_TableForeign
-    //         l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboFk_TableForeign" id="ComboFk_TableForeign"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-    //             l_cHtml += [<option value="0"]+iif(l_iFk_TableForeign==0,[ selected],[])+[></option>]
-    //             select ListOfTable
-    //             scan all
-    //                 l_cHtml += [<option value="]+Trans(ListOfTable->Table_pk)+["]+iif(ListOfTable->Table_pk == l_iFk_TableForeign,[ selected],[])+[>]+Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)+[</option>]
-    //             endscan
-    //         l_cHtml += [</select>]
-    //     l_cHtml += [</td>]
-    // l_cHtml += [</tr>]
-
-
-
-
 
     l_json_Entities := []
     select ListOfTable
@@ -4850,57 +5303,50 @@ l_cHtml += [<div class="m-3">]
         if !empty(l_json_Entities)
             l_json_Entities += [,]
         endif
-        l_cEntityInfo := Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)
+        l_cEntityInfo := Allt(ListOfTable->Namespace_Name)+[.]+Allt(ListOfTable->Table_Name)
         l_json_Entities += "{id:"+trans(ListOfTable->Table_pk)+",text:'"+l_cEntityInfo+"'}"
         l_hEntityNames[ListOfTable->Table_pk] := l_cEntityInfo
     endscan
     l_json_Entities := "["+l_json_Entities+"]"
     oFcgi:p_cjQueryScript += [$(".SelectEntity").select2({placeholder: '',allowClear: true,data: ]+l_json_Entities+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
 
-
     l_cObjectName := "ComboFk_TableForeign"
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryFk_TableForeign">]
         l_cHtml += [<td class="pe-2 pb-3">Foreign Key To</td>]
         l_cHtml += [<td class="pb-3">]
 
-            l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity" style="width:600px">]
-                if l_iFk_TableForeign == 0
-                    oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
-                else
-                    l_cHtml += [<option value="]+Trans(l_iFk_TableForeign)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iFk_TableForeign,"")+[</option>]
-                endif
-            l_cHtml += [</select>]
-
-            //fk_TableForeign
-            // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="]+l_cObjectName+[" id="]+l_cObjectName+["]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-                // l_cHtml += [<option value="0"]+iif(l_iFk_TableForeign==0,[ selected],[])+[></option>]
-                // select ListOfTable
-                // scan all
-                //     l_cHtml += [<option value="]+Trans(ListOfTable->Table_pk)+["]+iif(ListOfTable->Table_pk == l_iFk_TableForeign,[ selected],[])+[>]+Allt(ListOfTable->NameSpace_Name)+[.]+Allt(ListOfTable->Table_Name)+[</option>]
-                // endscan
-            // l_cHtml += [</select>]
+            l_cHtml += [<table><tr>]
+                l_cHtml += [<td>]
+                    l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity" style="width:480px">]
+                        if l_iFk_TableForeign == 0
+                            oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
+                        else
+                            l_cHtml += [<option value="]+Trans(l_iFk_TableForeign)+[" selected="selected">]+hb_HGetDef(l_hEntityNames,l_iFk_TableForeign,"")+[</option>]
+                        endif
+                    l_cHtml += [</select>]
+                l_cHtml += [</td>]
+                l_cHtml += [<td class="ps-4 pe-2">Optional</td>] // class="pe-2 pb-3"
+                l_cHtml += [<td><div class="form-check form-switch">]  // class="pb-3"
+                    l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckForeignKeyOptional" id="CheckForeignKeyOptional" value="1"]+iif(l_lForeignKeyOptional," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                l_cHtml += [</div></td>]
+            l_cHtml += [</tr></table>]
 
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
-
-
-
-
-
-
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryForeignKeyUse">]
         l_cHtml += [<td class="pe-2 pb-3">Foreign Key Use</td>]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextForeignKeyUse" id="TextForeignKeyUse" value="]+FcgiPrepFieldForValue(l_cForeignKeyUse)+[" maxlength="120" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
+    l_cHtml += [<tr class="pb-5" id="EntryOnDelete">]
+        l_cHtml += [<td class="pe-2 pb-3">On Delete</td>]
         l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
-            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
-            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboOnDelete" id="ComboOnDelete"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nOnDelete==1,[ selected],[])+[></option>]
+            l_cHtml += [<option value="2"]+iif(l_nOnDelete==2,[ selected],[])+[>Protect (Restrict)</option>]
+            l_cHtml += [<option value="3"]+iif(l_nOnDelete==3,[ selected],[])+[>Cascade</option>]
+            l_cHtml += [<option value="4"]+iif(l_nOnDelete==4,[ selected],[])+[>Break Link</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -4940,7 +5386,6 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [</table>]
     
-
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
@@ -4952,14 +5397,17 @@ l_cHtml += [</form>]
 l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
+
 //=================================================================================================================
-static function ColumnEditFormOnSubmit(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function ColumnEditFormOnSubmit(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iColumnPk
 local l_cColumnName
 local l_cColumnAKA
+local l_nColumnUsedAs
+local l_nColumnUsedBy
 local l_nColumnUseStatus
 local l_nColumnDocStatus
 local l_cColumnDescription
@@ -4971,11 +5419,11 @@ local l_cColumnScale
 local l_nColumnScale
 local l_cColumnLastNativeType
 local l_lColumnNullable
-local l_nColumnRequired
-local l_cColumnDefault
+local l_lColumnForeignKeyOptional
+local l_nColumnOnDelete
+local l_nColumnDefaultType
+local l_cColumnDefaultCustom
 local l_lColumnUnicode
-local l_lColumnPrimary
-local l_nColumnUsedBy
 local l_iColumnFk_TableForeign
 local l_cColumnForeignKeyUse
 local l_iColumnFk_Enumeration
@@ -4986,7 +5434,7 @@ local l_iTypePos   //The position in the oFcgi:p_ColumnTypes array
 
 local l_hValues := {=>}
 
-local l_aSQLResult   := {}
+local l_aSQLResult := {}
 
 local l_cErrorMessage := ""
 local l_oDB1
@@ -5004,57 +5452,57 @@ oFcgi:TraceAdd("ColumnEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iColumnPk              := Val(oFcgi:GetInputValue("TableKey"))
+l_iColumnPk                 := Val(oFcgi:GetInputValue("TableKey"))
 
-l_lShowPrimary           := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
+l_lShowPrimary              := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
-l_cColumnName            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+l_cColumnName               := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
-l_cColumnAKA             := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+l_cColumnAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cColumnAKA)
     l_cColumnAKA := NIL
 endif
 
-l_nColumnUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nColumnUsedAs             := Val(oFcgi:GetInputValue("ComboUsedAs"))
 
-l_cColumnType            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
-l_lColumnArray           := (oFcgi:GetInputValue("CheckArray") == "1")
+l_nColumnUsedBy             := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
-l_cColumnLength          := SanitizeInput(oFcgi:GetInputValue("TextLength"))
-l_nColumnLength          := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
+l_nColumnUseStatus          := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
-l_cColumnScale           := SanitizeInput(oFcgi:GetInputValue("TextScale"))
-l_nColumnScale           := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
+l_cColumnType               := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
+l_lColumnArray              := (oFcgi:GetInputValue("CheckArray") == "1")
 
-l_cColumnLastNativeType  := SanitizeInput(oFcgi:GetInputValue("TextLastNativeType"))
+l_cColumnLength             := SanitizeInput(oFcgi:GetInputValue("TextLength"))
+l_nColumnLength             := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
 
-l_lColumnNullable        := (oFcgi:GetInputValue("CheckNullable") == "1")
+l_cColumnScale              := SanitizeInput(oFcgi:GetInputValue("TextScale"))
+l_nColumnScale              := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
 
-l_nColumnRequired        := Val(oFcgi:GetInputValue("ComboRequired"))
+l_cColumnLastNativeType     := SanitizeInput(oFcgi:GetInputValue("TextLastNativeType"))
 
-l_cColumnDefault             := SanitizeInput(oFcgi:GetInputValue("TextDefault"))
-if empty(l_cColumnDefault)
-    l_cColumnDefault := NIL
+l_lColumnNullable           := (oFcgi:GetInputValue("CheckNullable") == "1")
+
+l_lColumnForeignKeyOptional := (oFcgi:GetInputValue("CheckForeignKeyOptional") == "1")
+
+l_nColumnOnDelete           := Val(oFcgi:GetInputValue("ComboOnDelete"))
+
+l_nColumnDefaultType        := Val(oFcgi:GetInputValue("ComboDefaultType"))
+
+l_cColumnDefaultCustom      := SanitizeInput(oFcgi:GetInputValue("TextDefaultCustom"))
+if empty(l_cColumnDefaultCustom)
+    l_cColumnDefaultCustom := NIL
 endif
 
-l_lColumnUnicode         := (oFcgi:GetInputValue("CheckUnicode") == "1")
+l_lColumnUnicode            := (oFcgi:GetInputValue("CheckUnicode") == "1")
 
-if l_lShowPrimary
-    l_lColumnPrimary := (oFcgi:GetInputValue("CheckPrimary") == "1")
-else
-    l_lColumnPrimary := .f.
-endif
+l_iColumnFk_TableForeign    := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
 
-l_nColumnUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
+l_cColumnForeignKeyUse      := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
 
-l_iColumnFk_TableForeign := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
+l_iColumnFk_Enumeration     := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
 
-l_cColumnForeignKeyUse  := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
-
-l_iColumnFk_Enumeration  := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
-
-l_nColumnDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cColumnDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_nColumnDocStatus          := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cColumnDescription        := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -5064,35 +5512,73 @@ case l_cActionOnSubmit == "Save"
             l_cErrorMessage := "Missing Name"
         else
             with object l_oDB1
-                :Table("810f0a78-58e8-46d2-87a2-5e29b484d274","Column")
-                :Column("Column.pk","pk")
-                :Where([Column.fk_Table = ^],par_iTablePk)
-                :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cColumnName," ","")))
-                if l_iColumnPk > 0
-                    :Where([Column.pk != ^],l_iColumnPk)
+                if l_nColumnUsedBy > USEDBY_ALLSERVERS
+                    :Table("1af13732-e24c-462f-9bd1-c7d282c176fe","Column")
+                    :Column("Column.pk","pk")
+                    :Column("Column.pk","UsedBy")
+                    :Where([Column.fk_Table = ^],par_iTablePk)
+                    :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cColumnName," ","")))
+                    :Where([Column.UsedBy = ^],l_nColumnUsedBy)
+                    if l_iColumnPk > 0
+                        :Where([Column.pk != ^],l_iColumnPk)
+                    endif
+                    :SQL()
+                    if :Tally <> 0
+                        l_cErrorMessage := "Duplicate Name/Used By"
+                    endif
+
+                    if empty(l_cErrorMessage)
+                        :Table("57cf9d71-0354-4a9b-9071-f1a95144f87a","Column")
+                        :Column("Column.pk","pk")
+                        :Column("Column.pk","UsedBy")
+                        :Where([Column.fk_Table = ^],par_iTablePk)
+                        :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cColumnName," ","")))
+                        :Where([Column.UsedBy = ^],USEDBY_ALLSERVERS)
+                        if l_iColumnPk > 0
+                            :Where([Column.pk != ^],l_iColumnPk)
+                        endif
+                        :SQL()
+                        if :Tally <> 0
+                            l_cErrorMessage := [Duplicate Name and "Used By" marked as "All Servers"]
+                        endif
+                    endif
+                else
+                    //Only 1 record should exists for the same name
+                    :Table("810f0a78-58e8-46d2-87a2-5e29b484d274","Column")
+                    :Column("Column.pk","pk")
+                    :Column("Column.pk","UsedBy")
+                    :Where([Column.fk_Table = ^],par_iTablePk)
+                    :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cColumnName," ","")))
+                    if l_iColumnPk > 0
+                        :Where([Column.pk != ^],l_iColumnPk)
+                    endif
+                    :SQL()
+                    if :Tally <> 0
+                        l_cErrorMessage := "Duplicate Name"
+                    endif
                 endif
-                :SQL()
-//SendToClipboard(:LastSQL())
             endwith
-            if l_oDB1:Tally <> 0
-                l_cErrorMessage := "Duplicate Name"
-            else
-                l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[1] == l_cColumnType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
+
+            if empty(l_cErrorMessage)
+                l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[COLUMN_TYPES_CODE] == l_cColumnType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
                 if l_iTypePos <= 0
                     l_cErrorMessage := [Failed to find "Column Type" definition.]
                 else
                     
                     do case
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_IsNIL(l_nColumnLength)   // Length should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]) .and. hb_IsNIL(l_nColumnLength)   // Length should be entered
                         l_cErrorMessage := "Length is required!"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_IsNIL(l_nColumnScale)   // Scale should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE]) .and. hb_IsNIL(l_nColumnScale)   // Scale should be entered
                         l_cErrorMessage := "Scale is required! Enter at the minimum 0"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_nColumnScale >= l_nColumnLength
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE]) .and. l_nColumnScale >= l_nColumnLength
                         l_cErrorMessage := "Scale must be smaller than Length!"
 
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,5]) .and. empty(l_iColumnFk_Enumeration)   // Enumeration should be entered
+                    case !hb_IsNIL(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE]) .and. l_nColumnScale > oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE]
+                        l_cErrorMessage := "Scale may not exceed "+trans(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE])+"!"
+
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS]) .and. empty(l_iColumnFk_Enumeration)   // Enumeration should be entered
                         l_cErrorMessage := "Select an Enumeration!"
 
                     otherwise
@@ -5103,12 +5589,12 @@ case l_cActionOnSubmit == "Save"
 
             if empty(l_cErrorMessage)
                 //Test that will not mark more than 1 field as Primary
-                if l_lColumnPrimary
+                if l_nColumnUsedAs = 2
                     with object l_oDB1
                         :Table("6f19ee39-637d-4995-b157-c4f35a6cb4e3","Column")
                         :Column("Column.pk","pk")
                         :Where([Column.fk_Table = ^],par_iTablePk)
-                        :Where("Column.Primary")
+                        :Where("Column.UsedAs = 2")
                         if l_iColumnPk > 0
                             :Where([Column.pk != ^],l_iColumnPk)
                         endif
@@ -5145,16 +5631,16 @@ case l_cActionOnSubmit == "Save"
         if oFcgi:p_nAccessLevelDD >= 5
             //Blank out any unneeded variable values
             if l_iTypePos > 0  //Should always be the case unless version issue with browser page
-                if !(oFcgi:p_ColumnTypes[l_iTypePos,3])
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH])
                     l_nColumnLength := NIL
                 endif
-                if !(oFcgi:p_ColumnTypes[l_iTypePos,4])
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE])
                     l_nColumnScale := NIL
                 endif
-                if !(oFcgi:p_ColumnTypes[l_iTypePos,5])
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS])
                     l_iColumnFk_Enumeration := 0
                 endif
-                // if !(oFcgi:p_ColumnTypes[l_iTypePos,6])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
+                // if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_UNICODE])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
                 //     l_lColumnUnicode := .f.
                 // endif
             endif
@@ -5164,22 +5650,24 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("1a6da9a6-6812-4129-979c-c8b8f848f351","Column")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("Column.Name"            , l_cColumnName)
-                :Field("Column.AKA"             , l_cColumnAKA)
-                :Field("Column.UseStatus"       , l_nColumnUseStatus)
-                :Field("Column.Type"            , l_cColumnType)
-                :Field("Column.Array"           , l_lColumnArray)
-                :Field("Column.Length"          , l_nColumnLength)
-                :Field("Column.Scale"           , l_nColumnScale)
-                :Field("Column.Nullable"        , l_lColumnNullable)
-                :Field("Column.Required"        , l_nColumnRequired)
-                :Field("Column.Default"         , l_cColumnDefault)
-                :Field("Column.Unicode"         , l_lColumnUnicode)
-                :Field("Column.Primary"         , l_lColumnPrimary)
-                :Field("Column.UsedBy"          , l_nColumnUsedBy)
-                :Field("Column.Fk_TableForeign" , l_iColumnFk_TableForeign)
-                :Field("Column.ForeignKeyUse"   , iif(empty(l_cColumnForeignKeyUse),NULL,l_cColumnForeignKeyUse))
-                :Field("Column.Fk_Enumeration"  , l_iColumnFk_Enumeration)
+                :Field("Column.Name"               , l_cColumnName)
+                :Field("Column.AKA"                , l_cColumnAKA)
+                :Field("Column.UsedAs"             , l_nColumnUsedAs)
+                :Field("Column.UsedBy"             , l_nColumnUsedBy)
+                :Field("Column.UseStatus"          , l_nColumnUseStatus)
+                :Field("Column.Type"               , l_cColumnType)
+                :Field("Column.Array"              , l_lColumnArray)
+                :Field("Column.Length"             , l_nColumnLength)
+                :Field("Column.Scale"              , l_nColumnScale)
+                :Field("Column.Nullable"           , l_lColumnNullable)
+                :Field("Column.ForeignKeyOptional" , l_lColumnForeignKeyOptional)
+                :Field("Column.OnDelete"           , l_nColumnOnDelete)
+                :Field("Column.DefaultType"        , l_nColumnDefaultType)
+                :Field("Column.DefaultCustom"      , l_cColumnDefaultCustom)
+                :Field("Column.Unicode"            , l_lColumnUnicode)
+                :Field("Column.Fk_TableForeign"    , l_iColumnFk_TableForeign)
+                :Field("Column.ForeignKeyUse"      , iif(empty(l_cColumnForeignKeyUse),NULL,l_cColumnForeignKeyUse))
+                :Field("Column.Fk_Enumeration"     , l_iColumnFk_Enumeration)
             endif
             :Field("Column.DocStatus"       , l_nColumnDocStatus)
             :Field("Column.Description"     , iif(empty(l_cColumnDescription),NULL,l_cColumnDescription))
@@ -5259,14 +5747,18 @@ case l_cActionOnSubmit == "Save"
                 //Save Tags - End
 
             endif
+
+            if empty(l_cErrorMessage)
+                DataDictionaryFixAndTest(par_iApplicationPk)
+            endif
+
         endwith
 
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
     endif
 
-
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
 
 case l_cActionOnSubmit == "Delete"   // Column
     if oFcgi:p_nAccessLevelDD >= 5
@@ -5281,7 +5773,9 @@ case l_cActionOnSubmit == "Delete"   // Column
             CustomFieldsDelete(par_iApplicationPk,USEDON_COLUMN,l_iColumnPk)
             l_oDB1:Delete("57e4ebae-00bf-4438-9c47-18e21601260a","Column",l_iColumnPk)
 
-            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+            DataDictionaryFixAndTest(par_iApplicationPk)
+
+            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
 
         else
             l_cErrorMessage := "Related Index Expression record on file"
@@ -5292,42 +5786,48 @@ case l_cActionOnSubmit == "Delete"   // Column
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["Name"]            := l_cColumnName
-    l_hValues["AKA"]             := l_cColumnAKA
-    l_hValues["UseStatus"]       := l_nColumnUseStatus
-    l_hValues["DocStatus"]       := l_nColumnDocStatus
-    l_hValues["Description"]     := l_cColumnDescription
-    l_hValues["Type"]            := l_cColumnType
-    l_hValues["Array"]           := l_lColumnArray
-    l_hValues["Length"]          := l_nColumnLength
-    l_hValues["Scale"]           := l_nColumnScale
-    l_hValues["LastNativeType"]  := l_cColumnLastNativeType
-    l_hValues["Nullable"]        := l_lColumnNullable
-    l_hValues["Required"]        := l_nColumnRequired
-    l_hValues["Default"]         := l_cColumnDefault
-    l_hValues["Unicode"]         := l_lColumnUnicode
-    l_hValues["ShowPrimary"]     := l_lShowPrimary
-    l_hValues["Primary"]         := l_lColumnPrimary
-    l_hValues["UsedBy"]          := l_nColumnUsedBy
-    l_hValues["Fk_TableForeign"] := l_iColumnFk_TableForeign
-    l_hValues["ForeignKeyUse"]   := l_cColumnForeignKeyUse
-    l_hValues["Fk_Enumeration"]  := l_iColumnFk_Enumeration
+    l_hValues["Name"]               := l_cColumnName
+    l_hValues["AKA"]                := l_cColumnAKA
+    l_hValues["UsedAs"]             := l_nColumnUsedAs
+    l_hValues["UsedBy"]             := l_nColumnUsedBy
+    l_hValues["UseStatus"]          := l_nColumnUseStatus
+    l_hValues["DocStatus"]          := l_nColumnDocStatus
+    l_hValues["Description"]        := l_cColumnDescription
+    l_hValues["Type"]               := l_cColumnType
+    l_hValues["Array"]              := l_lColumnArray
+    l_hValues["Length"]             := l_nColumnLength
+    l_hValues["Scale"]              := l_nColumnScale
+    l_hValues["LastNativeType"]     := l_cColumnLastNativeType
+    l_hValues["Nullable"]           := l_lColumnNullable
+    l_hValues["ForeignKeyOptional"] := l_lColumnForeignKeyOptional
+    l_hValues["OnDelete"]           := l_nColumnOnDelete
+    l_hValues["DefaultType"]        := l_nColumnDefaultType
+    l_hValues["DefaultCustom"]      := l_cColumnDefaultCustom
+    l_hValues["Unicode"]            := l_lColumnUnicode
+    l_hValues["ShowPrimary"]        := l_lShowPrimary
+    l_hValues["Fk_TableForeign"]    := l_iColumnFk_TableForeign
+    l_hValues["ForeignKeyUse"]      := l_cColumnForeignKeyUse
+    l_hValues["Fk_Enumeration"]     := l_iColumnFk_Enumeration
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_COLUMN,@l_hValues)
 
-    l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_cErrorMessage,l_iColumnPk,l_hValues)
+    l_cHtml += ColumnEditFormBuild(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,l_cErrorMessage,l_iColumnPk,l_hValues)
 endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cTableAKA)
+static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfIndexes
 local l_oDB_ListOfColumns
+local l_cURL
+local l_cName
+local l_nColspan
+local l_lWarnings := .f.
 
 oFcgi:TraceAdd("IndexListFormBuild")
 
@@ -5336,15 +5836,15 @@ with object l_oDB1
     :Table("0154af03-a45d-4a8a-811f-c45d09da73f7","Index")
     :Column("Index.pk"             ,"pk")
     :Column("Index.Name"           ,"Index_Name")
+    :Column("Index.UsedBy"         ,"Index_UsedBy")
     :Column("Index.Expression"     ,"Index_Expression")
     :Column("Index.Unique"         ,"Index_Unique")
     :Column("Index.Algo"           ,"Index_Algo")
     :Column("Index.UseStatus"      ,"Index_UseStatus")
     :Column("Index.DocStatus"      ,"Index_DocStatus")
     :Column("Index.Description"    ,"Index_Description")
-    :Column("Index.UsedBy"         ,"Index_UsedBy")
+    :Column("Index.TestWarning"    ,"Index_TestWarning")
     :Column("upper(Index.Name)"    ,"tag1")
-    
     :Where("Index.fk_Table = ^",par_iTablePk)
     :OrderBy("tag1")
     :SQL("ListOfIndexes")
@@ -5360,20 +5860,27 @@ endwith
 if l_nNumberOfIndexes <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Index</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Columns</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
 else
+    select ListOfIndexes
+    scan all while !l_lWarnings
+        if !empty(nvl(ListOfIndexes->Index_TestWarning,""))
+            l_lWarnings := .t.
+        endif
+    endscan
+
     l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB_ListOfColumns
         :Table("0c885ec3-553e-438a-846f-59fc8906d149","Index")
@@ -5391,13 +5898,13 @@ else
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Index</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Columns</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Columns</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Export for DataWharf Imports</a>]
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
@@ -5411,22 +5918,30 @@ else
 
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
+            l_nColspan := 8
+            if l_lWarnings
+                l_nColspan++
+            endif
+
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="9">]
-                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
+                l_cHtml += [<th class="text-center text-white" colspan="]+trans(l_nColspan)+[">]
+                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+["]
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Expression</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Unique</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Algo</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Used By</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Columns</th>]
+                l_cHtml += [<th class="text-white">Name</th>]
+                l_cHtml += [<th class="text-white">Expression</th>]
+                l_cHtml += [<th class="text-white">Unique</th>]
+                l_cHtml += [<th class="text-white">Algo</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                // l_cHtml += [<th class="text-white text-center">Used By</th>]
+                l_cHtml += [<th class="text-white text-center">Columns</th>]
+                if l_lWarnings
+                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
+                endif
             l_cHtml += [</tr>]
 
             select ListOfIndexes
@@ -5435,8 +5950,19 @@ else
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)+[/">]+Allt(ListOfIndexes->Index_Name)+[</a>]
+                        l_cURL  := l_cSitePath+[DataDictionaries/EditIndex/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+[/]+Allt(ListOfIndexes->Index_Name)
+                        l_cName := Allt(ListOfIndexes->Index_Name)
+                        if ListOfIndexes->Index_UsedBy <> USEDBY_ALLSERVERS
+                            l_cURL  += [:]+trans(ListOfIndexes->Index_UsedBy)
+                            l_cName += [ (]+GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                        endif
+                        l_cHtml += [<a href="]+l_cURL+[/">]+l_cName+[</a>]
                     l_cHtml += [</td>]
+
+                    // // Used By
+                    // l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                    //     l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                    // l_cHtml += [</td>]
 
                     // Expression
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -5469,11 +5995,6 @@ else
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING)]
                     l_cHtml += [</td>]
 
-                    // Used By
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
-                    l_cHtml += [</td>]
-
                     // Columns
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         select ListOfColumns
@@ -5481,6 +6002,12 @@ else
                             l_cHtml += [<div>]+Alltrim(ListOfColumns->Column_Name)+[</div>]
                         endscan
                     l_cHtml += [</td>]
+
+                    if l_lWarnings
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_TestWarning,""))
+                        l_cHtml += [</td>]
+                    endif
 
                 l_cHtml += [</tr>]
             endscan
@@ -5493,18 +6020,18 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function IndexEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,par_cErrorText,par_iPk,par_hValues)
+static function IndexEditFormBuild(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText   := hb_DefaultValue(par_cErrorText,"")
 local l_cName        := hb_HGetDef(par_hValues,"Name","")
+local l_nUsedBy      := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
 local l_nUseStatus   := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus   := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_lUnique      := hb_HGetDef(par_hValues,"Unique",.f.)
 local l_cExpression  := nvl(hb_HGetDef(par_hValues,"Expression",""),"")
 local l_nAlgo        := hb_HGetDef(par_hValues,"Algo",0)
-local l_nUsedBy      := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
 
 local l_CheckBoxId
 
@@ -5523,7 +6050,7 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Index in Table "]+par_cURLNameSpaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Index in Table "]+par_cURLNamespaceName+[.]+par_cURLTableName+["</span>]   //navbar-text
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         endif
@@ -5548,6 +6075,17 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
+            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Expression</td>]
         l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextExpression" id="TextExpression" value="]+FcgiPrepFieldForValue(l_cExpression)+[" maxlength="2704" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
@@ -5564,17 +6102,6 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3">]
             l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboAlgo" id="ComboAlgo"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [<option value="1"]+iif(l_nAlgo==1,[ selected],[])+[>BTREE</option>]
-            l_cHtml += [</select>]
-        l_cHtml += [</td>]
-    l_cHtml += [</tr>]
-
-    l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
-        l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
-            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
-            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
@@ -5676,19 +6203,19 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function IndexEditFormOnSubmit(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName)
+static function IndexEditFormOnSubmit(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iPk
 local l_cName
+local l_nUsedBy
 local l_nUseStatus
 local l_nDocStatus
 local l_cDescription
 local l_cExpression
 local l_lUnique
 local l_nAlgo
-local l_nUsedBy
 local l_hValues := {=>}
 
 local l_cErrorMessage := ""
@@ -5699,15 +6226,15 @@ oFcgi:TraceAdd("IndexEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iPk              := Val(oFcgi:GetInputValue("TableKey"))
-l_cName            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
-l_nUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
-l_nDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
-l_lUnique          := (oFcgi:GetInputValue("CheckUnique") == "1")
-l_cExpression      := SanitizeInput(oFcgi:GetInputValue("TextExpression"))
-l_nAlgo            := Val(oFcgi:GetInputValue("ComboAlgo"))
-l_nUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
+l_iPk          := Val(oFcgi:GetInputValue("TableKey"))
+l_cName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+l_nUsedBy      := Val(oFcgi:GetInputValue("ComboUsedBy"))
+l_nUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nDocStatus   := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cDescription := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_lUnique      := (oFcgi:GetInputValue("CheckUnique") == "1")
+l_cExpression  := SanitizeInput(oFcgi:GetInputValue("TextExpression"))
+l_nAlgo        := Val(oFcgi:GetInputValue("ComboAlgo"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -5743,9 +6270,9 @@ case l_cActionOnSubmit == "Save"
             :Table("96801344-ac57-4b74-87e7-fd50ffab7c01","Index")
             if oFcgi:p_nAccessLevelDD >= 5
                 :Field("Index.Name"       , l_cName)
+                :Field("Index.UsedBy"     , l_nUsedBy)
                 :Field("Index.UseStatus"  , l_nUseStatus)
                 :Field("Index.Unique"     , l_lUnique)
-                :Field("Index.UsedBy"     , l_nUsedBy)
                 :Field("Index.Expression" , iif(empty(l_cExpression),NULL,l_cExpression))
                 :Field("Index.Algo"       , l_nAlgo)
             endif
@@ -5799,12 +6326,13 @@ case l_cActionOnSubmit == "Save"
 
         endwith
 
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+        DataDictionaryFixAndTest(par_iApplicationPk)
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
     endif
 
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
 
 case l_cActionOnSubmit == "Delete"   // Index
     if oFcgi:p_nAccessLevelDD >= 5
@@ -5823,7 +6351,8 @@ case l_cActionOnSubmit == "Delete"   // Index
 
                 :Delete("3ae994e1-b216-4869-b884-b372e5e24c2f","Index",l_iPk)
 
-                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLTableName+"/")
+                DataDictionaryFixAndTest(par_iApplicationPk)
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLTableName+"/")
 
             else
                 l_cErrorMessage := "Unable to find related columns."
@@ -5836,13 +6365,13 @@ endcase
 
 if !empty(l_cErrorMessage)
     l_hValues["Name"]            := l_cName
+    l_hValues["UsedBy"]          := l_nUsedBy
     l_hValues["UseStatus"]       := l_nUseStatus
     l_hValues["DocStatus"]       := l_nDocStatus
     l_hValues["Description"]     := l_cDescription
     l_hValues["Expression"]      := l_cExpression
     l_hValues["Algo"]            := l_nAlgo
     l_hValues["Unique"]          := l_lUnique
-    l_hValues["UsedBy"]          := l_nUsedBy
 
     l_oDB_ListOfAllColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
     with Object l_oDB_ListOfAllColumns
@@ -5859,7 +6388,7 @@ if !empty(l_cErrorMessage)
         endscan
     endwith
 
-    l_cHtml += IndexEditFormBuild(par_iApplicationPk,par_iNameSpacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLTableName,l_cErrorMessage,l_iPk,l_hValues)
+    l_cHtml += IndexEditFormBuild(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,l_cErrorMessage,l_iPk,l_hValues)
 endif
 
 return l_cHtml
@@ -5930,6 +6459,7 @@ local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
 local l_cSearchValueName
 local l_cSearchValueDescription
+local l_lWarnings := .f.
 // local l_cValueSearchParameters
 
 oFcgi:TraceAdd("EnumerationListFormBuild")
@@ -5954,7 +6484,7 @@ l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
     :Table("a969a3ec-01a9-4aa5-b9f8-d9bd7b1005e7","Enumeration")
     :Column("Enumeration.pk"             ,"pk")
-    :Column("NameSpace.Name"             ,"NameSpace_Name")
+    :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
     :Column("Enumeration.AKA"            ,"Enumeration_AKA")
     :Column("Enumeration.UseStatus"      ,"Enumeration_UseStatus")
@@ -5962,11 +6492,11 @@ with object l_oDB1
     :Column("Enumeration.Description"    ,"Enumeration_Description")
     :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
-    :Column("Upper(NameSpace.Name)","tag1")
+    :Column("Enumeration.TestWarning"    ,"Enumeration_TestWarning")
+    :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Enumeration.Name)","tag2")
-    :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-
+    :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 
     if !empty(l_cSearchEnumerationName)
         :KeywordCondition(l_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA)")
@@ -5993,14 +6523,22 @@ with object l_oDB1
     :SQL("ListOfEnumerations")
     l_nNumberOfEnumerations := :Tally
 endwith
+if l_nNumberOfEnumerations > 0
+    select ListOfEnumerations
+    scan all while !l_lWarnings
+        if !empty(nvl(ListOfEnumerations->Enumeration_TestWarning,""))
+            l_lWarnings := .t.
+        endif
+    endscan
+endif
 
 with object l_oDB2
     :Table("0a20a86a-a519-451c-a01b-388f16a4c909","Enumeration")
     :Column("Enumeration.pk" ,"Enumeration_pk")
     :Column("Count(*)" ,"EnumValueCount")
-    :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
     :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :GroupBy("Enumeration_pk")
     :SQL("ListOfEnumerationsEnumValueCounts")
     with object :p_oCursor
@@ -6087,38 +6625,41 @@ if !empty(l_nNumberOfEnumerations)
         l_cHtml += [<div class="col-auto">]
 
             l_cHtml += [<table class="table table-sm table-bordered">] //  table-striped
-
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_lWarnings,"8","7")+[">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Enumeration Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Implemented As</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Values</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                l_cHtml += [<th class="text-white">Namespace</th>]
+                l_cHtml += [<th class="text-white">Enumeration Name</th>]
+                l_cHtml += [<th class="text-white">Implemented As</th>]
+                l_cHtml += [<th class="text-white">Values</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                // l_cHtml += [<th class="text-white text-center">Warnings</th>]
+                if l_lWarnings
+                    // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
+                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
+                endif
             l_cHtml += [</tr>]
-
             select ListOfEnumerations
             scan all
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += Allt(ListOfEnumerations->NameSpace_Name)
+                        l_cHtml += Allt(ListOfEnumerations->Namespace_Name)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+ListOfEnumerations->NameSpace_Name+[/]+ListOfEnumerations->Enumeration_Name+[/">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+ListOfEnumerations->Namespace_Name+[/]+ListOfEnumerations->Enumeration_Name+[/">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]+EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength)+[</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                         l_iEnumValueCount := iif( VFP_Seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfEnumerations->NameSpace_Name)+[/]+Allt(ListOfEnumerations->Enumeration_Name)+[/">]+Trans(l_iEnumValueCount)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfEnumerations->Namespace_Name)+[/]+Allt(ListOfEnumerations->Enumeration_Name)+[/">]+Trans(l_iEnumValueCount)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -6132,6 +6673,12 @@ if !empty(l_nNumberOfEnumerations)
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING)]
                     l_cHtml += [</td>]
+
+                    if l_lWarnings
+                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_TestWarning,""))
+                        l_cHtml += [</td>]
+                    endif
 
                 l_cHtml += [</tr>]
             endscan
@@ -6154,7 +6701,7 @@ local l_cHtml := ""
 local l_cSitePath := oFcgi:p_cSitePath
 local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
 
-local l_iNameSpacePk     := hb_HGetDef(par_hValues,"Fk_NameSpace",0)
+local l_iNamespacePk     := hb_HGetDef(par_hValues,"Fk_Namespace",0)
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
@@ -6172,18 +6719,18 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
 
     :Table("fe972943-4a6c-4e04-b03a-5969abc9a8c6","Enumeration")
-    :Column("NameSpace.Name"     ,"NameSpace_Name")
+    :Column("Namespace.Name"     ,"Namespace_Name")
     :Column("Enumeration.Name"   ,"Enumeration_Name")
-    :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
+    :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
     l_oDataTableInfo := :Get(par_iPk)
 
-    :Table("e40fee2e-6e7e-4160-a6a8-c828ba3cf3ea","NameSpace")
-    :Column("NameSpace.pk"         ,"pk")
-    :Column("NameSpace.Name"       ,"NameSpace_Name")
-    :Column("Upper(NameSpace.Name)","tag1")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
+    :Table("e40fee2e-6e7e-4160-a6a8-c828ba3cf3ea","Namespace")
+    :Column("Namespace.pk"         ,"pk")
+    :Column("Namespace.Name"       ,"Namespace_Name")
+    :Column("Upper(Namespace.Name)","tag1")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
-    :SQL("ListOfNameSpaces")
+    :SQL("ListOfNamespaces")
 endwith
 
 l_cHtml += [<script language="javascript">]
@@ -6200,7 +6747,7 @@ l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value
 l_cHtml += [<input type="hidden" name="EnumerationKey" value="]+trans(par_iPk)+[">]
 
 if l_oDB1:Tally <= 0
-    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+[You must setup at least one Name Space first]+[</div>]
+    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+[You must setup at least one Namespace first]+[</div>]
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
@@ -6227,7 +6774,7 @@ else
                 if oFcgi:p_nAccessLevelDD >= 5
                     l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
-                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:NameSpace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
             endif
         l_cHtml += [</div>]
@@ -6240,12 +6787,12 @@ else
         l_cHtml += [<table>]
 
         l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Name Space</td>]
+            l_cHtml += [<td class="pe-2 pb-3">Namespace</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNameSpacePk" id="ComboNameSpacePk"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-                select ListOfNameSpaces
+                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNamespacePk" id="ComboNamespacePk"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                select ListOfNamespaces
                 scan all
-                    l_cHtml += [<option value="]+Trans(ListOfNameSpaces->pk)+["]+iif(ListOfNameSpaces->pk = l_iNameSpacePk,[ selected],[])+[>]+AllTrim(ListOfNameSpaces->NameSpace_Name)+[</option>]
+                    l_cHtml += [<option value="]+Trans(ListOfNamespaces->pk)+["]+iif(ListOfNamespaces->pk = l_iNamespacePk,[ selected],[])+[>]+AllTrim(ListOfNamespaces->Namespace_Name)+[</option>]
                 endscan
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
@@ -6333,7 +6880,7 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_iEnumerationPk
-local l_iNameSpacePk
+local l_iNamespacePk
 local l_cEnumerationName
 local l_cEnumerationAKA
 local l_iEnumerationUseStatus
@@ -6355,7 +6902,7 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_iNameSpacePk                  := Val(oFcgi:GetInputValue("ComboNameSpacePk"))
+l_iNamespacePk                  := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 l_cEnumerationName              := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
 l_cEnumerationAKA               := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
@@ -6388,9 +6935,9 @@ case l_cActionOnSubmit == "Save"
             with object l_oDB1
                 :Table("5459a2e5-0194-4efb-b051-469e203e3af1","Enumeration")
                 :Column("Enumeration.pk","pk")
-                :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
-                :Where([NameSpace.fk_Application = ^],par_iApplicationPk)
-                :Where([Enumeration.fk_NameSpace = ^],l_iNameSpacePk)
+                :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
+                :Where([Namespace.fk_Application = ^],par_iApplicationPk)
+                :Where([Enumeration.fk_Namespace = ^],l_iNamespacePk)
                 :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cEnumerationName," ","")))
                 if l_iEnumerationPk > 0
                     :Where([Enumeration.pk != ^],l_iEnumerationPk)
@@ -6409,7 +6956,7 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("92372d16-01ca-41d7-8f45-d145a2ce3cdc","Enumeration")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("Enumeration.fk_NameSpace"   , l_iNameSpacePk)
+                :Field("Enumeration.fk_Namespace"   , l_iNamespacePk)
                 :Field("Enumeration.Name"           , l_cEnumerationName)
                 :Field("Enumeration.AKA"            , l_cEnumerationAKA)
                 :Field("Enumeration.UseStatus"      , l_iEnumerationUseStatus)
@@ -6433,6 +6980,7 @@ case l_cActionOnSubmit == "Save"
                 endif
             endif
         endwith
+        DataDictionaryFixAndTest(par_iApplicationPk)
     endif
 
 case l_cActionOnSubmit == "Cancel"
@@ -6456,6 +7004,7 @@ case l_cActionOnSubmit == "Delete"   // Enumeration
 
             if l_oDB1:Tally == 0
                 if l_oDB1:Delete("8f1c66fc-38df-4b14-a43d-5cb8049944e3","Enumeration",l_iEnumerationPk)
+                    DataDictionaryFixAndTest(par_iApplicationPk)
                     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
                     l_cFrom := "Redirect"
                 else
@@ -6478,7 +7027,7 @@ do case
 case l_cFrom == "Redirect"
 
 case !empty(l_cErrorMessage)
-    l_hValues["Fk_NameSpace"]    := l_iNameSpacePk
+    l_hValues["Fk_Namespace"]    := l_iNamespacePk
     l_hValues["Name"]            := l_cEnumerationName
     l_hValues["AKA"]             := l_cEnumerationAKA
     l_hValues["UseStatus"]       := l_iEnumerationUseStatus
@@ -6494,9 +7043,9 @@ case empty(l_cFrom) .or. empty(l_iEnumerationPk)
 otherwise
     with object l_oDB1
         :Table("da356f83-c733-465e-a73c-e0af9e06d192","Enumeration")
-        :Column("NameSpace.Name"  ,"NameSpace_Name")
+        :Column("Namespace.Name"  ,"Namespace_Name")
         :Column("Enumeration.Name","Enumeration_Name")
-        :Join("inner","NameSpace","","Enumeration.fk_NameSpace = NameSpace.pk")
+        :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iEnumerationPk)
         if :Tally <> 1
             l_cFrom := ""
@@ -6504,7 +7053,7 @@ otherwise
     endwith
     switch l_cFrom
     case 'Values'
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+l_oData:NameSpace_Name+"/"+l_oData:Enumeration_Name+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+l_oData:Namespace_Name+"/"+l_oData:Enumeration_Name+"/")
         exit
     otherwise
         //Should not happen. Failed :Get.
@@ -6516,7 +7065,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cEnumerationAKA)
+static function EnumValueListFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName,par_cEnumerationAKA)
 local l_cHtml := []
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfEnumValues
@@ -6544,12 +7093,12 @@ endwith
 if l_nNumberOfEnumValues <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+[".</span>]
+            l_cHtml += [<span class="navbar-brand ms-3">No Value on file for Enumeration "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+[".</span>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[DataDictionaries/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[DataDictionaries/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
-            l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
+            l_cHtml += [<a  class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -6557,13 +7106,13 @@ else
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewEnumValue/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/">New Enumeration Value</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+par_cURLApplicationLinkCode+[/">Back To Enumerations</a>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/OrderEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/">Order Values</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/?From=Values">Edit Enumeration</a>]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -6575,15 +7124,15 @@ else
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNameSpaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+["</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="5">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLEnumerationName)+FormatAKAForDisplay(par_cEnumerationAKA)+["</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Number</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
+                l_cHtml += [<th class="text-white">Name</th>]
+                l_cHtml += [<th class="text-white">Number</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
             l_cHtml += [</tr>]
 
             select ListOfEnumValues
@@ -6591,7 +7140,7 @@ else
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumValues->EnumValue_UseStatus)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLEnumerationName+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
@@ -6627,7 +7176,7 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName)
+static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName)
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:p_cSitePath
@@ -6685,11 +7234,11 @@ select ListOfEnumValues
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]
+        l_cHtml += [<span class="navbar-brand ms-3">Order Values for Enumeration "]+par_cURLNamespaceName+[.]+par_cURLEnumerationName+["</span>]
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
         endif
-        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNameSpaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
+        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLEnumerationName+[/">Cancel</a>]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -6717,7 +7266,7 @@ l_cHtml += [</form>]
 
 return l_cHtml
 //=================================================================================================================
-static function EnumValueOrderFormOnSubmit(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName)
+static function EnumValueOrderFormOnSubmit(par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -6765,14 +7314,14 @@ case l_cActionOnSubmit == "Save"
             endif
         endfor
     endif
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLEnumerationName+"/")
 
 endcase
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,par_cErrorText,par_iPk,par_hValues)
+static function EnumValueEditFormBuild(par_iNamespacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName,par_cErrorText,par_iPk,par_hValues)
 
 //par_cName,par_iNumber,par_nUseStatus,par_nDocStatus,par_cDescription
 
@@ -6805,7 +7354,7 @@ endif
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNameSpaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
+        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ EnumValue in Enumeration "]+par_cURLNamespaceName+[.]+par_cURLEnumerationName+["</span>]   //navbar-text
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
         endif
@@ -6884,7 +7433,7 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function EnumValueEditFormOnSubmit(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName)
+static function EnumValueEditFormOnSubmit(par_iNamespacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -6989,19 +7538,19 @@ case l_cActionOnSubmit == "Save"
             endif
         endwith
 
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLEnumerationName+"/")
     endif
 
 
 case l_cActionOnSubmit == "Cancel"
-    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLEnumerationName+"/")
 
 case l_cActionOnSubmit == "Delete"   // EnumValue
     if oFcgi:p_nAccessLevelDD >= 5
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-altd()
+// altd()
         if l_oDB1:Delete("7f3486e6-6bbc-4307-b617-5ff00f0ac3ad","EnumValue",l_iEnumValuePk)
-            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNameSpaceName+"/"+par_cURLEnumerationName+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+"/"+par_cURLEnumerationName+"/")
         else
             l_cErrorMessage := "Failed to delete value."
         endif
@@ -7017,14 +7566,14 @@ if !empty(l_cErrorMessage)
     l_hValues["DocStatus"]       := l_nEnumValueDocStatus
     l_hValues["Description"]     := l_cEnumValueDescription
 
-    l_cHtml += EnumValueEditFormBuild(par_iNameSpacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNameSpaceName,par_cURLEnumerationName,l_cErrorMessage,l_iEnumValuePk,l_hValues)
+    l_cHtml += EnumValueEditFormBuild(par_iNamespacePk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLEnumerationName,l_cErrorMessage,l_iEnumValuePk,l_hValues)
 endif
 
 return l_cHtml
 //=================================================================================================================
 static function DataDictionaryDeltaLoadGenScriptFormBuild(par_cMode,par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
                                                        par_nFk_Deployment,;
-                                                       par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNameSpaces,par_nSyncSetForeignKey,;
+                                                       par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNamespaces,par_nSyncSetForeignKey,;
                                                        par_aDeltaMessages,par_cScript)
 
 local l_cHtml := ""
@@ -7039,14 +7588,14 @@ local l_nSyncPort          := hb_DefaultValue(par_nSyncPort,0)
 local l_cSyncUser          := hb_DefaultValue(par_cSyncUser,"")
 local l_cSyncPassword      := hb_DefaultValue(par_cSyncPassword,"")
 local l_cSyncDatabase      := hb_DefaultValue(par_cSyncDatabase,"")
-local l_cSyncNameSpaces    := hb_DefaultValue(par_cSyncNameSpaces,"")
+local l_cSyncNamespaces    := hb_DefaultValue(par_cSyncNamespaces,"")
 local l_nSyncSetForeignKey := hb_DefaultValue(par_nSyncSetForeignKey,1)
 
 local l_cMessageLine
 
 local l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfDeployments
-local l_cNameSpaces
+local l_cNamespaces
 
 oFcgi:TraceAdd("DataDictionaryDeltaLoadGenScriptFormBuild")
 
@@ -7056,7 +7605,7 @@ with object l_oDB_ListOfDeployments
     :Where("Deployment.Status = 1")
     :Column("Deployment.pk"         ,"Pk")
     :Column("Deployment.Name"       ,"Deployment_Name")
-    :Column("Deployment.NameSpaces" ,"Deployment_NameSpaces")
+    :Column("Deployment.Namespaces" ,"Deployment_Namespaces")
     :Column("Upper(Deployment.Name)","tag1")
     :OrderBy("tag1")
     :SQL("ListOfDeployments")
@@ -7129,9 +7678,9 @@ else
                         scan all
                             l_cHtml += [<option value="]+trans(ListOfDeployments->pk)+["]+iif(ListOfDeployments->pk == l_nFk_Deployment,[ selected],[])+[>]+Alltrim(ListOfDeployments->Deployment_Name)
                             
-                            l_cNameSpaces := nvl(ListOfDeployments->Deployment_NameSpaces,"")
-                            if !empty(l_cNameSpaces)
-                                l_cHtml += " - Namespace"+iif("," $ l_cNameSpaces,"s","")+[: ]+nvl(ListOfDeployments->Deployment_NameSpaces,"")
+                            l_cNamespaces := nvl(ListOfDeployments->Deployment_Namespaces,"")
+                            if !empty(l_cNamespaces)
+                                l_cHtml += " - Namespace"+iif("," $ l_cNamespaces,"s","")+[: ]+nvl(ListOfDeployments->Deployment_Namespaces,"")
                             endif
                             
                             l_cHtml += [</option>]
@@ -7189,8 +7738,8 @@ else
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
-                l_cHtml += [<td class="pe-2 pb-3">Name Spaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
-                l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncNameSpaces" id="TextSyncNameSpaces" value="]+FcgiPrepFieldForValue(l_cSyncNameSpaces)+[" maxlength="400" size="80"></td>]
+                l_cHtml += [<td class="pe-2 pb-3">Namespaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
+                l_cHtml += [<td class="pb-3"><input type="text" name="TextSyncNamespaces" id="TextSyncNamespaces" value="]+FcgiPrepFieldForValue(l_cSyncNamespaces)+[" maxlength="400" size="80"></td>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="pb-5">]
@@ -7249,7 +7798,7 @@ local l_nSyncPort
 local l_cSyncUser
 local l_cSyncPassword
 local l_cSyncDatabase
-local l_cSyncNameSpaces
+local l_cSyncNamespaces
 local l_nSyncSetForeignKey
 
 local l_nConnectBackendType
@@ -7258,7 +7807,7 @@ local l_nConnectPort
 local l_cConnectUser
 local l_cConnectPassword
 local l_cConnectDatabase
-local l_cConnectNameSpaces
+local l_cConnectNamespaces
 local l_nConnectSetForeignKey
 local l_nConnectPasswordStorage
 local l_cConnectPasswordConfigKey
@@ -7290,7 +7839,7 @@ l_nSyncPort          := Val(oFcgi:GetInputValue("TextSyncPort"))
 l_cSyncUser          := SanitizeInput(oFcgi:GetInputValue("TextSyncUser"))
 l_cSyncPassword      := SanitizeInput(oFcgi:GetInputValue("TextSyncPassword"))
 l_cSyncDatabase      := SanitizeInput(oFcgi:GetInputValue("TextSyncDatabase"))
-l_cSyncNameSpaces    := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextSyncNameSpaces"),[,_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+l_cSyncNamespaces    := SanitizeInputWithValidChars(oFcgi:GetInputValue("TextSyncNamespaces"),[,_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
 l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
@@ -7326,7 +7875,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
             :Column("UserSettingApplication.SyncPort"         ,"SyncPort")
             :Column("UserSettingApplication.SyncUser"         ,"SyncUser")
             :Column("UserSettingApplication.SyncDatabase"     ,"SyncDatabase")
-            :Column("UserSettingApplication.SyncNameSpaces"   ,"SyncNameSpaces")
+            :Column("UserSettingApplication.SyncNamespaces"   ,"SyncNamespaces")
             :Column("UserSettingApplication.SyncSetForeignKey","SyncSetForeignKey")
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
             :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
@@ -7349,7 +7898,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                 :Field("UserSettingApplication.SyncPort"         ,l_nSyncPort)
                 :Field("UserSettingApplication.SyncUser"         ,l_cSyncUser)
                 :Field("UserSettingApplication.SyncDatabase"     ,l_cSyncDatabase)
-                :Field("UserSettingApplication.SyncNameSpaces"   ,l_cSyncNameSpaces)
+                :Field("UserSettingApplication.SyncNamespaces"   ,l_cSyncNamespaces)
                 :Field("UserSettingApplication.SyncSetForeignKey",l_nSyncSetForeignKey)
                 :Field("UserSettingApplication.fk_User"       ,oFcgi:p_iUserPk)
                 :Field("UserSettingApplication.fk_Application",par_iApplicationPk)
@@ -7362,7 +7911,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                    ListOfUserSettingApplication->SyncPort          <> l_nSyncPort          .or. ;
                    ListOfUserSettingApplication->SyncUser          <> l_cSyncUser          .or. ;
                    ListOfUserSettingApplication->SyncDatabase      <> l_cSyncDatabase      .or. ;
-                   ListOfUserSettingApplication->SyncNameSpaces    <> l_cSyncNameSpaces    .or. ;
+                   ListOfUserSettingApplication->SyncNamespaces    <> l_cSyncNamespaces    .or. ;
                    ListOfUserSettingApplication->SyncSetForeignKey <> l_nSyncSetForeignKey
                     :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c7","UserSettingApplication")
                     :Field("UserSettingApplication.fk_Deployment"    ,l_nFk_Deployment)
@@ -7371,7 +7920,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                     :Field("UserSettingApplication.SyncPort"         ,l_nSyncPort)
                     :Field("UserSettingApplication.SyncUser"         ,l_cSyncUser)
                     :Field("UserSettingApplication.SyncDatabase"     ,l_cSyncDatabase)
-                    :Field("UserSettingApplication.SyncNameSpaces"   ,l_cSyncNameSpaces)
+                    :Field("UserSettingApplication.SyncNamespaces"   ,l_cSyncNamespaces)
                     :Field("UserSettingApplication.SyncSetForeignKey",l_nSyncSetForeignKey)
                     :Update(ListOfUserSettingApplication->pk)
                 endif
@@ -7389,7 +7938,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
             l_cConnectUser          := l_cSyncUser
             l_cConnectPassword      := l_cSyncPassword
             l_cConnectDatabase      := l_cSyncDatabase
-            l_cConnectNameSpaces    := l_cSyncNameSpaces
+            l_cConnectNamespaces    := l_cSyncNamespaces
             l_nConnectSetForeignKey := l_nSyncSetForeignKey
 
         else
@@ -7403,7 +7952,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                 :Column("Deployment.Port"               , "Port")
                 :Column("Deployment.User"               , "User")
                 :Column("Deployment.Database"           , "Database")
-                :Column("Deployment.NameSpaces"         , "NameSpaces")
+                :Column("Deployment.Namespaces"         , "Namespaces")
                 :Column("Deployment.SetForeignKey"      , "SetForeignKey")
                 :Column("Deployment.PasswordStorage"    , "PasswordStorage")
                 // :Column("Deployment.PasswordCrypt"      , "PasswordCrypt")
@@ -7417,7 +7966,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                     l_nConnectPort            := nvl(l_oData:Port,0)
                     l_cConnectUser            := nvl(l_oData:User,"")
                     l_cConnectDatabase        := nvl(l_oData:Database,"")
-                    l_cConnectNameSpaces      := nvl(l_oData:NameSpaces,"")
+                    l_cConnectNamespaces      := nvl(l_oData:Namespaces,"")
                     l_nConnectSetForeignKey   := nvl(l_oData:SetForeignKey,0)
                     l_nConnectPasswordStorage := nvl(l_oData:PasswordStorage,0)  //1 = Encrypted, 2 = In config.txt, 3 = In Environment Variable, 4 = User is AWS iam account. (Coming Soon)
 
@@ -7560,13 +8109,13 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                 do case
                 case l_cActionOnSubmit == "Load"
                     if oFcgi:p_nAccessLevelDD >= 6
-                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNameSpaces,l_nConnectSetForeignKey)
+                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey)
                     else
                         l_cErrorMessage := "No Access."
                     endif
                     
                 case l_cActionOnSubmit == "Delta"
-                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNameSpaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
 
                 case l_cActionOnSubmit == "GenerateScript"
 
@@ -7596,7 +8145,7 @@ if !empty(l_cErrorMessage)
                                                       l_cSyncUser,;
                                                       l_cSyncPassword,;
                                                       l_cSyncDatabase,;
-                                                      l_cSyncNameSpaces,;
+                                                      l_cSyncNamespaces,;
                                                       l_nSyncSetForeignKey,;
                                                       l_aDeltaMessages,;
                                                       l_cScript)
@@ -7660,15 +8209,15 @@ else
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="5">Tags (]+Trans(l_nNumberOfTags)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="5">Tags (]+Trans(l_nNumberOfTags)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Code</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Table<br>Use<br>Status</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Column<br>Use<br>Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Code</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Table<br>Use<br>Status</th>]
+                    l_cHtml += [<th class="text-white text-center">Column<br>Use<br>Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfTags
@@ -8040,12 +8589,12 @@ if !empty(l_nNumberOfTemplateTables)
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="2">Template Tables (]+Trans(l_nNumberOfTemplateTables)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="2">Template Tables (]+Trans(l_nNumberOfTemplateTables)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Template Table Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Columns</th>]
+                l_cHtml += [<th class="text-white">Template Table Name</th>]
+                l_cHtml += [<th class="text-white">Columns</th>]
             l_cHtml += [</tr>]
 
             select ListOfTemplateTables
@@ -8276,6 +8825,8 @@ local l_nNumberOfTemplateColumns := 0
 local l_iTemplateColumnPk
 local l_oData_Application
 local l_cApplicationSupportColumns
+local l_cURL
+local l_cName
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -8295,23 +8846,23 @@ with object l_oDB_ListOfTemplateColumns
     l_nNumberOfTemplateColumns := :Count()
 
     :Table("9a0ac423-cfe4-48f8-a6da-36211dae310e","TemplateColumn")
-    :Column("TemplateColumn.pk"             ,"pk")
-    :Column("TemplateColumn.Name"           ,"TemplateColumn_Name")
-    :Column("TemplateColumn.AKA"            ,"TemplateColumn_AKA")
-    :Column("TemplateColumn.UseStatus"      ,"TemplateColumn_UseStatus")
-    :Column("TemplateColumn.DocStatus"      ,"TemplateColumn_DocStatus")
-    :Column("TemplateColumn.Description"    ,"TemplateColumn_Description")
-    :Column("TemplateColumn.Order"          ,"TemplateColumn_Order")
-    :Column("TemplateColumn.Type"           ,"TemplateColumn_Type")
-    :Column("TemplateColumn.Array"          ,"TemplateColumn_Array")
-    :Column("TemplateColumn.Length"         ,"TemplateColumn_Length")
-    :Column("TemplateColumn.Scale"          ,"TemplateColumn_Scale")
-    :Column("TemplateColumn.Nullable"       ,"TemplateColumn_Nullable")
-    :Column("TemplateColumn.Required"       ,"TemplateColumn_Required")
-    :Column("TemplateColumn.Default"        ,"TemplateColumn_Default")
-    :Column("TemplateColumn.Unicode"        ,"TemplateColumn_Unicode")
-    :Column("TemplateColumn.Primary"        ,"TemplateColumn_Primary")
-    :Column("TemplateColumn.UsedBy"         ,"TemplateColumn_UsedBy")
+    :Column("TemplateColumn.pk"                 ,"pk")
+    :Column("TemplateColumn.Name"               ,"TemplateColumn_Name")
+    :Column("TemplateColumn.AKA"                ,"TemplateColumn_AKA")
+    :Column("TemplateColumn.UsedAs"             ,"TemplateColumn_UsedAs")
+    :Column("TemplateColumn.UsedBy"             ,"TemplateColumn_UsedBy")
+    :Column("TemplateColumn.UseStatus"          ,"TemplateColumn_UseStatus")
+    :Column("TemplateColumn.DocStatus"          ,"TemplateColumn_DocStatus")
+    :Column("TemplateColumn.Description"        ,"TemplateColumn_Description")
+    :Column("TemplateColumn.Order"              ,"TemplateColumn_Order")
+    :Column("TemplateColumn.Type"               ,"TemplateColumn_Type")
+    :Column("TemplateColumn.Array"              ,"TemplateColumn_Array")
+    :Column("TemplateColumn.Length"             ,"TemplateColumn_Length")
+    :Column("TemplateColumn.Scale"              ,"TemplateColumn_Scale")
+    :Column("TemplateColumn.Nullable"           ,"TemplateColumn_Nullable")
+    :Column("TemplateColumn.DefaultType"        ,"TemplateColumn_DefaultType")
+    :Column("TemplateColumn.DefaultCustom"      ,"TemplateColumn_DefaultCustom")
+    :Column("TemplateColumn.Unicode"            ,"TemplateColumn_Unicode")
 
     :Where("TemplateColumn.fk_TemplateTable = ^",par_iTemplateTablePk)
 
@@ -8360,22 +8911,21 @@ else
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-center text-white" colspan="10">]
+                l_cHtml += [<th class="text-center text-white" colspan="8">]
                     l_cHtml += [Columns (]+Trans(l_nNumberOfTemplateColumns)+[) for Table "]+AllTrim(par_cURLTemplateTableName)+["]
                 l_cHtml += [</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="GridHeaderRowCells text-white"></th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Required</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Default</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Used By</th>]
+                l_cHtml += [<th class="text-white"></th>]
+                l_cHtml += [<th class="text-white">Name</th>]
+                l_cHtml += [<th class="text-white">Type</th>]
+                l_cHtml += [<th class="text-white">Nullable</th>]
+                l_cHtml += [<th class="text-white">Default</th>]
+                l_cHtml += [<th class="text-white">Description</th>]
+                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                // l_cHtml += [<th class="text-white text-center">Used By</th>]
             l_cHtml += [</tr>]
 
             select ListOfTemplateColumns
@@ -8384,17 +8934,30 @@ else
 
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                         do case
-                        case ListOfTemplateColumns->TemplateColumn_Primary
+                        case ListOfTemplateColumns->TemplateColumn_UsedAs = 2
                             l_cHtml += [<i class="bi bi-key"></i>]
-                        case " "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" "
+                        case ListOfTemplateColumns->TemplateColumn_UsedAs = 3
+                            l_cHtml += [<i class="bi-arrow-right"></i>]
+                        case (ListOfTemplateColumns->TemplateColumn_UsedAs = 4) .or. (" "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
                             l_cHtml += [<i class="bi bi-tools"></i>]
                         endcase
                     l_cHtml += [</td>]
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTemplateColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLTemplateTableName+[/]+ListOfTemplateColumns->TemplateColumn_Name+[/">]+ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA)+[</a>]
+                        l_cURL  := l_cSitePath+[DataDictionaries/EditTemplateColumn/]+par_cURLApplicationLinkCode+"/"+par_cURLTemplateTableName+[/]+ListOfTemplateColumns->TemplateColumn_Name
+                        l_cName := ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA)
+                        if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
+                            l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
+                            l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                        endif
+                        l_cHtml += [<a href="]+l_cURL+[/">]+l_cName+[</a>]
                     l_cHtml += [</td>]
+
+                    // // Used By
+                    // l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                    //     l_cHtml += GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                    // l_cHtml += [</td>]
 
                     // Type
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -8421,14 +8984,10 @@ else
                         l_cHtml += iif(ListOfTemplateColumns->TemplateColumn_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
                     l_cHtml += [</td>]
 
-                    // Required
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfTemplateColumns->TemplateColumn_Required,1,3),ListOfTemplateColumns->TemplateColumn_Required,1)]
-                    l_cHtml += [</td>]
-
                     // Default
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += nvl(ListOfTemplateColumns->TemplateColumn_Default,"")
+                        l_cHtml += GetColumnDefault(.f.,ListOfTemplateColumns->TemplateColumn_Type,ListOfTemplateColumns->TemplateColumn_DefaultType,ListOfTemplateColumns->TemplateColumn_DefaultCustom)
+                        // l_cHtml += nvl(ListOfTemplateColumns->TemplateColumn_DefaultCustom,"")
                     l_cHtml += [</td>]
 
                     // Description
@@ -8444,11 +9003,6 @@ else
                     // Doc Status
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
-
-                    // Used By
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
                     l_cHtml += [</td>]
 
                 l_cHtml += [</tr>]
@@ -8475,6 +9029,7 @@ static function TemplateColumnOrderFormBuild(par_iTemplateTablePk,par_cURLApplic
 local l_cHtml := []
 local l_oDB_ListOfTemplateColumns
 local l_cSitePath := oFcgi:p_cSitePath
+local l_cName
 
 oFcgi:TraceAdd("TemplateColumnOrderFormBuild")
 
@@ -8490,6 +9045,8 @@ with object l_oDB_ListOfTemplateColumns
     :Column("TemplateColumn.pk"    ,"pk")
     :Column("TemplateColumn.Name"  ,"TemplateColumn_Name")
     :Column("TemplateColumn.AKA"   ,"TemplateColumn_AKA")
+    :Column("TemplateColumn.UsedAs","TemplateColumn_UsedAs")
+    :Column("TemplateColumn.UsedBy","TemplateColumn_UsedBy")
     :Column("TemplateColumn.Order" ,"TemplateColumn_Order")
     :Where("TemplateColumn.fk_TemplateTable = ^",par_iTemplateTablePk)
     :OrderBy("TemplateColumn_order")
@@ -8541,7 +9098,11 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<ul id="sortable">]
         scan all
-            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfTemplateColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA)+[</span></li>]
+            l_cName := ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA)
+            if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
+                l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+            endif
+            l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfTemplateColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+l_cName+[</span></li>]
         endscan
         l_cHtml += [</ul>]
 
@@ -8612,26 +9173,29 @@ return l_cHtml
 static function TemplateColumnEditFormBuild(par_iApplicationPk,par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText       := hb_DefaultValue(par_cErrorText,"")
-local l_cName            := hb_HGetDef(par_hValues,"Name","")
-local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
-local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
-local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cType            := Alltrim(hb_HGetDef(par_hValues,"Type",""))
-local l_lArray           := hb_HGetDef(par_hValues,"Array",.f.)
-local l_cLength          := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
-local l_cScale           := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
-local l_lNullable        := hb_HGetDef(par_hValues,"Nullable",.t.)
-local l_nRequired        := max(1,hb_HGetDef(par_hValues,"Required",1))
-local l_cDefault         := nvl(hb_HGetDef(par_hValues,"Default",""),"")
-local l_lUnicode         := hb_HGetDef(par_hValues,"Unicode",.t.)
-local l_lPrimary         := hb_HGetDef(par_hValues,"Primary",.f.)
-local l_nUsedBy          := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
-local l_lShowPrimary     := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
+local l_cErrorText          := hb_DefaultValue(par_cErrorText,"")
+local l_cName               := hb_HGetDef(par_hValues,"Name","")
+local l_cAKA                := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
+local l_nUsedAs             := hb_HGetDef(par_hValues,"UsedAs",1)
+local l_nUsedBy             := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
+local l_nUseStatus          := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
+local l_nDocStatus          := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
+local l_cDescription        := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cType               := Alltrim(hb_HGetDef(par_hValues,"Type",""))
+local l_lArray              := hb_HGetDef(par_hValues,"Array",.f.)
+local l_cLength             := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
+local l_cScale              := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
+local l_lNullable           := hb_HGetDef(par_hValues,"Nullable",.t.)
+local l_nDefaultType        := nvl(hb_HGetDef(par_hValues,"DefaultType",0),0)
+local l_cDefaultCustom      := nvl(hb_HGetDef(par_hValues,"DefaultCustom",""),"")
+local l_lUnicode            := hb_HGetDef(par_hValues,"Unicode",.t.)
+local l_lShowPrimary        := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
 
 local l_iTypeCount
 local l_aSQLResult   := {}
+
+local l_oDB_Application   := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_TemplateTable := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_cSitePath := oFcgi:p_cSitePath
 local l_ScriptFolder
@@ -8641,11 +9205,34 @@ local l_hEntityNames := {=>}
 local l_cEntityInfo
 local l_cObjectName
 
-local l_oDBTemplateTable := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nOptionNumber
+local l_cCallOnChangeSettings := [OnChangeSettings($("#ComboUsedAs").val(),$("#ComboType").val(),$("#ComboDefaultType").val())]
+
+local l_oData_Application
+local l_lUseApplicationSettingsForKeys
+local l_cKeyType
 
 oFcgi:TraceAdd("TemplateColumnEditFormBuild")
 
-with object l_oDBTemplateTable
+with object l_oDB_Application
+    :Table("98ab94cf-0bd7-4099-ab74-6389f9f4b57a","Application")
+    :Column("Application.KeyConfig" ,"Application_KeyConfig")
+    l_oData_Application := :Get(par_iApplicationPk)
+endwith
+
+do case
+case l_oData_Application:Application_KeyConfig == 2
+    l_lUseApplicationSettingsForKeys := .t.
+    l_cKeyType := "I"
+case l_oData_Application:Application_KeyConfig == 3
+    l_lUseApplicationSettingsForKeys := .t.
+    l_cKeyType := "IB"
+otherwise
+    l_lUseApplicationSettingsForKeys := .f.
+    l_cKeyType := "?"
+endcase
+
+with object l_oDB_TemplateTable
     :Table("3d374987-3ef7-4f1c-91de-02341340b015","TemplateTable")
     :Column("TemplateTable.pk"          , "TemplateTable_pk")
     :Column("TemplateTable.Name"        , "TemplateTable_Name")
@@ -8656,23 +9243,138 @@ with object l_oDBTemplateTable
 endwith
 
 l_cHtml += [<script language="javascript">]
-l_cHtml += [function OnChangeType(par_Value) {]
+//----------------------------------------------------------------------------
+l_cHtml += [function OnChangeSettings(par_cUsedAs,par_cType,par_cDefaultType) {]
 
-l_cHtml += [switch(par_Value) {]
-for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
-    l_cHtml += [  case ']+oFcgi:p_ColumnTypes[l_iTypeCount,1]+[':]
-    l_cHtml += [  $('#SpanLength').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,3],[show],[hide])+[();]
-    l_cHtml +=   [$('#SpanScale').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,4],[show],[hide])+[();]
-    l_cHtml +=   [$('#TRUnicode').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,6],[show],[hide])+[();]
+    l_cHtml += [switch(par_cUsedAs) {]
+
+    l_cHtml += [  case '2': ]  // PrimaryKey
+    l_cHtml +=   [$('#EntryNullable').hide();]
+    l_cHtml +=   [$('#CheckNullable').prop('checked', false);]
+
+    l_cHtml +=   [$('#EntryArray').hide();]
+    l_cHtml +=   [$('#CheckArray').prop('checked', false);]
+
+    if l_lUseApplicationSettingsForKeys
+        l_cHtml +=   [$('#EntryType').hide();]
+        l_cHtml +=   [par_cType = ']+l_cKeyType+[';]
+        l_cHtml +=   [$('#EntryType').val(']+l_cKeyType+[');]
+
+        l_cHtml +=   [$('#EntryDefaultType').hide();]
+        l_cHtml +=   [par_cDefaultType = '15';]
+        l_cHtml +=   [$('#EntryDefaultType').val('15');]
+    else
+        l_cHtml +=   [$('#EntryType').show();]
+        l_cHtml +=   [$('#EntryDefaultType').show();]
+    endif
     l_cHtml += [    break;]
-endfor
-l_cHtml += [  default:]
-l_cHtml += [  $('#SpanLength').hide();$('#SpanScale').hide();]
-l_cHtml += [};]
+
+    l_cHtml += [  case '3': ]  // ForeignKey
+    if l_lUseApplicationSettingsForKeys
+        l_cHtml +=   [$('#EntryNullable').hide();]
+        l_cHtml +=   [$('#CheckNullable').prop('checked', true);]
+
+        l_cHtml +=   [$('#EntryType').hide();]
+        l_cHtml +=   [par_cType = ']+l_cKeyType+[';]
+        l_cHtml +=   [$('#EntryType').val(']+l_cKeyType+[');]
+
+        l_cHtml +=   [$('#EntryDefaultType').hide();]
+        l_cHtml +=   [par_cDefaultType = '0';]
+        l_cHtml +=   [$('#EntryDefaultType').val('0');]
+    else
+        l_cHtml +=   [$('#EntryNullable').show();]
+        l_cHtml +=   [$('#EntryType').show();]
+        l_cHtml +=   [$('#EntryDefaultType').show();]
+    endif
+    
+    l_cHtml +=   [$('#EntryArray').hide();]
+    l_cHtml +=   [$('#CheckArray').prop('checked', false);]
+
+    l_cHtml += [    break;]
+
+    l_cHtml += [  default:]  //Regular or Support
+    l_cHtml +=   [$('#EntryNullable').show();]
+    l_cHtml +=   [$('#EntryType').show();]
+    l_cHtml +=   [$('#EntryArray').show();]
+
+    l_cHtml +=   [$('#EntryDefaultType').show();]
+    l_cHtml += [};]
+
+    l_cHtml += [switch(par_cType) {]
+    for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
+        l_cHtml += [  case ']+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+[':]
+        l_cHtml += [  $('#SpanLength').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_LENGTH],[show],[hide])+[();]
+        l_cHtml +=   [$('#SpanScale').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_SCALE],[show],[hide])+[();]
+        // l_cHtml +=   [$('#SpanEnumeration').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_ENUMS],[show],[hide])+[();]
+        l_cHtml +=   [$('#EntryUnicode').]+iif(oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_SHOW_UNICODE],[show],[hide])+[();]
+        l_cHtml += [    break;]
+    endfor
+    l_cHtml += [  default:]
+    l_cHtml += [  $('#SpanLength').hide();$('#SpanScale').hide();$('#SpanEnumeration').hide();]
+    l_cHtml += [};]
+
+    l_cHtml += [switch(par_cType) {]
+    l_cHtml += [  case 'L':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="13">False</option>')]
+        l_cHtml += [.append('<option value="14">True</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'D':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="10">Today</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'TOZ':]
+    l_cHtml += [  case 'TO':]
+    l_cHtml += [  case 'DTZ':]
+    l_cHtml += [  case 'DT':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="11">Now</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'I':]
+    l_cHtml += [  case 'IB':]
+    l_cHtml += [  case 'IS':]
+    l_cHtml += [  case 'N':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="15">Auto Increment</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  case 'UUI':]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [.append('<option value="12">Random uuid</option>')]
+        l_cHtml += [;break;]
+    l_cHtml += [  default:]
+        l_cHtml += [  $('#ComboDefaultType').find("option").remove().end()]
+        l_cHtml += [.append('<option value="0"></option>')]
+        l_cHtml += [.append('<option value="1">Custom</option>')]
+        l_cHtml += [;]
+    l_cHtml += [};]
+
+    l_cHtml += [$('#ComboDefaultType').val(par_cDefaultType);]  // Since we called .remove().end() we need to reset the value
+
+    l_cHtml += [switch(par_cDefaultType) {]
+    l_cHtml += [  case '1':]  // Custom Default
+    l_cHtml +=   [ $('#EntryDefaultCustom').show();]
+    l_cHtml +=   [ break;]
+
+    l_cHtml += [  default:]
+    l_cHtml +=   [ $('#EntryDefaultCustom').hide();]
+    l_cHtml +=   [ break;]
+    l_cHtml += [};]
 
 l_cHtml += [};]
+//----------------------------------------------------------------------------
 l_cHtml += [</script>] 
-oFcgi:p_cjQueryScript += [OnChangeType($("#ComboType").val());]
+
+oFcgi:p_cjQueryScript += l_cCallOnChangeSettings+[;]
 
 SetSelect2Support()
 
@@ -8719,15 +9421,38 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Used As</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select name="ComboUsedAs" id="ComboUsedAs" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedAs==1,[ selected],[])+[></option>]
+            if l_lShowPrimary
+                l_cHtml += [<option value="2"]+iif(l_nUsedAs==2,[ selected],[])+[>Primary Key</option>]
+            endif
+            l_cHtml += [<option value="3"]+iif(l_nUsedAs==3,[ selected],[])+[>Foreign Key</option>]
+            l_cHtml += [<option value="4"]+iif(l_nUsedAs==4,[ selected],[])+[>Support</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5">]
+        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
+            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
+            l_cHtml += [</select>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    l_cHtml += [<tr class="pb-5" id="EntryType">]
         l_cHtml += [<td class="pe-2 pb-3">Type</td>]
         l_cHtml += [<td class="pb-3">]
 
             l_cHtml += [<span class="pe-5">]
-                l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]  // ]+UPDATESAVEBUTTON+[
                 for l_iTypeCount := 1 to len(oFcgi:p_ColumnTypes)
-                    if !(oFcgi:p_ColumnTypes[l_iTypeCount,1] == "E")   // Enumeration not supported in TemplateColumn
-                        l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,1],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,1]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,2]+[</option>]
-                    endif
+                    l_cHtml += [<option value="]+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+["]+iif(l_cType==oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE],[ selected],[])+[>]+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_CODE]+" - "+oFcgi:p_ColumnTypes[l_iTypeCount,COLUMN_TYPES_NAME]+[</option>]
                 endfor
                 l_cHtml += [</select>]
             l_cHtml += [</span>]
@@ -8740,64 +9465,71 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<span class="pe-2">Scale</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextScale" id="TextScale" value="]+FcgiPrepFieldForValue(l_cScale)+[" size="2" maxlength="2"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [</span>]
 
+            // l_cHtml += [<span class="pe-5" id="SpanEnumeration" style="display: none;">]
+            //     l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboFk_Enumeration" id="ComboFk_Enumeration"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            //         l_cHtml += [<option value="0"]+iif(l_iFk_Enumeration==0,[ selected],[])+[></option>]
+            //         select ListOfEnumeration
+            //         scan all
+            //             l_cHtml += [<option value="]+Trans(ListOfEnumeration->Enumeration_pk)+["]+iif(ListOfEnumeration->Enumeration_pk == l_iFk_Enumeration,[ selected],[])+[>]+Allt(ListOfEnumeration->Enumeration_Name)+[&nbsp;(]+EnumerationImplementAsInfo(ListOfEnumeration->Enumeration_ImplementAs,ListOfEnumeration->Enumeration_ImplementLength)+[)]+[</option>]
+            //         endscan
+            //     l_cHtml += [</select>]
+            // l_cHtml += [</span>]
+
+
+
+
+
+
+
+
+
+            // if !empty(nvl(l_cLastNativeType,""))
+            //     l_cHtml += [<span class="pe-5" id="SpanLastNativeType">Last Sync/Log Type: ] + l_cLastNativeType + [</span>]
+            //     l_cHtml += [<input type="hidden" name="TextLastNativeType" value="]+FcgiPrepFieldForValue(l_cLastNativeType)+[">]
+            // endif
+
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryNullable">]
         l_cHtml += [<td class="pe-2 pb-3">Nullable</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNullable" id="CheckNullable" value="1"]+iif(l_lNullable," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryArray">]
         l_cHtml += [<td class="pe-2 pb-3">Array</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckArray" id="CheckArray" value="1"]+iif(l_lArray," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<span class="ps-3">(PostgreSQL Only)</span>]
         l_cHtml += [</div></td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Required</td>]
+   l_cHtml += [<tr class="pb-5" id="EntryDefaultType">]
+        l_cHtml += [<td class="pe-2 pb-3">Default Options</td>]
         l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRequired" id="ComboRequired"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_nRequired==1,[ selected],[])+[>Unknown</option>]
-            l_cHtml += [<option value="2"]+iif(l_nRequired==2,[ selected],[])+[>Yes</option>]
-            l_cHtml += [<option value="3"]+iif(l_nRequired==3,[ selected],[])+[>No</option>]
+            l_cHtml += [<select name="ComboDefaultType" id="ComboDefaultType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+l_cCallOnChangeSettings+[;']+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+            l_cHtml += [<option value="0"]+iif(l_nDefaultType==0,[ selected],[])+[></option>]
+            l_cHtml += [<option value="1"]+iif(l_nDefaultType==1,[ selected],[])+[></option>]
+            for l_nOptionNumber := 10 to 30   //Originally have to list all possible values, so that the initial OnChangeDefaultType() will position on the correct option.
+                l_cHtml += [<option value="]+trans(l_nOptionNumber)+["]+iif(l_nDefaultType==l_nOptionNumber,[ selected],[])+[></option>]
+            endfor
+            
             l_cHtml += [</select>]
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5">]
+    l_cHtml += [<tr class="pb-5" id="EntryDefaultCustom">]
         l_cHtml += [<td class="pe-2 pb-3">Default</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDefault" id="TextDefault" value="]+FcgiPrepFieldForValue(l_cDefault)+[" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDefaultCustom" id="TextDefaultCustom" value="]+FcgiPrepFieldForValue(l_cDefaultCustom)+[" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
-    l_cHtml += [<tr class="pb-5" id="TRUnicode">]
+    l_cHtml += [<tr class="pb-5" id="EntryUnicode">]
         l_cHtml += [<td class="pe-2 pb-3">Unicode</td>]
         l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
             l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckUnicode" id="CheckUnicode" value="1"]+iif(l_lUnicode," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
         l_cHtml += [</div></td>]
-    l_cHtml += [</tr>]
-
-    if l_lShowPrimary
-        l_cHtml += [<tr class="pb-5">]
-            l_cHtml += [<td class="pe-2 pb-3">Primary</td>]
-            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckPrimary" id="CheckPrimary" value="1"]+iif(l_lPrimary," checked","")+[ class="form-check-input"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [</div></td>]
-        l_cHtml += [</tr>]
-    endif
-
-    l_cHtml += [<tr class="pb-5">]
-        l_cHtml += [<td class="pe-2 pb-3">Used By</td>]
-        l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
-            l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
-            l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
-            l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
-            l_cHtml += [</select>]
-        l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
@@ -8852,6 +9584,8 @@ local l_cActionOnSubmit
 local l_iPk
 local l_cName
 local l_cAKA
+local l_nUsedAs
+local l_nUsedBy
 local l_nUseStatus
 local l_nDocStatus
 local l_cDescription
@@ -8862,11 +9596,9 @@ local l_nLength
 local l_cScale
 local l_nScale
 local l_lNullable
-local l_nRequired
-local l_cDefault
+local l_nDefaultType
+local l_cDefaultCustom
 local l_lUnicode
-local l_lPrimary
-local l_nUsedBy
 local l_lShowPrimary
 
 local l_iColumnOrder
@@ -8883,49 +9615,45 @@ oFcgi:TraceAdd("TemplateColumnEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_iPk              := Val(oFcgi:GetInputValue("TableKey"))
+l_iPk                 := Val(oFcgi:GetInputValue("TableKey"))
 
-l_lShowPrimary     := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
+l_lShowPrimary        := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
-l_cName            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
+l_cName               := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName"))
 
-l_cAKA             := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+l_cAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cAKA)
     l_cAKA := NIL
 endif
 
-l_nUseStatus       := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nUsedAs             := Val(oFcgi:GetInputValue("ComboUsedAs"))
 
-l_cType            := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
-l_lArray           := (oFcgi:GetInputValue("CheckArray") == "1")
+l_nUsedBy             := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
-l_cLength          := SanitizeInput(oFcgi:GetInputValue("TextLength"))
-l_nLength          := iif(empty(l_cLength),NULL,val(l_cLength))
+l_nUseStatus          := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
-l_cScale           := SanitizeInput(oFcgi:GetInputValue("TextScale"))
-l_nScale           := iif(empty(l_cScale),NULL,val(l_cScale))
+l_cType               := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
+l_lArray              := (oFcgi:GetInputValue("CheckArray") == "1")
 
-l_lNullable        := (oFcgi:GetInputValue("CheckNullable") == "1")
+l_cLength             := SanitizeInput(oFcgi:GetInputValue("TextLength"))
+l_nLength             := iif(empty(l_cLength),NULL,val(l_cLength))
 
-l_nRequired        := Val(oFcgi:GetInputValue("ComboRequired"))
+l_cScale              := SanitizeInput(oFcgi:GetInputValue("TextScale"))
+l_nScale              := iif(empty(l_cScale),NULL,val(l_cScale))
 
-l_cDefault         := SanitizeInput(oFcgi:GetInputValue("TextDefault"))
-if empty(l_cDefault)
-    l_cDefault := NIL
+l_lNullable           := (oFcgi:GetInputValue("CheckNullable") == "1")
+
+l_nDefaultType        := Val(oFcgi:GetInputValue("ComboDefaultType"))
+
+l_cDefaultCustom      := SanitizeInput(oFcgi:GetInputValue("TextDefaultCustom"))
+if empty(l_cDefaultCustom)
+    l_cDefaultCustom := NIL
 endif
 
-l_lUnicode         := (oFcgi:GetInputValue("CheckUnicode") == "1")
+l_lUnicode            := (oFcgi:GetInputValue("CheckUnicode") == "1")
 
-if l_lShowPrimary
-    l_lPrimary := (oFcgi:GetInputValue("CheckPrimary") == "1")
-else
-    l_lPrimary := .f.
-endif
-
-l_nUsedBy          := Val(oFcgi:GetInputValue("ComboUsedBy"))
-
-l_nDocStatus       := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cDescription     := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_nDocStatus          := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cDescription        := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -8947,20 +9675,23 @@ case l_cActionOnSubmit == "Save"
             if l_oDB1:Tally <> 0
                 l_cErrorMessage := "Duplicate Name"
             else
-                l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[1] == l_cType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
+                l_iTypePos := hb_Ascan(oFcgi:p_ColumnTypes,{|aSettings| aSettings[COLUMN_TYPES_CODE] == l_cType},,,.t.)   // Exact Match Search on the first column of the 2 dimension array.
                 if l_iTypePos <= 0
                     l_cErrorMessage := [Failed to find "Column Type" definition.]
                 else
                     
                     do case
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. hb_IsNIL(l_nLength)   // Length should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]) .and. hb_IsNIL(l_nLength)   // Length should be entered
                         l_cErrorMessage := "Length is required!"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. hb_IsNIL(l_nScale)   // Scale should be entered
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE]) .and. hb_IsNIL(l_nScale)   // Scale should be entered
                         l_cErrorMessage := "Scale is required! Enter at the minimum 0"
                         
-                    case (oFcgi:p_ColumnTypes[l_iTypePos,3]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,4]) .and. l_nScale >= l_nLength
+                    case (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH]) .and. (oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE]) .and. l_nScale >= l_nLength
                         l_cErrorMessage := "Scale must be smaller than Length!"
+
+                    case !hb_IsNIL(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE]) .and. l_nScale > oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE]
+                        l_cErrorMessage := "Scale may not exceed "+trans(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_MAX_SCALE])+"!"
 
                     otherwise
 
@@ -8970,12 +9701,12 @@ case l_cActionOnSubmit == "Save"
 
             if empty(l_cErrorMessage)
                 //Test that will not mark more than 1 field as Primary
-                if l_lPrimary
+                if l_nUsedAs = 2
                     with object l_oDB1
                         :Table("c2cd33e5-28e3-43b8-b387-26a86783273e","TemplateColumn")
                         :Column("TemplateColumn.pk","pk")
                         :Where([TemplateColumn.fk_TemplateTable = ^],par_iTemplateTablePk)
-                        :Where("TemplateColumn.Primary")
+                        :Where("TemplateColumn.UsedAs = 2")
                         if l_iPk > 0
                             :Where([TemplateColumn.pk != ^],l_iPk)
                         endif
@@ -9011,13 +9742,13 @@ case l_cActionOnSubmit == "Save"
         if oFcgi:p_nAccessLevelDD >= 5
             //Blank out any unneeded variable values
             if l_iTypePos > 0  //Should always be the case unless version issue with browser page
-                if !(oFcgi:p_ColumnTypes[l_iTypePos,3])
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_LENGTH])
                     l_nLength := NIL
                 endif
-                if !(oFcgi:p_ColumnTypes[l_iTypePos,4])
+                if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_SCALE])
                     l_nScale := NIL
                 endif
-                // if !(oFcgi:p_ColumnTypes[l_iTypePos,6])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
+                // if !(oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_UNICODE])    // Will not turn of the Unicode flag, in case column type is switched back to a char ...
                 //     l_lUnicode := .f.
                 // endif
             endif
@@ -9027,19 +9758,19 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("75d96e40-1f4f-44bf-9177-04d81d10e933","TemplateColumn")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("TemplateColumn.Name"      , l_cName)
-                :Field("TemplateColumn.AKA"       , l_cAKA)
-                :Field("TemplateColumn.UseStatus" , l_nUseStatus)
-                :Field("TemplateColumn.Type"      , l_cType)
-                :Field("TemplateColumn.Array"     , l_lArray)
-                :Field("TemplateColumn.Length"    , l_nLength)
-                :Field("TemplateColumn.Scale"     , l_nScale)
-                :Field("TemplateColumn.Nullable"  , l_lNullable)
-                :Field("TemplateColumn.Required"  , l_nRequired)
-                :Field("TemplateColumn.Default"   , l_cDefault)
-                :Field("TemplateColumn.Unicode"   , l_lUnicode)
-                :Field("TemplateColumn.Primary"   , l_lPrimary)
-                :Field("TemplateColumn.UsedBy"    , l_nUsedBy)
+                :Field("TemplateColumn.Name"               , l_cName)
+                :Field("TemplateColumn.AKA"                , l_cAKA)
+                :Field("TemplateColumn.UsedAs"             , l_nUsedAs)
+                :Field("TemplateColumn.UsedBy"             , l_nUsedBy)
+                :Field("TemplateColumn.UseStatus"          , l_nUseStatus)
+                :Field("TemplateColumn.Type"               , l_cType)
+                :Field("TemplateColumn.Array"              , l_lArray)
+                :Field("TemplateColumn.Length"             , l_nLength)
+                :Field("TemplateColumn.Scale"              , l_nScale)
+                :Field("TemplateColumn.Nullable"           , l_lNullable)
+                :Field("TemplateColumn.DefaultType"        , l_nDefaultType)
+                :Field("TemplateColumn.DefaultCustom"      , l_cDefaultCustom)
+                :Field("TemplateColumn.Unicode"            , l_lUnicode)
             endif
             :Field("TemplateColumn.DocStatus"       , l_nDocStatus)
             :Field("TemplateColumn.Description"     , iif(empty(l_cDescription),NULL,l_cDescription))
@@ -9060,6 +9791,7 @@ case l_cActionOnSubmit == "Save"
 
         endwith
 
+        DataDictionaryFixAndTest(par_iApplicationPk)
         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTemplateColumns/"+par_cURLApplicationLinkCode+"/"+par_cURLTemplateTableName+"/")
     endif
 
@@ -9078,22 +9810,22 @@ case l_cActionOnSubmit == "Delete"   // Column
 endcase
 
 if !empty(l_cErrorMessage)
-    l_hValues["Name"]        := l_cName
-    l_hValues["AKA"]         := l_cAKA
-    l_hValues["UseStatus"]   := l_nUseStatus
-    l_hValues["DocStatus"]   := l_nDocStatus
-    l_hValues["Description"] := l_cDescription
-    l_hValues["Type"]        := l_cType
-    l_hValues["Array"]       := l_lArray
-    l_hValues["Length"]      := l_nLength
-    l_hValues["Scale"]       := l_nScale
-    l_hValues["Nullable"]    := l_lNullable
-    l_hValues["Required"]    := l_nRequired
-    l_hValues["Default"]     := l_cDefault
-    l_hValues["Unicode"]     := l_lUnicode
-    l_hValues["ShowPrimary"] := l_lShowPrimary
-    l_hValues["Primary"]     := l_lPrimary
-    l_hValues["UsedBy"]      := l_nUsedBy
+    l_hValues["Name"]               := l_cName
+    l_hValues["AKA"]                := l_cAKA
+    l_hValues["UsedAs"]             := l_nUsedAs
+    l_hValues["UsedBy"]             := l_nUsedBy
+    l_hValues["UseStatus"]          := l_nUseStatus
+    l_hValues["DocStatus"]          := l_nDocStatus
+    l_hValues["Description"]        := l_cDescription
+    l_hValues["Type"]               := l_cType
+    l_hValues["Array"]              := l_lArray
+    l_hValues["Length"]             := l_nLength
+    l_hValues["Scale"]              := l_nScale
+    l_hValues["Nullable"]           := l_lNullable
+    l_hValues["DefaultType"]        := l_nDefaultType
+    l_hValues["DefaultCustom"]      := l_cDefaultCustom
+    l_hValues["Unicode"]            := l_lUnicode
+    l_hValues["ShowPrimary"]        := l_lShowPrimary
 
     l_cHtml += TemplateColumnEditFormBuild(par_iApplicationPk,par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName,l_cErrorMessage,l_iPk,l_hValues)
 endif
@@ -9243,7 +9975,7 @@ with object l_oDB1
 endwith
 return l_cErrorMessage
 //=================================================================================================================
-function CascadeDeleteNameSpace(par_iApplicationPk,par_iNameSpacePk)
+function CascadeDeleteNamespace(par_iApplicationPk,par_iNamespacePk)
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
 local l_cErrorMessage := ""
@@ -9252,14 +9984,14 @@ with object l_oDB1
 
     :Table("40f4bf76-ffc0-45cd-ba04-f84dad486ea3","Table")
     :Column("Table.pk","pk")
-    :Where("Table.fk_NameSpace = ^" , par_iNameSpacePk)
-    :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+    :Where("Table.fk_Namespace = ^" , par_iNamespacePk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteNamespace")
     if :Tally < 0
-        l_cErrorMessage := "Failed to delete NameSpace. Error 1."
+        l_cErrorMessage := "Failed to delete Namespace. Error 1."
     else
-        select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+        select ListOfRecordsToDeleteInCascadeDeleteNamespace
         scan all
-            l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
+            l_cErrorMessage := CascadeDeleteTable(par_iApplicationPk,ListOfRecordsToDeleteInCascadeDeleteNamespace->pk)
             if !empty(l_cErrorMessage)
                 exit
             endif
@@ -9270,15 +10002,15 @@ with object l_oDB1
         :Table("6f7e5169-b207-4cf9-be62-d61400b38de4","Enumeration")
         :Column("EnumValue.pk","pk")
         :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
-        :Where("Enumeration.fk_NameSpace = ^" , par_iNameSpacePk)
-        :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+        :Where("Enumeration.fk_Namespace = ^" , par_iNamespacePk)
+        :SQL("ListOfRecordsToDeleteInCascadeDeleteNamespace")
         if :Tally < 0
-            l_cErrorMessage := "Failed to delete NameSpace. Error 2."
+            l_cErrorMessage := "Failed to delete Namespace. Error 2."
         else
-            select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+            select ListOfRecordsToDeleteInCascadeDeleteNamespace
             scan all
-                if !:Delete("6ebff3a3-99db-40ef-ade6-a6e9c2642423","EnumValue",ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
-                    l_cErrorMessage := "Failed to delete NameSpace. Error 3."
+                if !:Delete("6ebff3a3-99db-40ef-ade6-a6e9c2642423","EnumValue",ListOfRecordsToDeleteInCascadeDeleteNamespace->pk)
+                    l_cErrorMessage := "Failed to delete Namespace. Error 3."
                     exit
                 endif
             endscan
@@ -9286,23 +10018,23 @@ with object l_oDB1
             if empty(l_cErrorMessage)
                 :Table("980a812a-b5c6-4296-96f5-ec8e5ed66947","Enumeration")
                 :Column("Enumeration.pk","pk")
-                :Where("Enumeration.fk_NameSpace = ^" , par_iNameSpacePk)
-                :SQL("ListOfRecordsToDeleteInCascadeDeleteNameSpace")
+                :Where("Enumeration.fk_Namespace = ^" , par_iNamespacePk)
+                :SQL("ListOfRecordsToDeleteInCascadeDeleteNamespace")
                 if :Tally < 0
-                    l_cErrorMessage := "Failed to delete NameSpace. Error 4."
+                    l_cErrorMessage := "Failed to delete Namespace. Error 4."
                 else
-                    select ListOfRecordsToDeleteInCascadeDeleteNameSpace
+                    select ListOfRecordsToDeleteInCascadeDeleteNamespace
                     scan all
-                        if !:Delete("4c254a46-f12a-4a03-94d1-5850fa61af22","Enumeration",ListOfRecordsToDeleteInCascadeDeleteNameSpace->pk)
-                            l_cErrorMessage := "Failed to delete NameSpace. Error 5."
+                        if !:Delete("4c254a46-f12a-4a03-94d1-5850fa61af22","Enumeration",ListOfRecordsToDeleteInCascadeDeleteNamespace->pk)
+                            l_cErrorMessage := "Failed to delete Namespace. Error 5."
                             exit
                         endif
                     endscan
 
                     if empty(l_cErrorMessage)
-                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,par_iNameSpacePk)
-                        if !:Delete("1e8e8f31-df5d-47bf-9b1b-de3f87a6792a","NameSpace",par_iNameSpacePk)
-                            l_cErrorMessage := "Failed to delete NameSpace. Error 6."
+                        CustomFieldsDelete(par_iApplicationPk,USEDON_NAMESPACE,par_iNamespacePk)
+                        if !:Delete("1e8e8f31-df5d-47bf-9b1b-de3f87a6792a","Namespace",par_iNamespacePk)
+                            l_cErrorMessage := "Failed to delete Namespace. Error 6."
                         endif
                     endif
                 endif
@@ -9391,4 +10123,54 @@ with object l_oDB1
 endwith
 return l_cErrorMessage
 //=================================================================================================================
+function GetColumnDefault(par_lForExport,par_cColumnType,par_nColumnDefaultType,par_cColumnDefaultCustom)
+local l_cResult
+local l_cColumnType := alltrim(par_cColumnType)
+
+do case
+case par_nColumnDefaultType == 0  // No Default
+    l_cResult := ""
+case par_nColumnDefaultType == 1  // Custom
+    l_cResult := nvl(par_cColumnDefaultCustom,"")
+case l_cColumnType == "D"
+    do case
+    case par_nColumnDefaultType == 10
+        l_cResult := iif(par_lForExport,"Wharf-","")+"Today()"
+    otherwise
+        l_cResult := ""
+    endcase
+case vfp_inlist(l_cColumnType,"TOZ","TO","DTZ","DT")
+    do case
+    case par_nColumnDefaultType == 11
+        l_cResult := iif(par_lForExport,"Wharf-","")+"Now()"
+    otherwise
+        l_cResult := ""
+    endcase
+case vfp_inlist(l_cColumnType,"I","IB","IS","N")
+    do case
+    case par_nColumnDefaultType == 15
+        l_cResult := iif(par_lForExport,"Wharf-","")+"AutoIncrement()"
+    otherwise
+        l_cResult := ""
+    endcase
+case l_cColumnType == "UUI"
+    do case
+    case par_nColumnDefaultType == 12
+        l_cResult := iif(par_lForExport,"Wharf-","")+"uuid()"
+    otherwise
+        l_cResult := ""
+    endcase
+case l_cColumnType == "L"
+    do case
+    case par_nColumnDefaultType == 13
+        l_cResult := iif(par_lForExport,"Wharf-","")+"False"
+    case par_nColumnDefaultType == 14
+        l_cResult := iif(par_lForExport,"Wharf-","")+"True"
+    otherwise
+        l_cResult := ""
+    endcase
+otherwise
+    l_cResult := ""
+endcase
+return l_cResult
 //=================================================================================================================

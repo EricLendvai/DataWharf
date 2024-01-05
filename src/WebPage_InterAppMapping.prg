@@ -183,8 +183,8 @@ local l_cInfo
 local l_json_Categories
 local l_cInputObjectName
 local l_cInputValue
-local l_nNumberOfNameSpacesInTablesFrom
-local l_nNumberOfNameSpacesInTablesTo
+local l_nNumberOfNamespacesInTablesFrom
+local l_nNumberOfNamespacesInTablesTo
 
 oFcgi:TraceAdd("InterAppMappingMapTablesBuild")
 
@@ -236,22 +236,22 @@ l_cHtml += [<div class="m-3">]
         //Determine if we have more than 1 name space
         :Table("1a4574df-d0df-4082-9fb6-52785057ade0","Table")
         :Distinct(.t.)
-        :Column("NameSpace.pk" , "NameSpace_pk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")   // join against table to ensure we only count NameSpaces with at least one table.
-        :Where("NameSpace.fk_Application = ^",l_iApplicationFromPk)
+        :Column("Namespace.pk" , "Namespace_pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")   // join against table to ensure we only count Namespaces with at least one table.
+        :Where("Namespace.fk_Application = ^",l_iApplicationFromPk)
         :SQL()
-        l_nNumberOfNameSpacesInTablesFrom := :tally
+        l_nNumberOfNamespacesInTablesFrom := :tally
 
 
         :Table("c253234c-e44c-4279-a132-5ad3745f4907","Table")
         :Column("Table.pk"         ,"pk")
-        :Column("NameSpace.Name"   ,"NameSpace_Name")
+        :Column("Namespace.Name"   ,"Namespace_Name")
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Upper(NameSpace.Name)","tag1")
+        :Column("Upper(Namespace.Name)","tag1")
         :Column("Upper(Table.Name)","tag2")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationFromPk)
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationFromPk)
         :OrderBy("tag1")
         :OrderBy("tag2")
         :SQL("ListOfTablesFrom")
@@ -262,21 +262,21 @@ l_cHtml += [<div class="m-3">]
         //Determine if we have more than 1 name space
         :Table("40d0b492-60cc-45cc-b5c6-f07c2c4cb4f3","Table")
         :Distinct(.t.)
-        :Column("NameSpace.pk" , "NameSpace_pk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")   // join against table to ensure we only count NameSpaces with at least one table.
-        :Where("NameSpace.fk_Application = ^",l_iApplicationToPk)
+        :Column("Namespace.pk" , "Namespace_pk")
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")   // join against table to ensure we only count Namespaces with at least one table.
+        :Where("Namespace.fk_Application = ^",l_iApplicationToPk)
         :SQL()
-        l_nNumberOfNameSpacesInTablesTo := :tally
+        l_nNumberOfNamespacesInTablesTo := :tally
 
         :Table("5b5fd2e4-8675-4bfe-b1ff-65933f4f257e","Table")
         :Column("Table.pk"         ,"pk")
-        :Column("NameSpace.Name"   ,"NameSpace_Name")
+        :Column("Namespace.Name"   ,"Namespace_Name")
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Upper(NameSpace.Name)","tag1")
+        :Column("Upper(Namespace.Name)","tag1")
         :Column("Upper(Table.Name)","tag2")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",l_iApplicationToPk)
+        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",l_iApplicationToPk)
         :OrderBy("tag1")
         :OrderBy("tag2")
         :SQL("ListOfTablesTo")
@@ -289,8 +289,8 @@ l_cHtml += [<div class="m-3">]
         if !empty(l_json_Categories)
             l_json_Categories += [,]
         endif
-        if l_nNumberOfNameSpacesInTablesTo > 1
-            l_cInfo = strtran(strtran(ListOfTablesTo->NameSpace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
+        if l_nNumberOfNamespacesInTablesTo > 1
+            l_cInfo = strtran(strtran(ListOfTablesTo->Namespace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
         else
             l_cInfo = strtran(strtran(ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ])
         endif
@@ -314,20 +314,20 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="]+iif(l_nNumberOfNameSpacesInTablesFrom > 1,"2","1")+[">]+lcApplicationNameFrom+[ Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]+lcApplicationNameTo+[ Tables</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Map</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfNamespacesInTablesFrom > 1,"2","1")+[">]+lcApplicationNameFrom+[ Tables (]+Trans(l_iNumberOfTablesInList)+[)</th>]
+                    l_cHtml += [<th class="bg-secondary"></th>]  // Extra Column
+                    l_cHtml += [<th class="text-white text-center">]+lcApplicationNameTo+[ Tables</th>]
+                    l_cHtml += [<th class="text-white text-center">Map</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    if l_nNumberOfNameSpacesInTablesFrom > 1
-                        l_cHtml += [<th class="GridHeaderRowCells text-white">Name Space</th>]
+                    if l_nNumberOfNamespacesInTablesFrom > 1
+                        l_cHtml += [<th class="text-white">Namespace</th>]
                     endif
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Table Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Table Names</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Columns</th>]
+                    l_cHtml += [<th class="text-white">Table Name</th>]
+                    l_cHtml += [<th class="bg-secondary"></th>]  // Extra Column
+                    l_cHtml += [<th class="text-white">Table Names</th>]
+                    l_cHtml += [<th class="text-white text-center">Columns</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfTablesFrom
@@ -337,14 +337,14 @@ l_cHtml += [<div class="m-3">]
 
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
-                        if l_nNumberOfNameSpacesInTablesFrom > 1
+                        if l_nNumberOfNamespacesInTablesFrom > 1
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += Allt(ListOfTablesFrom->NameSpace_Name)
+                                l_cHtml += Allt(ListOfTablesFrom->Namespace_Name)
                             l_cHtml += [</td>]
                         endif
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTablesFrom->NameSpace_Name)+[/]+ListOfTablesFrom->Table_Name+[/">]+ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)+[</a>]
+                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTablesFrom->Namespace_Name)+[/]+ListOfTablesFrom->Table_Name+[/">]+ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)+[</a>]
                             l_cHtml += ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)
                         l_cHtml += [</td>]
 
@@ -408,8 +408,8 @@ l_hValues["ApplicationToPk"]   := l_iApplicationToPk
 with object l_oDB_ListOfTablesFrom
     :Table("1b10a823-d84e-48d5-ba77-5d6f87d50385","Table")
     :Column("Table.pk"         ,"pk")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^",l_iApplicationFromPk)
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^",l_iApplicationFromPk)
     :SQL("ListOfTablesFrom")
 endwith
 
@@ -429,11 +429,11 @@ case vfp_inlist(l_cActionOnSubmit,"SaveAndStay","SaveAndReturn","MapColumns")
         :Column("Table_From.pk"           , "fk_TableFrom")
         :Column("TableMapping.fk_TableTo" , "fk_TableTo")
         :Join("inner","Table"    ,"Table_From"    ,"TableMapping.fk_TableFrom = Table_From.pk")
-        :Join("inner","NameSpace","NameSpace_From","Table_From.fk_NameSpace = NameSpace_From.pk")
+        :Join("inner","Namespace","Namespace_From","Table_From.fk_Namespace = Namespace_From.pk")
         :Join("inner","Table"    ,"Table_To","TableMapping.fk_TableTo = Table_To.pk")
-        :Join("inner","NameSpace","NameSpace_To","Table_To.fk_NameSpace = NameSpace_To.pk")
-        :Where("NameSpace_From.fk_Application = ^" , l_iApplicationFromPk)
-        :Where("NameSpace_To.fk_Application = ^"   , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
+        :Join("inner","Namespace","Namespace_To","Table_To.fk_Namespace = Namespace_To.pk")
+        :Where("Namespace_From.fk_Application = ^" , l_iApplicationFromPk)
+        :Where("Namespace_To.fk_Application = ^"   , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
         :SQL("ListOfMappingsOnFile")
 
         l_nNumberOfMappingsOnFile := :Tally
@@ -498,9 +498,9 @@ case vfp_inlist(l_cActionOnSubmit,"SaveAndStay","SaveAndReturn","MapColumns")
                 :Join("inner","Column"   ,"Column_From" ,"ColumnMapping.fk_ColumnFrom = Column_From.pk")
                 :Join("inner","Column"   ,"Column_To"   ,"ColumnMapping.fk_ColumnTo = Column_To.pk")
                 :Join("inner","Table"    ,"Table_To"    ,"Column_To.fk_Table = Table_To.pk")
-                :Join("inner","NameSpace","NameSpace_To","Table_To.fk_NameSpace = NameSpace_To.pk")
+                :Join("inner","Namespace","Namespace_To","Table_To.fk_Namespace = Namespace_To.pk")
                 :Where("Column_From.fk_Table = ^" , l_iTableFromPk)
-                :Where("NameSpace_To.fk_Application = ^"   , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
+                :Where("Namespace_To.fk_Application = ^"   , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
                 :SQL("ListOfMappingsOnFile")
                 
             endwith
@@ -591,14 +591,14 @@ with object l_oDB1
     :Table("6d92b143-0a73-4bfe-b147-23fd801938c0","Table")
     :Column("Table.Name"                 , "Table_Name")
     :Column("Table.AKA"                  , "Table_AKA")
-    :Column("NameSpace.Name"             , "NameSpace_Name")
-    :Column("NameSpace.AKA"              , "NameSpace_AKA")
+    :Column("Namespace.Name"             , "Namespace_Name")
+    :Column("Namespace.AKA"              , "Namespace_AKA")
     :Column("Application.SupportColumns" , "Application_SupportColumns")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Application","","Namespace.fk_Application = Application.pk")
     l_oData := :Get(l_iTableFromPk)
     
-    lcTableInfoFrom := l_oData:NameSpace_Name+FormatAKAForDisplay(l_oData:NameSpace_AKA)+"."+l_oData:Table_Name+FormatAKAForDisplay(l_oData:Table_AKA)
+    lcTableInfoFrom := l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+"."+l_oData:Table_Name+FormatAKAForDisplay(l_oData:Table_AKA)
 
     l_cApplicationSupportColumns := nvl(l_oData:Application_SupportColumns,"")
 
@@ -607,15 +607,15 @@ endwith
 with object l_oDB_ListOfTablesTo
     :Table("322d4d23-4ec6-43d2-9ef3-0010b1b44b67","TableMapping")
     :Column("Table.pk"             , "pk")
-    :Column("NameSpace.Name"       , "NameSpace_Name")
-    :Column("NameSpace.AKA"        , "NameSpace_AKA")
+    :Column("Namespace.Name"       , "Namespace_Name")
+    :Column("Namespace.AKA"        , "Namespace_AKA")
     :Column("Table.Name"           , "Table_Name")
     :Column("Table.AKA"            , "Table_AKA")
-    :Column("Upper(NameSpace.Name)", "tag1")
+    :Column("Upper(Namespace.Name)", "tag1")
     :Column("Upper(Table.Name)"    , "tag2")
     :Join("inner","Table","","TableMapping.fk_TableTo = Table.pk")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^" , l_iApplicationToPk)  // Redundant test
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^" , l_iApplicationToPk)  // Redundant test
     :Where("TableMapping.fk_TableFrom = ^" , l_iTableFromPk)
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -628,19 +628,19 @@ with object l_oDB_ListOfColumnsTo
     :Table("bb0c5681-6677-4add-b1ae-06cf7e1294d2","TableMapping")
     // :Column("Table.pk"             , "Table_pk")
     :Column("Column.pk"            , "Column_pk")
-    :Column("NameSpace.Name"       , "NameSpace_Name")
-    :Column("NameSpace.AKA"        , "NameSpace_AKA")
+    :Column("Namespace.Name"       , "Namespace_Name")
+    :Column("Namespace.AKA"        , "Namespace_AKA")
     :Column("Table.Name"           , "Table_Name")
     :Column("Table.AKA"            , "Table_AKA")
     :Column("Column.Name"          , "Column_Name")
     :Column("Column.AKA"           , "Column_AKA")
-    :Column("Upper(NameSpace.Name)", "tag1")
+    :Column("Upper(Namespace.Name)", "tag1")
     :Column("Upper(Table.Name)"    , "tag2")
     :Column("Column.Order"         , "Column_Order")
     :Join("inner","Table","","TableMapping.fk_TableTo = Table.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Where("NameSpace.fk_Application = ^" , l_iApplicationToPk)  // Redundant test
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^" , l_iApplicationToPk)  // Redundant test
     :Where("TableMapping.fk_TableFrom = ^" , l_iTableFromPk)
     :OrderBy("tag1")
     :OrderBy("tag2")
@@ -676,14 +676,14 @@ l_cHtml += [<div class="m-3">]
         :Column("Column.Length"         ,"Column_Length")
         :Column("Column.Scale"          ,"Column_Scale")
         :Column("Column.Nullable"       ,"Column_Nullable")
-        :Column("Column.Default"        ,"Column_Default")
+        :Column("Column.DefaultCustom"        ,"Column_DefaultCustom")
         :Column("Column.Unicode"        ,"Column_Unicode")
-        :Column("Column.Primary"        ,"Column_Primary")
+        :Column("Column.PrimaryMode"    ,"Column_PrimaryMode")
         :Column("Column.UsedBy"         ,"Column_UsedBy")
         :Column("Column.fk_TableForeign","Column_fk_TableForeign")
         :Column("Column.fk_Enumeration" ,"Column_fk_Enumeration")
 
-        :Column("NameSpace.Name"                ,"NameSpace_Name")
+        :Column("Namespace.Name"                ,"Namespace_Name")
         :Column("Table.Name"                    ,"Table_Name")
         :Column("Table.AKA"                     ,"Table_AKA")
         :Column("Enumeration.Name"              ,"Enumeration_Name")
@@ -692,7 +692,7 @@ l_cHtml += [<div class="m-3">]
         :Column("Enumeration.ImplementLength"   ,"Enumeration_ImplementLength")
         
         :Join("left","Table"      ,"","Column.fk_TableForeign = Table.pk")
-        :Join("left","NameSpace"  ,"","Table.fk_NameSpace = NameSpace.pk")
+        :Join("left","Namespace"  ,"","Table.fk_Namespace = Namespace.pk")
         :Join("left","Enumeration","","Column.fk_Enumeration  = Enumeration.pk")
 
         :Where("Column.fk_Table = ^" , l_iTableFromPk)
@@ -712,7 +712,7 @@ l_cHtml += [<div class="m-3">]
             // select ListOfTablesTo
             // scan all
             //     l_iTableToPk := ListOfTablesTo->pk
-            //     l_cTableToInfo := strtran(ListOfTablesTo->NameSpace_Name+FormatAKAForDisplay(ListOfTablesTo->NameSpace_AKA) +"."+ ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),"&nbsp;"," ")
+            //     l_cTableToInfo := strtran(ListOfTablesTo->Namespace_Name+FormatAKAForDisplay(ListOfTablesTo->Namespace_AKA) +"."+ ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),"&nbsp;"," ")
             //     l_nTableCounter += 1
             //     if l_nTableCounter > 1
             //         l_cColumnsToOptions += ","
@@ -740,7 +740,7 @@ l_cHtml += [<div class="m-3">]
                 if l_nColumnCounter > 1
                     l_cColumnsToOptions += ","
                 endif
-                l_cTableToInfo  := strtran(ListOfColumnsTo->NameSpace_Name+FormatAKAForDisplay(ListOfColumnsTo->NameSpace_AKA) +"."+ ListOfColumnsTo->Table_Name+FormatAKAForDisplay(ListOfColumnsTo->Table_AKA),"&nbsp;"," ")
+                l_cTableToInfo  := strtran(ListOfColumnsTo->Namespace_Name+FormatAKAForDisplay(ListOfColumnsTo->Namespace_AKA) +"."+ ListOfColumnsTo->Table_Name+FormatAKAForDisplay(ListOfColumnsTo->Table_AKA),"&nbsp;"," ")
                 l_cColumnToInfo := ListOfColumnsTo->Column_Name+strtran(FormatAKAForDisplay(ListOfColumnsTo->Column_AKA),[&nbsp;],[ ])+[ (]+l_cTableToInfo+[)]
                 l_cColumnsToOptions += [{id:]+Trans(ListOfColumnsTo->Column_pk)+[,text:"]+l_cColumnToInfo+["}]
                 l_hColumnToNames[ListOfColumnsTo->Column_pk] := l_cColumnToInfo   // Will be used to assist in setting up default <select> <option>
@@ -773,31 +773,31 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">]+lcApplicationNameFrom+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]+lcApplicationNameTo+[</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="6">]+lcApplicationNameFrom+[</th>]
+                    l_cHtml += [<th class="bg-secondary"></th>]  // Extra Column
+                    l_cHtml += [<th class="text-white text-center">]+lcApplicationNameTo+[</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="6">]+lcTableInfoFrom+[</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">]
+                    l_cHtml += [<th class="text-white text-center" colspan="6">]+lcTableInfoFrom+[</th>]
+                    l_cHtml += [<th class="bg-secondary"></th>]  // Extra Column
+                    l_cHtml += [<th class="text-white text-center">]
                         select ListOfTablesTo
                         scan all
-                            l_cHtml += strtran(strtran(ListOfTablesTo->NameSpace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ]) + [<br>]
+                            l_cHtml += strtran(strtran(ListOfTablesTo->Namespace_Name+"."+ListOfTablesTo->Table_Name+FormatAKAForDisplay(ListOfTablesTo->Table_AKA),["],[ ]),['],[ ]) + [<br>]
                         endscan
                     l_cHtml += [</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white"></th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Nullable</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Foreign Key To</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells bg-secondary"></th>]  // Extra Column
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Map To</th>]
+                    l_cHtml += [<th class="text-white"></th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Type</th>]
+                    l_cHtml += [<th class="text-white">Nullable</th>]
+                    l_cHtml += [<th class="text-white">Foreign Key To</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="bg-secondary"></th>]  // Extra Column
+                    l_cHtml += [<th class="text-white">Map To</th>]
                 l_cHtml += [</tr>]
 
                 select ListColumnsFrom
@@ -808,12 +808,12 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             do case
-                            case ListColumnsFrom->Column_Primary
+                            case ListColumnsFrom->Column_UsedAs = 2
                                 l_cHtml += [<i class="bi bi-key"></i>]
-                            case " "+ListColumnsFrom->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
+                            case ListColumnsFrom->Column_UsedAs = 3   // !hb_IsNIL(ListColumnsFrom->Table_Name)
+                                l_cHtml += [<i class="bi-arrow-right"></i>]
+                            case (ListColumnsFrom->Column_UsedAs = 4) .or. (" "+ListColumnsFrom->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
                                 l_cHtml += [<i class="bi bi-tools"></i>]
-                            case !hb_IsNIL(ListColumnsFrom->Table_Name)
-                                l_cHtml += [<i class="bi-arrow-left"></i>]
                             endcase
                         l_cHtml += [</td>]
 
@@ -847,7 +847,7 @@ l_cHtml += [<div class="m-3">]
                         // Foreign Key To
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             if !hb_IsNIL(ListColumnsFrom->Table_Name)
-                                l_cHtml += ListColumnsFrom->NameSpace_Name+[.]+ListColumnsFrom->Table_Name+FormatAKAForDisplay(ListColumnsFrom->Table_AKA)
+                                l_cHtml += ListColumnsFrom->Namespace_Name+[.]+ListColumnsFrom->Table_Name+FormatAKAForDisplay(ListColumnsFrom->Table_AKA)
                             endif
                         l_cHtml += [</td>]
 
@@ -941,9 +941,9 @@ case vfp_inlist(l_cActionOnSubmit,"SaveStay","SaveReturn")
         :Join("inner","Column"   ,"Column_From" ,"ColumnMapping.fk_ColumnFrom = Column_From.pk")
         :Join("inner","Column"   ,"Column_To"   ,"ColumnMapping.fk_ColumnTo = Column_To.pk")
         :Join("inner","Table"    ,"Table_To"    ,"Column_To.fk_Table = Table_To.pk")
-        :Join("inner","NameSpace","NameSpace_To","Table_To.fk_NameSpace = NameSpace_To.pk")
+        :Join("inner","Namespace","Namespace_To","Table_To.fk_Namespace = Namespace_To.pk")
         :Where("Column_From.fk_Table = ^" , l_iTableFromPk)
-        :Where("NameSpace_To.fk_Application = ^" , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
+        :Where("Namespace_To.fk_Application = ^" , l_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
         :SQL("ListOfMappingsOnFile")
 
         l_nNumberOfMappingsOnFile := :Tally
@@ -1019,11 +1019,11 @@ with object l_oDB_ListOfTableMapping
     :Column("TableFrom.pk"            , "fk_TableFrom")
     :Column("TableMapping.fk_TableTo" , "fk_TableTo")
     :Join("inner","Table"    ,"TableFrom"    ,"TableMapping.fk_TableFrom = TableFrom.pk")
-    :Join("inner","NameSpace","NameSpaceFrom","TableFrom.fk_NameSpace = NameSpaceFrom.pk")
+    :Join("inner","Namespace","NamespaceFrom","TableFrom.fk_Namespace = NamespaceFrom.pk")
     :Join("inner","Table"    ,"TableTo","TableMapping.fk_TableTo = TableTo.pk")
-    :Join("inner","NameSpace","NameSpaceTo","TableTo.fk_NameSpace = NameSpaceTo.pk")
-    :Where("NameSpaceFrom.fk_Application = ^" , par_iApplicationFromPk)
-    :Where("NameSpaceTo.fk_Application = ^"   , par_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
+    :Join("inner","Namespace","NamespaceTo","TableTo.fk_Namespace = NamespaceTo.pk")
+    :Where("NamespaceFrom.fk_Application = ^" , par_iApplicationFromPk)
+    :Where("NamespaceTo.fk_Application = ^"   , par_iApplicationToPk)    // To ensure we only get the tables from the Application To list.
     :OrderBy("fk_TableFrom")
     :SQL("ListOfMappingsOnFile")
 

@@ -272,17 +272,17 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">APITokens (]+Trans(l_nNumberOfAPITokens)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="7">APITokens (]+Trans(l_nNumberOfAPITokens)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Access Mode</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Projects</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Applications</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">API Endpoints</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Access Mode</th>]
+                    l_cHtml += [<th class="text-white">Projects</th>]
+                    l_cHtml += [<th class="text-white">Applications</th>]
+                    l_cHtml += [<th class="text-white">API Endpoints</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfAPITokens

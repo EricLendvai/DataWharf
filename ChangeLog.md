@@ -1,17 +1,43 @@
 # DataWharf - Change Log
 
+## 01/05/2023 v 3.0
+* WARNING, THE FIRST RUN using the new version may take several minutes to run, since a lot of data cleanup/restructuring will occur.
+* Major version change, due to p_Schema structure change and the use of DataWharf to manage its own Schema.
+* REQUIRES Harbour_ORM version 4.0 minimum.
+* REQUIRES Harbour_FastCGI version 1.7 minimum
+* Added support for JSONB PostgreSQL native field types.  STILL UNDER DEVELOPMENT. Bad DEFAULT
+* In "Applications/Data Dictionaries" new export option "Export to JSON".
+* Added support for API Tokens to be past in the URL additionally from being able to add the token in a header meta data.   
+* New APIs "ApplicationHarbourConfigurationExport" and "ApplicationJSONConfigurationExport". You must add the endpoint to an API Token to call it.   
+The following is an example for calling the an api:   
+```api/ApplicationHarbourConfigurationExport?application=<ApplicationLinkCode>&AccessToken=<Token>```
+* Option to add a Scale/Precision to field types including a time component. Max scale set at 6.
+* Fixed issue of double rendering diagrams.
+* Fix to ignore request to resource files, like the favicon.ico.
+* New application settings: "Auto Increment Integer and Big Integer Primary Keys" and "Auto Assign UUID Primary Keys".
+* In Columns ability to specify how a primary field can be auto set.
+* Removed the "Required" property for columns. This concept to be implemented in WharfSystems, since it is related to UI. The Nullable property is already sufficient. 
+* The export of Harbour_ORM changed to match the requirements of Harbour_ORM version 4+.
+* Data dictionary integrity test option in "Application Setup". Extra Warning column will appear in Tables, Columns, Enumerations and Indexes list.
+* Foreign keys can be marked as "Optional". In Diagram mode the edge will have an "Open" arrow, instead of a solid one.
+* DataWharf's own database will not use "0" integer in foreign keys. Nulls are now supported internally. This is due to auto-conversion for 0 and NULL made by the Harbour_ORM.
+* New "Default Presets" in Columns and Template Columns. This will simplify setting up defaults in most cases.
+* DataWharf's own database has foreign key constraints.
+
+
 ## 11/12/2023 v 2.60
-* REQUIRES hb_orm version 3.14 minimum.
+* REQUIRES Harbour_ORM version 3.14 minimum.
 * Added in Visualizations (Diagrams) "My Settings" the option to be current diagram (Application and Modeling) specific.
 * Fix saving "Right Panel Scale" in "My Settings".
 * Added support for PostgreSQL UNLOGGED table setting.
+* Change casing and word separation from "Name Space"/"NameSpace" to "Namespace"
 
 ## 11/05/2023 v 2.59
 * Minor Enhancement to make it easier to select and copy to clipboard table and link names in Application Visualization.
 * Enhancements to integrate with WharfSystems.
 * Removed the "Version" table, since schema management will be done via WharfSystems Stories.
 * Added field UserSetting.ValueType to align with WharfSystems.
-* "Export for DataWharf Imports" option at the level of a single table. For now only related NameSpace, Columns, Index and Enumerations are exported only. Foreign key links will not be set during imports. 
+* "Export for DataWharf Imports" option at the level of a single table. For now only related Namespace, Columns, Index and Enumerations are exported only. Foreign key links will not be set during imports. 
 * Added prefix to Cookies, needed to avoid conflicts with WharfSystems while sharing a host.
 * Added filter Name Space in the Tables Advanced mode search.
 
@@ -27,10 +53,10 @@
 ## 09/09/2023 v 2.56
 * Requirement: Get New Harbour_ORM and Harbour_FastCGI first.
 * New Settings / API Tokens menu option to configure API Tokens and specify their access rights.
-* New API "Applications" and "ApplicationHarbourSchemaExport", aware of API Tokens access rights.   
+* New API "Applications" and "ApplicationHarbourConfigurationExport", aware of API Tokens access rights.   
    You must set AccessToken in the request header.   
    Example of API Call: {{base_url}}api/applications   
-   Example of API Call: {{base_url}}api/ApplicationHarbourSchemaExport?application=WF   
+   Example of API Call: {{base_url}}api/ApplicationHarbourConfigurationExport?application=WF   
 * API names, used in API calls, are now case-insensitive.
 * New Template Tables in Data Dictionaries. They can be used when adding a new table to initialize a list of columns.
 * Updated Main Menu UI for consistency and color highlight.

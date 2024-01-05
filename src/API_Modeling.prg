@@ -151,6 +151,7 @@ with object l_oDB_ListOfEntitiesAndAttributes
     :Join("inner","Attribute","","Attribute.fk_Entity = Entity.pk")
     :Join("left","DataType","","Attribute.fk_DataType = DataType.pk")
     :Join("left","ModelEnumeration","","Attribute.fk_ModelEnumeration = ModelEnumeration.pk")
+    // :Where("Attribute.fk_Attribute IS NULL")
     :Where("Attribute.fk_Attribute = 0")
     if !empty(l_cEntityId)
         :Where("Entity.LinkUID = ^", l_cEntityId)

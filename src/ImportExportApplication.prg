@@ -1,17 +1,19 @@
 #include "DataWharf.ch"
 //=================================================================================================================
-function ExportApplicationToHbORM(par_iApplicationPk,par_nVersion)
+function ExportApplicationToHarbour_ORM(par_iApplicationPk,par_nVersion,par_IncludeDescription,par_cBackend)
 
 local l_lContinue := .t.
+local l_oDB_Application
 local l_oDB_ListOfTables
 local l_oDB_ListOfColumns
 local l_oDB_ListOfIndexes_OnForeignKey
 local l_oDB_ListOfIndexes_Defined
 local l_oDB_ListOfIndexes
+local l_oDB_ListOfEnumValues
 
 local l_iTablePk := 0
 
-local l_cIndent := space(3)
+local l_cIndent := space(4)
 local l_cIndentHashElement
 local l_cSchemaAndTableName
 
@@ -24,15 +26,17 @@ local l_cSourceCode := ""
 local l_cSourceCodeFields
 local l_nMaxNameLength
 local l_nMaxExpressionLength
+local l_cFieldUsedBy
 local l_cFieldName
 local l_cFieldType
 local l_nFieldLen
 local l_nFieldDec
-local l_cFieldDefault
-local l_lFieldAllowNull
+local l_cFieldDefault        //The Default to export
+local l_lFieldNullable
 local l_lFieldAutoIncrement
 local l_lFieldArray
 local l_cFieldAttributes
+local l_cFieldDescription
 local l_cIndexPrefix
 local l_cIndexName
 local l_cSourceCodeIndexes
@@ -40,43 +44,69 @@ local l_cIndexExpression
 local l_nIndexRecno
 local lnEnumerationImplementAs
 local lnEnumerationImplementLength
+local l_lIncludeDescription := nvl(par_IncludeDescription,.f.)
+local l_iPkEnumeration
+local l_nUsedBy
+local l_nTableCounter := 0
+local l_cSchemaIndent := space(4)
+local l_oData
+local l_lAddForeignKeyIndexORMExport
 
-l_oDB_ListOfTables  := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
 
-l_oDB_ListOfIndexes_OnForeignKey := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfIndexes_Defined      := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfIndexes              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
+l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfTables     := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+do case
+case par_cBackend == "PostgreSQL"
+    l_nUsedBy := USEDBY_POSTGRESQLONLY
+case par_cBackend == "MySQL"
+    l_nUsedBy := USEDBY_MYSQLONLY
+otherwise
+    l_nUsedBy := -1
+endcase
+
+with object l_oDB_Application
+    :Table("ddda0d32-5f65-4f5c-8025-42239f806aa8","Application")
+    :Column("Application.AddForeignKeyIndexORMExport","AddForeignKeyIndexORMExport")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        l_lAddForeignKeyIndexORMExport := l_oData:AddForeignKeyIndexORMExport
+    endif
+endwith
 
 with object l_oDB_ListOfTables
-    :Table("299a129d-dab1-4dad-0001-000000000001","NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000001","Namespace")
     // :Distinct(.t.)  // Needed since joining on columns to not use discontinued fields
 
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table" ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
 
     :Column("max(length(Column.Name))" , "MaxColumnNameLength")
 
-    :Column("NameSpace.Name"        ,"NameSpace_Name")
+    :Column("Namespace.Name"        ,"Namespace_Name")
     :Column("Table.Name"            ,"Table_Name")
     :Column("Table.Pk"              ,"Table_pk")
-    :Column("upper(NameSpace.Name)" ,"tag1")
+    :Column("upper(Namespace.Name)" ,"tag1")
     :Column("upper(Table.Name)"     ,"tag2")
     :Column("Table.Unlogged"        ,"Table_Unlogged")
-    :GroupBy("NameSpace_Name")
+    :GroupBy("Namespace_Name")
     :GroupBy("Table_Name")
     :GroupBy("Table_pk")
     :GroupBy("tag1")
     :GroupBy("tag2")
 
-    :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+    :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
     :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
     :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
 
     :OrderBy("tag1")
     :OrderBy("tag2")
+
+    :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
 
     :SQL("ListOfTables")
     l_nNumberOfTables := :Tally
@@ -89,29 +119,43 @@ endwith
 
 if l_lContinue
     with object l_oDB_ListOfColumns
-        :Table("299a129d-dab1-4dad-0001-000000000002","NameSpace")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-        :Join("inner","Table" ,"","Table.fk_NameSpace = NameSpace.pk")
-        :Join("inner","Column","","Column.fk_Table = Table.pk")
-        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
-        :Column("Table.Pk"       ,"Table_Pk")
-        :Column("Column.Name"    ,"Column_Name")
-        :Column("Column.Order"   ,"Column_Order")
-        :Column("Column.Type"    ,"Column_Type")
-        :Column("Column.Length"  ,"Column_Length")
-        :Column("Column.Scale"   ,"Column_Scale")
-        :Column("Column.Nullable","Column_Nullable")
-        :Column("Column.Array"   ,"Column_Array")
-        :Column("Column.Primary" ,"Column_Primary")
-        :Column("Column.Unicode" ,"Column_Unicode")
-        :Column("Column.Default" ,"Column_Default")
-
+        :Table("299a129d-dab1-4dad-0001-000000000002","Namespace")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Join("inner","Table"      ,""               ,"Table.fk_Namespace = Namespace.pk")
+        :Join("inner","Column"     ,""               ,"Column.fk_Table = Table.pk")
+        :Join("left", "Enumeration",""               ,"Column.fk_Enumeration = Enumeration.pk")
+        :Join("left", "Table"      ,"ParentTable"    ,"Column.fk_TableForeign = ParentTable.pk")
+        :Join("left", "Namespace"  ,"ParentNamespace","ParentTable.fk_Namespace = ParentNamespace.pk")
+        :Column("Table.Pk"             ,"Table_Pk")
+        :Column("Column.Name"          ,"Column_Name")
+        :Column("Column.Order"         ,"Column_Order")
+        :Column("Column.Type"          ,"Column_Type")
+        :Column("Column.Length"        ,"Column_Length")
+        :Column("Column.Scale"         ,"Column_Scale")
+        :Column("Column.Nullable"      ,"Column_Nullable")
+        :Column("Column.Array"         ,"Column_Array")
+        :Column("Column.Unicode"       ,"Column_Unicode")
+        :Column("Column.DefaultType"   ,"Column_DefaultType")
+        :Column("Column.DefaultCustom" ,"Column_DefaultCustom")
+        :Column("Column.fk_Enumeration","pk_Enumeration")
+        if l_lIncludeDescription
+            :Column("Column.Description" ,"Column_Description")
+        endif
+        :Column("Column.UsedAs"        ,"Column_UsedAs")
+        :Column("Column.UsedBy"        ,"Column_UsedBy")
+        :Column("Column.OnDelete"      ,"Column_OnDelete")
         :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
         :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
 
-        :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+        :Column("ParentNamespace.Name","ParentNamespace_Name")
+        :Column("ParentTable.Name"    ,"ParentTable_Name")
+        
+        :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
+
+        :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
         :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
         :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
         :SQL("ListOfColumns")
         if :Tally < 0
             l_lContinue := .f.
@@ -120,85 +164,189 @@ if l_lContinue
                 :Index("tag1","strtran(str(Table_pk,10)+str(Column_Order,10),' ','0')")   // Fixed length of the numbers with leading '0'
                 :CreateIndexes()
             endwith
+// ExportTableToHtmlFile("ListOfColumns",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfColumns_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
         endif
     endwith
 endif
 
+
 if l_lContinue
+    with object l_oDB_ListOfEnumValues
+        :Table("299a129d-dab1-4dad-0001-000000000003","Namespace")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Join("inner","Enumeration" ,"","Enumeration.fk_Namespace = Namespace.pk")
+        :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
+        :Column("Enumeration.Pk"       ,"Enumeration_Pk")
+        :Column("EnumValue.Name"       ,"EnumValue_Name")
+        :Column("EnumValue.Order"      ,"EnumValue_Order")
+        :Column("EnumValue.Number"     ,"EnumValue_Number")
+        :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
+        :Column("EnumValue.Description","EnumValue_Description")
 
-    with object l_oDB_ListOfIndexes_Defined
-        :Table("c5450b4d-8d2a-418e-8d56-75ac97d57ceb","NameSpace")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-        :Join("inner","Table"      ,"","Table.fk_NameSpace = NameSpace.pk")
-        :Join("inner","Index"      ,"","Index.fk_Table = Table.pk")
-//Future Use        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
-//Future Use        :Join("inner","Column"     ,"","IndexColumn.fk_Column = Column.pk")
-
-        :Column("Table.Pk"         ,"Table_Pk")
-        :Column("Index.Name"       ,"Index_Name")
-        :Column("Index.Expression" ,"Index_Expression")
-        :Column("Index.Unique"     ,"Index_Unique")
-        :Column("Index.Algo"       ,"Index_Algo")
-
-        :Where("NameSpace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-        :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-//Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
-    endwith
-
-    with object l_oDB_ListOfIndexes_OnForeignKey
-        :Table("90dd4f9c-8910-4cd7-913d-dacff9f5c115","Column")
-
-        :Column("Table.Pk"           ,"Table_Pk")
-        :Column("lower(Column.Name)" ,"Index_Name")
-        :Column("Column.Name"        ,"Index_Expression")
-        :Column("false"              ,"Index_Unique")
-        :Column("1"                  ,"Index_Algo")
-
-        :Join("inner","Table","","Column.fk_Table = Table.pk")
-        :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-        :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-        :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
-    endwith
-
-    with object l_oDB_ListOfIndexes
-        :AnchorAlias("26cfaf58-cc3a-4456-a707-2379863acdf8","CombinedListOfIndexes")
-        :AddSQLDataQuery("ListOfIndexesDefined"                  ,l_oDB_ListOfIndexes_Defined)
-        :AddSQLDataQuery("AllTableColumnsChildrenForForeignKeys" ,l_oDB_ListOfIndexes_OnForeignKey)
-        :CombineQueries(COMBINE_ACTION_UNION,"CombinedListOfIndexes",.t.,"ListOfIndexesDefined","AllTableColumnsChildrenForForeignKeys")
-        :SQL("ListOfIndexes")
-
-//1234567890
-// SendToClipboard(:LastSQL())
-
+        :Where("Namespace.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Enumeration.UseStatus <= ^" ,USESTATUS_TOBEDISCONTINUED)
+        :Where("EnumValue.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :OrderBy("Enumeration_Pk")
+        :OrderBy("EnumValue_Order")
+        :SQL("ListOfEnumValues")
         if :Tally < 0
             l_lContinue := .f.
         else
-// ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
             with object :p_oCursor
-                :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
+                :Index("tag1","strtran(str(Enumeration_Pk,10)+str(EnumValue_Order,10),' ','0')")   // Fixed length of the numbers with leading '0'
                 :CreateIndexes()
             endwith
         endif
     endwith
 endif
 
+
 if l_lContinue
 
-    if l_nNumberOfTables == 0
-        l_cSourceCode := "{=>}"+CRLF
+    if l_lAddForeignKeyIndexORMExport
+        // Automatically add indexes on Foreign Keys
+
+        l_oDB_ListOfIndexes_OnForeignKey := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB_ListOfIndexes_Defined      := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB_ListOfIndexes              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
+
+        with object l_oDB_ListOfIndexes_Defined
+            :Table("c5450b4d-8d2a-418e-8d56-75ac97d57ceb","Namespace")
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            :Join("inner","Table"      ,"","Table.fk_Namespace = Namespace.pk")
+            :Join("inner","Index"      ,"","Index.fk_Table = Table.pk")
+            //Future Use        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
+            //Future Use        :Join("inner","Column"     ,"","IndexColumn.fk_Column = Column.pk")
+
+            :Column("Table.Pk"         ,"Table_Pk")
+            :Column("Index.Name"       ,"Index_Name")
+            :Column("Index.Expression" ,"Index_Expression")
+            :Column("Index.Unique"     ,"Index_Unique")
+            :Column("Index.Algo"       ,"Index_Algo")
+
+            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+
+            :Where("Index.UsedBy = ^ OR Index.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+
+            //Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        endwith
+
+        with object l_oDB_ListOfIndexes_OnForeignKey
+            :Table("90dd4f9c-8910-4cd7-913d-dacff9f5c115","Column")
+
+            :Column("Table.Pk"           ,"Table_Pk")
+            :Column("lower(Column.Name)" ,"Index_Name")
+            :Column("Column.Name"        ,"Index_Expression")
+            :Column("false"              ,"Index_Unique")
+            :Column("1"                  ,"Index_Algo")
+
+            :Join("inner","Table","","Column.fk_Table = Table.pk")
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            // :Where("Column.fk_TableForeign IS NOT NULL")             // Only needing the foreign key fields.
+            :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
+            :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+        endwith
+
+        with object l_oDB_ListOfIndexes
+            :AnchorAlias("26cfaf58-cc3a-4456-a707-2379863acdf8","CombinedListOfIndexes")
+            :AddSQLDataQuery("ListOfIndexesDefined"                  ,l_oDB_ListOfIndexes_Defined)
+            :AddSQLDataQuery("AllTableColumnsChildrenForForeignKeys" ,l_oDB_ListOfIndexes_OnForeignKey)
+            :CombineQueries(COMBINE_ACTION_UNION,"CombinedListOfIndexes",.t.,"ListOfIndexesDefined","AllTableColumnsChildrenForForeignKeys")
+            :SQL("ListOfIndexes")
+
+            // SendToClipboard(:LastSQL())
+
+            if :Tally < 0
+                l_lContinue := .f.
+            else
+            // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
+                with object :p_oCursor
+                    :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
+                    :CreateIndexes()
+                endwith
+            endif
+        endwith
+
     else
+        //Only create index defined in the data dictionary.
+
+        l_oDB_ListOfIndexes := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+        with object l_oDB_ListOfIndexes
+            :Table("18a48ce3-6117-4a35-808c-5782a3038e36","Namespace")
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            :Join("inner","Table"      ,"","Table.fk_Namespace = Namespace.pk")
+            :Join("inner","Index"      ,"","Index.fk_Table = Table.pk")
+            //Future Use        :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
+            //Future Use        :Join("inner","Column"     ,"","IndexColumn.fk_Column = Column.pk")
+
+            :Column("Table.Pk"         ,"Table_Pk")
+            :Column("Index.Name"       ,"Index_Name")
+            :Column("Index.Expression" ,"Index_Expression")
+            :Column("Index.Unique"     ,"Index_Unique")
+            :Column("Index.Algo"       ,"Index_Algo")
+
+            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+
+            :Where("Index.UsedBy = ^ OR Index.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+            
+            //Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+
+            :SQL("ListOfIndexes")
+            // SendToClipboard(:LastSQL())
+
+            if :Tally < 0
+                l_lContinue := .f.
+            else
+            // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
+                with object :p_oCursor
+                    :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
+                    :CreateIndexes()
+                endwith
+            endif
+
+        endwith
+
+    endif
+endif
+
+if l_lContinue
+    if par_nVersion == 3
+        l_cSchemaIndent := space(4)
+        l_cSourceCode := [{"HarbourORMVersion" => ]+HB_ORM_BUILDVERSION+[,;]+CRLF
+        l_cSourceCode += [ "DataWharfVersion" => ]+BUILDVERSION+[,;]+CRLF
+        l_cSourceCode += [ "Backend" => "]+par_cBackend+[",;]+CRLF
+        l_cSourceCode += [ "GenerationTime" => "]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
+        l_cSourceCode += [ "GenerationSignature" => "]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
+    else
+        l_cSchemaIndent := ""
+    endif
+    
+    if l_nNumberOfTables > 0
+        if par_nVersion == 3
+            l_cSourceCode += [,;]+CRLF
+            l_cSourceCode += [ "TableSchema" => ;]+CRLF
+        else
+            // l_cSourceCode += [{]+CRLF
+        endif
+
         select ListOfTables
         scan all
+            l_nTableCounter++
             l_iTablePk := ListOfTables->Table_Pk
 
-            l_cSchemaAndTableName := alltrim(ListOfTables->NameSpace_Name)+"."+alltrim(ListOfTables->Table_Name)
+            l_cSchemaAndTableName := alltrim(ListOfTables->Namespace_Name)+"."+alltrim(ListOfTables->Table_Name)
 
-            if par_nVersion == 2
+            if par_nVersion >= 2
                 l_cIndentHashElement := space(len([{"]+l_cSchemaAndTableName+["=>]))
             endif
 
-            l_cSourceCode += iif(empty(l_cSourceCode),"{",",")  // Start the next table hash element
+            l_cSourceCode += l_cSchemaIndent+iif(l_nTableCounter==1,"{",",")  // Start the next table hash element
             
             //Get Field Definitions
             l_cSourceCodeFields := ""
@@ -208,22 +356,48 @@ if l_lContinue
 
             if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
                 //At lease one field could exists
+                l_cFieldDescription := ""
                 select ListOfColumns
                 scan while ListOfColumns->Table_Pk = l_iTablePk
                     l_nNumberOfFields++
 
+                    l_cFieldUsedBy      := ListOfColumns->Column_UsedBy
                     l_cFieldName        := ListOfColumns->Column_Name
-                    l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cIndent+"{" , ";"+CRLF+l_cIndent+"," )
+                    l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cSchemaIndent+l_cIndent+"{" , ";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndent+"," )
                 
                     l_cFieldType          := allt(ListOfColumns->Column_Type)
                     l_nFieldLen           := nvl(ListOfColumns->Column_Length,0)
                     l_nFieldDec           := nvl(ListOfColumns->Column_Scale,0)
-                    l_cFieldDefault       := nvl(ListOfColumns->Column_Default,"")
-                    l_lFieldAllowNull     := ListOfColumns->Column_Nullable
-                    l_lFieldAutoIncrement := ListOfColumns->Column_Primary
+                    // l_nFieldDefaultType   := ListOfColumns->Column_DefaultType
+                    // l_cFieldDefaultCustom := ListOfColumns->Column_DefaultCustom
+                    l_cFieldDefault       := GetColumnDefault(.t.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
+                    l_lFieldNullable      := ListOfColumns->Column_Nullable
+                    l_lFieldAutoIncrement := (ListOfColumns->Column_UsedAs = 2)
                     l_lFieldArray         := ListOfColumns->Column_Array
-                    l_cFieldAttributes    := iif(l_lFieldAllowNull,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
+                    l_cFieldAttributes    := iif(l_lFieldNullable,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
+                    l_cFieldDescription := ""
+                    if l_lIncludeDescription
+                        l_iPkEnumeration := nvl(ListOfColumns->pk_Enumeration,0)
+                        if l_iPkEnumeration > 0
+                            if vfp_seek(strtran(str(l_iPkEnumeration,10),' ','0'),"ListOfEnumValues","tag1")
+                                select ListOfEnumValues
+                                scan while ListOfEnumValues->Enumeration_Pk == l_iPkEnumeration
+                                    if !empty(l_cFieldDescription)
+                                        l_cFieldDescription += [, ]
+                                    endif
+                                    l_cFieldDescription += trans(nvl(ListOfEnumValues->EnumValue_Number,0))+[="]+alltrim(ListOfEnumValues->EnumValue_Name)+["]
+                                endscan
+                            endif
+                        endif
+                        if !empty(l_cFieldDescription)
+                            l_cFieldDescription += space(3)
+                        endif
+                        l_cFieldDescription += hb_StrReplace(nvl(ListOfColumns->Column_Description,""),{chr(10)=>[],chr(13)=>[ ]})
+                        if !empty(l_cFieldDescription)
+                            l_cFieldDescription := space(3)+[/]+[/]+l_cFieldDescription
+                        endif
+                    endif
                     // if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
                     //     l_lFieldAutoIncrement := .t.
                     // endif
@@ -248,18 +422,66 @@ if l_lContinue
                     if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
                         l_lFieldAutoIncrement := .f.
                     endif
-                    if l_lFieldAutoIncrement .and. l_lFieldAllowNull  //Auto-Increment fields may not be null (and not have a default)
-                        l_lFieldAllowNull := .f.
+                    if l_lFieldAutoIncrement .and. l_lFieldNullable  //Auto-Increment fields may not be null (and not have a default)
+                        l_lFieldNullable := .f.
                     endif
 
                     l_cSourceCodeFields += padr('"'+l_cFieldName+'"',l_nMaxNameLength+2)+"=>{"
-                    l_cSourceCodeFields += ","  // Null Value for the HB_ORM_SCHEMA_INDEX_BACKEND_TYPES 
-                    l_cSourceCodeFields += padl('"'+l_cFieldType+'"',5)+","+;
-                                        str(nvl(l_nFieldLen,0),4)+","+;
-                                        str(nvl(l_nFieldDec,0),3)+","+;
-                                        iif(empty(l_cFieldAttributes),"",'"'+l_cFieldAttributes+'"')
-                    if !empty(l_cFieldDefault)
-                        l_cSourceCodeFields += ',"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
+                    if par_nVersion == 3
+                        // do case
+                        // case l_cFieldUsedBy == USEDBY_MYSQLONLY
+                        //     l_cSourceCodeFields += '"BackendType"=>"MySQL",'
+                        // case l_cFieldUsedBy == USEDBY_POSTGRESQLONLY
+                        //     l_cSourceCodeFields += '"BackendType"=>"PostgreSQL",'
+                        // endcase
+
+// hb_orm_SendToDebugView(l_cSourceCodeFields)
+// hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
+                        l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"'
+                        if nvl(l_nFieldLen,0) > 0
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_LENGTH+'"=>'+trans(nvl(l_nFieldLen,0))
+                        endif
+                        if nvl(l_nFieldDec,0) > 0
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DECIMALS+'"=>'+trans(nvl(l_nFieldDec,0))
+                        endif
+                        if !empty(l_cFieldDefault)
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DEFAULT+'"=>"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
+                        endif
+                        if l_lFieldNullable
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_NULLABLE+'"=>.t.'
+                        endif
+                        if l_lFieldAutoIncrement
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_AUTOINCREMENT+'"=>.t.'
+                        endif
+                        if l_lFieldArray
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
+                        endif
+                        if !empty(el_Inlist(ListOfColumns->Column_UsedAs,2,3,4))
+                            l_cSourceCodeFields += ',"UsedAs"=>"'+{"","Primary","Foreign","Support"}[ListOfColumns->Column_UsedAs]+'"'
+                            if ListOfColumns->Column_UsedAs == 3  // Foreign
+//1234567
+                                if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
+                                    l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
+                                endif
+                                if ListOfColumns->Column_ForeignKeyOptional
+                                    l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
+                                endif
+                            endif
+                        endif
+                        if !empty(el_Inlist(ListOfColumns->Column_OnDelete,2,3,4))
+                            l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
+                        endif
+
+//_M_ What about Unicode and other field attributes?
+                    else
+                        l_cSourceCodeFields += ","  // Null Value for the HB_ORM_SCHEMA_INDEX_BACKEND_TYPES 
+                        l_cSourceCodeFields += padl('"'+l_cFieldType+'"',5)+","+;
+                                            str(nvl(l_nFieldLen,0),4)+","+;
+                                            str(nvl(l_nFieldDec,0),3)+","+;
+                                            iif(empty(l_cFieldAttributes),"",'"'+l_cFieldAttributes+'"')
+                        if !empty(l_cFieldDefault)
+                            l_cSourceCodeFields += ',"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
+                        endif
                     endif
                     l_cSourceCodeFields += "}"
 
@@ -321,13 +543,22 @@ if l_lContinue
                     l_cIndexExpression := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
                     l_cIndexExpression := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
                     
-                    l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , l_cIndent+"{" , ";"+CRLF+l_cIndent+",")
+                    l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , l_cSchemaIndent+l_cIndent+"{" , ";"+CRLF+l_cSchemaIndent+l_cIndent+",")
 
                     l_cSourceCodeIndexes += padr('"'+l_cIndexName+'"',l_nMaxNameLength+2)+"=>{"
-                    l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
-                    l_cSourceCodeIndexes += '"'+l_cIndexExpression+'"'+space(l_nMaxExpressionLength-len(l_cIndexExpression))+','+;
-                                        iif(ListOfIndexes->Index_Unique,".t.",".f.")+","+;
-                                        '"'+"BTREE"+'"'    //Later make this aware of ListOfIndexes->Index_Algo
+
+                    if par_nVersion <= 2
+                        l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
+                        l_cSourceCodeIndexes += '"'+l_cIndexExpression+'"'+space(l_nMaxExpressionLength-len(l_cIndexExpression))+','+;
+                                            iif(ListOfIndexes->Index_Unique,".t.",".f.")+","+;
+                                            '"'+"BTREE"+'"'    //Later make this aware of ListOfIndexes->Index_Algo
+                    else
+                        l_cSourceCodeIndexes += '"'+HB_ORM_SCHEMA_INDEX_EXPRESSION+'"=>"'+l_cIndexExpression+'"'
+                        if ListOfIndexes->Index_Unique
+                            l_cSourceCodeIndexes += ',"'+HB_ORM_SCHEMA_INDEX_UNIQUE+'"=>.t.'
+                        endif
+                    endif
+                    
                     l_cSourceCodeIndexes += "}"
 
                 endscan
@@ -341,28 +572,43 @@ if l_lContinue
 
             // l_cSourceCode += "Table "+ListOfTables->Table_Name+" has "+trans(l_nNumberOfFields)+" fields and has "+trans(l_nNumberOfIndexes)+" indexes. MaxColumnNameLength = "+trans(ListOfTables->MaxColumnNameLength)+CRLF
 
-            if par_nVersion == 1
+            do case
+            case par_nVersion == 1
                 l_cSourceCode += '"'+l_cSchemaAndTableName+'"'+"=>{;   /"+"/Field Definition"
-                l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndent+",;   /"+"/Index Definition"+CRLF
+                l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndent+",;   /"+"/Index Definition"+CRLF
                 l_cSourceCode += l_cSourceCodeIndexes+"};"+CRLF
-            else
-                //par_nVersion == 2
+
+            case par_nVersion == 2
                 l_cSourceCode += '"'+l_cSchemaAndTableName+'"=>{"Fields"=>;'
                 if l_cSourceCodeIndexes == l_cIndent+"NIL"
-                    l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndentHashElement+',"Indexes"=>NIL'+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
+                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndentHashElement+',"Indexes"=>NIL'+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
                 else
-                    l_cSourceCode += l_cSourceCodeFields+";"+CRLF+l_cIndentHashElement+',"Indexes"=>;'+CRLF
+                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndentHashElement+',"Indexes"=>;'+CRLF
                     l_cSourceCode += l_cSourceCodeIndexes
                     l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
                 endif
                 l_cSourceCode += '};'+CRLF
-            endif
+                
+            case par_nVersion == 3
+                l_cSourceCode += '"'+l_cSchemaAndTableName+'"=>{"Fields"=>;'
+                if l_cSourceCodeIndexes == l_cIndent+"NIL"
+                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
+                else
+                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+',"Indexes"=>;'+CRLF
+                    l_cSourceCode += l_cSourceCodeIndexes
+                    l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cSchemaIndent+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
+                endif
+                l_cSourceCode += '};'+CRLF
+                
+            endcase
 
         endscan
-        l_cSourceCode += "}"
+        if par_nVersion == 3
+            l_cSourceCode += l_cSchemaIndent+"};"+CRLF
+        endif
     endif
 
-
+    l_cSourceCode += [}]
 endif
 
 if !l_lContinue
@@ -377,7 +623,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hSchema := Schema()
+local l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -390,120 +636,123 @@ local l_cLinkUID
 local l_cFileName
 local l_oInfo
 
-hb_HCaseMatch(l_hSchema,.f.)  // Case Insensitive search
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
+
+hb_HCaseMatch(l_hTableSchema,.f.)  // Case Insensitive search
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000004","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"NameSpace")
+    :Table("299a129d-dab1-4dad-0001-000000000004","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Namespace")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"NameSpace","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Namespace","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000005","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table" ,"","Table.fk_NameSpace = NameSpace.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Table")
+    :Table("299a129d-dab1-4dad-0001-000000000005","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Table")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Table","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Table","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000006","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table"  ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Table("299a129d-dab1-4dad-0001-000000000006","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table"  ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Column")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Column")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+// SendToClipboard(:LastSQL())
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Column","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0001-000000000007","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Enumeration" ,"","Enumeration.fk_Namespace = Namespace.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Enumeration")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Column","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Enumeration","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000007","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Enumeration" ,"","Enumeration.fk_NameSpace = NameSpace.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Enumeration")
-    :OrderBy("pk")
-    :SQL("ListOfRecords")
-    if :Tally < 0
-        l_lContinue := .f.
-    else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Enumeration","ListOfRecords")
-    endif
-endwith
-
-with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000008","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Enumeration"  ,"","Enumeration.fk_NameSpace = NameSpace.pk")
+    :Table("299a129d-dab1-4dad-0001-000000000008","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Enumeration"  ,"","Enumeration.fk_Namespace = Namespace.pk")
     :Join("inner","EnumValue" ,"","EnumValue.fk_Enumeration = Enumeration.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"EnumValue")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"EnumValue")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"EnumValue","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"EnumValue","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000009","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table"  ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Table("299a129d-dab1-4dad-0001-000000000009","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table"  ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Index")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Index")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Index","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Index","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
-    :Table("299a129d-dab1-4dad-0001-000000000010","NameSpace")
-    :Where("NameSpace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table"       ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Table("299a129d-dab1-4dad-0001-000000000010","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table"       ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index"       ,"","Index.fk_Table = Table.pk")
     :Join("inner","IndexColumn" ,"","IndexColumn.fk_Index = Index.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"IndexColumn")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"IndexColumn")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"IndexColumn","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"IndexColumn","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000011","Diagram")
     :Where("Diagram.fk_Application = ^",par_iApplicationPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Diagram")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Diagram")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Diagram","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Diagram","ListOfRecords")
     endif
 endwith
 
@@ -511,26 +760,26 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000012","Diagram")
     :Where("Diagram.fk_Application = ^",par_iApplicationPk)
     :Join("inner","DiagramTable" ,"","DiagramTable.fk_Diagram = Diagram.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"DiagramTable")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"DiagramTable")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"DiagramTable","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"DiagramTable","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000013","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Tag")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Tag")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Tag","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Tag","ListOfRecords")
     endif
 endwith
 
@@ -538,13 +787,13 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000014","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TagTable" ,"","TagTable.fk_Tag = Tag.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TagTable")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"TagTable")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TagTable","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"TagTable","ListOfRecords")
     endif
 endwith
 
@@ -552,13 +801,13 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000015","Tag")
     :Where("Tag.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TagColumn" ,"","TagColumn.fk_Tag = Tag.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TagColumn")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"TagColumn")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TagColumn","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"TagColumn","ListOfRecords")
     endif
 endwith
 
@@ -566,13 +815,13 @@ endwith
 with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000016","TemplateTable")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateTable")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"TemplateTable")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TemplateTable","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"TemplateTable","ListOfRecords")
     endif
 endwith
 
@@ -580,13 +829,13 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000017","TemplateTable")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
     :Join("inner","TemplateColumn" ,"","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"TemplateColumn")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"TemplateColumn")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"TemplateColumn","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"TemplateColumn","ListOfRecords")
     endif
 endwith
 
@@ -596,7 +845,7 @@ with object l_oDB_ListOfRecords
     :Distinct(.t.)
     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
     :Join("inner","CustomField" ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomField")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomField")
 
     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
@@ -605,7 +854,7 @@ with object l_oDB_ListOfRecords
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomField","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomField","ListOfRecords")
     endif
 endwith
 
@@ -616,13 +865,13 @@ with object l_oDB_ListOfRecords
     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ApplicationCustomField")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ApplicationCustomField")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ApplicationCustomField","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ApplicationCustomField","ListOfRecords")
     endif
 endwith
 
@@ -635,16 +884,17 @@ with object l_oDB_ListOfRecords
     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomFieldValue")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomFieldValue")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomFieldValue","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomFieldValue","ListOfRecords")
     endif
 endwith
 // ----- Custom Field End ------------------------------------------------------
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.t.)
 
 if l_lContinue
     l_cBackupCode += CRLF
@@ -732,7 +982,7 @@ endif
 
 return l_cLinkUID
 //=================================================================================================================
-function DataDictionaryImportStep1FormBuild(par_iPk,par_cErrorText)
+function DataDictionaryImportStep1FormBuild(par_iApplicationPk,par_cErrorText)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
@@ -744,13 +994,13 @@ oFcgi:TraceAdd("DataDictionaryImportStep1FormBuild")
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Step1">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
-l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
+// l_cHtml += [<input type="hidden" name="ApplicationKey" value="]+trans(par_iApplicationPk)+[">]
 
 if !empty(l_cErrorText)
     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
 endif
 
-if !empty(par_iPk)
+if !empty(par_iApplicationPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">Import</span>]   //navbar-text
@@ -832,6 +1082,7 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
             DeleteFile(l_cFilePathPID+"Export.txt")
 
             ImportApplicationFile(par_iApplicationPk,@l_cImportContent)
+            DataDictionaryFixAndTest(par_iApplicationPk)
 
         endif
 
@@ -872,7 +1123,7 @@ local l_cCursorFieldDec
 local l_oDB_ListOfCurrentRecords := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDBImport                := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-local l_hNameSpacePkOldToNew     := {=>}
+local l_hNamespacePkOldToNew     := {=>}
 local l_hTablePkOldToNew         := {=>}
 local l_hColumnPkOldToNew        := {=>}
 local l_hEnumerationPkOldToNew   := {=>}
@@ -913,6 +1164,7 @@ local l_hImportSourceCustomFieldUsedOn := {=>}
 local lnUsedOn
 
 local l_cValidNameChars
+local l_aColumns
 
 // Parse the file line by line
 
@@ -1001,7 +1253,7 @@ enddo
 
 //Order of Table Imports
 //======================
-// NameSpace
+// Namespace
 // Table
 // Enumeration
 // Column
@@ -1016,12 +1268,12 @@ enddo
 // Custom Fields
 
 //-------------------------------------------------------------------------------------------------------------------------
-// Import NameSpaces
+// Import Namespaces
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000001","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Column("NameSpace.Pk"  ,"pk")
-    :Column("NameSpace.Name","name")
+    :Table("df873645-94d3-4ba5-85cf-000000000001","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Column("Namespace.Pk"  ,"pk")
+    :Column("Namespace.Name","name")
     :SQL("ListOfCurrentRecords")
     with object :p_oCursor
         :Index("tag1","padr(upper(strtran(Name,' ',''))+'*',240)")
@@ -1029,19 +1281,21 @@ with object l_oDB_ListOfCurrentRecords
     endwith
 endwith
 
-select ImportSourceNameSpace
+select ImportSourceNamespace
+//12345
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Namespace")
 scan all
-    if vfp_seek( upper(strtran(ImportSourceNameSpace->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-        // SendToDebugView("Import: NameSpace Already on file",ListOfCurrentRecords->Name)
-        l_hNameSpacePkOldToNew[ImportSourceNameSpace->pk] := ListOfCurrentRecords->pk
+    if vfp_seek( upper(strtran(ImportSourceNamespace->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        // SendToDebugView("Import: Namespace Already on file",ListOfCurrentRecords->Name)
+        l_hNamespacePkOldToNew[ImportSourceNamespace->pk] := ListOfCurrentRecords->pk
     else
         with object l_oDBImport
-            :Table("df873645-94d3-4ba5-85cf-000000000002","NameSpace")
+            :Table("df873645-94d3-4ba5-85cf-000000000002","Namespace")
             :Field("fk_Application",par_iApplicationPk)
-            ImportAddRecordSetField(l_oDBImport,"NameSpace","*fk_Application*")
+            ImportAddRecordSetField(l_oDBImport,"Namespace","*fk_Application*",l_aColumns)
             if :Add()
                 //Log the old key, new key
-                l_hNameSpacePkOldToNew[ImportSourceNameSpace->pk] := :Key()
+                l_hNamespacePkOldToNew[ImportSourceNamespace->pk] := :Key()
             endif
             // VFP_StrToFile(:LastSQL(),"d:\LastSQL.txt")
             
@@ -1052,15 +1306,15 @@ endscan
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Tables
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000003","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Table","","Table.fk_NameSpace = NameSpace.pk")
-    :Column("Table.fk_NameSpace","fk_NameSpace")
+    :Table("df873645-94d3-4ba5-85cf-000000000003","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table","","Table.fk_Namespace = Namespace.pk")
+    :Column("Table.fk_Namespace","fk_Namespace")
     :Column("Table.Pk"          ,"pk")
     :Column("Table.Name"        ,"name")
     :SQL("ListOfCurrentRecords")
     with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_NameSpace))+'*'+upper(strtran(Name,' ',''))+'*',240)")  // IMPORTANT - Had to Pad the index expression otherwise the searcher would only work on the shortest string. Also could not use trans(), had to use Harbour native functions.
+        :Index("tag1","padr(alltrim(str(fk_Namespace))+'*'+upper(strtran(Name,' ',''))+'*',240)")  // IMPORTANT - Had to Pad the index expression otherwise the searcher would only work on the shortest string. Also could not use trans(), had to use Harbour native functions.
         :CreateIndexes()
     endwith
 endwith
@@ -1068,22 +1322,23 @@ endwith
 // ExportTableToHtmlFile("ListOfCurrentRecords",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCurrentRecords.html","From PostgreSQL",,,.t.)
 
 select ImportSourceTable
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Table")
 scan all
-    l_iParentKeyImport  := ImportSourceTable->fk_NameSpace
-    l_iParentKeyCurrent := hb_HGetDef(l_hNameSpacePkOldToNew,l_iParentKeyImport,0)
+    l_iParentKeyImport  := ImportSourceTable->fk_Namespace
+    l_iParentKeyCurrent := hb_HGetDef(l_hNamespacePkOldToNew,l_iParentKeyImport,0)
 
     if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find NameSpace Parent Key on Table Import" ,l_iParentKeyImport)
+        SendToDebugView("Failure to find Namespace Parent Key on Table Import" ,l_iParentKeyImport)
     else
         //In the index search could not use trans() for some reason it left leading blanks
         if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: Table Already on file in NameSpace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            // SendToDebugView("Import: Table Already on file in Namespace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hTablePkOldToNew[ImportSourceTable->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000004","Table")
-                :Field("fk_NameSpace",l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Table","*fk_NameSpace*")
+                :Field("fk_Namespace",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"Table","*fk_Namespace*",l_aColumns)
                 if :Add()
                     //Log the old key, new key
                     l_hTablePkOldToNew[ImportSourceTable->pk] := :Key()
@@ -1098,35 +1353,36 @@ endscan
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Enumerations
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000005","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
-    :Column("Enumeration.fk_NameSpace","fk_NameSpace")
+    :Table("df873645-94d3-4ba5-85cf-000000000005","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
+    :Column("Enumeration.fk_Namespace","fk_Namespace")
     :Column("Enumeration.Pk"  ,"pk")
     :Column("Enumeration.Name","name")
     :SQL("ListOfCurrentRecords")
     with object :p_oCursor
-        :Index("tag1","padr(alltrim(str(fk_NameSpace))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :Index("tag1","padr(alltrim(str(fk_Namespace))+'*'+upper(strtran(Name,' ',''))+'*',240)")
         :CreateIndexes()
     endwith
 endwith
 
 select ImportSourceEnumeration
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Enumeration")
 scan all
-    l_iParentKeyImport  := ImportSourceEnumeration->fk_NameSpace
-    l_iParentKeyCurrent := hb_HGetDef(l_hNameSpacePkOldToNew,l_iParentKeyImport,0)
+    l_iParentKeyImport  := ImportSourceEnumeration->fk_Namespace
+    l_iParentKeyCurrent := hb_HGetDef(l_hNamespacePkOldToNew,l_iParentKeyImport,0)
 
     if empty(l_iParentKeyCurrent)
-        SendToDebugView("Failure to find NameSpace Parent Key on Enumeration Import" ,l_iParentKeyImport)
+        SendToDebugView("Failure to find Namespace Parent Key on Enumeration Import" ,l_iParentKeyImport)
     else
         if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
-            // SendToDebugView("Import: Enumeration Already on file in NameSpace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            // SendToDebugView("Import: Enumeration Already on file in Namespace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hEnumerationPkOldToNew[ImportSourceEnumeration->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000006","Enumeration")
-                :Field("fk_NameSpace",l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Enumeration","*fk_NameSpace*")
+                :Field("fk_Namespace",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"Enumeration","*fk_Namespace*",l_aColumns)
                 if :Add()
                     //Log the old key, new key
                     l_hEnumerationPkOldToNew[ImportSourceEnumeration->pk] := :Key()
@@ -1142,9 +1398,9 @@ endscan
 // Import Columns
 
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000007","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Table" ,"" ,"Table.fk_NameSpace = NameSpace.pk")
+    :Table("df873645-94d3-4ba5-85cf-000000000007","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table" ,"" ,"Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column","","Column.fk_Table = Table.pk")
     :Column("Column.fk_Table","fk_Table")
     :Column("Column.Pk"      ,"pk")
@@ -1157,6 +1413,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceColumn
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Column")
 scan all
     l_iParentKeyImport  := ImportSourceColumn->fk_Table
     l_iParentKeyCurrent := hb_HGetDef(l_hTablePkOldToNew,l_iParentKeyImport,0)
@@ -1187,7 +1444,7 @@ scan all
                 :Field("fk_Table"       ,l_iParentKeyCurrent)
                 :Field("fk_TableForeign",l_ifk_TableForeignCurrent)
                 :Field("fk_Enumeration" ,l_ifk_EnumerationCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Column","*fk_Table*fk_TableForeign*fk_Enumeration*")
+                ImportAddRecordSetField(l_oDBImport,"Column","*fk_Table*fk_TableForeign*fk_Enumeration*",l_aColumns)
                 if :Add()
                     l_hColumnPkOldToNew[ImportSourceColumn->pk] := :Key()
                 endif
@@ -1199,9 +1456,9 @@ endscan
 //-------------------------------------------------------------------------------------------------------------------------
 // Import EnumValues
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000009","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Enumeration","","Enumeration.fk_NameSpace = NameSpace.pk")
+    :Table("df873645-94d3-4ba5-85cf-000000000009","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
     :Join("inner","EnumValue"  ,"","EnumValue.fk_Enumeration = Enumeration.pk")
     :Column("EnumValue.fk_Enumeration","fk_Enumeration")
     :Column("EnumValue.Pk"  ,"pk")
@@ -1220,6 +1477,7 @@ endwith
 l_cValidNameChars := [01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_']
 
 select ImportSourceEnumValue
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.EnumValue")
 scan all
     l_iParentKeyImport  := ImportSourceEnumValue->fk_Enumeration
     l_iParentKeyCurrent := hb_HGetDef(l_hEnumerationPkOldToNew,l_iParentKeyImport,0)
@@ -1233,7 +1491,7 @@ scan all
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000010","EnumValue")
                 :Field("fk_Enumeration"       ,l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"EnumValue","*fk_Enumeration*")
+                ImportAddRecordSetField(l_oDBImport,"EnumValue","*fk_Enumeration*",l_aColumns)
                 if :Add()
                 endif
             endwith
@@ -1244,9 +1502,9 @@ endscan
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Index
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000011","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Table","","Table.fk_NameSpace = NameSpace.pk")
+    :Table("df873645-94d3-4ba5-85cf-000000000011","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table","","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index","","Index.fk_Table = Table.pk")
     :Column("Index.fk_Table","fk_Table")
     :Column("Index.Pk"  ,"pk")
@@ -1259,6 +1517,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceIndex
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Index")
 scan all
     l_iParentKeyImport  := ImportSourceIndex->fk_Table
     l_iParentKeyCurrent := hb_HGetDef(l_hTablePkOldToNew,l_iParentKeyImport,0)
@@ -1273,7 +1532,7 @@ scan all
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000012","Index")
                 :Field("fk_Table"       ,l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Index","*fk_Table*")
+                ImportAddRecordSetField(l_oDBImport,"Index","*fk_Table*",l_aColumns)
                 if :Add()
                     l_hIndexPkOldToNew[ImportSourceIndex->pk] := :Key()
                 endif
@@ -1285,9 +1544,9 @@ endscan
 //-------------------------------------------------------------------------------------------------------------------------
 // Import IndexColumn
 with object l_oDB_ListOfCurrentRecords
-    :Table("df873645-94d3-4ba5-85cf-000000000013","NameSpace")
-    :Where("NameSpace.fk_Application = ^" , par_iApplicationPk)
-    :Join("inner","Table"      ,"","Table.fk_NameSpace = NameSpace.pk")
+    :Table("df873645-94d3-4ba5-85cf-000000000013","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table"      ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index"      ,"","Index.fk_Table = Table.pk")
     :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
     :Column("IndexColumn.fk_Index" ,"fk_Index")
@@ -1301,6 +1560,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceIndexColumn
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.IndexColumn")
 scan all
     l_iParentKeyImport  := ImportSourceIndexColumn->fk_Index
     l_iParentKeyCurrent := hb_HGetDef(l_hIndexPkOldToNew,l_iParentKeyImport,0)
@@ -1322,7 +1582,7 @@ scan all
                 :Table("df873645-94d3-4ba5-85cf-000000000014","IndexColumn")
                 :Field("fk_Index"  ,l_iParentKeyCurrent)
                 :Field("fk_Column" ,l_ifk_ColumnCurrent)
-                ImportAddRecordSetField(l_oDBImport,"IndexColumn","*fk_Index*fk_Column*")   // No other field exists but leaving this in case we add some.
+                ImportAddRecordSetField(l_oDBImport,"IndexColumn","*fk_Index*fk_Column*",l_aColumns)   // No other field exists but leaving this in case we add some.
                 if :Add()
                 endif
             endwith
@@ -1346,6 +1606,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
     endwith
 
     select ImportSourceDiagram
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Diagram")
     scan all
         if vfp_seek( upper(strtran(ImportSourceDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Diagram Already on file",ListOfCurrentRecords->Name)
@@ -1390,7 +1651,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
                 if !hb_IsNil(l_cJSONMxgPos)
                     :FieldExpression("MxgPos","E'"+l_cJSONMxgPos+"'")
                 endif
-                ImportAddRecordSetField(l_oDBImport,"Diagram","*fk_Application*VisPos*MxgPos*")
+                ImportAddRecordSetField(l_oDBImport,"Diagram","*fk_Application*VisPos*MxgPos*",l_aColumns)
                 if :Add()
                     //Log the old key, new key
                     l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := :Key()
@@ -1417,6 +1678,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
     endwith
 
     select ImportSourceDiagramTable
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.DiagramTable")
     scan all
         l_iParentKeyImport  := ImportSourceDiagramTable->fk_Diagram
         l_iParentKeyCurrent := hb_HGetDef(l_hDiagramPkOldToNew,l_iParentKeyImport,0)
@@ -1438,7 +1700,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
                     :Table("df873645-94d3-4ba5-85cf-000000000018","DiagramTable")
                     :Field("fk_Diagram",l_iParentKeyCurrent)
                     :Field("fk_Table"  ,l_ifk_TableCurrent)
-                    ImportAddRecordSetField(l_oDBImport,"DiagramTable","*fk_Diagram*fk_Table*")   // No other field exists but leaving this in case we add some.
+                    ImportAddRecordSetField(l_oDBImport,"DiagramTable","*fk_Diagram*fk_Table*",l_aColumns)   // No other field exists but leaving this in case we add some.
                     if :Add()
                     endif
                 endwith
@@ -1462,6 +1724,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
     endwith
 
     select ImportSourceTag
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Tag")
     scan all
         if vfp_seek( upper(strtran(ImportSourceTag->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             l_hTagPkOldToNew[ImportSourceTag->pk] := ListOfCurrentRecords->pk
@@ -1469,7 +1732,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000020","Tag")
                 :Field("fk_Application",par_iApplicationPk)
-                ImportAddRecordSetField(l_oDBImport,"Tag","*fk_Application*")
+                ImportAddRecordSetField(l_oDBImport,"Tag","*fk_Application*",l_aColumns)
                 if :Add()
                     l_hTagPkOldToNew[ImportSourceTag->pk] := :Key()
                 endif
@@ -1495,6 +1758,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
     endwith
 
     select ImportSourceTagTable
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TagTable")
     scan all
         l_iParentKeyImport  := ImportSourceTagTable->fk_Tag
         l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
@@ -1516,7 +1780,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
                     :Table("df873645-94d3-4ba5-85cf-000000000022","TagTable")
                     :Field("fk_Tag"    ,l_iParentKeyCurrent)
                     :Field("fk_Table"  ,l_ifk_TableCurrent)
-                    ImportAddRecordSetField(l_oDBImport,"TagTable","*fk_Tag*fk_Table*")   // No other field exists but leaving this in case we add some.
+                    ImportAddRecordSetField(l_oDBImport,"TagTable","*fk_Tag*fk_Table*",l_aColumns)   // No other field exists but leaving this in case we add some.
                     if :Add()
                     endif
                 endwith
@@ -1541,6 +1805,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
     endwith
 
     select ImportSourceTagColumn
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TagColumn")
     scan all
         l_iParentKeyImport  := ImportSourceTagColumn->fk_Tag
         l_iParentKeyCurrent := hb_HGetDef(l_hTagPkOldToNew,l_iParentKeyImport,0)
@@ -1562,7 +1827,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
                     :Table("df873645-94d3-4ba5-85cf-000000000024","TagColumn")
                     :Field("fk_Tag"    ,l_iParentKeyCurrent)
                     :Field("fk_Column" ,l_ifk_ColumnCurrent)
-                    ImportAddRecordSetField(l_oDBImport,"TagColumn","*fk_Tag*fk_Column*")   // No other field exists but leaving this in case we add some.
+                    ImportAddRecordSetField(l_oDBImport,"TagColumn","*fk_Tag*fk_Column*",l_aColumns)   // No other field exists but leaving this in case we add some.
                     if :Add()
                     endif
                 endwith
@@ -1586,6 +1851,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
     endwith
 
     select ImportSourceCustomField
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.CustomField")
     scan all
 
         l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
@@ -1595,7 +1861,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000026","CustomField")
-                ImportAddRecordSetField(l_oDBImport,"CustomField","")
+                ImportAddRecordSetField(l_oDBImport,"CustomField","",l_aColumns)
                 if :Add()
                     l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := :Key()
                 endif
@@ -1619,6 +1885,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
     endwith
 
     select ImportSourceApplicationCustomField
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ApplicationCustomField")
     scan all
 
         l_ifk_CustomFieldImport:= ImportSourceApplicationCustomField->fk_CustomField
@@ -1635,7 +1902,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
                 :Table("df873645-94d3-4ba5-85cf-000000000027","ApplicationCustomField")
                 :Field("fk_Application" ,par_iApplicationPk)
                 :Field("fk_CustomField" ,l_ifk_CustomFieldCurrent)
-                ImportAddRecordSetField(l_oDBImport,"ApplicationCustomField","*fk_Application*fk_CustomField*")   // No other field exists but leaving this in case we add some.
+                ImportAddRecordSetField(l_oDBImport,"ApplicationCustomField","*fk_Application*fk_CustomField*",l_aColumns)   // No other field exists but leaving this in case we add some.
                 if :Add()
                 endif
             endwith
@@ -1663,6 +1930,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
     endwith
 
     select ImportSourceCustomFieldValue
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.CustomFieldValue")
     scan all
         l_iParentKeyImport  := ImportSourceCustomFieldValue->fk_CustomField
         l_iParentKeyCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_iParentKeyImport,0)
@@ -1676,7 +1944,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
             case lnUsedOn == USEDON_APPLICATION  // 1
                 l_ifk_EntityCurrent := par_iApplicationPk
             case lnUsedOn == USEDON_NAMESPACE    // 2
-                l_ifk_EntityCurrent := hb_HGetDef(l_hNameSpacePkOldToNew,l_ifk_EntityImport,0)
+                l_ifk_EntityCurrent := hb_HGetDef(l_hNamespacePkOldToNew,l_ifk_EntityImport,0)
             case lnUsedOn == USEDON_TABLE        // 3
                 l_ifk_EntityCurrent := hb_HGetDef(l_hTablePkOldToNew    ,l_ifk_EntityImport,0)
             case lnUsedOn == USEDON_COLUMN       // 4
@@ -1696,7 +1964,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
                     :Table("df873645-94d3-4ba5-85cf-000000000029","CustomFieldValue")
                     :Field("fk_CustomField" ,l_iParentKeyCurrent)
                     :Field("fk_Entity"      ,l_ifk_EntityCurrent)
-                    ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*")
+                    ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*",l_aColumns)
                     if :Add()
                     endif
                 endwith
@@ -1723,6 +1991,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
     endwith
 
     select ImportSourceTemplateTable
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TemplateTable")
     scan all
         if vfp_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
             l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := ListOfCurrentRecords->pk
@@ -1730,7 +1999,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000031","TemplateTable")
                 :Field("fk_Application",par_iApplicationPk)
-                ImportAddRecordSetField(l_oDBImport,"TemplateTable","*fk_Application*")
+                ImportAddRecordSetField(l_oDBImport,"TemplateTable","*fk_Application*",l_aColumns)
                 if :Add()
                     l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := :Key()
                 endif
@@ -1756,6 +2025,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
     endwith
 
     select ImportSourceTemplateColumn
+    l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TemplateColumn")
     scan all
         l_iParentKeyImport  := ImportSourceTemplateColumn->fk_TemplateTable
         l_iParentKeyCurrent := hb_HGetDef(l_hTemplateTablePkOldToNew,l_iParentKeyImport,0)
@@ -1769,7 +2039,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
                 with object l_oDBImport
                     :Table("df873645-94d3-4ba5-85cf-000000000033","TemplateColumn")
                     :Field("fk_TemplateTable"    ,l_iParentKeyCurrent)
-                    ImportAddRecordSetField(l_oDBImport,"TemplateColumn","*fk_TemplateTable*")
+                    ImportAddRecordSetField(l_oDBImport,"TemplateColumn","*fk_TemplateTable*",l_aColumns)
                     if :Add()
                     endif
                 endwith
@@ -1793,7 +2063,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hSchema := Schema()
+local l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1806,20 +2076,20 @@ local l_cLinkUID
 local l_cFileName
 local l_oInfo
 
-local l_iNameSpacePk
+local l_iNamespacePk
 local l_iApplicationPk
 
 
-hb_HCaseMatch(l_hSchema,.f.)  // Case Insensitive search
+hb_HCaseMatch(l_hTableSchema,.f.)  // Case Insensitive search
 
 with object l_oDB_TableInfo
     :Table("c2d4720b-d8fe-4540-b43a-ac60bc55f601","Table")
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Application","","Namespace.fk_Application = Application.pk")
     :Column("Application.Pk"  ,"Application_Pk")
     :Column("Application.Name","Application_Name")
-    :Column("NameSpace.Pk"    ,"NameSpace_Pk")
-    :Column("NameSpace.Name"  ,"NameSpace_Name")
+    :Column("Namespace.Pk"    ,"Namespace_Pk")
+    :Column("Namespace.Name"  ,"Namespace_Name")
     :Column("Table.Name"      ,"Table_Name")
     l_oInfo := :Get(par_iTablePk)
 endwith
@@ -1829,28 +2099,28 @@ endwith
 with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0002-000000000004","Table")
     :Where("Table.pk = ^",par_iTablePk)
-    :Join("inner","NameSpace","","Table.fk_NameSpace = NameSpace.pk")
-    :Join("inner","Application","","NameSpace.fk_Application = Application.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"NameSpace")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Application","","Namespace.fk_Application = Application.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Namespace")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"NameSpace","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Namespace","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0002-000000000005","Table")
     :Where("Table.pk = ^",par_iTablePk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Table")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Table")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Table","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Table","ListOfRecords")
     endif
 endwith
 
@@ -1858,13 +2128,13 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0002-000000000006","Table")
     :Where("Table.pk = ^",par_iTablePk)
     :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Column")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Column")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Column","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Column","ListOfRecords")
     endif
 endwith
 
@@ -1874,13 +2144,13 @@ with object l_oDB_ListOfRecords
     :Where("Table.pk = ^",par_iTablePk)
     :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
     :Join("inner","Enumeration" ,"","Column.fk_Enumeration = Enumeration.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Enumeration")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Enumeration")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Enumeration","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Enumeration","ListOfRecords")
     endif
 endwith
 
@@ -1890,13 +2160,13 @@ with object l_oDB_ListOfRecords
     :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
     :Join("inner","Enumeration" ,"","Column.fk_Enumeration = Enumeration.pk")
     :Join("inner","EnumValue" ,"","EnumValue.fk_Enumeration = Enumeration.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"EnumValue")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"EnumValue")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"EnumValue","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"EnumValue","ListOfRecords")
     endif
 endwith
 
@@ -1904,13 +2174,13 @@ with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0002-000000000009","Table")
     :Where("Table.pk = ^",par_iTablePk)
     :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Index")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Index")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Index","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Index","ListOfRecords")
     endif
 endwith
 
@@ -1919,13 +2189,13 @@ with object l_oDB_ListOfRecords
     :Where("Table.pk = ^",par_iTablePk)
     :Join("inner","Index" ,"","Index.fk_Table = Table.pk")
     :Join("inner","IndexColumn" ,"","IndexColumn.fk_Index = Index.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"IndexColumn")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"IndexColumn")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"IndexColumn","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"IndexColumn","ListOfRecords")
     endif
 endwith
 
@@ -1936,7 +2206,7 @@ endwith
 //     :Distinct(.t.)
 //     :Where("ApplicationCustomField.fk_Application = ^",par_iApplicationPk)
 //     :Join("inner","CustomField" ,"","ApplicationCustomField.fk_CustomField = CustomField.pk")
-//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomField")
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomField")
 
 //     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
@@ -1945,7 +2215,7 @@ endwith
 //     if :Tally < 0
 //         l_lContinue := .f.
 //     else
-//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomField","ListOfRecords")
+//         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomField","ListOfRecords")
 //     endif
 // endwith
 
@@ -1956,13 +2226,13 @@ endwith
 //     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
 //     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
-//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ApplicationCustomField")
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ApplicationCustomField")
 //     :OrderBy("pk")
 //     :SQL("ListOfRecords")
 //     if :Tally < 0
 //         l_lContinue := .f.
 //     else
-//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ApplicationCustomField","ListOfRecords")
+//         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ApplicationCustomField","ListOfRecords")
 //     endif
 // endwith
 
@@ -1975,13 +2245,13 @@ endwith
 //     :Join("inner","CustomField","","ApplicationCustomField.fk_CustomField = CustomField.pk")
 //     :Where("CustomField.UsedOn <= ^" , USEDON_MODEL)
 
-//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomFieldValue")
+//     ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomFieldValue")
 //     :OrderBy("pk")
 //     :SQL("ListOfRecords")
 //     if :Tally < 0
 //         l_lContinue := .f.
 //     else
-//         l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomFieldValue","ListOfRecords")
+//         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomFieldValue","ListOfRecords")
 //     endif
 // endwith
 // ----- Custom Field End ------------------------------------------------------
@@ -1997,7 +2267,7 @@ if l_lContinue
     DeleteFile(l_cFilePathPID+"Export.txt")
 
     //_M_ Add a Sanitizing function for l_oInfo:Application_Name
-    l_cFileName := "ExportTable_"+strtran(l_oInfo:NameSpace_Name," ","_")+"_"+strtran(l_oInfo:Table_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
+    l_cFileName := "ExportTable_"+strtran(l_oInfo:Namespace_Name," ","_")+"_"+strtran(l_oInfo:Table_Name," ","_")+"_"+GetZuluTimeStampForFileNameSuffix()+".zip"
 
     //Try to find if we already have a streamfile
     with object l_oDB_ListOfFileStream
@@ -2065,4 +2335,135 @@ if l_iKey == 0
 endif
 
 return l_cLinkUID
+//=================================================================================================================
+
+
+//=================================================================================================================
+function DataDictionaryExportFormBuild(par_iApplicationPk,par_cErrorText)
+
+local l_cHtml := ""
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
+local l_cSitePath  := oFcgi:p_cSitePath
+local l_nBackendType
+
+local l_cMessageLine
+
+oFcgi:TraceAdd("DataDictionaryExportOptions")
+
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="Step1">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+// l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
+
+if !empty(l_cErrorText)
+    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
+endif
+
+if !empty(par_iApplicationPk)
+    l_cHtml += [<nav class="navbar navbar-light bg-light">]
+        l_cHtml += [<div class="input-group">]
+            l_cHtml += [<span class="navbar-brand ms-3">Export Options</span>]   //navbar-text
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
+            // l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmImportModal">Import</button>]
+
+            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [</div>]
+    l_cHtml += [</nav>]
+
+    l_cHtml += [<div class="m-3"></div>]
+
+    l_cHtml += [<div class="m-3">]
+        // l_cHtml += [<table>]
+
+        //     l_cHtml += [<tr class="pb-5">]
+        //         l_cHtml += [<td class="pe-2 pb-3">Backend</td>]
+        //         l_cHtml += [<td class="pb-3"></td>]
+        //     l_cHtml += [</tr>]
+
+        // l_cHtml += [</table>]
+
+            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+par_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
+            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToJSON/]+par_cURLApplicationLinkCode+[/">Export to JSON</a>]
+            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/">Export For DataWharf Imports</a>]
+
+l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export For DataWharf Imports" onclick="$('#ActionOnSubmit').val('ExportForDataWharfImports');document.form.submit();" role="button">]
+l_cHtml += [<hr>]
+
+
+
+l_nBackendType := val(GetUserSetting("DataDictionaryExportBackendType"))
+                l_cHtml += [<select name="ComboBackendType" id="ComboBackendType">]
+                l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL/MariaDB</option>]
+                l_cHtml += [<option value="3"]+iif(l_nBackendType==3,[ selected],[])+[>PostgreSQL</option>]
+                // l_cHtml += [<option value="4"]+iif(l_nBackendType==4,[ selected],[])+[>MSSQL</option>]
+                l_cHtml += [</select>]
+l_cHtml += [<br>]
+l_cHtml += [<br>]
+
+
+l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export to Harbour_ORM" onclick="$('#ActionOnSubmit').val('ExportToHarbourORM');document.form.submit();" role="button">]
+l_cHtml += [<br>]
+l_cHtml += [<br>]
+l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export to JSON" onclick="$('#ActionOnSubmit').val('ExportToJSON');document.form.submit();" role="button">]
+
+
+    l_cHtml += [</div>]
+
+    // oFcgi:p_cjQueryScript += [$('#TextExportFile').focus();]
+
+    l_cHtml += [</form>]
+
+    // l_cHtml += GetConfirmationModalFormsImport()
+endif
+
+return l_cHtml
+//=================================================================================================================
+function DataDictionaryExportFormOnSubmit(par_iApplicationPk,par_cApplicationName,par_cURLApplicationLinkCode)
+local l_cHtml := []
+local l_cActionOnSubmit
+local l_nBackendType
+local l_cBackendType
+
+local l_cErrorMessage := ""
+
+oFcgi:TraceAdd("DataDictionaryExportFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+l_nBackendType    := val(oFcgi:GetInputValue("ComboBackendType"))
+SaveUserSetting("DataDictionaryExportBackendType",trans(l_nBackendType))
+
+do case
+case l_nBackendType == 2
+    l_cBackendType := "MySQL"
+case l_nBackendType == 3
+    l_cBackendType := "PostgreSQL"
+// case l_nBackendType == 4
+otherwise
+    l_cBackendType := ""
+endcase
+
+do case
+case empty(l_cBackendType)
+    l_cErrorMessage := "Missing Backend Type"
+
+case l_cActionOnSubmit == "ExportForDataWharfImports"
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryExportForDataWharfImports/"+par_cURLApplicationLinkCode+"/")
+
+case l_cActionOnSubmit == "ExportToHarbourORM"
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryExportToHarbourORM/"+par_cURLApplicationLinkCode+"/?Backend="+l_cBackendType)
+
+case l_cActionOnSubmit == "ExportToJSON"
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryExportToJSON/"+par_cURLApplicationLinkCode+"/?Backend="+l_cBackendType)
+
+case l_cActionOnSubmit == "Cancel"
+    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryImport/"+par_cURLApplicationLinkCode+"/")
+
+endcase
+
+if !empty(l_cErrorMessage)
+    // l_cHtml += DataDictionaryExportFormBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode)
+    l_cHtml += DataDictionaryExportFormBuild(par_iApplicationPk,l_cErrorMessage)
+endif
+
+return l_cHtml
 //=================================================================================================================

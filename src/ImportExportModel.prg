@@ -5,9 +5,8 @@ function ExportModelForImports(par_iModelPk)
 local l_cBackupCode := ""
 
 local l_lContinue := .t.
-local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hSchema := Schema()
-
+local l_hTableSchema         := oFcgi:p_WharfConfig["TableSchema"]
+local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ModelInfo        := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -19,7 +18,9 @@ local l_cLinkUID
 local l_cFileName
 local l_oModelInfo
 
-hb_HCaseMatch(l_hSchema,.f.)  // Case Insensitive search
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
+
+hb_HCaseMatch(l_hTableSchema,.f.)  // Case Insensitive search
 
 with object l_oDB_ModelInfo
     :Table("edb07440-470b-4a37-8467-b81a8e23bf4a","Model")
@@ -33,65 +34,65 @@ endwith
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000001","Entity")
     :Where("Entity.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Entity")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Entity")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Entity","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Entity","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000002","Package")
     :Where("Package.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Package")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Package")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Package","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Package","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000003","Association")
     :Where("Association.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Association")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Association")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Association","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Association","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000004","DataType")
     :Where("DataType.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"DataType")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"DataType")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"DataType","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"DataType","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000005","ModelEnumeration")
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ModelEnumeration")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ModelEnumeration")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ModelEnumeration","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ModelEnumeration","ListOfRecords")
     endif
 endwith
 
@@ -99,13 +100,13 @@ with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000006","ModelEnumeration")
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
     :Join("inner","ModelEnumValue" ,"","ModelEnumValue.fk_ModelEnumeration = ModelEnumeration.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ModelEnumValue")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ModelEnumValue")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ModelEnumValue","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ModelEnumValue","ListOfRecords")
     endif
 endwith
 
@@ -113,13 +114,13 @@ with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000007","Entity")
     :Where("Entity.fk_Model = ^",par_iModelPk)
     :Join("inner","Attribute" ,"","Attribute.fk_Entity = Entity.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Attribute")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Attribute")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Attribute","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Attribute","ListOfRecords")
     endif
 endwith
 
@@ -127,13 +128,13 @@ with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000008","Entity")
     :Where("Entity.fk_Model = ^",par_iModelPk)
     :Join("inner","Endpoint" ,"","Endpoint.fk_Entity = Entity.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"Endpoint")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"Endpoint")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"Endpoint","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Endpoint","ListOfRecords")
     endif
 endwith
 
@@ -141,26 +142,26 @@ with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000009","DataType")
     :Where("DataType.fk_Model = ^",par_iModelPk)
     :Join("inner","PrimitiveType" ,"","DataType.fk_PrimitiveType = PrimitiveType.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"PrimitiveType")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"PrimitiveType")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"PrimitiveType","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"PrimitiveType","ListOfRecords")
     endif
 endwith
 
 with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000010","ModelingDiagram")
     :Where("ModelingDiagram.fk_Model = ^",par_iModelPk)
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ModelingDiagram")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ModelingDiagram")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ModelingDiagram","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ModelingDiagram","ListOfRecords")
     endif
 endwith
 
@@ -168,13 +169,13 @@ with object l_oDB_ListOfRecords
     :Table("8795599c-bb2a-4f1f-8ee7-000000000011","ModelingDiagram")
     :Where("ModelingDiagram.fk_Model = ^",par_iModelPk)
     :Join("inner","DiagramEntity" ,"","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"DiagramEntity")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"DiagramEntity")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"DiagramEntity","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"DiagramEntity","ListOfRecords")
     endif
 endwith
 
@@ -184,7 +185,7 @@ with object l_oDB_ListOfRecords
     :Distinct(.t.)
     :Where("ProjectCustomField.fk_Project = ^",l_oModelInfo:Project_pk)
     :Join("inner","CustomField" ,"","ProjectCustomField.fk_CustomField = CustomField.pk")
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomField")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomField")
 
     :Where("CustomField.UsedOn >= ^" , USEDON_ENTITY)
     
@@ -193,7 +194,7 @@ with object l_oDB_ListOfRecords
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomField","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomField","ListOfRecords")
     endif
 endwith
 
@@ -204,13 +205,13 @@ with object l_oDB_ListOfRecords
     :Join("inner","CustomField","","ProjectCustomField.fk_CustomField = CustomField.pk")
     :Where("CustomField.UsedOn >= ^" , USEDON_ENTITY)
 
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"ProjectCustomField")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ProjectCustomField")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"ProjectCustomField","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ProjectCustomField","ListOfRecords")
     endif
 endwith
 
@@ -223,16 +224,17 @@ with object l_oDB_ListOfRecords
     :Join("inner","CustomField","","ProjectCustomField.fk_CustomField = CustomField.pk")
     :Where("CustomField.UsedOn >= ^" , USEDON_ENTITY)
 
-    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hSchema,"CustomFieldValue")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"CustomFieldValue")
     :OrderBy("pk")
     :SQL("ListOfRecords")
     if :Tally < 0
         l_lContinue := .f.
     else
-        l_cBackupCode += ExportForImports_Cursor(l_hSchema,"CustomFieldValue","ListOfRecords")
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"CustomFieldValue","ListOfRecords")
     endif
 endwith
 // ----- Custom Field End ------------------------------------------------------
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.t.)
 
 
 //Order of Table Export
@@ -535,6 +537,7 @@ local l_cJSONVisPos
 
 local l_hImportSourceCustomFieldUsedOn := {=>}
 local lnUsedOn
+local l_aColumns
 
 // Parse the file line by line
 
@@ -642,6 +645,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
         
 select ImportSourcePackage
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Package")
 scan all
     if vfp_seek( upper(strtran(ImportSourcePackage->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: Package Already on file",ListOfCurrentRecords->Name)
@@ -651,7 +655,7 @@ scan all
             :Table("c8459f40-9026-4718-b3d6-000000000002","Package")
             :Field("fk_Model",par_iModelPk)
             :Field("fk_Package"      ,-ImportSourcePackage->fk_Package)   // To Flag it should be rekeyed. Had to be deferred due to self-reference-pointer.
-            ImportAddRecordSetField(l_oDBImport,"Package","*fk_Model*fk_Package*")
+            ImportAddRecordSetField(l_oDBImport,"Package","*fk_Model*fk_Package*",l_aColumns)
             if :Add()
                 l_hPackagePkOldToNew[ImportSourcePackage->pk] := :Key()
                 if ImportSourcePackage->fk_Package > 0
@@ -693,6 +697,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourcePrimitiveType
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.PrimitiveType")
 scan all
     if vfp_seek( upper(strtran(ImportSourcePrimitiveType->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         l_hPrimitiveTypePkOldToNew[ImportSourcePrimitiveType->pk] := ListOfCurrentRecords->pk
@@ -700,7 +705,7 @@ scan all
         with object l_oDBImport
             :Table("c8459f40-9026-4718-b3d6-000000000005","PrimitiveType")
             :Field("fk_Project",l_oModelInfo:Model_fk_Project)
-            ImportAddRecordSetField(l_oDBImport,"PrimitiveType","*fk_Model*")
+            ImportAddRecordSetField(l_oDBImport,"PrimitiveType","*fk_Model*",l_aColumns)
             if :Add()
                 l_hPrimitiveTypePkOldToNew[ImportSourcePrimitiveType->pk] := :Key()
             endif
@@ -725,8 +730,8 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceDataType
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.DataType")
 scan all
-
     l_ifk_PrimitiveTypeImport := ImportSourceDataType->fk_PrimitiveType
     if hb_IsNil(l_ifk_PrimitiveTypeImport) .or. hb_IsNil(l_ifk_PrimitiveTypeImport)
         l_ifk_PrimitiveTypeCurrent := 0
@@ -743,7 +748,7 @@ scan all
             :Field("fk_Model"         ,par_iModelPk)
             :Field("fk_PrimitiveType" ,l_ifk_PrimitiveTypeCurrent)
             :Field("fk_DataType"      ,-ImportSourceDataType->fk_DataType)   // To Flag it should be rekeyed. Had to be deferred due to self-reference-pointer.
-            ImportAddRecordSetField(l_oDBImport,"DataType","*fk_Model*fk_DataType*fk_PrimitiveType*")
+            ImportAddRecordSetField(l_oDBImport,"DataType","*fk_Model*fk_DataType*fk_PrimitiveType*",l_aColumns)
             if :Add()
                 l_hDataTypePkOldToNew[ImportSourceDataType->pk] := :Key()
                 if ImportSourceDataType->fk_DataType > 0
@@ -785,6 +790,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
         
 select ImportSourceModelEnumeration
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelEnumeration")
 scan all
     if vfp_seek( upper(strtran(ImportSourceModelEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: ModelEnumeration Already on file",ListOfCurrentRecords->Name)
@@ -793,7 +799,7 @@ scan all
         with object l_oDBImport
             :Table("c8459f40-9026-4718-b3d6-000000000006","ModelEnumeration")
             :Field("fk_Model",par_iModelPk)
-            ImportAddRecordSetField(l_oDBImport,"ModelEnumeration","*fk_Model*")
+            ImportAddRecordSetField(l_oDBImport,"ModelEnumeration","*fk_Model*",l_aColumns)
             if :Add()
                 l_hModelEnumerationPkOldToNew[ImportSourceModelEnumeration->pk] := :Key()
             endif
@@ -817,8 +823,8 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceEntity
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Entity")
 scan all
-
     l_ifk_PackageImport := ImportSourceEntity->fk_Package
     if hb_IsNil(l_ifk_PackageImport) .or. hb_IsNil(l_ifk_PackageImport)
         l_ifk_PackageCurrent := 0
@@ -834,7 +840,7 @@ scan all
             :Table("c8459f40-9026-4718-b3d6-000000000008","Entity")
             :Field("fk_Model"   ,par_iModelPk)
             :Field("fk_Package" ,l_ifk_PackageCurrent)
-            ImportAddRecordSetField(l_oDBImport,"Entity","*fk_Model*fk_package*")
+            ImportAddRecordSetField(l_oDBImport,"Entity","*fk_Model*fk_package*",l_aColumns)
             if :Add()
                 l_hEntityPkOldToNew[ImportSourceEntity->pk] := :Key()
             endif
@@ -858,8 +864,8 @@ with object l_oDB_ListOfCurrentRecords
 endwith
         
 select ImportSourceAssociation
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Association")
 scan all
-
     l_ifk_PackageImport := ImportSourceAssociation->fk_Package
     if hb_IsNil(l_ifk_PackageImport) .or. hb_IsNil(l_ifk_PackageImport)
         l_ifk_PackageCurrent := 0
@@ -875,7 +881,7 @@ scan all
             :Table("c8459f40-9026-4718-b3d6-000000000010","Association")
             :Field("fk_Model"   ,par_iModelPk)
             :Field("fk_Package" ,l_ifk_PackageCurrent)
-            ImportAddRecordSetField(l_oDBImport,"Association","*fk_Model*fk_package")
+            ImportAddRecordSetField(l_oDBImport,"Association","*fk_Model*fk_package",l_aColumns)
             if :Add()
                 l_hAssociationPkOldToNew[ImportSourceAssociation->pk] := :Key()
             endif
@@ -900,6 +906,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceModelEnumValue
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelEnumValue")
 scan all
     l_iParentKeyImport  := ImportSourceModelEnumValue->fk_ModelEnumeration
     l_iParentKeyCurrent := hb_HGetDef(l_hModelEnumerationPkOldToNew,l_iParentKeyImport,0)
@@ -913,7 +920,7 @@ scan all
             with object l_oDBImport
                 :Table("c8459f40-9026-4718-b3d6-000000000012","ModelEnumValue")
                 :Field("fk_ModelEnumeration" ,l_iParentKeyCurrent)
-                ImportAddRecordSetField(l_oDBImport,"ModelEnumValue","*fk_ModelEnumeration*")
+                ImportAddRecordSetField(l_oDBImport,"ModelEnumValue","*fk_ModelEnumeration*",l_aColumns)
                 if :Add()
                 endif
             endwith
@@ -941,6 +948,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
         
 select ImportSourceAttribute
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Attribute")
 scan all
     l_iParentKeyImport  := ImportSourceAttribute->fk_Entity
     l_iParentKeyCurrent := hb_HGetDef(l_hEntityPkOldToNew,l_iParentKeyImport,0)
@@ -964,7 +972,7 @@ scan all
                 :Field("fk_Attribute"        ,-ImportSourceAttribute->fk_Attribute)   // To Flag it should be rekeyed. Had to be deferred due to self-reference-pointer.
                 :Field("fk_ModelEnumeration" ,l_ifk_ModelEnumerationCurrent)
                 :Field("fk_DataType"         ,l_ifk_DataTypeCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Attribute","*fk_Entity*fk_Attribute*fk_ModelEnumeration*fk_DataType*")
+                ImportAddRecordSetField(l_oDBImport,"Attribute","*fk_Entity*fk_Attribute*fk_ModelEnumeration*fk_DataType*",l_aColumns)
                 if :Add()
                     l_hAttributePkOldToNew[ImportSourceAttribute->pk] := :Key()
                     if ImportSourceAttribute->fk_Attribute > 0
@@ -1011,6 +1019,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceEndpoint
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Endpoint")
 scan all
     l_iParentKeyImport  := ImportSourceEndpoint->fk_Entity
     l_iParentKeyCurrent := hb_HGetDef(l_hEntityPkOldToNew,l_iParentKeyImport,0)
@@ -1033,7 +1042,7 @@ scan all
                 :Table("c8459f40-9026-4718-b3d6-000000000017","Endpoint")
                 :Field("fk_Entity"      ,l_iParentKeyCurrent)
                 :Field("fk_Association" ,l_ifk_AssociationCurrent)
-                ImportAddRecordSetField(l_oDBImport,"Endpoint","*fk_Entity*fk_Association*AspectOf*")   //AspectOf was an old field
+                ImportAddRecordSetField(l_oDBImport,"Endpoint","*fk_Entity*fk_Association*AspectOf*",l_aColumns)   //AspectOf was an old field
                 if :Add()
                     l_hEndpointPkOldToNew[ImportSourceEndpoint->pk] := :Key()
                 endif
@@ -1057,6 +1066,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceModelingDiagram
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelingDiagram")
 scan all
     if vfp_seek( upper(strtran(ImportSourceModelingDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: ModelingDiagram Already on file",ListOfCurrentRecords->Name)
@@ -1094,7 +1104,7 @@ scan all
             if !hb_IsNil(l_cJSONVisPos)
                 :FieldExpression("VisPos","E'"+l_cJSONVisPos+"'")
             endif
-            ImportAddRecordSetField(l_oDBImport,"ModelingDiagram","*fk_Model*VisPos*")
+            ImportAddRecordSetField(l_oDBImport,"ModelingDiagram","*fk_Model*VisPos*",l_aColumns)
             if :Add()
                 //Log the old key, new key
                 l_hModelingDiagramPkOldToNew[ImportSourceModelingDiagram->pk] := :Key()
@@ -1121,6 +1131,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceDiagramEntity
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelingDiagram")
 scan all
     l_iParentKeyImport  := ImportSourceDiagramEntity->fk_ModelingDiagram
     l_iParentKeyCurrent := hb_HGetDef(l_hModelingDiagramPkOldToNew,l_iParentKeyImport,0)
@@ -1141,7 +1152,7 @@ scan all
                 :Table("df873645-94d3-4ba5-85cf-000000000018","DiagramEntity")
                 :Field("fk_ModelingDiagram",l_iParentKeyCurrent)
                 :Field("fk_Entity"         ,l_ifk_EntityCurrent)
-                ImportAddRecordSetField(l_oDBImport,"ModelingDiagram","*fk_ModelingDiagram*fk_Entity*")   // No other field exists but leaving this in case we add some.
+                ImportAddRecordSetField(l_oDBImport,"ModelingDiagram","*fk_ModelingDiagram*fk_Entity*",l_aColumns)   // No other field exists but leaving this in case we add some.
                 if :Add()
                 endif
             endwith
@@ -1164,8 +1175,8 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceCustomField
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.CustomField")
 scan all
-
     l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
 
     if vfp_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
@@ -1173,7 +1184,7 @@ scan all
     else
         with object l_oDBImport
             :Table("df873645-94d3-4ba5-85cf-000000000026","CustomField")
-            ImportAddRecordSetField(l_oDBImport,"CustomField","")
+            ImportAddRecordSetField(l_oDBImport,"CustomField","",l_aColumns)
             if :Add()
                 l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := :Key()
             endif
@@ -1197,8 +1208,8 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceProjectCustomField
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ProjectCustomField")
 scan all
-
     l_ifk_CustomFieldImport:= ImportSourceProjectCustomField->fk_CustomField
     if hb_IsNil(l_ifk_CustomFieldImport) .or. hb_IsNil(l_ifk_CustomFieldImport)
         l_ifk_CustomFieldCurrent := 0
@@ -1213,7 +1224,7 @@ scan all
             :Table("df873645-94d3-4ba5-85cf-000000000027","ProjectCustomField")
             :Field("fk_Project" ,l_oModelInfo:Model_fk_Project)
             :Field("fk_CustomField" ,l_ifk_CustomFieldCurrent)
-            ImportAddRecordSetField(l_oDBImport,"ProjectCustomField","*fk_Project*fk_CustomField*")   // No other field exists but leaving this in case we add some.
+            ImportAddRecordSetField(l_oDBImport,"ProjectCustomField","*fk_Project*fk_CustomField*",l_aColumns)   // No other field exists but leaving this in case we add some.
             if :Add()
             endif
         endwith
@@ -1241,6 +1252,7 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceCustomFieldValue
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.CustomFieldValue")
 scan all
     l_iParentKeyImport  := ImportSourceCustomFieldValue->fk_CustomField
     l_iParentKeyCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_iParentKeyImport,0)
@@ -1281,7 +1293,7 @@ scan all
                 :Table("df873645-94d3-4ba5-85cf-000000000029","CustomFieldValue")
                 :Field("fk_CustomField" ,l_iParentKeyCurrent)
                 :Field("fk_Entity"      ,l_ifk_EntityCurrent)
-                ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*")
+                ImportAddRecordSetField(l_oDBImport,"CustomFieldValue","*fk_CustomField*fk_Entity*",l_aColumns)
                 if :Add()
                 endif
             endwith

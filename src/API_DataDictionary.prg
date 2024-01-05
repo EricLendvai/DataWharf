@@ -76,12 +76,25 @@ endif
 return l_cResponse
 //=================================================================================================================
 // Example: /api/application_harbour_schema_export
-function APIGetApplicationHarbourSchemaExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
+function APIGetApplicationHarbourConfigurationExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
+local l_cResponse
+l_cResponse := APIGetApplicationSchemaExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode,"Harbour")
+return l_cResponse
+//=================================================================================================================
+function APIGetApplicationJSONConfigurationExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
+local l_cResponse
+l_cResponse := APIGetApplicationSchemaExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode,"JSON")
+return l_cResponse
+//=================================================================================================================
+// Example: /api/application_harbour_schema_export
+static function APIGetApplicationSchemaExport(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode,par_cTarget)
 
 local l_cResponse := ""
 local l_cApplicationLinkCode   := oFcgi:GetQueryString("application")
 local l_oDB_ListOfApplications := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfApplications
+local l_cMacro
+local l_hTableSchema
 
 if par_nTokenAccessMode == 1 .and. !APIAccessCheck_Token_EndPoint_Application_ReadRequest(par_cAccessToken,par_cAPIEndpointName,l_cApplicationLinkCode)
     l_cResponse := "Access Denied"
@@ -106,11 +119,24 @@ else
             l_cResponse += hb_jsonEncode({"Error"=>"SQL Error", "Message"=>"Failed SQL 750c8b4a-11ad-4cb6-a805-dc6d45f1b1a1"})
             oFcgi:SetHeaderValue("Status","500 Internal Server Error")
         else
-            l_cResponse := ExportApplicationToHbORM(ListOfApplications->pk,2)
+            do case
+            case par_cTarget == "Harbour"
+                l_cResponse := ExportApplicationToHarbour_ORM(ListOfApplications->pk,3,.f.,"PostgreSQL")
+            case par_cTarget == "JSON"
+                l_cMacro := ExportApplicationToHarbour_ORM(ListOfApplications->pk,3,.f.,"PostgreSQL")
+                l_cMacro := Strtran(l_cMacro,chr(13),"")
+                l_cMacro := Strtran(l_cMacro,chr(10),"")
+                l_cMacro := Strtran(l_cMacro,[;],"")
+                
+                l_hTableSchema := &( l_cMacro )
+                l_hTableSchema := {"Version" => 1,;
+                                   "GenerationTime" => strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z",;
+                                   "TableSchema" => l_hTableSchema}
+                l_cResponse += hb_jsonEncode(l_hTableSchema,.t.)
+            endcase
         endif
     endif
 endif
 
 return l_cResponse
-//=================================================================================================================
 //=================================================================================================================

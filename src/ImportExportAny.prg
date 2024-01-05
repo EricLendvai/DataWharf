@@ -1,14 +1,14 @@
 #include "DataWharf.ch"
 //=================================================================================================================
-function ExportForImports_GetFields(par_oDB_ListOfTables,par_hSchema,par_cTableName)
+function ExportForImports_GetFields(par_oDB_ListOfTables,par_hTableSchema,par_cTableName)
 local l_aTableInfo
-local l_aFields
+local l_hFields
 local l_cFieldName
 
-if hb_HHasKey(par_hSchema,"public."+par_cTableName)
-    l_aTableInfo := par_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
-        l_cFieldName := l_aFields:__enumkey
+if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
+    l_aTableInfo := par_hTableSchema["public."+par_cTableName]
+    for each l_hFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
+        l_cFieldName := l_hFields:__enumkey
         if !vfp_inlist(l_cFieldName,'sysc','sysm')
             par_oDB_ListOfTables:Column(par_cTableName+"."+l_cFieldName ,l_cFieldName)
         endif
@@ -17,11 +17,11 @@ endif
 
 return nil
 //=================================================================================================================
-function ExportForImports_Cursor(par_hSchema,par_cTableName,par_cCursornName)
+function ExportForImports_Cursor(par_hTableSchema,par_cTableName,par_cCursornName)
 local l_cBackupCode := ""
 local l_cAdditionalCharactersToEscape := "|^"   // | is for NULL, ^ field separator
-local l_aTableInfo
-local l_aFields
+local l_hTableInfo
+local l_hFields
 local l_cFieldName
 local l_cFieldType
 local l_cFieldLen
@@ -30,24 +30,26 @@ local l_xValue
 
 //Instead of using the table schema, will use the list of fields current version of the app is expecting.
 
-if hb_HHasKey(par_hSchema,"public."+par_cTableName)
+if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
     l_cBackupCode := "!"+par_cTableName+CRLF
-    l_aTableInfo := par_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
-        l_cFieldName := l_aFields:__enumkey
+    l_hTableInfo := par_hTableSchema["public."+par_cTableName]
+    for each l_hFields in l_hTableInfo[HB_ORM_SCHEMA_FIELD]
+        l_cFieldName := l_hFields:__enumkey
         if !vfp_inlist(l_cFieldName,'sysc','sysm')
-            l_cFieldType  := l_aFields[HB_ORM_SCHEMA_FIELD_TYPE]
+            l_cFieldType  := l_hFields[HB_ORM_SCHEMA_FIELD_TYPE]
             l_cBackupCode += "|"
             l_cBackupCode += l_cFieldName + "|"
             l_cBackupCode += l_cFieldType + "|"
-            l_cBackupCode += trans(nvl(l_aFields[HB_ORM_SCHEMA_FIELD_LENGTH],0)) + "|"
-            l_cBackupCode += trans(nvl(l_aFields[HB_ORM_SCHEMA_FIELD_DECIMALS],0)) + "|"
-            if len(l_aFields) >= HB_ORM_SCHEMA_FIELD_ATTRIBUTES
-                l_cBackupCode += nvl(l_aFields[HB_ORM_SCHEMA_FIELD_ATTRIBUTES],"") + "|"
-            endif
-            if len(l_aFields) >= HB_ORM_SCHEMA_FIELD_DEFAULT
-                l_cBackupCode += nvl(l_aFields[HB_ORM_SCHEMA_FIELD_DEFAULT],"") + "|"
-            endif
+            l_cBackupCode += trans(hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_LENGTH,0)) + "|"
+            l_cBackupCode += trans(hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_DECIMALS,0)) + "|"
+
+            l_cBackupCode += iif(hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_NULLABLE,.f.)     ,"N","")
+            l_cBackupCode += iif(hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_AUTOINCREMENT,.f.),"+","")
+            l_cBackupCode += iif(hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_ARRAY,.f.)        ,"A","")
+            l_cBackupCode += "|"
+
+            l_cBackupCode += hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_DEFAULT,"") + "|"
+
             l_cBackupCode += CRLF
         endif
     endfor
@@ -57,10 +59,10 @@ if hb_HHasKey(par_hSchema,"public."+par_cTableName)
     scan all
         l_cBackupCode += "^"
 
-        for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
-            l_cFieldName := l_aFields:__enumkey
+        for each l_hFields in l_hTableInfo[HB_ORM_SCHEMA_FIELD]
+            l_cFieldName := l_hFields:__enumkey
             if !vfp_inlist(l_cFieldName,'sysc','sysm')
-                l_cFieldType := l_aFields[HB_ORM_SCHEMA_FIELD_TYPE]
+                l_cFieldType := l_hFields[HB_ORM_SCHEMA_FIELD_TYPE]
                 l_xValue     := hb_FieldGet(l_cFieldName)
                 do case
                 case hb_IsNil(l_xValue)
@@ -79,8 +81,8 @@ if hb_HHasKey(par_hSchema,"public."+par_cTableName)
                     endif
 
                case vfp_inlist(l_cFieldType,"N")
-                    l_cFieldLen := l_aFields[HB_ORM_SCHEMA_FIELD_LENGTH]
-                    l_cFieldDec := l_aFields[HB_ORM_SCHEMA_FIELD_DECIMALS]
+                    l_cFieldLen := hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_LENGTH,0)
+                    l_cFieldDec := hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_DECIMALS,0)
                     if empty(l_cFieldDec)
                         l_cBackupCode += trans(l_xValue)
                     else
@@ -135,43 +137,35 @@ ENDTEXT
 
 return cHtml
 //=================================================================================================================
-function ImportAddRecordSetField(par_oDBImport,par_cTableName,par_cFieldsToExclude)
+function ImportAddRecordSetField(par_oDBImport,par_cTableName,par_cFieldsToExclude,par_aFieldsToInclude)
 local l_aTableInfo
-local l_aFields
+local l_hFields
 local l_cFieldName
 local l_nListOfImportData := select("ImportSource"+par_cTableName)
 local l_xValue
-local l_hSchema := oFcgi:p_o_SQLConnection:p_Schema
+local l_hTableSchema := oFcgi:p_o_SQLConnection:p_TableSchema
 
-if hb_HHasKey(l_hSchema,"public."+par_cTableName)
-    l_aTableInfo := l_hSchema["public."+par_cTableName]
-    for each l_aFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
-        l_cFieldName := l_aFields:__enumkey
+if hb_HHasKey(l_hTableSchema,"public."+par_cTableName)
+    l_aTableInfo := l_hTableSchema["public."+par_cTableName]
+    for each l_hFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
+        l_cFieldName := l_hFields:__enumkey
         if !vfp_inlist(lower(l_cFieldName),'pk','sysc','sysm') .and. !("*"+lower(l_cFieldName)+"*" $ lower(par_cFieldsToExclude))
-            if lower(l_cFieldName) == "linkuid" //Always generate a new uuid for these named fields
-                par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,oFcgi:p_o_SQLConnection:GetUUIDString())
-            else
-                l_xValue := (l_nListOfImportData)->(hb_FieldGet(l_cFieldName))
 
-                // do case
-                // case hb_IsNil(l_xValue)
-                //     par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,nil)
-                // case vfp_inlist(l_aFields[2],"C","CV","M")
-                //     par_oDBImport:FieldExpression(par_cTableName+"."+l_cFieldName ,"E'"+l_xValue+"'")  //Since value was already encoded.
-                // case vfp_inlist(l_aFields[2],"D")
-                //     par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,SToD(l_xValue))
-                // case vfp_inlist(l_aFields[2],"L")
-                //     par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,(l_xValue == "T"))
-                // otherwise
-                //     par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,l_xValue)
-                // endcase
+            //Test if the Field is not discontinued.   See GetColumnsConfiguration
+            if hb_Ascan(par_aFieldsToInclude,{|l_cFieldNameInArray| lower(l_cFieldName) == lower(l_cFieldNameInArray)},,,.t.) > 0
 
-                if !hb_IsNil(l_xValue) .and. vfp_inlist(l_aFields[2],"C","CV","M")
-                    par_oDBImport:FieldExpression(par_cTableName+"."+l_cFieldName ,"E'"+l_xValue+"'")  //Since value was already encoded.
+                if lower(l_cFieldName) == "linkuid" //Always generate a new uuid for these named fields
+                    par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 else
-                    par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,l_xValue)
-                endif
+                    l_xValue := (l_nListOfImportData)->(hb_FieldGet(l_cFieldName))
 
+                    if !hb_IsNil(l_xValue) .and. vfp_inlist(l_hFields[HB_ORM_SCHEMA_FIELD_TYPE],"C","CV","M")
+                        par_oDBImport:FieldExpression(par_cTableName+"."+l_cFieldName ,"E'"+l_xValue+"'")  //Since value was already encoded.
+                    else
+                        par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,l_xValue)
+                    endif
+
+                endif
             endif
         endif
     endfor

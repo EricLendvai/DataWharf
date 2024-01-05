@@ -1,4 +1,4 @@
-#define BUILDVERSION "2.60"
+#define BUILDVERSION "3.0"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,14 +14,15 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "3.14"
+#define MIN_HARBOUR_ORM_VERSION  "4.0"
 #define MIN_HARBOUR_VFP_VERSION  "3.4"
-#define MIN_HARBOUR_FCGI_VERSION "1.4"
+#define MIN_HARBOUR_FCGI_VERSION "1.7"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
 #define MXGRAPH_SCRIPT_VERSION       "18_0_1"
 #define BOOTSTRAP_SCRIPT_VERSION     "5_0_2"
+// #define BOOTSTRAP_SCRIPT_VERSION     "5_3_2"
 #define JQUERYUI_SCRIPT_VERSION      "1_12_1_NoTooltip"
 #define JQUERY_SCRIPT_VERSION        "3_6_0"
 #define JQUERYSELECT2_SCRIPT_VERSION "2022_01_01"
@@ -169,3 +170,19 @@
 #define OUTPUT_FOLDER "Output"  //Folder will be relative to the Backend Folder where the FastCGI EXE in placed.
 
 #define APIUSE .t.    // To enable or not the management and use of APIs
+
+//{Code,Name,Show Length,Show Scale,Max Scale,Show Enums,Show Unicode,PostgreSQL Name, MySQL Name}
+#define COLUMN_TYPES_CODE          1
+#define COLUMN_TYPES_NAME          2
+#define COLUMN_TYPES_SHOW_LENGTH   3
+#define COLUMN_TYPES_SHOW_SCALE    4
+#define COLUMN_TYPES_MAX_SCALE     5
+#define COLUMN_TYPES_SHOW_ENUMS    6
+#define COLUMN_TYPES_SHOW_UNICODE  7
+#define COLUMN_TYPES_POSTGRES_NAME 8
+#define COLUMN_TYPES_MYSQL_NAME    9
+
+#define COLUMN_USEDAS_PRIMARY_KEY 2
+#define COLUMN_USEDAS_FOREIGN_KEY 3
+#define COLUMN_USEDAS_SUPPORT     4
+

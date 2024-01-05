@@ -2217,9 +2217,9 @@ local l_nEntityUseStatus
 
 local l_cAttributeName
 local l_cAttributeDescription
-local l_cFrom_NameSpace_Name
+local l_cFrom_Namespace_Name
 local l_cFrom_Entity_Name
-local l_cTo_NameSpace_Name
+local l_cTo_Namespace_Name
 local l_cTo_Entity_Name
 local l_CheckBoxId
 local l_nNumberOfEntitiesInDiagram
@@ -2600,14 +2600,14 @@ if len(l_aNodes) == 1
                             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFDataType+[</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                                l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Use<br>Status</th>]
+                                l_cHtml += [<th class="text-white">Name</th>]
+                                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataType+[</th>]
+                                l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
+                                l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
+                                l_cHtml += [<th class="text-white">Description</th>]
+                                l_cHtml += [<th class="text-white text-center">Use<br>Status</th>]
                                 if l_nNumberOfCustomFieldValues > 0
-                                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Other</th>]
+                                    l_cHtml += [<th class="text-white text-center">Other</th>]
                                 endif
                             l_cHtml += [</tr>]
 
@@ -3051,12 +3051,12 @@ if l_oDB_InArray:Tally == 1
                     l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                     l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white">]+oFcgi:p_ANFEntity+[</th>]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Lower</th>]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Bound<br>Upper</th>]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Aspect<br>Of</th>]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                        l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
+                        l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntity+[</th>]
+                        l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
+                        l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
+                        l_cHtml += [<th class="text-white text-center">Aspect<br>Of</th>]
+                        l_cHtml += [<th class="text-white">Name</th>]
+                        l_cHtml += [<th class="text-white">Description</th>]
                     l_cHtml += [</tr>]
 
                     select ListOfEndpoints

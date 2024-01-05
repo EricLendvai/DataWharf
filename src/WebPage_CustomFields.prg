@@ -207,17 +207,17 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center" colspan="7">Custom Fields (]+Trans(l_nNumberOfCustomFields)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="7">Custom Fields (]+Trans(l_nNumberOfCustomFields)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Name</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Code</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Label</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Type</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Used On</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white">Description</th>]
-                    l_cHtml += [<th class="GridHeaderRowCells text-white text-center">Status</th>]
+                    l_cHtml += [<th class="text-white">Name</th>]
+                    l_cHtml += [<th class="text-white">Code</th>]
+                    l_cHtml += [<th class="text-white">Label</th>]
+                    l_cHtml += [<th class="text-white">Type</th>]
+                    l_cHtml += [<th class="text-white">Used On</th>]
+                    l_cHtml += [<th class="text-white">Description</th>]
+                    l_cHtml += [<th class="text-white text-center">Status</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfCustomFields
@@ -241,7 +241,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application","Name Space","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
+                            l_cHtml += {"Application","Namespace","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -409,7 +409,7 @@ l_cHtml += [<div class="m-3">]
                 l_iUsedOn := hb_HGetDef(par_hValues,"UsedOn",1)
                 l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedOn" id="ComboUsedOn">]
                     l_cHtml += [<option value="]+Trans(USEDON_APPLICATION)+["]+iif(l_iUsedOn==USEDON_APPLICATION,[ selected],[])+[>Application</option>]
-                    l_cHtml += [<option value="]+Trans(USEDON_NAMESPACE)  +["]+iif(l_iUsedOn==USEDON_NAMESPACE  ,[ selected],[])+[>Name Space</option>]
+                    l_cHtml += [<option value="]+Trans(USEDON_NAMESPACE)  +["]+iif(l_iUsedOn==USEDON_NAMESPACE  ,[ selected],[])+[>Namespace</option>]
                     l_cHtml += [<option value="]+Trans(USEDON_TABLE)      +["]+iif(l_iUsedOn==USEDON_TABLE      ,[ selected],[])+[>Table</option>]
                     l_cHtml += [<option value="]+Trans(USEDON_COLUMN)     +["]+iif(l_iUsedOn==USEDON_COLUMN     ,[ selected],[])+[>Column</option>]
                     l_cHtml += [<option value="]+Trans(USEDON_PROJECT)    +["]+iif(l_iUsedOn==USEDON_PROJECT    ,[ selected],[])+[>Project</option>]
