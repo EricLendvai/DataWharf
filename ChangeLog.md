@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/06/2023 v 3.1
+* New "Recent Errors" page under setting, accessible by "Root Admin" users. This will display up to 100 of the latest Data Errors and Data Trim events (Loss of data,due to too small columns).
+* Minor fix in Template Columns.
+
 ## 01/05/2023 v 3.0
 * WARNING, THE FIRST RUN using the new version may take several minutes to run, since a lot of data cleanup/restructuring will occur.
 * Major version change, due to p_Schema structure change and the use of DataWharf to manage its own Schema.

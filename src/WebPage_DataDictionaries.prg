@@ -3817,6 +3817,8 @@ l_cTableName        := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("TextName")
 l_cTableAKA         := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
     l_cTableAKA := NIL
+// else
+//     l_cTableAKA := l_cTableAKA+" "+replicate("a",500)
 endif
 l_lUnlogged         := (oFcgi:GetInputValue("CheckUnlogged") == "1")
 

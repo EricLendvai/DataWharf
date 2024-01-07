@@ -30,6 +30,7 @@ private v_hPageMapping := {"home"             => {"Home"                     ,1,
                            "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
                            "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
                            "APITokens"        => {"API Tokens"               ,1,.t.,@BuildPageAPITokens()},;
+                           "DataWharfErrors"  => {"Recent Errors"            ,1,.t.,@BuildPageDataWharfErrors()},;
                            "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
 
 hb_HCaseMatch(v_hPageMapping,.f.)
@@ -1670,7 +1671,7 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 
                     if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
 //                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(vfp_inlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(vfp_inlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","datawharferrors")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
 
 
 
@@ -1691,6 +1692,7 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                                 if APIUSE
                                     l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "apitokens"  ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[APITokens">API Tokens</a></li>]
                                 endif
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "recenterrors"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataWharfErrors">Recent Errors</a></li>]
                                 l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                             endif
                             if l_lShowChangePassword
