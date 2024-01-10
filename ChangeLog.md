@@ -1,12 +1,12 @@
 # DataWharf - Change Log
 
-## 01/06/2023 v 3.1
+## 01/06/2024 v 3.1
 * Failure on Requiring dependency update. No code change in DataWharf, but YOU MUST update Harbour_FCGI, Harbour_ORM and Harbour_VFP to their latest version:
    * MIN_HARBOUR_ORM_VERSION  "4.0"
    * MIN_HARBOUR_VFP_VERSION  "3.4"
    * MIN_HARBOUR_FCGI_VERSION "1.7"
 
-## 01/06/2023 v 3.1
+## 01/06/2024 v 3.1
 * New "Recent Errors" page under setting, accessible by "Root Admin" users. This will display up to 100 of the latest Data Errors and Data Trim events (Loss of data,due to too small columns).
 * Minor fix in Template Columns.
 
