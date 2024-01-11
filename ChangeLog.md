@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 01/11/2024 v 3.2
+* Minor fix on "Recent Errors" listing page.
+
 ## 01/06/2024 v 3.1
 * Failure on Requiring dependency update. No code change in DataWharf, but YOU MUST update Harbour_FCGI, Harbour_ORM and Harbour_VFP to their latest version:
    * MIN_HARBOUR_ORM_VERSION  "4.0"

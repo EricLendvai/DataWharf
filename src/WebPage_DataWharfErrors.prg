@@ -110,7 +110,7 @@ case l_cURLAction == "ListErrors"
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += ListOfDataErrors->SchemaAndDataErrorLog_eventid
+                                l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_eventid,"")
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -176,7 +176,7 @@ case l_cURLAction == "ListErrors"
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += ListOfAutoTrimLog->SchemaAutoTrimLog_eventid
+                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_eventid,"")
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
