@@ -1,4 +1,10 @@
-FROM ubuntu:latest AS builder
+# Could pass in 22.04
+ARG UBUNTU_VERSION=latest
+# Set to true to get the main image to start with the builder image instead of the base image
+ARG MAIN_IMAGE_BASE=datawharf-base
+
+#-------------------- base image --------------------
+FROM ubuntu:$UBUNTU_VERSION AS datawharf-base
 
 ## for apt to be noninteractive
 ENV DEBIAN_FRONTEND noninteractive
@@ -29,6 +35,10 @@ RUN apt-get install -y libssl-dev
 
 # install Postgresql odbc driver
 RUN apt-get -y install odbc-postgresql
+
+
+#-------------------- builder image --------------------
+FROM datawharf-base AS datawharf-builder
 
 # "ADD https://api.github.com/repos/...." Logic to help avoid cache on git clone commands
 
@@ -107,41 +117,12 @@ ENV SiteRootFolder /var/www/Harbour_websites/fcgi_DataWharf/
 RUN chmod +x ./BuildEXE.sh
 RUN ./BuildEXE.sh
 
-# ----------------------------------------------------------------------------------------------
-FROM ubuntu:latest
-
-## for apt to be noninteractive
-ENV DEBIAN_FRONTEND noninteractive
-ENV DEBCONF_NONINTERACTIVE_SEEN true
-
-# Used by running apps to detect if inside a docker container. Testing for existence of /.dockerenv may not always work.
-ENV InDocker=True
-
-RUN apt-get update && apt-get install -y apt-utils
-
-RUN apt-get install -y \
-        libfcgi-dev \
-        libapache2-mod-fcgid \
-        git \
-        build-essential \
-        unixodbc-dev \
-        apache2 \
-        libgpm2 \
-        gnupg \
-        wget \
-        psmisc \
-        libcurl4-openssl-dev
-
-RUN apt-get update && apt-get -y upgrade
-
-# Had to run the following dependency install separatly
-RUN apt-get install -y libssl-dev
-
-# install Postgresql odbc driver
-RUN apt-get -y install odbc-postgresql
+#-------------------- main image --------------------
+FROM ${MAIN_IMAGE_BASE} AS datawharf
 
 RUN a2enmod rewrite
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/apache-logs/
+
 
 ENV APACHE_RUN_USER www-data
 ENV APACHE_RUN_GROUP www-data
@@ -152,10 +133,11 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
 
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
-COPY ./config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+COPY ./hosting/docker/datawharf/scripts/all/* /usr/local/bin
+COPY ./hosting/docker/datawharf/scripts/ubuntu/* /usr/local/bin
+RUN chmod a+x /usr/local/bin/*
 
-#RUN cp /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
-COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
+COPY --from=datawharf-builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 
@@ -191,4 +173,4 @@ RUN apt install ./mysqlodbc.deb
 
 EXPOSE 80 
 
-CMD apache2ctl start & sleep infinity
+CMD datawharf-run

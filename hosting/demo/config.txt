@@ -1,0 +1,29 @@
+ReloadConfigAtEveryRequest=true             //"true" or "false"
+MaxRequestPerFCGIProcess=0                  //0 for Unlimited
+
+POSTGRESDRIVER=PostgreSQL Unicode
+POSTGRESHOST=host.docker.internal
+POSTGRESPORT=5432
+
+//Database Login ID and Password
+POSTGRESID=datawharf
+POSTGRESPASSWORD=main
+
+//Name of Database. Initially if could be simply an empty database.
+POSTGRESDATABASE=DataWharfDemo
+
+ShowDevelopmentInfo=No                      //No or Yes
+APPLICATION_TITLE=DataWharf Demo
+//COLOR_HEADER_BACKGROUND=E3F2FD
+//COLOR_HEADER_TEXT_WHITE=No                //No or Yes
+//LOGO_THEME_NAME=RainierSailBoat           //Images available from Repo: Earth_001, Blocks_001, Blocks_002, Blocks_003, RainierKayak, RainierSailBoat
+
+SECURITY_DEFAULT_PASSWORD=password
+SECURITY_SALT=0123456789ABCDEFG
+
+CYANAUDIT_TRAC_USER=No                      //No or Yes
+
+ODBC_DRIVER_POSTGRESQL=PostgreSQL Unicode
+ODBC_DRIVER_MARIADB=MariaDB Unicode
+ODBC_DRIVER_MYSQL=MySQL ODBC 8.0 Unicode Driver
+ODBC_DRIVER_MSSQL=ODBC Driver 18 for SQL Server

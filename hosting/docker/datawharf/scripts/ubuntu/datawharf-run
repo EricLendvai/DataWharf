@@ -1,0 +1,15 @@
+#!/bin/bash
+
+fileroot=/var/www/Harbour_websites/fcgi_DataWharf/
+logfile=$fileroot/apache-logs/error.log
+
+/usr/local/bin/config.txt.sh > $fileroot/backend/config.txt
+
+apache2ctl start &
+
+while [ ! -e "$logfile" ]; do
+	echo "Unable to find file $logfile"
+	sleep 1
+done
+
+tail -f $logfile

@@ -1,9 +1,10 @@
 FROM ericlendvai/dockerfile_dockerhub_base_image_ubuntu_22_04:latest
 
 # Update or select another config.txt file
-COPY ./config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
+COPY ./hosting/demo/config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 # COPY ./.devcontainer/config_deployment.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
 
 EXPOSE 80 
 
-CMD apache2ctl start & sleep infinity
+# Unnecessary -- inherits CMD from parent
+#CMD apache2ctl start & sleep infinity
