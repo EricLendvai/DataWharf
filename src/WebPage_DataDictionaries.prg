@@ -340,6 +340,7 @@ case l_cURLAction == "DataDictionarySettings"
                 :Table("62f3e291-c7c0-4da7-8874-c839c7c3938c","public.Application")
                 :Column("Application.SupportColumns"                       , "Application_SupportColumns")
                 :Column("Application.AddForeignKeyIndexORMExport"          , "Application_AddForeignKeyIndexORMExport")
+                :Column("Application.SetMissingOnDeleteToProtect"          , "Application_SetMissingOnDeleteToProtect")
                 :Column("Application.KeyConfig"                            , "Application_KeyConfig")
                 :Column("Application.TestTableHasPrimaryKey"               , "Application_TestTableHasPrimaryKey")
                 :Column("Application.TestForeignKeyTypeMatchPrimaryKey"    , "Application_TestForeignKeyTypeMatchPrimaryKey")
@@ -362,6 +363,7 @@ case l_cURLAction == "DataDictionarySettings"
                 l_hValues["LinkCode"]                             := l_cURLApplicationLinkCode
                 l_hValues["SupportColumns"]                       := l_oData:Application_SupportColumns
                 l_hValues["AddForeignKeyIndexORMExport"]          := l_oData:Application_AddForeignKeyIndexORMExport
+                l_hValues["SetMissingOnDeleteToProtect"]          := l_oData:Application_SetMissingOnDeleteToProtect
                 l_hValues["KeyConfig"]                            := l_oData:Application_KeyConfig
                 l_hValues["TestTableHasPrimaryKey"]               := l_oData:Application_TestTableHasPrimaryKey
                 l_hValues["TestForeignKeyTypeMatchPrimaryKey"]    := l_oData:Application_TestForeignKeyTypeMatchPrimaryKey
@@ -2188,6 +2190,7 @@ local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
 
 local l_cSupportColumns                       := nvl(hb_HGetDef(par_hValues,"SupportColumns",""),"")
 local l_lAddForeignKeyIndexORMExport          := hb_HGetDef(par_hValues,"AddForeignKeyIndexORMExport"          ,.f.)
+local l_lSetMissingOnDeleteToProtect          := hb_HGetDef(par_hValues,"SetMissingOnDeleteToProtect"          ,.f.)
 local l_nKeyConfig                            := hb_HGetDef(par_hValues,"KeyConfig"                            ,1)
 local l_lTestTableHasPrimaryKey               := hb_HGetDef(par_hValues,"TestTableHasPrimaryKey"               ,.f.)
 local l_lTestForeignKeyTypeMatchPrimaryKey    := hb_HGetDef(par_hValues,"TestForeignKeyTypeMatchPrimaryKey"    ,.f.)
@@ -2263,6 +2266,19 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
+        l_cObjectId := "CheckSetMissingOnDeleteToProtect"
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3"></td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_cObjectId+[" id="]+l_cObjectId+[" value="1"]+iif( l_lSetMissingOnDeleteToProtect," checked","")+[ class="form-check-input">]
+                l_cHtml += [<label class="form-check-label" for="]+l_cObjectId+[">&nbsp;Set Missing "On Delete" in Foreign Keys To "Protect (Restrict)"</label>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td colspan="2"><hr></td>]
+        l_cHtml += [</tr>]
+
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3" valign="top">Integrity Test<br>(Warnings)</td>]
             l_cHtml += [<td class="pb-3">]
@@ -2323,6 +2339,7 @@ local l_cActionOnSubmit
 local l_iApplicationPk
 local l_cApplicationSupportColumns
 local l_lAddForeignKeyIndexORMExport
+local l_lSetMissingOnDeleteToProtect
 local l_nKeyConfig
 local l_lTestTableHasPrimaryKey
 local l_lTestForeignKeyTypeMatchPrimaryKey
@@ -2350,6 +2367,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iApplicationPk                        := Val(oFcgi:GetInputValue("TableKey"))
 l_cApplicationSupportColumns            := SanitizeInput(oFcgi:GetInputValue("TextSupportColumns"))
 l_lAddForeignKeyIndexORMExport          := (oFcgi:GetInputValue("CheckAddForeignKeyIndexORMExport")          == "1")
+l_lSetMissingOnDeleteToProtect          := (oFcgi:GetInputValue("CheckSetMissingOnDeleteToProtect")          == "1")
 l_nKeyConfig                            := Val(oFcgi:GetInputValue("ComboKeyConfig"))
 l_lTestTableHasPrimaryKey               := (oFcgi:GetInputValue("CheckTestTableHasPrimaryKey")               == "1")
 l_lTestForeignKeyTypeMatchPrimaryKey    := (oFcgi:GetInputValue("CheckTestForeignKeyTypeMatchPrimaryKey")    == "1")
@@ -2379,6 +2397,7 @@ case l_cActionOnSubmit == "Save"
             :Table("3cbf7dbb-cdec-483d-9660-a9043820b170","Application")
             :Field("Application.SupportColumns"                       , iif(empty(l_cApplicationSupportColumns),NULL,l_cApplicationSupportColumns))
             :Field("Application.AddForeignKeyIndexORMExport"          , l_lAddForeignKeyIndexORMExport)
+            :Field("Application.SetMissingOnDeleteToProtect"          , l_lSetMissingOnDeleteToProtect)
             :Field("Application.KeyConfig"                            , l_nKeyConfig)
             :Field("Application.TestTableHasPrimaryKey"               , l_lTestTableHasPrimaryKey)
             :Field("Application.TestForeignKeyTypeMatchPrimaryKey"    , l_lTestForeignKeyTypeMatchPrimaryKey)
@@ -2418,6 +2437,7 @@ endcase
 if !empty(l_cErrorMessage)
     l_hValues["SupportColumns"]                       := l_cApplicationSupportColumns
     l_hValues["AddForeignKeyIndexORMExport"]          := l_lAddForeignKeyIndexORMExport
+    l_hValues["SetMissingOnDeleteToProtect"]          := l_lSetMissingOnDeleteToProtect
     l_hValues["KeyConfig"]                            := l_nKeyConfig
     l_hValues["TestTableHasPrimaryKey"]               := l_lTestTableHasPrimaryKey
     l_hValues["TestForeignKeyTypeMatchPrimaryKey"]    := l_lTestForeignKeyTypeMatchPrimaryKey

@@ -46,6 +46,7 @@ with object l_oDB_Application
     :Table("d9689368-d768-4058-abb3-0cf4f0a1ddc3","Application")
 
     :Column("Application.KeyConfig"                            ,"Application_KeyConfig")
+    :Column("Application.SetMissingOnDeleteToProtect"          ,"Application_SetMissingOnDeleteToProtect")
     :Column("Application.TestTableHasPrimaryKey"               ,"Application_TestTableHasPrimaryKey")
     :Column("Application.TestForeignKeyTypeMatchPrimaryKey"    ,"Application_TestForeignKeyTypeMatchPrimaryKey")
     :Column("Application.TestForeignKeyIsNullable"             ,"Application_TestForeignKeyIsNullable")
@@ -212,10 +213,39 @@ if !empty(l_cColumnType)
 
 endif
 
+if l_oData:Application_SetMissingOnDeleteToProtect
+    l_oDB_ListOfForeignKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
+    with object l_oDB_ListOfForeignKeys
+        :Table("e340bf16-9ebf-442f-ae08-05055aaaa9b5","Namespace")
+        :Column("Table.Pk"  ,"Table_Pk")
+        :Column("Column.Pk" ,"Column_Pk")
+        :Where("Column.UsedAs = ^" , COLUMN_USEDAS_FOREIGN_KEY)
+        :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+        :Join("inner","Column","","Column.fk_Table = Table.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Where("Column.OnDelete <= 1")
+        :SQL("ListOfForeignKeys")
+    endwith
+
+    select ListOfForeignKeys
+    scan all
+        with object l_oDB_Record
+            :Table("b1df69b4-c6ca-4a10-8f3f-7e7ea7d82657","Column")
+            :Field("Column.OnDelete" , 2)
+            :Update(ListOfForeignKeys->Column_Pk)
+        endwith
+    
+    endscan
+
+endif
+
+
 if vfp_inlist(l_oData:Application_KeyConfig,2,3) .or. ;
     l_oData:Application_TestForeignKeyTypeMatchPrimaryKey
 
-    l_oDB_ListOfForeignKeys                       := hb_SQLData(oFcgi:p_o_SQLConnection)
+    if hb_IsNil(l_oDB_ListOfForeignKeys)
+        l_oDB_ListOfForeignKeys                   := hb_SQLData(oFcgi:p_o_SQLConnection)
+    endif
     l_oDB_ListOfPrimaryKeys                       := hb_SQLData(oFcgi:p_o_SQLConnection)
     l_oDB_ListOfForeignKeysNotMatchingPrimaryKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
     l_oDB_CTEForeignKeysNotMatchingPrimaryKeys    := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
@@ -421,7 +451,7 @@ if l_oData:Application_TestTableHasPrimaryKey               .or. ;
             :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             :Where("Namespace.fk_Application = ^",par_iApplicationPk)
-            :Where("NOT Column.Nullable OR Column.DefaultType > 0")   // Will reduce to potential list of foreign keys with issues
+            :Where("NOT Column.Nullable OR Column.DefaultType > 0 OR Column.OnDelete <= 1")   // Will reduce to potential list of foreign keys with issues
             :SQL("ListOfForeignKeys")
         endwith
 

@@ -2,10 +2,10 @@
 function Config()
 return ;
 {"HarbourORMVersion" => 4.0,;
- "DataWharfVersion" => 3.0,;
+ "DataWharfVersion" => 3.3,;
  "Backend" => "PostgreSQL",;
- "GenerationTime" => "2024-01-05T10:15:22.846Z",;
- "GenerationSignature" => "074fee72-5778-4e6c-97b9-395f49d89266",;
+ "GenerationTime" => "2024-01-12T11:13:19.534Z",;
+ "GenerationSignature" => "97ab22b9-2d1b-4c12-ac28-33c4056e78dc",;
  "TableSchema" => ;
     {"public.APIAccessEndpoint"=>{"Fields"=>;
         {"pk"            =>{"Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.,"UsedAs"=>"Primary"};
@@ -73,6 +73,7 @@ return ;
         ,"PublishingUseStatus3"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Inactive (Read Only)". (Upcoming Feature)
         ,"PublishingUseStatus4"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Archived". (Upcoming Feature)
         ,"KeyConfig"                           =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Any", 2="Integer", 3="IntegerBig"   
+        ,"SetMissingOnDeleteToProtect"         =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"};
         ,"TestTableHasPrimaryKey"              =>{"Type"=>"L","Default"=>"Wharf-True"};   //Table must have a Primary Key.
         ,"TestForeignKeyTypeMatchPrimaryKey"   =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key Type must match Primary Key Type.
         ,"TestForeignKeyIsNullable"            =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key must be Nullable.
@@ -684,8 +685,8 @@ return ;
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_User"           =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.User","OnDelete"=>"Cascade"};
-        ,"fk_Diagram"        =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.};   //Used only if setting is specific to a particular Application Diagram.
-        ,"fk_ModelingDiagram"=>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","ForeignKeyOptional"=>.t.};   //Used only if setting is specific to a particular Modeling Diagram.
+        ,"fk_Diagram"        =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Application Diagram.
+        ,"fk_ModelingDiagram"=>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","ForeignKeyOptional"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Modeling Diagram.
         ,"KeyC"              =>{"Type"=>"CV","Length"=>100};   //Any Text that will be know in the app.
         ,"ValueC"            =>{"Type"=>"M"};   //Text representation of the value.
         ,"ValueType"         =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="String", 2="Integer", 3="Date", 4="BlobMemo"   
@@ -731,9 +732,9 @@ return ;
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"type"          =>{"Type"=>"N","Length"=>1,"Nullable"=>.t.};   //1="ApplicationExport", 2="ApplicationImport", 3="ModelExport", 4="ModelImport", 5="TableExport"   
         ,"fk_User"       =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.User","OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Application","ForeignKeyOptional"=>.t.};
-        ,"fk_Model"      =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Model","ForeignKeyOptional"=>.t.};
-        ,"fk_Table"      =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.};
+        ,"fk_Application"=>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Application","ForeignKeyOptional"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Model"      =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Model","ForeignKeyOptional"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"      =>{"Type"=>"I","Nullable"=>.t.,"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"OnDelete"=>"Cascade"};
         ,"LinkUID"       =>{"Type"=>"C","Length"=>36};
         ,"oid"           =>{"Type"=>"OID","Nullable"=>.t.};   //To the PostgreSQL Large Object.
         ,"FileName"      =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.}};

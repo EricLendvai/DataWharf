@@ -104,7 +104,6 @@ endif
 //Save current diagram being used by current user in current application
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
-altd()
     :Table("37aa71df-4025-4f88-bd67-29cdee691d33","UserSettingApplication")
     :Column("UserSettingApplication.pk"        ,"pk")
     :Column("UserSettingApplication.fk_Diagram","fk_Diagram")

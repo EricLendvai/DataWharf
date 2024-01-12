@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 01/12/2024 v 3.3
+* Minor fix in Integrity Test feature, the "Foreign Key missing "On Delete" setting" failed to work sometimes.
+* New setting "Set Missing "On Delete" in Foreign Keys To "Protect (Restrict)"" in "Data Dictionary Settings".
+
 ## 01/11/2024 v 3.2
 * Minor fix on "Recent Errors" listing page.
 
