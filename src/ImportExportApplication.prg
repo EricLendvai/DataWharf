@@ -9,18 +9,21 @@ local l_oDB_ListOfColumns
 local l_oDB_ListOfIndexes_OnForeignKey
 local l_oDB_ListOfIndexes_Defined
 local l_oDB_ListOfIndexes
+local l_oDB_ListOfEnumerations
 local l_oDB_ListOfEnumValues
 
-local l_iTablePk := 0
+local l_iTablePk
+local l_iEnumerationPk
 
 local l_cIndent := space(4)
 local l_cIndentHashElement
-local l_cSchemaAndTableName
+local l_cNamespaceAndTableName
 
 local l_nNumberOfTables
-
 local l_nNumberOfFields
 local l_nNumberOfIndexes
+local l_nNumberOfEnumerations
+local l_nNumberOfEnumValues
 
 local l_cSourceCode := ""
 local l_cSourceCodeFields
@@ -29,6 +32,7 @@ local l_nMaxExpressionLength
 local l_cFieldUsedBy
 local l_cFieldName
 local l_cFieldType
+local l_cFieldTypeEnumName
 local l_nFieldLen
 local l_nFieldDec
 local l_cFieldDefault        //The Default to export
@@ -39,25 +43,33 @@ local l_cFieldAttributes
 local l_cFieldDescription
 local l_cIndexPrefix
 local l_cIndexName
+local l_cEnumValueName
 local l_cSourceCodeIndexes
 local l_cIndexExpression
 local l_nIndexRecno
+local l_nEnumValueRecno
 local lnEnumerationImplementAs
 local lnEnumerationImplementLength
 local l_lIncludeDescription := nvl(par_IncludeDescription,.f.)
-local l_iPkEnumeration
 local l_nUsedBy
 local l_nTableCounter := 0
+local l_nEnumerationCounter := 0
 local l_cSchemaIndent := space(4)
 local l_oData
 local l_lAddForeignKeyIndexORMExport
+local l_cSourceCodeEnumValues
+local l_cNamespaceAndEnumerationName
+local l_nEnumValue_Order
+local l_nEnumValue_Number
+local l_cImplementAs
 
 oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
 
-l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfTables     := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
-l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_Application        := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfTables       := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfColumns      := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfEnumValues   := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 do case
 case par_cBackend == "PostgreSQL"
@@ -144,6 +156,7 @@ if l_lContinue
         :Column("Column.UsedAs"        ,"Column_UsedAs")
         :Column("Column.UsedBy"        ,"Column_UsedBy")
         :Column("Column.OnDelete"      ,"Column_OnDelete")
+        :Column("Enumeration.Name"           ,"Enumeration_Name")
         :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
         :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
 
@@ -169,6 +182,36 @@ if l_lContinue
     endwith
 endif
 
+if l_lContinue
+    with object l_oDB_ListOfEnumerations
+        :Table("e83505ef-d915-40e9-b3f3-a98aed191676","Namespace")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Join("inner","Enumeration" ,"","Enumeration.fk_Namespace = Namespace.pk")
+        :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")  //Will still join on EnumValue to ensure we only export enumerations with at least one active value.
+        :Column("Enumeration.Pk"             ,"Enumeration_Pk")
+        :Column("Namespace.Name"             ,"Namespace_Name")
+        :Column("Enumeration.Name"           ,"Enumeration_Name")
+        :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
+        :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
+        :Column("upper(Namespace.Name)"      ,"tag1")
+        :Column("upper(Enumeration.Name)"    ,"tag2")
+        // :Column("EnumValue.Name"       ,"EnumValue_Name")
+        // :Column("EnumValue.Order"      ,"EnumValue_Order")
+        // :Column("EnumValue.Number"     ,"EnumValue_Number")
+        :Where("Namespace.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Enumeration.UseStatus <= ^" ,USESTATUS_TOBEDISCONTINUED)
+        :Where("EnumValue.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :Distinct(.t.)
+        // :OrderBy("EnumValue_Order")
+        :SQL("ListOfEnumerations")
+        l_nNumberOfEnumerations := :Tally
+        if l_nNumberOfEnumerations < 0
+            l_lContinue := .f.
+        endif
+    endwith
+endif
 
 if l_lContinue
     with object l_oDB_ListOfEnumValues
@@ -330,7 +373,7 @@ if l_lContinue
     if l_nNumberOfTables > 0
         if par_nVersion == 3
             l_cSourceCode += [,;]+CRLF
-            l_cSourceCode += [ "TableSchema" => ;]+CRLF
+            l_cSourceCode += [ "Tables" => ;]+CRLF
         else
             // l_cSourceCode += [{]+CRLF
         endif
@@ -340,10 +383,10 @@ if l_lContinue
             l_nTableCounter++
             l_iTablePk := ListOfTables->Table_Pk
 
-            l_cSchemaAndTableName := alltrim(ListOfTables->Namespace_Name)+"."+alltrim(ListOfTables->Table_Name)
+            l_cNamespaceAndTableName := alltrim(ListOfTables->Namespace_Name)+"."+alltrim(ListOfTables->Table_Name)
 
             if par_nVersion >= 2
-                l_cIndentHashElement := space(len([{"]+l_cSchemaAndTableName+["=>]))
+                l_cIndentHashElement := space(len([{"]+l_cNamespaceAndTableName+["=>]))
             endif
 
             l_cSourceCode += l_cSchemaIndent+iif(l_nTableCounter==1,"{",",")  // Start the next table hash element
@@ -365,24 +408,25 @@ if l_lContinue
                     l_cFieldName        := ListOfColumns->Column_Name
                     l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cSchemaIndent+l_cIndent+"{" , ";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndent+"," )
                 
-                    l_cFieldType          := allt(ListOfColumns->Column_Type)
-                    l_nFieldLen           := nvl(ListOfColumns->Column_Length,0)
-                    l_nFieldDec           := nvl(ListOfColumns->Column_Scale,0)
+                    l_cFieldType            := allt(ListOfColumns->Column_Type)
+                    l_cFieldTypeEnumName := ""
+                    l_nFieldLen             := nvl(ListOfColumns->Column_Length,0)
+                    l_nFieldDec             := nvl(ListOfColumns->Column_Scale,0)
                     // l_nFieldDefaultType   := ListOfColumns->Column_DefaultType
                     // l_cFieldDefaultCustom := ListOfColumns->Column_DefaultCustom
-                    l_cFieldDefault       := GetColumnDefault(.t.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
-                    l_lFieldNullable      := ListOfColumns->Column_Nullable
-                    l_lFieldAutoIncrement := (ListOfColumns->Column_UsedAs = 2)
-                    l_lFieldArray         := ListOfColumns->Column_Array
-                    l_cFieldAttributes    := iif(l_lFieldNullable,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
+                    l_cFieldDefault         := GetColumnDefault(.t.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
+                    l_lFieldNullable        := ListOfColumns->Column_Nullable
+                    l_lFieldAutoIncrement   := (ListOfColumns->Column_UsedAs = 2)
+                    l_lFieldArray           := ListOfColumns->Column_Array
+                    l_cFieldAttributes      := iif(l_lFieldNullable,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
                     l_cFieldDescription := ""
                     if l_lIncludeDescription
-                        l_iPkEnumeration := nvl(ListOfColumns->pk_Enumeration,0)
-                        if l_iPkEnumeration > 0
-                            if vfp_seek(strtran(str(l_iPkEnumeration,10),' ','0'),"ListOfEnumValues","tag1")
+                        l_iEnumerationPk := nvl(ListOfColumns->pk_Enumeration,0)
+                        if l_iEnumerationPk > 0
+                            if vfp_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")
                                 select ListOfEnumValues
-                                scan while ListOfEnumValues->Enumeration_Pk == l_iPkEnumeration
+                                scan while ListOfEnumValues->Enumeration_Pk == l_iEnumerationPk
                                     if !empty(l_cFieldDescription)
                                         l_cFieldDescription += [, ]
                                     endif
@@ -402,18 +446,30 @@ if l_lContinue
                     //     l_lFieldAutoIncrement := .t.
                     // endif
 
+                    //Overwrite Enumeration field type when the are not "NativeSQLEnum"
                     if l_cFieldType == "E"
                         lnEnumerationImplementAs     := nvl(ListOfColumns->Enumeration_ImplementAs,0)
                         lnEnumerationImplementLength := nvl(ListOfColumns->Enumeration_ImplementLength,0)
 
                         // EnumerationImplementAs   1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
                         do case
+                        case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_NATIVESQLENUM
+//_M_ Drop the field unless we are migrating inside Postgresql
+                            l_cFieldType := "E"  
+                            l_nFieldLen  := nil
+                            l_nFieldDec  := nil
+                            l_cFieldTypeEnumName := nvl(ListOfColumns->Enumeration_Name,"")
+
                         case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_INTEGER
                             l_cFieldType := "I"
                             l_nFieldLen  := nil
                             l_nFieldDec  := nil
                         case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_NUMERIC
                             l_cFieldType := "N"
+                            l_nFieldLen  := lnEnumerationImplementLength
+                            l_nFieldDec  := 0
+                        case lnEnumerationImplementAs == ENUMERATIONIMPLEMENTAS_VARCHAR
+                            l_cFieldType := "CV"
                             l_nFieldLen  := lnEnumerationImplementLength
                             l_nFieldDec  := 0
                         endcase
@@ -438,6 +494,9 @@ if l_lContinue
 // hb_orm_SendToDebugView(l_cSourceCodeFields)
 // hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
                         l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"'
+                        if !empty(l_cFieldTypeEnumName)
+                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ENUMNAME+'"=>"'+l_cFieldTypeEnumName+'"'
+                        endif
                         if nvl(l_nFieldLen,0) > 0
                             l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_LENGTH+'"=>'+trans(nvl(l_nFieldLen,0))
                         endif
@@ -459,7 +518,6 @@ if l_lContinue
                         if !empty(el_Inlist(ListOfColumns->Column_UsedAs,2,3,4))
                             l_cSourceCodeFields += ',"UsedAs"=>"'+{"","Primary","Foreign","Support"}[ListOfColumns->Column_UsedAs]+'"'
                             if ListOfColumns->Column_UsedAs == 3  // Foreign
-//1234567
                                 if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
                                     l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
                                 endif
@@ -494,7 +552,6 @@ if l_lContinue
                 l_cSourceCodeFields += "}"
             endif
 
-
             //Get Index Definitions
             l_cSourceCodeIndexes := ""
             l_nNumberOfIndexes   := 0
@@ -511,7 +568,7 @@ if l_lContinue
                     // Clean up index name
                     if right(l_cIndexName,4) == "_idx"
                         l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
-                        l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                        l_cIndexPrefix     := lower(strtran(l_cNamespaceAndTableName,".","_"))+"_"
                         if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
                             l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
                         endif
@@ -533,7 +590,7 @@ if l_lContinue
                     // Clean up index name
                     if right(l_cIndexName,4) == "_idx"
                         l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
-                        l_cIndexPrefix     := lower(strtran(l_cSchemaAndTableName,".","_"))+"_"
+                        l_cIndexPrefix     := lower(strtran(l_cNamespaceAndTableName,".","_"))+"_"
                         if left(l_cIndexName,len(l_cIndexPrefix)) == l_cIndexPrefix
                             l_cIndexName := substr(l_cIndexName,len(l_cIndexPrefix)+1)
                         endif
@@ -570,16 +627,14 @@ if l_lContinue
                 l_cSourceCodeIndexes += "}"
             endif
 
-            // l_cSourceCode += "Table "+ListOfTables->Table_Name+" has "+trans(l_nNumberOfFields)+" fields and has "+trans(l_nNumberOfIndexes)+" indexes. MaxColumnNameLength = "+trans(ListOfTables->MaxColumnNameLength)+CRLF
-
             do case
             case par_nVersion == 1
-                l_cSourceCode += '"'+l_cSchemaAndTableName+'"'+"=>{;   /"+"/Field Definition"
+                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"'+"=>{;   /"+"/Field Definition"
                 l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndent+",;   /"+"/Index Definition"+CRLF
                 l_cSourceCode += l_cSourceCodeIndexes+"};"+CRLF
 
             case par_nVersion == 2
-                l_cSourceCode += '"'+l_cSchemaAndTableName+'"=>{"Fields"=>;'
+                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"=>{"Fields"=>;'
                 if l_cSourceCodeIndexes == l_cIndent+"NIL"
                     l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndentHashElement+',"Indexes"=>NIL'+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
                 else
@@ -590,7 +645,7 @@ if l_lContinue
                 l_cSourceCode += '};'+CRLF
                 
             case par_nVersion == 3
-                l_cSourceCode += '"'+l_cSchemaAndTableName+'"=>{"Fields"=>;'
+                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"=>{"Fields"=>;'
                 if l_cSourceCodeIndexes == l_cIndent+"NIL"
                     l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
                 else
@@ -604,8 +659,81 @@ if l_lContinue
 
         endscan
         if par_nVersion == 3
-            l_cSourceCode += l_cSchemaIndent+"};"+CRLF
+            l_cSourceCode += l_cSchemaIndent+"}"+iif(l_nNumberOfEnumerations > 0,",","")+";"+CRLF
         endif
+    endif
+
+    if l_nNumberOfEnumerations > 0 .and. par_nVersion >= 3
+        l_cSourceCode += ["Enumerations"=>;]+CRLF
+
+        select ListOfEnumerations
+        scan all
+            l_nEnumerationCounter++
+            l_iEnumerationPk := ListOfEnumerations->Enumeration_Pk
+
+            l_cNamespaceAndEnumerationName := alltrim(ListOfEnumerations->Namespace_Name)+"."+alltrim(ListOfEnumerations->Enumeration_Name)
+
+            l_cIndentHashElement := space(len([{"]+l_cNamespaceAndEnumerationName+["=>]))
+
+            l_cSourceCode += l_cSchemaIndent+iif(l_nEnumerationCounter==1,"{",",")  // Start the next enumeration hash element
+            
+            //Get EnumValues Definitions
+            l_cSourceCodeEnumValues := ""
+            l_nNumberOfEnumValues   := 0
+
+            if vfp_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+                l_nMaxNameLength       := 0
+
+                select ListOfEnumValues
+                l_nEnumValueRecno := Recno()
+                scan while ListOfEnumValues->Enumeration_Pk = l_iEnumerationPk  // Pre scan the enumvalues to help determine the l_nMaxNameLength
+                    l_cEnumValueName := ListOfEnumValues->EnumValue_Name
+                    l_nMaxNameLength := max(l_nMaxNameLength,len(l_cEnumValueName))
+                endscan
+                dbGoTo(l_nEnumValueRecno)
+
+                scan while ListOfEnumValues->Enumeration_Pk = l_iEnumerationPk
+                    l_nNumberOfEnumValues++
+
+                    l_cEnumValueName := ListOfEnumValues->EnumValue_Name
+                    
+                    l_nEnumValue_Order     := ListOfEnumValues->EnumValue_Order
+                    l_nEnumValue_Number    := ListOfEnumValues->EnumValue_Number
+                    
+                    l_cSourceCodeEnumValues += iif(empty(l_cSourceCodeEnumValues) , l_cSchemaIndent+l_cIndent+l_cIndent+"{" , ";"+CRLF+l_cSchemaIndent+l_cIndent+l_cIndent+",")
+
+                    l_cSourceCodeEnumValues += padr('"'+l_cEnumValueName+'"',l_nMaxNameLength+2)+"=>{"
+
+                    l_cSourceCodeEnumValues += '"Order"=>'+Trans(l_nEnumValue_Order)
+                    if !hb_IsNil(l_nEnumValue_Number)
+                        l_cSourceCodeEnumValues += ',"Number"=>'+Trans(l_nEnumValue_Number)
+                    endif
+                    
+                    l_cSourceCodeEnumValues += "}"
+
+                endscan
+
+            endif
+
+            l_cSourceCode += '"'+l_cNamespaceAndEnumerationName+'"=>{;'+CRLF
+
+            if vfp_between(ListOfEnumerations->Enumeration_ImplementAs,1,4)
+                l_cImplementAs := {"NativeSQLEnum","Integer","Numeric","VarChar"}[ListOfEnumerations->Enumeration_ImplementAs]
+                l_cSourceCode += l_cSchemaIndent+l_cIndent+'"ImplementAs"=>"'+l_cImplementAs+'",;'+CRLF
+            endif
+
+            if nvl(ListOfEnumerations->Enumeration_ImplementLength,0) > 0
+                l_cSourceCode += l_cSchemaIndent+l_cIndent+'"ImplementLength"=>'+Trans(ListOfEnumerations->Enumeration_ImplementLength)+',;'+CRLF
+            endif
+
+            l_cSourceCode += l_cSchemaIndent+l_cIndent+'"Values"=>;'+CRLF
+
+            l_cSourceCode += l_cSourceCodeEnumValues
+
+            l_cSourceCode += '}};'+CRLF
+
+        endscan
+        l_cSourceCode += l_cSchemaIndent+"};"+CRLF
     endif
 
     l_cSourceCode += [}]
@@ -615,6 +743,8 @@ if !l_lContinue
     l_cSourceCode += [/]+[/ error]
 endif
 
+oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.t.)
+
 return l_cSourceCode
 //=================================================================================================================
 //=================================================================================================================
@@ -623,7 +753,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
+local l_hTableSchema := oFcgi:p_WharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1282,7 +1412,6 @@ with object l_oDB_ListOfCurrentRecords
 endwith
 
 select ImportSourceNamespace
-//12345
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Namespace")
 scan all
     if vfp_seek( upper(strtran(ImportSourceNamespace->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
@@ -2063,7 +2192,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
+local l_hTableSchema := oFcgi:p_WharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2389,9 +2518,8 @@ if !empty(par_iApplicationPk)
 l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export For DataWharf Imports" onclick="$('#ActionOnSubmit').val('ExportForDataWharfImports');document.form.submit();" role="button">]
 l_cHtml += [<hr>]
 
-
-
 l_nBackendType := val(GetUserSetting("DataDictionaryExportBackendType"))
+
                 l_cHtml += [<select name="ComboBackendType" id="ComboBackendType">]
                 l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL/MariaDB</option>]
                 l_cHtml += [<option value="3"]+iif(l_nBackendType==3,[ selected],[])+[>PostgreSQL</option>]

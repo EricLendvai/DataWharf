@@ -255,6 +255,7 @@ case l_cURLAction == "EditDeployment"
         :Column("Deployment.PasswordStorage"    , "PasswordStorage")     // 12
         :Column("Deployment.PasswordConfigKey"  , "PasswordConfigKey")   // 13
         :Column("Deployment.PasswordEnvVarName" , "PasswordEnvVarName")  // 14
+        :Column("Deployment.AllowUpdates"       , "AllowUpdates")        // 15
 
         :Where([Deployment.fk_Application = ^],l_iApplicationPk)
         :Where([Deployment.LinkUID = ^]       ,l_cURLLinkUID)
@@ -280,6 +281,7 @@ case l_cURLAction == "EditDeployment"
             l_hValues["PasswordStorage"]    := nvl(l_aSQLResult[1,12],0)
             l_hValues["PasswordConfigKey"]  := AllTrim(nvl(l_aSQLResult[1,13],""))
             l_hValues["PasswordEnvVarName"] := AllTrim(nvl(l_aSQLResult[1,14],""))
+            l_hValues["AllowUpdates"]       := l_aSQLResult[1,15]
 
             l_cHtml += DeploymentEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iDeploymentPk,l_hValues)
         else
@@ -820,7 +822,7 @@ case l_cActionOnSubmit == "Save"
                         :Field("Application.DocStatus"         , l_nApplicationDocStatus)
                         :Field("Application.Description"       , iif(empty(l_cApplicationDescription),NULL,l_cApplicationDescription))
                         :Field("Application.DestructiveDelete" , l_nApplicationDestructiveDelete)
-                                                
+                        
                         if empty(l_iApplicationPk)
                             if :Add()
                                 l_iApplicationPk := :Key()
@@ -1122,6 +1124,7 @@ with object l_oDB1
     :Column("Deployment.Database"           ,"Deployment_Database")
     :Column("Deployment.Namespaces"         ,"Deployment_Namespaces")
     :Column("Deployment.SetForeignKey"      ,"Deployment_SetForeignKey")
+    :Column("Deployment.AllowUpdates"       ,"Deployment_AllowUpdates")
 
     :Column("Upper(Deployment.Name)","tag1")
     :Where("Deployment.fk_Application = ^",par_iApplicationPk)
@@ -1158,7 +1161,7 @@ else
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="11">Deployment (]+Trans(l_nNumberOfDeployments)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="12">Deployment (]+Trans(l_nNumberOfDeployments)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -1173,6 +1176,7 @@ else
                     l_cHtml += [<th class="text-white text-center">Database</th>]
                     l_cHtml += [<th class="text-white text-center">Namespaces</th>]
                     l_cHtml += [<th class="text-white text-center">Set Foreign Key</th>]
+                    l_cHtml += [<th class="text-white text-center">Allow Updates</th>]
                 l_cHtml += [</tr>]
 
                 select ListOfDeployments
@@ -1233,6 +1237,10 @@ else
                             l_cHtml += {"","Not","Foreign Key Restrictions","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(vfp_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
                         l_cHtml += [</td>]
 
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_cHtml += iif(ListOfDeployments->Deployment_AllowUpdates,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                        l_cHtml += [</td>]
+
                     l_cHtml += [</tr>]
                 endscan
                 l_cHtml += [</table>]
@@ -1264,6 +1272,7 @@ local l_cPasswordEnvVarName:= hb_HGetDef(par_hValues,"PasswordEnvVarName","")
 local l_cDatabase          := hb_HGetDef(par_hValues,"Database","")
 local l_cNamespaces        := hb_HGetDef(par_hValues,"Namespaces","")
 local l_nSetForeignKey     := hb_HGetDef(par_hValues,"SetForeignKey",0)
+local l_lAllowUpdates      := hb_HGetDef(par_hValues,"AllowUpdates",.f.)
 
 oFcgi:TraceAdd("DeploymentEditFormBuild")
 
@@ -1407,6 +1416,13 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Allow Updates</td>]
+            l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
+                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAllowUpdates" id="CheckAllowUpdates" value="1"]+iif(l_lAllowUpdates," checked","")+[ class="form-check-input">]
+            l_cHtml += [</div></td>]
+        l_cHtml += [</tr>]
+
     l_cHtml += [</table>]
 
 
@@ -1473,6 +1489,7 @@ local l_nDeploymentPasswordStorage
 local l_cDeploymentPasswordCrypt
 local l_cDeploymentPasswordConfigKey
 local l_cDeploymentPasswordEnvVarName
+local l_lDeploymentAllowUpdates
 
 local l_cLinkUID
 
@@ -1501,6 +1518,7 @@ l_nDeploymentSetForeignKey      := Val(oFcgi:GetInputValue("ComboSetForeignKey")
 l_cDeploymentPasswordCrypt      := SanitizeInput(oFcgi:GetInputValue("TextPasswordCrypt"))
 l_cDeploymentPasswordConfigKey  := SanitizeInput(oFcgi:GetInputValue("TextPasswordConfigKey"))
 l_cDeploymentPasswordEnvVarName := SanitizeInput(oFcgi:GetInputValue("TextPasswordEnvVarName"))
+l_lDeploymentAllowUpdates       := (oFcgi:GetInputValue("CheckAllowUpdates") == "1")
 
 // l_cDeploymentPasswordCrypt      := strtran(l_cDeploymentPasswordCrypt     ," ","")
 // l_cDeploymentPasswordCrypt      := strtran(l_cDeploymentPasswordCrypt     ,"'","")
@@ -1554,6 +1572,7 @@ case l_cActionOnSubmit == "Save"
                     :Field("Deployment.Database"           ,iif(empty(l_cDeploymentDatabase)          ,NULL,l_cDeploymentDatabase))
                     :Field("Deployment.Namespaces"         ,iif(empty(l_cDeploymentNamespaces)        ,NULL,l_cDeploymentNamespaces))
                     :Field("Deployment.SetForeignKey"      ,iif(l_nDeploymentSetForeignKey == 0       ,NULL,l_nDeploymentSetForeignKey))
+                    :Field("Deployment.AllowUpdates"       ,l_lDeploymentAllowUpdates)
                     if nvl(l_nDeploymentPasswordStorage,0) == 1 .and. !empty(nvl(l_cDeploymentPasswordCrypt,""))
                         :FieldExpression("Deployment.PasswordCrypt","pgp_sym_encrypt('"+l_cDeploymentPasswordCrypt+"','"+oFcgi:GetAppConfig("DEPLOYMENT_CRYPT_KEY")+"','compress-algo=0, cipher-algo=aes256')")
                     endif

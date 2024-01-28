@@ -6270,8 +6270,7 @@ with object l_oDB_ListOfAttributes
     :OrderBy("tag1")
     :SQL("ListOfAttributes")
     l_nNumberOfAttributesInSearch := :Tally
-// SendToClipboard(:LastSQL())
-//1234567
+    // SendToClipboard(:LastSQL())
 endwith
 
 if l_nNumberOfAttributes > 0

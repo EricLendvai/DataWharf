@@ -2776,7 +2776,9 @@ if len(l_aNodes) == 1
 
                                     // OnDelete
                                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                                        if ListOfColumns->Column_UsedAs = 3
+                                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                                        endif
                                     l_cHtml += [</td>]
 
                                     // Description

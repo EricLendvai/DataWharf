@@ -649,8 +649,8 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 29
 
-            :ForeignKeyConvertAllZeroToNull(oFcgi:p_WharfConfig["TableSchema"])
-            :DeleteAllOrphanRecords( oFcgi:p_WharfConfig["TableSchema"] )
+            :ForeignKeyConvertAllZeroToNull(oFcgi:p_WharfConfig["Tables"])
+            :DeleteAllOrphanRecords( oFcgi:p_WharfConfig["Tables"] )
 
             for each l_cTableName in {"Application"}
                 for each l_cColumnName in {"PrimaryKeyDefaultInteger","PrimaryKeyDefaultUUID","PrimaryKeyType","ForeignKeyTypeMatchPrimaryKey","ForeignKeyIsNullable","ForeignKeyNoDefault"}
@@ -673,8 +673,8 @@ with object ::p_o_SQLConnection
         endif
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
-//:RemoveWharfForeignKeyConstraints( oFcgi:p_WharfConfig["TableSchema"] )
-:AddUpdateWharfForeignKeyConstraints( oFcgi:p_WharfConfig["TableSchema"] )
+//:RemoveWharfForeignKeyConstraints( oFcgi:p_WharfConfig["Tables"] )
+:MigrateForeignKeyConstraints( oFcgi:p_WharfConfig["Tables"] )
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
@@ -1558,13 +1558,15 @@ return nil
 function UpdateSchema(par_o_SQLConnection)
 local l_cLastError := ""
 local l_hTableSchema
+local l_hEnumerations
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
 local l_cUpdateScript := ""
 
-l_hTableSchema := oFcgi:p_WharfConfig["TableSchema"]
+l_hTableSchema  := oFcgi:p_WharfConfig["Tables"]
+l_hEnumerations := nvl(hb_hGetDef(oFcgi:p_WharfConfig,"Enumerations",{=>}),{=>})
 
-if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hTableSchema),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
+if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hTableSchema,l_hEnumerations),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
@@ -1759,6 +1761,33 @@ TEXT TO VAR cHtml
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Load');document.form.submit();">Yes</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ENDTEXT
+
+return cHtml
+//=================================================================================================================
+function GetConfirmationModalFormsUpdateSchema()
+local cHtml
+
+TEXT TO VAR cHtml
+
+<div class="modal fade" id="ConfirmUpdateSchemaModal" tabindex="-1" aria-labelledby="ConfirmUpdateSchemaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ConfirmUpdateSchemaModalLabel">Confirm Update Schema</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Any missing tables, columns, enumerations and indexes will be added. Nothing will be deleted!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Update');document.form.submit();">Yes</button>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
       </div>
     </div>
@@ -1982,7 +2011,7 @@ with object l_oDB1
     :Where("UserSetting.fk_Diagram = ^"         , l_iFk_Diagram)
     :Where("UserSetting.fk_ModelingDiagram = ^" , l_iFk_ModelingDiagram)
     :SQL(@l_aSQLResult)
-
+// SendToClipboard(:LastSQL())
     do case
     case :Tally  < 0
     case :Tally == 0

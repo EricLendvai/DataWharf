@@ -69,7 +69,7 @@ local l_nSyncSetForeignKey
 
 local l_cPrefix
 local l_cMacro
-local l_hTableSchema
+local l_hWharfConfig
 
 local l_nAccessLevelDD := 1   // None by default
 // As per the info in Schema.prg
@@ -105,8 +105,8 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/DataDictionarySettings/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryImport/<ApplicationLinkCode>/
 // DataDictionaries/DataDictionaryExport/<ApplicationLinkCode>/
-// DataDictionaries/DataDictionaryDeltaLoadSchema/<ApplicationLinkCode>/
-// DataDictionaries/DataDictionaryMigrationScript/<ApplicationLinkCode>/
+// DataDictionaries/DataDictionaryDeploymentTools/<ApplicationLinkCode>/
+
 
 // DataDictionaries/Visualize/<ApplicationLinkCode>/
 
@@ -263,11 +263,8 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case vfp_Inlist(l_cURLAction,"DataDictionaryExport","DataDictionaryExportToHarbourORM","DataDictionaryExportToJSON","DataDictionaryExportForDataWharfImports")
         l_cApplicationElement := "EXPORT"
 
-    case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema")
-        l_cApplicationElement := "LOADSCHEMA"
-
-    case vfp_Inlist(l_cURLAction,"DataDictionaryMigrationScript")
-        l_cApplicationElement := "MIGRATIONSCRIPT"
+    case vfp_Inlist(l_cURLAction,"DataDictionaryDeploymentTools")
+        l_cApplicationElement := "DEVELOPMENTTOOLS"
 
     case vfp_Inlist(l_cURLAction,"Visualize")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
@@ -465,14 +462,9 @@ case vfp_inlist(l_cURLAction,"DataDictionaryExportToHarbourORM","DataDictionaryE
                 l_cMacro := Strtran(l_cMacro,chr(13),"")
                 l_cMacro := Strtran(l_cMacro,chr(10),"")
                 l_cMacro := Strtran(l_cMacro,[;],"")
+                l_hWharfConfig := &( l_cMacro )
 
-                l_hTableSchema := &( l_cMacro )
-                // if par_nVersion <= 2
-                //     l_hTableSchema := {"Version" => 1,;
-                //                        "GenerationTime" => strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z",;
-                //                        "TableSchema" => l_hTableSchema}
-                // endif
-                l_cHtmlUnderHeader += hb_jsonEncode(l_hTableSchema,.t.)
+                l_cHtmlUnderHeader += hb_jsonEncode(l_hWharfConfig,.t.)
             endcase
             
             l_cHtmlUnderHeader += [</pre>]
@@ -512,8 +504,8 @@ case l_cURLAction == "DataDictionaryExportForDataWharfImports"
         l_cHtml += l_cHtmlUnderHeader
     endif
 
-case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigrationScript")
-    l_cMode := iif(l_cURLAction == "DataDictionaryDeltaLoadSchema","DeltaLoad","")+iif(l_cURLAction == "DataDictionaryMigrationScript","GenScript","")
+case vfp_Inlist(l_cURLAction,"DataDictionaryDeploymentTools")
+    l_cMode := iif(l_cURLAction == "DataDictionaryDeploymentTools","DeltaLoadGenScriptUpdate","")
 
     //Will Build the header after new entities are created.
     l_cHtmlUnderHeader := []
@@ -570,7 +562,7 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
 
         endwith
 
-        l_cHtmlUnderHeader += DataDictionaryDeltaLoadGenScriptFormBuild(l_cMode,;
+        l_cHtmlUnderHeader += DataDictionaryDeploymentToolsFormBuild(l_cMode,;
                                                     l_iApplicationPk,"",l_cApplicationName,l_cURLApplicationLinkCode,;
                                                     l_nFk_Deployment,;
                                                     l_nSyncBackendType,;
@@ -581,10 +573,10 @@ case vfp_Inlist(l_cURLAction,"DataDictionaryDeltaLoadSchema","DataDictionaryMigr
                                                     l_cSyncDatabase,;
                                                     l_cSyncNamespaces,;
                                                     l_nSyncSetForeignKey,;
-                                                    {},"")
+                                                    {},"","")
     else
         if l_iApplicationPk > 0
-            l_cHtmlUnderHeader += DataDictionaryDeltaLoadGenScriptFormOnSubmit(l_cMode,l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
+            l_cHtmlUnderHeader += DataDictionaryDeploymentToolsFormOnSubmit(l_cMode,l_iApplicationPk,l_cApplicationName,l_cURLApplicationLinkCode)
         endif
     endif
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
@@ -1241,6 +1233,7 @@ case l_cURLAction == "EditEnumValue"
         :Where([lower(replace(EnumValue.Name,' ','')) = ^],lower(StrTran(l_cURLEnumValueName," ","")))
         l_aSQLResult := {}
         :SQL(@l_aSQLResult)
+// SendToClipboard(:LastSQL())
     endwith
 
     if l_oDB1:Tally != 1
@@ -1254,7 +1247,11 @@ case l_cURLAction == "EditEnumValue"
 
             l_hValues["Name"]            := AllTrim(l_aSQLResult[1,4])
             l_hValues["AKA"]             := AllTrim(nvl(l_aSQLResult[1,5],""))
-            l_hValues["Number"]          := l_aSQLResult[1,6]
+            if hb_IsNil(l_aSQLResult[1,6])
+                l_hValues["Number"] := ""
+            else
+                l_hValues["Number"] := Trans(l_aSQLResult[1,6])
+            endif
             l_hValues["UseStatus"]       := l_aSQLResult[1,7]
             l_hValues["DocStatus"]       := l_aSQLResult[1,8]
             l_hValues["Description"]     := l_aSQLResult[1,9]
@@ -1855,9 +1852,9 @@ l_cHtml += [<ul class="nav nav-tabs">]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
         if oFcgi:p_nAccessLevelDD >= 6
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeltaLoadSchema/]+par_cURLApplicationLinkCode+[/">Delta/Load Schema</a>]
+            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools</a>]
         else
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "LOADSCHEMA",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeltaLoadSchema/]+par_cURLApplicationLinkCode+[/">Delta Schema</a>]
+            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Delta Schema</a>]
         endif
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
@@ -1872,11 +1869,6 @@ l_cHtml += [<ul class="nav nav-tabs">]
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
         l_cHtml += [<a class="nav-link]+iif(par_cApplicationElement == "TEMPLATETABLES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/ListTemplateTables/]+par_cURLApplicationLinkCode+[/">Templates (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
-    //--------------------------------------------------------------------------------------
-//On Hold Change MIGRATIONSCRIPT
-    // l_cHtml += [<li class="nav-item">]
-    //     l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "MIGRATIONSCRIPT",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryMigrationScript/]+par_cURLApplicationLinkCode+[/">Migration Script</a>]
-    // l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
 l_cHtml += [</ul>]
 
@@ -3055,7 +3047,7 @@ with object l_oDB_ListOfTables
     :SQL("ListOfTables")
     l_nNumberOfTables := :Tally
 
-    SendToClipboard(:LastSQL())
+    // SendToClipboard(:LastSQL())
 
 endwith
 
@@ -4631,7 +4623,9 @@ else
 
                     // OnDelete
                     l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                        if ListOfColumns->Column_UsedAs = 3
+                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                        endif
                     l_cHtml += [</td>]
 
                     // Description
@@ -7352,11 +7346,12 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName            := hb_HGetDef(par_hValues,"Name","")
 local l_cAKA             := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_cNumber          := Trans(hb_HGetDef(par_hValues,"Number",0))
+// local l_xNumber          := hb_HGetDef(par_hValues,"Number",0)
+local l_cNumber          := nvl(hb_HGetDef(par_hValues,"Number",""),"")
 local l_nUseStatus       := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus       := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription     := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-
+// altd()
 oFcgi:TraceAdd("EnumValueEditFormBuild")
 
 // local l_ipcount := pcount()
@@ -7593,10 +7588,10 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function DataDictionaryDeltaLoadGenScriptFormBuild(par_cMode,par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
+static function DataDictionaryDeploymentToolsFormBuild(par_cMode,par_iPk,par_cErrorText,par_cApplicationName,par_cLinkCode,;
                                                        par_nFk_Deployment,;
                                                        par_nSyncBackendType,par_cSyncServer,par_nSyncPort,par_cSyncUser,par_cSyncPassword,par_cSyncDatabase,par_cSyncNamespaces,par_nSyncSetForeignKey,;
-                                                       par_aDeltaMessages,par_cScript)
+                                                       par_aDeltaMessages,par_cErrorDetail,par_cScript)
 
 local l_cHtml := ""
 local l_cErrorText         := hb_DefaultValue(par_cErrorText,"")
@@ -7618,8 +7613,9 @@ local l_cMessageLine
 local l_oDB_ListOfDeployments := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nNumberOfDeployments
 local l_cNamespaces
+local l_cJavaScript
 
-oFcgi:TraceAdd("DataDictionaryDeltaLoadGenScriptFormBuild")
+oFcgi:TraceAdd("DataDictionaryDeploymentToolsFormBuild")
 
 with object l_oDB_ListOfDeployments
     :Table("622f65ec-3a70-4f96-9bd2-a55386c9e2b8","Deployment")
@@ -7649,7 +7645,7 @@ if empty(par_iPk)
 else
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Enter Connection Information</span>]   //navbar-text
+            l_cHtml += [<span class="navbar-brand ms-3">Action on Deployment</span>]   //navbar-text
 
             if "Delta" $ par_cMode
                 l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
@@ -7662,7 +7658,13 @@ else
             endif
 
             if "GenScript" $ par_cMode
-                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Generate Script" onclick="$('#ActionOnSubmit').val('GenerateScript');document.form.submit();" role="button">]
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Generate Script" onclick="$('#ActionOnSubmit').val('GenerateScript');document.form.submit();" role="button">]
+            endif
+
+            if "Update" $ par_cMode
+                if oFcgi:p_nAccessLevelDD >= 6
+                    l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmUpdateSchemaModal">Update</button>]
+                endif
             endif
 
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
@@ -7793,10 +7795,44 @@ else
         l_cHtml += [</div>]
     endif
 
-    if !empty(par_cScript)
+    if !empty(par_cErrorDetail)
         l_cHtml += [<div class="m-3">]
-            l_cHtml += [<div class="fs-4">Generate Script:</div>]
-                l_cHtml += [<div>]+par_cScript+[</div>]
+            l_cHtml += [<div class="fs-4">Error Detail:</div>]
+                l_cHtml += [<div>]+par_cErrorDetail+[</div>]
+            l_cHtml += [<div class="m-5"></div>]
+        l_cHtml += [</div>]
+    endif
+
+    if !empty(par_cScript)
+
+        l_cJavaScript := [function copyToClip(str) {]
+        l_cJavaScript +=   [function listener(e) {]
+        l_cJavaScript +=     [e.clipboardData.setData("text/html", str);]
+        l_cJavaScript +=     [e.clipboardData.setData("text/plain", str);]
+        l_cJavaScript +=     [e.preventDefault();]
+        l_cJavaScript +=   [}]
+        l_cJavaScript +=   [document.addEventListener("copy", listener);]
+        l_cJavaScript +=   [document.execCommand("copy");]
+        l_cJavaScript +=   [document.removeEventListener("copy", listener);]
+        l_cJavaScript +=   [$('#CopySourceCode').addClass('btn-success').removeClass('btn-primary');]
+        l_cJavaScript += [};]
+
+        l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
+        l_cHtml += l_cJavaScript+CRLF
+        l_cHtml += [</script>]+CRLF
+
+
+        l_cHtml += [<div class="m-3">]
+            l_cHtml += [<div class="fs-4">]
+                l_cHtml += [Generated Script:]
+                l_cHtml += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
+                l_cHtml += [copyToClip(document.getElementById('GeneratedCode').innerText);return false;">]
+            l_cHtml += [</div>]
+//12345
+            l_cHtml += [<pre id="GeneratedCode" class="ms-3">]
+            l_cHtml += par_cScript
+            l_cHtml += [</pre>]
+
             l_cHtml += [<div class="m-5"></div>]
         l_cHtml += [</div>]
     endif
@@ -7804,12 +7840,13 @@ else
     l_cHtml += [</form>]
 
     l_cHtml += GetConfirmationModalFormsLoad()
+    l_cHtml += GetConfirmationModalFormsUpdateSchema()
 endif
 
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function DataDictionaryDeltaLoadGenScriptFormOnSubmit(par_cMode,par_iApplicationPk,par_cApplicationName,par_cURLApplicationLinkCode)
+static function DataDictionaryDeploymentToolsFormOnSubmit(par_cMode,par_iApplicationPk,par_cApplicationName,par_cURLApplicationLinkCode)
 local l_cHtml := []
 local l_cActionOnSubmit
 
@@ -7824,6 +7861,7 @@ local l_cSyncNamespaces
 local l_nSyncSetForeignKey
 
 local l_nConnectBackendType
+local l_cConnectBackendType
 local l_cConnectServer
 local l_nConnectPort
 local l_cConnectUser
@@ -7842,15 +7880,30 @@ local l_oDB_ListOfDeployments
 
 local l_cPreviousDefaultRDD
 local l_cConnectionString
-local l_SQLEngineType
+local l_cSQLEngineType
+local l_cBackendType
 local l_iPort
 local l_cDriver
-local l_SQLHandle
+local l_iSQLHandle
 local l_aDeltaMessages := {}
 local l_oData
-local l_cScript
+local l_cErrorDetail := ""
+local l_cScript      := ""
+local l_o_SQLConnection
+local l_cMacro
+local l_hWharfConfig
 
-oFcgi:TraceAdd("DataDictionaryDeltaLoadGenScriptFormOnSubmit")
+local l_cLastError := ""
+local l_nMigrateResult := 0
+//local l_lCyanAuditAware
+local l_cUpdateScript := ""
+local l_cSQLScript
+local l_aInstructions
+local l_cStatement
+local l_nPos
+local l_lAllowUpdates
+
+oFcgi:TraceAdd("DataDictionaryDeploymentToolsFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
@@ -7867,7 +7920,8 @@ l_nSyncSetForeignKey := Val(oFcgi:GetInputValue("ComboSyncSetForeignKey"))
 l_cPreviousDefaultRDD = RDDSETDEFAULT( "SQLMIX" )
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
+case vfp_inlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
+    l_lAllowUpdates := .f.
 
     do case
     case empty(l_nFk_Deployment) .and. empty(l_nSyncBackendType)
@@ -7949,10 +8003,6 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
             endcase
         endwith
 
-
-//config
-
-
         if empty(l_nFk_Deployment)
             l_nConnectBackendType   := l_nSyncBackendType
             l_cConnectServer        := l_cSyncServer
@@ -7980,6 +8030,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                 // :Column("Deployment.PasswordCrypt"      , "PasswordCrypt")
                 :Column("Deployment.PasswordConfigKey"  , "PasswordConfigKey")
                 :Column("Deployment.PasswordEnvVarName" , "PasswordEnvVarName")
+                :Column("Deployment.AllowUpdates"       , "AllowUpdates")
 
                 l_oData := :Get(l_nFk_Deployment)
                 if :Tally == 1
@@ -7991,6 +8042,7 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                     l_cConnectNamespaces      := nvl(l_oData:Namespaces,"")
                     l_nConnectSetForeignKey   := nvl(l_oData:SetForeignKey,0)
                     l_nConnectPasswordStorage := nvl(l_oData:PasswordStorage,0)  //1 = Encrypted, 2 = In config.txt, 3 = In Environment Variable, 4 = User is AWS iam account. (Coming Soon)
+                    l_lAllowUpdates           := l_oData:AllowUpdates
 
                     do case
                     case empty(l_nConnectBackendType)
@@ -8065,33 +8117,37 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
         if empty(l_cErrorMessage)
             switch l_nConnectBackendType
             case HB_ORM_BACKENDTYPE_MARIADB
-                l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-                l_iPort         := iif(empty(l_nConnectPort),3306,l_nConnectPort)
-                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MARIADB")
+                l_cConnectBackendType := "MARIADB"
+                l_cSQLEngineType      := HB_ORM_ENGINETYPE_MYSQL
+                l_iPort               := iif(empty(l_nConnectPort),3306,l_nConnectPort)
+                l_cDriver             := oFcgi:GetAppConfig("ODBC_DRIVER_MARIADB")
                 if empty(l_cDriver)
                     l_cDriver := "MariaDB ODBC 3.1 Driver"
                 endif
                 exit
             case HB_ORM_BACKENDTYPE_MYSQL
-                l_SQLEngineType := HB_ORM_ENGINETYPE_MYSQL
-                l_iPort         := iif(empty(l_nConnectPort),3306,l_nConnectPort)
-                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MYSQL")
+                l_cConnectBackendType := "MYSQL"
+                l_cSQLEngineType      := HB_ORM_ENGINETYPE_MYSQL
+                l_iPort               := iif(empty(l_nConnectPort),3306,l_nConnectPort)
+                l_cDriver             := oFcgi:GetAppConfig("ODBC_DRIVER_MYSQL")
                 if empty(l_cDriver)
                     l_cDriver := "MySQL ODBC 8.0 Unicode Driver"
                 endif
                 exit
             case HB_ORM_BACKENDTYPE_POSTGRESQL
-                l_SQLEngineType := HB_ORM_ENGINETYPE_POSTGRESQL
-                l_iPort         := iif(empty(l_nConnectPort),5432,l_nConnectPort)
-                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_POSTGRESQL")
+                l_cConnectBackendType := "POSTGRESQL"
+                l_cSQLEngineType      := HB_ORM_ENGINETYPE_POSTGRESQL
+                l_iPort               := iif(empty(l_nConnectPort),5432,l_nConnectPort)
+                l_cDriver             := oFcgi:GetAppConfig("ODBC_DRIVER_POSTGRESQL")
                 if empty(l_cDriver)
                     l_cDriver := "PostgreSQL Unicode"
                 endif
                 exit
             case HB_ORM_BACKENDTYPE_MSSQL
-                l_SQLEngineType := HB_ORM_ENGINETYPE_MSSQL
-                l_iPort         := iif(empty(l_nConnectPort),1433,l_nConnectPort)
-                l_cDriver       := oFcgi:GetAppConfig("ODBC_DRIVER_MSSQL")
+                l_cConnectBackendType := "MSSQL"
+                l_cSQLEngineType      := HB_ORM_ENGINETYPE_MSSQL
+                l_iPort               := iif(empty(l_nConnectPort),1433,l_nConnectPort)
+                l_cDriver             := oFcgi:GetAppConfig("ODBC_DRIVER_MSSQL")
                 if empty(l_cDriver)
                     l_cDriver := "SQL Server"
                 endif
@@ -8100,56 +8156,200 @@ case vfp_inlist(l_cActionOnSubmit,"Load","Delta","GenerateScript")
                 l_iPort := -1
             endswitch
 
-            do case
-            case l_iPort == -1
-                l_cErrorMessage := "Unknown Server Type"
-            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_nConnectBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
-                // To enable multi statements to be executed, meaning multiple SQL commands separated by ";", had to use the OPTION= setting.
-                // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
-                l_cConnectionString := "SERVER="+l_cConnectServer+";Driver={"+l_cDriver+"};USER="+l_cConnectUser+";PASSWORD="+l_cConnectPassword+";DATABASE="+l_cConnectDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
-            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
-                l_cConnectionString := "Server="+l_cConnectServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Database="+l_cConnectDatabase+";BoolsAsChar=0;"
-            case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
-                l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+AllTrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=no;Trusted_Connection=no;TrustServerCertificate=yes"  // Due to an issue with certificates had to turn off Encrypt and Trusted_Connection had to set to "no" since not using Windows Account.
-                //"Driver=ODBC Driver 17 for SQL Server;Server=192.168.4.105;Uid=sa;PWD=rndrnd;Encrypt=no;Database=test001;Trusted_Connection=no;TrustServerCertificate=yes"
-            otherwise
-                l_cErrorMessage := "Invalid 'Backend Type'"
-            endcase
-        endif
 
-//Sync
-        if !empty(l_cConnectionString)
-            l_SQLHandle := hb_RDDInfo( RDDI_CONNECT, { "ODBC", l_cConnectionString })
+            if vfp_inlist(l_cActionOnSubmit,"Update","GenerateScript")
+//:SetHarbourORMNamespace("Harbour_ORM")
 
-            if l_SQLHandle == 0
-                l_SQLHandle := -1
-                l_cErrorMessage := "Unable connect to the server!"+Chr(13)+Chr(10)+Str(hb_RDDInfo( RDDI_ERRORNO ))+Chr(13)+Chr(10)+hb_RDDInfo( RDDI_ERROR )
-                // l_cErrorMessage += Chr(13)+Chr(10)+l_cConnectionString
+                l_o_SQLConnection := hb_SQLConnect(l_cConnectBackendType,;
+                                                    l_cDriver,;
+                                                    l_cConnectServer,;
+                                                    l_iPort,;
+                                                    l_cConnectUser,;
+                                                    l_cConnectPassword,;
+                                                    l_cConnectDatabase,;
+                                                    "public";
+                                                    )
+                with object l_o_SQLConnection
+//_M_ refine options to use depending of Engine Type
+                    :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
+                    :MySQLEngineConvertIdentifierToLowerCase := .f.
+
+//Why is this needed?                    :SetPrimaryKeyFieldName("pk")
+                    :SetApplicationName("DataWharf")
+
+                    :SetHarbourORMNamespace("nohborm")
+
+                    l_iSQLHandle := :Connect()
+                    do case
+                    case l_iSQLHandle == 0
+                        l_cErrorMessage := "Already Connected"
+                    case l_iSQLHandle < 0
+                        l_cErrorMessage := :GetErrorMessage()
+                    otherwise
+
+                        do case
+                        case l_cActionOnSubmit == "Update"
+                            if !l_lAllowUpdates
+                                l_cErrorMessage := "Deployment is not configured to allow updates."
+                            else
+                                l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,3,.f.,l_cConnectBackendType)
+                                l_cMacro := Strtran(l_cMacro,chr(13),"")
+                                l_cMacro := Strtran(l_cMacro,chr(10),"")
+                                l_cMacro := Strtran(l_cMacro,[;],"")
+                                l_hWharfConfig := &( l_cMacro )
+
+                                if el_AUnpack(l_o_SQLConnection:MigrateSchema(l_hWharfConfig["Tables"],nvl(hb_hGetDef(l_hWharfConfig,"Enumerations",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                    l_cErrorMessage := "Success - Migrated Structure"
+
+                                    if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(l_hWharfConfig["Tables"]),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                        l_cErrorMessage := "Success - Structure and Foreign Key Constraints Migrated"
+                                    else
+                                        if empty(l_cLastError)
+                                            l_cErrorMessage := "Success - Structure Migrated and Foreign Key Constraints did not change."
+                                        else
+                                            l_cErrorMessage := "Structure Migrated but Failed To Migrate Foreign Key Constraints"
+                                            l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                            SendToDebugView("PostgreSQL - Failed Update")
+                                        endif
+                                    endif
+
+                                    // if l_nMigrateResult == 1
+                                    //     l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
+                                    //     if l_lCyanAuditAware
+                                    //         //Ensure Cyanaudit is up to date
+                                    //         oFcgi:p_o_SQLConnection:SQLExec("a1bf5168-18e2-42ee-b0bd-6bfd252fa7a8","SELECT cyanaudit.fn_update_audit_fields('public');")
+                                    //         //SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
+                                    //     endif
+                                    // endif
+                                else
+                                    if empty(l_cLastError)
+
+                                        if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(l_hWharfConfig["Tables"]),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                            l_cErrorMessage := "Success - Structure did not change and Foreign Key Constraints Migrated"
+                                        else
+                                            if empty(l_cLastError)
+                                                l_cErrorMessage := "Success - Structure and Foreign Key Constraints did not change."
+                                            else
+                                                l_cErrorMessage := "Structure did not change but Failed To Migrate Foreign Key Constraints"
+                                                l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                                SendToDebugView("PostgreSQL - Failed Update")
+                                            endif
+                                        endif
+
+
+                                    else
+                                        l_cErrorMessage := "Failed To Migrate Structure"
+                                        l_cErrorDetail := l_cLastError+[<br>Script Generated to migrate structure:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                        SendToDebugView("PostgreSQL - Failed Update")
+                                    endif
+                                endif
+
+                            endif
+                            l_cScript := ""
+
+                        case l_cActionOnSubmit == "GenerateScript"
+                            l_cScript := "" //"Generate Script to come here"
+
+                            l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,3,.f.,l_cConnectBackendType)
+                            l_cMacro := Strtran(l_cMacro,chr(13),"")
+                            l_cMacro := Strtran(l_cMacro,chr(10),"")
+                            l_cMacro := Strtran(l_cMacro,[;],"")
+                            l_hWharfConfig := &( l_cMacro )
+
+                            l_cSQLScript := ""
+                            l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript( l_hWharfConfig["Tables"] , nvl(hb_hGetDef(l_hWharfConfig,"Enumerations",{=>}),{=>}) )
+                            if !empty(l_cScript)
+                                l_cSQLScript := "--Structure Changes"+CRLF+l_cScript
+                            endif
+                            l_cScript := l_o_SQLConnection:GenerateMigrateForeignKeyConstraintsScript( l_hWharfConfig["Tables"] )
+                            if !empty(l_cScript)
+                                if !empty(l_cSQLScript)
+                                    l_cSQLScript += CRLF
+                                endif
+                                l_cSQLScript += "--Foreign Key Constraint Changes"+CRLF+l_cScript
+                            endif
+
+                            l_cScript := ""
+                            l_aInstructions := hb_ATokens(l_cSQLScript,.t.)
+                            for each l_cStatement in l_aInstructions
+                                if !empty(l_cStatement)
+                                    l_nPos = at("/*OnFailMessage",l_cStatement)
+                                    if l_nPos > 0
+                                        l_cStatement := trim(left(l_cStatement,l_nPos-1))
+                                    endif
+                                    l_cScript += l_cStatement + CRLF
+                                else
+                                    l_cScript += CRLF
+                                endif
+                            endfor
+
+                            if empty(l_cScript)
+                                l_cErrorMessage := "Success - Nothing is different, no Generated Script"
+                            else
+                                l_cErrorMessage := "Success - Generated Script"
+                            endif
+
+                        endcase
+
+
+                        :Disconnect()
+                    endcase
+
+                endwith
 
             else
-// SendToDebugView(l_cConnectionString)
+                //Will connect without using the ORM
+
                 do case
-                case l_cActionOnSubmit == "Load"
-                    if oFcgi:p_nAccessLevelDD >= 6
-                        l_cErrorMessage := LoadSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey)
-                    else
-                        l_cErrorMessage := "No Access."
-                    endif
-                    
-                case l_cActionOnSubmit == "Delta"
-                    el_AUnpack( DeltaSchema(l_SQLHandle,par_iApplicationPk,l_SQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
-
-                case l_cActionOnSubmit == "GenerateScript"
-
-l_cErrorMessage := "No Error"
-l_cScript := "Generate Script"
-
+                case l_iPort == -1
+                    l_cConnectionString := ""
+                    l_cErrorMessage := "Unknown Server Type"
+                case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MARIADB .or. l_nConnectBackendType == HB_ORM_BACKENDTYPE_MYSQL   // MySQL or MariaDB
+                    // To enable multi statements to be executed, meaning multiple SQL commands separated by ";", had to use the OPTION= setting.
+                    // See: https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-configuration-connection-parameters.html#codbc-dsn-option-flags
+                    l_cConnectionString := "SERVER="+l_cConnectServer+";Driver={"+l_cDriver+"};USER="+l_cConnectUser+";PASSWORD="+l_cConnectPassword+";DATABASE="+l_cConnectDatabase+";PORT="+AllTrim(str(l_iPort)+";OPTION=67108864;")
+                case l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL   // PostgreSQL
+                    l_cConnectionString := "Server="+l_cConnectServer+";Port="+AllTrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Database="+l_cConnectDatabase+";BoolsAsChar=0;"
+                case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
+                    l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+AllTrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=no;Trusted_Connection=no;TrustServerCertificate=yes"  // Due to an issue with certificates had to turn off Encrypt and Trusted_Connection had to set to "no" since not using Windows Account.
+                    //"Driver=ODBC Driver 17 for SQL Server;Server=192.168.4.105;Uid=sa;PWD=rndrnd;Encrypt=no;Database=test001;Trusted_Connection=no;TrustServerCertificate=yes"
+                otherwise
+                    l_cConnectionString := ""
+                    l_cErrorMessage := "Invalid 'Backend Type'"
                 endcase
 
-                hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_SQLHandle)
-                // l_cErrorMessage := "Connected OK"
+                if !empty(l_cConnectionString)
+                    l_iSQLHandle := hb_RDDInfo( RDDI_CONNECT, { "ODBC", l_cConnectionString })
+
+                    if l_iSQLHandle == 0
+                        l_iSQLHandle := -1
+                        l_cErrorMessage := "Unable connect to the server!"+Chr(13)+Chr(10)+Str(hb_RDDInfo( RDDI_ERRORNO ))+Chr(13)+Chr(10)+hb_RDDInfo( RDDI_ERROR )
+                        // l_cErrorMessage += Chr(13)+Chr(10)+l_cConnectionString
+
+                    else
+                        // SendToDebugView(l_cConnectionString)
+                        do case
+                        case l_cActionOnSubmit == "Load"
+                            if oFcgi:p_nAccessLevelDD >= 6
+                                l_cErrorMessage := LoadSchema(l_iSQLHandle,par_iApplicationPk,l_cSQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey)
+                            else
+                                l_cErrorMessage := "No Access."
+                            endif
+                            
+                        case l_cActionOnSubmit == "Delta"
+                            el_AUnpack( DeltaSchema(l_iSQLHandle,par_iApplicationPk,l_cSQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+
+                        endcase
+
+                        hb_RDDInfo(RDDI_DISCONNECT,,"SQLMIX",l_iSQLHandle)
+                        // l_cErrorMessage := "Connected OK"
+                    endif
+                endif
+
             endif
         endif
+
+
 
     endcase
 
@@ -8159,7 +8359,7 @@ case l_cActionOnSubmit == "Cancel"
 endcase
 
 if !empty(l_cErrorMessage)
-    l_cHtml += DataDictionaryDeltaLoadGenScriptFormBuild(par_cMode,par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
+    l_cHtml += DataDictionaryDeploymentToolsFormBuild(par_cMode,par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,;
                                                       l_nFk_Deployment,;
                                                       l_nSyncBackendType,;
                                                       l_cSyncServer,;
@@ -8170,6 +8370,7 @@ if !empty(l_cErrorMessage)
                                                       l_cSyncNamespaces,;
                                                       l_nSyncSetForeignKey,;
                                                       l_aDeltaMessages,;
+                                                      l_cErrorDetail,;
                                                       l_cScript)
 endif
 
@@ -10194,5 +10395,8 @@ case l_cColumnType == "L"
 otherwise
     l_cResult := ""
 endcase
+
 return l_cResult
 //=================================================================================================================
+
+

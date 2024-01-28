@@ -397,8 +397,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
 
 
-//_M_ MySQL
-l_nColumnDefaultType  := 1
+//_M_ MySQL Add support to default presets, like we already have for Postgresql
+l_nColumnDefaultType   := 1
 l_cColumnDefaultCustom := ""
 //123456
                     l_cColumnDefault := oFcgi:p_o_SQLConnection:SanitizeFieldDefaultFromDefaultBehavior(par_SQLEngineType,;
@@ -599,7 +599,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         l_cSQLCommandFields  += [)]
     endif
     l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
-SendToClipboard(l_cSQLCommandFields)
+// SendToClipboard(l_cSQLCommandFields)
 
     l_cSQLCommandIndexes := [SELECT pg_indexes.schemaname        AS namespace_name,]
     l_cSQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
@@ -1108,14 +1108,6 @@ SendToClipboard(l_cSQLCommandFields)
                     else
                         l_nColumnUsedAs = 1                            //Regular Field
                     endif
-//_M_ Postgreql
-// l_nColumnDefaultType  := 1
-// l_cColumnDefaultCustom := ""
-// //123456
-
-// if l_cColumnName == "pk"
-//     altd()
-// endif
 
                     l_cColumnDefault := oFcgi:p_o_SQLConnection:NormalizeFieldDefaultForCurrentEngineType(l_cColumnDefault,l_cColumnType,l_nColumnScale)
                     l_cColumnDefault := oFcgi:p_o_SQLConnection:SanitizeFieldDefaultFromDefaultBehavior(par_SQLEngineType,;
@@ -1900,7 +1892,7 @@ if par_nSyncSetForeignKey > 1
                 endif
 
             case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
-                //12345678
+                //12345678  _M_ Add support to load the foreign keys from Postgresql. That logic already exists in hb_orm in GenerateMigrateForeignKeyConstraintsScript()
                 
             case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
             endcase

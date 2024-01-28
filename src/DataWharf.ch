@@ -1,4 +1,4 @@
-#define BUILDVERSION "3.3"
+#define BUILDVERSION "3.4"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,7 +14,7 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "4.0"
+#define MIN_HARBOUR_ORM_VERSION  "4.1"
 #define MIN_HARBOUR_VFP_VERSION  "3.4"
 #define MIN_HARBOUR_FCGI_VERSION "1.7"
 
@@ -185,4 +185,3 @@
 #define COLUMN_USEDAS_PRIMARY_KEY 2
 #define COLUMN_USEDAS_FOREIGN_KEY 3
 #define COLUMN_USEDAS_SUPPORT     4
-

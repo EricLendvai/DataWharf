@@ -723,7 +723,6 @@ if l_oData:Application_TestTableHasPrimaryKey               .or. ;
             :Join("inner","Column","","Column.fk_Table = Table.pk")
             :Where("Namespace.fk_Application = ^",par_iApplicationPk)
             :SQL("ListOfIssues")
-//123456
 // SendToClipboard(:LastSQL())
 // altd()
         endwith

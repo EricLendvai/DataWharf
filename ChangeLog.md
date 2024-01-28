@@ -1,5 +1,17 @@
 # DataWharf - Change Log
 
+## 01/28/2024 v 3.4
+* Requiring Harbour_ORM 4.1 to ensure Foreign Key Constraint name are always created lower case.
+* Renamed "Delta/Load Schema" tab in Dictionary to "Deployment Tools".
+* Added an option to "Update Schema" in "Deployment Tools".
+* Export to ORM and JSON now include Enumeration list.
+* Renamed "TableSchema" Harbour Hash Array and Json Exports to simple "Tables".
+* New GenerateMigrateForeignKeyConstraintsScript and MigrateForeignKeyConstraints methods.
+* GenerateMigrateSchemaScript and MigrateSchema will now also update Postgresql native Enumerations. Please note, that due to current Postgresql limitations, enumeration values can be added, but never renamed or deleted.
+* Removed method GenerateCurrentSchemaHarbourCode, since all Harbour Hash tables are now generated from DataWharf.
+* Added "Generated Script" option under the "Deployment Tools".
+* New Option "Allow Updates" under Application Deployment setting screen. This will be used by the "Update" option in "Deployment Tools".
+
 ## 01/12/2024 v 3.3
 * Minor fix in Integrity Test feature, the "Foreign Key missing "On Delete" setting" failed to work sometimes.
 * New setting "Set Missing "On Delete" in Foreign Keys To "Protect (Restrict)"" in "Data Dictionary Settings".
