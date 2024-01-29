@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 01/28/2024 v 3.5
+* Requiring Harbour_ORM 4.2
+* Internal Refactoring to reduce memory usage.
+* Fix on Harbour_ORM and JSon Export to exclude Foreign Key Constraints on discontinued fields.
+
 ## 01/28/2024 v 3.4
 * Requiring Harbour_ORM 4.1 to ensure Foreign Key Constraint name are always created lower case.
 * Renamed "Delta/Load Schema" tab in Dictionary to "Deployment Tools".

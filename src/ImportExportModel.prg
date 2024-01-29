@@ -5,7 +5,7 @@ function ExportModelForImports(par_iModelPk)
 local l_cBackupCode := ""
 
 local l_lContinue := .t.
-local l_hTableSchema         := oFcgi:p_WharfConfig["Tables"]
+local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
 local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)

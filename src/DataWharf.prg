@@ -58,7 +58,7 @@ SendToDebugView("Ending DataWharf FastCGI App")
 return nil
 //=================================================================================================================
 class MyFcgi from hb_Fcgi
-    data p_WharfConfig          init {=>}
+    // data p_WharfConfig          init {=>}
     data p_o_SQLConnection
     data p_cHeader              init ""
     data p_cjQueryScript        init ""
@@ -170,7 +170,7 @@ set delete on
 ::SetOnErrorDetailLevel(2)
 ::SetOnErrorProgramInfo(hb_BuildInfo())
 
-::p_WharfConfig := Config()
+// ::p_WharfConfig := Config()
 
 ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                     ::GetAppConfig("POSTGRESDRIVER"),;
@@ -182,7 +182,8 @@ set delete on
                                     "public";
                                     )
 with object ::p_o_SQLConnection
-    :LoadWharfConfiguration(oFcgi:p_WharfConfig)
+    :LoadWharfConfiguration(Config())
+    
     :SetForeignKeyNullAndZeroParity(.t.)
 
     :SetHarbourORMNamespace("ORM")
@@ -649,8 +650,8 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 29
 
-            :ForeignKeyConvertAllZeroToNull(oFcgi:p_WharfConfig["Tables"])
-            :DeleteAllOrphanRecords( oFcgi:p_WharfConfig["Tables"] )
+            :ForeignKeyConvertAllZeroToNull(oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"])
+            :DeleteAllOrphanRecords( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
 
             for each l_cTableName in {"Application"}
                 for each l_cColumnName in {"PrimaryKeyDefaultInteger","PrimaryKeyDefaultUUID","PrimaryKeyType","ForeignKeyTypeMatchPrimaryKey","ForeignKeyIsNullable","ForeignKeyNoDefault"}
@@ -673,8 +674,8 @@ with object ::p_o_SQLConnection
         endif
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
-//:RemoveWharfForeignKeyConstraints( oFcgi:p_WharfConfig["Tables"] )
-:MigrateForeignKeyConstraints( oFcgi:p_WharfConfig["Tables"] )
+        //:RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
+        :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
@@ -847,7 +848,7 @@ if l_lPostgresLostConnection
                                         "public";
                                         )
     with object ::p_o_SQLConnection
-        :LoadWharfConfiguration(oFcgi:p_WharfConfig)
+        :LoadWharfConfiguration(Config())
         :SetForeignKeyNullAndZeroParity(.t.)
 
         :SetHarbourORMNamespace("ORM")
@@ -1563,8 +1564,8 @@ local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
 local l_cUpdateScript := ""
 
-l_hTableSchema  := oFcgi:p_WharfConfig["Tables"]
-l_hEnumerations := nvl(hb_hGetDef(oFcgi:p_WharfConfig,"Enumerations",{=>}),{=>})
+l_hTableSchema  := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
+l_hEnumerations := nvl(hb_hGetDef(oFcgi:p_o_SQLConnection:p_WharfConfig,"Enumerations",{=>}),{=>})
 
 if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hTableSchema,l_hEnumerations),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
     if l_nMigrateSchemaResult == 1

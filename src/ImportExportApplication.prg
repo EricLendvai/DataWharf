@@ -29,6 +29,7 @@ local l_cSourceCode := ""
 local l_cSourceCodeFields
 local l_nMaxNameLength
 local l_nMaxExpressionLength
+local l_nFieldUsedAs
 local l_cFieldUsedBy
 local l_cFieldName
 local l_cFieldType
@@ -291,6 +292,10 @@ if l_lContinue
             // :Where("Column.fk_TableForeign IS NOT NULL")             // Only needing the foreign key fields.
             :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
             :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+
+            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
         endwith
 
         with object l_oDB_ListOfIndexes
@@ -361,11 +366,11 @@ endif
 if l_lContinue
     if par_nVersion == 3
         l_cSchemaIndent := space(4)
-        l_cSourceCode := [{"HarbourORMVersion" => ]+HB_ORM_BUILDVERSION+[,;]+CRLF
-        l_cSourceCode += [ "DataWharfVersion" => ]+BUILDVERSION+[,;]+CRLF
-        l_cSourceCode += [ "Backend" => "]+par_cBackend+[",;]+CRLF
-        l_cSourceCode += [ "GenerationTime" => "]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
-        l_cSourceCode += [ "GenerationSignature" => "]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
+        l_cSourceCode := [{"HarbourORMVersion"=>]+HB_ORM_BUILDVERSION+[,;]+CRLF
+        l_cSourceCode += [ "DataWharfVersion"=>]+BUILDVERSION+[,;]+CRLF
+        l_cSourceCode += [ "Backend"=>"]+par_cBackend+[",;]+CRLF
+        l_cSourceCode += [ "GenerationTime"=>"]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
+        l_cSourceCode += [ "GenerationSignature"=>"]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
     else
         l_cSchemaIndent := ""
     endif
@@ -373,7 +378,7 @@ if l_lContinue
     if l_nNumberOfTables > 0
         if par_nVersion == 3
             l_cSourceCode += [,;]+CRLF
-            l_cSourceCode += [ "Tables" => ;]+CRLF
+            l_cSourceCode += [ "Tables"=>;]+CRLF
         else
             // l_cSourceCode += [{]+CRLF
         endif
@@ -404,6 +409,7 @@ if l_lContinue
                 scan while ListOfColumns->Table_Pk = l_iTablePk
                     l_nNumberOfFields++
 
+                    l_nFieldUsedAs      := ListOfColumns->Column_UsedAs
                     l_cFieldUsedBy      := ListOfColumns->Column_UsedBy
                     l_cFieldName        := ListOfColumns->Column_Name
                     l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cSchemaIndent+l_cIndent+"{" , ";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndent+"," )
@@ -416,7 +422,7 @@ if l_lContinue
                     // l_cFieldDefaultCustom := ListOfColumns->Column_DefaultCustom
                     l_cFieldDefault         := GetColumnDefault(.t.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
                     l_lFieldNullable        := ListOfColumns->Column_Nullable
-                    l_lFieldAutoIncrement   := (ListOfColumns->Column_UsedAs = 2)
+                    l_lFieldAutoIncrement   := (l_nFieldUsedAs = 2)
                     l_lFieldArray           := ListOfColumns->Column_Array
                     l_cFieldAttributes      := iif(l_lFieldNullable,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
@@ -493,6 +499,19 @@ if l_lContinue
 
 // hb_orm_SendToDebugView(l_cSourceCodeFields)
 // hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
+
+                        if !empty(el_Inlist(l_nFieldUsedAs,2,3,4))
+                            l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_USEDAS+'"=>"'+{"","Primary","Foreign","Support"}[l_nFieldUsedAs]+'"'
+                            if l_nFieldUsedAs == 3  // Foreign
+                                if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
+                                    l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
+                                endif
+                                if ListOfColumns->Column_ForeignKeyOptional
+                                    l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
+                                endif
+                            endif
+                            l_cSourceCodeFields += ','
+                        endif
                         l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"'
                         if !empty(l_cFieldTypeEnumName)
                             l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ENUMNAME+'"=>"'+l_cFieldTypeEnumName+'"'
@@ -514,17 +533,6 @@ if l_lContinue
                         endif
                         if l_lFieldArray
                             l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
-                        endif
-                        if !empty(el_Inlist(ListOfColumns->Column_UsedAs,2,3,4))
-                            l_cSourceCodeFields += ',"UsedAs"=>"'+{"","Primary","Foreign","Support"}[ListOfColumns->Column_UsedAs]+'"'
-                            if ListOfColumns->Column_UsedAs == 3  // Foreign
-                                if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
-                                    l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
-                                endif
-                                if ListOfColumns->Column_ForeignKeyOptional
-                                    l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
-                                endif
-                            endif
                         endif
                         if !empty(el_Inlist(ListOfColumns->Column_OnDelete,2,3,4))
                             l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
@@ -752,8 +760,8 @@ function ExportApplicationForImports(par_iApplicationPk)
 local l_cBackupCode := ""
 
 local l_lContinue := .t.
-local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema := oFcgi:p_WharfConfig["Tables"]
+local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2191,8 +2199,8 @@ function ExportTableForImports(par_iTablePk)
 local l_cBackupCode := ""
 
 local l_lContinue := .t.
-local l_oDB_ListOfRecords  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema := oFcgi:p_WharfConfig["Tables"]
+local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
