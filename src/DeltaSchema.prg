@@ -272,6 +272,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             endif
             :OrderBy("tag1")
             :OrderBy("tag2")
+
+// :Where("Enumeration.UseStatus != ^",USESTATUS_DISCONTINUED)
+
             :SQL("ListOfEnumerations")
             select ListOfEnumerations
             scan all
@@ -291,6 +294,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             endif
             :OrderBy("tag1")
             :OrderBy("tag2")
+
+// :Where("Table.UseStatus != ^",USESTATUS_DISCONTINUED)
+
             :SQL("ListOfTables")
             select ListOfTables
             scan all
@@ -379,6 +385,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("upper(EnumValue.Name)" , "tag1")
                         :Where("EnumValue.fk_Enumeration = ^" , l_iEnumerationPk)
                         :OrderBy("EnumValue_Order") //,"Desc"
+
+// :Where("EnumValue.UseStatus != ^",USESTATUS_DISCONTINUED)
+
                         :SQL("ListOfEnumValuesInEnumeration")
 
                         if :Tally < 0
@@ -538,6 +547,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
                         :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
 
+// :Where("Column.UseStatus != ^"     ,USESTATUS_DISCONTINUED)
+// :Where("Enumeration.UseStatus != ^",USESTATUS_DISCONTINUED)
+//123456
                         :SQL("ListOfColumnsInTable")
 // SendToClipboard(:LastSQL())
 

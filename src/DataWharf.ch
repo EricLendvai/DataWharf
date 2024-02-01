@@ -1,4 +1,4 @@
-#define BUILDVERSION "3.5"
+#define BUILDVERSION "3.6"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -45,8 +45,8 @@
 #define LOGO_THEME_NAME "RainierKayak"        // Default Value, Can be overwritten in config.txt
 
 
-#define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();"]
-#define UPDATESAVEBUTTON_COMBOWITHONCHANGE [$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.HideOnEdit').hide();]
+#define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();"]
+#define UPDATESAVEBUTTON_COMBOWITHONCHANGE [$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();]
 
 #define USEDON_APPLICATION 1
 #define USEDON_NAMESPACE   2

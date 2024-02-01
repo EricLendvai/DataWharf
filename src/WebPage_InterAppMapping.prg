@@ -812,7 +812,7 @@ l_cHtml += [<div class="m-3">]
                                 l_cHtml += [<i class="bi bi-key"></i>]
                             case ListColumnsFrom->Column_UsedAs = 3   // !hb_IsNIL(ListColumnsFrom->Table_Name)
                                 l_cHtml += [<i class="bi-arrow-right"></i>]
-                            case (ListColumnsFrom->Column_UsedAs = 4) .or. (" "+ListColumnsFrom->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
+                            case (ListColumnsFrom->Column_UsedAs = 4) .or. (ListColumnsFrom->Column_UsedAs = 1 .and. " "+ListColumnsFrom->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
                                 l_cHtml += [<i class="bi bi-tools"></i>]
                             endcase
                         l_cHtml += [</td>]

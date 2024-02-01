@@ -352,6 +352,7 @@ case l_cURLAction == "DataDictionarySettings"
                 :Column("Application.TestMissingEnumerationValues"         , "Application_TestMissingEnumerationValues")
                 :Column("Application.TestUseOfDiscontinuedEnumeration"     , "Application_TestUseOfDiscontinuedEnumeration")
                 :Column("Application.TestUseOfDiscontinuedForeignTable"    , "Application_TestUseOfDiscontinuedForeignTable")
+                :Column("Application.TestValidColumnLengthAndScale"        , "Application_TestValidColumnLengthAndScale")
                 l_oData := :Get(l_iApplicationPk)
             endwith
 
@@ -375,6 +376,7 @@ case l_cURLAction == "DataDictionarySettings"
                 l_hValues["TestMissingEnumerationValues"]         := l_oData:Application_TestMissingEnumerationValues
                 l_hValues["TestUseOfDiscontinuedEnumeration"]     := l_oData:Application_TestUseOfDiscontinuedEnumeration
                 l_hValues["TestUseOfDiscontinuedForeignTable"]    := l_oData:Application_TestUseOfDiscontinuedForeignTable
+                l_hValues["TestValidColumnLengthAndScale"]        := l_oData:Application_TestValidColumnLengthAndScale
 
                 l_cHtml += DataDictionaryEditFormBuild("",l_iApplicationPk,l_hValues)
             endif
@@ -754,9 +756,9 @@ case l_cURLAction == "ListColumns"
         l_cTableAKA := l_aSQLResult[1,2]
 
         if oFcgi:isGet()
-            l_cHtml += ColumnListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
+            l_cHtml += ColumnListFormBuild(l_iApplicationPk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
         else
-            l_cHtml += ColumnListFormOnSubmit(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
+            l_cHtml += ColumnListFormOnSubmit(l_iApplicationPk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
         endif
 
 
@@ -963,7 +965,7 @@ case l_cURLAction == "ListIndexes"
     if l_oDB1:Tally == 1
         l_iTablePk  := l_aSQLResult[1,1]
         l_cTableAKA := l_aSQLResult[1,2]
-        l_cHtml += IndexListFormBuild(l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
+        l_cHtml += IndexListFormBuild(l_iApplicationPk,l_iTablePk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLTableName,l_cTableAKA)
     endif
 
 case l_cURLAction == "NewIndex"
@@ -1429,9 +1431,9 @@ case l_cURLAction == "ListTemplateColumns"
         l_iTemplateTablePk := l_aSQLResult[1,1]
 
         if oFcgi:isGet()
-            l_cHtml += TemplateColumnListFormBuild(l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName)
+            l_cHtml += TemplateColumnListFormBuild(l_iApplicationPk,l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName)
         else
-            l_cHtml += TemplateColumnListFormOnSubmit(l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName)
+            l_cHtml += TemplateColumnListFormOnSubmit(l_iApplicationPk,l_iTemplateTablePk,l_cURLApplicationLinkCode,l_cURLTemplateTableName)
         endif
 
     endif
@@ -1600,20 +1602,14 @@ case l_cURLAction == "TableExportForDataWharfImports"
                 //     l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
                 // endif
 
+                l_cHtml += GetAboveNavbarTable("Export for DataWharf Imports",AllTrim(l_aSQLResult[1,2]),AllTrim(l_aSQLResult[1,3]),l_aSQLResult[1,4])
                 l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<div class="input-group">]
+                        l_cHtml += GetNextPreviousTable(l_iApplicationPk,l_cURLApplicationLinkCode,l_iTablePk,"TableExportForDataWharfImports")
 
-                        l_cHtml += [<span class="navbar-brand ms-3">Table: "]+AllTrim(l_aSQLResult[1,2])+[.]+AllTrim(l_aSQLResult[1,3])+FormatAKAForDisplay(l_aSQLResult[1,4])+["</span>]
-
-                        // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(l_iTablePk),"New","Edit")+[ Table</span>]   //navbar-text
-
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+l_cURLApplicationLinkCode+[/">Back To Tables</a>]
                         l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Edit Table</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Columns</a>]
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Indexes</a>]
-                        // if oFcgi:p_nAccessLevelDD >= 5
-                        //     l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Export for DataWharf Imports</a>]
-                        // endif
+                        l_cHtml += [<a class="btn btn-primary rounded ms-5 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Columns</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cURLApplicationLinkCode+[/]+l_cURLNamespaceName+[/]+l_cURLTableName+[/">Indexes</a>]
                     l_cHtml += [</div>]
                 l_cHtml += [</nav>]
 
@@ -1851,11 +1847,14 @@ l_cHtml += [<ul class="nav nav-tabs">]
     endif
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
-        if oFcgi:p_nAccessLevelDD >= 6
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools</a>]
-        else
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Delta Schema</a>]
-        endif
+        with object l_oDB1
+            :Table("fa9ced84-f14e-4ef0-9047-ca77a564b327","Deployment")
+            :Column("Count(*)","Total")
+            :Where("Deployment.fk_Application = ^" , par_iApplicationPk)
+            :SQL(@l_aSQLResult)
+        endwith
+        l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
+        l_cHtml += [<a class="nav-link]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools (]+Trans(l_iReccount)+[)</a>]
     l_cHtml += [</li>]
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
@@ -2197,6 +2196,7 @@ local l_lTestMissingForeignKeyTable           := hb_HGetDef(par_hValues,"TestMis
 local l_lTestMissingEnumerationValues         := hb_HGetDef(par_hValues,"TestMissingEnumerationValues"         ,.f.)
 local l_lTestUseOfDiscontinuedEnumeration     := hb_HGetDef(par_hValues,"TestUseOfDiscontinuedEnumeration"     ,.f.)
 local l_lTestUseOfDiscontinuedForeignTable    := hb_HGetDef(par_hValues,"TestUseOfDiscontinuedForeignTable"    ,.f.)
+local l_lTestValidColumnLengthAndScale        := hb_HGetDef(par_hValues,"TestValidColumnLengthAndScale"        ,.f.)
 
 local l_cObjectId
 
@@ -2234,7 +2234,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3" valign="top">Support Column Names</td>]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="TextSupportColumns" id="TextSupportColumns" value="]+FcgiPrepFieldForValue(l_cSupportColumns)+[" size="80">]
-                l_cHtml += [<br><span class="small">Comma separated list of column names</span>]
+                l_cHtml += [<br><span class="small">Blank separated list of column names.<br>If the "Used As" property of columns is not set, but its name is in the list above, it will be displayed as "Implicit Support".</span>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
@@ -2294,6 +2294,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMissingEnumerationValues",         l_lTestMissingEnumerationValues,         "All Enumeration Fields must point to a enumeration")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestUseOfDiscontinuedEnumeration",     l_lTestUseOfDiscontinuedEnumeration,     "Non Discontinued Fields may not point to a Discontinued Enumeration")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestUseOfDiscontinuedForeignTable",    l_lTestUseOfDiscontinuedForeignTable,    "Non Discontinued Foreign Keys may not point to a Discontinued Table")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestValidColumnLengthAndScale",        l_lTestValidColumnLengthAndScale,        "Validity of Column Length and Scale")
 
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -2346,6 +2347,7 @@ local l_lTestMissingForeignKeyTable
 local l_lTestMissingEnumerationValues
 local l_lTestUseOfDiscontinuedEnumeration
 local l_lTestUseOfDiscontinuedForeignTable
+local l_lTestValidColumnLengthAndScale
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
@@ -2374,6 +2376,7 @@ l_lTestMissingForeignKeyTable           := (oFcgi:GetInputValue("CheckTestMissin
 l_lTestMissingEnumerationValues         := (oFcgi:GetInputValue("CheckTestMissingEnumerationValues")         == "1")
 l_lTestUseOfDiscontinuedEnumeration     := (oFcgi:GetInputValue("CheckTestUseOfDiscontinuedEnumeration")     == "1")
 l_lTestUseOfDiscontinuedForeignTable    := (oFcgi:GetInputValue("CheckTestUseOfDiscontinuedForeignTable")    == "1")
+l_lTestValidColumnLengthAndScale        := (oFcgi:GetInputValue("CheckTestValidColumnLengthAndScale")        == "1")
 
 l_cApplicationSupportColumns := Alltrim(strtran(l_cApplicationSupportColumns,[,],[ ]))
 do while space(2) $ l_cApplicationSupportColumns
@@ -2404,6 +2407,7 @@ case l_cActionOnSubmit == "Save"
             :Field("Application.TestMissingEnumerationValues"         , l_lTestMissingEnumerationValues)
             :Field("Application.TestUseOfDiscontinuedEnumeration"     , l_lTestUseOfDiscontinuedEnumeration)
             :Field("Application.TestUseOfDiscontinuedForeignTable"    , l_lTestUseOfDiscontinuedForeignTable)
+            :Field("Application.TestValidColumnLengthAndScale"        , l_lTestValidColumnLengthAndScale)
 
             if empty(l_iApplicationPk)
                 //Should never happen
@@ -2444,6 +2448,7 @@ if !empty(l_cErrorMessage)
     l_hValues["TestMissingEnumerationValues"]         := l_lTestMissingEnumerationValues
     l_hValues["TestUseOfDiscontinuedEnumeration"]     := l_lTestUseOfDiscontinuedEnumeration
     l_hValues["TestUseOfDiscontinuedForeignTable"]    := l_lTestUseOfDiscontinuedForeignTable
+    l_hValues["TestValidColumnLengthAndScale"]        := l_lTestValidColumnLengthAndScale
 
     l_cHtml += DataDictionaryEditFormBuild(l_cErrorMessage,l_iApplicationPk,l_hValues)
 endif
@@ -2859,7 +2864,7 @@ oFcgi:TraceAdd("TableListFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_lSearchAdvancedMode     := (oFcgi:GetInputValue("CheckSearchAdvancedMode") == "1")
+l_lSearchAdvancedMode           := (oFcgi:GetInputValue("CheckSearchAdvancedMode") == "1")
 
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
@@ -3608,6 +3613,7 @@ with object l_oDB1
         :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
         :Column("Namespace.Name"     ,"Namespace_Name")
         :Column("Table.Name"         ,"Table_Name")
+        :Column("Table.AKA"          ,"Table_AKA")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oDataTableInfo := :Get(par_iPk)
     endif
@@ -3632,8 +3638,8 @@ if l_oDB1:Tally <= 0
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Ok" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -3648,21 +3654,33 @@ else
         l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
     endif
 
+    if empty(par_iPk)
+        l_cHtml += GetAboveNavbarTable("New Table")
+    else
+        //Tables Unsaved Namespace,Name and AKA
+        l_cHtml += GetAboveNavbarTable("Edit",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Table_Name,l_oDataTableInfo:Table_AKA)
+    endif
+
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
+        
+            if !empty(par_iPk)
+                l_cHtml += GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iPk,"EditTable")
+            endif
+
+            // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Table</span>]   //navbar-text
             if oFcgi:p_nAccessLevelDD >= 3
-                l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+                l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
             endif
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
                     l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
-                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-5 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Columns</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Indexes</a>]
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Export for DataWharf Imports</a>]
+                    l_cHtml += [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/TableExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Table_Name+[/">Export for DataWharf Imports</a>]
                 endif
             endif
         l_cHtml += [</div>]
@@ -3892,6 +3910,9 @@ case l_cActionOnSubmit == "Save"
             else
                 if :Update(l_iTablePk)
                     l_cFrom := oFcgi:GetQueryString('From')
+                    if empty(l_cFrom)
+                        l_cFrom := "Table"
+                    endif
                 else
                     l_cErrorMessage := "Failed to update Table."
                 endif
@@ -4021,6 +4042,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
     l_cFrom := oFcgi:GetQueryString('From')
+    if empty(l_cFrom)
+        l_cFrom := "Table"
+    endif
 
 case l_cActionOnSubmit == "Delete"   // Table
     if oFcgi:p_nAccessLevelDD >= 5
@@ -4171,6 +4195,9 @@ otherwise
     case 'Indexes'
         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+l_oData:Namespace_Name+"/"+l_oData:Table_Name+"/")
         exit
+    case 'Table'
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTable/"+par_cURLApplicationLinkCode+"/"+l_oData:Namespace_Name+"/"+l_oData:Table_Name+"/")
+        exit
     otherwise
         //Should not happen. Failed :Get.
         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
@@ -4181,7 +4208,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+static function ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB_Application      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumns    := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -4392,13 +4419,14 @@ l_cHtml += [</style>]
 // ExportTableToHtmlFile("ListOfCustomFieldValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
 if l_nNumberOfColumns <= 0
+    l_cHtml += GetAboveNavbarTable("Columns",par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
+            l_cHtml += GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,"ListColumns")
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Column</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            // l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Columns">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Indexes</a>]
             if oFcgi:p_nAccessLevelDD >= 5
@@ -4406,14 +4434,17 @@ if l_nNumberOfColumns <= 0
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
+    l_cHtml += GetNoInfoForTableMessage("No Column on file.")
 
 else
+    l_cHtml += GetAboveNavbarTable("Columns",par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
+            l_cHtml += GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,"ListColumns")
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Column</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+            // l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/OrderColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Order Columns</a>]
             endif
@@ -4424,7 +4455,6 @@ else
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
-
 
     //Search Bar
     l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
@@ -4487,7 +4517,13 @@ else
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white"></th>]
+
+                if oFcgi:p_nAccessLevelDD >= 5
+                    l_cHtml += [<th class="text-center"><a href="]+l_cSitePath+[DataDictionaries/NewColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/"><span class="text-white bi-plus-lg"></span></a></th>]
+                else
+                    l_cHtml += [<th class="text-white"></th>]
+                endif
+
                 l_cHtml += [<th class="text-white">Name</th>]
                 l_cHtml += [<th class="text-white">Type</th>]
                 l_cHtml += [<th class="text-white">Nullable</th>]
@@ -4523,7 +4559,7 @@ else
                             else
                                 l_cHtml += [<i class="bi-arrow-right"></i>]
                             endi
-                        case (ListOfColumns->Column_UsedAs = 4) .or. (" "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
+                        case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
                             l_cHtml += [<i class="bi bi-tools"></i>]
                         endcase
                     l_cHtml += [</td>]
@@ -4669,7 +4705,7 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function ColumnListFormOnSubmit(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+static function ColumnListFormOnSubmit(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -4691,7 +4727,7 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cColumnName)
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cColumnDescription)
 
-    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+    l_cHtml += ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,"")
@@ -4701,7 +4737,7 @@ case l_cActionOnSubmit == "Reset"
     oFcgi:Redirect(l_cURL)
 
 otherwise
-    l_cHtml += ColumnListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+    l_cHtml += ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 
 endcase
 
@@ -4909,11 +4945,16 @@ local l_oData_Application
 local l_lUseApplicationSettingsForKeys
 local l_cKeyType
 
+local l_cListOfColumnsForArray
+local l_cSupportColumnName
+
+
 oFcgi:TraceAdd("ColumnEditFormBuild")
 
 with object l_oDB_Application
     :Table("8c4bfb41-a22c-4534-8a6c-5d96323c8e7e","Application")
-    :Column("Application.KeyConfig" ,"Application_KeyConfig")
+    :Column("Application.KeyConfig"      ,"Application_KeyConfig")
+    :Column("Application.SupportColumns" ,"Application_SupportColumns")
     l_oData_Application := :Get(par_iApplicationPk)
 endwith
 
@@ -5185,13 +5226,34 @@ l_cHtml += [</nav>]
 
 l_cHtml += [<div class="m-3"></div>]
 
+// Code to dynamically show/hide "Implicit Support"
+l_cHtml += [<script type="text/javascript">]
+l_cHtml += [function UpdateImplicitSupportNotice()]
+l_cHtml += [{]
+l_cListOfColumnsForArray := ""
+for each l_cSupportColumnName in hb_ATokens( nvl(l_oData_Application:Application_SupportColumns,"") , " " ,.f.)
+    if !empty(l_cListOfColumnsForArray)
+        l_cListOfColumnsForArray += ","
+    endif
+    l_cListOfColumnsForArray += ["]+l_cSupportColumnName+["]
+endfor
+l_cHtml += 'const j_PossibleValues = ['+l_cListOfColumnsForArray+'];'
+l_cHtml += [if( ($("#TextName").val()) && j_PossibleValues.includes( $("#TextName").val() ))]
+l_cHtml += [ $("#TextImplicitSupport").show();]
+l_cHtml += [else]
+l_cHtml += [ $("#TextImplicitSupport").hide();]
+l_cHtml += [}]
+l_cHtml += [</script>]
+oFcgi:p_cjQueryScript += [UpdateImplicitSupportNotice();]
+
+
 l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
+        l_cHtml += [<td class="pb-3"><input]+strtran(UPDATESAVEBUTTON,[onchange="],[onchange="UpdateImplicitSupportNotice();])+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
@@ -5210,6 +5272,9 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<option value="3"]+iif(l_nUsedAs==3,[ selected],[])+[>Foreign Key</option>]
             l_cHtml += [<option value="4"]+iif(l_nUsedAs==4,[ selected],[])+[>Support</option>]
             l_cHtml += [</select>]
+
+            l_cHtml += [<span class="ms-5" id="TextImplicitSupport">Implicitly "Support"</span>]
+
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
@@ -5834,7 +5899,7 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-static function IndexListFormBuild(par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+static function IndexListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
 local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:p_cSitePath
@@ -5874,13 +5939,13 @@ endwith
 // l_cHtml += [</div>]
 
 if l_nNumberOfIndexes <= 0
+    l_cHtml += GetAboveNavbarTable("Indexes",par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">No Index on file for Table "]+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[".</span>]
+            l_cHtml += GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,"ListIndexes")
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms-0" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Index</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Index</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Columns</a>]
             if oFcgi:p_nAccessLevelDD >= 5
@@ -5888,6 +5953,7 @@ if l_nNumberOfIndexes <= 0
             endif
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
+    l_cHtml += GetNoInfoForTableMessage("No Index on file.")
 
 else
     select ListOfIndexes
@@ -5911,12 +5977,13 @@ else
         :SQL("ListOfColumns")
     endwith
 
+    l_cHtml += GetAboveNavbarTable("Indexes",par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
+            l_cHtml += GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,"ListIndexes")
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewIndex/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">New Index</a>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTable/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/?From=Indexes">Edit Table</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+par_cURLNamespaceName+[/]+par_cURLTableName+[/">Columns</a>]
             if oFcgi:p_nAccessLevelDD >= 5
@@ -6790,7 +6857,7 @@ else
                 if oFcgi:p_nAccessLevelDD >= 5
                     l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
                 endif
-                l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-5 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+l_oDataTableInfo:Namespace_Name+[/]+l_oDataTableInfo:Enumeration_Name+[/">Values</a>]
 
             endif
         l_cHtml += [</div>]
@@ -7828,7 +7895,7 @@ else
                 l_cHtml += [<input type="button" role="button" value="Copy To Clipboard" class="btn btn-primary rounded ms-3" id="CopySourceCode" onclick="]
                 l_cHtml += [copyToClip(document.getElementById('GeneratedCode').innerText);return false;">]
             l_cHtml += [</div>]
-//12345
+
             l_cHtml += [<pre id="GeneratedCode" class="ms-3">]
             l_cHtml += par_cScript
             l_cHtml += [</pre>]
@@ -8888,7 +8955,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
             endif
-            l_cHtml += [<a class="btn btn-primary rounded ms-5 HideOnEdit" href="]+l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTemplateTableInfo:TemplateTable_Name+[/">Columns</a>]
+            l_cHtml += [<a class="btn btn-primary rounded ms-5 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+l_oDataTemplateTableInfo:TemplateTable_Name+[/">Columns</a>]
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -9039,7 +9106,7 @@ endcase
 
 return l_cHtml
 //=================================================================================================================
-static function TemplateColumnListFormBuild(par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
+static function TemplateColumnListFormBuild(par_iApplicationPk,par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
 local l_cHtml := []
 local l_oDB_Application           := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTemplateColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -9056,10 +9123,9 @@ local l_hOptionValueToDescriptionMapping := {=>}
 oFcgi:TraceAdd("TemplateColumnListFormBuild")
 
 with object l_oDB_Application
-    :Table("21f206fb-4bb4-4061-8be1-72246ceebc1f","TemplateTable")
+    :Table("21f206fb-4bb4-4061-8be1-72246ceebc1f","Application")
     :Column("Application.SupportColumns" , "Application_SupportColumns")
-    :Join("inner","Application","","TemplateTable.fk_Application = Application.pk")
-    l_oData_Application := :Get(par_iTemplateTablePk)
+    l_oData_Application := :Get(par_iApplicationPk)
     l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
 endwith
 
@@ -9104,7 +9170,7 @@ if l_nNumberOfTemplateColumns <= 0
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">No Column on file for Template Table "]+AllTrim(par_cURLTemplateTableName)+[".</span>]
             if oFcgi:p_nAccessLevelDD >= 5
-                l_cHtml += [<a class="btn btn-primary rounded ms_0" href="]+l_cSitePath+[DataDictionaries/NewTemplateColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLTemplateTableName+[/">New Column</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/NewTemplateColumn/]+par_cURLApplicationLinkCode+[/]+par_cURLTemplateTableName+[/">New Column</a>]
             endif
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/ListTemplateTables/]+par_cURLApplicationLinkCode+[/">Back To Template Tables</a>]
             l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[DataDictionaries/EditTemplateTable/]+par_cURLApplicationLinkCode+[/]+par_cURLTemplateTableName+[/?From=Columns">Edit Template Table</a>]
@@ -9161,7 +9227,7 @@ else
                             l_cHtml += [<i class="bi bi-key"></i>]
                         case ListOfTemplateColumns->TemplateColumn_UsedAs = 3
                             l_cHtml += [<i class="bi-arrow-right"></i>]
-                        case (ListOfTemplateColumns->TemplateColumn_UsedAs = 4) .or. (" "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
+                        case (ListOfTemplateColumns->TemplateColumn_UsedAs = 4) .or. (ListOfTemplateColumns->TemplateColumn_UsedAs = 1 .and. " "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
                             l_cHtml += [<i class="bi bi-tools"></i>]
                         endcase
                     l_cHtml += [</td>]
@@ -9239,12 +9305,12 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-static function TemplateColumnListFormOnSubmit(par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
+static function TemplateColumnListFormOnSubmit(par_iApplicationPk,par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
 local l_cHtml := []
 
 oFcgi:TraceAdd("TemplateColumnListFormOnSubmit")
 
-l_cHtml += TemplateColumnListFormBuild(par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
+l_cHtml += TemplateColumnListFormBuild(par_iApplicationPk,par_iTemplateTablePk,par_cURLApplicationLinkCode,par_cURLTemplateTableName)
 
 return l_cHtml
 //=================================================================================================================
@@ -9435,11 +9501,15 @@ local l_oData_Application
 local l_lUseApplicationSettingsForKeys
 local l_cKeyType
 
+local l_cListOfColumnsForArray
+local l_cSupportColumnName
+
 oFcgi:TraceAdd("TemplateColumnEditFormBuild")
 
 with object l_oDB_Application
     :Table("98ab94cf-0bd7-4099-ab74-6389f9f4b57a","Application")
-    :Column("Application.KeyConfig" ,"Application_KeyConfig")
+    :Column("Application.KeyConfig"      ,"Application_KeyConfig")
+    :Column("Application.SupportColumns" ,"Application_SupportColumns")
     l_oData_Application := :Get(par_iApplicationPk)
 endwith
 
@@ -9629,13 +9699,33 @@ l_cHtml += [</nav>]
 
 l_cHtml += [<div class="m-3"></div>]
 
+// Code to dynamically show/hide "Implicit Support"
+l_cHtml += [<script type="text/javascript">]
+l_cHtml += [function UpdateImplicitSupportNotice()]
+l_cHtml += [{]
+l_cListOfColumnsForArray := ""
+for each l_cSupportColumnName in hb_ATokens( nvl(l_oData_Application:Application_SupportColumns,"") , " " ,.f.)
+    if !empty(l_cListOfColumnsForArray)
+        l_cListOfColumnsForArray += ","
+    endif
+    l_cListOfColumnsForArray += ["]+l_cSupportColumnName+["]
+endfor
+l_cHtml += 'const j_PossibleValues = ['+l_cListOfColumnsForArray+'];'
+l_cHtml += [if( ($("#TextName").val()) && j_PossibleValues.includes( $("#TextName").val() ))]
+l_cHtml += [ $("#TextImplicitSupport").show();]
+l_cHtml += [else]
+l_cHtml += [ $("#TextImplicitSupport").hide();]
+l_cHtml += [}]
+l_cHtml += [</script>]
+oFcgi:p_cjQueryScript += [UpdateImplicitSupportNotice();]
+
 l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<table>]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
+        l_cHtml += [<td class="pb-3"><input]+strtran(UPDATESAVEBUTTON,[onchange="],[onchange="UpdateImplicitSupportNotice();])+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
@@ -9654,6 +9744,9 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<option value="3"]+iif(l_nUsedAs==3,[ selected],[])+[>Foreign Key</option>]
             l_cHtml += [<option value="4"]+iif(l_nUsedAs==4,[ selected],[])+[>Support</option>]
             l_cHtml += [</select>]
+
+            l_cHtml += [<span class="ms-5" id="TextImplicitSupport">Implicitly "Support"</span>]
+
         l_cHtml += [</td>]
     l_cHtml += [</tr>]
 
@@ -10398,5 +10491,153 @@ endcase
 
 return l_cResult
 //=================================================================================================================
+static function GetAboveNavbarTable(par_cSource,par_cURLNamespaceName,par_cURLTableName,par_cTableAKA)
+local l_cHtml
+if hb_IsNil(par_cURLNamespaceName)
+    l_cHtml := [<div><span class="navbar-brand ms-3">]+par_cSource+[</span></div>]
+else
+    l_cHtml := [<div><span class="navbar-brand ms-3">]+par_cSource+" Table: "+AllTrim(par_cURLNamespaceName)+[.]+AllTrim(par_cURLTableName)+FormatAKAForDisplay(par_cTableAKA)+[</span></div>]
+endif
+return l_cHtml
+//=================================================================================================================
+static function GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,par_cURLAction)
+local l_cHtml := ""
+local l_oDB_ListOfTables       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_AnyTags            := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cSitePath := oFcgi:p_cSitePath
+
+local l_lSearchAdvancedMode
+
+local l_cSearchNamespaceName
+local l_cSearchNamespaceDescription
+
+local l_cSearchTableName
+local l_cSearchTableDescription
+local l_cSearchTableTags
+
+local l_cSearchColumnName
+local l_cSearchColumnDescription
+local l_cSearchColumnTags
+
+local l_cSearchEnumerationName
+local l_cSearchEnumerationDescription
+
+local l_nNumberOfTables := 0
+local l_nNumberOfUsedTags
+
+local l_FoundTable
+local l_cHtmlPrevious
+local l_cHtmlNext
 
 
+oFcgi:TraceAdd("GetNextPreviousTable")
+
+l_cHtml += [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/ListTables/]+par_cURLApplicationLinkCode+[/">Back To Tables</a>]
+
+l_lSearchAdvancedMode           := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_AdvancedMode") == "T")
+
+l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
+l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
+
+l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
+l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
+
+l_cSearchTableTags              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags")
+
+l_cSearchColumnName             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
+l_cSearchColumnDescription      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
+l_cSearchColumnTags             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTags")
+
+l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName")
+l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription")
+
+//Find out if any tags are linked to any tables, regardless of filter
+with object l_oDB_AnyTags
+    :Table("1f510c4e-d637-4803-814b-6bae91676385","TagTable")
+    :Join("inner","Table","","TagTable.fk_Table = Table.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Tag","","TagTable.fk_Tag = Tag.pk")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Where("Tag.fk_Application = ^",par_iApplicationPk)
+    :Where("Tag.TableUseStatus = ^",TAGUSESTATUS_ACTIVE)
+    l_nNumberOfUsedTags := :Count()
+
+    if empty(l_nNumberOfUsedTags)
+        l_cSearchTableTags  := []
+        l_cSearchColumnTags := []
+    else
+        //_M_ add extra code to ensure have ",0123456789" characters. in l_cSearchTableTags and l_cSearchColumnTags
+    endif
+
+endwith
+
+with object l_oDB_ListOfTables
+    :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
+    :Column("Table.pk"         ,"pk")
+    :Column("Namespace.Name"   ,"Namespace_Name")
+    :Column("Table.Name"       ,"Table_Name")
+    // :Column("Table.AKA"        ,"Table_AKA")
+    // :Column("Table.Unlogged"   ,"Table_Unlogged")
+    // :Column("Table.UseStatus"  ,"Table_UseStatus")
+    // :Column("Table.DocStatus"  ,"Table_DocStatus")
+    // :Column("Table.Description","Table_Description")
+    // :Column("Table.Information","Table_Information")
+    // :Column("Table.TestWarning","Table_TestWarning")
+    :Column("Upper(Namespace.Name)","tag1")
+    :Column("Upper(Table.Name)","tag2")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+
+    TableListFormAddFiltering(l_oDB_ListOfTables,;
+                              l_lSearchAdvancedMode,;
+                              l_cSearchNamespaceName,;
+                              l_cSearchNamespaceDescription,;
+                              l_cSearchTableName,;
+                              l_cSearchTableDescription,;
+                              l_cSearchColumnName,;
+                              l_cSearchColumnDescription,;
+                              l_cSearchEnumerationName,;
+                              l_cSearchEnumerationDescription,;
+                              l_cSearchTableTags)
+
+    :OrderBy("tag1")
+    :OrderBy("tag2")
+    :SQL("ListOfTables")
+    l_nNumberOfTables := :Tally
+
+    // SendToClipboard(:LastSQL())
+
+endwith
+
+if l_nNumberOfTables > 1
+    l_FoundTable    := .f.
+    l_cHtmlPrevious := [<a class="btn btn-primary rounded ms-3 invisible RemoveOnEdit" href="#"><span class="bi-arrow-left"></span>&nbsp;Table</a>]
+    l_cHtmlNext     := [<a class="btn btn-primary rounded ms-3 invisible RemoveOnEdit" href="#"><span class="bi-arrow-right"></span>&nbsp;Table</a>]
+    select ListOfTables
+    scan all
+        if l_FoundTable
+            l_cHtmlNext := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cURLAction+[/]+par_cURLApplicationLinkCode+[/]+ListOfTables->Namespace_Name+[/]+ListOfTables->Table_Name+[/"><span class="bi-arrow-right"></span>&nbsp;Table</a>]
+            exit
+        else
+            if ListOfTables->pk == par_iTablePk
+                l_FoundTable := .t.
+            else
+                l_cHtmlPrevious := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cURLAction+[/]+par_cURLApplicationLinkCode+[/]+ListOfTables->Namespace_Name+[/]+ListOfTables->Table_Name+[/"><span class="bi-arrow-left"></span>&nbsp;Table</a>]
+            endif
+        endif
+    endscan
+
+    if l_FoundTable
+        l_cHtml += l_cHtmlPrevious+l_cHtmlNext
+    endif
+endif
+
+return l_cHtml
+//=================================================================================================================
+static function GetNoInfoForTableMessage(par_cMessage)
+local l_cHtml
+l_cHtml := [<div class="row justify-content-center mt-5"><div class="col-auto">]
+    l_cHtml += [<h5>]+par_cMessage+[</h5>]
+l_cHtml += [</div></div>]
+return l_cHtml
+//=================================================================================================================

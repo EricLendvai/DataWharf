@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 02/01/2024 v 3.6
+* Enhanced UI when editing tables. New Nex/Previous on tables that is aware of the last search on tables.
+* "Support Column Names" list will be used to display "Implicitly Support" in Column edit screen when applicable.
+
 ## 01/28/2024 v 3.5
 * Requiring Harbour_ORM 4.2
 * Internal Refactoring to reduce memory usage.

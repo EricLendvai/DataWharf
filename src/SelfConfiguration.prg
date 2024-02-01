@@ -1,12 +1,12 @@
 //As of DataWharf 3, its own configuration is defined using a "DataWharf" application managed in DataWharf itself.
 function Config()
 return ;
-{"HarbourORMVersion" => 4.2,;
- "DataWharfVersion" => 3.5,;
- "Backend" => "PostgreSQL",;
- "GenerationTime" => "2024-01-29T01:59:18.368Z",;
- "GenerationSignature" => "f0e83547-7cee-452e-9cdb-e91d425b3a82",;
- "Tables" => ;
+{"HarbourORMVersion"=>4.2,;
+ "DataWharfVersion"=>3.6,;
+ "Backend"=>"PostgreSQL",;
+ "GenerationTime"=>"2024-01-31T18:15:05.506Z",;
+ "GenerationSignature"=>"88c42277-4660-456c-80e0-883f1ca1ee9e",;
+ "Tables"=>;
     {"public.APIAccessEndpoint"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -86,7 +86,8 @@ return ;
         ,"TestMissingForeignKeyTable"          =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Foreign Keys must point to a table.
         ,"TestMissingEnumerationValues"        =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Enumeration Fields must point to a enumeration.
         ,"TestUseOfDiscontinuedEnumeration"    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Fields may not point to a Discontinued Enumeration.
-        ,"TestUseOfDiscontinuedForeignTable"   =>{"Type"=>"L","Default"=>"Wharf-True"}};   //Non Discontinued Foreign Keys may not point to a Discontinued Table.
+        ,"TestUseOfDiscontinuedForeignTable"   =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Foreign Keys may not point to a Discontinued Table.
+        ,"TestValidColumnLengthAndScale"       =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"}};   //Check validity of columns Length and/or Scale base on column type.
                            ,"Indexes"=>;
         {"linkcode"=>{"Expression"=>"LinkCode"}}};
     ,"public.ApplicationCustomField"=>{"Fields"=>;

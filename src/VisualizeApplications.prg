@@ -2671,7 +2671,7 @@ if len(l_aNodes) == 1
                                 case ListOfColumns->Column_UsedAs = 2
                                     l_cHtml_icon     := [<i class="bi bi-key"></i>]
                                     l_cHtml_tr_class := "ColumnNotCore"
-                                case ListOfColumns->Column_UsedAs = 4 .or. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" "
+                                case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
                                     l_cHtml_icon     := [<i class="bi bi-tools"></i>]
                                     l_cHtml_tr_class := "ColumnNotCore"
                                 // case !hb_IsNIL(ListOfColumns->Table_Name)

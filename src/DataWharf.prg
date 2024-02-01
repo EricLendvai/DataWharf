@@ -58,7 +58,6 @@ SendToDebugView("Ending DataWharf FastCGI App")
 return nil
 //=================================================================================================================
 class MyFcgi from hb_Fcgi
-    // data p_WharfConfig          init {=>}
     data p_o_SQLConnection
     data p_cHeader              init ""
     data p_cjQueryScript        init ""
@@ -169,8 +168,6 @@ set delete on
 
 ::SetOnErrorDetailLevel(2)
 ::SetOnErrorProgramInfo(hb_BuildInfo())
-
-// ::p_WharfConfig := Config()
 
 ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
                                     ::GetAppConfig("POSTGRESDRIVER"),;

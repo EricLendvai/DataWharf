@@ -40,12 +40,24 @@ local l_oDB_ListEnumerationColumnsWithIssues
 local l_oDB_CTEEnumerationColumnsWithIssues
 local l_lFixNullable
 local l_lFixDefault
+local l_aColumnTypes
+local l_hColumnTypes
+local l_cListOfTypesForSearch
+local l_lShowLength
+local l_lShowScale
+local l_lSMaxScale
+local l_nColumnLength
+local l_nColumnScale
+
+
 // local l_cLastSQL
 
 with object l_oDB_Application
     :Table("d9689368-d768-4058-abb3-0cf4f0a1ddc3","Application")
 
     :Column("Application.KeyConfig"                            ,"Application_KeyConfig")
+    :Column("Application.SupportColumns"                       ,"Application_SupportColumns")
+    
     :Column("Application.SetMissingOnDeleteToProtect"          ,"Application_SetMissingOnDeleteToProtect")
     :Column("Application.TestTableHasPrimaryKey"               ,"Application_TestTableHasPrimaryKey")
     :Column("Application.TestForeignKeyTypeMatchPrimaryKey"    ,"Application_TestForeignKeyTypeMatchPrimaryKey")
@@ -60,9 +72,12 @@ with object l_oDB_Application
     :Column("Application.TestMissingEnumerationValues"         ,"Application_TestMissingEnumerationValues")
     :Column("Application.TestUseOfDiscontinuedEnumeration"     ,"Application_TestUseOfDiscontinuedEnumeration")
     :Column("Application.TestUseOfDiscontinuedForeignTable"    ,"Application_TestUseOfDiscontinuedForeignTable")
+    :Column("Application.TestValidColumnLengthAndScale"        ,"Application_TestValidColumnLengthAndScale")
 
     l_oData := :Get(par_iApplicationPk)
 endwith
+
+//l_oData:SupportColumns
 
 with object l_oDB_ListOfTables
     :Table("d66cac69-15d9-460c-b2af-774b407a9e51","Namespace")
@@ -380,7 +395,8 @@ if l_oData:Application_TestTableHasPrimaryKey               .or. ;
    l_oData:Application_TestMissingForeignKeyTable           .or. ;
    l_oData:Application_TestMissingEnumerationValues         .or. ;
    l_oData:Application_TestUseOfDiscontinuedEnumeration     .or. ;
-   l_oData:Application_TestUseOfDiscontinuedForeignTable
+   l_oData:Application_TestUseOfDiscontinuedForeignTable    .or. ;
+   l_oData:Application_TestValidColumnLengthAndScale
 
     // -- Test: Table must have a Primary Key --------------------------------------------------------------------------------
     if l_oData:Application_TestTableHasPrimaryKey
@@ -799,6 +815,66 @@ if l_oData:Application_TestTableHasPrimaryKey               .or. ;
             l_hColumnWarning[ListOfIssues->Column_Pk] := l_cWarningMessage
 
             l_hTableColumnCountWarning[ListOfIssues->Table_Pk] := hb_HGetDef(l_hTableColumnCountWarning,ListOfIssues->Table_Pk,0)+1
+        endscan
+
+    endif
+
+
+    // -- Test: Column Validity of Length and Scale --------------------------------------------------------------------------------
+    if l_oData:Application_TestValidColumnLengthAndScale
+
+        l_hColumnTypes := {=>}
+        l_cListOfTypesForSearch := ""
+        for each l_aColumnTypes in oFcgi:p_ColumnTypes
+            if l_aColumnTypes[COLUMN_TYPES_SHOW_LENGTH] .or. l_aColumnTypes[COLUMN_TYPES_SHOW_SCALE]
+                l_hColumnTypes[l_aColumnTypes[COLUMN_TYPES_CODE]] := {l_aColumnTypes[COLUMN_TYPES_SHOW_LENGTH],l_aColumnTypes[COLUMN_TYPES_SHOW_SCALE],l_aColumnTypes[COLUMN_TYPES_MAX_SCALE]}
+                if !empty(l_cListOfTypesForSearch)
+                    l_cListOfTypesForSearch += ","
+                endif
+                l_cListOfTypesForSearch := l_cListOfTypesForSearch + "'"+l_aColumnTypes[COLUMN_TYPES_CODE]+"'"
+            endif
+        endfor
+
+        if hb_IsNil(l_oDB_ListOfIssues)
+            l_oDB_ListOfIssues := hb_SQLData(oFcgi:p_o_SQLConnection)
+        endif
+        with object l_oDB_ListOfIssues
+            :Table("8608e08e-d7f6-404a-ab52-d08ec71f29a5","Namespace")
+            :Column("Table.Pk"              ,"Table_Pk")
+            :Column("Column.Pk"             ,"Column_Pk")
+            :Column("Column.Type"           ,"Column_Type")
+            :Column("Column.Length"         ,"Column_Length")
+            :Column("Column.Scale"          ,"Column_Scale")
+            // :Where("Column.UsedAs != ^" , COLUMN_USEDAS_PRIMARY_KEY)
+            // :Where("Column.UsedAs != ^" , COLUMN_USEDAS_FOREIGN_KEY)
+            :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+            :Join("inner","Column","","Column.fk_Table = Table.pk")
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            // :Where("Column.UseStatus != ^",USESTATUS_DISCONTINUED)
+            :Where("Column.Type in ("+l_cListOfTypesForSearch+")")
+            :SQL("ListOfIssues")
+            // SendToClipboard(:LastSQL())
+        endwith
+
+        //List of Columns that should have a Length and/or Scale
+        select ListOfIssues
+        scan all
+            el_AUnpack(l_hColumnTypes[alltrim(ListOfIssues->Column_Type)],@l_lShowLength,@l_lShowScale,@l_lSMaxScale)
+
+            l_nColumnLength := nvl(ListOfIssues->Column_Length,-1)
+            l_nColumnScale  := nvl(ListOfIssues->Column_Scale,-1)
+
+            if (l_lShowLength  .and. !vfp_between(l_nColumnLength,1,99999))                .or. ;
+               (l_lShowScale   .and. !vfp_between(l_nColumnScale,0,99))                    .or. ;
+               (!hb_IsNil(l_lSMaxScale) .and. !vfp_between(l_nColumnScale,0,l_lSMaxScale)) .or. ;
+               (l_lShowLength .and. l_lShowScale .and. l_nColumnScale >= l_nColumnLength)
+
+                l_cWarningMessage := hb_HGetDef(l_hColumnWarning,ListOfIssues->Column_Pk,"")
+                l_cWarningMessage += iif(empty(l_cWarningMessage),"",CRLF)+"Invalid Length or Scale."
+                l_hColumnWarning[ListOfIssues->Column_Pk] := l_cWarningMessage
+
+                l_hTableColumnCountWarning[ListOfIssues->Table_Pk] := hb_HGetDef(l_hTableColumnCountWarning,ListOfIssues->Table_Pk,0)+1
+            endif
         endscan
 
     endif
