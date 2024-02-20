@@ -58,7 +58,7 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_EL_ROOT":"C:\\Harbour_EL",
                         "HB_ORM_ROOT":"C:\\Harbour_ORM",
                         "HB_FASTCGI_ROOT":"C:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
@@ -76,7 +76,7 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"/src/Harbour_VFP",
+                        "HB_EL_ROOT":"/src/Harbour_EL",
                         "HB_ORM_ROOT":"/src/Harbour_ORM",
                         "HB_FASTCGI_ROOT":"/src/Harbour_FastCGI/",
                         "EXEName":"DataWharf",
@@ -105,7 +105,7 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"C:\\Harbour_VFP",
+                        "HB_EL_ROOT":"C:\\Harbour_EL",
                         "HB_ORM_ROOT":"C:\\Harbour_ORM",
                         "HB_FASTCGI_ROOT":"C:\\Harbour_FastCGI",
                         "EXEName":"DataWharf",
@@ -123,7 +123,7 @@
                 "options": {
                     "cwd": "${workspaceFolder}",
                     "env": {
-                        "HB_VFP_ROOT":"/src/Harbour_VFP",
+                        "HB_EL_ROOT":"/src/Harbour_EL",
                         "HB_ORM_ROOT":"/src/Harbour_ORM",
                         "HB_FASTCGI_ROOT":"/src/Harbour_FastCGI",
                         "EXEName":"DataWharf",

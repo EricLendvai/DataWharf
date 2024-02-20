@@ -63,7 +63,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     endif
 
     do case
-    case vfp_Inlist(l_cURLAction,"ProjectSettings","ListPrimitiveTypes","NewPrimitiveType")
+    case el_IsInlist(l_cURLAction,"ProjectSettings","ListPrimitiveTypes","NewPrimitiveType")
         with object l_oDB1
             :Table("a2907501-52d2-43c2-a711-e72dceb91b2b","Project")
             :Column("Project.LinkUID", "Project_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
@@ -74,7 +74,7 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
 
-    case vfp_Inlist(l_cURLAction,"EditPrimitiveType")
+    case el_IsInlist(l_cURLAction,"EditPrimitiveType")
         with object l_oDB1
             :Table("3cb1f9a9-9324-4f2b-962d-7bcc676ede5d","PrimitiveType")
             :Column("PrimitiveType.LinkUID" , "PrimitiveType_LinkUID")    // Redundant but makes it clearer than to use l_cURLLinkUID
@@ -92,10 +92,10 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
 
 
     do case
-    case vfp_Inlist(l_cURLAction,"ProjectSettings")
+    case el_IsInlist(l_cURLAction,"ProjectSettings")
         l_cProjectElement := "SETTINGS"
 
-    case vfp_Inlist(l_cURLAction,"ListPrimitiveTypes","NewPrimitiveType","EditPrimitiveType")
+    case el_IsInlist(l_cURLAction,"ListPrimitiveTypes","NewPrimitiveType","EditPrimitiveType")
         l_cProjectElement := "PRIMITIVETYPES"
 
     otherwise
@@ -288,15 +288,13 @@ l_cHtml += [<ul class="nav nav-tabs">]
 
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<li class="nav-item">]
-            // l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
-            l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
         l_cHtml += [</li>]
     endif
 
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<li class="nav-item">]
-            // l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
-            l_cHtml += [<a class="nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
         l_cHtml += [</li>]
     endif
 
@@ -412,7 +410,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+AllTrim(ListOfProjects->Project_LinkUID)+[/">]+Allt(ListOfProjects->Project_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+alltrim(ListOfProjects->Project_LinkUID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -420,11 +418,11 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(vfp_between(ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE,PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS),ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE)]
+                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(el_between(ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE,PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS),ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -449,7 +447,7 @@ return l_cHtml
 static function ProjectEditFormBuild(par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText      := hb_DefaultValue(par_cErrorText,"")
+local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cName                          := hb_HGetDef(par_hValues,"Name","")
 local l_nUseStatus                     := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
@@ -479,24 +477,24 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
+
+l_cHtml += GetAboveNavbarHeading("Project Settings")
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        if empty(par_iPk)
-            l_cHtml += [<span class="navbar-brand ms-3">New Project</span>]   //navbar-text
-        else
-            l_cHtml += [<span class="navbar-brand ms-3">Update Project Settings</span>]   //navbar-text
-        endif
+        // if empty(par_iPk)
+        //     l_cHtml += [<span class="navbar-brand ms-3">New Project</span>]   //navbar-text
+        // else
+        //     l_cHtml += [<span class="navbar-brand ms-3">Update Project Settings</span>]   //navbar-text
+        // endif
         if oFcgi:p_nAccessLevelML >= 7
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormSave()
         endif
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 7
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += GetButtonOnEditFormDelete()
             endif
         endif
     l_cHtml += [</div>]
@@ -509,13 +507,13 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
                     l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
                     l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
                     l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
@@ -528,13 +526,13 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
                     l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Entities/Associations</option>]
                     l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>Can Delete Model</option>]
@@ -556,44 +554,44 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Model</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForModel"  id="TextAlternateNameForModel"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForModel) +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForModels" id="TextAlternateNameForModels" value="]+FcgiPrepFieldForValue(l_cAlternateNameForModels)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForModel"  id="TextAlternateNameForModel"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForModel) +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForModels" id="TextAlternateNameForModels" value="]+FcgiPrepFieldForValue(l_cAlternateNameForModels)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Entity</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForEntity"   id="TextAlternateNameForEntity"   value="]+FcgiPrepFieldForValue(l_cAlternateNameForEntity)  +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForEntities" id="TextAlternateNameForEntities" value="]+FcgiPrepFieldForValue(l_cAlternateNameForEntities)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForEntity"   id="TextAlternateNameForEntity"   value="]+FcgiPrepFieldForValue(l_cAlternateNameForEntity)  +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForEntities" id="TextAlternateNameForEntities" value="]+FcgiPrepFieldForValue(l_cAlternateNameForEntities)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Association</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForAssociation"  id="TextAlternateNameForAssociation"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForAssociation) +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForAssociations" id="TextAlternateNameForAssociations" value="]+FcgiPrepFieldForValue(l_cAlternateNameForAssociations)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForAssociation"  id="TextAlternateNameForAssociation"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForAssociation) +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForAssociations" id="TextAlternateNameForAssociations" value="]+FcgiPrepFieldForValue(l_cAlternateNameForAssociations)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Attribute</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForAttribute"  id="TextAlternateNameForAttribute"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForAttribute) +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForAttributes" id="TextAlternateNameForAttributes" value="]+FcgiPrepFieldForValue(l_cAlternateNameForAttributes)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForAttribute"  id="TextAlternateNameForAttribute"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForAttribute) +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForAttributes" id="TextAlternateNameForAttributes" value="]+FcgiPrepFieldForValue(l_cAlternateNameForAttributes)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Data Type</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForDataType"  id="TextAlternateNameForDataType"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForDataType) +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForDataTypes" id="TextAlternateNameForDataTypes" value="]+FcgiPrepFieldForValue(l_cAlternateNameForDataTypes)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForDataType"  id="TextAlternateNameForDataType"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForDataType) +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForDataTypes" id="TextAlternateNameForDataTypes" value="]+FcgiPrepFieldForValue(l_cAlternateNameForDataTypes)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td class="pe-2 pb-3">Package</td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForPackage"  id="TextAlternateNameForPackage"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForPackage) +[" maxlength="80" size="32"></td>]
-                            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForPackages" id="TextAlternateNameForPackages" value="]+FcgiPrepFieldForValue(l_cAlternateNameForPackages)+[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForPackage"  id="TextAlternateNameForPackage"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForPackage) +[" maxlength="80" size="32"></td>]
+                            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForPackages" id="TextAlternateNameForPackages" value="]+FcgiPrepFieldForValue(l_cAlternateNameForPackages)+[" maxlength="80" size="32"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr>]
                         l_cHtml += [<td class="pe-2 pb-3">Linked Entity</td>]
-                        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForLinkedEntity"  id="TextAlternateNameForLinkedEntity"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntity) +[" maxlength="80" size="32"></td>]
-                        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextAlternateNameForLinkedEntities" id="TextAlternateNameForLinkedEntities" value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntities)+[" maxlength="80" size="32"></td>]
+                        l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForLinkedEntity"  id="TextAlternateNameForLinkedEntity"  value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntity) +[" maxlength="80" size="32"></td>]
+                        l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAlternateNameForLinkedEntities" id="TextAlternateNameForLinkedEntities" value="]+FcgiPrepFieldForValue(l_cAlternateNameForLinkedEntities)+[" maxlength="80" size="32"></td>]
                     l_cHtml += [</tr>]
 
                     l_cHtml += [</table>]
@@ -604,12 +602,12 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Association End<br><span class="small">Lower Bound Values</span><br><span class="small">Comma-Separated</span></td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextValidEndpointBoundLowerValues" id="TextValidEndpointBoundLowerValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundLowerValues)+[" maxlength="500" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextValidEndpointBoundLowerValues" id="TextValidEndpointBoundLowerValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundLowerValues)+[" maxlength="500" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Association End<br><span class="small">Upper Bound Values</span><br><span class="small">Comma-Separated</span></td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextValidEndpointBoundUpperValues" id="TextValidEndpointBoundUpperValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundUpperValues)+[" maxlength="500" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextValidEndpointBoundUpperValues" id="TextValidEndpointBoundUpperValues" value="]+FcgiPrepFieldForValue(l_cValidEndpointBoundUpperValues)+[" maxlength="500" size="80"></td>]
         l_cHtml += [</tr>]
 
         if !empty(par_iPk)
@@ -668,6 +666,7 @@ local l_nAccessLevelML
 
 local l_oDB1
 local l_oDB2
+local l_oData
 
 oFcgi:TraceAdd("ProjectEditFormOnSubmit")
 
@@ -751,16 +750,13 @@ case l_cActionOnSubmit == "Save"
                         :Field("Project.LinkUID" , l_cProjectLinkUID)
                         if :Add()
                             l_iProjectPk := :Key()
-                            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
                         else
                             l_cErrorMessage := "Failed to add Project."
                         endif
                     else
                         if :Update(l_iProjectPk)
                             CustomFieldsSave(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
-                            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_cProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
+                            // l_iProjectPk := 0
                         else
                             l_cErrorMessage := "Failed to update Project."
                         endif
@@ -771,12 +767,9 @@ case l_cActionOnSubmit == "Save"
     endif
 
 case l_cActionOnSubmit == "Cancel"
-    if empty(l_iProjectPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Projects")
-    else
-        // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+par_cURLProjectLinkUID+"/")   // Since there are no other tabs for now, lets go back to the list of Projects
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
-    endif
+
+case l_cActionOnSubmit == "Done"
+    l_iProjectPk := 0
 
 case l_cActionOnSubmit == "Delete"   // Project
     if oFcgi:p_nUserAccessMode >= 3
@@ -814,8 +807,8 @@ case l_cActionOnSubmit == "Delete"   // Project
                         
                             CustomFieldsDelete(l_iProjectPk,USEDON_PROJECT,l_iProjectPk)
                             :Delete("853346d3-ece1-4f23-b189-5c70e37a9c6a","Project",l_iProjectPk)
-
-                            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
+                            l_iProjectPk := 0
+                            
                         endif
                     endif
                 endif
@@ -825,7 +818,8 @@ case l_cActionOnSubmit == "Delete"   // Project
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["Name"]                          := l_cProjectName
     l_hValues["UseStatus"]                     := l_nProjectUseStatus
     l_hValues["Description"]                   := l_cProjectDescription
@@ -849,7 +843,27 @@ if !empty(l_cErrorMessage)
     CustomFieldsFormToHash(l_iProjectPk,USEDON_PROJECT,@l_hValues)
 
     l_cHtml += ProjectEditFormBuild(l_cErrorMessage,l_iProjectPk,l_hValues)
-endif
+
+case empty(l_iProjectPk)
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
+
+otherwise
+    //Since the Name could have change the redirect URL has to be re-evaluated.
+    if hb_IsNil(l_oDB1)
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    endif
+    with object l_oDB1
+        :Table("48ef14b8-2ded-4f9e-8075-70b2c9ae47a9","Project")
+        :Column("Project.LinkUID","Project_LinkUID")
+        l_oData := l_oDB1:Get(l_iProjectPk)
+        if l_oDB1:Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_oData:Project_LinkUID+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
+        endif
+    endif
+
+endcase
 
 return l_cHtml
 //=================================================================================================================
@@ -888,7 +902,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
                     if oFcgi:p_nAccessLevelML >= 7
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Projects/NewPrimitiveType/]+par_Project_LinkUID+[/">New Primitive Type</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Projects/NewPrimitiveType/]+par_Project_LinkUID+[/]+[">New Primitive Type</a>]
                     else
                         l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
                     endif
@@ -964,20 +978,19 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="PrimitiveTypeKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
+
+l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+[ Primitive Type])
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Primitive Type</span>]   //navbar-text
         if oFcgi:p_nAccessLevelML >= 7
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormSave()
         endif
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelML >= 7
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += GetButtonOnEditFormDelete()
             endif
         endif
     l_cHtml += [</div>]
@@ -991,12 +1004,12 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 7,[],[ disabled])+[ class="form-control"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelML >= 7,[],[ disabled])+[ class="form-control"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -1013,7 +1026,6 @@ l_cHtml += GetConfirmationModalFormsDelete()
 return l_cHtml
 //=================================================================================================================
 static function PrimitiveTypeEditFormOnSubmit(par_iProjectPk,par_cProjectLinkUID)
-
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -1086,6 +1098,9 @@ case l_cActionOnSubmit == "Save"
 
 case l_cActionOnSubmit == "Cancel"
 
+case l_cActionOnSubmit == "Done"
+    l_iPrimitiveTypePk := 0
+
 case l_cActionOnSubmit == "Delete"   // PrimitiveType
     if oFcgi:p_nAccessLevelML >= 7
         with object l_oDB1
@@ -1095,8 +1110,8 @@ case l_cActionOnSubmit == "Delete"   // PrimitiveType
 
             if :Tally == 0
                 :Delete("04faf037-bff8-461a-9d57-c3317b4e10b9","PrimitiveType",l_iPrimitiveTypePk)
-
-                oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+                l_iPrimitiveTypePk := 0
+                
             else
                 l_cErrorMessage := "Related Data Type record on file"
             endif
@@ -1116,8 +1131,25 @@ case !empty(l_cErrorMessage)
 
     l_cHtml += PrimitiveTypeEditFormBuild(par_iProjectPk,l_cErrorMessage,l_iPrimitiveTypePk,l_hValues)
 
-otherwise
+case empty(l_iPrimitiveTypePk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+
+otherwise
+    //Since the Name could have change the redirect URL has to be re-evaluated.
+    if hb_IsNil(l_oDB1)
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    endif
+    with object l_oDB1
+        :Table("6223983f-81d6-4804-8de5-834bc0e38098","PrimitiveType")
+        :Column("PrimitiveType.LinkUID","PrimitiveType_LinkUID")
+        l_oData := l_oDB1:Get(l_iPrimitiveTypePk)
+        if l_oDB1:Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/EditPrimitiveType/"+l_oData:PrimitiveType_LinkUID+"/")
+            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+        endif
+    endif
 
 endcase
 
@@ -1129,7 +1161,7 @@ local l_cValue
 local l_aValues := hb_ATokens(alltrim(nvl(par_cValues,"")),",")
 
 for each l_cValue in l_aValues
-    l_cValue := left(Alltrim(l_cValue),4)
+    l_cValue := left(alltrim(l_cValue),4)
     if !empty(l_cValue)
         if !empty(l_cResult)
             l_cResult += ","

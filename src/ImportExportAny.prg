@@ -9,7 +9,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
     l_aTableInfo := par_hTableSchema["public."+par_cTableName]
     for each l_hFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_hFields:__enumkey
-        if !vfp_inlist(l_cFieldName,'sysc','sysm')
+        if !el_IsInlist(l_cFieldName,'sysc','sysm')
             par_oDB_ListOfTables:Column(par_cTableName+"."+l_cFieldName ,l_cFieldName)
         endif
     endfor
@@ -35,7 +35,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
     l_hTableInfo := par_hTableSchema["public."+par_cTableName]
     for each l_hFields in l_hTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_hFields:__enumkey
-        if !vfp_inlist(l_cFieldName,'sysc','sysm')
+        if !el_IsInlist(l_cFieldName,'sysc','sysm')
             l_cFieldType  := l_hFields[HB_ORM_SCHEMA_FIELD_TYPE]
             l_cBackupCode += "|"
             l_cBackupCode += l_cFieldName + "|"
@@ -61,7 +61,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
 
         for each l_hFields in l_hTableInfo[HB_ORM_SCHEMA_FIELD]
             l_cFieldName := l_hFields:__enumkey
-            if !vfp_inlist(l_cFieldName,'sysc','sysm')
+            if !el_IsInlist(l_cFieldName,'sysc','sysm')
                 l_cFieldType := l_hFields[HB_ORM_SCHEMA_FIELD_TYPE]
                 l_xValue     := hb_FieldGet(l_cFieldName)
                 do case
@@ -71,7 +71,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
                 case l_cFieldType == "I"
                     l_cBackupCode += trans(l_xValue)
 
-                case vfp_inlist(l_cFieldType,"C","CV","M")
+                case el_IsInlist(l_cFieldType,"C","CV","M")
                     if l_cFieldType == "C"
                         l_xValue := trim(l_xValue)
                     endif
@@ -80,7 +80,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
                         l_cBackupCode += substr(l_xValue,3,len(l_xValue)-3)
                     endif
 
-               case vfp_inlist(l_cFieldType,"N")
+               case el_IsInlist(l_cFieldType,"N")
                     l_cFieldLen := hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_LENGTH,0)
                     l_cFieldDec := hb_HGetDef(l_hFields,HB_ORM_SCHEMA_FIELD_DECIMALS,0)
                     if empty(l_cFieldDec)
@@ -149,7 +149,7 @@ if hb_HHasKey(l_hTableSchema,"public."+par_cTableName)
     l_aTableInfo := l_hTableSchema["public."+par_cTableName]
     for each l_hFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_hFields:__enumkey
-        if !vfp_inlist(lower(l_cFieldName),'pk','sysc','sysm') .and. !("*"+lower(l_cFieldName)+"*" $ lower(par_cFieldsToExclude))
+        if !el_IsInlist(lower(l_cFieldName),'pk','sysc','sysm') .and. !("*"+lower(l_cFieldName)+"*" $ lower(par_cFieldsToExclude))
 
             //Test if the Field is not discontinued.   See GetColumnsConfiguration
             if hb_Ascan(par_aFieldsToInclude,{|l_cFieldNameInArray| lower(l_cFieldName) == lower(l_cFieldNameInArray)},,,.t.) > 0
@@ -159,7 +159,7 @@ if hb_HHasKey(l_hTableSchema,"public."+par_cTableName)
                 else
                     l_xValue := (l_nListOfImportData)->(hb_FieldGet(l_cFieldName))
 
-                    if !hb_IsNil(l_xValue) .and. vfp_inlist(l_hFields[HB_ORM_SCHEMA_FIELD_TYPE],"C","CV","M")
+                    if !hb_IsNil(l_xValue) .and. el_IsInlist(l_hFields[HB_ORM_SCHEMA_FIELD_TYPE],"C","CV","M")
                         par_oDBImport:FieldExpression(par_cTableName+"."+l_cFieldName ,"E'"+l_xValue+"'")  //Since value was already encoded.
                     else
                         par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,l_xValue)
@@ -192,10 +192,10 @@ if pcount() == 2 .and. !hb_IsNil(par_hHash) .and. !hb_IsNil(par_cFileName) .and.
     l_cFullFileName := l_cFolder+l_cFileName+l_cFileExtension
     l_cFullFileName := Strtran(Strtran(l_cFullFileName,[/],hb_ps()),[\],hb_ps())
     if hb_DirExists(l_cFolder)
-        vfp_StrToFile(hb_jsonEncode(par_hHash,.t.,"UTF8EX"),l_cFullFileName)
+        el_StrToFile(hb_jsonEncode(par_hHash,.t.,"UTF8EX"),l_cFullFileName)
     endif
 endif
 
 return nil
 //=================================================================================================================
-// VFP_StrToFile(:LastSQL(),"d:\LastSQL.txt")
+// el_StrToFile(:LastSQL(),"d:\LastSQL.txt")

@@ -55,7 +55,7 @@ The following is the list of additional open source projects used to design, bui
 | https://github.com/harbour/core                | The Habour to C Compiler |
 | https://github.com/EricLendvai/Harbour_FastCGI | FastCGI web framework |
 | https://github.com/EricLendvai/Harbour_ORM     | Database framework |
-| https://github.com/EricLendvai/Harbour_VFP     | Additional Harbour/VFP Language Libraries |
+| https://github.com/EricLendvai/Harbour_EL      | Additional Harbour Libraries |
 | https://www.postgresql.org/                    | Main data store of the web app |
 | https://httpd.apache.org/                      | Apache Web server |
 | https://getbootstrap.com/                      | Bootstrap 5 |

@@ -187,7 +187,7 @@ with object l_oDB_ListOfCustomFields
     :Column("CustomField.Description","CustomField_Description")
     :Column("CustomField.Status"     ,"CustomField_Status")
     :Column("Upper(CustomField.Name)","tag1")
-    :OrderBy("CustomField_UsedOn")
+    // :OrderBy("CustomField_UsedOn")
     :OrderBy("tag1")
     :SQL("ListOfCustomFields")
     l_nNumberOfCustomFields := :Tally
@@ -225,23 +225,23 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[CustomFields/EditCustomField/]+AllTrim(ListOfCustomFields->CustomField_Code)+[/">]+Allt(ListOfCustomFields->CustomField_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[CustomFields/EditCustomField/]+alltrim(ListOfCustomFields->CustomField_Code)+[/">]+alltrim(ListOfCustomFields->CustomField_Name)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += Allt(ListOfCustomFields->CustomField_Code)
+                            l_cHtml += alltrim(ListOfCustomFields->CustomField_Code)
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += Allt(ListOfCustomFields->CustomField_Label)
+                            l_cHtml += alltrim(ListOfCustomFields->CustomField_Label)
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Logical","Multi Choice","String","Text Area","Date"}[iif(vfp_between(ListOfCustomFields->CustomField_Type,1,5),ListOfCustomFields->CustomField_Type,1)]
+                            l_cHtml += {"Logical","Multi Choice","String","Text Area","Date"}[iif(el_between(ListOfCustomFields->CustomField_Type,1,5),ListOfCustomFields->CustomField_Type,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application","Namespace","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(vfp_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
+                            l_cHtml += {"Application","Namespace","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(el_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -249,7 +249,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","Inactive","Hidden"}[iif(vfp_between(ListOfCustomFields->CustomField_Status,1,3),ListOfCustomFields->CustomField_Status,1)]
+                            l_cHtml += {"Active","Inactive","Hidden"}[iif(el_between(ListOfCustomFields->CustomField_Status,1,3),ListOfCustomFields->CustomField_Status,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -329,9 +329,7 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
@@ -340,10 +338,10 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         else
             l_cHtml += [<span class="navbar-brand ms-3">Update Custom Field</span>]   //navbar-text
         endif
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormSave()
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
-            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            l_cHtml += GetButtonOnEditFormDelete()
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -355,17 +353,17 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Link Code</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextCode" id="TextCode" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Code",""))+[" maxlength="10" size="10" style="text-transform: uppercase;"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextCode" id="TextCode" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Code",""))+[" maxlength="10" size="10" style="text-transform: uppercase;"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Label</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextLabel" id="TextLabel" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Label",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLabel" id="TextLabel" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Label",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -374,8 +372,8 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<span class="pe-5">]
                     l_nType := hb_HGetDef(par_hValues,"Type",1)
-                    // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboType" id="ComboType">]
-                    l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeType(this.value);'>]
+                    // l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboType" id="ComboType">]
+                    l_cHtml += [<select name="ComboType" id="ComboType" onchange=']+UPDATE_ONCOMBOWITHONCHANGE_SAVEBUTTON+[OnChangeType(this.value);'>]
                         l_cHtml += [<option value="1"]+iif(l_nType==1,[ selected],[])+[>Logical</option>]
                         l_cHtml += [<option value="2"]+iif(l_nType==2,[ selected],[])+[>Multi Choice</option>]
                         l_cHtml += [<option value="3"]+iif(l_nType==3,[ selected],[])+[>String</option>]
@@ -385,19 +383,19 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanOptionDefinition" style="display: none;">]
-                    l_cHtml += [<br><span class="pe-2 mt-2 mb-2">Enter one option value per line  &lt;number&gt; : &lt;Label&gt;</span><br><textarea]+UPDATESAVEBUTTON+[ name="TextOptionDefinition" id="TextOptionDefinition" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"OptionDefinition",NIL),""))+[</textarea>]
+                    l_cHtml += [<br><span class="pe-2 mt-2 mb-2">Enter one option value per line  &lt;number&gt; : &lt;Label&gt;</span><br><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextOptionDefinition" id="TextOptionDefinition" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"OptionDefinition",NIL),""))+[</textarea>]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanLength" style="display: none;">]
-                    l_cHtml += [<span class="pe-2">Length</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextLength" id="TextLength" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Length</span><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLength" id="TextLength" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanWidth" style="display: none;">]
-                    l_cHtml += [<span class="pe-2">Width</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextWidth" id="TextWidth" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Width",0),0))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Width</span><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextWidth" id="TextWidth" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Width",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanHeight" style="display: none;" >]
-                    l_cHtml += [<span class="pe-2">Height</span><input]+UPDATESAVEBUTTON+[ type="text" name="TextHeight" id="TextHeight" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Height",0),0))+[" size="5" maxlength="5">]
+                    l_cHtml += [<span class="pe-2">Height</span><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextHeight" id="TextHeight" value="]+Trans(nvl(hb_HGetDef(par_hValues,"Height",0),0))+[" size="5" maxlength="5">]
                 l_cHtml += [</span>]
 
             l_cHtml += [</td>]
@@ -407,7 +405,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Used On</td>]
             l_cHtml += [<td class="pb-3">]
                 l_iUsedOn := hb_HGetDef(par_hValues,"UsedOn",1)
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUsedOn" id="ComboUsedOn">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUsedOn" id="ComboUsedOn">]
                     l_cHtml += [<option value="]+Trans(USEDON_APPLICATION)+["]+iif(l_iUsedOn==USEDON_APPLICATION,[ selected],[])+[>Application</option>]
                     l_cHtml += [<option value="]+Trans(USEDON_NAMESPACE)  +["]+iif(l_iUsedOn==USEDON_NAMESPACE  ,[ selected],[])+[>Namespace</option>]
                     l_cHtml += [<option value="]+Trans(USEDON_TABLE)      +["]+iif(l_iUsedOn==USEDON_TABLE      ,[ selected],[])+[>Table</option>]
@@ -427,7 +425,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_nStatus := hb_HGetDef(par_hValues,"Status",1)
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
                     l_cHtml += [<option value="1"]+iif(l_nStatus==1,[ selected],[])+[>Active</option>]
                     l_cHtml += [<option value="2"]+iif(l_nStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
                     l_cHtml += [<option value="3"]+iif(l_nStatus==3,[ selected],[])+[>Hidden</option>]
@@ -437,7 +435,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -484,7 +482,7 @@ select ListOfAllApplications
 scan all
     l_CheckBoxId := "CheckApplication"+Trans(ListOfAllApplications->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Application"+Trans(ListOfAllApplications->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Application"+Trans(ListOfAllApplications->pk),.f.)," checked","")+[ class="form-check-input">]
         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANApplication">]+ListOfAllApplications->Application_Name+[</span></label>]
     l_cHtml += [</td></tr>]
 endscan
@@ -524,7 +522,7 @@ select ListOfAllProjects
 scan all
     l_CheckBoxId := "CheckProject"+Trans(ListOfAllProjects->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(par_hValues,"Project"+Trans(ListOfAllProjects->pk),.f.)," checked","")+[ class="form-check-input">]
         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANProject">]+ListOfAllProjects->Project_Name+[</span></label>]
     l_cHtml += [</td></tr>]
 endscan
@@ -642,9 +640,9 @@ case l_cActionOnSubmit == "Save"
                 if !empty(l_cLine)
                     l_nPos := at(":",l_cLine)
                     if !empty(l_nPos)
-                        l_cOptionVal  := Alltrim(left(l_cLine,l_nPos-1))
+                        l_cOptionVal  := alltrim(left(l_cLine,l_nPos-1))
                         l_nOptionVal  := Val(l_cOptionVal)
-                        l_cOptionText := Alltrim(Substr(l_cLine,l_nPos+1))
+                        l_cOptionText := alltrim(Substr(l_cLine,l_nPos+1))
                         if Trans(l_nOptionVal) == l_cOptionVal .and. !empty(l_cOptionText)
                             if !empty(l_cCustomFieldOptionDefinition)
                                 l_cCustomFieldOptionDefinition += CRLF
@@ -751,7 +749,7 @@ case l_cActionOnSubmit == "Save"
                         scan all
                             l_lSelected := (oFcgi:GetInputValue("CheckApplication"+Trans(ListOfApplications->pk)) == "1")
 
-                            if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForCustomField","pk")
+                            if el_seek(ListOfApplications->pk,"ListOfCurrentApplicationForCustomField","pk")
                                 if !l_lSelected
                                     // Remove the Application
                                     with Object l_oDB1
@@ -808,7 +806,7 @@ case l_cActionOnSubmit == "Save"
                         scan all
                             l_lSelected := (oFcgi:GetInputValue("CheckProject"+Trans(ListOfProjects->pk)) == "1")
 
-                            if VFP_Seek(ListOfProjects->pk,"ListOfCurrentProjectForCustomField","pk")
+                            if el_seek(ListOfProjects->pk,"ListOfCurrentProjectForCustomField","pk")
                                 if !l_lSelected
                                     // Remove the Project
                                     with Object l_oDB1
@@ -844,7 +842,7 @@ case l_cActionOnSubmit == "Save"
         endif
     endcase
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     if empty(l_iCustomFieldPk)
         oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields")
     else
@@ -1109,7 +1107,7 @@ with object l_oDB_ListOfCustomFieldsToBuild
                     do case
                     case ListOfCustomFieldsToBuild->CustomField_Type == 1  // Logical
                         l_cHtml += [<div class="form-check form-switch">]
-                            l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="Check]+l_cObjectName+[" id="Check]+l_cObjectName+[" value="1"]+iif(hb_HGetDef(par_hValues,l_cObjectName,.f.)," checked","")+[ class="form-check-input" ]+par_extra_property+[>]
+                            l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="Check]+l_cObjectName+[" id="Check]+l_cObjectName+[" value="1"]+iif(hb_HGetDef(par_hValues,l_cObjectName,.f.)," checked","")+[ class="form-check-input" ]+par_extra_property+[>]
                         l_cHtml += [</div>]
 
                     case ListOfCustomFieldsToBuild->CustomField_Type == 2  // Multi Choice
@@ -1117,16 +1115,16 @@ with object l_oDB_ListOfCustomFieldsToBuild
                         l_cOptionDefinition := ListOfCustomFieldsToBuild->CustomField_OptionDefinition
                         l_nOption           := hb_HGetDef(par_hValues,l_cObjectName,0)
 
-                        l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="Combo]+l_cObjectName+[" id="Combo]+l_cObjectName+[" ]+par_extra_property+[ class="form-select">]
+                        l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="Combo]+l_cObjectName+[" id="Combo]+l_cObjectName+[" ]+par_extra_property+[ class="form-select">]
                         l_cHtml += [<option value="0"]+iif(l_nOption==0,[ selected],[])+[></option>]
                         for l_nLineNumber := 1 to MLCount(l_cOptionDefinition,1024)
                             l_cLine := MemoLine(l_cOptionDefinition,1024,l_nLineNumber)
                             if !empty(l_cLine)
                                 l_nPos := at(":",l_cLine)
                                 if !empty(l_nPos)
-                                    l_cOptionVal  := Alltrim(left(l_cLine,l_nPos-1))
+                                    l_cOptionVal  := alltrim(left(l_cLine,l_nPos-1))
                                     l_nOptionVal  := Val(l_cOptionVal)
-                                    l_cOptionText := Alltrim(Substr(l_cLine,l_nPos+1))
+                                    l_cOptionText := alltrim(Substr(l_cLine,l_nPos+1))
                                     if Trans(l_nOptionVal) == l_cOptionVal .and. !empty(l_cOptionText)
                                         l_cHtml += [<option value="]+l_cOptionVal+["]+iif(l_nOption==l_nOptionVal,[ selected],[])+[>]+l_cOptionText+[</option>]
                                     endif
@@ -1137,12 +1135,12 @@ with object l_oDB_ListOfCustomFieldsToBuild
                         
                     case ListOfCustomFieldsToBuild->CustomField_Type == 3  // String
                         l_nLength := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Length,0))
-                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[" maxlength="]+Trans(l_nLength)+[" size="]+Trans(Min(l_nLength,80))+[" ]+par_extra_property+[ class="form-control">]
+                        l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[" maxlength="]+Trans(l_nLength)+[" size="]+Trans(Min(l_nLength,80))+[" ]+par_extra_property+[ class="form-control">]
                         
                     case ListOfCustomFieldsToBuild->CustomField_Type == 4  // Text Area
                         l_nWidth  := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Width,0))
                         l_nHeight := max(1,nvl(ListOfCustomFieldsToBuild->CustomField_Height,0))
-                        l_cHtml += [<textarea]+UPDATESAVEBUTTON+[ name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" rows="]+Trans(l_nHeight)+[" cols="]+Trans(l_nWidth)+[" ]+par_extra_property+[ class="form-control">]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[</textarea>]
+                        l_cHtml += [<textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" rows="]+Trans(l_nHeight)+[" cols="]+Trans(l_nWidth)+[" ]+par_extra_property+[ class="form-control">]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,l_cObjectName,""))+[</textarea>]
 
                     case ListOfCustomFieldsToBuild->CustomField_Type == 5  // Date
                         l_xValue := hb_HGetDef(par_hValues,l_cObjectName,nil)
@@ -1152,13 +1150,13 @@ with object l_oDB_ListOfCustomFieldsToBuild
                             l_xValue := ""
                         endif
 
-                        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(l_xValue)+[" maxlength="10" size="10" ]+par_extra_property+[ class="form-control">]
+                        l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="Text]+l_cObjectName+[" id="Text]+l_cObjectName+[" value="]+FcgiPrepFieldForValue(l_xValue)+[" maxlength="10" size="10" ]+par_extra_property+[ class="form-control">]
                         oFcgi:p_cjQueryScript += [$("#Text]+l_cObjectName+[").datepicker();]
 
                     endcase
 
 
-                    // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                    // l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
                     //     l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
                     //     l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
                     //     l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
@@ -1278,7 +1276,7 @@ with object l_oDB_ListOfCustomFieldsSave
                 exit
                 
             case 5  // Date
-                l_xValue := Alltrim(SanitizeInput(oFcgi:GetInputValue("Text"+l_cObjectName)))
+                l_xValue := alltrim(SanitizeInput(oFcgi:GetInputValue("Text"+l_cObjectName)))
                 if !empty(l_xValue) .and. !empty(ctod(l_xValue))
                     if l_lOnFile
                         if ListOfCustomFieldsSave->CustomFieldValue_ValueD <> ctod(l_xValue)
@@ -1362,8 +1360,8 @@ scan all
         if !empty(l_cLine)
             l_nPos := at(":",l_cLine)
             if !empty(l_nPos)
-                l_cOptionVal  := Alltrim(left(l_cLine,l_nPos-1))
-                l_cOptionText := Alltrim(Substr(l_cLine,l_nPos+1))
+                l_cOptionVal  := alltrim(left(l_cLine,l_nPos-1))
+                l_cOptionText := alltrim(Substr(l_cLine,l_nPos+1))
                 par_hOptionValueToDescriptionMapping[Trans(ListOfCustomFieldOptionDefinition->CustomField_pk)+"_"+l_cOptionVal] := l_cOptionText
             endif
         endif
@@ -1409,9 +1407,9 @@ return l_cHtml
 static function GetBaseNameForUsedOn(par_UsedOn)
 local l_cBaseTable
 do case
-case vfp_Inlist(par_UsedOn,USEDON_APPLICATION,USEDON_NAMESPACE,USEDON_TABLE,USEDON_COLUMN)
+case el_IsInlist(par_UsedOn,USEDON_APPLICATION,USEDON_NAMESPACE,USEDON_TABLE,USEDON_COLUMN)
     l_cBaseTable := "Application"
-case vfp_Inlist(par_UsedOn,USEDON_PROJECT,USEDON_MODEL,USEDON_ENTITY,USEDON_ASSOCIATION,USEDON_PACKAGE,USEDON_DATATYPE,USEDON_ATTRIBUTE)
+case el_IsInlist(par_UsedOn,USEDON_PROJECT,USEDON_MODEL,USEDON_ENTITY,USEDON_ASSOCIATION,USEDON_PACKAGE,USEDON_DATATYPE,USEDON_ATTRIBUTE)
     l_cBaseTable := "Project"
 endcase
 return l_cBaseTable

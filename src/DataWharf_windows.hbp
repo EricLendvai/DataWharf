@@ -10,14 +10,14 @@
 #To also create a list of all the object files linked uncomment the following line
 #-map
 
-#Temporary solution due to conflict of same definition in Harbour_FastCGI and Harbour_VFP
+#Temporary solution due to conflict of same definition in Harbour_FastCGI and Harbour_EL
 #-ldflag=-Wl,--allow-multiple-definition
 #Instead now using the following 2 preprocessor variables, one for .prg files and other for .c files.
--prgflag=-DUSING_HB_VFP
--cflag=-DUSING_HB_VFP
+-prgflag=-DUSING_HB_EL
+-cflag=-DUSING_HB_EL
 
--L${HB_VFP_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}
-hb_vfp.hbc
+-L${HB_EL_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}
+hb_el.hbc
 
 -L${HB_ORM_ROOT}\build\win64\${HB_COMPILER}\${BuildMode}
 hb_orm.hbc

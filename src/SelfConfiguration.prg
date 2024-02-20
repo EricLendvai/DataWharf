@@ -2,10 +2,10 @@
 function Config()
 return ;
 {"HarbourORMVersion"=>4.2,;
- "DataWharfVersion"=>3.6,;
+ "DataWharfVersion"=>4.0,;
  "Backend"=>"PostgreSQL",;
- "GenerationTime"=>"2024-01-31T18:15:05.506Z",;
- "GenerationSignature"=>"88c42277-4660-456c-80e0-883f1ca1ee9e",;
+ "GenerationTime"=>"2024-02-19T03:52:48.730Z",;
+ "GenerationSignature"=>"204151de-486e-42de-a270-ced103049796",;
  "Tables"=>;
     {"public.APIAccessEndpoint"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
@@ -57,37 +57,43 @@ return ;
         {"fk_apitoken"=>{"Expression"=>"fk_APIToken"};
         ,"fk_project" =>{"Expression"=>"fk_Project"}}};
     ,"public.Application"=>{"Fields"=>;
-        {"pk"                                  =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
-        ,"sysc"                                =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"sysm"                                =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"LinkCode"                            =>{"Type"=>"CV","Length"=>20};   //Used to create direct link to the Application for data dic management
-        ,"Name"                                =>{"Type"=>"CV","Length"=>200};   //12
-        ,"UseStatus"                           =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
-        ,"DocStatus"                           =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Missing", 2="NotNeeded", 3="InProgress", 4="Complete"   
-        ,"Description"                         =>{"Type"=>"M","Nullable"=>.t.};
-        ,"SupportColumns"                      =>{"Type"=>"M","Nullable"=>.t.};   //List of Column Name that are use as support fields.
-        ,"AddForeignKeyIndexORMExport"         =>{"Type"=>"L"};   //Automatically Add Indexes on Integer and Big Integer Foreign Keys during "Export to Harbour_ORM"
-        ,"DestructiveDelete"                   =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="None", 2="OnTablesTags", 3="OnNamespaces", 4="EntireApplicationContent", 5="CanDeleteApplication"   
-        ,"PublishingUseStatus1"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Unknown". (Upcoming Feature)
-        ,"PublishingUseStatus2"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Active". (Upcoming Feature)
-        ,"PublishingUseStatus3"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Inactive (Read Only)". (Upcoming Feature)
-        ,"PublishingUseStatus4"                =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Archived". (Upcoming Feature)
-        ,"KeyConfig"                           =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Any", 2="Integer", 3="IntegerBig"   
-        ,"SetMissingOnDeleteToProtect"         =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"};
-        ,"TestTableHasPrimaryKey"              =>{"Type"=>"L","Default"=>"Wharf-True"};   //Table must have a Primary Key.
-        ,"TestForeignKeyTypeMatchPrimaryKey"   =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key Type must match Primary Key Type.
-        ,"TestForeignKeyIsNullable"            =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key must be Nullable.
-        ,"TestForeignKeyNoDefault"             =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key may not have a default value.
-        ,"TestForeignKeyMissingOnDeleteSetting"=>{"Type"=>"L","Default"=>"Wharf-True"};   //Test missing "On Delete" setting for Foreign Keys.
-        ,"TestNumericEnumerationWideEnough"    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Numeric Enumerations must be large enough to handle largest Value.
-        ,"TestMaxTableNameLength"              =>{"Type"=>"L","Default"=>"Wharf-True"};   //Maximum Table Name length is 63 characters (Postgres).
-        ,"TestMaxColumnNameLength"             =>{"Type"=>"L","Default"=>"Wharf-True"};   //Maximum Column Name length is 59 characters (Postgres).
-        ,"TestMaxIndexNameLength"              =>{"Type"=>"L","Default"=>"Wharf-True"};   //Maximum Index Name (After adding Table Names and suffix) 63 characters (Postgresql).
-        ,"TestMissingForeignKeyTable"          =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Foreign Keys must point to a table.
-        ,"TestMissingEnumerationValues"        =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Enumeration Fields must point to a enumeration.
-        ,"TestUseOfDiscontinuedEnumeration"    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Fields may not point to a Discontinued Enumeration.
-        ,"TestUseOfDiscontinuedForeignTable"   =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Foreign Keys may not point to a Discontinued Table.
-        ,"TestValidColumnLengthAndScale"       =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"}};   //Check validity of columns Length and/or Scale base on column type.
+        {"pk"                                                   =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
+        ,"sysc"                                                 =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
+        ,"sysm"                                                 =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
+        ,"LinkCode"                                             =>{"Type"=>"CV","Length"=>20};   //Used to create direct link to the Application for data dic management
+        ,"Name"                                                 =>{"Type"=>"CV","Length"=>200};   //12
+        ,"UseStatus"                                            =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
+        ,"DocStatus"                                            =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Missing", 2="NotNeeded", 3="InProgress", 4="Complete"   
+        ,"Description"                                          =>{"Type"=>"M","Nullable"=>.t.};
+        ,"SupportColumns"                                       =>{"Type"=>"M","Nullable"=>.t.};   //List of Column Name that are use as support fields.
+        ,"AddForeignKeyIndexORMExport"                          =>{"Type"=>"L"};   //Automatically Add Indexes on Integer and Big Integer Foreign Keys during "Export to Harbour_ORM"
+        ,"DestructiveDelete"                                    =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="None", 2="OnTablesTags", 3="OnNamespaces", 4="EntireApplicationContent", 5="CanDeleteApplication"   
+        ,"PublishingUseStatus1"                                 =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Unknown". (Upcoming Feature)
+        ,"PublishingUseStatus2"                                 =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Active". (Upcoming Feature)
+        ,"PublishingUseStatus3"                                 =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Inactive (Read Only)". (Upcoming Feature)
+        ,"PublishingUseStatus4"                                 =>{"Type"=>"L"};   //If should publish to the public elements with Use Status "Archived". (Upcoming Feature)
+        ,"KeyConfig"                                            =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Any", 2="Integer", 3="IntegerBig"   
+        ,"SetMissingOnDeleteToProtect"                          =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"};
+        ,"NoNamespaceChangeOnTablesAndEnumerations"             =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Prevent Changing Namespace on Existing Tables and Enumeration. Changing the Namespace would cause new Tables and Enumerations to be created.
+        ,"TestTableHasPrimaryKey"                               =>{"Type"=>"L","Default"=>"Wharf-True"};   //Table must have a Primary Key.
+        ,"TestForeignKeyTypeMatchPrimaryKey"                    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key Type must match Primary Key Type.
+        ,"TestForeignKeyIsNullable"                             =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key must be Nullable.
+        ,"TestForeignKeyNoDefault"                              =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key may not have a default value.
+        ,"TestForeignKeyMissingOnDeleteSetting"                 =>{"Type"=>"L","Default"=>"Wharf-True"};   //Test missing "On Delete" setting for Foreign Keys.
+        ,"TestNumericEnumerationWideEnough"                     =>{"Type"=>"L","Default"=>"Wharf-True"};   //Numeric Enumerations must be large enough to handle largest Value.
+        ,"TestIdentifierMaxLengthAsPostgres"                    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Maximum Identifier Length when used for PostgreSQL (63 bytes) (Namespace, Table, Column, Enumeration, Enumeration Values)
+        ,"TestMissingForeignKeyTable"                           =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Foreign Keys must point to a table.
+        ,"TestMissingEnumerationValues"                         =>{"Type"=>"L","Default"=>"Wharf-True"};   //All Enumeration Fields must point to a enumeration.
+        ,"TestUseOfDiscontinuedEnumeration"                     =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Fields may not point to a Discontinued Enumeration.
+        ,"TestUseOfDiscontinuedForeignTable"                    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Non Discontinued Foreign Keys may not point to a Discontinued Table.
+        ,"TestValidColumnLengthAndScale"                        =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check validity of columns Length and/or Scale base on column type.
+        ,"TestNoLeadingOrTrainingBlanksInIdentifiers"           =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Namespace, Table, Column, Index and Enumeration Identifiers to Match Variable Name Requirements
+        ,"TestValidNonEnumValueIdentifierAsVariableName"        =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Namespace, Table, Column, Index and Enumeration Identifiers to Match Variable Name Requirements
+        ,"TestValidSQLEnumValueIdentifierAsVariableName"        =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Enumeration values used as SQLEnum Identifiers to Match Variable Name Requirements
+        ,"TestValidSQLEnumValueIdentifierAsAlphaNumericExtended"=>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Enumeration values not used as SQLEnum Identifiers to be Alpha Numeric, blank, dash or underscore
+        ,"TestIndexOnPrimaryAndForeignKeys"                     =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Add Test to prevent indexes on Primary and Foreign keys. Primary and Foreign key indexes are already implicit.
+        ,"TestUniquenessCaseInsensitiveIdentifiers"             =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check uniqueness of case insensitive identifiers
+        ,"TestUniquenessTableSQLEnumerationIdentifiers"         =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"}};   //Check uniqueness between Table and SQLEnum Enumeration names in same Namespace
                            ,"Indexes"=>;
         {"linkcode"=>{"Expression"=>"LinkCode"}}};
     ,"public.ApplicationCustomField"=>{"Fields"=>;
@@ -164,6 +170,7 @@ return ;
         ,"fk_TableForeign"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};   //Parent Table if this is a foreign key.
         ,"fk_Enumeration"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"Order"             =>{"Type"=>"I"};   //Display order only. Is not used to enforce column position in tables.
+        ,"LinkUID"           =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"              =>{"Type"=>"CV","Length"=>200};
         ,"AKA"               =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Also Known As. Will be displayed in Diagrams, not used in physical implementation.
         ,"UsedAs"            =>{"Type"=>"N","Length"=>1};   //1="Regular", 2="PrimaryKey", 3="ForeignKey", 4="Support"   
@@ -347,6 +354,7 @@ return ;
         ,"sysc"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Namespace"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"LinkUID"        =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"           =>{"Type"=>"CV","Length"=>200};
         ,"AKA"            =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Also Known As. Not used in physical implementation.
         ,"ImplementAs"    =>{"Type"=>"N","Length"=>1};   //1="NativeSQLEnum", 2="Integer", 3="Numeric", 4="VarChar"   Besides PostgreSQL native support to enums, it is possible to make integer, numeric and string fields behave as enumerations.
@@ -364,11 +372,14 @@ return ;
         ,"fk_Enumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Number"        =>{"Type"=>"I","Nullable"=>.t.};   //Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
         ,"Order"         =>{"Type"=>"I"};   //Display Order
+        ,"LinkUID"       =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"          =>{"Type"=>"CV","Length"=>200};
         ,"AKA"           =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used for display only, not in physical implementation.
+        ,"Code"          =>{"Type"=>"CV","Length"=>10,"Nullable"=>.t.,"OnDelete"=>"Protect"};   //Optional and can be used for reporting. Must be unique.
         ,"Description"   =>{"Type"=>"M","Nullable"=>.t.};
         ,"UseStatus"     =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
-        ,"DocStatus"     =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="Missing", 2="NotNeeded", 3="InProgress", 4="Complete"   
+        ,"DocStatus"     =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Missing", 2="NotNeeded", 3="InProgress", 4="Complete"   
+        ,"TestWarning"   =>{"Type"=>"M","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Last Test Run warning messages.
                          ,"Indexes"=>;
         {"fk_enumeration"=>{"Expression"=>"fk_Enumeration"}}};
     ,"public.FastCGIRunLog"=>{"Fields"=>;
@@ -388,6 +399,7 @@ return ;
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Table"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"LinkUID"    =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>200};
         ,"Unique"     =>{"Type"=>"L"};
         ,"Expression" =>{"Type"=>"M","Nullable"=>.t.};
@@ -479,8 +491,8 @@ return ;
         ,"sysc"                  =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"                  =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Model"              =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"Name"                  =>{"Type"=>"CV","Length"=>200};
         ,"LinkUID"               =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
+        ,"Name"                  =>{"Type"=>"CV","Length"=>200};
         ,"NodeShowDescription"   =>{"Type"=>"L"};   //True If the node description should be included.
         ,"VisPos"                =>{"Type"=>"M","Nullable"=>.t.};   //Last Visualization Positions.
         ,"NodeMinHeight"         =>{"Type"=>"I"};
@@ -495,11 +507,13 @@ return ;
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"LinkUID"       =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"          =>{"Type"=>"CV","Length"=>200};
         ,"AKA"           =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used for display only, not in physical implementation.
         ,"UseStatus"     =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
         ,"DocStatus"     =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Missing", 2="NotNeeded", 3="InProgress", 4="Complete"   
-        ,"Description"   =>{"Type"=>"M","Nullable"=>.t.}};
+        ,"Description"   =>{"Type"=>"M","Nullable"=>.t.};
+        ,"TestWarning"   =>{"Type"=>"M","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Last Test Run warning messages.
                          ,"Indexes"=>;
         {"fk_application"=>{"Expression"=>"fk_Application"}}};
     ,"public.Package"=>{"Fields"=>;
@@ -569,6 +583,7 @@ return ;
         ,"sysc"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Namespace"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"LinkUID"     =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"        =>{"Type"=>"CV","Length"=>200};
         ,"AKA"         =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used for display only, not in physical implementation.
         ,"UseStatus"   =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
@@ -594,6 +609,7 @@ return ;
         ,"sysc"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Application" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"LinkUID"        =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};
         ,"Code"           =>{"Type"=>"CV","Length"=>10};
         ,"Name"           =>{"Type"=>"CV","Length"=>100};
         ,"TableUseStatus" =>{"Type"=>"N","Length"=>1};   //1="DoNotUse", 2="Active", 3="Discontinued"   
@@ -625,6 +641,7 @@ return ;
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_TemplateTable"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.TemplateTable","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Order"           =>{"Type"=>"I"};   //Display Order.
+        ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
         ,"AKA"             =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used for display only, not in physical implementation.
         ,"UsedAs"          =>{"Type"=>"N","Length"=>1};   //1="Regular", 2="PrimaryKey", 3="ForeignKey", 4="Support"   
@@ -647,6 +664,7 @@ return ;
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"LinkUID"       =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"          =>{"Type"=>"CV","Length"=>200}};
                              ,"Indexes"=>;
         {"fk_application"=>{"Expression"=>"fk_Application"}}};

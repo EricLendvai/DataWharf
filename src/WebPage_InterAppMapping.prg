@@ -77,9 +77,7 @@ l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<div class="m-3">]
     if l_nNumberOfApplications >= 2
@@ -114,7 +112,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<div>]
         l_cHtml += [<input type="button" class="btn btn-primary rounded" value="Map Tables" onclick="$('#ActionOnSubmit').val('MapTables');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         l_cHtml += [</div>]
     endif
 l_cHtml += [</div>]
@@ -155,7 +153,7 @@ case l_cActionOnSubmit == "MapTables"
         l_cHtml := InterAppMappingSelectApplicationsBuild(l_cErrorMessage,l_hValues)
     end
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     oFcgi:Redirect(oFcgi:p_cSitePath+"InterAppMapping/")
 
 otherwise
@@ -199,6 +197,8 @@ l_cHtml += [ ul.amsify-list {min-height: 400px;} ]
 l_cHtml += [</style>]
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="PageLoaded" id="PageLoaded" value="0">]
+
 l_cHtml += [<input type="hidden" name="formname" value="MapTables">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 
@@ -229,7 +229,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<div>]
     l_cHtml += [<input type="button" class="btn btn-primary rounded ms" value="Save And Stay" onclick="$('#ActionOnSubmit').val('SaveAndStay');document.form.submit();" role="button">]
     l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Save And Return" onclick="$('#ActionOnSubmit').val('SaveAndReturn');document.form.submit();" role="button">]
-    l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+    l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 
     with object l_oDB_ListOfTablesFrom
@@ -305,8 +305,12 @@ l_cHtml += [<div class="m-3">]
                                                                 "tagLimit: 10,"+;
                                                                 "selectOnHover: true,"+;
                                                                 "showAllSuggestions: true,"+;
-                                                                "keepLastOnHoverTag: false"+;
+                                                                "keepLastOnHoverTag: false,"+;
+                                                                "afterAdd: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }},"+;
+                                                                "afterRemove: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }}"+;
                                                                 [});]
+
+        oFcgi:p_cjQueryScript += "$('#PageLoaded').val('1');"
 
         l_cHtml += [<div class="row justify-content-center m-3">]
             l_cHtml += [<div class="col-auto">]
@@ -339,12 +343,12 @@ l_cHtml += [<div class="m-3">]
 
                         if l_nNumberOfNamespacesInTablesFrom > 1
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += Allt(ListOfTablesFrom->Namespace_Name)
+                                l_cHtml += alltrim(ListOfTablesFrom->Namespace_Name)
                             l_cHtml += [</td>]
                         endif
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+Allt(ListOfTablesFrom->Namespace_Name)+[/]+ListOfTablesFrom->Table_Name+[/">]+ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)+[</a>]
+                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/EditTable/]+par_cURLApplicationLinkCode+[/]+alltrim(ListOfTablesFrom->Namespace_Name)+[/]+ListOfTablesFrom->Table_Name+[/">]+ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)+[</a>]
                             l_cHtml += ListOfTablesFrom->Table_Name+FormatAKAForDisplay(ListOfTablesFrom->Table_AKA)
                         l_cHtml += [</td>]
 
@@ -420,7 +424,7 @@ scan all
 endscan
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"SaveAndStay","SaveAndReturn","MapColumns")
+case el_IsInlist(l_cActionOnSubmit,"SaveAndStay","SaveAndReturn","MapColumns")
     // Save Tables mappings
 
     with object l_oDB_ListOfTableMapping
@@ -522,7 +526,7 @@ case vfp_inlist(l_cActionOnSubmit,"SaveAndStay","SaveAndReturn","MapColumns")
         l_cHtml := InterAppMappingSelectApplicationsBuild("",l_hValues)
     endcase
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml := InterAppMappingSelectApplicationsBuild("",l_hValues)
 
 otherwise
@@ -659,7 +663,7 @@ l_cHtml += [<div class="m-3">]
     l_cHtml += [<div>]
     l_cHtml += [<input type="button" class="btn btn-primary rounded" value="Save And Stay" onclick="$('#ActionOnSubmit').val('SaveStay');document.form.submit();" role="button">]
     l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Save And Return To Table List" onclick="$('#ActionOnSubmit').val('SaveReturn');document.form.submit();" role="button">]
-    l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+    l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 
     with object l_oDB_ListOfColumnsFrom
@@ -676,7 +680,7 @@ l_cHtml += [<div class="m-3">]
         :Column("Column.Length"         ,"Column_Length")
         :Column("Column.Scale"          ,"Column_Scale")
         :Column("Column.Nullable"       ,"Column_Nullable")
-        :Column("Column.DefaultCustom"        ,"Column_DefaultCustom")
+        :Column("Column.DefaultCustom"  ,"Column_DefaultCustom")
         :Column("Column.Unicode"        ,"Column_Unicode")
         :Column("Column.PrimaryMode"    ,"Column_PrimaryMode")
         :Column("Column.UsedBy"         ,"Column_UsedBy")
@@ -763,7 +767,8 @@ l_cHtml += [<div class="m-3">]
 
         l_cColumnsToOptions += "]"
 
-        oFcgi:p_cjQueryScript += [$(".ColumnsTos").select2({placeholder: '',allowClear: true,data: ]+l_cColumnsToOptions+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+        // oFcgi:p_cjQueryScript += [$(".ColumnsTos").select2({placeholder: '',allowClear: true,data: ]+l_cColumnsToOptions+[,theme: "bootstrap-5",selectionCssClass: "select2--small",dropdownCssClass: "select2--small"});]
+        ActivatejQuerySelect2(".ColumnsTos",l_cColumnsToOptions)
 
         l_cHtml += [<div class="m-3"></div>]   //Spacer
 
@@ -825,18 +830,38 @@ l_cHtml += [<div class="m-3">]
 
                         // Type
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += FormatColumnTypeInfo(allt(ListColumnsFrom->Column_Type),;
-                                                            ListColumnsFrom->Column_Length,;
-                                                            ListColumnsFrom->Column_Scale,;
-                                                            ListColumnsFrom->Enumeration_Name,;
-                                                            ListColumnsFrom->Enumeration_AKA,;
-                                                            ListColumnsFrom->Enumeration_ImplementAs,;
-                                                            ListColumnsFrom->Enumeration_ImplementLength,;
-                                                            ListColumnsFrom->Column_Unicode,;
-                                                            "",;
-                                                            "",;
-                                                            "",;
-                                                            "")
+                            // l_cHtml += FormatColumnTypeInfo(alltrim(ListColumnsFrom->Column_Type),;
+                            //                                 ListColumnsFrom->Column_Length,;
+                            //                                 ListColumnsFrom->Column_Scale,;
+                            //                                 ListColumnsFrom->Enumeration_Name,;
+                            //                                 ListColumnsFrom->Enumeration_AKA,;
+                            //                                 ListColumnsFrom->Enumeration_ImplementAs,;
+                            //                                 ListColumnsFrom->Enumeration_ImplementLength,;
+                            //                                 ListColumnsFrom->Column_Unicode,;
+                            //                                 "",;
+                            //                                 "",;
+                            //                                 "",;
+                            //                                 "")
+
+
+                        l_cHtml += FormatColumnTypeInfo(alltrim(ListColumnsFrom->Column_Type),;
+                                                        ListColumnsFrom->Column_Length,;
+                                                        ListColumnsFrom->Column_Scale,;
+                                                        ListColumnsFrom->Column_Unicode,;
+                                                        "",;                                                    // ListColumnsFrom->Namespace_Name   (Used to decide if should display Namespace info)
+                                                        ,;                                                      // ListColumnsFrom->EnumerationNamespace_Name
+                                                        ,;                                                      // ListColumnsFrom->EnumerationNamespace_AKA
+                                                        ,;                                                      // ListColumnsFrom->EnumerationNamespace_LinkUID
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_Name
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_AKA
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_LinkUID
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_ImplementAs
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_ImplementLength
+                                                        ,;                                                      // l_cSitePath
+                                                        ,;                                                      // par_cURLApplicationLinkCode
+                                                        "")                                                     // l_cTooltipEnumValues
+
+
                         l_cHtml += [</td>]
 
                         // Nullable
@@ -931,7 +956,7 @@ scan all
 endscan
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"SaveStay","SaveReturn")
+case el_IsInlist(l_cActionOnSubmit,"SaveStay","SaveReturn")
 
     with object l_oDB_ListOfColumnMapping
         :Table("49d688b2-fd5c-4f71-8c3d-5a492f6b961b","ColumnMapping")
@@ -996,7 +1021,7 @@ case vfp_inlist(l_cActionOnSubmit,"SaveStay","SaveReturn")
         l_cHtml := InterAppMappingMapTablesBuild("",l_hValues)
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     InterAppMappingLoadTableMappingInputField(l_iApplicationFromPk,l_iApplicationToPk,@l_hValues)
     l_cHtml := InterAppMappingMapTablesBuild("",l_hValues)
 

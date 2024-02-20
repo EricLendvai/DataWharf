@@ -267,26 +267,26 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Users/EditUser/]+AllTrim(ListOfUsers->User_ID)+[/">]+Allt(ListOfUsers->User_FirstName)+" "+Allt(ListOfUsers->User_LastName)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Users/EditUser/]+alltrim(ListOfUsers->User_ID)+[/">]+alltrim(ListOfUsers->User_FirstName)+" "+alltrim(ListOfUsers->User_LastName)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += AllTrim(ListOfUsers->User_ID)
+                            l_cHtml += alltrim(ListOfUsers->User_ID)
                         l_cHtml += [</td>]
 
                         // l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        //     l_cHtml += AllTrim(ListOfUsers->User_Password)
+                        //     l_cHtml += alltrim(ListOfUsers->User_Password)
                         // l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access","Root Admin (User Control)"}[iif(vfp_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
+                            l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access","Root Admin (User Control)"}[iif(el_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">] //Projects
                             select ListOfProjectAccess
                             scan all for ListOfProjectAccess->User_Pk == l_iUserPk
                                 l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","","Full Access"}[iif(vfp_between(ListOfProjectAccess->AccessLevel,1,7),ListOfProjectAccess->AccessLevel,1)]
+                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","","Full Access"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,7),ListOfProjectAccess->AccessLevel,1)]
                                 l_cHtml += [</div>]
                             endscan
                         l_cHtml += [</td>]
@@ -295,7 +295,7 @@ l_cHtml += [<div class="m-3">]
                             select ListOfApplicationAccess
                             scan all for ListOfApplicationAccess->User_Pk == l_iUserPk
                                 l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load Schema","Full Access"}[iif(vfp_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
+                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load Schema","Full Access"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
                                 l_cHtml += [</div>]
                             endscan
                         l_cHtml += [</td>]
@@ -305,7 +305,7 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","Inactive"}[iif(vfp_between(ListOfUsers->User_Status,1,2),ListOfUsers->User_Status,1)]
+                            l_cHtml += {"Active","Inactive"}[iif(el_between(ListOfUsers->User_Status,1,2),ListOfUsers->User_Status,1)]
                         l_cHtml += [</td>]
 
                     l_cHtml += [</tr>]
@@ -365,9 +365,7 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
@@ -376,10 +374,10 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         else
             l_cHtml += [<span class="navbar-brand ms-3">Update User</span>]   //navbar-text
         endif
-        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormSave()
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
-            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            l_cHtml += GetButtonOnEditFormDelete()
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -391,22 +389,22 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">First Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextFirstName" id="TextFirstName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"FirstName",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextFirstName" id="TextFirstName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"FirstName",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Last Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextLastName" id="TextLastName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"LastName",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLastName" id="TextLastName" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"LastName",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">ID</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextID" id="TextID" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"ID",""))+[" maxlength="100" size="80"></td>] // style="text-transform: uppercase;"
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextID" id="TextID" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"ID",""))+[" maxlength="100" size="80"></td>] // style="text-transform: uppercase;"
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Password</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextPassword" id="TextPassword" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Password",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextPassword" id="TextPassword" value="]+FcgiPrepFieldForValue(hb_HGetDef(par_hValues,"Password",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -415,8 +413,8 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<span class="pe-5">]
                     l_nAccessMode := hb_HGetDef(par_hValues,"AccessMode",1)
-                    // l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboAccessMode" id="ComboAccessMode">]
-                    l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangeAccessMode(this.value);'>]
+                    // l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboAccessMode" id="ComboAccessMode">]
+                    l_cHtml += [<select name="ComboAccessMode" id="ComboAccessMode" onchange=']+UPDATE_ONCOMBOWITHONCHANGE_SAVEBUTTON+[OnChangeAccessMode(this.value);'>]
                         l_cHtml += [<option value="1"]+iif(l_nAccessMode==1,[ selected],[])+[>Project and Application Specific</option>]
                         l_cHtml += [<option value="2"]+iif(l_nAccessMode==2,[ selected],[])+[>All Projects and Applications Read Only</option>]
                         l_cHtml += [<option value="3"]+iif(l_nAccessMode==3,[ selected],[])+[>All Projects and Applications Full Access</option>]
@@ -431,7 +429,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">Status</td>]
             l_cHtml += [<td class="pb-3">]
                 l_nStatus := hb_HGetDef(par_hValues,"Status",1)
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
                     l_cHtml += [<option value="1"]+iif(l_nStatus==1,[ selected],[])+[>Active</option>]
                     l_cHtml += [<option value="2"]+iif(l_nStatus==2,[ selected],[])+[>Inactive (Read Only)</option>]
                 l_cHtml += [</select>]
@@ -440,7 +438,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(nvl(hb_HGetDef(par_hValues,"Description",NIL),""))+[</textarea></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -483,7 +481,7 @@ l_cHtml += [<div id="DivProjectSecurity">]
             l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                 l_cHtml += [<td class="pb-2">]+ListOfAllProjects->Project_Name+[</td>]
                 
-                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<td class="pb-2"><select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]
                     l_cHtml += [<option value="1"]+iif(l_nAccessLevelML == 1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nAccessLevelML == 2,[ selected],[])+[>Read Only</option>]
                     // l_cHtml += [<option value="3"]+iif(l_nAccessLevelML == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
@@ -518,7 +516,7 @@ l_cHtml += [<div id="DivApplicationSecurity">]
             l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                 l_cHtml += [<td class="pb-2">]+ListOfAllApplications->Application_Name+[</td>]
                 
-                l_cHtml += [<td class="pb-2"><select]+UPDATESAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]  // ]+UPDATESAVEBUTTON+[
+                l_cHtml += [<td class="pb-2"><select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="]+l_cObjectDDID+[" id="]+l_cObjectDDID+[" class="ms-1">]
                     l_cHtml += [<option value="1"]+iif(l_nAccessLevelDD == 1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nAccessLevelDD == 2,[ selected],[])+[>Read Only</option>]
                     l_cHtml += [<option value="3"]+iif(l_nAccessLevelDD == 3,[ selected],[])+[>Edit Description and Information Entries</option>]
@@ -681,7 +679,7 @@ case l_cActionOnSubmit == "Save"
                     select ListOfApplications
                     scan all
                         l_nAccessLevelDD := max(1,val(oFcgi:GetInputValue("ComboApplicationSecLevelDD"+Trans(ListOfApplications->pk))))
-                        if VFP_Seek(ListOfApplications->pk,"ListOfCurrentApplicationForUser","pk")
+                        if el_seek(ListOfApplications->pk,"ListOfCurrentApplicationForUser","pk")
                             if l_nAccessLevelDD <= 1
                                 // Remove the Application
                                 if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
@@ -742,7 +740,7 @@ case l_cActionOnSubmit == "Save"
                     select ListOfProjects
                     scan all
                         l_nAccessLevelML := max(1,val(oFcgi:GetInputValue("ComboProjectSecLevelML"+Trans(ListOfProjects->pk))))
-                        if VFP_Seek(ListOfProjects->pk,"ListOfCurrentProjectForUser","pk")
+                        if el_seek(ListOfProjects->pk,"ListOfCurrentProjectForUser","pk")
                             if l_nAccessLevelML <= 1
                                 // Remove the Project
                                 if !:Delete("7ffef7e4-582c-4f30-a7d6-eb46011b963c","UserAccessProject",ListOfCurrentProjectForUser->UserAccessProject_pk)
@@ -784,7 +782,7 @@ case l_cActionOnSubmit == "Save"
         endif
     endcase
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     if empty(l_iUserPk)
         oFcgi:Redirect(oFcgi:p_cSitePath+"Users")
     else

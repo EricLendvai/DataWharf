@@ -389,6 +389,7 @@ if l_lContinue
             l_iTablePk := ListOfTables->Table_Pk
 
             l_cNamespaceAndTableName := alltrim(ListOfTables->Namespace_Name)+"."+alltrim(ListOfTables->Table_Name)
+//l_cNamespaceAndTableName := el_StringFilterCharacters(l_cNamespaceAndTableName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.")
 
             if par_nVersion >= 2
                 l_cIndentHashElement := space(len([{"]+l_cNamespaceAndTableName+["=>]))
@@ -402,7 +403,7 @@ if l_lContinue
 
             l_nMaxNameLength := ListOfTables->MaxColumnNameLength
 
-            if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+            if el_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfColumns","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
                 //At lease one field could exists
                 l_cFieldDescription := ""
                 select ListOfColumns
@@ -412,9 +413,11 @@ if l_lContinue
                     l_nFieldUsedAs      := ListOfColumns->Column_UsedAs
                     l_cFieldUsedBy      := ListOfColumns->Column_UsedBy
                     l_cFieldName        := ListOfColumns->Column_Name
+// l_cFieldName := el_StringFilterCharacters(l_cFieldName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
                     l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cSchemaIndent+l_cIndent+"{" , ";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndent+"," )
                 
-                    l_cFieldType            := allt(ListOfColumns->Column_Type)
+                    l_cFieldType            := alltrim(ListOfColumns->Column_Type)
                     l_cFieldTypeEnumName := ""
                     l_nFieldLen             := nvl(ListOfColumns->Column_Length,0)
                     l_nFieldDec             := nvl(ListOfColumns->Column_Scale,0)
@@ -430,7 +433,7 @@ if l_lContinue
                     if l_lIncludeDescription
                         l_iEnumerationPk := nvl(ListOfColumns->pk_Enumeration,0)
                         if l_iEnumerationPk > 0
-                            if vfp_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")
+                            if el_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")
                                 select ListOfEnumValues
                                 scan while ListOfEnumValues->Enumeration_Pk == l_iEnumerationPk
                                     if !empty(l_cFieldDescription)
@@ -481,7 +484,7 @@ if l_lContinue
                         endcase
                     endif
 
-                    if l_lFieldAutoIncrement .and. empty(el_inlist(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
+                    if l_lFieldAutoIncrement .and. empty(el_InlistPos(l_cFieldType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
                         l_lFieldAutoIncrement := .f.
                     endif
                     if l_lFieldAutoIncrement .and. l_lFieldNullable  //Auto-Increment fields may not be null (and not have a default)
@@ -500,7 +503,7 @@ if l_lContinue
 // hb_orm_SendToDebugView(l_cSourceCodeFields)
 // hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
 
-                        if !empty(el_Inlist(l_nFieldUsedAs,2,3,4))
+                        if el_IsInlist(l_nFieldUsedAs,2,3,4)
                             l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_USEDAS+'"=>"'+{"","Primary","Foreign","Support"}[l_nFieldUsedAs]+'"'
                             if l_nFieldUsedAs == 3  // Foreign
                                 if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
@@ -534,7 +537,7 @@ if l_lContinue
                         if l_lFieldArray
                             l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
                         endif
-                        if !empty(el_Inlist(ListOfColumns->Column_OnDelete,2,3,4))
+                        if el_IsInlist(ListOfColumns->Column_OnDelete,2,3,4)
                             l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
                         endif
 
@@ -564,7 +567,7 @@ if l_lContinue
             l_cSourceCodeIndexes := ""
             l_nNumberOfIndexes   := 0
 
-            if vfp_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfIndexes","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+            if el_seek(strtran(str(l_iTablePk,10),' ','0'),"ListOfIndexes","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
                 l_nMaxNameLength       := 0
                 l_nMaxExpressionLength := 0
 
@@ -573,6 +576,7 @@ if l_lContinue
                 scan while ListOfIndexes->Table_Pk = l_iTablePk  // Pre scan the index to help determine the l_nMaxNameLength
 
                     l_cIndexName := ListOfIndexes->Index_Name
+// l_cIndexName := el_StringFilterCharacters(l_cIndexName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
                     // Clean up index name
                     if right(l_cIndexName,4) == "_idx"
                         l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
@@ -595,6 +599,7 @@ if l_lContinue
                     l_nNumberOfIndexes++
 
                     l_cIndexName := ListOfIndexes->Index_Name
+// l_cIndexName := el_StringFilterCharacters(l_cIndexName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
                     // Clean up index name
                     if right(l_cIndexName,4) == "_idx"
                         l_cIndexName := left(l_cIndexName,len(l_cIndexName)-4)
@@ -607,10 +612,12 @@ if l_lContinue
                     l_cIndexExpression := ListOfIndexes->Index_Expression
                     l_cIndexExpression := strtran(l_cIndexExpression,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
                     l_cIndexExpression := strtran(l_cIndexExpression,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+// l_cIndexExpression := el_StringFilterCharacters(l_cIndexExpression,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+ ()")
                     
                     l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , l_cSchemaIndent+l_cIndent+"{" , ";"+CRLF+l_cSchemaIndent+l_cIndent+",")
 
                     l_cSourceCodeIndexes += padr('"'+l_cIndexName+'"',l_nMaxNameLength+2)+"=>{"
+
 
                     if par_nVersion <= 2
                         l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
@@ -680,6 +687,7 @@ if l_lContinue
             l_iEnumerationPk := ListOfEnumerations->Enumeration_Pk
 
             l_cNamespaceAndEnumerationName := alltrim(ListOfEnumerations->Namespace_Name)+"."+alltrim(ListOfEnumerations->Enumeration_Name)
+// l_cNamespaceAndEnumerationName := el_StringFilterCharacters(l_cNamespaceAndEnumerationName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.")
 
             l_cIndentHashElement := space(len([{"]+l_cNamespaceAndEnumerationName+["=>]))
 
@@ -689,13 +697,14 @@ if l_lContinue
             l_cSourceCodeEnumValues := ""
             l_nNumberOfEnumValues   := 0
 
-            if vfp_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
+            if el_seek(strtran(str(l_iEnumerationPk,10),' ','0'),"ListOfEnumValues","tag1")   // Takes advantage of only doing a seek on the first 10 character of the index.
                 l_nMaxNameLength       := 0
 
                 select ListOfEnumValues
                 l_nEnumValueRecno := Recno()
                 scan while ListOfEnumValues->Enumeration_Pk = l_iEnumerationPk  // Pre scan the enumvalues to help determine the l_nMaxNameLength
                     l_cEnumValueName := ListOfEnumValues->EnumValue_Name
+// l_cEnumValueName := el_StringFilterCharacters(l_cEnumValueName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
                     l_nMaxNameLength := max(l_nMaxNameLength,len(l_cEnumValueName))
                 endscan
                 dbGoTo(l_nEnumValueRecno)
@@ -704,6 +713,7 @@ if l_lContinue
                     l_nNumberOfEnumValues++
 
                     l_cEnumValueName := ListOfEnumValues->EnumValue_Name
+// l_cEnumValueName := el_StringFilterCharacters(l_cEnumValueName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
                     
                     l_nEnumValue_Order     := ListOfEnumValues->EnumValue_Order
                     l_nEnumValue_Number    := ListOfEnumValues->EnumValue_Number
@@ -725,7 +735,7 @@ if l_lContinue
 
             l_cSourceCode += '"'+l_cNamespaceAndEnumerationName+'"=>{;'+CRLF
 
-            if vfp_between(ListOfEnumerations->Enumeration_ImplementAs,1,4)
+            if el_between(ListOfEnumerations->Enumeration_ImplementAs,1,4)
                 l_cImplementAs := {"NativeSQLEnum","Integer","Numeric","VarChar"}[ListOfEnumerations->Enumeration_ImplementAs]
                 l_cSourceCode += l_cSchemaIndent+l_cIndent+'"ImplementAs"=>"'+l_cImplementAs+'",;'+CRLF
             endif
@@ -1039,7 +1049,7 @@ if l_lContinue
 
     l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
 
-    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
+    el_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
 
     hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
     DeleteFile(l_cFilePathPID+"Export.txt")
@@ -1134,18 +1144,19 @@ l_cHtml += [<input type="hidden" name="formname" value="Step1">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 // l_cHtml += [<input type="hidden" name="ApplicationKey" value="]+trans(par_iApplicationPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 if !empty(par_iApplicationPk)
+
+    l_cHtml += GetAboveNavbarHeading("Import")
+
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Import</span>]   //navbar-text
+            // l_cHtml += [<span class="navbar-brand ms-3">Import</span>]   //navbar-text
             // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
             l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmImportModal">Import</button>]
 
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormDoneCancel()
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -1190,7 +1201,7 @@ oFcgi:TraceAdd("DataDictionaryImportStep1FormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"Import")
+case el_IsInlist(l_cActionOnSubmit,"Import")
 
     l_cInputFileName := oFcgi:GetInputFileName("TextExportFile")
     if empty(l_cInputFileName)
@@ -1226,7 +1237,7 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
 
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryImport/"+par_cURLApplicationLinkCode+"/")
 
 endcase
@@ -1334,7 +1345,7 @@ do while l_nLineCounter < l_nNumberOfLines
                 AAdd(l_aTableStructure,{l_aFieldStructure[2],l_aFieldStructure[3],val(l_aFieldStructure[4]),val(l_aFieldStructure[5]),strtran(l_aFieldStructure[6],"+","")})
 
                 l_cCursorFieldType := l_aFieldStructure[3]
-                if vfp_inlist(l_cCursorFieldType,"C","CV","M")
+                if el_IsInlist(l_cCursorFieldType,"C","CV","M")
                     l_cCursorFieldType := "M"  //overwrite to ensure will have enough space to store encoded field value
                     l_cCursorFieldLen  := 0
                     l_cCursorFieldDec  := 0
@@ -1422,7 +1433,7 @@ endwith
 select ImportSourceNamespace
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Namespace")
 scan all
-    if vfp_seek( upper(strtran(ImportSourceNamespace->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourceNamespace->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: Namespace Already on file",ListOfCurrentRecords->Name)
         l_hNamespacePkOldToNew[ImportSourceNamespace->pk] := ListOfCurrentRecords->pk
     else
@@ -1434,7 +1445,7 @@ scan all
                 //Log the old key, new key
                 l_hNamespacePkOldToNew[ImportSourceNamespace->pk] := :Key()
             endif
-            // VFP_StrToFile(:LastSQL(),"d:\LastSQL.txt")
+            // el_StrToFile(:LastSQL(),"d:\LastSQL.txt")
             
         endwith
     endif
@@ -1468,7 +1479,7 @@ scan all
         SendToDebugView("Failure to find Namespace Parent Key on Table Import" ,l_iParentKeyImport)
     else
         //In the index search could not use trans() for some reason it left leading blanks
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Table Already on file in Namespace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hTablePkOldToNew[ImportSourceTable->pk] := ListOfCurrentRecords->pk
         else
@@ -1480,7 +1491,7 @@ scan all
                     //Log the old key, new key
                     l_hTablePkOldToNew[ImportSourceTable->pk] := :Key()
                 endif
-                // VFP_StrToFile(:LastSQL(),"d:\LastSQL.txt")
+                // el_StrToFile(:LastSQL(),"d:\LastSQL.txt")
                 
             endwith
         endif
@@ -1512,7 +1523,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Namespace Parent Key on Enumeration Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Enumeration Already on file in Namespace (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hEnumerationPkOldToNew[ImportSourceEnumeration->pk] := ListOfCurrentRecords->pk
         else
@@ -1524,7 +1535,7 @@ scan all
                     //Log the old key, new key
                     l_hEnumerationPkOldToNew[ImportSourceEnumeration->pk] := :Key()
                 endif
-                // VFP_StrToFile(:LastSQL(),"d:\LastSQL.txt")
+                // el_StrToFile(:LastSQL(),"d:\LastSQL.txt")
                 
             endwith
         endif
@@ -1572,7 +1583,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Table Parent Key on Column Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Column Already on file in Table (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hColumnPkOldToNew[ImportSourceColumn->pk] := ListOfCurrentRecords->pk
         else
@@ -1622,7 +1633,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Enumeration Parent Key on EnumValue Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(hb_StrReplace(ImportSourceEnumValue->Name,hb_StrReplace(ImportSourceEnumValue->Name,l_cValidNameChars,'') ,''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(hb_StrReplace(ImportSourceEnumValue->Name,hb_StrReplace(ImportSourceEnumValue->Name,l_cValidNameChars,'') ,''))+'*' ,"ListOfCurrentRecords","tag1")
             SendToDebugView("Import: EnumValue Already on file in Enumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
         else
             with object l_oDBImport
@@ -1662,7 +1673,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Table Parent Key on Index Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceIndex->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceIndex->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Index Already on file in Table (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hIndexPkOldToNew[ImportSourceIndex->pk] := ListOfCurrentRecords->pk
         else
@@ -1712,7 +1723,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Index Parent Key on IndexColumn Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Column Already on file in Index (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
         else
             with object l_oDBImport
@@ -1745,7 +1756,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
     select ImportSourceDiagram
     l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Diagram")
     scan all
-        if vfp_seek( upper(strtran(ImportSourceDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek( upper(strtran(ImportSourceDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Diagram Already on file",ListOfCurrentRecords->Name)
             l_hDiagramPkOldToNew[ImportSourceDiagram->pk] := ListOfCurrentRecords->pk
         else
@@ -1830,7 +1841,7 @@ if used("ImportSourceDiagram")   // Should skip this in case this is a Table Imp
         if empty(l_iParentKeyCurrent)
             SendToDebugView("Failure to find Diagram Parent Key on DiagramTable Import" ,l_iParentKeyImport)
         else
-            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+            if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
                 // SendToDebugView("Import: Table Already on file in Diagram (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             else
                 with object l_oDBImport
@@ -1863,7 +1874,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
     select ImportSourceTag
     l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Tag")
     scan all
-        if vfp_seek( upper(strtran(ImportSourceTag->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek( upper(strtran(ImportSourceTag->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             l_hTagPkOldToNew[ImportSourceTag->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
@@ -1910,7 +1921,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
         if empty(l_iParentKeyCurrent)
             SendToDebugView("Failure to find Tag Parent Key on TagTable Import" ,l_iParentKeyImport)
         else
-            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+            if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_TableCurrent))+'*' ,"ListOfCurrentRecords","tag1")
                 // SendToDebugView("Import: Table Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             else
                 with object l_oDBImport
@@ -1957,7 +1968,7 @@ if used("ImportSourceTag")   // Should skip this in case this is a Table Import
         if empty(l_iParentKeyCurrent)
             SendToDebugView("Failure to find Tag Parent Key on TagColumn Import" ,l_iParentKeyImport)
         else
-            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+            if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_ColumnCurrent))+'*' ,"ListOfCurrentRecords","tag1")
                 // SendToDebugView("Import: Column Already on file in Tag (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             else
                 with object l_oDBImport
@@ -1993,7 +2004,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
 
         l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
 
-        if vfp_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
@@ -2032,7 +2043,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
             l_ifk_CustomFieldCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_ifk_CustomFieldImport,0)
         endif
 
-        if vfp_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
+        if el_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
             // Record already on file
         else
             with object l_oDBImport
@@ -2094,7 +2105,7 @@ if used("ImportSourceCustomField")   // Should skip this in case this is a Table
         if empty(l_iParentKeyCurrent)
             SendToDebugView("Failure to find CustomField Parent Key on CustomFieldValue Import" ,l_iParentKeyImport)
         else
-            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+            if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
                 // SendToDebugView("Import: CustomFieldValue Already on file in CustomField (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             else
                 with object l_oDBImport
@@ -2130,7 +2141,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
     select ImportSourceTemplateTable
     l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TemplateTable")
     scan all
-        if vfp_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+        if el_seek( upper(strtran(ImportSourceTemplateTable->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
             l_hTemplateTablePkOldToNew[ImportSourceTemplateTable->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
@@ -2170,7 +2181,7 @@ if used("ImportSourceTemplateTable")   // Should skip this in case this is a Tab
         if empty(l_iParentKeyCurrent)
             SendToDebugView("Failure to find TemplateTable Parent Key on TemplateColumn Import" ,l_iParentKeyImport)
         else
-            if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTemplateColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
+            if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTemplateColumn->Name,' ',''))+'*' ,"ListOfCurrentRecords","TemplateTable1")
                 // SendToDebugView("Import: Table Already on file in TemplateTable (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             else
                 with object l_oDBImport
@@ -2398,7 +2409,7 @@ if l_lContinue
 
     l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
 
-    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
+    el_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
 
     hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
     DeleteFile(l_cFilePathPID+"Export.txt")
@@ -2492,64 +2503,34 @@ l_cHtml += [<input type="hidden" name="formname" value="Step1">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 // l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 if !empty(par_iApplicationPk)
+
+    l_nBackendType := val(GetUserSetting("DataDictionaryExportBackendType"))
+
+    l_cHtml += GetAboveNavbarHeading("Export")
+
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            l_cHtml += [<span class="navbar-brand ms-3">Export Options</span>]   //navbar-text
-            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Delta" onclick="$('#ActionOnSubmit').val('Delta');document.form.submit();" role="button">]
-            // l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmImportModal">Import</button>]
+            // l_cHtml += [<span class="navbar-brand ms-3">Export Options</span>]   //navbar-text
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3 me-5" value="Export For DataWharf Imports" onclick="$('#ActionOnSubmit').val('ExportForDataWharfImports');document.form.submit();" role="button">]
 
-            // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += [<select name="ComboBackendType" id="ComboBackendType" class="ms-5">]
+            l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL/MariaDB</option>]
+            l_cHtml += [<option value="3"]+iif(l_nBackendType==3,[ selected],[])+[>PostgreSQL</option>]
+            // l_cHtml += [<option value="4"]+iif(l_nBackendType==4,[ selected],[])+[>MSSQL</option>]
+            l_cHtml += [</select>]
+
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Export to Harbour_ORM" onclick="$('#ActionOnSubmit').val('ExportToHarbourORM');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Export to JSON" onclick="$('#ActionOnSubmit').val('ExportToJSON');document.form.submit();" role="button">]
+
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
     l_cHtml += [<div class="m-3"></div>]
 
-    l_cHtml += [<div class="m-3">]
-        // l_cHtml += [<table>]
-
-        //     l_cHtml += [<tr class="pb-5">]
-        //         l_cHtml += [<td class="pe-2 pb-3">Backend</td>]
-        //         l_cHtml += [<td class="pb-3"></td>]
-        //     l_cHtml += [</tr>]
-
-        // l_cHtml += [</table>]
-
-            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToHarbourORM/]+par_cURLApplicationLinkCode+[/">Export to Harbour_ORM</a>]
-            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportToJSON/]+par_cURLApplicationLinkCode+[/">Export to JSON</a>]
-            // l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExportForDataWharfImports/]+par_cURLApplicationLinkCode+[/">Export For DataWharf Imports</a>]
-
-l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export For DataWharf Imports" onclick="$('#ActionOnSubmit').val('ExportForDataWharfImports');document.form.submit();" role="button">]
-l_cHtml += [<hr>]
-
-l_nBackendType := val(GetUserSetting("DataDictionaryExportBackendType"))
-
-                l_cHtml += [<select name="ComboBackendType" id="ComboBackendType">]
-                l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL/MariaDB</option>]
-                l_cHtml += [<option value="3"]+iif(l_nBackendType==3,[ selected],[])+[>PostgreSQL</option>]
-                // l_cHtml += [<option value="4"]+iif(l_nBackendType==4,[ selected],[])+[>MSSQL</option>]
-                l_cHtml += [</select>]
-l_cHtml += [<br>]
-l_cHtml += [<br>]
-
-
-l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export to Harbour_ORM" onclick="$('#ActionOnSubmit').val('ExportToHarbourORM');document.form.submit();" role="button">]
-l_cHtml += [<br>]
-l_cHtml += [<br>]
-l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" value="Export to JSON" onclick="$('#ActionOnSubmit').val('ExportToJSON');document.form.submit();" role="button">]
-
-
-    l_cHtml += [</div>]
-
-    // oFcgi:p_cjQueryScript += [$('#TextExportFile').focus();]
-
     l_cHtml += [</form>]
-
-    // l_cHtml += GetConfirmationModalFormsImport()
 endif
 
 return l_cHtml
@@ -2591,7 +2572,7 @@ case l_cActionOnSubmit == "ExportToHarbourORM"
 case l_cActionOnSubmit == "ExportToJSON"
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryExportToJSON/"+par_cURLApplicationLinkCode+"/?Backend="+l_cBackendType)
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/DataDictionaryImport/"+par_cURLApplicationLinkCode+"/")
 
 endcase

@@ -416,7 +416,7 @@ static procedure sendStatics(cParams,prefix)
    local i, aInfo, value, cLine
 
    if iStack>0
-      cModule := lower(allTrim(aStack[iStack,HB_DBG_CS_MODULE]))
+      cModule := lower(alltrim(aStack[iStack,HB_DBG_CS_MODULE]))
       idxModule := aScan(aModules, {|v| v[1]=cModule})
    else
       idxModule := 0
@@ -534,7 +534,7 @@ static function MyGetSta(iStack,varIndex)
    LOCAL cModule, idxModule
    local nVarMod, aInfo, nVarStack := iif(iStack>0,len(aStack[iStack,HB_DBG_CS_STATICS]),0)
    if iStack>0
-      cModule := lower(allTrim(aStack[iStack,HB_DBG_CS_MODULE]))
+      cModule := lower(alltrim(aStack[iStack,HB_DBG_CS_MODULE]))
       idxModule := aScan(aModules, {|v| v[1]=cModule})
    else
       idxModule := 0
@@ -1031,7 +1031,7 @@ static function replaceExpression(xExpr, __dbg, name, value)
       return xExpr
    endif
    aadd(__dbg, value )
-   cVal := "__dbg[" + allTrim(str(len(__dbg))) +"]"
+   cVal := "__dbg[" + alltrim(str(len(__dbg))) +"]"
    for i:=len(aMatches) to 1 step -1
       xExpr := left(xExpr,aMatches[i,1,2]-1) + cVal + substr(xExpr,aMatches[i,1,3]+1)
    next

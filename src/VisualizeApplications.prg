@@ -270,7 +270,7 @@ with object l_oDB_ListOfLinks
         l_nNumberOfLinksInDiagram := :Tally
 
     else
-        // _M_ When the Harbour_ORM will add support to CTE could avoid using vfp_seek and delete
+        // _M_ When the Harbour_ORM will add support to CTE could avoid using el_seek and delete
         :Table("9f3afcce-5f28-457e-965c-e294cfd628aa","DiagramTable")
         :Distinct(.t.)
         :Column("Table.pk"                 ,"pkFrom")
@@ -294,7 +294,7 @@ with object l_oDB_ListOfLinks
         l_nNumberOfLinksInDiagram := 0
         select ListOfLinks
         scan all
-            if vfp_seek(ListOfLinks->pkTo,"ListOfTables","pk")
+            if el_seek(ListOfLinks->pkTo,"ListOfTables","pk")
                 l_nNumberOfLinksInDiagram++
             else
                 dbDelete()
@@ -520,14 +520,14 @@ l_cHtml += 'var nodes = ['
 select ListOfTables
 scan all
     if l_lShowNamespace
-        l_cNodeLabel := AllTrim(ListOfTables->Namespace_Name)+"."
+        l_cNodeLabel := alltrim(ListOfTables->Namespace_Name)+"."
     else
         l_cNodeLabel := ""
     endif
 
     do case
     case l_nNodeDisplayMode == 1 //Table Name and Alias
-        l_cNodeLabel += AllTrim(ListOfTables->Table_Name)
+        l_cNodeLabel += alltrim(ListOfTables->Table_Name)
         if ListOfTables->Table_Unlogged
             l_cNodeLabel += [\n<small><mark>UNLOGGED</mark></small>]
         endif
@@ -539,22 +539,22 @@ scan all
     case l_nNodeDisplayMode == 2 //Table Alias or Name
         if ListOfTables->Table_Unlogged
             if !hb_orm_isnull("ListOfTables","Table_AKA")
-                l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[\n<small><mark>UNLOGGED</mark></small></b>]
+                l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[\n<small><mark>UNLOGGED</mark></small></b>]
             else
-                l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
+                l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
             endif
         else
             if !hb_orm_isnull("ListOfTables","Table_AKA")
-                l_cNodeLabel += AllTrim(ListOfTables->Table_AKA)+[</b>]
+                l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[</b>]
             else
-                l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
+                l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[</b>]
             endif
         endif
     case l_nNodeDisplayMode == 3 //Table Name
         if ListOfTables->Table_Unlogged
-            l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
+            l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
         else
-            l_cNodeLabel += AllTrim(ListOfTables->Table_Name)+[</b>]
+            l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[</b>]
         endif
     endcase
     l_cNodeLabel := [<b>]+l_cNodeLabel
@@ -977,7 +977,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                         l_lSelected := (oFcgi:GetInputValue("CheckTable"+l_cTablePk) == "1")
 
                         if l_lSelected
-                            if !VFP_Seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
+                            if !el_seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
                                 //Add if not present
                                 with object l_oDB3
                                     :Table("d653adf7-19bf-4c6a-b2d5-8c9043ce7061","DiagramTable")
@@ -987,7 +987,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                                 endwith
                             endif
                         else
-                            if VFP_Seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
+                            if el_seek(val(l_cTablePk),"ListOfCurrentTablesInDiagram","pk")
                                 //Remove if present
                                 l_oDB3:Delete("3ac82b2c-63eb-4604-8bf4-0271e17a5c6c","DiagramTable",ListOfCurrentTablesInDiagram->DiagramTable_pk)
                             endif
@@ -1055,7 +1055,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                 else
                     //Remove only the current tables.
                     l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                    if VFP_Seek(l_iTablePk,"ListOfCurrentTablesInDiagram","pk")
+                    if el_seek(l_iTablePk,"ListOfCurrentTablesInDiagram","pk")
                         //Remove if still present
                         l_oDB3:Delete("a66d5243-995d-421e-9687-fb7fe1be895b","DiagramTable",ListOfCurrentTablesInDiagram->DiagramTable_pk)
                     endif
@@ -1142,14 +1142,22 @@ if !empty(par_cErrorText)
     l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
 endif
 
+l_nRenderMode := hb_HGetDef(l_hValues,"RenderMode",RENDERMODE_MXGRAPH)
+
+l_cHtml += GetAboveNavbarHeading(iif(empty(par_iDiagramPk),"New Diagram","Diagram Settings"))
+
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iDiagramPk),"New Diagram","Diagram Settings")+[</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        // l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iDiagramPk),"New Diagram","Diagram Settings")+[</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iDiagramPk)
-            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Reset" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormDelete()
+
+            if l_nRenderMode == RENDERMODE_VISJS
+                l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3 RemoveOnEdit" value="Reset Straight Connectors Layout" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
+            endif
+
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -1162,14 +1170,14 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_nNodeDisplayMode := hb_HGetDef(l_hValues,"NodeDisplayMode",1)
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Display</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboNodeDisplayMode" id="ComboNodeDisplayMode">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboNodeDisplayMode" id="ComboNodeDisplayMode">]
                     l_cHtml += [<option value="1"]+iif(l_nNodeDisplayMode==1,[ selected],[])+[>Table Name and Alias</option>]
                     l_cHtml += [<option value="2"]+iif(l_nNodeDisplayMode==2,[ selected],[])+[>Table Alias or Name</option>]
                     l_cHtml += [<option value="3"]+iif(l_nNodeDisplayMode==3,[ selected],[])+[>Table Name</option>]
@@ -1177,11 +1185,10 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
-        l_nRenderMode := hb_HGetDef(l_hValues,"RenderMode",RENDERMODE_MXGRAPH)
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Render Mode</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboRenderMode" id="ComboRenderMode">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboRenderMode" id="ComboRenderMode">]
                     l_cHtml += [<option value="1"]+iif(l_nRenderMode==1,[ selected],[])+[>Straight Connectors (visjs)</option>]
                     l_cHtml += [<option value="2"]+iif(l_nRenderMode==2,[ selected],[])+[>Custom Connectors (mxgraph)</option>]
                 l_cHtml += [</select>]
@@ -1192,7 +1199,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Table Description</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1200,7 +1207,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Minimum Height</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
                 l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1209,7 +1216,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Maximum Width</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
                 l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1290,7 +1297,7 @@ select ListOfAllTablesInApplication
 scan all
     l_CheckBoxId := "CheckTable"+Trans(ListOfAllTablesInApplication->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Table"+Trans(ListOfAllTablesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Table"+Trans(ListOfAllTablesInApplication->pk),.f.)," checked","")+[ class="form-check-input">]
         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANTable">]+iif(l_lShowNamespace,ListOfAllTablesInApplication->Namespace_Name+[.],[])+ListOfAllTablesInApplication->Table_Name+FormatAKAForDisplay(ListOfAllTablesInApplication->Table_AKA)
         l_cHtml += [</span></label>]
     l_cHtml += [</td></tr>]
@@ -1442,7 +1449,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         scan all
             l_lSelected := (oFcgi:GetInputValue("CheckTable"+Trans(ListOfAllTablesInApplication->pk)) == "1")
 
-            if VFP_Seek(ListOfAllTablesInApplication->pk,"ListOfCurrentTablesInDiagram","pk")
+            if el_seek(ListOfAllTablesInApplication->pk,"ListOfCurrentTablesInDiagram","pk")
                 if !l_lSelected
                     // Remove the table
                     with Object l_oDB3
@@ -1491,7 +1498,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         l_cHtml := DataDictionaryVisualizeDiagramSettingsBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 case l_cActionOnSubmit == "Delete"
@@ -1528,13 +1535,15 @@ case l_cActionOnSubmit == "ResetLayout"
             l_oDataDiagram := :Get(l_iDiagramPk)
             l_nRenderMode := max(RENDERMODE_VISJS,l_oDataDiagram:Diagram_RenderMode)
 
-            :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
-            if l_nRenderMode == RENDERMODE_MXGRAPH
-                :Field("Diagram.MxgPos",NIL)
-            else
-                :Field("Diagram.VisPos",NIL)
+            if l_nRenderMode == RENDERMODE_VISJS
+                :Table("222b379f-8605-40ce-a35f-c57fecd78d08","Diagram")
+                // if l_nRenderMode == RENDERMODE_MXGRAPH
+                //     :Field("Diagram.MxgPos",NIL)
+                // else
+                    :Field("Diagram.VisPos",NIL)
+                // endif
+                :Update(l_iDiagramPk)
             endif
-            :Update(l_iDiagramPk)
         endwith
     endif
 
@@ -1576,15 +1585,18 @@ l_cHtml += [<input type="hidden" name="formname" value="DuplicateDiagram">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
 
-if !empty(par_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
-endif
+// if !empty(par_cErrorText)
+//     l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
+// endif
+l_cHtml += DisplayErrorMessageOnEditForm(par_cErrorText)
+
+l_cHtml += GetAboveNavbarHeading("Duplicate Diagram")
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">Duplicate Diagram</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        // l_cHtml += [<span class="navbar-brand ms-3">Duplicate Diagram</span>]   //navbar-text
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -1596,7 +1608,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">New Diagram Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -1724,29 +1736,12 @@ case l_cActionOnSubmit == "DuplicateDiagram"
         l_cHtml := DataDictionaryVisualizeDiagramDuplicateBuild(par_iApplicationPk,l_cErrorMessage,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk,l_hValues)
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase
 
 return l_cHtml
-//=================================================================================================================
-//=================================================================================================================
-// The Following function was used by deprecated Ajax Call
-// function SaveVisualizationPositions()
-
-// local l_iApplicationPk := val(oFcgi:GetQueryString("apppk"))
-// local l_cNodePositions := Strtran(oFcgi:GetQueryString("pos"),[%22],["])
-
-// local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-// with object l_oDB1
-//     :Table("44111d36-963b-42f1-b4e5-4c4e4e5ffd13","Application")
-//     :Field("Application.VisPos",l_cNodePositions)
-//     :Update(l_iApplicationPk)
-// endwith
-
-// return ""
 //=================================================================================================================
 //=================================================================================================================
 function DataDictionaryVisualizeMyDiagramSettingsBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk,par_hValues)
@@ -1860,15 +1855,15 @@ l_cHtml += [<input type="hidden" name="formname" value="MyDiagramSettings">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+trans(par_iDiagramPk)+[">]
 
-if !empty(par_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-danger text-white">]+par_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
+
+l_cHtml += GetAboveNavbarHeading("My Settings")
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += [<span class="navbar-brand ms-3">My Settings</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveMySettings');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        // l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveMySettings');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormSave()
+        l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -1883,7 +1878,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">For Current Diagram Only</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input type="hidden" id="CheckPreviousThisDiagramOnly" name="CheckPreviousThisDiagramOnly" value="]+iif(l_lPreviousThisDiagramOnly,"1","0")+[">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
                 if l_lThisDiagramOnly  //If turning off the setting, hide all the other settings.
                     l_cHtml += [ onclick='$(".DiagramSettings").toggleClass("d-none",!$("#CheckThisDiagramOnly").is(":checked"));']
                 endif
@@ -1896,7 +1891,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Right Panel Scale</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
                     l_cHtml += [<option value="1"]  +iif(l_nDiagramInfoScale==1  ,[ selected],[])+[>1.0</option>]
                     l_cHtml += [<option value="0.9"]+iif(l_nDiagramInfoScale==0.9,[ selected],[])+[>0.9</option>]
                     l_cHtml += [<option value="0.8"]+iif(l_nDiagramInfoScale==0.8,[ selected],[])+[>0.8</option>]
@@ -1916,7 +1911,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Width</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
                     for l_nSize := CANVAS_WIDTH_MIN to CANVAS_WIDTH_MAX step 100
                         l_cHtml += [<option value="]+Trans(l_nSize)+["]+iif(l_iCanvasWidth==l_nSize,[ selected],[])+[>]+Trans(l_nSize)+[</option>]
                     endfor
@@ -1932,7 +1927,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Height</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
                     for l_nSize := CANVAS_HEIGHT_MIN to CANVAS_HEIGHT_MAX step 100
                         l_cHtml += [<option value="]+Trans(l_nSize)+["]+iif(l_iCanvasHeight==l_nSize,[ selected],[])+[>]+Trans(l_nSize)+[</option>]
                     endfor
@@ -1945,7 +1940,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Display Navigation Controls</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1954,7 +1949,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Unknown Usage Status in Gray</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckUnknownInGray" id="CheckUnknownInGray" value="1"]+iif(l_lUnknownInGray," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckUnknownInGray" id="CheckUnknownInGray" value="1"]+iif(l_lUnknownInGray," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1963,7 +1958,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Never Show Description On Hover</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -2009,7 +2004,7 @@ l_lPreviousThisDiagramOnly := (oFcgi:GetInputValue("CheckPreviousThisDiagramOnly
 l_lThisDiagramOnly         := (oFcgi:GetInputValue("CheckThisDiagramOnly") == "1")
 
 do case
-case l_cActionOnSubmit == "SaveMySettings"
+case el_IsInlist(l_cActionOnSubmit,"SaveMySettings","Save")
     SaveUserSetting("ThisDiagramOnly",iif(l_lThisDiagramOnly,"T","F"),l_iDiagramPk)
 
     if l_lPreviousThisDiagramOnly .and. !l_lThisDiagramOnly
@@ -2089,7 +2084,7 @@ case l_cActionOnSubmit == "SaveMySettings"
         endif
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,l_iDiagramPk)
 
 endcase
@@ -2174,6 +2169,7 @@ local l_oDataDiagram
 local l_cTooltipEnumValues
 local l_nColspan
 local l_lWarnings := .f.
+local l_cCombinedPath
 
 //oFcgi:p_nAccessLevelDD
 
@@ -2203,8 +2199,23 @@ if len(l_aNodes) == 1
 
     with object l_oDB_Application
         :Table("51edf270-d3d3-4c8b-b530-c2d3b90c93c1","Table")
-        :Column("Application.pk"             , "Application_pk")
-        :Column("Application.SupportColumns" , "Application_SupportColumns")
+        :Column("Application.pk"            , "Application_pk")
+        :Column("Application.SupportColumns", "Application_SupportColumns")
+
+        :Column("Application.Name"          ,"Application_Name")
+        :Column("Application.LinkCode"      ,"Application_LinkCode")
+        :Column("Namespace.Name"            ,"Namespace_Name")
+        :Column("Namespace.AKA"             ,"Namespace_AKA")
+        :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
+        :Column("Table.Name"                ,"Table_Name")
+        :Column("Table.AKA"                 ,"Table_AKA")
+        :Column("Table.LinkUID"             ,"Table_LinkUID")
+        :Column("Table.Unlogged"            ,"Table_Unlogged")
+        :Column("Table.Description"         ,"Table_Description")
+        :Column("Table.Information"         ,"Table_Information")
+        :Column("Table.UseStatus"           ,"Table_UseStatus")
+        :Column("Table.DocStatus"           ,"Table_DocStatus")
+
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         :Join("inner","Application","","Namespace.fk_Application = Application.pk")
         l_oData_Application := :Get(l_iTablePk)
@@ -2216,8 +2227,13 @@ if len(l_aNodes) == 1
         l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find table.</div>]
 
     else
-
         l_cApplicationSupportColumns := nvl(l_oData_Application:Application_SupportColumns,"")
+
+        l_cApplicationLinkCode := alltrim(l_oData_Application:Application_LinkCode)
+
+        l_cCombinedPath := l_cApplicationLinkCode+[/]+;
+                           PrepareForURLSQLIdentifier("Namespace",l_oData_Application:Namespace_Name,l_oData_Application:Namespace_LinkUID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData_Application:Table_Name    ,l_oData_Application:Table_LinkUID)    +[/]
 
         //Get the applicable l_nAccessLevelDD
         l_iApplicationPk := l_oData_Application:Application_pk
@@ -2257,6 +2273,7 @@ if len(l_aNodes) == 1
             :Column("Column.pk"                  ,"pk")
             :Column("Column.Name"                ,"Column_Name")
             :Column("Column.AKA"                 ,"Column_AKA")
+            :Column("Column.LinkUID"             ,"Column_LinkUID")
             :Column("Column.UsedAs"              ,"Column_UsedAs")
             :Column("Column.UsedBy"              ,"Column_UsedBy")
             :Column("Column.UseStatus"           ,"Column_UseStatus")
@@ -2268,7 +2285,6 @@ if len(l_aNodes) == 1
             :Column("Column.Length"              ,"Column_Length")
             :Column("Column.Scale"               ,"Column_Scale")
             :Column("Column.Nullable"            ,"Column_Nullable")
-            :Column("Column.ForeignKeyOptional"  ,"Column_ForeignKeyOptional")
             :Column("Column.OnDelete"            ,"Column_OnDelete")
             :Column("Column.DefaultType"         ,"Column_DefaultType")
             :Column("Column.DefaultCustom"       ,"Column_DefaultCustom")
@@ -2278,18 +2294,40 @@ if len(l_aNodes) == 1
             :Column("Column.ForeignKeyOptional"  ,"Column_ForeignKeyOptional")
             :Column("Column.fk_Enumeration"      ,"Column_fk_Enumeration")
             :Column("Column.TestWarning"         ,"Column_TestWarning")
-            
             :Column("Namespace.Name"             ,"Namespace_Name")
+            :Column("Namespace.AKA"              ,"Namespace_AKA")
+            :Column("Namespace.LinkUID"          ,"Namespace_LinkUID")
             :Column("Table.Name"                 ,"Table_Name")
             :Column("Table.AKA"                  ,"Table_AKA")
+            :Column("Table.LinkUID"              ,"Table_LinkUID")
+            :Column("Enumeration.Pk"             ,"Enumeration_Pk")
             :Column("Enumeration.Name"           ,"Enumeration_Name")
             :Column("Enumeration.AKA"            ,"Enumeration_AKA")
+            :Column("Enumeration.LinkUID"        ,"Enumeration_LinkUID")
             :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
             :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
             
-            :Join("left","Table"      ,"","Column.fk_TableForeign = Table.pk")
-            :Join("left","Namespace"  ,"","Table.fk_Namespace = Namespace.pk")
-            :Join("left","Enumeration","","Column.fk_Enumeration  = Enumeration.pk")
+            :Join("inner","Table"      ,"","Column.fk_Table = Table.pk")
+            :Join("inner","Namespace"  ,"","Table.fk_Namespace = Namespace.pk")
+
+            :Join("left","Table"      ,"ForeignTable"    ,"Column.fk_TableForeign = ForeignTable.pk")
+            :Join("left","Namespace"  ,"ForeignNameSpace","ForeignTable.fk_Namespace = ForeignNameSpace.pk")
+
+            :Join("left","Enumeration",""                    ,"Column.fk_Enumeration  = Enumeration.pk")
+            :Join("left","Namespace"  ,"EnumerationNamespace","Enumeration.fk_Namespace = EnumerationNamespace.pk")
+
+            :Column("ForeignNameSpace.Name"          ,"ForeignNameSpace_Name")
+            :Column("ForeignNameSpace.AKA"           ,"ForeignNameSpace_AKA")
+            :Column("ForeignNameSpace.LinkUID"       ,"ForeignNameSpace_LinkUID")
+
+            :Column("ForeignTable.Name"              ,"ForeignTable_Name")
+            :Column("ForeignTable.AKA"               ,"ForeignTable_AKA")
+            :Column("ForeignTable.LinkUID"           ,"ForeignTable_LinkUID")
+
+            :Column("EnumerationNamespace.Name"      ,"EnumerationNamespace_Name")
+            :Column("EnumerationNamespace.AKA"       ,"EnumerationNamespace_AKA")
+            :Column("EnumerationNamespace.LinkUID"   ,"EnumerationNamespace_LinkUID")
+
             :Where("Column.fk_Table = ^",l_iTablePk)
             :OrderBy("Column_Order")
             :SQL("ListOfColumns")
@@ -2367,13 +2405,13 @@ if len(l_aNodes) == 1
                 select ListOfRelatedTables
                 scan all
                     l_cRelatedTablesKey := padr(ListOfRelatedTables->tag1,200)+padr(ListOfRelatedTables->tag2,200)
-                    l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
-                                                            ListOfRelatedTables->Table_pk,;
-                                                            ListOfRelatedTables->Namespace_Name,;
-                                                            ListOfRelatedTables->Namespace_AKA,;
-                                                            ListOfRelatedTables->Table_Name,;
-                                                            ListOfRelatedTables->Table_AKA,;
-                                                            .t.,.f.}   // Parent Of, Child Of
+                    l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. el_seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
+                                                               ListOfRelatedTables->Table_pk,;
+                                                               ListOfRelatedTables->Namespace_Name,;
+                                                               ListOfRelatedTables->Namespace_AKA,;
+                                                               ListOfRelatedTables->Table_Name,;
+                                                               ListOfRelatedTables->Table_AKA,;
+                                                               .t.,.f.}   // Parent Of, Child Of
                 endscan
             endif
 
@@ -2401,14 +2439,14 @@ if len(l_aNodes) == 1
                     l_aRelatedTableInfo := hb_HGetDef(l_hRelatedTables,l_cRelatedTablesKey,{})
                     if empty(len(l_aRelatedTableInfo))
                         //The table was not already a "Parent Of"
-                        l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
-                                                                ListOfRelatedTables->Table_pk,;
-                                                                ListOfRelatedTables->Namespace_Name,;
-                                                                ListOfRelatedTables->Namespace_AKA,;
-                                                                ListOfRelatedTables->Table_Name,;
-                                                                ListOfRelatedTables->Table_AKA,;
-                                                                .f.,;    // Parent Of
-                                                                .t.  }   // Child Of    8th array element
+                        l_hRelatedTables[l_cRelatedTablesKey] := {(l_nNumberOfTablesInDiagram <= 0) .or. el_seek(ListOfRelatedTables->Table_pk,"ListOfCurrentTablesInDiagram","pk"),;  // If table already included in diagram
+                                                                   ListOfRelatedTables->Table_pk,;
+                                                                   ListOfRelatedTables->Namespace_Name,;
+                                                                   ListOfRelatedTables->Namespace_AKA,;
+                                                                   ListOfRelatedTables->Table_Name,;
+                                                                   ListOfRelatedTables->Table_AKA,;
+                                                                   .f.,;    // Parent Of
+                                                                   .t.  }   // Child Of    8th array element
                     else
                         l_hRelatedTables[l_cRelatedTablesKey][8] := .t.
                     endif
@@ -2497,421 +2535,366 @@ if len(l_aNodes) == 1
 
         endwith
 
-        with object l_oDB_InArray
-            :Table("da9443c6-bffe-4ccd-bded-c3a7221bac9f","Table")
-            :Column("Application.LinkCode","Application_LinkCode")  // 1
-            :Column("Namespace.name"      ,"Namespace_Name")        // 2
-            :Column("Table.Name"          ,"Table_Name")            // 3
-            :Column("Table.AKA"           ,"Table_AKA")             // 4
-            :Column("Table.Unlogged"      ,"Table_Unlogged")        // 5
-            :Column("Table.Description"   ,"Table_Description")     // 6
-            :Column("Table.Information"   ,"Table_Information")     // 7
-            :Column("Table.UseStatus"     ,"Table_UseStatus")       // 8
-            :Column("Table.DocStatus"     ,"Table_DocStatus")       // 9
-            :join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-            :join("inner","Application","","Namespace.fk_Application = Application.pk")
-            :Where("Table.pk = ^" , l_iTablePk)
-            :SQL(@l_aSQLResult)
-        endwith
+        l_cNamespaceName       := l_oData_Application:Namespace_Name
+        l_cTableName           := l_oData_Application:Table_Name
+        l_cTableAKA            := nvl(l_oData_Application:Table_AKA,"")
+        l_lTableUnlogged       := l_oData_Application:Table_Unlogged
+        l_cTableDescription    := nvl(l_oData_Application:Table_Description,"")
+        l_cTableInformation    := nvl(l_oData_Application:Table_Information,"")
+        l_nTableUseStatus      := l_oData_Application:Table_UseStatus
+        l_nTableDocStatus      := l_oData_Application:Table_DocStatus
 
-        if l_oDB_InArray:Tally == 1
-            l_cApplicationLinkCode := AllTrim(l_aSQLResult[1,1])
-            l_cNamespaceName       := AllTrim(l_aSQLResult[1,2])
-            l_cTableName           := AllTrim(l_aSQLResult[1,3])
-            l_cTableAKA            := AllTrim(nvl(l_aSQLResult[1,4],""))
-            l_lTableUnlogged       := l_aSQLResult[1,5]
-            l_cTableDescription    := nvl(l_aSQLResult[1,6],"")
-            l_cTableInformation    := nvl(l_aSQLResult[1,7],"")
-            l_nTableUseStatus      := l_aSQLResult[1,8]
-            l_nTableDocStatus      := l_aSQLResult[1,9]
+        l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(l_nTableUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nTableUseStatus,USESTATUS_UNKNOWN)]
+        l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(el_between(l_nTableDocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),l_nTableDocStatus,DOCTATUS_MISSING)]
 
-            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nTableUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nTableUseStatus,USESTATUS_UNKNOWN)]
-            l_cDocStatus := {"","Not Needed","Composing","Completed"}[iif(vfp_between(l_nTableDocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),l_nTableDocStatus,DOCTATUS_MISSING)]
-
-            l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
-            do case
-            case l_nTableUseStatus <= USESTATUS_UNKNOWN
-                if l_lUnknownInGray
-                    l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
-                else
-                    l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
-                endif
-            case l_nTableUseStatus == USESTATUS_PROPOSED
-                l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
-            case l_nTableUseStatus == USESTATUS_UNDERDEVELOPMENT
-                l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
-            case l_nTableUseStatus == USESTATUS_ACTIVE
+        l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
+        do case
+        case l_nTableUseStatus <= USESTATUS_UNKNOWN
+            if l_lUnknownInGray
+                l_cHtml += USESTATUS_1_NODE_HIGHLIGHT
+            else
                 l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
-            case l_nTableUseStatus == USESTATUS_TOBEDISCONTINUED
-                l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
-            case l_nTableUseStatus >= USESTATUS_DISCONTINUED
-                l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
-            endcase
-            l_cHtml += [;">]
+            endif
+        case l_nTableUseStatus == USESTATUS_PROPOSED
+            l_cHtml += USESTATUS_2_NODE_HIGHLIGHT
+        case l_nTableUseStatus == USESTATUS_UNDERDEVELOPMENT
+            l_cHtml += USESTATUS_3_NODE_HIGHLIGHT
+        case l_nTableUseStatus == USESTATUS_ACTIVE
+            l_cHtml += USESTATUS_4_NODE_HIGHLIGHT
+        case l_nTableUseStatus == USESTATUS_TOBEDISCONTINUED
+            l_cHtml += USESTATUS_5_NODE_HIGHLIGHT
+        case l_nTableUseStatus >= USESTATUS_DISCONTINUED
+            l_cHtml += USESTATUS_6_NODE_HIGHLIGHT
+        endcase
+        l_cHtml += [;">]
 
-                l_cHtml += [<div class="input-group">]
-                    //Added extra double quotes around table names it easier to select text on double click.
-                    l_cHtml += [<span class="navbar-brand ms-3">Table: "]+l_cNamespaceName+[.]+l_cTableName+["]+;
-                                iif(l_lTableUnlogged,[ UNLOGGED],[])+;
-                                FormatAKAForDisplay(l_cTableAKA)+;
-                                [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cApplicationLinkCode+"/"+l_cNamespaceName+"/"+l_cTableName+[/"><i class="bi bi-pencil-square"></i></a>]
-                                if !empty(l_cUseStatus) // .and. l_cUseStatus != "Active"
-                                    l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
+            l_cHtml += [<div class="input-group">]
+                //Added extra double quotes around table names it easier to select text on double click.
+                l_cHtml += [<span class="navbar-brand ms-3">Table: "]+;
+                            TextToHtml(l_oData_Application:Namespace_Name+FormatAKAForDisplay(l_oData_Application:Namespace_AKA)+[.]+alltrim(l_oData_Application:Table_Name)+FormatAKAForDisplay(l_oData_Application:Table_AKA))+["]+;
+                            iif(l_lTableUnlogged,[ UNLOGGED],[])+;
+                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cCombinedPath+["><i class="bi bi-pencil-square"></i></a>]
+                            if !empty(l_cUseStatus) // .and. l_cUseStatus != "Active"
+                                l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
+                            endif
+                l_cHtml += [</span>]
+            l_cHtml += [</div>]
+
+        l_cHtml += [</nav>]
+
+        l_cHtml += [<div class="m-3"></div>]
+
+        l_cHtml += [<ul class="nav nav-tabs">]
+            l_cHtml += [<li class="nav-item">]
+                l_cHtml += [<a id="TabDetail1" class="nav-link]+iif(l_nActiveTabNumber == 1,[ active],[])+["]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=1; path=/';]+;
+                                                            [$('#DetailType1').show();]+;
+                                                            [$('#DetailType2').hide();]+;
+                                                            [$('#DetailType3').hide();]+;
+                                                            [$('#DetailType4').hide();]+;
+                                                            [$('#TabDetail1').addClass('active');]+;
+                                                            [$('#TabDetail2').removeClass('active');]+;
+                                                            [$('#TabDetail3').removeClass('active');]+;
+                                                            [$('#TabDetail4').removeClass('active');"]+;
+                                                            [>Columns (]+Trans(l_nNumberOfColumns)+[)</a>]
+            l_cHtml += [</li>]
+            l_cHtml += [<li class="nav-item">]
+                l_cHtml += [<a id="TabDetail2" class="nav-link]+iif(l_nActiveTabNumber == 2,[ active],[])+["]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=2; path=/';]+;
+                                                            [$('#DetailType1').hide();]+;
+                                                            [$('#DetailType2').show();]+;
+                                                            [$('#DetailType3').hide();]+;
+                                                            [$('#DetailType4').hide();]+;
+                                                            [$('#TabDetail1').removeClass('active');]+;
+                                                            [$('#TabDetail2').addClass('active');]+;
+                                                            [$('#TabDetail3').removeClass('active');]+;
+                                                            [$('#TabDetail4').removeClass('active');"]+;
+                                                            [>Related Tables In App (]+Trans(l_nNumberOfRelatedTables)+[)</a>]
+            l_cHtml += [</li>]
+            l_cHtml += [<li class="nav-item">]
+                l_cHtml += [<a id="TabDetail3" class="nav-link]+iif(l_nActiveTabNumber == 3,[ active],[])+["]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=3; path=/';]+;
+                                                            [$('#DetailType1').hide();]+;
+                                                            [$('#DetailType2').hide();]+;
+                                                            [$('#DetailType3').show();]+;
+                                                            [$('#DetailType4').hide();]+;
+                                                            [$('#TabDetail1').removeClass('active');]+;
+                                                            [$('#TabDetail2').removeClass('active');]+;
+                                                            [$('#TabDetail3').addClass('active');]+;
+                                                            [$('#TabDetail4').removeClass('active');"]+;
+                                                            [>Other Diagrams (]+Trans(l_nNumberOfOtherDiagram)+[)</a>]
+            l_cHtml += [</li>]
+            l_cHtml += [<li class="nav-item">]
+                l_cHtml += [<a id="TabDetail4" class="nav-link]+iif(l_nActiveTabNumber == 4,[ active],[])+["]+;
+                                [ onclick="document.cookie = 'DiagramDetailTab=4; path=/';]+;
+                                                            [$('#DetailType1').hide();]+;
+                                                            [$('#DetailType2').hide();]+;
+                                                            [$('#DetailType3').hide();]+;
+                                                            [$('#DetailType4').show();]+;
+                                                            [$('#TabDetail1').removeClass('active');]+;
+                                                            [$('#TabDetail2').removeClass('active');]+;
+                                                            [$('#TabDetail3').removeClass('active');]+;
+                                                            [$('#TabDetail4').addClass('active');"]+;
+                                                            [>Table Info</a>]
+            l_cHtml += [</li>]
+        l_cHtml += [</ul>]
+
+        l_cHtml += [<div class="m-3"></div>]
+
+        // -----------------------------------------------------------------------------------------------------------------------------------------
+        l_cHtml += [<div id="DetailType1"]+iif(l_nActiveTabNumber <> 1,[ style="display: none;"],[])+[ class="m-3">]
+
+
+            if l_nNumberOfColumns <= 0
+                l_cHtml += [<div class="mb-2">Table has no columns</div>]
+            else
+                l_cHtml += [<div class="row">]  //  justify-content-center
+                    l_cHtml += [<div class="col-auto">]
+
+                        l_cHtml += [<div>]
+                        l_cHtml += [<span>Filter on Column Name</span>]
+                        l_cHtml += [<input type="text" id="ColumnSearch" value="" size="30" class="ms-2">]
+                        l_cHtml += [<span class="ms-1"> (Press Enter)</span>]
+                        l_cHtml += [<input type="button" id="ButtonShowAll" class="btn btn-primary rounded ms-3" value="All">]
+                        l_cHtml += [<input type="button" id="ButtonShowCoreOnly" class="btn btn-primary rounded ms-3" value="Core Only">]
+                        l_cHtml += [</div>]
+
+                        l_cHtml += [<div class="m-3"></div>]
+
+                        l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+
+                        l_cHtml += [<tr class="bg-primary bg-gradient">]
+                            l_cHtml += [<th></th>]
+                            l_cHtml += [<th class="text-white">Name</th>]
+                            l_cHtml += [<th class="text-white">Type</th>]
+                            l_cHtml += [<th class="text-white">Nullable</th>]
+                            l_cHtml += [<th class="text-white">Default</th>]
+                            l_cHtml += [<th class="text-white">Foreign Key<br>To/Use/Optional</th>]
+                            l_cHtml += [<th class="text-white">On Delete</th>]
+                            l_cHtml += [<th class="text-white">Description</th>]
+                            l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
+                            l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                            l_cHtml += [<th class="text-white">Used By</th>]
+                            if l_nNumberOfCustomFieldValues > 0
+                                l_cHtml += [<th class="text-white text-center">Other</th>]
+                            endif
+                            if l_lWarnings
+                                l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
+                            endif
+                        l_cHtml += [</tr>]
+
+                        select ListOfColumns
+                        scan all
+
+                            do case
+                            case ListOfColumns->Column_UsedAs = 2
+                                l_cHtml_icon     := [<i class="bi bi-key"></i>]
+                                l_cHtml_tr_class := "ColumnNotCore"
+                            case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
+                                l_cHtml_icon     := [<i class="bi bi-tools"></i>]
+                                l_cHtml_tr_class := "ColumnNotCore"
+                            // case !hb_IsNIL(ListOfColumns->Table_Name)
+                            case ListOfColumns->Column_UsedAs = 3
+                                // l_cHtml_icon     := [<i class="bi-arrow-left"></i>]
+                                if ListOfColumns->Column_ForeignKeyOptional
+                                    l_cHtml_icon     := [<i class="bi-arrow-bar-right"></i>]
+                                else
+                                    l_cHtml_icon     := [<i class="bi-arrow-right"></i>]
                                 endif
-                    l_cHtml += [</span>]
+                                l_cHtml_tr_class := "ColumnNotCore"
+                            otherwise
+                                l_cHtml_icon     := []
+                                l_cHtml_tr_class := "ColumnCore"
+                            endcase
+
+                            l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
+
+                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
+
+                                // Name
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
+                                                                                                                      PrepareForURLSQLIdentifier("Table",ListOfColumns->Column_Name,ListOfColumns->Column_LinkUID)+[/]+;
+                                                                                                                      ["><span class="SpanColumnName">]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</span></a>]
+                                l_cHtml += [</td>]
+
+                                // Type
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+
+                                    // Prepare the tooltip text for enumeration type fields
+                                    if alltrim(ListOfColumns->Column_Type) == "E" .and. el_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                                        l_cTooltipEnumValues := [<table>]
+                                        select ListOfEnumValues
+                                        scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                                            l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                            l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                                        {[ ]=>[&nbsp;],;
+                                                        ["]=>[&#34;],;
+                                                        [']=>[&#39;],;
+                                                        [<]=>[&lt;],;
+                                                        [>]=>[&gt;]})+[</td>]
+                                            l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                                            if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                                                l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                                            else
+                                                l_cTooltipEnumValues += [<td></td>]
+                                            endif
+                                            l_cTooltipEnumValues += [</tr>]
+                                        endscan
+                                        l_cTooltipEnumValues += [</table>]
+                                    else
+                                        l_cTooltipEnumValues := ""
+                                    endif
+
+                                    l_cHtml += FormatColumnTypeInfo(alltrim(ListOfColumns->Column_Type),;
+                                                                    ListOfColumns->Column_Length,;
+                                                                    ListOfColumns->Column_Scale,;
+                                                                    ListOfColumns->Column_Unicode,;
+                                                                    ListOfColumns->Namespace_Name,;
+                                                                    ListOfColumns->EnumerationNamespace_Name,;
+                                                                    ListOfColumns->EnumerationNamespace_AKA,;
+                                                                    ListOfColumns->EnumerationNamespace_LinkUID,;
+                                                                    ListOfColumns->Enumeration_Name,;
+                                                                    ListOfColumns->Enumeration_AKA,;
+                                                                    ListOfColumns->Enumeration_LinkUID,;
+                                                                    ListOfColumns->Enumeration_ImplementAs,;
+                                                                    ListOfColumns->Enumeration_ImplementLength,;
+                                                                    l_cSitePath,;
+                                                                    l_cApplicationLinkCode,;
+                                                                    l_cTooltipEnumValues)
+
+                                    if ListOfColumns->Column_Array
+                                        l_cHtml += " [Array]"
+                                    endif
+                                l_cHtml += [</td>]
+
+                                // Nullable
+                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                    l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
+                                l_cHtml += [</td>]
+
+                                // Default
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
+                                l_cHtml += [</td>]
+
+
+
+                                // // Foreign Key To/Use/Optional
+                                // l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                //     if !hb_IsNIL(ListOfColumns->Table_Name)
+                                //         l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
+                                //                        l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+[/]+;
+                                //                                         ListOfColumns->Namespace_Name+"/"+ListOfColumns->Table_Name+[/]+;
+                                //                                         [">]
+                                //         l_cHtml += ListOfColumns->Namespace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
+                                //         l_cHtml += [</a>]
+                                //         if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
+                                //             l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
+                                //         endif
+                                //         if ListOfColumns->Column_ForeignKeyOptional
+                                //             l_cHtml += [<br>Optional]
+                                //         endif
+                                //     endif
+                                // l_cHtml += [</td>]
+
+
+
+                                // Foreign Key To/Use/Optional
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
+                                        l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
+                                                            l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+;
+                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_LinkUID)+"/"+;
+                                                                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_LinkUID)    +[/]+;
+                                                                                                        [">]
+
+                                        if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
+                                            l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                        else
+                                            // l_cHtml += ListOfColumns->ForeignNamespace_Name+[.]+ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA)  //_M_ To Enhance
+                                            l_cHtml += TextToHTML(ListOfColumns->ForeignNamespace_Name+FormatAKAForDisplay(ListOfColumns->ForeignNamespace_AKA))
+                                            l_cHtml += [.]
+                                            l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                        endif
+
+                                        l_cHtml += [</a>]
+                                        if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
+                                            l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
+                                        endif
+                                        if ListOfColumns->Column_ForeignKeyOptional
+                                            l_cHtml += [<br>Optional]
+                                        endif
+                                    endif
+                                l_cHtml += [</td>]
+
+
+                                // // Foreign Key Required
+                                // l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                //     if ListOfColumns->Column_UsedAs == COLUMN_USEDAS_FOREIGN_KEY
+                                //         l_cHtml += {"","Yes","No"}[iif(el_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
+                                //     endif
+                                // l_cHtml += [</td>]
+
+                                // OnDelete
+                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                                    if ListOfColumns->Column_UsedAs = 3
+                                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                                    endif
+                                l_cHtml += [</td>]
+
+                                // Description
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
+                                l_cHtml += [</td>]
+
+                                // Use Status
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)]
+                                l_cHtml += [</td>]
+
+                                // Doc Status
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
+                                l_cHtml += [</td>]
+
+                                // Used By
+                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                    l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
+                                l_cHtml += [</td>]
+
+                                if l_nNumberOfCustomFieldValues > 0
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
+                                    l_cHtml += [</td>]
+                                endif
+
+                                if l_lWarnings
+                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
+                                    l_cHtml += [</td>]
+                                endif
+
+                            l_cHtml += [</tr>]
+                        endscan
+                        l_cHtml += [</table>]
+                        
+                    l_cHtml += [</div>]
                 l_cHtml += [</div>]
 
-            l_cHtml += [</nav>]
+            endif
 
-            l_cHtml += [<div class="m-3"></div>]
+        l_cHtml += [</div>]
 
-            l_cHtml += [<ul class="nav nav-tabs">]
-                l_cHtml += [<li class="nav-item">]
-                    l_cHtml += [<a id="TabDetail1" class="nav-link]+iif(l_nActiveTabNumber == 1,[ active],[])+["]+;
-                                    [ onclick="document.cookie = 'DiagramDetailTab=1; path=/';]+;
-                                                                [$('#DetailType1').show();]+;
-                                                                [$('#DetailType2').hide();]+;
-                                                                [$('#DetailType3').hide();]+;
-                                                                [$('#DetailType4').hide();]+;
-                                                                [$('#TabDetail1').addClass('active');]+;
-                                                                [$('#TabDetail2').removeClass('active');]+;
-                                                                [$('#TabDetail3').removeClass('active');]+;
-                                                                [$('#TabDetail4').removeClass('active');"]+;
-                                                                [>Columns (]+Trans(l_nNumberOfColumns)+[)</a>]
-                l_cHtml += [</li>]
-                l_cHtml += [<li class="nav-item">]
-                    l_cHtml += [<a id="TabDetail2" class="nav-link]+iif(l_nActiveTabNumber == 2,[ active],[])+["]+;
-                                    [ onclick="document.cookie = 'DiagramDetailTab=2; path=/';]+;
-                                                                [$('#DetailType1').hide();]+;
-                                                                [$('#DetailType2').show();]+;
-                                                                [$('#DetailType3').hide();]+;
-                                                                [$('#DetailType4').hide();]+;
-                                                                [$('#TabDetail1').removeClass('active');]+;
-                                                                [$('#TabDetail2').addClass('active');]+;
-                                                                [$('#TabDetail3').removeClass('active');]+;
-                                                                [$('#TabDetail4').removeClass('active');"]+;
-                                                                [>Related Tables In App (]+Trans(l_nNumberOfRelatedTables)+[)</a>]
-                l_cHtml += [</li>]
-                l_cHtml += [<li class="nav-item">]
-                    l_cHtml += [<a id="TabDetail3" class="nav-link]+iif(l_nActiveTabNumber == 3,[ active],[])+["]+;
-                                    [ onclick="document.cookie = 'DiagramDetailTab=3; path=/';]+;
-                                                                [$('#DetailType1').hide();]+;
-                                                                [$('#DetailType2').hide();]+;
-                                                                [$('#DetailType3').show();]+;
-                                                                [$('#DetailType4').hide();]+;
-                                                                [$('#TabDetail1').removeClass('active');]+;
-                                                                [$('#TabDetail2').removeClass('active');]+;
-                                                                [$('#TabDetail3').addClass('active');]+;
-                                                                [$('#TabDetail4').removeClass('active');"]+;
-                                                                [>Other Diagrams (]+Trans(l_nNumberOfOtherDiagram)+[)</a>]
-                l_cHtml += [</li>]
-                l_cHtml += [<li class="nav-item">]
-                    l_cHtml += [<a id="TabDetail4" class="nav-link]+iif(l_nActiveTabNumber == 4,[ active],[])+["]+;
-                                    [ onclick="document.cookie = 'DiagramDetailTab=4; path=/';]+;
-                                                                [$('#DetailType1').hide();]+;
-                                                                [$('#DetailType2').hide();]+;
-                                                                [$('#DetailType3').hide();]+;
-                                                                [$('#DetailType4').show();]+;
-                                                                [$('#TabDetail1').removeClass('active');]+;
-                                                                [$('#TabDetail2').removeClass('active');]+;
-                                                                [$('#TabDetail3').removeClass('active');]+;
-                                                                [$('#TabDetail4').addClass('active');"]+;
-                                                                [>Table Info</a>]
-                l_cHtml += [</li>]
-            l_cHtml += [</ul>]
+        // -----------------------------------------------------------------------------------------------------------------------------------------
 
-            l_cHtml += [<div class="m-3"></div>]
-
-            // -----------------------------------------------------------------------------------------------------------------------------------------
-            l_cHtml += [<div id="DetailType1"]+iif(l_nActiveTabNumber <> 1,[ style="display: none;"],[])+[ class="m-3">]
-
-
-                if l_nNumberOfColumns <= 0
-                    l_cHtml += [<div class="mb-2">Table has no columns</div>]
-                else
-                    l_cHtml += [<div class="row">]  //  justify-content-center
-                        l_cHtml += [<div class="col-auto">]
-
-                            l_cHtml += [<div>]
-                            l_cHtml += [<span>Filter on Column Name</span>]
-                            l_cHtml += [<input type="text" id="ColumnSearch" value="" size="30" class="ms-2">]
-                            l_cHtml += [<span class="ms-1"> (Press Enter)</span>]
-                            l_cHtml += [<input type="button" id="ButtonShowAll" class="btn btn-primary rounded ms-3" value="All">]
-                            l_cHtml += [<input type="button" id="ButtonShowCoreOnly" class="btn btn-primary rounded ms-3" value="Core Only">]
-                            l_cHtml += [</div>]
-
-                            l_cHtml += [<div class="m-3"></div>]
-
-                            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
-
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th></th>]
-                                l_cHtml += [<th class="text-white">Name</th>]
-                                l_cHtml += [<th class="text-white">Type</th>]
-                                l_cHtml += [<th class="text-white">Nullable</th>]
-                                l_cHtml += [<th class="text-white">Default</th>]
-                                l_cHtml += [<th class="text-white">Foreign Key<br>To/Use/Optional</th>]
-                                l_cHtml += [<th class="text-white">On Delete</th>]
-                                l_cHtml += [<th class="text-white">Description</th>]
-                                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                                l_cHtml += [<th class="text-white">Used By</th>]
-                                if l_nNumberOfCustomFieldValues > 0
-                                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                                endif
-                                if l_lWarnings
-                                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                                endif
-                            l_cHtml += [</tr>]
-
-                            select ListOfColumns
-                            scan all
-
-                                do case
-                                case ListOfColumns->Column_UsedAs = 2
-                                    l_cHtml_icon     := [<i class="bi bi-key"></i>]
-                                    l_cHtml_tr_class := "ColumnNotCore"
-                                case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
-                                    l_cHtml_icon     := [<i class="bi bi-tools"></i>]
-                                    l_cHtml_tr_class := "ColumnNotCore"
-                                // case !hb_IsNIL(ListOfColumns->Table_Name)
-                                case ListOfColumns->Column_UsedAs = 3
-                                    // l_cHtml_icon     := [<i class="bi-arrow-left"></i>]
-                                    if ListOfColumns->Column_ForeignKeyOptional
-                                        l_cHtml_icon     := [<i class="bi-arrow-bar-right"></i>]
-                                    else
-                                        l_cHtml_icon     := [<i class="bi-arrow-right"></i>]
-                                    endif
-                                    l_cHtml_tr_class := "ColumnNotCore"
-                                otherwise
-                                    l_cHtml_icon     := []
-                                    l_cHtml_tr_class := "ColumnCore"
-                                endcase
-
-                                l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
-
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
-
-                                    // Name
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditColumn/]+l_cApplicationLinkCode+"/"+l_cNamespaceName+"/"+l_cTableName+[/]+ListOfColumns->Column_Name+[/"><span class="SpanColumnName">]+ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)+[</span></a>]
-                                    l_cHtml += [</td>]
-
-                                    // Type
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-
-                                        // Prepare the tooltip text for enumeration type fields
-                                        if allt(ListOfColumns->Column_Type) == "E" .and. vfp_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
-                                            l_cTooltipEnumValues := [<table>]
-                                            select ListOfEnumValues
-                                            scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
-                                                l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
-                                                            {[ ]=>[&nbsp;],;
-                                                            ["]=>[&#34;],;
-                                                            [']=>[&#39;],;
-                                                            [<]=>[&lt;],;
-                                                            [>]=>[&gt;]})+[</td>]
-                                                l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
-                                                if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
-                                                    l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
-                                                else
-                                                    l_cTooltipEnumValues += [<td></td>]
-                                                endif
-                                                l_cTooltipEnumValues += [</tr>]
-                                            endscan
-                                            l_cTooltipEnumValues += [</table>]
-                                        else
-                                            l_cTooltipEnumValues := ""
-                                        endif
-
-                                        l_cHtml += FormatColumnTypeInfo(allt(ListOfColumns->Column_Type),;
-                                                                        ListOfColumns->Column_Length,;
-                                                                        ListOfColumns->Column_Scale,;
-                                                                        ListOfColumns->Enumeration_Name,;
-                                                                        ListOfColumns->Enumeration_AKA,;
-                                                                        ListOfColumns->Enumeration_ImplementAs,;
-                                                                        ListOfColumns->Enumeration_ImplementLength,;
-                                                                        ListOfColumns->Column_Unicode,;
-                                                                        l_cSitePath,;
-                                                                        l_cApplicationLinkCode,;
-                                                                        l_cNamespaceName,;
-                                                                        l_cTooltipEnumValues)
-                                        if ListOfColumns->Column_Array
-                                            l_cHtml += " [Array]"
-                                        endif
-                                    l_cHtml += [</td>]
-
-                                    // Nullable
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                                    l_cHtml += [</td>]
-
-                                    // Default
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
-                                    l_cHtml += [</td>]
-
-                                    // Foreign Key To/Use/Optional
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        if !hb_IsNIL(ListOfColumns->Table_Name)
-                                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+ListOfColumns->Namespace_Name+"/"+ListOfColumns->Table_Name+[/">]
-                                            l_cHtml += ListOfColumns->Namespace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
-                                            l_cHtml += [</a>]
-                                            if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
-                                                l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
-                                            endif
-                                            if ListOfColumns->Column_ForeignKeyOptional
-                                                l_cHtml += [<br>Optional]
-                                            endif
-                                        endif
-                                    l_cHtml += [</td>]
-
-                                    // // Foreign Key Required
-                                    // l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                    //     if ListOfColumns->Column_UsedAs == COLUMN_USEDAS_FOREIGN_KEY
-                                    //         l_cHtml += {"","Yes","No"}[iif(vfp_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
-                                    //     endif
-                                    // l_cHtml += [</td>]
-
-                                    // OnDelete
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                        if ListOfColumns->Column_UsedAs = 3
-                                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
-                                        endif
-                                    l_cHtml += [</td>]
-
-                                    // Description
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
-                                    l_cHtml += [</td>]
-
-                                    // Use Status
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)]
-                                    l_cHtml += [</td>]
-
-                                    // Doc Status
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(vfp_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
-                                    l_cHtml += [</td>]
-
-                                    // Used By
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
-                                    l_cHtml += [</td>]
-
-                                    if l_nNumberOfCustomFieldValues > 0
-                                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                            l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
-                                        l_cHtml += [</td>]
-                                    endif
-
-                                    if l_lWarnings
-                                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
-                                        l_cHtml += [</td>]
-                                    endif
-
-                                l_cHtml += [</tr>]
-                            endscan
-                            l_cHtml += [</table>]
-                            
-                        l_cHtml += [</div>]
-                    l_cHtml += [</div>]
-
-                endif
-
-            l_cHtml += [</div>]
-
-            // -----------------------------------------------------------------------------------------------------------------------------------------
-
-            l_cHtml += [<div id="DetailType2"]+iif(l_nActiveTabNumber <> 2,[ style="display: none;"],[])+[ class="m-3]+iif(l_nNumberOfRelatedTables > 0,[ form-check form-switch],[])+[">]
-                if l_nNumberOfRelatedTables <= 0
-                    l_cHtml += [<div class="mb-2">Table has no related tables</div>]
-                else
-                    //---------------------------------------------------------------------------
-                    if l_nAccessLevelDD >= 4
-                        l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
-                        // if GRAPH_LIB_DD == "mxgraph"
-                        if l_nRenderMode == RENDERMODE_MXGRAPH
-                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-                        // elseif GRAPH_LIB_DD == "visjs"
-                        else
-                            l_cHtml += [network.storePositions();]
-                            l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-                        endif
-                        
-                        l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
-                        l_cHtml += [">Update Table selection and Save Layout</button></div>]
-                        l_cDisabled := ""
-                    else
-                        l_cDisabled := " disabled"
-                    endif
-                    //---------------------------------------------------------------------------
-
-                    // l_aRelatedTableInfo
-                    //     1 = In Diagram
-                    //     2 = table_pk
-                    //     3 = Namespace_Name
-                    //     4 = Namespace_AKA
-                    //     5 = Table_Name
-                    //     6 = Table_AKA
-                    //     7 = Parent Of
-                    //     8 = Child Of
-                    l_cHtml += [<table class="">]
-
-                    for each l_aRelatedTableInfo in l_hRelatedTables
-                        l_cHtml += [<tr><td>]
-                            l_CheckBoxId := "CheckTable"+Trans(l_aRelatedTableInfo[2])
-                            if !empty(l_cListOfRelatedTablePks)
-                                l_cListOfRelatedTablePks += "*"
-                            endif
-                            l_cListOfRelatedTablePks += Trans(l_aRelatedTableInfo[2])
-
-                            // l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
-                            l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input"]+l_cDisabled+[>]
-
-                            l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
-
-                            l_cHtml += l_aRelatedTableInfo[3]+FormatAKAForDisplay(l_aRelatedTableInfo[4])+[.]+l_aRelatedTableInfo[5]+FormatAKAForDisplay(l_aRelatedTableInfo[6])
-                            if l_aRelatedTableInfo[8]
-                                l_cHtml += [<span class="bi bi-arrow-left ms-2">]
-                            endif
-                            if l_aRelatedTableInfo[7]
-                                l_cHtml += [<span class="bi bi-arrow-right ms-2">]
-                            endif
-
-                            l_cHtml += [</label>]
-
-                        l_cHtml += [</td></tr>]
-                    endfor
-
-                    l_cHtml += [</table>]
-
-                    l_cHtml += [<input type="hidden" name="TextListOfRelatedTablePks" value="]+l_cListOfRelatedTablePks+[">]
-                endif
-            l_cHtml += [</div>]
-
-            // -----------------------------------------------------------------------------------------------------------------------------------------
-
-            l_cHtml += [<div id="DetailType3"]+iif(l_nActiveTabNumber <> 3,[ style="display: none;"],[])+[ class="m-3">]
-                if l_nNumberOfOtherDiagram <= 0
-                    l_cHtml += [<div class="mb-2">Table is not used in other diagrams</div>]
-                else
-                    select ListOfOtherDiagram
-                    scan all
-                        l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagram->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagram->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagram->Diagram_Name+[</a></div>]
-                    endscan
-                endif
-            l_cHtml += [</div>]
-
-            // -----------------------------------------------------------------------------------------------------------------------------------------
-
-            l_cHtml += [<div id="DetailType4"]+iif(l_nActiveTabNumber <> 4,[ style="display: none;"],[])+[ class="m-3">]
+        l_cHtml += [<div id="DetailType2"]+iif(l_nActiveTabNumber <> 2,[ style="display: none;"],[])+[ class="m-3]+iif(l_nNumberOfRelatedTables > 0,[ form-check form-switch],[])+[">]
+            if l_nNumberOfRelatedTables <= 0
+                l_cHtml += [<div class="mb-2">Table has no related tables</div>]
+            else
                 //---------------------------------------------------------------------------
                 if l_nAccessLevelDD >= 4
-                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
+                    l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndSelectedTables" class="btn btn-primary rounded" onclick="]
                     // if GRAPH_LIB_DD == "mxgraph"
                     if l_nRenderMode == RENDERMODE_MXGRAPH
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
@@ -2920,49 +2903,127 @@ if len(l_aNodes) == 1
                         l_cHtml += [network.storePositions();]
                         l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                     endif
-                    l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
-                    l_cHtml += [">Remove Table and Save Layout</button></div>]
+                    
+                    l_cHtml += [$('#ActionOnSubmit').val('UpdateTableSelectionAndSaveLayout');document.form.submit();]
+                    l_cHtml += [">Update Table selection and Save Layout</button></div>]
+                    l_cDisabled := ""
+                else
+                    l_cDisabled := " disabled"
                 endif
                 //---------------------------------------------------------------------------
-                l_cHtml += [<input type="hidden" name="TextTablePkToRemove" value="]+Trans(l_iTablePk)+[">]
 
-                if !empty(l_cUseStatus)
-                    l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
+                // l_aRelatedTableInfo
+                //     1 = In Diagram
+                //     2 = table_pk
+                //     3 = Namespace_Name
+                //     4 = Namespace_AKA
+                //     5 = Table_Name
+                //     6 = Table_AKA
+                //     7 = Parent Of
+                //     8 = Child Of
+                l_cHtml += [<table class="">]
+
+                for each l_aRelatedTableInfo in l_hRelatedTables
+                    l_cHtml += [<tr><td>]
+                        l_CheckBoxId := "CheckTable"+Trans(l_aRelatedTableInfo[2])
+                        if !empty(l_cListOfRelatedTablePks)
+                            l_cListOfRelatedTablePks += "*"
+                        endif
+                        l_cListOfRelatedTablePks += Trans(l_aRelatedTableInfo[2])
+
+                        // l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
+                        l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input"]+l_cDisabled+[>]
+
+                        l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
+
+                        l_cHtml += TextToHTML(l_aRelatedTableInfo[3]+FormatAKAForDisplay(l_aRelatedTableInfo[4])+[.]+l_aRelatedTableInfo[5]+FormatAKAForDisplay(l_aRelatedTableInfo[6]))
+                        if l_aRelatedTableInfo[8]
+                            l_cHtml += [<span class="bi bi-arrow-left ms-2">]
+                        endif
+                        if l_aRelatedTableInfo[7]
+                            l_cHtml += [<span class="bi bi-arrow-right ms-2">]
+                        endif
+
+                        l_cHtml += [</label>]
+
+                    l_cHtml += [</td></tr>]
+                endfor
+
+                l_cHtml += [</table>]
+
+                l_cHtml += [<input type="hidden" name="TextListOfRelatedTablePks" value="]+l_cListOfRelatedTablePks+[">]
+            endif
+        l_cHtml += [</div>]
+
+        // -----------------------------------------------------------------------------------------------------------------------------------------
+
+        l_cHtml += [<div id="DetailType3"]+iif(l_nActiveTabNumber <> 3,[ style="display: none;"],[])+[ class="m-3">]
+            if l_nNumberOfOtherDiagram <= 0
+                l_cHtml += [<div class="mb-2">Table is not used in other diagrams</div>]
+            else
+                select ListOfOtherDiagram
+                scan all
+                    l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagram->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagram->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagram->Diagram_Name+[</a></div>]
+                endscan
+            endif
+        l_cHtml += [</div>]
+
+        // -----------------------------------------------------------------------------------------------------------------------------------------
+
+        l_cHtml += [<div id="DetailType4"]+iif(l_nActiveTabNumber <> 4,[ style="display: none;"],[])+[ class="m-3">]
+            //---------------------------------------------------------------------------
+            if l_nAccessLevelDD >= 4
+                l_cHtml += [<div class="mb-3"><button id="ButtonSaveLayoutAndDeleteTable" class="btn btn-primary rounded" onclick="]
+                // if GRAPH_LIB_DD == "mxgraph"
+                if l_nRenderMode == RENDERMODE_MXGRAPH
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+                // elseif GRAPH_LIB_DD == "visjs"
+                else
+                    l_cHtml += [network.storePositions();]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
                 endif
+                l_cHtml += [$('#ActionOnSubmit').val('RemoveTableAndSaveLayout');document.form.submit();]
+                l_cHtml += [">Remove Table and Save Layout</button></div>]
+            endif
+            //---------------------------------------------------------------------------
+            l_cHtml += [<input type="hidden" name="TextTablePkToRemove" value="]+Trans(l_iTablePk)+[">]
 
-                if !empty(l_cDocStatus)
-                    l_cHtml += [<div class="mt-3"><span class="fs-5">Documentation Status:</span><span class="mt-3 ms-2">]+l_cDocStatus+[</span></div>]
-                endif
+            if !empty(l_cUseStatus)
+                l_cHtml += [<div class="mt-3"><span class="fs-5">Usage Status:</span><span class="mt-3 ms-2">]+l_cUseStatus+[</span></div>]
+            endif
 
-                if !empty(l_cTableDescription)
-                    l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cTableDescription)+[</div>]
-                endif
+            if !empty(l_cDocStatus)
+                l_cHtml += [<div class="mt-3"><span class="fs-5">Documentation Status:</span><span class="mt-3 ms-2">]+l_cDocStatus+[</span></div>]
+            endif
 
-                if !empty(l_cTableInformation)
-                    // l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cTableInformation)+[</div>]
+            if !empty(l_cTableDescription)
+                l_cHtml += [<div class="mt-3"><div class="fs-5">Description:</div>]+TextToHTML(l_cTableDescription)+[</div>]
+            endif
 
-                    l_cHtml += [<div class="mt-3">]
-                        l_cHtml += [<div class="fs-5">Information:</div>]
+            if !empty(l_cTableInformation)
+                // l_cHtml += [<div class="mt-3"><div class="fs-5">Information:</div>]+TextToHTML(l_cTableInformation)+[</div>]
 
-                        l_cObjectId := "table-description"+Trans(l_iTablePk)
-                        l_cHtml += [<div id="]+l_cObjectId+[">]
-                        l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(l_cTableInformation)+[');</script>]
-                        l_cHtml += [</div>]
+                l_cHtml += [<div class="mt-3">]
+                    l_cHtml += [<div class="fs-5">Information:</div>]
+
+                    l_cObjectId := "table-description"+Trans(l_iTablePk)
+                    l_cHtml += [<div id="]+l_cObjectId+[">]
+                    l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(l_cTableInformation)+[');</script>]
                     l_cHtml += [</div>]
+                l_cHtml += [</div>]
 
-                endif
+            endif
 
-                if !empty(l_cHtml_TableCustomFields)
-                    l_cHtml += [<div class="mt-3">]
-                        l_cHtml += l_cHtml_TableCustomFields
-                    l_cHtml += [</div>]
-                endif
+            if !empty(l_cHtml_TableCustomFields)
+                l_cHtml += [<div class="mt-3">]
+                    l_cHtml += l_cHtml_TableCustomFields
+                l_cHtml += [</div>]
+            endif
 
-            l_cHtml += [</div>]
+        l_cHtml += [</div>]
 
-            // -----------------------------------------------------------------------------------------------------------------------------------------
+        // -----------------------------------------------------------------------------------------------------------------------------------------
 
-        endif
     endif
 else
     l_aEdges := hb_HGetDef(l_hOnClickInfo,"edges",{})
@@ -3009,22 +3070,22 @@ else
                         l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find relation.</div>]
 
                     else
-                        l_cColumnName               := Alltrim(l_aSQLResult[1,1])
-                        l_cColumnAKA                := Alltrim(nvl(l_aSQLResult[1,2],""))
+                        l_cColumnName               := alltrim(l_aSQLResult[1,1])
+                        l_cColumnAKA                := alltrim(nvl(l_aSQLResult[1,2],""))
                         l_nColumnUseStatus          := l_aSQLResult[1,3]
                         l_nColumnDocStatus          := l_aSQLResult[1,4]
-                        l_cColumnDescription        := Alltrim(nvl(l_aSQLResult[1,5],""))
-                        l_cColumnForeignKeyUse      := Alltrim(nvl(l_aSQLResult[1,6],""))
+                        l_cColumnDescription        := alltrim(nvl(l_aSQLResult[1,5],""))
+                        l_cColumnForeignKeyUse      := alltrim(nvl(l_aSQLResult[1,6],""))
                         l_lColumnForeignKeyOptional := l_aSQLResult[1,7]
                         l_nColumnOnDelete           := l_aSQLResult[1,8]
 
-                        l_cFrom_Namespace_Name := Alltrim(l_aSQLResult[1,9])
-                        l_cFrom_Table_Name     := Alltrim(l_aSQLResult[1,10])
-                        l_cFrom_Table_AKA      := Alltrim(nvl(l_aSQLResult[1,11],""))
+                        l_cFrom_Namespace_Name := alltrim(l_aSQLResult[1,9])
+                        l_cFrom_Table_Name     := alltrim(l_aSQLResult[1,10])
+                        l_cFrom_Table_AKA      := alltrim(nvl(l_aSQLResult[1,11],""))
 
-                        l_cTo_Namespace_Name   := Alltrim(l_aSQLResult[1,12])
-                        l_cTo_Table_Name       := Alltrim(l_aSQLResult[1,13])
-                        l_cTo_Table_AKA        := Alltrim(nvl(l_aSQLResult[1,14],""))
+                        l_cTo_Namespace_Name   := alltrim(l_aSQLResult[1,12])
+                        l_cTo_Table_Name       := alltrim(l_aSQLResult[1,13])
+                        l_cTo_Table_AKA        := alltrim(nvl(l_aSQLResult[1,14],""))
 
                         l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
                         do case
@@ -3058,7 +3119,7 @@ else
                         endif
                         if l_nColumnOnDelete > 1
                             l_cHtml += [<div class="m-3"><div class="fs-5">On Delete:</div>]
-                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(vfp_between(l_nColumnOnDelete,1,4),l_nColumnOnDelete,1)]
+                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(l_nColumnOnDelete,1,4),l_nColumnOnDelete,1)]
                             l_cHtml += [</div>]
                         endif
 

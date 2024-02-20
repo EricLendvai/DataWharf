@@ -256,7 +256,7 @@ if l_lContinue
 
     l_cFilePathPID := GetStreamFileFolderForCurrentProcess()
 
-    vfp_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
+    el_StrToFile(l_cBackupCode,l_cFilePathPID+"Export.txt")
 
     hb_ZipFile(l_cFilePathPID+"Export.zip",l_cFilePathPID+"Export.txt",9,,.t.)
     DeleteFile(l_cFilePathPID+"Export.txt")
@@ -343,19 +343,16 @@ l_cHtml += [<input type="hidden" name="formname" value="Steo1">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="ModelKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 if !empty(par_iPk)
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">Import</span>]   //navbar-text
             if oFcgi:p_nAccessLevelML >= 7
-                // l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
                 l_cHtml += [<button type="button" class="btn btn-danger rounded ms-3" data-bs-toggle="modal" data-bs-target="#ConfirmImportModal">Import</button>]
             endif
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormDoneCancel()
         l_cHtml += [</div>]
     l_cHtml += [</nav>]
 
@@ -400,7 +397,7 @@ oFcgi:TraceAdd("ModelImportStep1FormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 do case
-case vfp_inlist(l_cActionOnSubmit,"Import")
+case el_IsInlist(l_cActionOnSubmit,"Import")
 
     l_cInputFileName := oFcgi:GetInputFileName("TextExportFile")
     if empty(l_cInputFileName)
@@ -434,7 +431,7 @@ case vfp_inlist(l_cActionOnSubmit,"Import")
 
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
 
 endcase
@@ -568,7 +565,7 @@ do while l_nLineCounter < l_nNumberOfLines
                 AAdd(l_aTableStructure,{l_aFieldStructure[2],l_aFieldStructure[3],val(l_aFieldStructure[4]),val(l_aFieldStructure[5]),strtran(l_aFieldStructure[6],"+","")})
 
                 l_cCursorFieldType := l_aFieldStructure[3]
-                if vfp_inlist(l_cCursorFieldType,"C","CV","M")
+                if el_IsInlist(l_cCursorFieldType,"C","CV","M")
                     l_cCursorFieldType := "M"  //overwrite to ensure will have enough space to store encoded field value
                     l_cCursorFieldLen  := 0
                     l_cCursorFieldDec  := 0
@@ -647,7 +644,7 @@ endwith
 select ImportSourcePackage
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Package")
 scan all
-    if vfp_seek( upper(strtran(ImportSourcePackage->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourcePackage->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: Package Already on file",ListOfCurrentRecords->Name)
         l_hPackagePkOldToNew[ImportSourcePackage->pk] := ListOfCurrentRecords->pk
     else
@@ -699,7 +696,7 @@ endwith
 select ImportSourcePrimitiveType
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.PrimitiveType")
 scan all
-    if vfp_seek( upper(strtran(ImportSourcePrimitiveType->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourcePrimitiveType->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         l_hPrimitiveTypePkOldToNew[ImportSourcePrimitiveType->pk] := ListOfCurrentRecords->pk
     else
         with object l_oDBImport
@@ -739,7 +736,7 @@ scan all
         l_ifk_PrimitiveTypeCurrent := hb_HGetDef(l_hPrimitiveTypePkOldToNew,l_ifk_PrimitiveTypeImport,0)
     endif
 
-    if vfp_seek( upper(strtran(ImportSourceDataType->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourceDataType->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: DataType Already on file",ListOfCurrentRecords->FullName)
         l_hDataTypePkOldToNew[ImportSourceDataType->pk] := ListOfCurrentRecords->pk
     else
@@ -792,7 +789,7 @@ endwith
 select ImportSourceModelEnumeration
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelEnumeration")
 scan all
-    if vfp_seek( upper(strtran(ImportSourceModelEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourceModelEnumeration->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: ModelEnumeration Already on file",ListOfCurrentRecords->Name)
         l_hModelEnumerationPkOldToNew[ImportSourceModelEnumeration->pk] := ListOfCurrentRecords->pk
     else
@@ -832,7 +829,7 @@ scan all
         l_ifk_PackageCurrent := hb_HGetDef(l_hPackagePkOldToNew,l_ifk_PackageImport,0)
     endif
 
-    if vfp_seek( alltrim(str(l_ifk_PackageCurrent))+'*'+upper(strtran(ImportSourceEntity->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( alltrim(str(l_ifk_PackageCurrent))+'*'+upper(strtran(ImportSourceEntity->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: Entity Already on file",ListOfCurrentRecords->Name)
         l_hEntityPkOldToNew[ImportSourceEntity->pk] := ListOfCurrentRecords->pk
     else
@@ -873,7 +870,7 @@ scan all
         l_ifk_PackageCurrent := hb_HGetDef(l_hPackagePkOldToNew,l_ifk_PackageImport,0)
     endif
 
-    if vfp_seek( alltrim(str(l_ifk_PackageCurrent))+'*'+upper(strtran(ImportSourceAssociation->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( alltrim(str(l_ifk_PackageCurrent))+'*'+upper(strtran(ImportSourceAssociation->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: Association Already on file",ListOfCurrentRecords->Name)
         l_hAssociationPkOldToNew[ImportSourceAssociation->pk] := ListOfCurrentRecords->pk
     else
@@ -914,7 +911,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find ModelEnumeration Parent Key on ModelEnumValue Import" ,l_iParentKeyImport)
     else
-        if vfp_seek( alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceModelEnumValue->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek( alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceModelEnumValue->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: ModelEnumValue Already on file in ModelEnumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
         else
             with object l_oDBImport
@@ -962,7 +959,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         // SendToDebugView("Failure to find Entity Parent Key on Attribute Import" ,l_iParentKeyImport)
     else
-        if vfp_seek( alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceAttribute->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek( alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceAttribute->FullName,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Attribute Already on file",ListOfCurrentRecords->Name)
             l_hAttributePkOldToNew[ImportSourceAttribute->pk] := ListOfCurrentRecords->pk
         else
@@ -1034,7 +1031,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find Entity Parent Key on Endpoint Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_AssociationCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_AssociationCurrent))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: Endpoint Already on file in Entity (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
             l_hEndpointPkOldToNew[ImportSourceEndpoint->pk] := ListOfCurrentRecords->pk
         else
@@ -1068,7 +1065,7 @@ endwith
 select ImportSourceModelingDiagram
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ModelingDiagram")
 scan all
-    if vfp_seek( upper(strtran(ImportSourceModelingDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourceModelingDiagram->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         // SendToDebugView("Import: ModelingDiagram Already on file",ListOfCurrentRecords->Name)
         l_hModelingDiagramPkOldToNew[ImportSourceModelingDiagram->pk] := ListOfCurrentRecords->pk
     else
@@ -1146,7 +1143,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find ModelingDiagram Parent Key on DiagramEntity Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000018","DiagramEntity")
@@ -1179,7 +1176,7 @@ l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.CustomFiel
 scan all
     l_hImportSourceCustomFieldUsedOn[ImportSourceCustomField->pk] := ImportSourceCustomField->UsedOn
 
-    if vfp_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+    if el_seek( upper(strtran(ImportSourceCustomField->Code,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
         l_hCustomFieldPkOldToNew[ImportSourceCustomField->pk] := ListOfCurrentRecords->pk
     else
         with object l_oDBImport
@@ -1217,7 +1214,7 @@ scan all
         l_ifk_CustomFieldCurrent := hb_HGetDef(l_hCustomFieldPkOldToNew,l_ifk_CustomFieldImport,0)
     endif
 
-    if vfp_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
+    if el_seek(l_ifk_CustomFieldCurrent ,"ListOfCurrentRecords","tag1")
         // Record already on file
     else
         with object l_oDBImport
@@ -1286,7 +1283,7 @@ scan all
     if empty(l_iParentKeyCurrent)
         SendToDebugView("Failure to find CustomField Parent Key on CustomFieldValue Import" ,l_iParentKeyImport)
     else
-        if vfp_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+alltrim(str(l_ifk_EntityCurrent))+'*' ,"ListOfCurrentRecords","tag1")
             // SendToDebugView("Import: CustomFieldValue Already on file in CustomField (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
         else
             with object l_oDBImport

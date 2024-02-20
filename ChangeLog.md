@@ -1,8 +1,19 @@
 # DataWharf - Change Log
 
-## 02/01/2024 v 3.6
-* Enhanced UI when editing tables. New Nex/Previous on tables that is aware of the last search on tables.
+## 02/19/2024 v 4.0
+* Enhanced UI when editing applications, new Nex/Previous buttons on most elements.
+* Added multiple Count columns and "Referenced by" screens.
+* Added the ability to review Diagrams from Tables.
+* In Applications, renamed the "Visualize" Tab to "Diagrams" to reduce confusion.
 * "Support Column Names" list will be used to display "Implicitly Support" in Column edit screen when applicable.
+* Support for extended and Unicode characters in "Namespace","Table","Column","Enumeration","EnumValue","Index" name fields, since allowed in PostgreSQL
+* New Integrity test to warn of non Alphanumeric with underscore and non leading numeric identifiers. Even though blanks are allowed in column names for example, many ORM can not handle them.
+* Removed for now the "Inter-App Mapping" option. This feature need to be re-designed to be effective.
+* Made the Table and Enumeration search options more valuable by adding search modes "Basic", "Standard" and "Advanced".
+* Added Code field to Enumeration Values. Optional and can be used for reporting.
+* New "Prevent Changing Namespace on Existing Tables and Enumeration" application level setting.
+* Several new "Integrity Test" options.
+* Changed use of Harbour_VFP to Harbour_EL dependency.
 
 ## 01/28/2024 v 3.5
 * Requiring Harbour_ORM 4.2
@@ -163,7 +174,7 @@ The following is an example for calling the an api:
 * Update the Harbour_FastCGI v 1.4 to fix "scan all" commands.
 
 ## 02/15/2023 v 2.46
-* Simplified linking of libraries hb_vfp and hb_orm. Update those related libraries.
+* Simplified linking of libraries hb_el and hb_orm. Update those related libraries.
 
 ## 02/12/2023 v 2.45
 * Fixed bug in load schema.

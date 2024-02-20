@@ -335,7 +335,7 @@ with object l_oDB_ListOfEdgesEntityAssociationNode
 
         select ListOfEdgesEntityAssociationNode
         scan all
-            if vfp_seek(ListOfEdgesEntityAssociationNode->Entity_pk,"ListOfEntities","pk")
+            if el_seek(ListOfEdgesEntityAssociationNode->Entity_pk,"ListOfEntities","pk")
                 l_nNumberOfLinksInDiagram++
             else
                 dbDelete()
@@ -400,7 +400,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         l_cListOfAssociationWhereAnEndpointWasDeleted := "*"
         select ListOfEdgesEntityEntity
         scan all
-            if vfp_seek(ListOfEdgesEntityEntity->Entity_pk,"ListOfEntities","pk")
+            if el_seek(ListOfEdgesEntityEntity->Entity_pk,"ListOfEntities","pk")
                 // l_nNumberOfLinksInDiagram++  Will not set here, since we need to ensure we have pairs
             else
                 l_cListOfAssociationWhereAnEndpointWasDeleted += trans(ListOfEdgesEntityEntity->Association_pk)+"*"
@@ -609,7 +609,7 @@ l_cHtml += [function MakeVis(){]
 l_cHtml += 'var nodes = ['
 select ListOfEntities
 scan all
-    l_cNodeLabel := '<b>'+AllTrim(ListOfEntities->Entity_Name)+'</b>'
+    l_cNodeLabel := '<b>'+alltrim(ListOfEntities->Entity_Name)+'</b>'
     if l_lShowPackage .and. len(nvl(ListOfEntities->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfEntities->Package_FullName+[)]
     endif
@@ -668,7 +668,7 @@ endscan
 //All Nodes for all Association with more than 2 Entity
 select ListOfAssociationNodes
 scan all
-    l_cNodeLabel := AllTrim(ListOfAssociationNodes->Association_Name)
+    l_cNodeLabel := alltrim(ListOfAssociationNodes->Association_Name)
     if l_lShowPackage .and. len(nvl(ListOfAssociationNodes->Package_FullName,"")) > 0
         l_cNodeLabel += [\n (]+ListOfAssociationNodes->Package_FullName+[)]
     endif
@@ -1162,7 +1162,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                         l_lSelected := (oFcgi:GetInputValue("CheckEntity"+l_cEntityPk) == "1")
 
                         if l_lSelected
-                            if !VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
+                            if !el_seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
                                 //Add if not present
                                 with object l_oDB3
                                     :Table("5c2c3a2c-349b-4949-aba7-cb00875263d6","DiagramEntity")
@@ -1172,7 +1172,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                                 endwith
                             endif
                         else
-                            if VFP_Seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
+                            if el_seek(val(l_cEntityPk),"ListOfCurrentEntitiesInModelingDiagram","pk")
                                 //Remove if present
                                 l_oDB3:Delete("8b24f8d0-c79b-43be-aeb3-339bc4b53dc3","DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->DiagramEntity_pk)
                             endif
@@ -1244,7 +1244,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                 else
                     //Remove only the current Entities.
                     l_oDB3 := hb_SQLData(oFcgi:p_o_SQLConnection)
-                    if VFP_Seek(l_iEntityPk,"ListOfCurrentEntitiesInModelingDiagram","pk")
+                    if el_seek(l_iEntityPk,"ListOfCurrentEntitiesInModelingDiagram","pk")
                         //Remove if still present
                         l_oDB3:Delete("d17d6980-88a1-46b1-8b64-1d1c93697d94","DiagramEntity",ListOfCurrentEntitiesInModelingDiagram->DiagramEntity_pk)
                     endif
@@ -1334,10 +1334,10 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iModelingDiagramPk),"New Diagram","Diagram Settings")+[</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveDiagram');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iModelingDiagramPk)
-            l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+            l_cHtml += GetButtonOnEditFormDelete()
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-5" value="Reset" onclick="$('#ActionOnSubmit').val('ResetLayout');document.form.submit();" role="button">]
         endif
     l_cHtml += [</div>]
@@ -1351,14 +1351,14 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_lNodeShowDescription := hb_HGetDef(l_hValues,"NodeShowDescription",.f.)
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Entity Description</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNodeShowDescription" id="CheckNodeShowDescription" value="1"]+iif(l_lNodeShowDescription," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1366,7 +1366,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Show Association Names</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAssociationShowName" id="CheckAssociationShowName" value="1"]+iif(l_lAssociationShowName," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckAssociationShowName" id="CheckAssociationShowName" value="1"]+iif(l_lAssociationShowName," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1374,7 +1374,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Show Association End Names</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAssociationEndShowName" id="CheckAssociationEndShowName" value="1"]+iif(l_lAssociationEndShowName," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckAssociationEndShowName" id="CheckAssociationEndShowName" value="1"]+iif(l_lAssociationEndShowName," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1382,7 +1382,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Minimum Height</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextNodeMinHeight" id="TextNodeMinHeight" value="]+iif(empty(l_nNodeMinHeight),"",Trans(l_nNodeMinHeight))+[" size="4" maxlength="4">]
                 l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1391,7 +1391,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Node Maximum Width</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="input" name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextNodeMaxWidth" id="TextNodeMaxWidth" value="]+iif(empty(l_nNodeMaxWidth),"",Trans(l_nNodeMaxWidth))+[" size="4" maxlength="4">]
                 l_cHtml += [<span>&nbsp;(In Pixels)&nbsp;(Optional)</span>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1458,7 +1458,7 @@ select ListOfAllEntitiesInModel
 scan all
     l_CheckBoxId := "CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)
     l_cHtml += [<tr><td>]
-        l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Entity"+Trans(ListOfAllEntitiesInModel->pk),.f.)," checked","")+[ class="form-check-input">]
+        l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif( hb_HGetDef(l_hValues,"Entity"+Trans(ListOfAllEntitiesInModel->pk),.f.)," checked","")+[ class="form-check-input">]
         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+["><span class="SPANEntity">]+ListOfAllEntitiesInModel->Entity_Name+iif(l_lShowPackage .and. !hb_IsNil(ListOfAllEntitiesInModel->Package_FullName),[ (]+ListOfAllEntitiesInModel->Package_FullName+[)],[])
         l_cHtml += [</span></label>]
     l_cHtml += [</td></tr>]
@@ -1584,7 +1584,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         scan all
             l_lSelected := (oFcgi:GetInputValue("CheckEntity"+Trans(ListOfAllEntitiesInModel->pk)) == "1")
 
-            if VFP_Seek(ListOfAllEntitiesInModel->pk,"ListOfCurrentEntitiesInModelingDiagram","pk")
+            if el_seek(ListOfAllEntitiesInModel->pk,"ListOfCurrentEntitiesInModelingDiagram","pk")
                 if !l_lSelected
                     // Remove the Entity
                     with Object l_oDB3
@@ -1635,7 +1635,7 @@ case l_cActionOnSubmit == "SaveDiagram"
         
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 
@@ -1718,8 +1718,8 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">Duplicate Diagram</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -1731,7 +1731,7 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Diagram Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(hb_HGetDef(l_hValues,"Name",""))+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
     l_cHtml += [</table>]
@@ -1851,7 +1851,7 @@ case l_cActionOnSubmit == "DuplicateDiagram"
         l_cHtml := ModelingVisualizeDiagramDuplicateBuild(par_oDataHeader,l_cErrorMessage,l_iModelingDiagramPk,l_hValues)
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 endcase
@@ -1966,8 +1966,8 @@ endif
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">My Settings</span>]   //navbar-text
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-0" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveMySettings');document.form.submit();" role="button">]
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('SaveMySettings');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -1982,7 +1982,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pe-2 pb-3">For Current Diagram Only</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
                 l_cHtml += [<input type="hidden" id="CheckPreviousThisDiagramOnly" name="CheckPreviousThisDiagramOnly" value="]+iif(l_lPreviousThisDiagramOnly,"1","0")+[">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckThisDiagramOnly" id="CheckThisDiagramOnly" value="1"]+iif(l_lThisDiagramOnly," checked","")+[ class="form-check-input"]
                 if l_lThisDiagramOnly  //If turning off the setting, hide all the other settings.
                     l_cHtml += [ onclick='$(".DiagramSettings").toggleClass("d-none",!$("#CheckThisDiagramOnly").is(":checked"));']
                 endif
@@ -1995,7 +1995,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Right Panel Scale</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDiagramInfoScale" id="ComboDiagramInfoScale">]
                     l_cHtml += [<option value="1"]  +iif(l_nDiagramInfoScale==1  ,[ selected],[])+[>1.0</option>]
                     l_cHtml += [<option value="0.9"]+iif(l_nDiagramInfoScale==0.9,[ selected],[])+[>0.9</option>]
                     l_cHtml += [<option value="0.8"]+iif(l_nDiagramInfoScale==0.8,[ selected],[])+[>0.8</option>]
@@ -2015,7 +2015,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Width</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboCanvasWidth" id="ComboCanvasWidth">]
                     for l_nSize := CANVAS_WIDTH_MIN to CANVAS_WIDTH_MAX step 100
                         l_cHtml += [<option value="]+Trans(l_nSize)+["]+iif(l_iCanvasWidth==l_nSize,[ selected],[])+[>]+Trans(l_nSize)+[</option>]
                     endfor
@@ -2031,7 +2031,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Canvas Height</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboCanvasHeight" id="ComboCanvasHeight">]
                     for l_nSize := CANVAS_HEIGHT_MIN to CANVAS_HEIGHT_MAX step 100
                         l_cHtml += [<option value="]+Trans(l_nSize)+["]+iif(l_iCanvasHeight==l_nSize,[ selected],[])+[>]+Trans(l_nSize)+[</option>]
                     endfor
@@ -2044,7 +2044,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Display Navigation Controls</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNavigationControl" id="CheckNavigationControl" value="1"]+iif(l_lNavigationControl," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -2053,7 +2053,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5 DiagramSettings">]
             l_cHtml += [<td class="pe-2 pb-3">Never Show Description On Hover</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckNeverShowDescriptionOnHover" id="CheckNeverShowDescriptionOnHover" value="1"]+iif(l_lNeverShowDescriptionOnHover," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -2176,7 +2176,7 @@ case l_cActionOnSubmit == "SaveMySettings"
         endif
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     l_cHtml += ModelingVisualizeDiagramBuild(par_oDataHeader,par_cErrorText,l_iModelingDiagramPk)
 
 endcase
@@ -2471,14 +2471,14 @@ if len(l_aNodes) == 1
         endwith
 
         if l_oDB_InArray:Tally == 1
-            l_cEntityLinkUID        := AllTrim(l_aSQLResult[1,1])
+            l_cEntityLinkUID        := alltrim(l_aSQLResult[1,1])
             l_cPackageFullName      := nvl(l_aSQLResult[1,2],"")
             l_cEntityName           := l_aSQLResult[1,3]
             l_cEntityDescription    := nvl(l_aSQLResult[1,4],"")
             l_cEntityInformation    := nvl(l_aSQLResult[1,5],"")
             l_nEntityUseStatus      := l_aSQLResult[1,6]
 
-            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nEntityUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nEntityUseStatus,USESTATUS_UNKNOWN)]
+            l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(l_nEntityUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nEntityUseStatus,USESTATUS_UNKNOWN)]
 
             if !empty(l_cPackageFullName)
                 l_cZoomInfo := l_cPackageFullName+" / "+l_cEntityName
@@ -2646,7 +2646,7 @@ if len(l_aNodes) == 1
 
                                     // Use Status
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
+                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
                                     l_cHtml += [</td>]
 
                                     if l_nNumberOfCustomFieldValues > 0
@@ -2697,7 +2697,7 @@ if len(l_aNodes) == 1
                             l_cListOfRelatedEntityPks += Trans(ListOfRelatedEntities->Entity_pk)
 
                             l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+;
-                                      iif( ((l_nNumberOfEntitiesInDiagram <= 0) .or. VFP_Seek(ListOfRelatedEntities->Entity_pk,"ListOfCurrentEntitiesInModelingDiagram","pk")) ," checked","");
+                                      iif( ((l_nNumberOfEntitiesInDiagram <= 0) .or. el_seek(ListOfRelatedEntities->Entity_pk,"ListOfCurrentEntitiesInModelingDiagram","pk")) ," checked","");
                                       +[ class="form-check-input">]
 
                             l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
@@ -2969,14 +2969,14 @@ with object l_oDB_InArray
 endwith
 
 if l_oDB_InArray:Tally == 1
-    l_cAssociationLinkUID           := AllTrim(l_aSQLResult[1,1])
+    l_cAssociationLinkUID           := alltrim(l_aSQLResult[1,1])
     l_cPackageFullName              := nvl(l_aSQLResult[1,2],"")
     l_cAssociationName              := nvl(l_aSQLResult[1,3],"")
     l_cAssociationDescription       := nvl(l_aSQLResult[1,4],"")
     l_nAssociationNumberOfEndpoints := l_aSQLResult[1,5]
     l_nAssociationUseStatus         := l_aSQLResult[1,6]
 
-    l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(l_nAssociationUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nAssociationUseStatus,USESTATUS_UNKNOWN)]
+    l_cUseStatus := {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(l_nAssociationUseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),l_nAssociationUseStatus,USESTATUS_UNKNOWN)]
 
     if !empty(l_cPackageFullName)
         l_cZoomInfo := l_cPackageFullName+" / "+l_cAssociationName

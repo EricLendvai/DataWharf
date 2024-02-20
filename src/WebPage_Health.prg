@@ -17,7 +17,7 @@ l_hStatus["data_schema_version"] := trans(oFcgi:p_o_SQLConnection:GetSchemaDefin
 
 l_hStatus["build Info"] := {"datawharf"   => hb_buildinfo(),;
                             "harbour_orm" => hb_orm_buildinfo(),;
-                            "harbour_vfp" => hb_vfp_buildinfo();
+                            "harbour_el" => hb_el_buildinfo();
                            }
 
 if !oFcgi:p_o_SQLConnection:SQLExec("BuildPageHealth","select version() as version","VersionInfo")

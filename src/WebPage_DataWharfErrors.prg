@@ -348,18 +348,18 @@ return l_cHtml
 //                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
 //                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-//                             l_cHtml += [<a href="]+l_cSitePath+[APITokens/EditAPIToken/]+AllTrim(ListOfAPITokens->APIToken_LinkUID)+[/">]+Allt(ListOfAPITokens->APIToken_Name)+[</a>]
+//                             l_cHtml += [<a href="]+l_cSitePath+[APITokens/EditAPIToken/]+alltrim(ListOfAPITokens->APIToken_LinkUID)+[/">]+alltrim(ListOfAPITokens->APIToken_Name)+[</a>]
 //                         l_cHtml += [</td>]
 
 //                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-//                             l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access"}[iif(vfp_between(ListOfAPITokens->APIToken_AccessMode,1,3),ListOfAPITokens->APIToken_AccessMode,1)]
+//                             l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access"}[iif(el_between(ListOfAPITokens->APIToken_AccessMode,1,3),ListOfAPITokens->APIToken_AccessMode,1)]
 //                         l_cHtml += [</td>]
 
 //                         l_cHtml += [<td class="GridDataControlCells" valign="top">] //Projects
 //                             select ListOfProjectAccess
 //                             scan all for ListOfProjectAccess->APIToken_Pk == l_iAPITokenPk
 //                                 l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
-//                                     l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(vfp_between(ListOfProjectAccess->AccessLevel,1,5),ListOfProjectAccess->AccessLevel,1)]
+//                                     l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,5),ListOfProjectAccess->AccessLevel,1)]
 //                                 l_cHtml += [</div>]
 //                             endscan
 //                         l_cHtml += [</td>]
@@ -368,7 +368,7 @@ return l_cHtml
 //                             select ListOfApplicationAccess
 //                             scan all for ListOfApplicationAccess->APIToken_Pk == l_iAPITokenPk
 //                                 l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
-//                                     l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(vfp_between(ListOfApplicationAccess->AccessLevel,1,5),ListOfApplicationAccess->AccessLevel,1)]
+//                                     l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,5),ListOfApplicationAccess->AccessLevel,1)]
 //                                 l_cHtml += [</div>]
 //                             endscan
 //                         l_cHtml += [</td>]
@@ -385,7 +385,7 @@ return l_cHtml
 //                         l_cHtml += [</td>]
 
 //                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-//                             l_cHtml += {"Active","Inactive"}[iif(vfp_between(ListOfAPITokens->APIToken_Status,1,2),ListOfAPITokens->APIToken_Status,1)]
+//                             l_cHtml += {"Active","Inactive"}[iif(el_between(ListOfAPITokens->APIToken_Status,1,2),ListOfAPITokens->APIToken_Status,1)]
 //                         l_cHtml += [</td>]
 
 //                     l_cHtml += [</tr>]

@@ -54,14 +54,14 @@ WORKDIR /src
 ADD https://api.github.com/repos/EricLendvai/Harbour_FastCGI/git/refs/heads/main RepoVersionHarbour_FastCGI.json
 RUN git clone https://github.com/EricLendvai/Harbour_FastCGI/
 
-ADD https://api.github.com/repos/EricLendvai/Harbour_VFP/git/refs/heads/main RepoVersionHarbour_VFP.json
-RUN git clone https://github.com/EricLendvai/Harbour_VFP/
+ADD https://api.github.com/repos/EricLendvai/Harbour_EL/git/refs/heads/main RepoVersionHarbour_EL.json
+RUN git clone https://github.com/EricLendvai/Harbour_EL/
 
 ADD https://api.github.com/repos/EricLendvai/Harbour_ORM/git/refs/heads/main RepoVersionHarbour_ORM.json
 RUN git clone https://github.com/EricLendvai/Harbour_ORM/
 
 #Will be used for future web apps builds and when building hb_orm
-ENV HB_VFP_ROOT /src/Harbour_VFP
+ENV HB_EL_ROOT /src/Harbour_EL
 ENV HB_ORM_ROOT /src/Harbour_ORM
 ENV HB_FASTCGI_ROOT /src/Harbour_FastCGI
 
@@ -69,9 +69,9 @@ ENV HB_COMPILER gcc
 
 ENV BuildMode release
 
-WORKDIR /src/Harbour_VFP
+WORKDIR /src/Harbour_EL
 RUN chmod +x ./BuildLIB.sh
-ENV LIBName hb_vfp
+ENV LIBName hb_el
 RUN ./BuildLIB.sh
 
 WORKDIR /src/Harbour_ORM
@@ -82,8 +82,8 @@ RUN ./BuildLIB.sh
 #also build debug libraries
 ENV BuildMode debug
 
-WORKDIR /src/Harbour_VFP
-ENV LIBName hb_vfp
+WORKDIR /src/Harbour_EL
+ENV LIBName hb_el
 RUN ./BuildLIB.sh
 
 WORKDIR /src/Harbour_ORM

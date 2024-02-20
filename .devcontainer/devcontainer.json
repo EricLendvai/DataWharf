@@ -13,14 +13,14 @@
         "harbour.compilerExecutable": "/src/harbour/bin/linux/gcc/harbour",
         "harbour.extraOptions": "-i/src/harbour/include/",
         "harbour.extraIncludePaths":["/src/harbour/include/",
-                                     "/src/Harbour_VFP/",
+                                     "/src/Harbour_EL/",
                                      "/src/Harbour_ORM/"],
         "harbour.warningLevel":1,
         "harbour.decorator":true
     },
 
     "mounts": ["source=C:\\Harbour_FastCGI,target=/src/Harbour_FastCGI,type=bind,consistency=default",
-               "source=C:\\Harbour_VFP,target=/src/Harbour_VFP,type=bind,consistency=default",
+               "source=C:\\Harbour_EL,target=/src/Harbour_EL,type=bind,consistency=default",
                "source=C:\\Harbour_ORM,target=/src/Harbour_ORM,type=bind,consistency=default"],
 
 

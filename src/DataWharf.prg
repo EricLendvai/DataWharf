@@ -651,7 +651,16 @@ with object ::p_o_SQLConnection
             :DeleteAllOrphanRecords( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
 
             for each l_cTableName in {"Application"}
-                for each l_cColumnName in {"PrimaryKeyDefaultInteger","PrimaryKeyDefaultUUID","PrimaryKeyType","ForeignKeyTypeMatchPrimaryKey","ForeignKeyIsNullable","ForeignKeyNoDefault"}
+                for each l_cColumnName in {"PrimaryKeyDefaultInteger",;
+                                           "PrimaryKeyDefaultUUID",;
+                                           "PrimaryKeyType",;
+                                           "ForeignKeyTypeMatchPrimaryKey",;
+                                           "ForeignKeyIsNullable",;
+                                           "ForeignKeyNoDefault",;
+                                           "TestIdentifierMaxLengthAsPostgres",;
+                                           "TestMaxEnumerationNameLength",;
+                                           "TestMaxColumnNameLength",;
+                                           "TestMaxIndexNameLength"}
                     if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,l_cColumnName)
                         ::p_o_SQLConnection:DeleteField("public."+l_cTableName,l_cColumnName)
                     endif
@@ -667,6 +676,28 @@ with object ::p_o_SQLConnection
             endif
 
             l_iCurrentDataVersion := 29
+            :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+        endif
+        //-----------------------------------------------------------------------------------
+        if l_iCurrentDataVersion < 30
+            with object l_oDB1
+                For each l_cTableName in {"Namespace","Table","Column","Enumeration","EnumValue","Index","TemplateTable","TemplateColumn","Tag"}
+                    :Table("f9be0f0b-1a63-4442-a7e4-89cf2ce1745a",l_cTableName)
+                    :Column(l_cTableName+".pk" , "pk")
+
+                    :Where([Length(Trim(]+l_cTableName+[.LinkUID)) = 0])
+                    :SQL("ListOfRecordsToUpdate")
+                    select ListOfRecordsToUpdate
+                    scan all
+                        with object l_oDB2
+                            :Table("6480d156-77ad-43b1-880e-4f5a3aaa9c8f",l_cTableName)
+                            :Field(l_cTableName+".LinkUID" , ::p_o_SQLConnection:GetUUIDString())
+                            :Update(ListOfRecordsToUpdate->pk)
+                        endwith
+                    endscan
+                endfor
+            endwith
+            l_iCurrentDataVersion := 30
             :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
         endif
         //-----------------------------------------------------------------------------------
@@ -774,7 +805,7 @@ local l_nTokenAccessMode
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
 
-// VFP_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestStart.txt")
+// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestStart.txt")
 
 ::p_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
 if empty(::p_cThisAppTitle)
@@ -894,10 +925,10 @@ case CompareVersionsWithDecimals( val(::p_o_SQLConnection:p_hb_orm_version) , va
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
-case CompareVersionsWithDecimals( VFP_GetCompatibilityPackVersion() , val(MIN_HARBOUR_VFP_VERSION) ) < 0
+case CompareVersionsWithDecimals( el_GetVersion() , val(MIN_HARBOUR_EL_VERSION) ) < 0
     l_cHtml := [<html>]
     l_cHtml += [<body>]
-    l_cHtml += [<h1>Harbour VFP must be version ]+MIN_HARBOUR_VFP_VERSION+[ or higher.</h1>]
+    l_cHtml += [<h1>Harbour EL must be version ]+MIN_HARBOUR_EL_VERSION+[ or higher.</h1>]
     l_cHtml += [</body>]
     l_cHtml += [</html>]
 
@@ -940,7 +971,7 @@ otherwise
 
         l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
 
-        if vfp_inlist(lower(right(l_cPageName,4)),".ico",".txt",".css") .or. vfp_inlist(lower(right(l_cPageName,3)),".js")
+        if el_IsInlist(lower(right(l_cPageName,4)),".ico",".txt",".css") .or. el_IsInlist(lower(right(l_cPageName,3)),".js")
             //Should not happen in FastCGI 1.7+
             SendToDebugView("Code should not happen ico,txt,css,js",::RequestCount)
             return nil
@@ -979,7 +1010,7 @@ otherwise
         // endfor
 
         // if l_cPageName <> "ajax"
-        if !VFP_Inlist(lower(l_cPageName),"ajax","api","streamfile") // ,"health"
+        if !el_IsInlist(lower(l_cPageName),"ajax","api","streamfile") // ,"health"
 
             l_aWebPageHandle := hb_HGetDef(v_hPageMapping, l_cPageName, {"Home",1,.t.,@BuildPageHome()})
             // #define WEBPAGEHANDLE_NAME            1
@@ -1101,7 +1132,7 @@ otherwise
         l_cUserID         := ""
         l_nUserAccessMode := 0
 
-        if !empty(l_cSessionID) .and. !VFP_Inlist(lower(l_cPageName),"api") // ,"health"
+        if !empty(l_cSessionID) .and. !el_IsInlist(lower(l_cPageName),"api") // ,"health"
 #ifdef __PLATFORM__LINUX
             if ::isOAuth()
                 //validate session JWT
@@ -1115,7 +1146,7 @@ otherwise
                 if getLinuxEpochTime() - l_oJWT:GetExpration() < 0 .and. ValidateToken(l_oJWT)
                     l_lLoggedIn := .t.
                     l_cUserID := l_oJWT:GetPayloadData('preferred_username')
-                    l_cUserName := AllTrim(l_oJWT:GetPayloadData('given_name'))+" "+l_oJWT:GetPayloadData('family_name')
+                    l_cUserName := alltrim(l_oJWT:GetPayloadData('given_name'))+" "+l_oJWT:GetPayloadData('family_name')
                     //check if user is already in local DB
                     with object l_oDB1
                         :Table("0405BFDF-8347-46DA-9C4C-BFF6E883CC94","public.User")
@@ -1162,7 +1193,7 @@ otherwise
                     if l_oDB1:Tally = 1
                         l_lLoggedIn       := .t.
                         l_iUserPk         := ListOfResults->User_pk
-                        l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                        l_cUserName       := alltrim(ListOfResults->User_FirstName)+" "+alltrim(ListOfResults->User_LastName)
                         l_nUserAccessMode := ListOfResults->User_AccessMode
                     else
                         // Clear the cookie
@@ -1176,7 +1207,7 @@ otherwise
         endif
         
         // if l_cPageName <> "ajax"
-        if !VFP_Inlist(lower(l_cPageName),"ajax","api","streamfile")
+        if !el_IsInlist(lower(l_cPageName),"ajax","api","streamfile")
             //If not a public page and not logged in, then request to log in.
             if l_aWebPageHandle[WEBPAGEHANDLE_ACCESSMODE] > 0 .and. !l_lLoggedIn
 #ifdef __PLATFORM__LINUX
@@ -1218,7 +1249,7 @@ otherwise
                                 l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
 
                                 if Trim(ListOfResults->User_Password) == hb_SHA512(l_cSecuritySalt+l_cPassword+Trans(l_iUserPk))
-                                    l_cUserName       := AllTrim(ListOfResults->User_FirstName)+" "+AllTrim(ListOfResults->User_LastName)
+                                    l_cUserName       := alltrim(ListOfResults->User_FirstName)+" "+alltrim(ListOfResults->User_LastName)
                                     l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
                                     l_nUserAccessMode := ListOfResults->User_AccessMode
 
@@ -1278,9 +1309,12 @@ otherwise
                     l_cAjaxAction := ::p_URLPathElements[2]
 
                     switch l_cAjaxAction
-                    // case "VisualizationPositions"
-                    //     l_cBody += SaveVisualizationPositions()
-                    //     exit
+                    case "SaveSearchModeTable"
+                        l_cBody += SaveSearchModeTable()
+                        exit
+                    case "SaveSearchModeEnumeration"
+                        l_cBody += SaveSearchModeEnumeration()
+                        exit
                     case "GetDDInfo"
                         l_cBody += GetDDInfoDuringVisualization()
                         exit
@@ -1349,7 +1383,7 @@ otherwise
                             endif
                             l_cBody += [<div>Site Build Info: ]+hb_buildinfo()+[</div>]
                             l_cBody += [<div>ORM Build Info: ]+hb_orm_buildinfo()+[</div>]
-                            l_cBody += [<div>VFP Build Info: ]+hb_vfp_buildinfo()+[</div>]
+                            l_cBody += [<div>EL Build Info: ]+hb_el_buildinfo()+[</div>]
                             l_cBody += [<div>PostgreSQL Host: ]+oFcgi:GetAppConfig("POSTGRESHOST")+[</div>]
                             l_cBody += [<div>PostgreSQL Database: ]+oFcgi:GetAppConfig("POSTGRESDATABASE")+[</div>]
                             l_cBody += ::TraceList(4)
@@ -1440,7 +1474,7 @@ endcase
 
 ::Print(l_cHtml)
 
-// VFP_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestEnd.txt")
+// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestEnd.txt")
 
 return nil
 //=================================================================================================================
@@ -1580,7 +1614,7 @@ else
 endif
 
 if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
-    VFP_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
+    el_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
 endif
 
 return nil
@@ -1665,15 +1699,14 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         l_cHtml += [<li class="nav-item"><a class="text-center nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[DataDictionaries">Applications<br>Data Dictionaries</a></li>]
                     endif
 
-                    if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-                        l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
-                    endif
+// Removed for now the "Inter-App Mapping" option. This feature need to be re-designed to be effective.
+            // if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
+            //     l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+            // endif
 
                     if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
-//                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(vfp_inlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","datawharferrors")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-
-
+// l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(el_IsInlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","datawharferrors")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
 
                         l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;top: 70%;left: -50%;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
                             if l_lShowMenuProjects
@@ -1714,8 +1747,6 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
     l_cHtml += [</div>]    
 l_cHtml += [</header>]
 
-// l_cHtml += [<div class="m-3"></div>]   //Spacer
-
 return l_cHtml
 //=================================================================================================================
 function hb_buildinfo()
@@ -1723,12 +1754,15 @@ function hb_buildinfo()
 return l_cBuildInfo
 //=================================================================================================================
 function SanitizeInput(par_text)
-local l_result := AllTrim(vfp_StrReplace(par_text,{chr(9)=>" "}))
-l_result = vfp_StrReplace(l_result,{"<"="",">"=""})
+local l_result := alltrim(el_StrReplace(par_text,{chr(9)=>" "}))
+l_result = el_StrReplace(l_result,{"<"="",">"=""})
 return l_result
 //=================================================================================================================
 function SanitizeInputAlphaNumeric(par_cText)
 return SanitizeInputWithValidChars(par_cText,[_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+//=================================================================================================================
+function SanitizeInputSQLIdentifier(par_cSource,par_cText)
+return SanitizeInputWithValidChars(alltrim(par_cText),"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !#$#%'()*+,-./:;<=>?@[\]^`{|}")   // ~
 //=================================================================================================================
 function SanitizeInputWithValidChars(par_text,par_cValidChars)
 local l_result := []
@@ -1910,13 +1944,17 @@ if hb_IsNull(par_SourceText)
 else
     l_Text := par_SourceText
 
-    l_Text := vfp_strtran(l_Text,[&amp;],[&],-1,-1,1)
-    l_Text := vfp_strtran(l_Text,[&],[&amp;])
-    l_Text := vfp_strtran(l_Text,[<],[&lt;])
-    l_Text := vfp_strtran(l_Text,[>],[&gt;])
-    l_Text := vfp_strtran(l_Text,[  ],[ &nbsp;])
-    l_Text := vfp_strtran(l_Text,chr(10),[])
-    l_Text := vfp_strtran(l_Text,chr(13),[<br>])
+    l_Text := el_StrTran(l_Text,[&amp;] ,[&] ,-1,-1,1)
+    l_Text := el_StrTran(l_Text,[&nbsp;],[ ] ,-1,-1,1)
+    l_Text := el_StrTran(l_Text,[&lt;]  ,[<] ,-1,-1,1)
+    l_Text := el_StrTran(l_Text,[&gt;]  ,[>] ,-1,-1,1)
+
+    l_Text := el_StrTran(l_Text,[&]     ,[&amp;]  )
+    l_Text := el_StrTran(l_Text,[<]     ,[&lt;]   )
+    l_Text := el_StrTran(l_Text,[>]     ,[&gt;]   )
+    l_Text := el_StrTran(l_Text,[  ]    ,[ &nbsp;])
+    l_Text := el_StrTran(l_Text,chr(10) ,[]       )
+    l_Text := el_StrTran(l_Text,chr(13) ,[<br>]   )
 endif
 
 return l_Text
@@ -1927,7 +1965,7 @@ return iif(!hb_IsNIL(par_iPos) .and. par_iPos > 0 .and. par_iPos <= Len(par_aVal
 function MultiLineTrim(par_cText)
 local l_nPos := len(par_cText)
 
-do while l_nPos > 0 .and. vfp_inlist(Substr(par_cText,l_nPos,1),chr(13),chr(10),chr(9),chr(32))
+do while l_nPos > 0 .and. el_IsInlist(Substr(par_cText,l_nPos,1),chr(13),chr(10),chr(9),chr(32))
     l_nPos -= 1
 enddo
 
@@ -2317,7 +2355,7 @@ return l_lSQLExecResult
             if empty(l_nResult)
                 l_cResult := curl_easy_dl_buff_get( l_pCurlHandle )
             else
-                l_cResult := Alltrim(Str( l_nResult, 5 )) + " " + curl_easy_strerror( l_nResult )
+                l_cResult := alltrim(Str( l_nResult, 5 )) + " " + curl_easy_strerror( l_nResult )
             endif
 
             curl_easy_cleanup(l_pCurlHandle)
@@ -2534,8 +2572,8 @@ with object l_oDB_ListOfAPIEndpoint
         for each l_pAPITokens in oFcgi:p_APIs
             l_cAPITokenName := l_pAPITokens:__enumkey
 
-            // if vfp_Seek(padr(upper(l_cAPITokenName)+'*',240),"ListOfAPIEndpoint","tag1")
-            if vfp_Seek(upper(l_cAPITokenName)+'*',"ListOfAPIEndpoint","tag1")
+            // if el_seek(padr(upper(l_cAPITokenName)+'*',240),"ListOfAPIEndpoint","tag1")
+            if el_seek(upper(l_cAPITokenName)+'*',"ListOfAPIEndpoint","tag1")
                 l_cAPITokenNameOnFile := alltrim(ListOfAPIEndpoint->APIEndpoint_Name)
                 if !(l_cAPITokenNameOnFile == l_cAPITokenName) .or. ListOfAPIEndpoint->APIEndpoint_Status != 1
                     //Casing or Status changed
@@ -2567,4 +2605,267 @@ with object l_oDB_ListOfAPIEndpoint
 endwith
 
 return nil
+//=================================================================================================================
+//=================================================================================================================
+function DisplayErrorMessageOnEditForm(par_cErrorText)
+local l_cHtml
+if empty(par_cErrorText)
+    l_cHtml := ""
+else
+    l_cHtml := [<div class="p-3 mb-2 bg-]+iif(lower(left(par_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+TextToHtml(par_cErrorText)+[</div>]
+    oFcgi:p_cjQueryScript += GOINEDITMODE
+endif
+return l_cHtml
+//=================================================================================================================
+function DisplayTestWarningMessageOnEditForm(par_cWarningText)
+local l_cHtml
+if empty(par_cWarningText)
+    l_cHtml := ""
+else
+    l_cHtml := [<div class="p-3 mb-2 bg-warning text-danger">]+TextToHtml(par_cWarningText)+[</div>]
+endif
+return l_cHtml
+//=================================================================================================================
+function DisplayErrorMessageOnViewForm(par_cErrorText)
+local l_cHtml
+if empty(par_cErrorText)
+    l_cHtml := ""
+else
+    l_cHtml := [<div class="p-3 mb-2 bg-]+iif(lower(left(par_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+par_cErrorText+[</div>]
+endif
+return l_cHtml
+//=================================================================================================================
+function GetButtonOnEditFormSave()
+
+
+                // l_cHtml += CRLF
+                // l_cHtml += 
+                // l_cHtml += [$(function() {]+CRLF
+                // l_cHtml += ::p_cjQueryScript+CRLF
+                // l_cHtml += [});]+CRLF
+                // l_cHtml += [</script>]+CRLF
+
+
+oFcgi:p_cHeader += CRLF
+oFcgi:p_cHeader += [<script type="text/javascript" language="Javascript">]+CRLF
+oFcgi:p_cHeader += 'var v_EditFormNotInEditMode = true;'
+oFcgi:p_cHeader += 'function ToggleEditFormMode() {'
+oFcgi:p_cHeader += 'if (v_EditFormNotInEditMode){'
+oFcgi:p_cHeader += 'v_EditFormNotInEditMode = false;'
+oFcgi:p_cHeader += GOINEDITMODE
+oFcgi:p_cHeader += '};return true;}'+CRLF
+oFcgi:p_cHeader += [</script>]+CRLF
+
+return [<input type="submit" class="btn btn-primary rounded ms-3 disabled" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+//=================================================================================================================
+function GetButtonOnEditFormDoneCancel()
+return [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonDoneCancel" name="ButtonDoneCancel" value="Done" onclick="$('#ActionOnSubmit').val( $(this).val() );document.form.submit();" role="button">]
+//=================================================================================================================
+function GetButtonOnEditFormDelete()
+return [<button type="button" class="btn btn-danger rounded ms-3 RemoveOnEdit" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+//=================================================================================================================
+function GetButtonOnEditFormNew(par_cCaption,par_cURL)
+return [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+par_cURL+["><span class="text-white bi-plus-lg"></span>&nbsp;]+par_cCaption+[</a>]
+//=================================================================================================================
+function GetButtonOnOrderListFormSave()
+return [<input type="submit" class="btn btn-primary rounded ms-3" id="ButtonSave" name="ButtonSave" value="Save" onclick="SendOrderList();" role="button">]
+//=================================================================================================================
+function GetButtonCancelAndRedirect(par_cURL)
+return [<a class="btn btn-primary rounded ms-3" href="]+par_cURL+[">Cancel</a>]
+//=================================================================================================================
+function GetButtonOnEditFormCaptionAndRedirect(par_cCaption,par_cURL,par_lDisabled)
+local l_lDisabled := nvl(par_lDisabled,.f.)
+return [<a class="btn btn-primary rounded ms-3 RemoveOnEdit]+iif(l_lDisabled,[ disabled],[])+[" href="]+par_cURL+[">]+par_cCaption+[</a>]
+//=================================================================================================================
+function GetButtonOnListFormCaptionAndRedirect(par_cCaption,par_cURL,par_lDisabled)
+local l_lDisabled := nvl(par_lDisabled,.f.)
+return [<a class="btn btn-primary rounded ms-3]+iif(l_lDisabled,[ disabled],[])+[" href="]+par_cURL+[">]+par_cCaption+[</a>]
+//=================================================================================================================
+function GetButtonOnEditForm(par_cName,par_cCaption,par_cAction)
+return [<input type="button" class="btn btn-primary rounded ms-3" id="]+par_cName+[" name="]+par_cName+[" value="]+par_cCaption+[" onclick="$('#ActionOnSubmit').val(']+par_cAction+[');document.form.submit();" role="button">]
+//=================================================================================================================
+function GetCheckboxOnEditForm(par_cObjectName,par_lValue,par_cLabel,par_lDisabled)
+local l_cHtml
+l_cHtml := [<span class="form-check form-switch">]
+l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+par_cObjectName+[" id="]+par_cObjectName+[" value="1"]+iif(par_lValue," checked","")+[ class="form-check-input"]+iif(nvl(par_lDisabled,.f.),[ disabled],[])+[>]
+if !hb_IsNil(par_cLabel) .and. !empty(par_cLabel)
+    l_cHtml += [<label class="form-check-label" for="]+par_cObjectName+[">&nbsp;]+par_cLabel+[</label>]
+endif
+l_cHtml += [</span>]
+return l_cHtml
+//=================================================================================================================
+function ActivatejQuerySelect2(par_cObjectRef,par_cJSON)
+oFcgi:p_cjQueryScript += [$("]+par_cObjectRef+[").select2({placeholder: '',]+;
+                                                        [allowClear: true,]+;
+                                                        [data: ]+par_cJSON+[,]+;
+                                                        [theme: "bootstrap-5",]+;
+                                                        [selectionCssClass: "select2--small",]+;
+                                                        [dropdownCssClass: "select2--small"}]+;
+                                                        [);]
+
+//Could not use the "change" event below, since it is trigger when the select is being populated
+oFcgi:p_cjQueryScript += [$("]+par_cObjectRef+[").on("select2:select", function (e) {]+GOINEDITMODE+[});]
+oFcgi:p_cjQueryScript += [$("]+par_cObjectRef+[").on("select2:unselect", function (e) {]+GOINEDITMODE+[});]
+return nil
+//=================================================================================================================
+//=================================================================================================================
+
+//=================================================================================================================
+function el_StringFilterCharacters(par_cText,par_cValidCharacters)
+local l_cResult := ""
+local l_cChar
+
+for each l_cChar in @par_cText
+    if l_cChar $ par_cValidCharacters
+        l_cResult += l_cChar
+    endif
+endfor
+
+return l_cResult
+//=================================================================================================================
+function EncodeStringForHashText(par_cString)
+
+local l_cEncodedText := []
+local l_cUTFEncoding
+local l_nPos
+local l_nUTF8Value := 0
+local l_nNumberOfBytesOfTheCharacter := 0
+// local l_cAdditionalCharactersToEscape := hb_DefaultValue(par_cAdditionalCharactersToEscape,"")
+
+if !empty(par_cString)
+
+    l_nPos := 1
+    do while (l_nPos <= len(par_cString)) 
+        if hb_UTF8FastPeek(par_cString,l_nPos,@l_nUTF8Value,@l_nNumberOfBytesOfTheCharacter)
+            if l_nNumberOfBytesOfTheCharacter > 0  // UTF Character
+                l_nPos += l_nNumberOfBytesOfTheCharacter
+            else
+                l_nPos++
+            endif
+
+            // 92 = \, 39 = ', 34 = ", 63 = ?
+
+            // if l_nUTF8Value < 31 .or. l_nUTF8Value > 126 .or. l_nUTF8Value == 92 .or. l_nUTF8Value == 39 .or. l_nUTF8Value == 34 .or. l_nUTF8Value == 63 ;
+            //    .or. (l_nUTF8Value < 127 .and. !empty(l_cAdditionalCharactersToEscape) .and. (chr(l_nUTF8Value) $ l_cAdditionalCharactersToEscape))
+
+            if l_nUTF8Value < 31 .or. l_nUTF8Value > 126 .or. l_nUTF8Value == 92 .or. l_nUTF8Value == 39 .or. l_nUTF8Value == 34 .or. l_nUTF8Value == 63
+                do case
+                case l_nUTF8Value == 92  // \
+                    l_cEncodedText += [\\]
+                case l_nUTF8Value == 39  // '
+                    l_cEncodedText += [\']
+                case l_nUTF8Value == 34  // "
+                    l_cEncodedText += [\"]
+                case l_nUTF8Value == 63  // ?
+                    l_cEncodedText += [\?]
+                otherwise
+                    l_cUTFEncoding := hb_NumToHex(l_nUTF8Value,8)
+                    do case
+                    case l_cUTFEncoding == [00000000]
+                        //To clean up bad data
+                        exit
+                    case left(l_cUTFEncoding,4) == [0000]
+                        l_cEncodedText += [\u]+right(l_cUTFEncoding,4)
+                    otherwise
+                        l_cEncodedText += [\U]+l_cUTFEncoding
+                    endcase
+                endcase
+
+            else
+                l_cEncodedText += chr(l_nUTF8Value)
+            endif
+
+        else
+            //Skip the bad character
+            l_nPos++
+        endif
+    enddo
+
+    if l_cEncodedText != par_cString
+        l_cEncodedText := [E']+l_cEncodedText+[']
+    endif
+
+endif
+
+return l_cEncodedText
+//=================================================================================================================
+function PrepareForURLSQLIdentifier(par_cOrigin,par_cName,par_xVal)   // Will keep the name or sub for pk with prefix if identifier is not alphanumeric
+local l_cResult
+
+if par_cOrigin == "EnumValue"
+    if par_cName == el_StringFilterCharacters(par_cName,"_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-()+")
+        l_cResult := par_cName
+    else
+        if valtype(par_xVal) == "C"
+            l_cResult := "~"+par_xVal
+        else
+            l_cResult := "~"+trans(par_xVal)
+        endif
+    endif
+else
+    if par_cName == el_StringFilterCharacters(par_cName,"_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+        l_cResult := par_cName
+    else
+        if valtype(par_xVal) == "C"
+            l_cResult := "~"+par_xVal
+        else
+            l_cResult := "~"+trans(par_xVal)
+        endif
+    endif
+endif
+
+return l_cResult
+//=================================================================================================================
+function AssembleNavbarInfo(par_cAction,par_aInfo)   // par_aInfo = {Source,Name,AKA,LinkUID}
+static s_aInfo := {}
+local l_aInfo
+local l_cResult
+
+do case
+case par_cAction == "Add"
+    l_cResult := nil
+    AAdd(s_aInfo,par_aInfo)
+case par_cAction == "Build"
+    l_cResult := ""
+    for each l_aInfo in s_aInfo
+        if !empty(l_cResult)
+            l_cResult += "."
+        endif
+        l_cResult += FcgiPrepFieldForValue(l_aInfo[2])
+        if !hb_IsNil(l_aInfo[3])
+            l_cResult += FcgiPrepFieldForValue(FormatAKAForDisplay(l_aInfo[3]))
+        endif
+    endfor
+    s_aInfo := {}
+endcase
+
+return l_cResult
+//=================================================================================================================
+function GetMultiFlagSearchInput(par_cObjectName,pac_cJSON,par_cCurrentValue,par_nSize)
+local l_cHtml:= ""
+
+// oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
+//                                                                 "suggestions :["+pac_cJSON+"],"+;
+//                                                                 "whiteList: true,"+;
+//                                                                 "tagLimit: 10,"+;
+//                                                                 "selectOnHover: true,"+;
+//                                                                 "showAllSuggestions: true,"+;
+//                                                                 "keepLastOnHoverTag: false,"+;
+//                                                                 "afterAdd: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }},"+;
+//                                                                 "afterRemove: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }}"+;
+//                                                                 [});]
+
+oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
+                                                                "suggestions :["+pac_cJSON+"],"+;
+                                                                "whiteList: true,"+;
+                                                                "tagLimit: 20,"+;
+                                                                "selectOnHover: true,"+;
+                                                                "showAllSuggestions: true,"+;
+                                                                "keepLastOnHoverTag: false"+;
+                                                                [});]
+
+
+l_cHtml := [<input type="text" name="]+par_cObjectName+[" id="]+par_cObjectName+[" size="]+Trans(par_nSize)+[" maxlength="10000" value="]+FcgiPrepFieldForValue(par_cCurrentValue)+[" class="form-control TextSearchTag" placeholder="">]
+   //  style="width:100px;"     TextSearchTag
+return l_cHtml
 //=================================================================================================================

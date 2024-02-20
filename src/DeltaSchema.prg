@@ -424,7 +424,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                 hb_HDel(l_hCurrentListOfEnumValues,l_cLastNamespace+"*"+l_cLastEnumerationName+"*"+l_cEnumValueName+"*")
 
-                if !used("ListOfEnumValuesInEnumeration") .or. !vfp_Seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInEnumeration","tag1")
+                if !used("ListOfEnumValuesInEnumeration") .or. !el_seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInEnumeration","tag1")
                     //Missing EnumValue, Add it
 
                     l_iNewEnumValues += 1
@@ -782,7 +782,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_cColumnDefault := ""
                     endif
                     
-                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInTable","tag1")
+                    if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInTable","tag1")
                         if ListOfColumnsInTable->Column_UseStatus == USESTATUS_DISCONTINUED
                             //Ignore the field. Still had to be aware of it, so not to try to re-add it
                         else
@@ -807,7 +807,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                             //---------------------------------------------------
                             l_lColumnAutoIncrement := (l_nColumnUsedAs = 2) // _M_ ("+" $ l_cCurrentColumnAttributes)
-                            if l_lColumnAutoIncrement .and. empty(el_inlist(l_cColumnType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
+                            if l_lColumnAutoIncrement .and. empty(el_InlistPos(l_cColumnType,"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
                                 l_lColumnAutoIncrement := .f.
                             endif
                             if l_lColumnAutoIncrement .and. l_lColumnNullable  //Auto-Increment fields may not be null (and not have a default)
@@ -828,7 +828,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                             l_lCurrentColumnNullable      := ListOfColumnsInTable->Column_Nullable
                             l_lCurrentColumnAutoIncrement := (ListOfColumnsInTable->Column_UsedAs = 2) // _M_ ("+" $ l_cCurrentColumnAttributes)
-                            if l_lCurrentColumnAutoIncrement .and. empty(el_inlist(alltrim(ListOfColumnsInTable->Column_Type),"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
+                            if l_lCurrentColumnAutoIncrement .and. empty(el_InlistPos(alltrim(ListOfColumnsInTable->Column_Type),"I","IB","IS"))  //Only those fields types may be flagged as Auto-Increment
                                 l_lCurrentColumnAutoIncrement := .f.
                             endif
                             if l_lCurrentColumnAutoIncrement .and. l_lCurrentColumnNullable  //Auto-Increment fields may not be null (and not have a default)
@@ -847,11 +847,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             case l_lColumnArray != ListOfColumnsInTable->Column_Array
                                 l_lMatchingFieldDefinition := .f.
                                 l_cMismatchType := "Field Array"
-                            case !empty(el_inlist(l_cColumnType,"I","IB","IS","M","R","L","D","Y","UUI","JS","JSB","OID"))  //Field type with no length
-                            case empty(el_inlist(l_cColumnType,"TOZ","TO","DTZ","DT")) .and. l_nColumnLength <> ListOfColumnsInTable->Column_Length   //Ignore Length matching for datetime and time fields
+                            case el_IsInlist(l_cColumnType,"I","IB","IS","M","R","L","D","Y","UUI","JS","JSB","OID")   //Field type with no length
+                            case empty(el_InlistPos(l_cColumnType,"TOZ","TO","DTZ","DT")) .and. l_nColumnLength <> ListOfColumnsInTable->Column_Length   //Ignore Length matching for datetime and time fields
                                 l_lMatchingFieldDefinition := .f.
                                 l_cMismatchType := "Field Length"
-                            case !empty(el_inlist(l_cColumnType,"C","CV","B","BV"))  //Field type with a length but no decimal
+                            case el_IsInlist(l_cColumnType,"C","CV","B","BV")   //Field type with a length but no decimal
                             case nvl(l_nColumnScale,0)  <> nvl(ListOfColumnsInTable->Column_Scale,0)
                                 l_lMatchingFieldDefinition := .f.
                                 l_cMismatchType := "Field Decimal"
@@ -859,7 +859,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                             if l_lMatchingFieldDefinition  // _M_ Should still test on nullable and incremental
 
-                                if l_lColumnAutoIncrement .and. vfp_Inlist(l_cCurrentColumnDefault,"Wharf-AutoIncrement()","AutoIncrement()")
+                                if l_lColumnAutoIncrement .and. el_IsInlist(l_cCurrentColumnDefault,"Wharf-AutoIncrement()","AutoIncrement()")
                                     l_cCurrentColumnDefault := ""
                                 endif
 
@@ -975,7 +975,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //                     endif
     //                 endif
                     
-    //                 if vfp_Seek(upper(l_cIndexName)+'*',"ListOfIndexesInTable","tag1")
+    //                 if el_seek(upper(l_cIndexName)+'*',"ListOfIndexesInTable","tag1")
     //                     l_iIndexPk := ListOfIndexesInTable->Pk
 
     //                     if !(trim(nvl(ListOfIndexesInTable->Index_Name,"")) == l_cIndexName) .or. ;

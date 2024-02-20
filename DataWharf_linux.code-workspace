@@ -12,15 +12,11 @@
         "harbour.compilerExecutable": "/usr/local/bin/harbour",
         "harbour.extraOptions": "-i/usr/local/include/harbour/",
         "harbour.extraIncludePaths":["/usr/local/include/harbour/",
-                                     "/src/Harbour_VFP/",
+                                     "/src/Harbour_EL/",
                                      "/src/Harbour_ORM/",
                                      "/src/Harbour_FastCGI/hb_fcgi/"],
         "harbour.warningLevel":1,
         "harbour.decorator":true,
-        "harbour.workspaceDepth": 1,
-        "local-history.path": "/opt/VSCode_History/Harbour_FastCGI",
-        "local-history.treeLocation": "localHistory",
-        "local-history.daysLimit": 0,
-        "local-history.maxDisplay": 5,
+        "harbour.workspaceDepth": 1
     }
 }

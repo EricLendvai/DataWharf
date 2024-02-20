@@ -42,7 +42,7 @@ l_cHtml += [<div class="container">]
                             scan all
                                 l_cHtml += [<tr>]
                                     l_cHtml += [<td>]+hb_TToC(ListOfRecords->TimeIn,"MM/DD/YYYY","HH:MM:SS PM")+[</td>]
-                                    l_cHtml += [<td>]+allt(ListOfRecords->IP)+[</td>]
+                                    l_cHtml += [<td>]+alltrim(ListOfRecords->IP)+[</td>]
                                 l_cHtml += [</tr>]
                             endscan
 

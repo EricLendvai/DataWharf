@@ -1,8 +1,8 @@
-#define BUILDVERSION "3.6"
+#define BUILDVERSION "4.0"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
-#include "hb_vfp.ch"
+#include "hb_el.ch"
 #include "dbinfo.ch"
 
 #ifdef __PLATFORM__LINUX
@@ -14,9 +14,9 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "4.2"
-#define MIN_HARBOUR_VFP_VERSION  "3.4"
-#define MIN_HARBOUR_FCGI_VERSION "1.7"
+#define MIN_HARBOUR_ORM_VERSION  "4.4"
+#define MIN_HARBOUR_EL_VERSION  "4.1"
+#define MIN_HARBOUR_FCGI_VERSION "1.8"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
@@ -44,9 +44,15 @@
 //#define LOGO_THEME_NAME "RainierSailBoat"
 #define LOGO_THEME_NAME "RainierKayak"        // Default Value, Can be overwritten in config.txt
 
+#define GOINEDITMODE "$('.TopTabs').addClass('disabled');$('.RemoveOnEdit').remove();$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary').removeClass('disabled');$('#ButtonDoneCancel').val('Cancel');"
 
-#define UPDATESAVEBUTTON [ onchange="$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();"]
-#define UPDATESAVEBUTTON_COMBOWITHONCHANGE [$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();]
+//Following to be removed
+#define UPDATE_ONSELECT_SAVEBUTTON            [ onchange="ToggleEditFormMode();" ]
+#define UPDATE_ONTEXTAREA_SAVEBUTTON          [ onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
+#define UPDATE_ONCHECKBOXINPUT_SAVEBUTTON     [ type="checkbox" onchange="ToggleEditFormMode(); " ]
+#define UPDATE_ONTEXTINPUT_SAVEBUTTON         [ type="text" onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
+#define UPDATE_ONPASSWORDINPUT_SAVEBUTTON     [ type="password" onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
+#define UPDATE_ONCOMBOWITHONCHANGE_SAVEBUTTON [ToggleEditFormMode();]
 
 #define USEDON_APPLICATION 1
 #define USEDON_NAMESPACE   2
@@ -185,4 +191,3 @@
 #define COLUMN_USEDAS_PRIMARY_KEY 2
 #define COLUMN_USEDAS_FOREIGN_KEY 3
 #define COLUMN_USEDAS_SUPPORT     4
-

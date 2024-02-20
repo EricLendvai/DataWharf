@@ -15,7 +15,7 @@
                     "${workspaceFolder}",
                     "${workspaceFolder}\\src\\",
                     "C:\\Harbour_ORM\\",
-                    "C:\\Harbour_VFP\\"
+                    "C:\\Harbour_EL\\"
                 ]
             },
             "linux":{
@@ -23,7 +23,7 @@
                 "sourcePaths": [
                     "${workspaceFolder}/src/",
                     "/src/Harbour_ORM/",
-                    "/src/Harbour_VFP/"
+                    "/src/Harbour_EL/"
                 ]
             }
         }

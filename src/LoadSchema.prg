@@ -401,6 +401,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 l_nColumnDefaultType   := 1
 l_cColumnDefaultCustom := ""
 //123456
+
                     l_cColumnDefault := oFcgi:p_o_SQLConnection:SanitizeFieldDefaultFromDefaultBehavior(par_SQLEngineType,;
                                                                                                               l_cColumnType,;
                                                                                                               l_lColumnNullable,;
@@ -416,7 +417,7 @@ l_cColumnDefaultCustom := ""
 
 //_M_ l_lColumnPrimary vs AutoIncrement
 
-                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
+                    if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
@@ -512,7 +513,7 @@ l_cColumnDefaultCustom := ""
 
     endif
 
-///////////////////////////////===========================================================================================================
+//===========================================================================================================
 
 
 
@@ -744,7 +745,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 
 
-                if !vfp_Seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInDataDictionary","tag1")
+                if !el_seek(upper(l_cEnumValueName)+'*',"ListOfEnumValuesInDataDictionary","tag1")
                     //Missing EnumValue, Add it
 
                     with object l_oDB1
@@ -1138,11 +1139,11 @@ case l_cColumnType == "D" .and. lower(l_cColumnDefault) == "current_date()"
     l_nColumnDefaultType   := 10
     l_cColumnDefaultCustom := ""
 
-case vfp_inlist(l_cColumnType,"TOZ","TO","DTZ","DT") .and. lower(l_cColumnDefault) == "now()"
+case el_IsInlist(l_cColumnType,"TOZ","TO","DTZ","DT") .and. lower(l_cColumnDefault) == "now()"
     l_nColumnDefaultType   := 11
     l_cColumnDefaultCustom := ""
 
-// case vfp_inlist(l_cColumnType,"I","IB","IS","N")   //_M_ Logic not implemented yet since it depends of the size of the integer.
+// case el_IsInlist(l_cColumnType,"I","IB","IS","N")   //_M_ Logic not implemented yet since it depends of the size of the integer.
 //     do case
 //     case par_nColumnDefaultType == 15
 //         l_cResult := iif(par_lForExport,"Wharf-","")+"AutoIncrement()"
@@ -1162,7 +1163,7 @@ case l_cColumnType == "L" .and. lower(l_cColumnDefault) == "true"
     l_nColumnDefaultType   := 14
     l_cColumnDefaultCustom := ""
 
-case vfp_inlist(l_cColumnType,"I","IB") .and. vfp_inlist(l_cColumnDefault,"Wharf-AutoIncrement()","AutoIncrement()")
+case el_IsInlist(l_cColumnType,"I","IB") .and. el_IsInlist(l_cColumnDefault,"Wharf-AutoIncrement()","AutoIncrement()")
     l_nColumnDefaultType   := 15
     l_cColumnDefaultCustom := ""
 
@@ -1180,7 +1181,7 @@ endcase
 
 
 //_M_ l_lColumnPrimary vs AutoIncrement
-                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
+                    if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
@@ -1684,7 +1685,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     endcase
 
 
-                    if vfp_Seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
+                    if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
@@ -1819,7 +1820,7 @@ endwith
 // ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
 // Pre-load the list of foreign keys in such a matter if can be tested when comparing indexes.
 select AllTableColumnsChildrenForForeignKeys
-scan all for vfp_inlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
+scan all for el_IsInlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
     if empty(hb_HPos(l_hForeignKeys,alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)))
         l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)] := {}           // Initialize list of Foreign key fields for the list of Hash Tables
     endif
@@ -1869,8 +1870,8 @@ if par_nSyncSetForeignKey > 1
                         // l_cTableName := ListOfFieldsForeignKeys->childtablename
                         // l_cTableName := ListOfFieldsForeignKeys->childcolumnname
 
-                        l_iParentTableKey := iif( VFP_Seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
-                        l_iChildColumnKey := iif( VFP_Seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
+                        l_iParentTableKey := iif( el_seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
+                        l_iChildColumnKey := iif( el_seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
 
                         if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
                             if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey
@@ -2055,7 +2056,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     
 //Check if is an index on a single column, and see if it is a Foreign key of type Integer or Interger Big or UUID
 
-                    if vfp_Seek(upper(l_cIndexName)+'*',"ListOfIndexesInDataDictionary","tag1")
+                    if el_seek(upper(l_cIndexName)+'*',"ListOfIndexesInDataDictionary","tag1")
                         l_iIndexPk := ListOfIndexesInDataDictionary->Pk
 
                         if !(trim(nvl(ListOfIndexesInDataDictionary->Index_Name,"")) == l_cIndexName) .or. ;

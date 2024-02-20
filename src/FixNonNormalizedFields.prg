@@ -30,7 +30,7 @@ endwith
 with object l_oDB1
     select ListOfPackage_Current
     scan all
-        if vfp_Seek(ListOfPackage_Current->pk,"CursorTreeStructureForPackage","pk")
+        if el_seek(ListOfPackage_Current->pk,"CursorTreeStructureForPackage","pk")
             if ListOfPackage_Current->Package_FullName   <> CursorTreeStructureForPackage->FullName .or. ;
                ListOfPackage_Current->Package_FullPk     <> CursorTreeStructureForPackage->FullPk   .or. ;
                ListOfPackage_Current->Package_TreeOrder1 <> CursorTreeStructureForPackage->recno    .or. ;
@@ -97,8 +97,8 @@ endwith
 if l_NumberOfOptions > 0
     for l_Counter = 1 to l_NumberOfOptions
         l_Package_pk   := l_aSQLResult[l_Counter,1]
-        l_Package_name := allt(l_aSQLResult[l_Counter,2])
-        CreateCursorTreeStructureForPackage_Branch(p_oCursor1,1,0,allt(l_Package_name),trans(l_Package_pk),l_Package_pk,0,l_Package_name)
+        l_Package_name := alltrim(l_aSQLResult[l_Counter,2])
+        CreateCursorTreeStructureForPackage_Branch(p_oCursor1,1,0,alltrim(l_Package_name),trans(l_Package_pk),l_Package_pk,0,l_Package_name)
     endfor
 endif
 
@@ -144,12 +144,12 @@ if l_NumberOfOptions > 0
     
     for l_Counter = 1 to l_NumberOfOptions
         l_Package_pk   := l_aSQLResult[l_Counter,1]
-        l_Package_Name := allt(l_aSQLResult[l_Counter,2])
+        l_Package_Name := alltrim(l_aSQLResult[l_Counter,2])
 
         if ("*"+Trans(l_Package_pk)+"*" $ "*"+par_FullPk+"*")
             SendToDebugView("Looping on "+l_Package_Name)   // Should not happen but this is preventative code in case of corrupted data
         else
-            CreateCursorTreeStructureForPackage_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+allt(l_Package_name),par_FullPk+"*"+trans(l_Package_pk),l_Package_pk,par_Package_pk,l_Package_name)
+            CreateCursorTreeStructureForPackage_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+alltrim(l_Package_name),par_FullPk+"*"+trans(l_Package_pk),l_Package_pk,par_Package_pk,l_Package_name)
         endif
 
     endfor
@@ -188,7 +188,7 @@ endwith
 with object l_oDB1
     select ListOfDataType_Current
     scan all
-        if vfp_Seek(ListOfDataType_Current->pk,"CursorTreeStructureForDataType","pk")
+        if el_seek(ListOfDataType_Current->pk,"CursorTreeStructureForDataType","pk")
             if ListOfDataType_Current->DataType_FullName   <> CursorTreeStructureForDataType->FullName .or. ;
                ListOfDataType_Current->DataType_FullPk     <> CursorTreeStructureForDataType->FullPk   .or. ;
                ListOfDataType_Current->DataType_TreeOrder1 <> CursorTreeStructureForDataType->recno    .or. ;
@@ -255,8 +255,8 @@ endwith
 if l_NumberOfOptions > 0
     for l_Counter = 1 to l_NumberOfOptions
         l_DataType_pk   := l_aSQLResult[l_Counter,1]
-        l_DataType_name := allt(l_aSQLResult[l_Counter,2])
-        CreateCursorTreeStructureForDataType_Branch(p_oCursor1,1,0,allt(l_DataType_name),trans(l_DataType_pk),l_DataType_pk,0,l_DataType_name)
+        l_DataType_name := alltrim(l_aSQLResult[l_Counter,2])
+        CreateCursorTreeStructureForDataType_Branch(p_oCursor1,1,0,alltrim(l_DataType_name),trans(l_DataType_pk),l_DataType_pk,0,l_DataType_name)
     endfor
 endif
 
@@ -302,12 +302,12 @@ if l_NumberOfOptions > 0
     
     for l_Counter = 1 to l_NumberOfOptions
         l_DataType_pk   := l_aSQLResult[l_Counter,1]
-        l_DataType_Name := allt(l_aSQLResult[l_Counter,2])
+        l_DataType_Name := alltrim(l_aSQLResult[l_Counter,2])
 
         if ("*"+Trans(l_DataType_pk)+"*" $ "*"+par_FullPk+"*")
             SendToDebugView("Looping on "+l_DataType_Name)   // Should not happen but this is preventative code in case of corrupted data
         else
-            CreateCursorTreeStructureForDataType_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+allt(l_DataType_name),par_FullPk+"*"+trans(l_DataType_pk),l_DataType_pk,par_DataType_pk,l_DataType_name)
+            CreateCursorTreeStructureForDataType_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+alltrim(l_DataType_name),par_FullPk+"*"+trans(l_DataType_pk),l_DataType_pk,par_DataType_pk,l_DataType_name)
         endif
 
     endfor
@@ -346,7 +346,7 @@ endwith
 with object l_oDB1
     select ListOfAttribute_Current
     scan all
-        if vfp_Seek(ListOfAttribute_Current->pk,"CursorTreeStructureForAttribute","pk")
+        if el_seek(ListOfAttribute_Current->pk,"CursorTreeStructureForAttribute","pk")
             if ListOfAttribute_Current->Attribute_FullName   <> CursorTreeStructureForAttribute->FullName .or. ;
                ListOfAttribute_Current->Attribute_FullPk     <> CursorTreeStructureForAttribute->FullPk   .or. ;
                ListOfAttribute_Current->Attribute_TreeOrder1 <> CursorTreeStructureForAttribute->recno    .or. ;
@@ -414,8 +414,8 @@ endwith
 if l_NumberOfOptions > 0
     for l_Counter = 1 to l_NumberOfOptions
         l_Attribute_pk   := l_aSQLResult[l_Counter,1]
-        l_Attribute_name := allt(l_aSQLResult[l_Counter,2])
-        CreateCursorTreeStructureForAttribute_Branch(p_oCursor1,1,0,allt(l_Attribute_name),trans(l_Attribute_pk),l_Attribute_pk,0,l_Attribute_name)
+        l_Attribute_name := alltrim(l_aSQLResult[l_Counter,2])
+        CreateCursorTreeStructureForAttribute_Branch(p_oCursor1,1,0,alltrim(l_Attribute_name),trans(l_Attribute_pk),l_Attribute_pk,0,l_Attribute_name)
     endfor
 endif
 
@@ -462,12 +462,12 @@ if l_NumberOfOptions > 0
     
     for l_Counter = 1 to l_NumberOfOptions
         l_Attribute_pk   := l_aSQLResult[l_Counter,1]
-        l_Attribute_Name := allt(l_aSQLResult[l_Counter,2])
+        l_Attribute_Name := alltrim(l_aSQLResult[l_Counter,2])
 
         if ("*"+Trans(l_Attribute_pk)+"*" $ "*"+par_FullPk+"*")
             SendToDebugView("Looping on "+l_Attribute_Name)   // Should not happen but this is preventative code in case of corrupted data
         else
-            CreateCursorTreeStructureForAttribute_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+allt(l_Attribute_name),par_FullPk+"*"+trans(l_Attribute_pk),l_Attribute_pk,par_Attribute_pk,l_Attribute_name)
+            CreateCursorTreeStructureForAttribute_Branch(par_oCursor1,par_Level+1,l_recno,par_FullName+" / "+alltrim(l_Attribute_name),par_FullPk+"*"+trans(l_Attribute_pk),l_Attribute_pk,par_Attribute_pk,l_Attribute_name)
         endif
 
     endfor

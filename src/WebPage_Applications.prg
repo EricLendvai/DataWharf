@@ -75,23 +75,23 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cURLLinkUID := oFcgi:p_URLPathElements[4]
     endif
 
-    if vfp_Inlist(l_cURLAction,"EditVersion")
+    if el_IsInlist(l_cURLAction,"EditVersion")
         if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
             l_cURLVersionCode := oFcgi:p_URLPathElements[4]
         endif
     endif
 
     do case
-    case vfp_Inlist(l_cURLAction,"ApplicationInfo")
+    case el_IsInlist(l_cURLAction,"ApplicationInfo")
         l_cApplicationElement := "INFO"
 
-    case vfp_Inlist(l_cURLAction,"ApplicationSettings")
+    case el_IsInlist(l_cURLAction,"ApplicationSettings")
         l_cApplicationElement := "SETTINGS"
 
-    case vfp_Inlist(l_cURLAction,"ListVersions","NewVersion","EditVersion")
+    case el_IsInlist(l_cURLAction,"ListVersions","NewVersion","EditVersion")
         l_cApplicationElement := "VERSIONS"
 
-    case vfp_Inlist(l_cURLAction,"ListDeployments","NewDeployment","EditDeployment")
+    case el_IsInlist(l_cURLAction,"ListDeployments","NewDeployment","EditDeployment")
         l_cApplicationElement := "DEPLOYMENTS"
 
     otherwise
@@ -157,7 +157,7 @@ case l_cURLAction == "NewApplication"
 
 
 case l_cURLAction == "ApplicationInfo"
-    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
     
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
@@ -184,7 +184,7 @@ case l_cURLAction == "ApplicationInfo"
 
 case l_cURLAction == "ApplicationSettings"
     if oFcgi:p_nAccessLevelDD >= 7
-        l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.f.)
+        l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
         
         if oFcgi:isGet()
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -217,16 +217,16 @@ case l_cURLAction == "ApplicationSettings"
     endif
 
 case l_cURLAction == "ListVersions"
-    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
     //_M_
 
 case l_cURLAction == "ListDeployments"
-    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
     l_cHtml += DeploymentListFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode)
 
 case l_cURLAction == "NewDeployment"
     if oFcgi:p_nAccessLevelDD >= 5
-        l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+        l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
         
         if oFcgi:isGet()
             l_cHtml += DeploymentEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",0,{=>})
@@ -236,7 +236,7 @@ case l_cURLAction == "NewDeployment"
     endif
 
 case l_cURLAction == "EditDeployment"
-    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode,.t.)
+    l_cHtml += ApplicationHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
     
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
@@ -268,19 +268,19 @@ case l_cURLAction == "EditDeployment"
         if oFcgi:isGet()
             l_iDeploymentPk                 := l_aSQLResult[1,1]
 
-            l_hValues["Name"]               := AllTrim(l_aSQLResult[1,2])
+            l_hValues["Name"]               := alltrim(l_aSQLResult[1,2])
             l_hValues["Status"]             := l_aSQLResult[1, 3]
             l_hValues["Description"]        := l_aSQLResult[1, 4]
             l_hValues["BackendType"]        := nvl(l_aSQLResult[1, 5],0)
-            l_hValues["Server"]             := AllTrim(nvl(l_aSQLResult[1, 6],""))
+            l_hValues["Server"]             := alltrim(nvl(l_aSQLResult[1, 6],""))
             l_hValues["Port"]               := nvl(l_aSQLResult[1, 7],0)
-            l_hValues["User"]               := AllTrim(nvl(l_aSQLResult[1, 8],""))
-            l_hValues["Database"]           := AllTrim(nvl(l_aSQLResult[1, 9],""))
-            l_hValues["Namespaces"]         := AllTrim(nvl(l_aSQLResult[1,10],""))
+            l_hValues["User"]               := alltrim(nvl(l_aSQLResult[1, 8],""))
+            l_hValues["Database"]           := alltrim(nvl(l_aSQLResult[1, 9],""))
+            l_hValues["Namespaces"]         := alltrim(nvl(l_aSQLResult[1,10],""))
             l_hValues["SetForeignKey"]      := nvl(l_aSQLResult[1,11],0)
             l_hValues["PasswordStorage"]    := nvl(l_aSQLResult[1,12],0)
-            l_hValues["PasswordConfigKey"]  := AllTrim(nvl(l_aSQLResult[1,13],""))
-            l_hValues["PasswordEnvVarName"] := AllTrim(nvl(l_aSQLResult[1,14],""))
+            l_hValues["PasswordConfigKey"]  := alltrim(nvl(l_aSQLResult[1,13],""))
+            l_hValues["PasswordEnvVarName"] := alltrim(nvl(l_aSQLResult[1,14],""))
             l_hValues["AllowUpdates"]       := l_aSQLResult[1,15]
 
             l_cHtml += DeploymentEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iDeploymentPk,l_hValues)
@@ -295,7 +295,7 @@ endcase
 
 return l_cHtml
 //=================================================================================================================
-static function ApplicationHeaderBuild(par_iApplicationPk,par_cApplicationName,par_cApplicationElement,par_cSitePath,par_cURLApplicationLinkCode,par_lActiveHeader)
+static function ApplicationHeaderBuild(par_iApplicationPk,par_cApplicationName,par_cApplicationElement,par_cSitePath,par_cURLApplicationLinkCode)
 local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
@@ -319,16 +319,16 @@ l_cHtml += [<div class="m-3"></div>]
 
 l_cHtml += [<ul class="nav nav-tabs">]
     l_cHtml += [<li class="nav-item">]
-        l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "INFO",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ApplicationInfo/]+par_cURLApplicationLinkCode+[/">Application Info</a>]
+        l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cApplicationElement == "INFO",[ active],[])+[" href="]+par_cSitePath+[Applications/ApplicationInfo/]+par_cURLApplicationLinkCode+[/">Application Info</a>]
     l_cHtml += [</li>]
     if oFcgi:p_nAccessLevelDD >= 7
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "SETTINGS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ApplicationSettings/]+par_cURLApplicationLinkCode+[/">Application Settings</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cApplicationElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Applications/ApplicationSettings/]+par_cURLApplicationLinkCode+[/">Application Settings</a>]
         l_cHtml += [</li>]
     endif
     // if oFcgi:p_nAccessLevelDD >= 7
     //     l_cHtml += [<li class="nav-item">]
-    //         l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "VERSIONS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListVersions/]+par_cURLApplicationLinkCode+[/">Versions</a>]
+    //         l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cApplicationElement == "VERSIONS",[ active],[])+[" href="]+par_cSitePath+[Applications/ListVersions/]+par_cURLApplicationLinkCode+[/">Versions</a>]
     //     l_cHtml += [</li>]
     // endif
     if oFcgi:p_nAccessLevelDD >= 7
@@ -342,7 +342,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
 
         l_iReccount := iif(l_oDB1:Tally == 1,l_aSQLResult[1,1],0) 
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="nav-link ]+iif(par_cApplicationElement == "DEPLOYMENTS",[ active],[])+iif(par_lActiveHeader,[],[ disabled])+[" href="]+par_cSitePath+[Applications/ListDeployments/]+par_cURLApplicationLinkCode+[/">Deployments (]+Trans(l_iReccount)+[)</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cApplicationElement == "DEPLOYMENTS",[ active],[])+[" href="]+par_cSitePath+[Applications/ListDeployments/]+par_cURLApplicationLinkCode+[/">Deployments (]+Trans(l_iReccount)+[)</a>]
         l_cHtml += [</li>]
     endif
 l_cHtml += [</ul>]
@@ -373,9 +373,7 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<div class="m-3"></div>]
 
@@ -384,18 +382,18 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"disabled></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"disabled></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Link Code</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextLinkCode" id="TextLinkCode" value="]+FcgiPrepFieldForValue(l_cLinkCode)+[" maxlength="20" size="20" style="text-transform: uppercase;" disabled></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLinkCode" id="TextLinkCode" value="]+FcgiPrepFieldForValue(l_cLinkCode)+[" maxlength="20" size="20" style="text-transform: uppercase;" disabled></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" disabled>]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus" disabled>]
                     l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
                     l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
                     l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
@@ -409,7 +407,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus" disabled>]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus" disabled>]
                     l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
                     l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
@@ -420,13 +418,13 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80" disabled>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80" disabled>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete" disabled>]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete" disabled>]
                     l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
                     l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On Namespaces</option>]
@@ -578,12 +576,12 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfApplications->Application_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationSettings/]+AllTrim(ListOfApplications->Application_LinkCode)+[/">]+Allt(ListOfApplications->Application_Name)+[</a>]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationInfo/]+AllTrim(ListOfApplications->Application_LinkCode)+[/">]+Allt(ListOfApplications->Application_Name)+[</a>]
+                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationSettings/]+alltrim(ListOfApplications->Application_LinkCode)+[/">]+alltrim(ListOfApplications->Application_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationInfo/]+alltrim(ListOfApplications->Application_LinkCode)+[/">]+alltrim(ListOfApplications->Application_Name)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += Allt(ListOfApplications->Application_LinkCode)
+                            l_cHtml += alltrim(ListOfApplications->Application_LinkCode)
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -591,22 +589,22 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( VFP_Seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->TableCount , 0)
+                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->TableCount , 0)
                             if !empty(l_nCount)
                                 l_cHtml += Trans(l_nCount)
                             endif
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(vfp_between(ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN)]
+                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(vfp_between(ListOfApplications->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfApplications->Application_DocStatus,DOCTATUS_MISSING)]
+                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfApplications->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfApplications->Application_DocStatus,DOCTATUS_MISSING)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Tables/Tags","On Namespaces","Entire Application Content","Can Delete Application"}[iif(vfp_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
+                            l_cHtml += {"None","On Tables/Tags","On Namespaces","Entire Application Content","Can Delete Application"}[iif(el_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
                         l_cHtml += [</td>]
 
                         if l_nNumberOfCustomFieldValues > 0
@@ -647,9 +645,7 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
@@ -659,13 +655,13 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<span class="navbar-brand ms-3">Update Application Settings</span>]   //navbar-text
         endif
         if oFcgi:p_nAccessLevelDD >= 7
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormSave()
         endif
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 7
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmPurgeModal">Purge All Content (Keep Access Rights)</button>]
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5 RemoveOnEdit" data-bs-toggle="modal" data-bs-target="#ConfirmPurgeModal">Purge All Content (Keep Access Rights and Deployments)</button>]
+                l_cHtml += GetButtonOnEditFormDelete()
             endif
         endif
     l_cHtml += [</div>]
@@ -678,18 +674,18 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Link Code</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextLinkCode" id="TextLinkCode" value="]+FcgiPrepFieldForValue(l_cLinkCode)+[" maxlength="20" size="20" style="text-transform: uppercase;"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLinkCode" id="TextLinkCode" value="]+FcgiPrepFieldForValue(l_cLinkCode)+[" maxlength="20" size="20" style="text-transform: uppercase;"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Usage Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUseStatus" id="ComboUseStatus">]
                     l_cHtml += [<option value="1"]+iif(l_nUseStatus==1,[ selected],[])+[>Unknown</option>]
                     l_cHtml += [<option value="2"]+iif(l_nUseStatus==2,[ selected],[])+[>Proposed</option>]
                     l_cHtml += [<option value="3"]+iif(l_nUseStatus==3,[ selected],[])+[>Under Development</option>]
@@ -703,7 +699,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Doc Status</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
                     l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDocStatus==2,[ selected],[])+[>Not Needed</option>]
                     l_cHtml += [<option value="3"]+iif(l_nDocStatus==3,[ selected],[])+[>Composing</option>]
@@ -714,13 +710,13 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-            l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+            l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr>]
             l_cHtml += [<td class="pe-2 pb-3">Destructive Deletes</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDestructiveDelete" id="ComboDestructiveDelete">]
                     l_cHtml += [<option value="1"]+iif(l_nDestructiveDelete==1,[ selected],[])+[>None</option>]
                     l_cHtml += [<option value="2"]+iif(l_nDestructiveDelete==2,[ selected],[])+[>On Tables/Tags</option>]
                     l_cHtml += [<option value="3"]+iif(l_nDestructiveDelete==3,[ selected],[])+[>On Namespaces</option>]
@@ -765,6 +761,7 @@ local l_cErrorMessage := ""
 local l_hValues := {=>}
 
 local l_oDB1
+local l_oData
 
 oFcgi:TraceAdd("ApplicationEditFormOnSubmit")
 
@@ -826,14 +823,14 @@ case l_cActionOnSubmit == "Save"
                         if empty(l_iApplicationPk)
                             if :Add()
                                 l_iApplicationPk := :Key()
-                                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
+                                // oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to add Application."
                             endif
                         else
                             if :Update(l_iApplicationPk)
                                 CustomFieldsSave(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
-                                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
+                                // oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to update Application."
                             endif
@@ -844,20 +841,19 @@ case l_cActionOnSubmit == "Save"
         endcase
     endif
 
+    // if empty(l_cErrorMessage)
+    //     l_iApplicationPk := 0
+    // endif
+
 case l_cActionOnSubmit == "Cancel"
-    if empty(l_iApplicationPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications")
-    else
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+par_cURLApplicationLinkCode+"/")
-    endif
+
+case l_cActionOnSubmit == "Done"
+    l_iApplicationPk := 0
 
 case l_cActionOnSubmit == "Delete"   // Application
     if oFcgi:p_nUserAccessMode >= 3
         if CheckIfAllowDestructiveApplicationDelete(l_iApplicationPk)
             l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk,.f.)
-            if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
-            endif
         else
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -936,7 +932,6 @@ case l_cActionOnSubmit == "Delete"   // Application
                                             l_cErrorMessage := "Failed to clear related DiagramTable records."
                                         endif
 
-                                        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
                                     endif
                                 endif
                             endif
@@ -946,20 +941,24 @@ case l_cActionOnSubmit == "Delete"   // Application
             endwith
         endif
     endif
+    if empty(l_cErrorMessage)
+        l_iApplicationPk := 0
+    endif
 
 case l_cActionOnSubmit == "Purge"   // Application
     if oFcgi:p_nUserAccessMode >= 3
         if CheckIfAllowDestructivePurgeApplication(l_iApplicationPk) .or. CheckIfAllowDestructiveApplicationDelete(l_iApplicationPk)
             l_cErrorMessage := CascadeDeleteApplication(l_iApplicationPk,.t.)
-            if empty(l_cErrorMessage)
-                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
-            endif
+            // if empty(l_cErrorMessage)
+            //     l_iApplicationPk := 0
+            // endif
         endif
     endif
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["Name"]              := l_cApplicationName
     l_hValues["LinkCode"]          := l_cApplicationLinkCode
     l_hValues["UseStatus"]         := l_nApplicationUseStatus
@@ -970,6 +969,26 @@ if !empty(l_cErrorMessage)
     CustomFieldsFormToHash(l_iApplicationPk,USEDON_APPLICATION,@l_hValues)
 
     l_cHtml += ApplicationEditFormBuild(l_cErrorMessage,l_iApplicationPk,l_hValues)
+
+case empty(l_iApplicationPk)
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
+
+otherwise
+    //Since the Name could have change the redirect URL has to be re-evaluated.
+    if hb_IsNil(l_oDB1)
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    endif
+    with object l_oDB1
+        :Table("f7d2bb71-41d3-46d7-8544-5b0db3db991b","Application")
+        :Column("Application.LinkCode","Application_LinkCode")
+        l_oData := l_oDB1:Get(l_iApplicationPk)
+        if l_oDB1:Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationSettings/"+l_oData:Application_LinkCode+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
+        endif
+    endif
+
 endif
 
 return l_cHtml
@@ -987,6 +1006,9 @@ local l_cTableName
 local l_cTableDescription
 
 local l_cErrorMessage := ""
+
+local l_aTableNames
+local l_aTableAKA
 
 with object l_oDB1
     :Table("ff898367-8a10-41ac-ad1d-8eaaec72fe0d","Namespace")
@@ -1048,9 +1070,21 @@ with object l_oDB1
     if empty(l_cErrorMessage)
         //Due to the deleting all Deployment, only a few directly related tables need to be cleared
         // Deleted all directly related records
+
+        if par_lPurgeOnly
+            l_aTableNames := {"Diagram" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"APITokenAccessApplication"   ,"UserSettingApplication"     }
+            l_aTableAKA   := {"Diagrams","Application Custom Fields","Tags","Template Tables","API Token Access Application","Last Diagrams Used by Users"}
+        else
+            l_aTableNames := {"Diagram" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"UserAccessApplication"   ,"APITokenAccessApplication"   ,"UserSettingApplication"     ,"Deployment" }
+            l_aTableAKA   := {"Diagrams","Application Custom Fields","Tags","Template Tables","User Access Application ","API Token Access Application","Last Diagrams Used by Users","Deployments"}
+        endif
+
         with object l_oDB_ListOfRecordsToDelete
-            for each l_cTableName,l_cTableDescription in {"Diagram" ,"ApplicationCustomField"   ,"Tag" ,"TemplateTable"  ,"UserAccessApplication"   ,"APITokenAccessApplication"   ,"UserSettingApplication"     ,"Deployment" },;
-                                                         {"Diagrams","Application Custom Fields","Tags","Template Tables","User Access Application ","API Token Access Application","Last Diagrams Used by Users","Deployments"}
+            // for each l_cTableName,l_cTableDescription in ,;
+            //                                              
+
+            for each l_cTableName,l_cTableDescription in l_aTableNames,l_aTableAKA
+
                 if empty(l_cErrorMessage)
                     :Table("1c66ab49-1671-468b-b5e1-788e9b12e5b3",l_cTableName)
                     :Column(l_cTableName+".pk","pk")
@@ -1147,7 +1181,7 @@ else
     if oFcgi:p_nAccessLevelDD >= 5
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
-                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewDeployment/]+par_cURLApplicationLinkCode+[/">New Deployment</a>]
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cSitePath+[Applications/NewDeployment/]+par_cURLApplicationLinkCode+[/]+[">New Deployment</a>]
             l_cHtml += [</div>]
         l_cHtml += [</nav>]
 
@@ -1192,11 +1226,11 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","On Hold"}[iif(vfp_between(ListOfDeployments->Deployment_Status,1,2),ListOfDeployments->Deployment_Status,1)]
+                            l_cHtml += {"Active","On Hold"}[iif(el_between(ListOfDeployments->Deployment_Status,1,2),ListOfDeployments->Deployment_Status,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","MariaDB","MySQL","PostgreSQL","MSSQL"}[iif(vfp_between(ListOfDeployments->Deployment_BackendType,1,4),ListOfDeployments->Deployment_BackendType+1,1)]
+                            l_cHtml += {"","MariaDB","MySQL","PostgreSQL","MSSQL"}[iif(el_between(ListOfDeployments->Deployment_BackendType,1,4),ListOfDeployments->Deployment_BackendType+1,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1212,7 +1246,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Encrypted","In config.txt:","In Environment Variable:","User is AWS iam account"}[iif(vfp_between(nvl(ListOfDeployments->Deployment_PasswordStorage,0),1,4),ListOfDeployments->Deployment_PasswordStorage+1,1)]
+                            l_cHtml += {"","Encrypted","In config.txt:","In Environment Variable:","User is AWS iam account"}[iif(el_between(nvl(ListOfDeployments->Deployment_PasswordStorage,0),1,4),ListOfDeployments->Deployment_PasswordStorage+1,1)]
 
                             switch nvl(ListOfDeployments->Deployment_PasswordStorage,0)
                             case 2
@@ -1234,7 +1268,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not","Foreign Key Restrictions","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(vfp_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
+                            l_cHtml += {"","Not","Foreign Key Restrictions","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(el_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
@@ -1281,20 +1315,18 @@ l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 
-if !empty(l_cErrorText)
-    l_cHtml += [<div class="p-3 mb-2 bg-]+iif(lower(left(l_cErrorText,7)) == "success",[success],[danger])+[ text-white">]+l_cErrorText+[</div>]
-endif
+l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         l_cHtml += [<span class="navbar-brand ms-3">]+iif(empty(par_iPk),"New","Edit")+[ Deployment</span>]   //navbar-text
         if oFcgi:p_nAccessLevelDD >= 7
-            l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-0" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button">]
+            l_cHtml += GetButtonOnEditFormSave()
         endif
-        l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button">]
+        l_cHtml += GetButtonOnEditFormDoneCancel()
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 7
-                l_cHtml += [<button type="button" class="btn btn-danger rounded ms-5" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+                l_cHtml += GetButtonOnEditFormDelete()
             endif
         endif
     l_cHtml += [</div>]
@@ -1308,13 +1340,13 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Name</td>]
-        l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
+        l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextName" id="TextName" value="]+FcgiPrepFieldForValue(l_cName)+[" maxlength="200" size="80"></td>]
     l_cHtml += [</tr>]
 
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Status</td>]
         l_cHtml += [<td class="pb-3">]
-            l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
+            l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboStatus" id="ComboStatus">]
                 l_cHtml += [<option value="1"]+iif(l_nStatus==1,[ selected],[])+[>Active</option>]
                 l_cHtml += [<option value="2"]+iif(l_nStatus==2,[ selected],[])+[>On Hold</option>]
             l_cHtml += [</select>]
@@ -1323,13 +1355,13 @@ l_cHtml += [<div class="m-3">]
 
     l_cHtml += [<tr>]
         l_cHtml += [<td valign="top" class="pe-2 pb-3">Description</td>]
-        l_cHtml += [<td class="pb-3"><textarea]+UPDATESAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
+        l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Server Type</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboBackendType" id="ComboBackendType">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboBackendType" id="ComboBackendType">]
                 l_cHtml += [<option value="0"]+iif(l_nBackendType==0,[ selected],[])+[></option>]
                 l_cHtml += [<option value="1"]+iif(l_nBackendType==1,[ selected],[])+[>MariaDB</option>]
                 l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL</option>]
@@ -1341,17 +1373,17 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Server Address/IP</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextServer" id="TextServer" value="]+FcgiPrepFieldForValue(l_cServer)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextServer" id="TextServer" value="]+FcgiPrepFieldForValue(l_cServer)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Port (If not default)</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextPort" id="TextPort" value="]+iif(empty(l_nPort),"",Trans(l_nPort))+[" maxlength="10" size="10"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextPort" id="TextPort" value="]+iif(empty(l_nPort),"",Trans(l_nPort))+[" maxlength="10" size="10"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">User Name</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextUser" id="TextUser" value="]+FcgiPrepFieldForValue(l_cUser)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextUser" id="TextUser" value="]+FcgiPrepFieldForValue(l_cUser)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
@@ -1359,7 +1391,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
 
                 l_cHtml += [<span class="pe-5">]
-                    l_cHtml += [<select name="ComboPasswordStorage" id="ComboPasswordStorage" onchange=']+UPDATESAVEBUTTON_COMBOWITHONCHANGE+[OnChangePasswordStorage(this.value);'>]
+                    l_cHtml += [<select name="ComboPasswordStorage" id="ComboPasswordStorage" onchange=']+UPDATE_ONCOMBOWITHONCHANGE_SAVEBUTTON+[OnChangePasswordStorage(this.value);'>]
                     l_cHtml += [<option value="0"]+iif(l_nPasswordStorage==0,[ selected],[])+[></option>]
                     l_cHtml += [<option value="1"]+iif(l_nPasswordStorage==1,[ selected],[])+[>Encrypted</option>]
                     l_cHtml += [<option value="2"]+iif(l_nPasswordStorage==2,[ selected],[])+[>In config.txt</option>]
@@ -1370,42 +1402,36 @@ l_cHtml += [<div class="m-3">]
 
                 l_cHtml += [<span class="pe-5" id="SpanPasswordCrypt" style="display: none;">]
                     l_cHtml += [<span class="pe-1">New Password</span>]
-                    l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="password" name="TextPasswordCrypt" id="TextPasswordCrypt" value="" size="20" maxlength="200">]
+                    l_cHtml += [<input]+UPDATE_ONPASSWORDINPUT_SAVEBUTTON+[name="TextPasswordCrypt" id="TextPasswordCrypt" value="" size="20" maxlength="200">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanPasswordConfigKey" style="display: none;">]
                     l_cHtml += [<span class="pe-1">Config Key</span>]
-                    l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="TextPasswordConfigKey" id="TextPasswordConfigKey" value="]+FcgiPrepFieldForValue(l_cPasswordConfigKey)+[" size="20" maxlength="200">]
+                    l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextPasswordConfigKey" id="TextPasswordConfigKey" value="]+FcgiPrepFieldForValue(l_cPasswordConfigKey)+[" size="20" maxlength="200">]
                 l_cHtml += [</span>]
 
                 l_cHtml += [<span class="pe-5" id="SpanPasswordEnvVarName" style="display: none;">]
                     l_cHtml += [<span class="pe-1">Environment Variable</span>]
-                    l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="text" name="TextPasswordEnvVarName" id="TextPasswordEnvVarName" value="]+FcgiPrepFieldForValue(l_cPasswordEnvVarName)+[" size="20" maxlength="200">]
+                    l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextPasswordEnvVarName" id="TextPasswordEnvVarName" value="]+FcgiPrepFieldForValue(l_cPasswordEnvVarName)+[" size="20" maxlength="200">]
                 l_cHtml += [</span>]
 
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
-
-        // l_cHtml += [<tr class="pb-5">]
-        //     l_cHtml += [<td class="pe-2 pb-3">Password</td>]
-        //     l_cHtml += [<td class="pb-3"><input type="password" name="TextPassword" id="TextPassword" value="]+FcgiPrepFieldForValue(l_cPassword)+[" maxlength="200" size="80"></td>]
-        // l_cHtml += [</tr>]
-
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Database</td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextDatabase" id="TextDatabase" value="]+FcgiPrepFieldForValue(l_cDatabase)+[" maxlength="200" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextDatabase" id="TextDatabase" value="]+FcgiPrepFieldForValue(l_cDatabase)+[" maxlength="200" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Namespaces<small><br>("schema" in PostgreSQL)<br>(optional, "," separated)</small></td>]
-            l_cHtml += [<td class="pb-3"><input]+UPDATESAVEBUTTON+[ type="text" name="TextNamespaces" id="TextNamespaces" value="]+FcgiPrepFieldForValue(l_cNamespaces)+[" maxlength="400" size="80"></td>]
+            l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextNamespaces" id="TextNamespaces" value="]+FcgiPrepFieldForValue(l_cNamespaces)+[" maxlength="400" size="80"></td>]
         l_cHtml += [</tr>]
 
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Set Foreign Key</td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += [<select]+UPDATESAVEBUTTON+[ name="ComboSetForeignKey" id="ComboSetForeignKey">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboSetForeignKey" id="ComboSetForeignKey">]
                 l_cHtml += [<option value="0"]+iif(l_nSetForeignKey==0,[ selected],[])+[></option>]
                 l_cHtml += [<option value="1"]+iif(l_nSetForeignKey==1,[ selected],[])+[>Not</option>]
                 l_cHtml += [<option value="2"]+iif(l_nSetForeignKey==2,[ selected],[])+[>Foreign Key Restrictions</option>]
@@ -1419,7 +1445,7 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<tr class="pb-5">]
             l_cHtml += [<td class="pe-2 pb-3">Allow Updates</td>]
             l_cHtml += [<td class="pb-3"><div class="form-check form-switch">]
-                l_cHtml += [<input]+UPDATESAVEBUTTON+[ type="checkbox" name="CheckAllowUpdates" id="CheckAllowUpdates" value="1"]+iif(l_lAllowUpdates," checked","")+[ class="form-check-input">]
+                l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckAllowUpdates" id="CheckAllowUpdates" value="1"]+iif(l_lAllowUpdates," checked","")+[ class="form-check-input">]
             l_cHtml += [</div></td>]
         l_cHtml += [</tr>]
 
@@ -1600,7 +1626,7 @@ case l_cActionOnSubmit == "Save"
         endif
     endif
 
-case l_cActionOnSubmit == "Cancel"
+case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
     oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
 
 case l_cActionOnSubmit == "Delete"   // Deployment
