@@ -1753,8 +1753,8 @@ case l_cURLAction == "TableExportForDataWharfImports"
                 l_cHtml += GetAboveNavbarHeading("Export for DataWharf Imports","Table",AssembleNavbarInfo("Build"))
 
                 l_cCombinedPath := l_cURLApplicationLinkCode+[/]+;
-                                    PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                                    PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
+                                   PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
+                                   PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
 
                 l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<div class="input-group">]
@@ -2077,6 +2077,7 @@ local l_oDB_ListOfDataDictionaries                     := hb_SQLData(oFcgi:p_o_S
 local l_oDB_ListOfCustomFieldValues                    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfNamespaceCounts                      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTableCounts                          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfRelationshipCounts                   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumnCounts                         := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEnumerationCounts                    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfIndexCounts                          := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2184,6 +2185,27 @@ with object l_oDB_ListOfTableCounts
     endwith
 endwith
 
+with object l_oDB_ListOfRelationshipCounts
+    :Table("5599c14a-b4e3-4407-b462-5b334bd42adc","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
+    :Where("Column.UsedAs = ^",COLUMN_USEDAS_FOREIGN_KEY)
+    :Where("Column.fk_TableForeign IS NOT NULL")
+    :GroupBy("Application_pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfRelationshipCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
 with object l_oDB_ListOfColumnCounts
     :Table("97ea0070-3ca0-4bf9-9634-aa2ae6913fd1","Application")
     :Column("Application.pk" ,"Application_pk")
@@ -2285,7 +2307,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"10","11")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -2294,6 +2316,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="text-white text-center">Name-<br>spaces</th>]
                     l_cHtml += [<th class="text-white text-center">Tables</th>]
                     l_cHtml += [<th class="text-white text-center">Columns</th>]
+                    l_cHtml += [<th class="text-white text-center">Relationships</th>]
                     l_cHtml += [<th class="text-white text-center">Enumerations</th>]
                     l_cHtml += [<th class="text-white text-center">Indexes</th>]
                     l_cHtml += [<th class="text-white text-center">Diagrams</th>]
@@ -2337,6 +2360,13 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Columns
                             l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Relationships
+                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfRelationshipCounts","tag1") , ListOfRelationshipCounts->Count , 0)
                             if !empty(l_nCount)
                                 l_cHtml += Trans(l_nCount)
                             endif
@@ -3891,7 +3921,7 @@ if !empty(l_nNumberOfTables)
 
                 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
                                    PrepareForURLSQLIdentifier("Namespace",ListOfTables->Namespace_Name,ListOfTables->Namespace_LinkUID)+[/]+;
-                                   PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_LinkUID)
+                                   PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_LinkUID)    +[/]
 
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTables->Table_UseStatus)+[>]
 
@@ -4153,8 +4183,8 @@ else
         l_cHtml += GetAboveNavbarHeading("Edit","Table",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                            PrepareForURLSQLIdentifier("Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_LinkUID)+[/]+;
-                            PrepareForURLSQLIdentifier("Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_LinkUID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_LinkUID)    +[/]
 
     endif
 
@@ -11255,8 +11285,8 @@ else
         l_cHtml += GetAboveNavbarHeading("Referenced By","Table",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                            PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                            PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
 
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -11348,8 +11378,8 @@ else
                                         // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
 
                                         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                        PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
-                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
 
                                         l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
                                                                                             PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_LinkUID)+[/]
@@ -11534,8 +11564,8 @@ else
         l_cHtml += GetAboveNavbarHeading("Referenced By","Enumeration",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                            PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                            PrepareForURLSQLIdentifier("Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
+                           PrepareForURLSQLIdentifier("Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_LinkUID)    +[/]
 
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -11620,8 +11650,8 @@ else
                                         // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
 
                                         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                        PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
-                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
 
                                         l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
                                                                                             PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_LinkUID)+[/]

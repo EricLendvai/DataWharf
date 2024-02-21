@@ -1,11 +1,11 @@
 //As of DataWharf 3, its own configuration is defined using a "DataWharf" application managed in DataWharf itself.
 function Config()
 return ;
-{"HarbourORMVersion"=>4.2,;
- "DataWharfVersion"=>4.0,;
+{"HarbourORMVersion"=>4.4,;
+ "DataWharfVersion"=>4.1,;
  "Backend"=>"PostgreSQL",;
- "GenerationTime"=>"2024-02-19T03:52:48.730Z",;
- "GenerationSignature"=>"204151de-486e-42de-a270-ced103049796",;
+ "GenerationTime"=>"2024-02-21T05:09:30.101Z",;
+ "GenerationSignature"=>"4b5ce60f-885c-4d09-9fff-892957c6d4be",;
  "Tables"=>;
     {"public.APIAccessEndpoint"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
@@ -91,7 +91,7 @@ return ;
         ,"TestValidNonEnumValueIdentifierAsVariableName"        =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Namespace, Table, Column, Index and Enumeration Identifiers to Match Variable Name Requirements
         ,"TestValidSQLEnumValueIdentifierAsVariableName"        =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Enumeration values used as SQLEnum Identifiers to Match Variable Name Requirements
         ,"TestValidSQLEnumValueIdentifierAsAlphaNumericExtended"=>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Validity of Enumeration values not used as SQLEnum Identifiers to be Alpha Numeric, blank, dash or underscore
-        ,"TestIndexOnPrimaryAndForeignKeys"                     =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Add Test to prevent indexes on Primary and Foreign keys. Primary and Foreign key indexes are already implicit.
+        ,"TestIndexOnPrimaryAndForeignKeys"                     =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check Existance of Indexes on Primary and Foreign Keys. Primary and Foreign key indexes are already implicit.
         ,"TestUniquenessCaseInsensitiveIdentifiers"             =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check uniqueness of case insensitive identifiers
         ,"TestUniquenessTableSQLEnumerationIdentifiers"         =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"}};   //Check uniqueness between Table and SQLEnum Enumeration names in same Namespace
                            ,"Indexes"=>;
@@ -386,6 +386,7 @@ return ;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
+        ,"LinkUID"           =>{"Type"=>"C","Length"=>36,"Default"=>"gen_random_uuid()::char(36)","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"dati"              =>{"Type"=>"DT"};   //First Request time.
         ,"RequestCount"      =>{"Type"=>"I"};
         ,"ErrorInfo"         =>{"Type"=>"M","Nullable"=>.t.};   //Error Info on Crash.

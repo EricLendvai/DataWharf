@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.0"
+#define BUILDVERSION "4.1"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -15,7 +15,7 @@
 // #endif
 
 #define MIN_HARBOUR_ORM_VERSION  "4.4"
-#define MIN_HARBOUR_EL_VERSION  "4.1"
+#define MIN_HARBOUR_EL_VERSION   "4.1"
 #define MIN_HARBOUR_FCGI_VERSION "1.8"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"

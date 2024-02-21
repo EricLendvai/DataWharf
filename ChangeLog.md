@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 02/20/2024 v 4.1
+* Number of Relationships in Application list screen.
+* Fix issue on using link to Table Columns, if a search criteria exists on Tables.
+
 ## 02/19/2024 v 4.0
 * Enhanced UI when editing applications, new Nex/Previous buttons on most elements.
 * Added multiple Count columns and "Referenced by" screens.

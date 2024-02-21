@@ -453,9 +453,10 @@ return l_cHtml
 //=================================================================================================================
 static function ApplicationListFormBuild()
 local l_cHtml := []
-local l_oDB_ListOfApplications      := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfCustomFieldValues := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTableCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfApplications       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfRelationshipCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
@@ -525,7 +526,7 @@ endif
 with object l_oDB_ListOfTableCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"TableCount")
+    :Column("Count(*)" ,"Count")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
@@ -540,6 +541,26 @@ with object l_oDB_ListOfTableCounts
     endwith
 endwith
 
+with object l_oDB_ListOfRelationshipCounts
+    :Table("e417f8cb-dffe-4e33-a817-3cd19770a2e9","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
+    :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
+    :Where("Column.UsedAs = ^",COLUMN_USEDAS_FOREIGN_KEY)
+    :Where("Column.fk_TableForeign IS NOT NULL")
+    :GroupBy("Application_pk")
+    if oFcgi:p_nUserAccessMode <= 1
+        :Join("inner","UserAccessApplication","","UserAccessApplication.fk_Application = Application.pk")
+        :Where("UserAccessApplication.fk_User = ^",oFcgi:p_iUserPk)
+    endif
+    :SQL("ListOfRelationshipCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
 
 l_cHtml += [<div class="m-3">]
 
@@ -555,7 +576,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"7","8")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -563,6 +584,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="text-white">Link Code</th>]
                     l_cHtml += [<th class="text-white">Description</th>]
                     l_cHtml += [<th class="text-white text-center">Tables</th>]
+                    l_cHtml += [<th class="text-white text-center">Relationships</th>]
                     l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                     l_cHtml += [<th class="text-white text-center">Destructive<br>Deletes</th>]
@@ -589,7 +611,14 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->TableCount , 0)
+                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1") , ListOfRelationshipCounts->Count , 0)
                             if !empty(l_nCount)
                                 l_cHtml += Trans(l_nCount)
                             endif
