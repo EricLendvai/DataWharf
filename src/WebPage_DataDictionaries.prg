@@ -4420,7 +4420,9 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("895da8f1-8cdb-4792-a5b9-3d3b6e646430","Table")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("Table.fk_Namespace",l_iNamespacePk)
+                if l_iNamespacePk > 0   // Needed in case of disabled Namespace dropdown
+                    :Field("Table.fk_Namespace",l_iNamespacePk)
+                endif
                 :Field("Table.Name"        ,l_cTableName)
                 :Field("Table.AKA"         ,l_cTableAKA)
                 :Field("Table.UseStatus"   ,l_nTableUseStatus)

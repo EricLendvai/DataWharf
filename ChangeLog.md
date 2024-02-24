@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+
+## 02/24/2024 v 4.1A
+* Fixed destructive bug when editing a table and the selection of namespace was disabled
+
 ## 02/20/2024 v 4.1
 * Number of Relationships in Application list screen.
 * Fix issue on using link to Table Columns, if a search criteria exists on Tables.
