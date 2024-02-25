@@ -1,8 +1,10 @@
 # DataWharf - Change Log
 
+## 02/25/2024 v 4.1B
+* Fixed destructive bug when editing an Enumeration and the selection of namespace was disabled
 
 ## 02/24/2024 v 4.1A
-* Fixed destructive bug when editing a table and the selection of namespace was disabled
+* Fixed destructive bug when editing a Table and the selection of namespace was disabled
 
 ## 02/20/2024 v 4.1
 * Number of Relationships in Application list screen.

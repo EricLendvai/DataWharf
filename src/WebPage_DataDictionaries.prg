@@ -7948,7 +7948,9 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("92372d16-01ca-41d7-8f45-d145a2ce3cdc","Enumeration")
             if oFcgi:p_nAccessLevelDD >= 5
-                :Field("Enumeration.fk_Namespace"   ,l_iNamespacePk)
+                if l_iNamespacePk > 0   // Needed in case of disabled Namespace dropdown
+                    :Field("Enumeration.fk_Namespace",l_iNamespacePk)
+                endif
                 :Field("Enumeration.Name"           ,l_cEnumerationName)
                 :Field("Enumeration.AKA"            ,l_cEnumerationAKA)
                 :Field("Enumeration.UseStatus"      ,l_iEnumerationUseStatus)
