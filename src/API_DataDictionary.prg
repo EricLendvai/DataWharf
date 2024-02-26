@@ -121,9 +121,9 @@ else
         else
             do case
             case par_cTarget == "Harbour"
-                l_cResponse := ExportApplicationToHarbour_ORM(ListOfApplications->pk,3,.f.,"PostgreSQL")
+                l_cResponse := ExportApplicationToHarbour_ORM(ListOfApplications->pk,.f.,"PostgreSQL")
             case par_cTarget == "JSON"
-                l_cMacro := ExportApplicationToHarbour_ORM(ListOfApplications->pk,3,.f.,"PostgreSQL")
+                l_cMacro := ExportApplicationToHarbour_ORM(ListOfApplications->pk,.f.,"PostgreSQL")
                 l_cMacro := Strtran(l_cMacro,chr(13),"")
                 l_cMacro := Strtran(l_cMacro,chr(10),"")
                 l_cMacro := Strtran(l_cMacro,[;],"")

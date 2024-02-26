@@ -1,6 +1,6 @@
 #include "DataWharf.ch"
 //=================================================================================================================
-function ExportApplicationToHarbour_ORM(par_iApplicationPk,par_nVersion,par_IncludeDescription,par_cBackend)
+function ExportApplicationToHarbour_ORM(par_iApplicationPk,par_IncludeDescription,par_cBackend)
 
 local l_lContinue := .t.
 local l_oDB_Application
@@ -364,24 +364,16 @@ if l_lContinue
 endif
 
 if l_lContinue
-    if par_nVersion == 3
-        l_cSchemaIndent := space(4)
-        l_cSourceCode := [{"HarbourORMVersion"=>]+HB_ORM_BUILDVERSION+[,;]+CRLF
-        l_cSourceCode += [ "DataWharfVersion"=>]+BUILDVERSION+[,;]+CRLF
-        l_cSourceCode += [ "Backend"=>"]+par_cBackend+[",;]+CRLF
-        l_cSourceCode += [ "GenerationTime"=>"]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
-        l_cSourceCode += [ "GenerationSignature"=>"]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
-    else
-        l_cSchemaIndent := ""
-    endif
+    l_cSchemaIndent := space(4)
+    l_cSourceCode := [{"HarbourORMVersion"=>]+HB_ORM_BUILDVERSION+[,;]+CRLF
+    l_cSourceCode += [ "DataWharfVersion"=>]+BUILDVERSION+[,;]+CRLF
+    l_cSourceCode += [ "Backend"=>"]+par_cBackend+[",;]+CRLF
+    l_cSourceCode += [ "GenerationTime"=>"]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
+    l_cSourceCode += [ "GenerationSignature"=>"]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
     
     if l_nNumberOfTables > 0
-        if par_nVersion == 3
-            l_cSourceCode += [,;]+CRLF
-            l_cSourceCode += [ "Tables"=>;]+CRLF
-        else
-            // l_cSourceCode += [{]+CRLF
-        endif
+        l_cSourceCode += [,;]+CRLF
+        l_cSourceCode += [ "Tables"=>;]+CRLF
 
         select ListOfTables
         scan all
@@ -391,9 +383,7 @@ if l_lContinue
             l_cNamespaceAndTableName := alltrim(ListOfTables->Namespace_Name)+"."+alltrim(ListOfTables->Table_Name)
 //l_cNamespaceAndTableName := el_StringFilterCharacters(l_cNamespaceAndTableName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.")
 
-            if par_nVersion >= 2
-                l_cIndentHashElement := space(len([{"]+l_cNamespaceAndTableName+["=>]))
-            endif
+            l_cIndentHashElement := space(len([{"]+l_cNamespaceAndTableName+["=>]))
 
             l_cSourceCode += l_cSchemaIndent+iif(l_nTableCounter==1,"{",",")  // Start the next table hash element
             
@@ -491,67 +481,56 @@ if l_lContinue
                         l_lFieldNullable := .f.
                     endif
 
-                    l_cSourceCodeFields += padr('"'+l_cFieldName+'"',l_nMaxNameLength+2)+"=>{"
-                    if par_nVersion == 3
-                        // do case
-                        // case l_cFieldUsedBy == USEDBY_MYSQLONLY
-                        //     l_cSourceCodeFields += '"BackendType"=>"MySQL",'
-                        // case l_cFieldUsedBy == USEDBY_POSTGRESQLONLY
-                        //     l_cSourceCodeFields += '"BackendType"=>"PostgreSQL",'
-                        // endcase
+                    l_cSourceCodeFields += PadRNoTrim('"'+SanitizeForHash(l_cFieldName)+'"',l_nMaxNameLength+2)+"=>{"
+                    // do case
+                    // case l_cFieldUsedBy == USEDBY_MYSQLONLY
+                    //     l_cSourceCodeFields += '"BackendType"=>"MySQL",'
+                    // case l_cFieldUsedBy == USEDBY_POSTGRESQLONLY
+                    //     l_cSourceCodeFields += '"BackendType"=>"PostgreSQL",'
+                    // endcase
 
 // hb_orm_SendToDebugView(l_cSourceCodeFields)
 // hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
 
-                        if el_IsInlist(l_nFieldUsedAs,2,3,4)
-                            l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_USEDAS+'"=>"'+{"","Primary","Foreign","Support"}[l_nFieldUsedAs]+'"'
-                            if l_nFieldUsedAs == 3  // Foreign
-                                if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
-                                    l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
-                                endif
-                                if ListOfColumns->Column_ForeignKeyOptional
-                                    l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
-                                endif
+                    if el_IsInlist(l_nFieldUsedAs,2,3,4)
+                        l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_USEDAS+'"=>"'+{"","Primary","Foreign","Support"}[l_nFieldUsedAs]+'"'
+                        if l_nFieldUsedAs == 3  // Foreign
+                            if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
+                                l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
                             endif
-                            l_cSourceCodeFields += ','
+                            if ListOfColumns->Column_ForeignKeyOptional
+                                l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
+                            endif
                         endif
-                        l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"'
-                        if !empty(l_cFieldTypeEnumName)
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ENUMNAME+'"=>"'+l_cFieldTypeEnumName+'"'
-                        endif
-                        if nvl(l_nFieldLen,0) > 0
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_LENGTH+'"=>'+trans(nvl(l_nFieldLen,0))
-                        endif
-                        if nvl(l_nFieldDec,0) > 0
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DECIMALS+'"=>'+trans(nvl(l_nFieldDec,0))
-                        endif
-                        if !empty(l_cFieldDefault)
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DEFAULT+'"=>"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
-                        endif
-                        if l_lFieldNullable
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_NULLABLE+'"=>.t.'
-                        endif
-                        if l_lFieldAutoIncrement
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_AUTOINCREMENT+'"=>.t.'
-                        endif
-                        if l_lFieldArray
-                            l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
-                        endif
-                        if el_IsInlist(ListOfColumns->Column_OnDelete,2,3,4)
-                            l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
-                        endif
+                        l_cSourceCodeFields += ','
+                    endif
+                    l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"'
+                    if !empty(l_cFieldTypeEnumName)
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ENUMNAME+'"=>"'+l_cFieldTypeEnumName+'"'
+                    endif
+                    if nvl(l_nFieldLen,0) > 0
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_LENGTH+'"=>'+trans(nvl(l_nFieldLen,0))
+                    endif
+                    if nvl(l_nFieldDec,0) > 0
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DECIMALS+'"=>'+trans(nvl(l_nFieldDec,0))
+                    endif
+                    if !empty(l_cFieldDefault)
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_DEFAULT+'"=>"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
+                    endif
+                    if l_lFieldNullable
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_NULLABLE+'"=>.t.'
+                    endif
+                    if l_lFieldAutoIncrement
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_AUTOINCREMENT+'"=>.t.'
+                    endif
+                    if l_lFieldArray
+                        l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
+                    endif
+                    if el_IsInlist(ListOfColumns->Column_OnDelete,2,3,4)
+                        l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
+                    endif
 
 //_M_ What about Unicode and other field attributes?
-                    else
-                        l_cSourceCodeFields += ","  // Null Value for the HB_ORM_SCHEMA_INDEX_BACKEND_TYPES 
-                        l_cSourceCodeFields += padl('"'+l_cFieldType+'"',5)+","+;
-                                            str(nvl(l_nFieldLen,0),4)+","+;
-                                            str(nvl(l_nFieldDec,0),3)+","+;
-                                            iif(empty(l_cFieldAttributes),"",'"'+l_cFieldAttributes+'"')
-                        if !empty(l_cFieldDefault)
-                            l_cSourceCodeFields += ',"'+strtran(l_cFieldDefault,["],["+'"'+"])+'"'
-                        endif
-                    endif
                     l_cSourceCodeFields += "}"
 
                 endscan
@@ -616,19 +595,11 @@ if l_lContinue
                     
                     l_cSourceCodeIndexes += iif(empty(l_cSourceCodeIndexes) , l_cSchemaIndent+l_cIndent+"{" , ";"+CRLF+l_cSchemaIndent+l_cIndent+",")
 
-                    l_cSourceCodeIndexes += padr('"'+l_cIndexName+'"',l_nMaxNameLength+2)+"=>{"
+                    l_cSourceCodeIndexes += PadRNoTrim('"'+SanitizeForHash(l_cIndexName)+'"',l_nMaxNameLength+2)+"=>{"
 
-
-                    if par_nVersion <= 2
-                        l_cSourceCodeIndexes += "," // HB_ORM_SCHEMA_FIELD_BACKEND_TYPES
-                        l_cSourceCodeIndexes += '"'+l_cIndexExpression+'"'+space(l_nMaxExpressionLength-len(l_cIndexExpression))+','+;
-                                            iif(ListOfIndexes->Index_Unique,".t.",".f.")+","+;
-                                            '"'+"BTREE"+'"'    //Later make this aware of ListOfIndexes->Index_Algo
-                    else
-                        l_cSourceCodeIndexes += '"'+HB_ORM_SCHEMA_INDEX_EXPRESSION+'"=>"'+l_cIndexExpression+'"'
-                        if ListOfIndexes->Index_Unique
-                            l_cSourceCodeIndexes += ',"'+HB_ORM_SCHEMA_INDEX_UNIQUE+'"=>.t.'
-                        endif
+                    l_cSourceCodeIndexes += '"'+HB_ORM_SCHEMA_INDEX_EXPRESSION+'"=>"'+l_cIndexExpression+'"'
+                    if ListOfIndexes->Index_Unique
+                        l_cSourceCodeIndexes += ',"'+HB_ORM_SCHEMA_INDEX_UNIQUE+'"=>.t.'
                     endif
                     
                     l_cSourceCodeIndexes += "}"
@@ -642,43 +613,21 @@ if l_lContinue
                 l_cSourceCodeIndexes += "}"
             endif
 
-            do case
-            case par_nVersion == 1
-                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"'+"=>{;   /"+"/Field Definition"
-                l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndent+",;   /"+"/Index Definition"+CRLF
-                l_cSourceCode += l_cSourceCodeIndexes+"};"+CRLF
-
-            case par_nVersion == 2
-                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"=>{"Fields"=>;'
-                if l_cSourceCodeIndexes == l_cIndent+"NIL"
-                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndentHashElement+',"Indexes"=>NIL'+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
-                else
-                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cIndentHashElement+',"Indexes"=>;'+CRLF
-                    l_cSourceCode += l_cSourceCodeIndexes
-                    l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
-                endif
-                l_cSourceCode += '};'+CRLF
-                
-            case par_nVersion == 3
-                l_cSourceCode += '"'+l_cNamespaceAndTableName+'"=>{"Fields"=>;'
-                if l_cSourceCodeIndexes == l_cIndent+"NIL"
-                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
-                else
-                    l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+',"Indexes"=>;'+CRLF
-                    l_cSourceCode += l_cSourceCodeIndexes
-                    l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cSchemaIndent+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
-                endif
-                l_cSourceCode += '};'+CRLF
-                
-            endcase
-
+            l_cSourceCode += '"'+SanitizeForHash(l_cNamespaceAndTableName)+'"=>{"Fields"=>;'
+            if l_cSourceCodeIndexes == l_cIndent+"NIL"
+                l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+iif(ListOfTables->Table_Unlogged,[,"Unlogged"=>.T.],[])
+            else
+                l_cSourceCode += l_cSourceCodeFields+";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndentHashElement+',"Indexes"=>;'+CRLF
+                l_cSourceCode += l_cSourceCodeIndexes
+                l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cSchemaIndent+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
+            endif
+            l_cSourceCode += '};'+CRLF
+            
         endscan
-        if par_nVersion == 3
-            l_cSourceCode += l_cSchemaIndent+"}"+iif(l_nNumberOfEnumerations > 0,",","")+";"+CRLF
-        endif
+        l_cSourceCode += l_cSchemaIndent+"}"+iif(l_nNumberOfEnumerations > 0,",","")+";"+CRLF
     endif
 
-    if l_nNumberOfEnumerations > 0 .and. par_nVersion >= 3
+    if l_nNumberOfEnumerations > 0
         l_cSourceCode += ["Enumerations"=>;]+CRLF
 
         select ListOfEnumerations
@@ -689,7 +638,7 @@ if l_lContinue
             l_cNamespaceAndEnumerationName := alltrim(ListOfEnumerations->Namespace_Name)+"."+alltrim(ListOfEnumerations->Enumeration_Name)
 // l_cNamespaceAndEnumerationName := el_StringFilterCharacters(l_cNamespaceAndEnumerationName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.")
 
-            l_cIndentHashElement := space(len([{"]+l_cNamespaceAndEnumerationName+["=>]))
+            l_cIndentHashElement := space(len([{"]+SanitizeForHash(l_cNamespaceAndEnumerationName)+["=>]))
 
             l_cSourceCode += l_cSchemaIndent+iif(l_nEnumerationCounter==1,"{",",")  // Start the next enumeration hash element
             
@@ -720,7 +669,7 @@ if l_lContinue
                     
                     l_cSourceCodeEnumValues += iif(empty(l_cSourceCodeEnumValues) , l_cSchemaIndent+l_cIndent+l_cIndent+"{" , ";"+CRLF+l_cSchemaIndent+l_cIndent+l_cIndent+",")
 
-                    l_cSourceCodeEnumValues += padr('"'+l_cEnumValueName+'"',l_nMaxNameLength+2)+"=>{"
+                    l_cSourceCodeEnumValues += PadRNoTrim('"'+SanitizeForHash(l_cEnumValueName)+'"',l_nMaxNameLength+2)+"=>{"
 
                     l_cSourceCodeEnumValues += '"Order"=>'+Trans(l_nEnumValue_Order)
                     if !hb_IsNil(l_nEnumValue_Number)
@@ -733,7 +682,7 @@ if l_lContinue
 
             endif
 
-            l_cSourceCode += '"'+l_cNamespaceAndEnumerationName+'"=>{;'+CRLF
+            l_cSourceCode += '"'+SanitizeForHash(l_cNamespaceAndEnumerationName)+'"=>{;'+CRLF
 
             if el_between(ListOfEnumerations->Enumeration_ImplementAs,1,4)
                 l_cImplementAs := {"NativeSQLEnum","Integer","Numeric","VarChar"}[ListOfEnumerations->Enumeration_ImplementAs]
@@ -2584,3 +2533,15 @@ endif
 
 return l_cHtml
 //=================================================================================================================
+static function SanitizeForHash(par_cText)
+return strtran(par_cText,'"','"+["]+"')
+//=================================================================================================================
+static function PadRNoTrim(par_cText,par_nLength)
+local l_cText := par_cText
+if len(l_cText) < par_nLength
+    l_cText := padr(l_cText,par_nLength)
+endif
+return l_cText 
+//=================================================================================================================
+
+

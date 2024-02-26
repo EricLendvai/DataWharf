@@ -1,10 +1,10 @@
 # DataWharf - Change Log
 
-## 02/25/2024 v 4.1B
-* Fixed destructive bug when editing an Enumeration and the selection of namespace was disabled
-
-## 02/24/2024 v 4.1A
-* Fixed destructive bug when editing a Table and the selection of namespace was disabled
+## 02/26/2024 v 4.2
+* Unlimited Personal Deployment configurations in every application. Previously only a Custom Configuration was allowed.
+* Track Name Changes for Namespaces, Tables, Columns, Enumerations and Enumeration Values (Indexes are deleted and created). This is optional and is not yet used during schema migrations.
+* Option to duplicate Namespaces and Tables. Columns, Enumerations and Enumeration Values will be added in future version.
+* Incorporated hot fix from V 4.1A and 4.1B on corruption of Table and Enumeration record after edit if Namespace edits were disabled.
 
 ## 02/20/2024 v 4.1
 * Number of Relationships in Application list screen.

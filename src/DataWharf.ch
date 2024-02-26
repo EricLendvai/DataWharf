@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.1"
+#define BUILDVERSION "4.2"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -51,7 +51,7 @@
 #define UPDATE_ONTEXTAREA_SAVEBUTTON          [ onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
 #define UPDATE_ONCHECKBOXINPUT_SAVEBUTTON     [ type="checkbox" onchange="ToggleEditFormMode(); " ]
 #define UPDATE_ONTEXTINPUT_SAVEBUTTON         [ type="text" onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
-#define UPDATE_ONPASSWORDINPUT_SAVEBUTTON     [ type="password" onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
+#define UPDATE_ONPASSWORDINPUT_SAVEBUTTON     [ type="password" onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" autocomplete="new-password" ]
 #define UPDATE_ONCOMBOWITHONCHANGE_SAVEBUTTON [ToggleEditFormMode();]
 
 #define USEDON_APPLICATION 1

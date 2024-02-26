@@ -95,10 +95,6 @@ with object l_oDB1
 endwith
 return l_nCount
 //=================================================================================================================
-
-//=================================================================================================================
-//=================================================================================================================
-//=================================================================================================================
 //=================================================================================================================
 function GetNextPreviousButtonsFromListOfRecords(par_iPk,par_cURLPath,par_nNumberOfTemplateColumns,par_cItem,par_cItems,par_cListAction,par_cEditAction,par_bCode)
 local l_cSitePath := oFcgi:p_cSitePath
@@ -877,7 +873,10 @@ with object par_oDB
     endif
 
     if !empty(par_cSearchTableName)
-        :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA)")
+        :Distinct(.t.)
+        :Join("left","TablePreviousName","","TablePreviousName.fk_Table = Table.pk")
+
+        :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA,' ',TablePreviousName.Name)")
     endif
     if !empty(par_cSearchTableDescription)
         :KeywordCondition(par_cSearchTableDescription,"Table.Description")
@@ -991,19 +990,19 @@ endwith
 return nil
 //=================================================================================================================
 function EnumerationListFormAddFiltering(par_oDB,;
-                                                par_nSearchMode,;
-                                                par_cSearchNamespaceName,;
-                                                par_cSearchNamespaceDescription,;
-                                                par_cSearchEnumerationName,;
-                                                par_cSearchEnumerationDescription,;
-                                                par_cSearchValueName,;
-                                                par_cSearchValueDescription,;
-                                                par_cSearchEnumerationUsageStatus,;
-                                                par_cSearchEnumerationDocStatus,;
-                                                par_cSearchEnumValueUsageStatus,;
-                                                par_cSearchEnumValueDocStatus,;
-                                                par_cSearchEnumerationImplementAs;
-                                                )
+                                         par_nSearchMode,;
+                                         par_cSearchNamespaceName,;
+                                         par_cSearchNamespaceDescription,;
+                                         par_cSearchEnumerationName,;
+                                         par_cSearchEnumerationDescription,;
+                                         par_cSearchValueName,;
+                                         par_cSearchValueDescription,;
+                                         par_cSearchEnumerationUsageStatus,;
+                                         par_cSearchEnumerationDocStatus,;
+                                         par_cSearchEnumValueUsageStatus,;
+                                         par_cSearchEnumValueDocStatus,;
+                                         par_cSearchEnumerationImplementAs;
+                                         )
 local l_lJoinEnumValues := .f.
 local l_cSQLList
 
@@ -1019,7 +1018,10 @@ with object par_oDB
     endif
 
     if !empty(par_cSearchEnumerationName)
-        :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA)")
+        :Distinct(.t.)
+        :Join("left","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
+
+        :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
     endif
     if !empty(par_cSearchEnumerationDescription)
         :KeywordCondition(par_cSearchEnumerationDescription,"Enumeration.Description")
@@ -1137,10 +1139,10 @@ with object l_oDB1
 
     :Limit(1)  // In case we have duplicate pick one of them
     l_oData := :SQL()
-
     if l_oDB1:Tally != 1
         l_oData := nil
     endif
+
 endwith
 
 return l_oData
@@ -1183,10 +1185,6 @@ endwith
 
 return l_oData
 //=================================================================================================================
-
-
-
-
 //=================================================================================================================
 function GetEnumerationExtendedButtonRelatedOnEditForm(par_cCurrentButton,par_iPk,par_cCombinedPath)
 local l_cSitePath := oFcgi:p_cSitePath
@@ -1197,4 +1195,96 @@ l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Values ("+Trans(EnumerationGet
 l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Referenced By ("+Trans(EnumerationGetNumberOfReferencedBy(par_iPk))+")",l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cCombinedPath,(par_cCurrentButton == "ReferenceBy"))
 
 return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+function GetTrackNameChangesAndPreviousNamesEditFormBuild(par_lTrackNameChanges,par_cRootTable,par_iPk)
+local l_cHtml := []
+local l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cObjectName
+local l_cjQuery
+
+if !empty(par_iPk)
+
+    l_cHtml += [<tr>]   // class="pb-5"
+        l_cHtml += [<td class="pb-3"></td>]
+        l_cHtml += [<td class="pb-3">]
+            l_cHtml += [<span class="form-check form-switch">]
+            l_cHtml += [<input class="form-check-input"]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="CheckTrackNameChanges" id="CheckTrackNameChanges" value="1"]+iif(par_lTrackNameChanges," checked","")+[>]
+            l_cHtml += [<label class="form-check-label" for="CheckTrackNameChanges">Track Name Changes <span class="text-muted">(Needed when deploying)<span></label>]
+            l_cHtml += [</span>]
+        l_cHtml += [</td>]
+    l_cHtml += [</tr>]
+
+    //Get Previous Names
+    with object l_oDB_ListOfPreviousName
+        :Table("678ac09c-093a-4e9e-a88b-f8fd4374baaf",par_cRootTable+"PreviousName")
+        :Column(par_cRootTable+"PreviousName.Pk"      ,"PreviousName_Pk")
+        :Column(par_cRootTable+"PreviousName.Name"    ,"PreviousName_Name")
+        // :Column(par_cRootTable+"PreviousName.DateTime","tag1")
+        :Column(par_cRootTable+"PreviousName.Pk","tag1")                            //Since it is an incremental field
+        :Where(par_cRootTable+"PreviousName.fk_"+par_cRootTable+" = ^",par_iPk)
+        :OrderBy("tag1","desc")
+        :SQL("ListOfPreviousName")
+        if :Tally > 0
+            l_cHtml += [<tr>]   // class="pb-5"
+                l_cHtml += [<td class="pe-2 pb-3" valign="top">Previous Name]+iif(:Tally > 1,[s],[])+[</td>]
+                l_cHtml += [<td class="pb-3">]
+                    select ListOfPreviousName
+                    scan all
+                        l_cObjectName := "CheckDeletePreviousName_"+Trans(ListOfPreviousName->PreviousName_Pk)
+                        l_cHtml += [<div>]
+                        l_cHtml += [<span class="form-check form-switch">]
+                        //Always default to not deleting previous name.
+                        l_cHtml += [<input class="form-check-input"]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_cObjectName+[" id="]+l_cObjectName+[" value="1"]+iif(.f.," checked","")+[">]   //  style="background-color: red;
+                        l_cHtml += [<span id="]+strtran(l_cObjectName,"Check","Text")+[">]+TextToHTML(ListOfPreviousName->PreviousName_Name)+[</span>]
+                        l_cHtml += [</span>]
+                        l_cHtml += [</div>]
+
+                        l_cjQuery := [$("#]+l_cObjectName+[").change(function () {]
+                        l_cjQuery +=    [if ($(this).prop('checked') == true) {]
+                        l_cjQuery +=        [$(this).addClass('bg-danger');]
+                        l_cjQuery +=        [$("#]+strtran(l_cObjectName,"Check","Text")+[").addClass('text-decoration-line-through');]
+                        l_cjQuery +=    [} else {]
+                        l_cjQuery +=        [$(this).removeClass('bg-danger');]
+                        l_cjQuery +=        [$("#]+strtran(l_cObjectName,"Check","Text")+[").removeClass('text-decoration-line-through');]
+                        l_cjQuery +=    [}]
+                        l_cjQuery += [});]
+                        oFcgi:p_cjQueryScript += l_cjQuery
+
+                    endscan
+                l_cHtml += [</td>]
+            l_cHtml += [</tr>]
+        endwith
+    endwith
+endif
+
+return l_cHtml
+//=================================================================================================================
+function RemovePreviousNameIfSelectedEditFormOnSubmit(par_cRootTable,par_iPk)
+local l_oDB_ListOfPreviousName
+local l_cObjectName
+
+if !empty(par_iPk) .and. oFcgi:p_nAccessLevelDD >= 5
+    l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
+    with object l_oDB_ListOfPreviousName
+        :Table("678ac09c-093a-4e9e-a88b-f8fd4374baaf",par_cRootTable+"PreviousName")
+        :Column(par_cRootTable+"PreviousName.Pk"      ,"PreviousName_Pk")
+        :Column(par_cRootTable+"PreviousName.Name"    ,"PreviousName_Name")
+        :Column(par_cRootTable+"PreviousName.DateTime","tag1")
+        :Where(par_cRootTable+"PreviousName.fk_"+par_cRootTable+" = ^",par_iPk)
+        :OrderBy("tag1","desc")
+        :SQL("ListOfPreviousName")
+        if :Tally > 0
+            select ListOfPreviousName
+            scan all
+                l_cObjectName := "CheckDeletePreviousName_"+Trans(ListOfPreviousName->PreviousName_Pk)
+                if (oFcgi:GetInputValue(l_cObjectName) == "1")
+                    :Delete("af0e96a6-13e2-4640-8185-42d718c8ccb9",par_cRootTable+"PreviousName",ListOfPreviousName->PreviousName_Pk)
+                endif
+            endscan
+        endif
+    endwith
+endif
+
+return nil
 //=================================================================================================================

@@ -2170,6 +2170,7 @@ local l_cTooltipEnumValues
 local l_nColspan
 local l_lWarnings := .f.
 local l_cCombinedPath
+local l_oData
 
 //oFcgi:p_nAccessLevelDD
 
@@ -3049,43 +3050,42 @@ else
                     :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")        //  6
                     :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")   //  7
                     :Column("Column.OnDelete"          ,"Column_OnDelete")             //  8
-                    
-                    :Column("Namespace.Name"   ,"From_Namespace_Name")   //  9
-                    :Column("Table.Name"       ,"From_Table_Name")       // 10
-                    :Column("Table.AKA"        ,"From_Table_AKA")        // 11
+                    :Column("Namespace.Name"           ,"From_Namespace_Name")   //  9
+                    :Column("Table.Name"               ,"From_Table_Name")       // 10
+                    :Column("Table.AKA"                ,"From_Table_AKA")        // 11
                     :join("inner","Table"      ,"","Column.fk_Table = Table.pk")
                     :join("inner","Namespace"  ,"","Table.fk_Namespace = Namespace.pk")
                     :join("inner","Application","","Namespace.fk_Application = Application.pk")
 
-                    :Column("NamespaceTo.name" , "To_Namespace_Name")    // 12
-                    :Column("TableTo.name"     , "To_Table_Name")        // 13
-                    :Column("TableTo.AKA"      , "To_Table_AKA")         // 14
+                    :Column("NamespaceTo.name"         ,"To_Namespace_Name")    // 12
+                    :Column("TableTo.name"             ,"To_Table_Name")        // 13
+                    :Column("TableTo.AKA"              ,"To_Table_AKA")         // 14
                     :Join("inner","Table"    ,"TableTo"    ,"Column.fk_TableForeign = TableTo.pk")
                     :Join("inner","Namespace","NamespaceTo","TableTo.fk_Namespace = NamespaceTo.pk")
                     
                     :Where("Column.pk = ^" , l_iColumnPk)
-                    :SQL(@l_aSQLResult)
+                    l_oData := :SQL()
 
                     if :Tally != 1
                         l_cHtml += [<div  class="alert alert-danger" role="alert m-3">Could not find relation.</div>]
 
                     else
-                        l_cColumnName               := alltrim(l_aSQLResult[1,1])
-                        l_cColumnAKA                := alltrim(nvl(l_aSQLResult[1,2],""))
-                        l_nColumnUseStatus          := l_aSQLResult[1,3]
-                        l_nColumnDocStatus          := l_aSQLResult[1,4]
-                        l_cColumnDescription        := alltrim(nvl(l_aSQLResult[1,5],""))
-                        l_cColumnForeignKeyUse      := alltrim(nvl(l_aSQLResult[1,6],""))
-                        l_lColumnForeignKeyOptional := l_aSQLResult[1,7]
-                        l_nColumnOnDelete           := l_aSQLResult[1,8]
+                        l_cColumnName               := alltrim(l_oData:Column_Name)
+                        l_cColumnAKA                := alltrim(nvl(l_oData:Column_AKA,""))
+                        l_nColumnUseStatus          := l_oData:Column_UseStatus
+                        l_nColumnDocStatus          := l_oData:Column_DocStatus
+                        l_cColumnDescription        := alltrim(nvl(l_oData:Column_Description,""))
+                        l_cColumnForeignKeyUse      := alltrim(nvl(l_oData:Column_ForeignKeyUse,""))
+                        l_lColumnForeignKeyOptional := l_oData:Column_ForeignKeyOptional
+                        l_nColumnOnDelete           := l_oData:Column_OnDelete
 
-                        l_cFrom_Namespace_Name := alltrim(l_aSQLResult[1,9])
-                        l_cFrom_Table_Name     := alltrim(l_aSQLResult[1,10])
-                        l_cFrom_Table_AKA      := alltrim(nvl(l_aSQLResult[1,11],""))
+                        l_cFrom_Namespace_Name := alltrim(l_oData:From_Namespace_Name)
+                        l_cFrom_Table_Name     := alltrim(l_oData:From_Table_Name)
+                        l_cFrom_Table_AKA      := alltrim(nvl(l_oData:From_Table_AKA,""))
 
-                        l_cTo_Namespace_Name   := alltrim(l_aSQLResult[1,12])
-                        l_cTo_Table_Name       := alltrim(l_aSQLResult[1,13])
-                        l_cTo_Table_AKA        := alltrim(nvl(l_aSQLResult[1,14],""))
+                        l_cTo_Namespace_Name   := alltrim(l_oData:To_Namespace_Name)
+                        l_cTo_Table_Name       := alltrim(l_oData:To_Table_Name)
+                        l_cTo_Table_AKA        := alltrim(nvl(l_oData:To_Table_AKA,""))
 
                         l_cHtml += [<nav class="navbar navbar-light" style="background-color: #]
                         do case

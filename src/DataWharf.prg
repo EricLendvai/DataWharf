@@ -1831,9 +1831,9 @@ ENDTEXT
 return cHtml
 //=================================================================================================================
 function GetConfirmationModalFormsDelete()
-local cHtml
+local l_cHtml
 
-TEXT TO VAR cHtml
+TEXT TO VAR l_cHtml
 
 <div class="modal fade" id="ConfirmDeleteModal" tabindex="-1" aria-labelledby="ConfirmDeleteModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -1855,12 +1855,41 @@ TEXT TO VAR cHtml
 
 ENDTEXT
 
-return cHtml
+return l_cHtml
+//=================================================================================================================
+function GetConfirmationModalFormsDuplicate(par_cMessage)
+local l_cHtml
+
+TEXT TO VAR l_cHtml
+
+<div class="modal fade" id="ConfirmDuplicateModal" tabindex="-1" aria-labelledby="ConfirmDuplicateModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ConfirmDuplicateModal">Confirm Duplication</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        xxxxxx
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="$('#ActionOnSubmit').val('Duplicate');document.form.submit();">Yes</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+ENDTEXT
+
+l_cHtml = strtran(l_cHtml,"xxxxxx",par_cMessage)
+
+return l_cHtml
 //=================================================================================================================
 function GetConfirmationModalFormsPurge()
-local cHtml
+local l_cHtml
 
-TEXT TO VAR cHtml
+TEXT TO VAR l_cHtml
 
 <div class="modal fade" id="ConfirmPurgeModal" tabindex="-1" aria-labelledby="ConfirmPurgeModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -1882,7 +1911,7 @@ TEXT TO VAR cHtml
 
 ENDTEXT
 
-return cHtml
+return l_cHtml
 //=================================================================================================================
 function BuildPageLoginScreen(par_cUserID,par_cPassword,par_cErrorMessage)
 local l_cHtml := ""
@@ -2663,6 +2692,9 @@ return [<input type="button" class="btn btn-primary rounded ms-3" id="ButtonDone
 //=================================================================================================================
 function GetButtonOnEditFormDelete()
 return [<button type="button" class="btn btn-danger rounded ms-3 RemoveOnEdit" data-bs-toggle="modal" data-bs-target="#ConfirmDeleteModal">Delete</button>]
+//=================================================================================================================
+function GetButtonOnEditFormDuplicate()
+return [<button type="button" class="btn btn-primary rounded ms-3 RemoveOnEdit" data-bs-toggle="modal" data-bs-target="#ConfirmDuplicateModal">Duplicate</button>]
 //=================================================================================================================
 function GetButtonOnEditFormNew(par_cCaption,par_cURL)
 return [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+par_cURL+["><span class="text-white bi-plus-lg"></span>&nbsp;]+par_cCaption+[</a>]
