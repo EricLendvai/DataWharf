@@ -455,6 +455,7 @@ local l_oDB_ListOfApplications       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelationshipCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDeploymentsCounts  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
@@ -560,6 +561,25 @@ with object l_oDB_ListOfRelationshipCounts
     endwith
 endwith
 
+
+
+
+with object l_oDB_ListOfDeploymentsCounts
+    :Table("916fdb6a-bfbb-45d3-ae86-4574ab7a2636","Application")
+    :Column("Application.pk" ,"Application_pk")
+    :Column("Count(*)" ,"Count")
+    :Join("inner","Deployment","","Deployment.fk_Application = Application.pk")
+    :GroupBy("Application_pk")
+    :Where("Deployment.fk_User = ^",0)
+    :SQL("ListOfDeploymentsCounts")
+    with object :p_oCursor
+        :Index("tag1","Application_pk")
+        :CreateIndexes()
+    endwith
+endwith
+
+
+
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfApplications)
@@ -574,7 +594,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"8","9")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
+                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
                 l_cHtml += [</tr>]
 
                 l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -583,6 +603,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<th class="text-white">Description</th>]
                     l_cHtml += [<th class="text-white text-center">Tables</th>]
                     l_cHtml += [<th class="text-white text-center">Relationships</th>]
+                    l_cHtml += [<th class="text-white text-center">Deployments</th>]
                     l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                     l_cHtml += [<th class="text-white text-center">Destructive<br>Deletes</th>]
@@ -617,6 +638,13 @@ l_cHtml += [<div class="m-3">]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
                             l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1") , ListOfRelationshipCounts->Count , 0)
+                            if !empty(l_nCount)
+                                l_cHtml += Trans(l_nCount)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfDeploymentsCounts","tag1") , ListOfDeploymentsCounts->Count , 0)
                             if !empty(l_nCount)
                                 l_cHtml += Trans(l_nCount)
                             endif

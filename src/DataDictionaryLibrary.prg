@@ -386,6 +386,7 @@ local l_cSearchEnumerationDocStatus
 local l_cSearchEnumValueUsageStatus
 local l_cSearchEnumValueDocStatus
 local l_cSearchEnumerationImplementAs
+local l_cSearchExtraFilters
 
 local l_bCode := {||
 return PrepareForURLSQLIdentifier("Namespace"  ,ListOfRecords->Namespace_Name  ,ListOfRecords->Namespace_LinkUID)  +[/]+;
@@ -407,8 +408,7 @@ l_cSearchEnumerationDocStatus   := GetUserSetting("Application_"+Trans(par_iAppl
 l_cSearchEnumValueUsageStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus")
 l_cSearchEnumValueDocStatus     := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus")
 l_cSearchEnumerationImplementAs := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs")
-
-
+l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ExtraFilters")
 
 with object l_oDB_ListOfEnumerations
     :Table("7e3eeb26-19bc-4ca1-8187-3b3298632cc1","Enumeration")
@@ -434,7 +434,8 @@ with object l_oDB_ListOfEnumerations
                                     l_cSearchEnumerationDocStatus,;
                                     l_cSearchEnumValueUsageStatus,;
                                     l_cSearchEnumValueDocStatus,;
-                                    l_cSearchEnumerationImplementAs;
+                                    l_cSearchEnumerationImplementAs,;
+                                    l_cSearchExtraFilters;
                                     )
 
     :OrderBy("tag1")
@@ -687,6 +688,36 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
+function CascadeDeleteEnumeration(par_iApplicationPk,par_iEnumerationPk)
+local l_cErrorMessage := ""
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+with object l_oDB1
+    :Table("c83d382a-286b-496f-8419-4ddb780ec138","EnumValue")
+    :Column("EnumValue.pk","pk")
+    :Where("EnumValue.fk_Enumeration = ^" , par_iEnumerationPk)
+    :SQL("ListOfRecordsToDeleteInCascadeDeleteEnumeration")
+    if :Tally < 0
+        l_cErrorMessage := "Failed to delete Enumeration. Error 5."
+    else
+        select ListOfRecordsToDeleteInCascadeDeleteEnumeration
+        scan all
+            if !:Delete("b316f931-da76-4d6f-9fa9-405b30d074dc","EnumValue",ListOfRecordsToDeleteInCascadeDeleteEnumeration->pk)
+                l_cErrorMessage := "Failed to delete Enumeration. Error 6."
+                exit
+            endif
+        endscan
+
+        if empty(l_cErrorMessage)
+            if !:Delete("719c4a88-e4c0-4f9a-9b2b-a9bfeb1f11b9","Enumeration",par_iEnumerationPk)
+                l_cErrorMessage := "Failed to delete Enumeration. Error 13."
+            endif
+        endif
+    endif
+
+endwith
+return l_cErrorMessage
+//=================================================================================================================
 function CascadeDeleteTag(par_iApplicationPk,par_iTagPk)
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
@@ -865,7 +896,9 @@ local l_cSQLList
 with object par_oDB
     if par_nSearchMode > 1
         if !empty(par_cSearchNamespaceName)
-            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA)")
+            :Distinct(.t.)
+            :Join("left","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
+            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
         endif
         if !empty(par_cSearchNamespaceDescription)
             :KeywordCondition(par_cSearchNamespaceDescription,"Namespace.Description")
@@ -875,7 +908,6 @@ with object par_oDB
     if !empty(par_cSearchTableName)
         :Distinct(.t.)
         :Join("left","TablePreviousName","","TablePreviousName.fk_Table = Table.pk")
-
         :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA,' ',TablePreviousName.Name)")
     endif
     if !empty(par_cSearchTableDescription)
@@ -886,7 +918,8 @@ with object par_oDB
         if !empty(par_cSearchColumnName) .or. !empty(par_cSearchColumnDescription)
             l_lJoinColumns := .t.
             if !empty(par_cSearchColumnName)
-                :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+                :Distinct(.t.)
+                :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
             endif
             if !empty(par_cSearchColumnDescription)
                 :KeywordCondition(par_cSearchColumnDescription,"Column.Description")
@@ -896,7 +929,8 @@ with object par_oDB
         if !empty(par_cSearchEnumerationName) .or. !empty(par_cSearchEnumerationDescription)
             l_lJoinEnumeration := .t.
             if !empty(par_cSearchEnumerationName)
-                :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA)")
+                :Distinct(.t.)
+                :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
             endif
             if !empty(par_cSearchEnumerationDescription)
                 :KeywordCondition(par_cSearchEnumerationDescription,"Enumeration.Description")
@@ -974,15 +1008,18 @@ with object par_oDB
                 :Where("Column.Array")
             endif
         endif
+
     endif
 
     if l_lJoinEnumeration .or. l_lJoinColumns
         :Distinct(.t.)
         :Join("inner","Column","","Column.fk_Table = Table.pk")
+        :Join("left","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
     endif
     if l_lJoinEnumeration
         :Distinct(.t.)
         :Join("inner","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+        :Join("left","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
     endif
 
 endwith
@@ -1001,16 +1038,17 @@ function EnumerationListFormAddFiltering(par_oDB,;
                                          par_cSearchEnumerationDocStatus,;
                                          par_cSearchEnumValueUsageStatus,;
                                          par_cSearchEnumValueDocStatus,;
-                                         par_cSearchEnumerationImplementAs;
+                                         par_cSearchEnumerationImplementAs,;
+                                         par_cSearchExtraFilters;
                                          )
 local l_lJoinEnumValues := .f.
 local l_cSQLList
 
 with object par_oDB
-
     if par_nSearchMode > 1
         if !empty(par_cSearchNamespaceName)
-            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA)")
+            :Join("left","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
+            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
         endif
         if !empty(par_cSearchNamespaceDescription)
             :KeywordCondition(par_cSearchNamespaceDescription,"Namespace.Description")
@@ -1020,7 +1058,6 @@ with object par_oDB
     if !empty(par_cSearchEnumerationName)
         :Distinct(.t.)
         :Join("left","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
-
         :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
     endif
     if !empty(par_cSearchEnumerationDescription)
@@ -1031,7 +1068,7 @@ with object par_oDB
         if !empty(par_cSearchValueName) .or. !empty(par_cSearchValueDescription)
             l_lJoinEnumValues := .t.
             if !empty(par_cSearchValueName)
-                :KeywordCondition(par_cSearchValueName,"CONCAT(EnumValue.Name,' ',EnumValue.AKA)")
+                :KeywordCondition(par_cSearchValueName,"CONCAT(EnumValue.Name,' ',EnumValue.AKA,' ',EnumValuePreviousName.Name)")
             endif
             if !empty(par_cSearchValueDescription)
                 :KeywordCondition(par_cSearchValueDescription,"EnumValue.Description")
@@ -1078,11 +1115,18 @@ with object par_oDB
             endif
         endif
 
+        if !empty(par_cSearchExtraFilters)
+            if 'WNG' $ par_cSearchExtraFilters
+                :Where("Enumeration.TestWarning IS NOT NULL")
+            endif
+        endif
+
     endif
 
     if l_lJoinEnumValues
         :Distinct(.t.)
         :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
+        :Join("left","EnumValuePreviousName","","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
     endif
 endwith
 
@@ -1287,4 +1331,75 @@ if !empty(par_iPk) .and. oFcgi:p_nAccessLevelDD >= 5
 endif
 
 return nil
+//=================================================================================================================
+function ReSequenceColumns(par_iTablePk)
+local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1              := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nOrder := 0
+
+with object l_oDB_ListOfColumns
+    :Table("a469c17e-aa0b-45c2-89e7-5e2b85821df8","Column")
+    :Column("Column.Pk"    , "Pk")
+    :Column("Column.Order" , "Column_Order")
+    :Where("Column.fk_Table = ^",par_iTablePk)
+    :OrderBy("Column_Order")
+    :OrderBy("Pk")
+    :SQL("ListOfColumns")
+
+    select ListOfColumns
+    scan all
+        l_nOrder++
+        if ListOfColumns->Column_Order <> l_nOrder
+            with object l_oDB1
+                :Table("f410d1c9-0edb-4dfb-8e40-bab586957c3f","Column")
+                :Field("Column.Order" , l_nOrder)
+                :Update(ListOfColumns->Pk)
+            endwith
+        endif
+    endscan
+endwith
+
+return nil
+//=================================================================================================================
+function ReSequenceEnumValues(par_iEnumerationPk)
+local l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1                 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_nOrder := 0
+
+with object l_oDB_ListOfEnumValues
+    :Table("441743f1-61d7-4013-a90e-d744bac25bd2","EnumValue")
+    :Column("EnumValue.Pk"    , "Pk")
+    :Column("EnumValue.Order" , "EnumValue_Order")
+    :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
+    :OrderBy("EnumValue_Order")
+    :OrderBy("Pk")
+    :SQL("ListOfEnumValues")
+
+    select ListOfEnumValues
+    scan all
+        l_nOrder++
+        if ListOfEnumValues->EnumValue_Order <> l_nOrder
+            with object l_oDB1
+                :Table("be4be667-a5cb-4caf-9a98-2ac27f1626fe","EnumValue")
+                :Field("EnumValue.Order" , l_nOrder)
+                :Update(ListOfEnumValues->Pk)
+            endwith
+        endif
+    endscan
+endwith
+
+return nil
+//=================================================================================================================
+function OnDuplicateSanitizeName(par_cNameFromSourceRecord,par_cLinkUIDNewRecord,par_cLinkUIDFromSourceRecord)
+local l_cName
+local l_nPos
+local l_cSuffix
+l_cSuffix := "_"+strtran(par_cLinkUIDFromSourceRecord,"-","")
+if right(par_cNameFromSourceRecord,len(l_cSuffix)) == l_cSuffix
+    //Get rid of UID in source Name, in case we are trying to duplicate an already duplicated, not renamed, record.
+    l_cName := left(par_cNameFromSourceRecord,len(par_cNameFromSourceRecord)-len(l_cSuffix))
+else
+    l_cName := par_cNameFromSourceRecord
+endif
+return l_cName+"_"+strtran(par_cLinkUIDNewRecord,"-","")
 //=================================================================================================================

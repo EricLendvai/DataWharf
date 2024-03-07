@@ -39,7 +39,7 @@ l_cHtml += [<div class="row justify-content-center">]
         l_cHtml += [<tr><td>Web Site Version</td>]    +[<td>]+BUILDVERSION                        +[</td></tr>]
         l_cHtml += [<tr><td>Site Build Info</td>]     +[<td>]+hb_buildinfo()                      +[</td></tr>]
         l_cHtml += [<tr><td>ORM Build Info</td>]      +[<td>]+hb_orm_buildinfo()                  +[</td></tr>]
-        l_cHtml += [<tr><td>EL Build Info</td>]      +[<td>]+hb_el_buildinfo()                  +[</td></tr>]
+        l_cHtml += [<tr><td>EL Build Info</td>]       +[<td>]+hb_el_buildinfo()                  +[</td></tr>]
         l_cHtml += [<tr><td>Data Server</td>]         +[<td>]+l_cDataServer                       +[</td></tr>]
 
         l_cHtml += [</table>]

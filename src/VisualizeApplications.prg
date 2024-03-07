@@ -2109,7 +2109,11 @@ local l_oDB_ListOfRelatedTables          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfCurrentTablesInDiagram := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfColumns                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfEnumValues             := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfOtherDiagrams          := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+local l_oDB_ListOfDiagramsWithTables     := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramsWithAllTables  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfOtherDiagrams          := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
+
 local l_oDB_TableCustomFields            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:p_cSitePath
@@ -2146,7 +2150,7 @@ local l_nActiveTabNumber := max(1,min(4,val(oFcgi:GetCookieValue("DiagramDetailT
 local l_nEdgeNumber
 local l_nEdgeCounter
 local l_nNumberOfColumns
-local l_nNumberOfOtherDiagram
+local l_nNumberOfOtherDiagrams
 local l_nNumberOfRelatedTables
 local l_cUseStatus
 local l_cDocStatus
@@ -2369,20 +2373,41 @@ if len(l_aNodes) == 1
             endwith
         endif
 
-        with object l_oDB_ListOfOtherDiagrams
-            :Table("d7bf79b7-d7bf-435d-ab83-3d02fcbc6612","DiagramTable")
+        with object l_oDB_ListOfDiagramsWithAllTables
+
+            :Table("1874ea2e-e91c-4df7-9c98-b3a50664b46e","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.Name"       ,"Diagram_Name")
             :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
-            :Column("upper(Diagram.Name)","tag1")
-            :Join("inner","Diagram","","DiagramTable.fk_Diagram = Diagram.pk")
-            :Where("DiagramTable.fk_Table = ^",l_iTablePk)
-            :Where("Diagram.pk <> ^",l_iDiagramPk)
-            :OrderBy("tag1")
-            :SQL("ListOfOtherDiagram")
-            l_nNumberOfOtherDiagram := :Tally
+            :Column("lower(Diagram.Name)","tag1")
+
+            :Where("Diagram.fk_Application = ^",l_iApplicationPk)
+            :Join("left","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
+            :Where("DiagramTable.Pk IS NULL")
+            
         endwith
 
+        with object l_oDB_ListOfDiagramsWithTables
+            :Table("144678ca-49af-4e19-84f8-cf52ebac9863","DiagramTable")
+            :Column("Diagram.pk"         ,"Diagram_pk")
+            :Column("Diagram.Name"       ,"Diagram_Name")
+            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("lower(Diagram.Name)","tag1")
+
+            :Where("DiagramTable.fk_Table = ^",l_iTablePk)
+            :join("inner","Diagram"    ,"","DiagramTable.fk_Diagram = Diagram.pk")
+            :OrderBy("tag1","asc")   // Only the last Select should have an OrderBy
+        endwith
+
+        with object l_oDB_ListOfOtherDiagrams
+            :AnchorAlias("5099472d-b021-4c05-9f44-cb1f502a14e5","ListOfOtherDiagrams")
+            :AddSQLDataQuery("ListOfDiagramsWithAllTables",l_oDB_ListOfDiagramsWithAllTables)
+            :AddSQLDataQuery("ListOfDiagramsWithTables"   ,l_oDB_ListOfDiagramsWithTables)
+            :CombineQueries(COMBINE_ACTION_UNION,"ListOfOtherDiagrams",.t.,"ListOfDiagramsWithAllTables","ListOfDiagramsWithTables")
+            :SQL("ListOfOtherDiagrams")
+
+            l_nNumberOfOtherDiagrams := :Tally
+        endwith
 
         //Get the list of related tables
         with object l_oDB_ListOfRelatedTables
@@ -2623,7 +2648,7 @@ if len(l_aNodes) == 1
                                                             [$('#TabDetail2').removeClass('active');]+;
                                                             [$('#TabDetail3').addClass('active');]+;
                                                             [$('#TabDetail4').removeClass('active');"]+;
-                                                            [>Other Diagrams (]+Trans(l_nNumberOfOtherDiagram)+[)</a>]
+                                                            [>Other Diagrams (]+Trans(l_nNumberOfOtherDiagrams)+[)</a>]
             l_cHtml += [</li>]
             l_cHtml += [<li class="nav-item">]
                 l_cHtml += [<a id="TabDetail4" class="nav-link]+iif(l_nActiveTabNumber == 4,[ active],[])+["]+;
@@ -2959,12 +2984,12 @@ if len(l_aNodes) == 1
         // -----------------------------------------------------------------------------------------------------------------------------------------
 
         l_cHtml += [<div id="DetailType3"]+iif(l_nActiveTabNumber <> 3,[ style="display: none;"],[])+[ class="m-3">]
-            if l_nNumberOfOtherDiagram <= 0
+            if l_nNumberOfOtherDiagrams <= 0
                 l_cHtml += [<div class="mb-2">Table is not used in other diagrams</div>]
             else
-                select ListOfOtherDiagram
+                select ListOfOtherDiagrams
                 scan all
-                    l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagram->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagram->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagram->Diagram_Name+[</a></div>]
+                    l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagrams->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagrams->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagrams->Diagram_Name+[</a></div>]
                 endscan
             endif
         l_cHtml += [</div>]

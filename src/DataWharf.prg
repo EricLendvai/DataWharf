@@ -58,6 +58,7 @@ SendToDebugView("Ending DataWharf FastCGI App")
 return nil
 //=================================================================================================================
 class MyFcgi from hb_Fcgi
+    data p_cOnFirstRequestError init ""
     data p_o_SQLConnection
     data p_cHeader              init ""
     data p_cjQueryScript        init ""
@@ -169,16 +170,17 @@ set delete on
 ::SetOnErrorDetailLevel(2)
 ::SetOnErrorProgramInfo(hb_BuildInfo())
 
-::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
-                                    ::GetAppConfig("POSTGRESDRIVER"),;
-                                    ::GetAppConfig("POSTGRESHOST"),;
-                                    val(::GetAppConfig("POSTGRESPORT")),;
-                                    ::GetAppConfig("POSTGRESID"),;
-                                    ::GetAppConfig("POSTGRESPASSWORD"),;
-                                    ::GetAppConfig("POSTGRESDATABASE"),;
-                                    "public";
-                                    )
+::p_o_SQLConnection := hb_SQLConnect()
 with object ::p_o_SQLConnection
+    :SetBackendType("PostgreSQL")
+    :SetDriver(::GetAppConfig("POSTGRESDRIVER"))
+    :SetServer(::GetAppConfig("POSTGRESHOST"))
+    :SetPort(val(::GetAppConfig("POSTGRESPORT")))
+    :SetUser(::GetAppConfig("POSTGRESID"))
+    :SetPassword(::GetAppConfig("POSTGRESPASSWORD"))
+    :SetDatabase(::GetAppConfig("POSTGRESDATABASE"))
+    :SetCurrentNamespaceName("public")
+
     :LoadWharfConfiguration(Config())
     
     :SetForeignKeyNullAndZeroParity(.t.)
@@ -188,7 +190,10 @@ with object ::p_o_SQLConnection
     :SetPrimaryKeyFieldName("pk")
     :SetApplicationName("DataWharf")
 
-    if :Connect() >= 0
+    if :Connect() < 0
+        ::p_o_SQLConnection := NIL
+        ::p_cOnFirstRequestError := :GetErrorMessage()
+    else
         UpdateSchema(::p_o_SQLConnection)
 
         l_oDB1 := hb_SQLData(::p_o_SQLConnection)
@@ -647,8 +652,8 @@ with object ::p_o_SQLConnection
         //-----------------------------------------------------------------------------------
         if l_iCurrentDataVersion < 29
 
-            :ForeignKeyConvertAllZeroToNull(oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"])
-            :DeleteAllOrphanRecords( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
+            :ForeignKeyConvertAllZeroToNull(oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"])
+            :DeleteAllOrphanRecords( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
 
             for each l_cTableName in {"Application"}
                 for each l_cColumnName in {"PrimaryKeyDefaultInteger",;
@@ -702,8 +707,8 @@ with object ::p_o_SQLConnection
         endif
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
-        //:RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
-        :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"] )
+        //:RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
+        :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
         //-----------------------------------------------------------------------------------
         //-----------------------------------------------------------------------------------
         
@@ -744,8 +749,6 @@ with object ::p_o_SQLConnection
 
         UpdateAPIEndpoint()
 
-    else
-        ::p_o_SQLConnection := NIL
     endif
 endwith
 
@@ -838,62 +841,65 @@ endif
 
 l_cSitePath := ::p_cSitePath
 
-//Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
-l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
+if empty(::p_cOnFirstRequestError)
+    //Since the OnFirstRequest method only runs on first request, on following request have to check if connection is still active, and not terminated by the SQL Server.
+    l_lPostgresLostConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
 
-if !l_lPostgresLostConnection
-    if (::p_o_SQLConnection:GetServer()   <> l_cPostgresHost)     .or.;
-       (::p_o_SQLConnection:GetPort()     <> l_iPostgresPort)     .or.;
-       (::p_o_SQLConnection:GetDatabase() <> l_cPostgresDatabase) .or.;
-       (::p_o_SQLConnection:GetUser()     <> l_cPostgresId)
-        l_lPostgresLostConnection := .t.
-    endif
-endif
-
-if !l_lPostgresLostConnection  //If still possibly connected, test if the ORM schema is present
-    if ::p_o_SQLConnection:SQLExec("a37e465d-1a15-48bb-aa4f-c2542b76effa","select exists (select nspname from pg_catalog.pg_namespace where nspname = 'ORM');","ListOfNamespaces")
-        if !ListOfNamespaces->exists
+    if !l_lPostgresLostConnection
+        if (::p_o_SQLConnection:GetServer()   <> l_cPostgresHost)     .or.;
+        (::p_o_SQLConnection:GetPort()     <> l_iPostgresPort)     .or.;
+        (::p_o_SQLConnection:GetDatabase() <> l_cPostgresDatabase) .or.;
+        (::p_o_SQLConnection:GetUser()     <> l_cPostgresId)
             l_lPostgresLostConnection := .t.
         endif
-    else
-        l_lPostgresLostConnection := .t.
-    endif
-endif
-
-if l_lPostgresLostConnection
-    if !(::p_o_SQLConnection == NIL)
-        ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
     endif
 
-    // SendToDebugView("Reconnecting to SQL Server")
-    ::p_o_SQLConnection := hb_SQLConnect("PostgreSQL",;
-                                        l_cPostgresDriver,;
-                                        l_cPostgresHost,;
-                                        l_iPostgresPort,;
-                                        l_cPostgresId,;
-                                        ::GetAppConfig("POSTGRESPASSWORD"),;
-                                        l_cPostgresDatabase,;
-                                        "public";
-                                        )
-    with object ::p_o_SQLConnection
-        :LoadWharfConfiguration(Config())
-        :SetForeignKeyNullAndZeroParity(.t.)
-
-        :SetHarbourORMNamespace("ORM")
-        :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
-        :SetPrimaryKeyFieldName("pk")
-        :SetApplicationName("DataWharf")
-
-        if :Connect() >= 0
-            UpdateSchema(::p_o_SQLConnection)
-////            SendToDebugView("Reconnected to SQL Server")
+    if !l_lPostgresLostConnection  //If still possibly connected, test if the ORM schema is present
+        if ::p_o_SQLConnection:SQLExec("a37e465d-1a15-48bb-aa4f-c2542b76effa","select exists (select nspname from pg_catalog.pg_namespace where nspname = 'ORM');","ListOfNamespaces")
+            if !ListOfNamespaces->exists
+                l_lPostgresLostConnection := .t.
+            endif
         else
-            ::p_o_SQLConnection := NIL
+            l_lPostgresLostConnection := .t.
         endif
-    endwith
-else
-    if ::p_o_SQLConnection:CheckIfSchemaCacheShouldBeUpdated()
-        UpdateSchema(::p_o_SQLConnection)
+    endif
+
+    if l_lPostgresLostConnection
+        if !(::p_o_SQLConnection == NIL)
+            ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
+        endif
+
+        // SendToDebugView("Reconnecting to SQL Server")
+        ::p_o_SQLConnection := hb_SQLConnect()
+        with object ::p_o_SQLConnection
+            :SetBackendType("PostgreSQL")
+            :SetDriver(l_cPostgresDriver)
+            :SetServer(l_cPostgresHost)
+            :SetPort(l_iPostgresPort)
+            :SetUser(l_cPostgresId)
+            :SetPassword(::GetAppConfig("POSTGRESPASSWORD"))
+            :SetDatabase(l_cPostgresDatabase)
+            :SetCurrentNamespaceName("public")
+
+            :LoadWharfConfiguration(Config())
+
+            :SetForeignKeyNullAndZeroParity(.t.)
+
+            :SetHarbourORMNamespace("ORM")
+            :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
+            :SetPrimaryKeyFieldName("pk")
+            :SetApplicationName("DataWharf")
+
+            if :Connect() >= 0
+                UpdateSchema(::p_o_SQLConnection)
+            else
+                ::p_o_SQLConnection := NIL
+            endif
+        endwith
+    else
+        if ::p_o_SQLConnection:CheckIfSchemaCacheShouldBeUpdated()
+            UpdateSchema(::p_o_SQLConnection)
+        endif
     endif
 endif
 
@@ -906,6 +912,10 @@ case ::p_o_SQLConnection == NIL
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
+
+    if !empty(::p_cOnFirstRequestError)
+        l_cHtml += [<h1>]+::p_cOnFirstRequestError+[</h1>]
+    endif
 
     l_cHtml += [<h2>Config File: ]+::PathBackend+"config.txt"+[</h2>]
     l_cHtml += [<h2>Driver: ]+l_cPostgresDriver+[</h2>]
@@ -1589,16 +1599,11 @@ return nil
 //=================================================================================================================
 function UpdateSchema(par_o_SQLConnection)
 local l_cLastError := ""
-local l_hTableSchema
-local l_hEnumerations
 local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
 local l_cUpdateScript := ""
 
-l_hTableSchema  := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
-l_hEnumerations := nvl(hb_hGetDef(oFcgi:p_o_SQLConnection:p_WharfConfig,"Enumerations",{=>}),{=>})
-
-if el_AUnpack(par_o_SQLConnection:MigrateSchema(l_hTableSchema,l_hEnumerations),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
+if el_AUnpack(par_o_SQLConnection:MigrateSchema(oFcgi:p_o_SQLConnection:p_hWharfConfig),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
@@ -2133,6 +2138,23 @@ with object l_oDB1
     :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
     l_oData := :Get(par_iApplicationPk)
     if :Tally == 1
+        l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_ONTABLESTAGS)
+    endif
+endwith
+
+return l_lResult
+//=================================================================================================================
+function CheckIfAllowDestructiveEnumerationDelete(par_iApplicationPk)
+local l_lResult := .f.
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oData
+
+with object l_oDB1
+    :Table("1ae29fc6-aa97-4471-962c-964f53664dc2","Application")
+    :Column("Application.DestructiveDelete" , "Application_DestructiveDelete")
+    l_oData := :Get(par_iApplicationPk)
+    if :Tally == 1
+        //For now will assume if it is allowed to delete Tables, so it is for enumerations
         l_lResult := (l_oData:Application_DestructiveDelete >= APPLICATIONDESTRUCTIVEDELETE_ONTABLESTAGS)
     endif
 endwith

@@ -1,5 +1,13 @@
 # DataWharf - Change Log
 
+## 03/06/2024 v 4.3
+* Option to duplicate table now also duplicated related indexes.
+* Option to duplicate Column, Enumeration and Enumeration Values.
+* Table and Enumeration search will also use Previous Names match on any related data.
+* Fix bug during duplication with initialization of name if the source included an "_".
+* Implemented renaming support for Namespaces, Tables, Columns, Enumerations and Enumeration Values, when generating migration code. This is only supported for PostgreSQL currently.
+* Requires Harbour_ORM version 4.5 minimum.
+
 ## 02/26/2024 v 4.2
 * Unlimited Personal Deployment configurations in every application. Previously only a Custom Configuration was allowed.
 * Track Name Changes for Namespaces, Tables, Columns, Enumerations and Enumeration Values (Indexes are deleted and created). This is optional and is not yet used during schema migrations.

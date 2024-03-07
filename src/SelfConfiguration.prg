@@ -1,11 +1,11 @@
 //As of DataWharf 3, its own configuration is defined using a "DataWharf" application managed in DataWharf itself.
 function Config()
 return ;
-{"HarbourORMVersion"=>4.4,;
- "DataWharfVersion"=>4.2,;
+{"HarbourORMVersion"=>4.5,;
+ "DataWharfVersion"=>4.3,;
  "Backend"=>"PostgreSQL",;
- "GenerationTime"=>"2024-02-25T06:04:29.750Z",;
- "GenerationSignature"=>"85406618-7a26-4b7c-b3bb-9f44e44668d6",;
+ "GenerationTime"=>"2024-03-01T18:51:42.640Z",;
+ "GenerationSignature"=>"8f4aa1c3-a9b3-4da4-8185-238dd2056c67",;
  "Tables"=>;
     {"public.APIAccessEndpoint"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
@@ -1096,5 +1096,6 @@ return ;
             ,"ModelExport"      =>{"Order"=>3,"Number"=>3};
             ,"ModelImport"      =>{"Order"=>4,"Number"=>4};
             ,"TableExport"      =>{"Order"=>5,"Number"=>5}}};
-    };
-}
+    },;
+ "GenerationSource"=>"DataWharf"}
+ 

@@ -454,7 +454,7 @@ case el_IsInlist(l_cURLAction,"DataDictionaryExportToHarbourORM","DataDictionary
         do case
         case l_cURLAction == "DataDictionaryExportToHarbourORM"
             l_cPrefix := "Harbour"
-            l_cHtmlUnderHeader := GetAboveNavbarHeading("Export to Harbour_ORM ("+oFcgi:GetQueryString("Backend")+")")
+            l_cHtmlUnderHeader := GetAboveNavbarHeading("Export to Harbour_ORM (WharfConfig) ("+oFcgi:GetQueryString("Backend")+")")
         case l_cURLAction == "DataDictionaryExportToJSON"
             l_cPrefix := "JSON"
             l_cHtmlUnderHeader := GetAboveNavbarHeading("Export to JSON")
@@ -1228,7 +1228,6 @@ case l_cURLAction == "EnumerationReferencedBy"
     if !hb_IsNil(l_oData)
         l_cHtml += EnumerationReferenceByFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,l_cURLNamespaceName,l_cURLEnumerationName)
     endif
-//123456
 
 case l_cURLAction == "OrderEnumValues"
     if oFcgi:p_nAccessLevelDD >= 5
@@ -3254,6 +3253,7 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("e4baa6fb-b62d-49ef-8e88-d68552f9e460","Namespace")
+            :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
             :Column("Namespace.Name"            ,"Namespace_Name")
             :Column("Namespace.TrackNameChanges","Namespace_TrackNameChanges")
             :Column("Namespace.UseStatus"       ,"Namespace_UseStatus")
@@ -3263,22 +3263,16 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
 
             if !hb_IsNil(l_oData)
                 l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-
-                l_cName := l_oData:Namespace_Name
-                l_nPos  := rat("_",l_cName)
-                if !empty(l_nPos)
-                    l_cName := left(l_cName,l_nPos-1)
-                endif
-                l_cName += "_"+strtran(l_cLinkUID,"-","")
+                l_cName := OnDuplicateSanitizeName(l_oData:Namespace_Name,l_cLinkUID,l_oData:Namespace_LinkUID)
                 
                 :Table("b9552326-f36e-4f9a-a353-087f54f4ee08","Namespace")
+                :Field("Namespace.LinkUID"         ,l_cLinkUID)
                 :Field("Namespace.Name"            ,l_cName)
                 :Field("Namespace.TrackNameChanges",l_oData:Namespace_TrackNameChanges)
                 :Field("Namespace.UseStatus"       ,l_oData:Namespace_UseStatus)
                 :Field("Namespace.DocStatus"       ,l_oData:Namespace_DocStatus)
                 :Field("Namespace.Description"     ,l_oData:Namespace_Description)
                 :Field("Namespace.fk_Application"  ,par_iApplicationPk)
-                :Field("Namespace.LinkUID"         ,l_cLinkUID)
                 if :Add()
                     l_iNamespacePk := :Key()
                 else
@@ -3443,16 +3437,17 @@ return l_cHtml
 //=================================================================================================================
 static function TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
-local l_oDB_ListOfTables             := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfColumnCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfIndexCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_CustomField              := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfTags               := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_TableTags                := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_AnyTags                  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfReferencedByCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfDiagramsCounts     := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfPreviousName       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTables               := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfColumnCounts         := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfIndexCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_CustomField                := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTags                 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_TableTags                  := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_AnyTags                    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfReferencedByCounts   := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramsCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_DiagramsWithAllTablesCount := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfPreviousName         := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_oCursor
 local l_iTablePk
@@ -3497,6 +3492,7 @@ local l_ScriptFolder
 local l_lWarnings := .f.
 local l_aColumnTypes
 local l_cCombinedPath
+local l_nNumberOfDiagramsWithAllTables
 
 oFcgi:TraceAdd("TableListFormBuild")
 
@@ -3601,7 +3597,7 @@ endwith
 if l_nNumberOfTables > 0
 
     with object l_oDB_ListOfPreviousName
-        //Not adding the extra conditions since in anycase el_seek will be used.
+        //Not adding the extra conditions since in any case el_seek will be used.
         :Table("01813641-5555-4be0-b867-683c2746f6b2","Table")
         :Column("Table.pk"              ,"pk")
         :Column("TablePreviousName.pk"  ,"PreviousName_pk")   //Will use the pk to order, since it is incremental
@@ -3784,6 +3780,15 @@ if l_nNumberOfTables > 0
             :Index("tag1","Table_pk")
             :CreateIndexes()
         endwith
+    endwith
+
+    with object l_oDB_DiagramsWithAllTablesCount
+        :Table("b9b89abc-8493-4e80-afae-6601f6d4a364","Diagram")
+        :Where("Diagram.fk_Application = ^",par_iApplicationPk)
+        :Join("left","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
+        :Where("DiagramTable.Pk IS NULL")
+        l_nNumberOfDiagramsWithAllTables := :Count()
+        SendToDebugView("Number Of Diagrams With All Tables = "+Trans(l_nNumberOfDiagramsWithAllTables))
     endwith
 
 else
@@ -3979,7 +3984,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-
                         l_cHtml += [<tr class="SearchMode3">]
                             l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
                             l_cHtml += [<td colspan="2">]
@@ -4162,12 +4166,13 @@ if !empty(l_nNumberOfTables)
                         endif
                     l_cHtml += [</td>]
 
-            l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                l_nCount := iif( el_seek(l_iTablePk,"ListOfDiagramsCounts","tag1") , ListOfDiagramsCounts->Count , 0)
-                if l_nCount > 0
-                    l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableDiagrams/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
-                endif
-            l_cHtml += [</td>]
+                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
+                        l_nCount := iif( el_seek(l_iTablePk,"ListOfDiagramsCounts","tag1") , ListOfDiagramsCounts->Count , 0)
+                        l_nCount += l_nNumberOfDiagramsWithAllTables
+                        if l_nCount > 0
+                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableDiagrams/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
+                        endif
+                    l_cHtml += [</td>]
 
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -4549,7 +4554,12 @@ local l_cLinkUID
 local l_cName
 local l_nPos
 local l_oDB_ListOfColumns
+local l_oDB_ListOfIndexes
+local l_oDB_ListOfIndexColumns
 local l_lDuplicate
+
+local l_hMappingIndex  := {=>}
+local l_hMappingColumn := {=>}
 
 oFcgi:TraceAdd("TableEditFormOnSubmit")
 
@@ -4889,11 +4899,15 @@ case l_cActionOnSubmit == "Delete"   // Table
 case l_cActionOnSubmit == "Duplicate"   // Table
     if oFcgi:p_nAccessLevelDD >= 5 .and. l_iTablePk > 0
 
-        l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB_ListOfColumns      := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB_ListOfIndexes      := hb_SQLData(oFcgi:p_o_SQLConnection)
+        l_oDB_ListOfIndexColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
+
         with object l_oDB_ListOfColumns
             :Table("8491ca8a-33cf-487c-9c1b-77ff9b9affef","Column")
             :Where("Column.fk_Table = ^",l_iTablePk)
 
+            :Column("Column.Pk"                ,"Pk")
             :Column("Column.fk_TableForeign"   ,"Column_fk_TableForeign")
             :Column("Column.fk_Enumeration"    ,"Column_fk_Enumeration")
             :Column("Column.Order"             ,"Column_Order")
@@ -4923,10 +4937,39 @@ case l_cActionOnSubmit == "Duplicate"   // Table
             :SQL("ListOfColumns")
         endwith
 
+        with object l_oDB_ListOfIndexes
+            :Table("5d7ddbdb-8eda-4bbb-9a61-90b23a270a82","Index")
+            :Where("Index.fk_Table = ^",l_iTablePk)
+
+            // :Column("Index.LinkUID"    ,"Index_LinkUID")
+            :Column("Index.Pk"         ,"Pk")
+            :Column("Index.Name"       ,"Index_Name")
+            :Column("Index.Unique"     ,"Index_Unique")
+            :Column("Index.Expression" ,"Index_Expression")
+            :Column("Index.Description","Index_Description")
+            :Column("Index.Algo"       ,"Index_Algo")
+            :Column("Index.UsedBy"     ,"Index_UsedBy")
+            :Column("Index.UseStatus"  ,"Index_UseStatus")
+            :Column("Index.DocStatus"  ,"Index_DocStatus")
+            // :Column("Index.TestWarning","Index_TestWarning")
+
+            :SQL("ListOfIndexes")
+        endwith
+
+        with object l_oDB_ListOfIndexColumns
+            :Table("5d7ddbdb-8eda-4bbb-9a61-90b23a270a83","Index")
+            :Where("Index.fk_Table = ^",l_iTablePk)
+            :Column("Index.Pk"              ,"Index_Pk")
+            :Column("IndexColumn.fk_Column" ,"Column_Pk")
+            :Join("inner","IndexColumn","","IndexColumn.fk_Index = Index.pk")
+            :SQL("ListOfIndexColumns")
+        endwith
+
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("3608cda1-4f7b-4230-ba03-68352d791fa5","Table")
             :Column("Table.fk_Namespace"    ,"Table_fk_Namespace")
+            :Column("Table.LinkUID"         ,"Table_LinkUID")
             :Column("Table.Name"            ,"Table_Name")
             :Column("Table.TrackNameChanges","Table_TrackNameChanges")
             :Column("Table.UseStatus"       ,"Table_UseStatus")
@@ -4938,24 +4981,18 @@ case l_cActionOnSubmit == "Duplicate"   // Table
 
             if !hb_IsNil(l_oData)
                 l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-
-                l_cName := l_oData:Table_Name
-                l_nPos  := rat("_",l_cName)
-                if !empty(l_nPos)
-                    l_cName := left(l_cName,l_nPos-1)
-                endif
-                l_cName += "_"+strtran(l_cLinkUID,"-","")
+                l_cName := OnDuplicateSanitizeName(l_oData:Table_Name,l_cLinkUID,l_oData:Table_LinkUID)
                 
                 :Table("00b39c52-09d8-4132-9c17-2402267cfd1e","Table")
                 :Field("Table.fk_Namespace"    ,l_oData:Table_fk_Namespace)
                 :Field("Table.Name"            ,l_cName)
+                :Field("Table.LinkUID"         ,l_cLinkUID)
                 :Field("Table.TrackNameChanges",l_oData:Table_TrackNameChanges)
                 :Field("Table.UseStatus"       ,l_oData:Table_UseStatus)
                 :Field("Table.DocStatus"       ,l_oData:Table_DocStatus)
                 :Field("Table.Description"     ,l_oData:Table_Description)
                 :Field("Table.Information"     ,l_oData:Table_Information)
                 :Field("Table.Unlogged"        ,l_oData:Table_Unlogged)
-                :Field("Table.LinkUID"         ,l_cLinkUID)
                 if :Add()
                     l_iTablePk := :Key()
 
@@ -4963,9 +5000,8 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     select ListOfColumns
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Column")
-                        :Field("Column.fk_Table"          ,l_iTablePk)
-                        :Field("Table.LinkUID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
-
+                        :Field("Column.fk_Table"           ,l_iTablePk)
+                        :Field("Column.LinkUID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("Column.fk_TableForeign"   ,ListOfColumns->Column_fk_TableForeign)
                         :Field("Column.fk_Enumeration"    ,ListOfColumns->Column_fk_Enumeration)
                         :Field("Column.Order"             ,ListOfColumns->Column_Order)
@@ -4988,11 +5024,44 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                         :Field("Column.OnDelete"          ,ListOfColumns->Column_OnDelete)
                         :Field("Column.Unicode"           ,ListOfColumns->Column_Unicode)
                         :Field("Column.Description"       ,ListOfColumns->Column_Description)
-                        // :Field("Column.TestWarning"       ,ListOfColumns->Column_TestWarning)
-                        // :Field("Column.LastNativeType"    ,ListOfColumns->Column_LastNativeType)
-
-                        if !:Add()
+                        if :Add()
+                            l_hMappingColumn[ListOfColumns->Pk] := :Key()
+                        else
                             l_cErrorMessage := "Failed to add Column in Table."
+                            exit
+                        endif
+                    endscan
+
+                    // Duplicate Indexes
+                    select ListOfIndexes
+                    scan all
+                        :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Index")
+                        :Field("Index.fk_Table"   ,l_iTablePk)
+                        :Field("Index.LinkUID"    ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Index.Name"       ,ListOfIndexes->Index_Name)
+                        :Field("Index.Unique"     ,ListOfIndexes->Index_Unique)
+                        :Field("Index.Expression" ,ListOfIndexes->Index_Expression)
+                        :Field("Index.Description",ListOfIndexes->Index_Description)
+                        :Field("Index.Algo"       ,ListOfIndexes->Index_Algo)
+                        :Field("Index.UsedBy"     ,ListOfIndexes->Index_UsedBy)
+                        :Field("Index.UseStatus"  ,ListOfIndexes->Index_UseStatus)
+                        :Field("Index.DocStatus"  ,ListOfIndexes->Index_DocStatus)
+                        if :Add()
+                            l_hMappingIndex[ListOfIndexes->Pk] := :Key()
+                        else
+                            l_cErrorMessage := "Failed to add Index in Table."
+                            exit
+                        endif
+                    endscan
+
+                    // Duplicate IndexColumn
+                    select ListOfIndexColumns
+                    scan all
+                        :Table("abed2f11-7b99-42f5-aff6-43ff8409c4a9","IndexColumn")
+                        :Field("IndexColumn.fk_Index"  , l_hMappingIndex[ListOfIndexColumns->Index_Pk])
+                        :Field("IndexColumn.fk_Column" , l_hMappingColumn[ListOfIndexColumns->Column_Pk])
+                        if !:Add()
+                            l_cErrorMessage := "Failed to add IndexColumn in Index."
                             exit
                         endif
                     endscan
@@ -5322,8 +5391,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div><div class="input-group">]
         if oFcgi:p_nAccessLevelDD >= 5
             l_cHtml += GetButtonOnEditFormNew("New Column",l_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath)
-        endif
-        if oFcgi:p_nAccessLevelDD >= 5
             if l_nNumberOfColumns > 1
                 l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Order Columns",l_cSitePath+[DataDictionaries/OrderColumns/]+l_cCombinedPath)
             endif
@@ -6135,7 +6202,15 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += GetButtonOnEditFormNew("New Column",l_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath)
+
                 l_cHtml += GetButtonOnEditFormDelete()
+                l_cHtml += GetConfirmationModalFormsDelete()
+
+                if l_nUsedAs <> COLUMN_USEDAS_PRIMARY_KEY
+                    l_cHtml += GetButtonOnEditFormDuplicate()
+                    l_cHtml += GetConfirmationModalFormsDuplicate("Only the Column definition will be duplicated.")
+                endif
+
             endif
         endif
     l_cHtml += [</div>]
@@ -6437,10 +6512,7 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalFormsDelete()
-
 return l_cHtml
-
 //=================================================================================================================
 static function ColumnEditFormOnSubmit(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_oNavData)
 local l_cHtml := []
@@ -6492,6 +6564,12 @@ local l_aTagsSelected
 local l_cTagSelected
 local l_iTagSelectedPk
 local l_iTagColumnPk
+
+local l_cLinkUID
+local l_cName
+local l_nPos
+
+local l_iTablePk := 0
 
 oFcgi:TraceAdd("ColumnEditFormOnSubmit")
 
@@ -6836,6 +6914,99 @@ case l_cActionOnSubmit == "Delete"   // Column
             l_cErrorMessage := "Related Index Expression record on file"
 
         endif
+    endif
+
+case l_cActionOnSubmit == "Duplicate"   // Column
+    if oFcgi:p_nAccessLevelDD >= 5 .and. l_iColumnPk > 0
+
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("6048be43-4909-40db-9157-796c765d7ac7","Column")
+            :Column("Column.fk_Table"          ,"Column_fk_Table")
+            :Column("Column.fk_TableForeign"   ,"Column_fk_TableForeign")
+            :Column("Column.fk_Enumeration"    ,"Column_fk_Enumeration")
+            :Column("Column.Order"             ,"Column_Order")
+            :Column("Column.LinkUID"           ,"Column_LinkUID")
+            :Column("Column.Name"              ,"Column_Name")
+            :Column("Column.TrackNameChanges"  ,"Column_TrackNameChanges")
+            :Column("Column.AKA"               ,"Column_AKA")
+            :Column("Column.UsedAs"            ,"Column_UsedAs")
+            :Column("Column.UsedBy"            ,"Column_UsedBy")
+            :Column("Column.UseStatus"         ,"Column_UseStatus")
+            :Column("Column.DocStatus"         ,"Column_DocStatus")
+            :Column("Column.Type"              ,"Column_Type")
+            :Column("Column.Array"             ,"Column_Array")
+            :Column("Column.Length"            ,"Column_Length")
+            :Column("Column.Scale"             ,"Column_Scale")
+            :Column("Column.Nullable"          ,"Column_Nullable")
+            :Column("Column.DefaultType"       ,"Column_DefaultType")
+            :Column("Column.DefaultCustom"     ,"Column_DefaultCustom")
+            :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
+            :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
+            :Column("Column.OnDelete"          ,"Column_OnDelete")
+            :Column("Column.Unicode"           ,"Column_Unicode")
+            :Column("Column.Description"       ,"Column_Description")
+            // :Column("Column.TestWarning"       ,"Column_TestWarning")
+            // :Column("Column.LastNativeType"    ,"Column_LastNativeType")
+            l_oData := :Get(l_iColumnPk)
+
+            if !hb_IsNil(l_oData)
+
+                if l_oData:Column_UsedAs == COLUMN_USEDAS_PRIMARY_KEY
+                    //This should not happen since the Duplicate button should not be visible on a primary key.
+                    //l_cErrorMessage := "May not dupicate the Primary key."
+                    l_iColumnPk := 0
+
+                else
+                    l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                    l_cName := OnDuplicateSanitizeName(l_oData:Column_Name,l_cLinkUID,l_oData:Column_LinkUID)
+                    
+                    l_iTablePk := l_oData:Column_fk_Table
+
+                    :Table("c90aba01-148b-470c-b4af-a223992a2fe3","Column")
+                    :Field("Column.fk_Table"          ,l_iTablePk)
+                    :Field("Column.LinkUID"           ,l_cLinkUID)
+                    :Field("Column.Name"              ,l_cName)
+
+                    :Field("Column.fk_TableForeign"   ,l_oData:Column_fk_TableForeign)
+                    :Field("Column.fk_Enumeration"    ,l_oData:Column_fk_Enumeration)
+                    :Field("Column.Order"             ,l_oData:Column_Order)
+                    :Field("Column.TrackNameChanges"  ,l_oData:Column_TrackNameChanges)
+                    :Field("Column.AKA"               ,l_oData:Column_AKA)
+                    :Field("Column.UsedAs"            ,l_oData:Column_UsedAs)
+                    :Field("Column.UsedBy"            ,l_oData:Column_UsedBy)
+                    :Field("Column.UseStatus"         ,l_oData:Column_UseStatus)
+                    :Field("Column.DocStatus"         ,l_oData:Column_DocStatus)
+                    :Field("Column.Type"              ,l_oData:Column_Type)
+                    :Field("Column.Array"             ,l_oData:Column_Array)
+                    :Field("Column.Length"            ,l_oData:Column_Length)
+                    :Field("Column.Scale"             ,l_oData:Column_Scale)
+                    :Field("Column.Nullable"          ,l_oData:Column_Nullable)
+                    :Field("Column.DefaultType"       ,l_oData:Column_DefaultType)
+                    :Field("Column.DefaultCustom"     ,l_oData:Column_DefaultCustom)
+                    :Field("Column.ForeignKeyUse"     ,l_oData:Column_ForeignKeyUse)
+                    :Field("Column.ForeignKeyOptional",l_oData:Column_ForeignKeyOptional)
+                    :Field("Column.OnDelete"          ,l_oData:Column_OnDelete)
+                    :Field("Column.Unicode"           ,l_oData:Column_Unicode)
+                    :Field("Column.Description"       ,l_oData:Column_Description)
+                    // :Field("Column.TestWarning"       ,l_oData:Column_TestWarning)
+                    // :Field("Column.LastNativeType"    ,l_oData:Column_LastNativeType)
+
+                    if :Add()
+                        l_iColumnPk := :Key()
+                    else
+                        l_cErrorMessage := "Failed to add Column."
+                    endif
+                endif
+            endif
+
+        endwith
+        if l_iTablePk > 0
+            ReSequenceColumns(l_iTablePk)
+        endif
+        DataDictionaryFixAndTest(par_iApplicationPk)
+    else
+        l_cErrorMessage := "No Access to Duplicate"
     endif
 
 endcase
@@ -7569,6 +7740,7 @@ local l_cSearchEnumerationDocStatus
 local l_cSearchEnumValueUsageStatus
 local l_cSearchEnumValueDocStatus
 local l_cSearchEnumerationImplementAs
+local l_cSearchExtraFilters
 local l_cURL
 
 oFcgi:TraceAdd("EnumerationListFormOnSubmit")
@@ -7587,37 +7759,40 @@ l_cSearchEnumerationDocStatus   := SanitizeInput(oFcgi:GetInputValue("TextSearch
 l_cSearchEnumValueUsageStatus   := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumValueUsageStatus"))
 l_cSearchEnumValueDocStatus     := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumValueDocStatus"))
 l_cSearchEnumerationImplementAs := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationImplementAs"))
+l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearchExtraFilters"))
 
 do case
 case l_cActionOnSubmit == "Search"
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                   ,trans(l_nSearchMode))
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"          ,l_cSearchNamespaceName)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"   ,l_cSearchNamespaceDescription)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"        ,l_cSearchEnumerationName)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription" ,l_cSearchEnumerationDescription)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"          ,l_cSearchEnumValueName)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"   ,l_cSearchEnumValueDescription)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus" ,l_cSearchEnumerationUsageStatus)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus"   ,l_cSearchEnumerationDocStatus)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus"   ,l_cSearchEnumValueUsageStatus)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus"     ,l_cSearchEnumValueDocStatus)
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs" ,l_cSearchEnumerationImplementAs)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                  ,trans(l_nSearchMode))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,l_cSearchNamespaceName)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,l_cSearchEnumerationName)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription",l_cSearchEnumerationDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"         ,l_cSearchEnumValueName)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"  ,l_cSearchEnumValueDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus",l_cSearchEnumerationUsageStatus)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus"  ,l_cSearchEnumerationDocStatus)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus"  ,l_cSearchEnumValueUsageStatus)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus"    ,l_cSearchEnumValueDocStatus)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs",l_cSearchEnumerationImplementAs)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ExtraFilters"          ,l_cSearchExtraFilters)
 
     l_cHtml += EnumerationListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
-    // SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                 ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"          ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"   ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"        ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription" ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"          ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"   ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus" ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus"   ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus"   ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus"     ,"")
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs" ,"")
+    // SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription","")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"         ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus","")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus"    ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs","")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ExtraFilters"          ,"")
 
     l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/"
     oFcgi:Redirect(l_cURL)
@@ -7655,6 +7830,9 @@ local l_cSearchEnumValueUsageStatus
 local l_cSearchEnumValueDocStatus
 local l_cSearchEnumerationImplementAs
 
+local l_cSearchExtraFilters
+local l_json_ExtraFilters
+
 local l_lWarnings := .f.
 
 oFcgi:TraceAdd("EnumerationListFormBuild")
@@ -7672,6 +7850,7 @@ l_cSearchEnumerationDocStatus   := GetUserSetting("Application_"+Trans(par_iAppl
 l_cSearchEnumValueUsageStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus")
 l_cSearchEnumValueDocStatus     := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDocStatus")
 l_cSearchEnumerationImplementAs := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationImplementAs")
+l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ExtraFilters")
 
 with object l_oDB_ListOfEnumerations
     :Table("a969a3ec-01a9-4aa5-b9f8-d9bd7b1005e7","Enumeration")
@@ -7705,7 +7884,8 @@ with object l_oDB_ListOfEnumerations
                                     l_cSearchEnumerationDocStatus,;
                                     l_cSearchEnumValueUsageStatus,;
                                     l_cSearchEnumValueDocStatus,;
-                                    l_cSearchEnumerationImplementAs;
+                                    l_cSearchEnumerationImplementAs,;
+                                    l_cSearchExtraFilters;
                                     )
 
     :OrderBy("tag1")
@@ -7777,6 +7957,8 @@ l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value
 l_ScriptFolder := l_cSitePath+[scripts/jQueryAmsify_2020_01_27/]
 oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_ScriptFolder+[amsify.suggestags.css">]
 oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.amsify.suggestags.js"></script>]
+
+l_json_ExtraFilters :=  [{tag:'Warning',value:'WNG'}]
 
 oFcgi:p_cjQueryScript += "$('#PageLoaded').val('1');"
 
@@ -7899,6 +8081,15 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumValueDocStatus",;
                                                                    "{tag:'Missing',value:1},{tag:'Not Needed',value:2},{tag:'Composing',value:3},{tag:'Completed',value:4}",;
                                                                    l_cSearchEnumValueDocStatus,25)
+                            l_cHtml += [</td>]
+                        l_cHtml += [</tr>]
+
+                        l_cHtml += [<tr class="SearchMode3">]
+                            l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
+                            l_cHtml += [<td colspan="2">]
+                                l_cHtml += GetMultiFlagSearchInput("TextSearchExtraFilters",;
+                                                                   l_json_ExtraFilters,;
+                                                                   l_cSearchExtraFilters,25)
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
@@ -8144,6 +8335,10 @@ else
             if !empty(par_iPk)
                 if oFcgi:p_nAccessLevelDD >= 5
                     l_cHtml += GetButtonOnEditFormDelete()
+                    l_cHtml += GetConfirmationModalFormsDelete()
+
+                    l_cHtml += GetButtonOnEditFormDuplicate()
+                    l_cHtml += GetConfirmationModalFormsDuplicate("Values will also be duplicated.")
                 endif
             endif
         l_cHtml += [</div>]
@@ -8252,7 +8447,6 @@ else
 
     l_cHtml += [</form>]
 
-    l_cHtml += GetConfirmationModalFormsDelete()
 endif
 
 return l_cHtml
@@ -8276,7 +8470,10 @@ local l_cErrorMessage := ""
 local l_oDB1
 local l_oData
 local l_lDuplicate
-
+local l_cLinkUID
+local l_cName
+local l_nPos
+local l_oDB_ListOfEnumValues
 
 oFcgi:TraceAdd("EnumerationEditFormOnSubmit")
 
@@ -8395,33 +8592,131 @@ case l_cActionOnSubmit == "Done"
 
 case l_cActionOnSubmit == "Delete"   // Enumeration
     if oFcgi:p_nAccessLevelDD >= 5
-        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-        with object l_oDB1
-            :Table("1bf31cf6-bbff-48de-95ff-5bbeaa82b77b","Column")
-            :Where("Column.fk_Enumeration = ^",l_iEnumerationPk)
-            :SQL()
-        endwith
-
-        if l_oDB1:Tally == 0
+        if CheckIfAllowDestructiveEnumerationDelete(par_iApplicationPk)
+            l_cErrorMessage := CascadeDeleteEnumeration(par_iApplicationPk,l_iEnumerationPk)
+            if empty(l_cErrorMessage)
+                l_iEnumerationPk := 0
+            endif
+        else
+            l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
-                :Table("7f34c282-3118-4ebd-84ad-ee8f3110cd3b","EnumValue")
-                :Where("EnumValue.fk_Enumeration = ^",l_iEnumerationPk)
+                :Table("1bf31cf6-bbff-48de-95ff-5bbeaa82b77b","Column")
+                :Where("Column.fk_Enumeration = ^",l_iEnumerationPk)
                 :SQL()
             endwith
 
             if l_oDB1:Tally == 0
-                if l_oDB1:Delete("8f1c66fc-38df-4b14-a43d-5cb8049944e3","Enumeration",l_iEnumerationPk)
-                    DataDictionaryFixAndTest(par_iApplicationPk)
-                    l_iEnumerationPk := 0  // Will force to go back to the list of enumerations
+                with object l_oDB1
+                    :Table("7f34c282-3118-4ebd-84ad-ee8f3110cd3b","EnumValue")
+                    :Where("EnumValue.fk_Enumeration = ^",l_iEnumerationPk)
+                    :SQL()
+                endwith
+
+                if l_oDB1:Tally == 0
+                    if l_oDB1:Delete("8f1c66fc-38df-4b14-a43d-5cb8049944e3","Enumeration",l_iEnumerationPk)
+                        DataDictionaryFixAndTest(par_iApplicationPk)
+                        l_iEnumerationPk := 0  // Will force to go back to the list of enumerations
+                    else
+                        l_cErrorMessage := "Failed to delete Enumeration"
+                    endif
                 else
-                    l_cErrorMessage := "Failed to delete Enumeration"
+                    l_cErrorMessage := "Related Enumeration Value record on file"
                 endif
             else
-                l_cErrorMessage := "Related Enumeration Value record on file"
+                l_cErrorMessage := "Related Column record on file"
             endif
-        else
-            l_cErrorMessage := "Related Column record on file"
         endif
+    endif
+
+case l_cActionOnSubmit == "Duplicate"   // Enumeration
+    if oFcgi:p_nAccessLevelDD >= 5 .and. l_iEnumerationPk > 0
+
+        l_oDB_ListOfEnumValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfEnumValues
+            :Table("3ef1f126-003f-42f5-af2f-5e826940f7cf","EnumValue")
+            :Where("EnumValue.fk_Enumeration = ^",l_iEnumerationPk)
+
+            :Column("EnumValue.Number"            ,"EnumValue_Number")
+            :Column("EnumValue.Order"             ,"EnumValue_Order")
+            // :Column("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+            :Column("EnumValue.Name"              ,"EnumValue_Name")
+            :Column("EnumValue.TrackNameChanges"  ,"EnumValue_TrackNameChanges")
+            :Column("EnumValue.AKA"               ,"EnumValue_AKA")
+            :Column("EnumValue.Code"              ,"EnumValue_Code")
+            :Column("EnumValue.Description"       ,"EnumValue_Description")
+            :Column("EnumValue.UseStatus"         ,"EnumValue_UseStatus")
+            :Column("EnumValue.DocStatus"         ,"EnumValue_DocStatus")
+            // :Column("EnumValue.TestWarning"       ,"EnumValue_TestWarning")
+            :SQL("ListOfEnumValues")
+        endwith
+
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("6e30d9b3-ac94-4a89-9df7-17083e62949b","Enumeration")
+            :Column("Enumeration.fk_Namespace"    ,"Enumeration_fk_Namespace")
+            :Column("Enumeration.Name"            ,"Enumeration_Name")
+            :Column("Enumeration.LinkUID"         ,"Enumeration_LinkUID")
+            :Column("Enumeration.TrackNameChanges","Enumeration_TrackNameChanges")
+            :Column("Enumeration.ImplementAs"     ,"Enumeration_ImplementAs")
+            :Column("Enumeration.ImplementLength" ,"Enumeration_ImplementLength")
+            :Column("Enumeration.Description"     ,"Enumeration_Description")
+            :Column("Enumeration.UseStatus"       ,"Enumeration_UseStatus")
+            :Column("Enumeration.DocStatus"       ,"Enumeration_DocStatus")
+            // :Column("Enumeration.TestWarning"       ,"Enumeration_TestWarning")
+            l_oData := :Get(l_iEnumerationPk)
+
+            if !hb_IsNil(l_oData)
+                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:Enumeration_Name,l_cLinkUID,l_oData:Enumeration_LinkUID)
+                
+                :Table("c7deaef4-1e08-4ea7-b1d7-2fa30a858be8","Enumeration")
+                :Field("Enumeration.fk_Namespace"    ,l_oData:Enumeration_fk_Namespace)
+                :Field("Enumeration.Name"            ,l_cName)
+                :Field("Enumeration.LinkUID"         ,l_cLinkUID)
+
+                :Field("Enumeration.TrackNameChanges",l_oData:Enumeration_TrackNameChanges)
+                :Field("Enumeration.ImplementAs"     ,l_oData:Enumeration_ImplementAs)
+                :Field("Enumeration.ImplementLength" ,l_oData:Enumeration_ImplementLength)
+                :Field("Enumeration.Description"     ,l_oData:Enumeration_Description)
+                :Field("Enumeration.UseStatus"       ,l_oData:Enumeration_UseStatus)
+                :Field("Enumeration.DocStatus"       ,l_oData:Enumeration_DocStatus)
+                if :Add()
+                    l_iEnumerationPk := :Key()
+
+                    // Duplicate EnumValues
+                    select ListOfEnumValues
+                    scan all
+                        :Table("11b1eb0a-0e1c-4a3d-b816-a3ea802c4816","EnumValue")
+                        :Field("EnumValue.fk_Enumeration"     ,l_iEnumerationPk)
+                        :Field("EnumValue.LinkUID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
+
+                        :Field("EnumValue.Number"            ,ListOfEnumValues->EnumValue_Number)
+                        :Field("EnumValue.Order"             ,ListOfEnumValues->EnumValue_Order)
+                        // :Field("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+                        :Field("EnumValue.Name"              ,ListOfEnumValues->EnumValue_Name)
+                        :Field("EnumValue.TrackNameChanges"  ,ListOfEnumValues->EnumValue_TrackNameChanges)
+                        :Field("EnumValue.AKA"               ,ListOfEnumValues->EnumValue_AKA)
+                        :Field("EnumValue.Code"              ,ListOfEnumValues->EnumValue_Code)
+                        :Field("EnumValue.Description"       ,ListOfEnumValues->EnumValue_Description)
+                        :Field("EnumValue.UseStatus"         ,ListOfEnumValues->EnumValue_UseStatus)
+                        :Field("EnumValue.DocStatus"         ,ListOfEnumValues->EnumValue_DocStatus)
+                        // :Field("EnumValue.TestWarning"       ,ListOfEnumValues->EnumValue_TestWarning)
+
+                        if !:Add()
+                            l_cErrorMessage := "Failed to add Values in Enumeration."
+                            exit
+                        endif
+                    endscan
+
+                else
+                    l_cErrorMessage := "Failed to add Enumeration."
+                endif
+            endif
+
+        endwith
+        DataDictionaryFixAndTest(par_iApplicationPk)
+    else
+        l_cErrorMessage := "No Access to Duplicate"
     endif
 
 otherwise
@@ -8523,8 +8818,6 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div><div class="input-group">]
         if oFcgi:p_nAccessLevelDD >= 5
             l_cHtml += GetButtonOnEditFormNew("New Value",l_cSitePath+[DataDictionaries/NewEnumValue/]+l_cCombinedPath)
-        endif
-        if oFcgi:p_nAccessLevelDD >= 5
             if l_nNumberOfEnumValues > 1
                 l_cHtml += GetButtonOnListFormCaptionAndRedirect("Order Values",l_cSitePath+[DataDictionaries/OrderEnumValues/]+l_cCombinedPath)
             endif
@@ -8836,7 +9129,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         if !empty(par_iPk)
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += GetButtonOnEditFormNew("New Value",l_cSitePath+[DataDictionaries/NewEnumValue/]+l_cCombinedPath)
+
                 l_cHtml += GetButtonOnEditFormDelete()
+                l_cHtml += GetConfirmationModalFormsDelete()
+
+                l_cHtml += GetButtonOnEditFormDuplicate()
+                l_cHtml += GetConfirmationModalFormsDuplicate("Only the Value definition will be duplicated.")
             endif
         endif
     l_cHtml += [</div>]
@@ -8915,8 +9213,6 @@ oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
 l_cHtml += [</form>]
 
-l_cHtml += GetConfirmationModalFormsDelete()
-
 return l_cHtml
 //=================================================================================================================
 static function EnumValueEditFormOnSubmit(par_iApplicationPk,par_cURLApplicationLinkCode,par_iEnumerationPk,par_oNavData)
@@ -8939,6 +9235,10 @@ local l_cErrorMessage := ""
 local l_oDB1
 local l_oData
 local l_lDuplicate
+local l_cLinkUID
+local l_cName
+local l_nPos
+local l_iEnumerationPk := 0
 
 oFcgi:TraceAdd("EnumValueEditFormOnSubmit")
 
@@ -9084,6 +9384,63 @@ case l_cActionOnSubmit == "Delete"   // EnumValue
         else
             l_cErrorMessage := "Failed to delete value."
         endif
+    endif
+
+case l_cActionOnSubmit == "Duplicate"   // EnumValue
+    if oFcgi:p_nAccessLevelDD >= 5 .and. l_iEnumValuePk > 0
+
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB1
+            :Table("508f5c4d-7db2-45cd-b432-67919235804a","EnumValue")
+            :Column("EnumValue.fk_Enumeration"    ,"EnumValue_fk_Enumeration")
+            :Column("EnumValue.Number"            ,"EnumValue_Number")
+            :Column("EnumValue.Order"             ,"EnumValue_Order")
+            :Column("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+            :Column("EnumValue.Name"              ,"EnumValue_Name")
+            :Column("EnumValue.TrackNameChanges"  ,"EnumValue_TrackNameChanges")
+            :Column("EnumValue.AKA"               ,"EnumValue_AKA")
+            :Column("EnumValue.Code"              ,"EnumValue_Code")
+            :Column("EnumValue.Description"       ,"EnumValue_Description")
+            :Column("EnumValue.UseStatus"         ,"EnumValue_UseStatus")
+            :Column("EnumValue.DocStatus"         ,"EnumValue_DocStatus")
+            // :Column("EnumValue.TestWarning"       ,"EnumValue_TestWarning")
+            l_oData := :Get(l_iEnumValuePk)
+
+            if !hb_IsNil(l_oData)
+                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:EnumValue_Name,l_cLinkUID,l_oData:EnumValue_LinkUID)
+                
+                l_iEnumerationPk := l_oData:EnumValue_fk_Enumeration
+
+                :Table("c0560ac0-6569-42b0-8372-d18463d0f2a2","EnumValue")
+                :Field("EnumValue.fk_Enumeration"    ,l_iEnumerationPk)
+                :Field("EnumValue.LinkUID"           ,l_cLinkUID)
+                :Field("EnumValue.Name"              ,l_cName)
+
+                :Field("EnumValue.Number"            ,l_oData:EnumValue_Number)
+                :Field("EnumValue.Order"             ,l_oData:EnumValue_Order)
+                :Field("EnumValue.TrackNameChanges"  ,l_oData:EnumValue_TrackNameChanges)
+                :Field("EnumValue.AKA"               ,l_oData:EnumValue_AKA)
+                :Field("EnumValue.Code"              ,l_oData:EnumValue_Code)
+                :Field("EnumValue.Description"       ,l_oData:EnumValue_Description)
+                :Field("EnumValue.UseStatus"         ,l_oData:EnumValue_UseStatus)
+                :Field("EnumValue.DocStatus"         ,l_oData:EnumValue_DocStatus)
+                // :Field("EnumValue.TestWarning"       ,l_oData:EnumValue_TestWarning)
+
+                if :Add()
+                    l_iEnumValuePk := :Key()
+                else
+                    l_cErrorMessage := "Failed to add Enumeration Value."
+                endif
+            endif
+
+        endwith
+        if l_iEnumerationPk > 0
+            ReSequenceEnumValues(l_iEnumerationPk)
+        endif
+        DataDictionaryFixAndTest(par_iApplicationPk)
+    else
+        l_cErrorMessage := "No Access to Duplicate"
     endif
 
 endcase
@@ -9581,16 +9938,20 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
             if el_IsInlist(l_cActionOnSubmit,"Update","GenerateScript")
 //:SetHarbourORMNamespace("Harbour_ORM")
 
-                l_o_SQLConnection := hb_SQLConnect(l_cConnectBackendType,;
-                                                    l_cDriver,;
-                                                    l_cConnectServer,;
-                                                    l_iPort,;
-                                                    l_cConnectUser,;
-                                                    l_cConnectPassword,;
-                                                    l_cConnectDatabase,;
-                                                    "public";
-                                                    )
+                l_o_SQLConnection := hb_SQLConnect()
                 with object l_o_SQLConnection
+                    :SetBackendType(l_cConnectBackendType)
+                    :SetDriver(l_cDriver)
+                    :SetServer(l_cConnectServer)
+                    :SetPort(l_iPort)
+                    :SetUser(l_cConnectUser)
+                    :SetPassword(l_cConnectPassword)
+                    :SetDatabase(l_cConnectDatabase)
+                    :SetCurrentNamespaceName("public")
+
+                    :LoadWharfConfiguration()
+
+
 //_M_ refine options to use depending of Engine Type
                     :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
                     :MySQLEngineConvertIdentifierToLowerCase := .f.
@@ -9599,7 +9960,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                     :SetApplicationName("DataWharf")
 
                     :SetHarbourORMNamespace("nohborm")
-
+// altd()
                     l_iSQLHandle := :Connect()
                     do case
                     case l_iSQLHandle == 0
@@ -9619,7 +9980,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                                 l_cMacro := Strtran(l_cMacro,[;],"")
                                 l_hWharfConfig := &( l_cMacro )
 
-                                if el_AUnpack(l_o_SQLConnection:MigrateSchema(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) , nvl(hb_hGetDef(l_hWharfConfig,"Enumerations",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                if el_AUnpack(l_o_SQLConnection:MigrateSchema(l_hWharfConfig),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
                                     l_cErrorMessage := "Success - Migrated Structure"
 
                                     if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
@@ -9669,28 +10030,26 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                             l_cScript := ""
 
                         case l_cActionOnSubmit == "GenerateScript"
-                            l_cScript := "" //"Generate Script to come here"
-
                             l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,.f.,l_cConnectBackendType)
                             l_cMacro := Strtran(l_cMacro,chr(13),"")
                             l_cMacro := Strtran(l_cMacro,chr(10),"")
                             l_cMacro := Strtran(l_cMacro,[;],"")
                             l_hWharfConfig := &( l_cMacro )
 
-                            l_cSQLScript := ""
-                            // l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript( l_hWharfConfig["Tables"] , nvl(hb_hGetDef(l_hWharfConfig,"Enumerations",{=>}),{=>}) )
-                            l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript( nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) , nvl(hb_hGetDef(l_hWharfConfig,"Enumerations",{=>}),{=>}) )
-                            if !empty(l_cScript)
-                                l_cSQLScript := "--Structure Changes"+CRLF+l_cScript
-                            endif
-                            l_cScript := l_o_SQLConnection:GenerateMigrateForeignKeyConstraintsScript( nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) )
-                            if !empty(l_cScript)
-                                if !empty(l_cSQLScript)
-                                    l_cSQLScript += CRLF
-                                endif
-                                l_cSQLScript += "--Foreign Key Constraint Changes"+CRLF+l_cScript
-                            endif
+                            // l_cSQLScript := ""
+                            // l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
+                            // if !empty(l_cScript)
+                            //     l_cSQLScript := "--Structure Changes"+CRLF+l_cScript
+                            // endif
+                            // l_cScript := l_o_SQLConnection:GenerateMigrateForeignKeyConstraintsScript( nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) )
+                            // if !empty(l_cScript)
+                            //     if !empty(l_cSQLScript)
+                            //         l_cSQLScript += CRLF
+                            //     endif
+                            //     l_cSQLScript += "--Foreign Key Constraint Changes"+CRLF+l_cScript
+                            // endif
 
+                            l_cSQLScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
                             l_cScript := ""
                             l_aInstructions := hb_ATokens(l_cSQLScript,.t.)
                             for each l_cStatement in l_aInstructions
@@ -10563,7 +10922,6 @@ l_cHtml += GetAboveNavbarHeading("Columns","Template Table",AssembleNavbarInfo("
 if l_nNumberOfTemplateColumns <= 0
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            // l_cHtml += GetButtonOnListFormCaptionAndRedirect("Back To Template Tables",l_cSitePath+[DataDictionaries/ListTemplateTables/]+par_cURLApplicationLinkCode+[/])
             l_cHtml += GetNextPreviousTemplateTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTemplateTablePk,"ListTemplateColumns")
 
             if oFcgi:p_nAccessLevelDD >= 5
@@ -10578,13 +10936,10 @@ if l_nNumberOfTemplateColumns <= 0
 else
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<div class="input-group">]
-            // l_cHtml += GetButtonOnListFormCaptionAndRedirect("Back To Template Tables",l_cSitePath+[DataDictionaries/ListTemplateTables/]+par_cURLApplicationLinkCode+[/])
             l_cHtml += GetNextPreviousTemplateTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTemplateTablePk,"ListTemplateColumns")
 
             if oFcgi:p_nAccessLevelDD >= 5
                 l_cHtml += GetButtonOnEditFormNew("New Column",l_cSitePath+[DataDictionaries/NewTemplateColumn/]+l_cCombinedPath)
-            endif
-            if oFcgi:p_nAccessLevelDD >= 5
                 if l_nNumberOfTemplateColumns > 1
                     l_cHtml += GetButtonOnListFormCaptionAndRedirect("Order Columns",l_cSitePath+[DataDictionaries/OrderTemplateColumns/]+l_cCombinedPath)
                 endif
@@ -11752,7 +12107,9 @@ local l_oData
 local l_iTablePk
 local l_cCombinedPath
 local l_cSitePath := oFcgi:p_cSitePath
-local l_oDB_ListOfDiagrams := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramsWithTables    := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagramsWithAllTables := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfDiagrams              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
 local l_cName
 local l_cURL
 local l_nNumberOfDiagrams
@@ -11786,17 +12143,35 @@ else
 
         l_cHtml += [<div class="m-3"></div>]
 
-        with object l_oDB_ListOfDiagrams
+        with object l_oDB_ListOfDiagramsWithAllTables
+
+            :Table("0d7201c8-3476-4007-bd17-5587efa3b144","Diagram")
+            :Column("Diagram.Name"       ,"Diagram_Name")
+            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("lower(Diagram.Name)","tag1")
+
+            :Where("Diagram.fk_Application = ^",par_iApplicationPk)
+            :Join("left","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
+            :Where("DiagramTable.Pk IS NULL")
+            
+        endwith
+
+        with object l_oDB_ListOfDiagramsWithTables
             :Table("18838cb1-061f-4fef-b01e-46f80878952e","DiagramTable")
-            :Column("Diagram.Name"           ,"Diagram_Name")
-            :Column("Diagram.LinkUID"        ,"Diagram_LinkUID")
+            :Column("Diagram.Name"       ,"Diagram_Name")
+            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("lower(Diagram.Name)","tag1")
 
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
             :join("inner","Diagram"    ,"","DiagramTable.fk_Diagram = Diagram.pk")
+            :OrderBy("tag1","asc")   // Only the last Select should have an OrderBy
+        endwith
 
-            :Column("lower(Diagram.Name)","tag1")
-            :OrderBy("tag1")
-
+        with object l_oDB_ListOfDiagrams
+            :AnchorAlias("d486c27c-dcaa-4193-8ffd-fd5528b7a1df","ListOfDiagrams")
+            :AddSQLDataQuery("ListOfDiagramsWithAllTables",l_oDB_ListOfDiagramsWithAllTables)
+            :AddSQLDataQuery("ListOfDiagramsWithTables"   ,l_oDB_ListOfDiagramsWithTables)
+            :CombineQueries(COMBINE_ACTION_UNION,"ListOfDiagrams",.t.,"ListOfDiagramsWithAllTables","ListOfDiagramsWithTables")
             :SQL("ListOfDiagrams")
 
             l_nNumberOfDiagrams := :Tally

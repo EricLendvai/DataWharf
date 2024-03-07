@@ -1,9 +1,10 @@
 #include "DataWharf.ch"
 //=================================================================================================================
-function ExportApplicationToHarbour_ORM(par_iApplicationPk,par_IncludeDescription,par_cBackend)
+function ExportApplicationToHarbour_ORM(par_iApplicationPk,par_IncludeDescription,par_cBackend)   // To create a WharfConfig Hash Array
 
 local l_lContinue := .t.
 local l_oDB_Application
+local l_oDB_ListOfNamespaces
 local l_oDB_ListOfTables
 local l_oDB_ListOfColumns
 local l_oDB_ListOfIndexes_OnForeignKey
@@ -12,6 +13,19 @@ local l_oDB_ListOfIndexes
 local l_oDB_ListOfEnumerations
 local l_oDB_ListOfEnumValues
 
+local l_oDB_ListOfNamespacePreviousNames
+local l_oDB_ListOfTablePreviousNames
+local l_oDB_ListOfColumnPreviousNames
+local l_oDB_ListOfEnumerationPreviousNames
+local l_oDB_ListOfEnumValuePreviousNames
+
+local l_nNumberOfNamespaceRenames
+local l_nNumberOfTableRenames
+local l_nNumberOfColumnRenames
+local l_nNumberOfEnumerationRenames
+local l_nNumberOfEnumValueRenames
+local l_nRenameCounter
+
 local l_iTablePk
 local l_iEnumerationPk
 
@@ -19,6 +33,7 @@ local l_cIndent := space(4)
 local l_cIndentHashElement
 local l_cNamespaceAndTableName
 
+local l_nNumberOfNamespaces
 local l_nNumberOfTables
 local l_nNumberOfFields
 local l_nNumberOfIndexes
@@ -53,6 +68,7 @@ local lnEnumerationImplementAs
 local lnEnumerationImplementLength
 local l_lIncludeDescription := nvl(par_IncludeDescription,.f.)
 local l_nUsedBy
+local l_nNamespaceCounter := 0
 local l_nTableCounter := 0
 local l_nEnumerationCounter := 0
 local l_cSchemaIndent := space(4)
@@ -63,14 +79,33 @@ local l_cNamespaceAndEnumerationName
 local l_nEnumValue_Order
 local l_nEnumValue_Number
 local l_cImplementAs
+local l_hRenameTree
+local l_hRenameNamespace
+local l_hRenameTable
+local l_hRenameColumn
+local l_hRenameEnumeration
+local l_hRenameEnumValue
+local l_hCurrentNamespace
+local l_cCurrentNamespace
+local l_cCurrentTable
+local l_hCurrentTable
+local l_cCurrentEnumeration
+local l_hCurrentEnumeration
 
 oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
 
 l_oDB_Application        := hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfNamespaces   := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB_ListOfTables       := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB_ListOfColumns      := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB_ListOfEnumValues   := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+l_oDB_ListOfNamespacePreviousNames   = hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfTablePreviousNames       = hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfColumnPreviousNames      = hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfEnumerationPreviousNames = hb_SQLData(oFcgi:p_o_SQLConnection)
+l_oDB_ListOfEnumValuePreviousNames   = hb_SQLData(oFcgi:p_o_SQLConnection)
 
 do case
 case par_cBackend == "PostgreSQL"
@@ -90,45 +125,62 @@ with object l_oDB_Application
     endif
 endwith
 
-with object l_oDB_ListOfTables
-    :Table("299a129d-dab1-4dad-0001-000000000001","Namespace")
-    // :Distinct(.t.)  // Needed since joining on columns to not use discontinued fields
-
+with object l_oDB_ListOfNamespaces
+    :Table("c7ce3c77-a09b-4326-ada7-731636633e27","Namespace")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
-    :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
-    :Join("inner","Column","","Column.fk_Table = Table.pk")
-
-    :Column("max(length(Column.Name))" , "MaxColumnNameLength")
-
     :Column("Namespace.Name"        ,"Namespace_Name")
-    :Column("Table.Name"            ,"Table_Name")
-    :Column("Table.Pk"              ,"Table_pk")
     :Column("upper(Namespace.Name)" ,"tag1")
-    :Column("upper(Table.Name)"     ,"tag2")
-    :Column("Table.Unlogged"        ,"Table_Unlogged")
-    :GroupBy("Namespace_Name")
-    :GroupBy("Table_Name")
-    :GroupBy("Table_pk")
-    :GroupBy("tag1")
-    :GroupBy("tag2")
-
     :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-    :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-    :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
-
     :OrderBy("tag1")
-    :OrderBy("tag2")
-
-    :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
-
-    :SQL("ListOfTables")
-    l_nNumberOfTables := :Tally
-    if l_nNumberOfTables < 0
+    :SQL("ListOfNamespaces")
+    l_nNumberOfNamespaces := :Tally
+    if l_nNumberOfNamespaces < 0
         l_lContinue := .f.
         l_cSourceCode += :LastSQL() + CRLF
     endif
-    // l_cSourceCode += :LastSQL() + CRLF   // Used to see how the changes to beautify code is done in the Harbour_ORM
 endwith
+
+if l_lContinue
+    with object l_oDB_ListOfTables
+        :Table("299a129d-dab1-4dad-0001-000000000001","Namespace")
+        // :Distinct(.t.)  // Needed since joining on columns to not use discontinued fields
+
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+        :Join("inner","Column","","Column.fk_Table = Table.pk")
+
+        :Column("max(length(Column.Name))" , "MaxColumnNameLength")
+
+        :Column("Namespace.Name"        ,"Namespace_Name")
+        :Column("Table.Name"            ,"Table_Name")
+        :Column("Table.Pk"              ,"Table_pk")
+        :Column("upper(Namespace.Name)" ,"tag1")
+        :Column("upper(Table.Name)"     ,"tag2")
+        :Column("Table.Unlogged"        ,"Table_Unlogged")
+        :GroupBy("Namespace_Name")
+        :GroupBy("Table_Name")
+        :GroupBy("Table_pk")
+        :GroupBy("tag1")
+        :GroupBy("tag2")
+
+        :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+
+        :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+
+        :SQL("ListOfTables")
+        l_nNumberOfTables := :Tally
+        if l_nNumberOfTables < 0
+            l_lContinue := .f.
+            l_cSourceCode += :LastSQL() + CRLF
+        endif
+        // l_cSourceCode += :LastSQL() + CRLF   // Used to see how the changes to beautify code is done in the Harbour_ORM
+    endwith
+endif
 
 if l_lContinue
     with object l_oDB_ListOfColumns
@@ -246,7 +298,6 @@ endif
 
 
 if l_lContinue
-
     if l_lAddForeignKeyIndexORMExport
         // Automatically add indexes on Foreign Keys
 
@@ -363,16 +414,295 @@ if l_lContinue
     endif
 endif
 
+
+//123456
+if l_lContinue   // Load all the Previous Names. This will be used to do all the renaming first.
+    // l_oDB_ListOfNamespacePreviousNames   = hb_SQLData(oFcgi:p_o_SQLConnection)
+    // l_oDB_ListOfTablePreviousNames       = hb_SQLData(oFcgi:p_o_SQLConnection)
+    // l_oDB_ListOfColumnPreviousNames      = hb_SQLData(oFcgi:p_o_SQLConnection)
+    // l_oDB_ListOfEnumerationPreviousNames = hb_SQLData(oFcgi:p_o_SQLConnection)
+    // l_oDB_ListOfEnumValuePreviousNames   = hb_SQLData(oFcgi:p_o_SQLConnection)
+
+    // local l_nNumberOfNamespaceRenames
+    // local l_nNumberOfTableRenames
+    // local l_nNumberOfColumnRenames
+    // local l_nNumberOfEnumerationRenames
+    // local l_nNumberOfEnumValueRenames
+
+    with object l_oDB_ListOfNamespacePreviousNames
+        :Table("b5dd798c-82ea-4d1e-b876-89f255a2e201","Namespace")
+        :Column("Namespace.Name"                   ,"NameTo")
+        :Column("NamespacePreviousName.Name"       ,"NameFrom")
+
+        :Column("lower(Namespace.Name)"            ,"tag1")
+        :Column("lower(NamespacePreviousName.Name)","tag2")
+
+        :Join("inner","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :SQL("ListOfNamespacePreviousNames")
+        l_nNumberOfNamespaceRenames := :Tally
+    endwith
+
+    with object l_oDB_ListOfTablePreviousNames
+        :Table("b5dd798c-82ea-4d1e-b876-89f255a2e202","Namespace")
+        :Column("Namespace.Name"        ,"Namespace_Name")
+        :Column("Table.Name"            ,"NameTo")
+        :Column("TablePreviousName.Name","NameFrom")
+
+        :Column("lower(Namespace.Name)"        ,"tag1")
+        :Column("lower(Table.Name)"            ,"tag2")
+        :Column("lower(TablePreviousName.Name)","tag3")
+
+        :Join("inner","Table"            ,"","Table.fk_Namespace = Namespace.pk")
+        :Join("inner","TablePreviousName","","TablePreviousName.fk_Table = Table.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :OrderBy("tag3")
+        :SQL("ListOfTablePreviousNames")
+        l_nNumberOfTableRenames := :Tally
+    endwith
+
+    with object l_oDB_ListOfColumnPreviousNames
+        :Table("83dded03-3c4b-446b-a340-48338be6eb66","Namespace")
+        :Column("Namespace.Name"         ,"Namespace_Name")
+        :Column("Table.Name"             ,"Table_Name")
+        :Column("Column.Name"            ,"NameTo")
+        :Column("ColumnPreviousName.Name","NameFrom")
+
+        :Column("lower(Namespace.Name)"         ,"tag1")
+        :Column("lower(Table.Name)"             ,"tag2")
+        :Column("lower(Column.Name)"            ,"tag3")
+        :Column("lower(ColumnPreviousName.Name)","tag4")
+
+        :Join("inner","Table"             ,"","Table.fk_Namespace = Namespace.pk")
+        :Join("inner","Column"            ,"","Column.fk_Table = Table.pk")
+        :Join("inner","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :OrderBy("tag3")
+        :OrderBy("tag4")
+        :SQL("ListOfColumnPreviousNames")
+        l_nNumberOfColumnRenames := :Tally
+    endwith
+
+
+
+    with object l_oDB_ListOfEnumerationPreviousNames
+        :Table("91dd80f2-c9ef-4119-9f6e-9ec589c06d1c","Namespace")
+        :Column("Namespace.Name"        ,"Namespace_Name")
+        :Column("Enumeration.Name"            ,"NameTo")
+        :Column("EnumerationPreviousName.Name","NameFrom")
+
+        :Column("lower(Namespace.Name)"        ,"tag1")
+        :Column("lower(Enumeration.Name)"            ,"tag2")
+        :Column("lower(EnumerationPreviousName.Name)","tag3")
+
+        :Join("inner","Enumeration"            ,"","Enumeration.fk_Namespace = Namespace.pk")
+        :Join("inner","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :OrderBy("tag3")
+        :SQL("ListOfEnumerationPreviousNames")
+        l_nNumberOfEnumerationRenames := :Tally
+    endwith
+
+    with object l_oDB_ListOfEnumValuePreviousNames
+        :Table("70e73f93-c824-45e8-8814-71863f6960b6","Namespace")
+        :Column("Namespace.Name"         ,"Namespace_Name")
+        :Column("Enumeration.Name"             ,"Enumeration_Name")
+        :Column("EnumValue.Name"            ,"NameTo")
+        :Column("EnumValuePreviousName.Name","NameFrom")
+
+        :Column("lower(Namespace.Name)"         ,"tag1")
+        :Column("lower(Enumeration.Name)"             ,"tag2")
+        :Column("lower(EnumValue.Name)"            ,"tag3")
+        :Column("lower(EnumValuePreviousName.Name)","tag4")
+
+        :Join("inner","Enumeration"             ,"","Enumeration.fk_Namespace = Namespace.pk")
+        :Join("inner","EnumValue"            ,"","EnumValue.fk_Enumeration = Enumeration.pk")
+        :Join("inner","EnumValuePreviousName","","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :OrderBy("tag1")
+        :OrderBy("tag2")
+        :OrderBy("tag3")
+        :OrderBy("tag4")
+        :SQL("ListOfEnumValuePreviousNames")
+        l_nNumberOfEnumValueRenames := :Tally
+    endwith
+
+endif
+
 if l_lContinue
     l_cSchemaIndent := space(4)
     l_cSourceCode := [{"HarbourORMVersion"=>]+HB_ORM_BUILDVERSION+[,;]+CRLF
     l_cSourceCode += [ "DataWharfVersion"=>]+BUILDVERSION+[,;]+CRLF
     l_cSourceCode += [ "Backend"=>"]+par_cBackend+[",;]+CRLF
     l_cSourceCode += [ "GenerationTime"=>"]+strtran(hb_TSToStr(hb_TSToUTC(hb_DateTime()))," ","T")+"Z"+[",;]+CRLF
-    l_cSourceCode += [ "GenerationSignature"=>"]+oFcgi:p_o_SQLConnection:GetUUIDString()+["]
+    l_cSourceCode += [ "GenerationSignature"=>"]+oFcgi:p_o_SQLConnection:GetUUIDString()+[",;]+CRLF
     
-    if l_nNumberOfTables > 0
+    if l_nNumberOfNamespaceRenames   > 0 .or. ;
+       l_nNumberOfTableRenames       > 0 .or. ;
+       l_nNumberOfColumnRenames      > 0 .or. ;
+       l_nNumberOfEnumerationRenames > 0 .or. ;
+       l_nNumberOfEnumValueRenames   > 0
+
+        l_hRenameTree := {=>}
+        // ----------------------------------------------------
+        if l_nNumberOfNamespaceRenames > 0
+            l_hRenameNamespace := {=>}
+            select ListOfNamespacePreviousNames
+            scan all
+                l_hRenameNamespace[ListOfNamespacePreviousNames->NameFrom] := ListOfNamespacePreviousNames->NameTo
+            endscan
+            l_hRenameTree["Namespace"] := l_hRenameNamespace
+        endif
+        // ----------------------------------------------------
+        if l_nNumberOfTableRenames > 0
+            l_hRenameTable := {=>}
+            l_cCurrentNamespace := ""
+            l_hCurrentNamespace := {=>}
+            select ListOfTablePreviousNames
+            scan all
+                if empty(l_cCurrentNamespace)
+                    l_cCurrentNamespace := ListOfTablePreviousNames->Namespace_Name
+                endif
+                if l_cCurrentNamespace <> ListOfTablePreviousNames->Namespace_Name
+                    l_hRenameTable[l_cCurrentNamespace] := l_hCurrentNamespace
+                    l_hCurrentNamespace := {=>}
+                    l_cCurrentNamespace := ListOfTablePreviousNames->Namespace_Name
+                endif
+                l_hCurrentNamespace[ListOfTablePreviousNames->NameFrom] := ListOfTablePreviousNames->NameTo
+            endscan
+            l_hRenameTable[l_cCurrentNamespace] := l_hCurrentNamespace
+            l_hRenameTree["Table"] := l_hRenameTable
+        endif
+        // ----------------------------------------------------
+        // ExportTableToHtmlFile("ListOfColumnPreviousNames",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfColumnPreviousNames_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
+        if l_nNumberOfColumnRenames > 0
+            l_hRenameColumn := {=>}
+
+            l_cCurrentNamespace := ""
+            l_hCurrentNamespace := {=>}
+
+            l_cCurrentTable := ""
+            l_hCurrentTable := {=>}
+
+            select ListOfColumnPreviousNames
+            scan all
+                if empty(l_cCurrentNamespace)
+                    l_cCurrentNamespace := ListOfColumnPreviousNames->Namespace_Name
+                endif
+                if empty(l_cCurrentTable)
+                    l_cCurrentTable := ListOfColumnPreviousNames->Table_Name
+                endif
+                
+                if l_cCurrentTable <> ListOfColumnPreviousNames->Table_Name .or. l_cCurrentNamespace <> ListOfColumnPreviousNames->Namespace_Name
+                    l_hCurrentNamespace[l_cCurrentTable] := l_hCurrentTable
+                    l_hCurrentTable := {=>}
+                    l_cCurrentTable := ListOfColumnPreviousNames->Table_Name
+                endif
+
+                if l_cCurrentNamespace <> ListOfColumnPreviousNames->Namespace_Name
+                    l_hRenameColumn[l_cCurrentNamespace] := l_hCurrentNamespace
+                    l_hCurrentNamespace := {=>}
+                    l_cCurrentNamespace := ListOfColumnPreviousNames->Namespace_Name
+                endif
+
+                l_hCurrentTable[ListOfColumnPreviousNames->NameFrom] := ListOfColumnPreviousNames->NameTo
+            endscan
+            l_hCurrentNamespace[l_cCurrentTable] := l_hCurrentTable
+            l_hRenameColumn[l_cCurrentNamespace] := l_hCurrentNamespace
+            l_hRenameTree["Column"] := l_hRenameColumn
+
+        endif
+        // ----------------------------------------------------
+        if l_nNumberOfEnumerationRenames > 0
+            l_hRenameEnumeration := {=>}
+            l_cCurrentNamespace := ""
+            l_hCurrentNamespace := {=>}
+            select ListOfEnumerationPreviousNames
+            scan all
+                if empty(l_cCurrentNamespace)
+                    l_cCurrentNamespace := ListOfEnumerationPreviousNames->Namespace_Name
+                endif
+                if l_cCurrentNamespace <> ListOfEnumerationPreviousNames->Namespace_Name
+                    l_hRenameEnumeration[l_cCurrentNamespace] := l_hCurrentNamespace
+                    l_hCurrentNamespace := {=>}
+                    l_cCurrentNamespace := ListOfEnumerationPreviousNames->Namespace_Name
+                endif
+                l_hCurrentNamespace[ListOfEnumerationPreviousNames->NameFrom] := ListOfEnumerationPreviousNames->NameTo
+            endscan
+            l_hRenameEnumeration[l_cCurrentNamespace] := l_hCurrentNamespace
+            l_hRenameTree["Enumeration"] := l_hRenameEnumeration
+
+        endif
+        // ----------------------------------------------------
+        if l_nNumberOfEnumValueRenames > 0
+            l_hRenameEnumValue := {=>}
+
+            l_cCurrentNamespace := ""
+            l_hCurrentNamespace := {=>}
+
+            l_cCurrentEnumeration := ""
+            l_hCurrentEnumeration := {=>}
+
+            select ListOfEnumValuePreviousNames
+            scan all
+                if empty(l_cCurrentNamespace)
+                    l_cCurrentNamespace := ListOfEnumValuePreviousNames->Namespace_Name
+                endif
+                if empty(l_cCurrentEnumeration)
+                    l_cCurrentEnumeration := ListOfEnumValuePreviousNames->Enumeration_Name
+                endif
+                
+                if l_cCurrentEnumeration <> ListOfEnumValuePreviousNames->Enumeration_Name .or. l_cCurrentNamespace <> ListOfEnumValuePreviousNames->Namespace_Name
+                    l_hCurrentNamespace[l_cCurrentEnumeration] := l_hCurrentEnumeration
+                    l_hCurrentEnumeration := {=>}
+                    l_cCurrentEnumeration := ListOfEnumValuePreviousNames->Enumeration_Name
+                endif
+
+                if l_cCurrentNamespace <> ListOfEnumValuePreviousNames->Namespace_Name
+                    l_hRenameEnumValue[l_cCurrentNamespace] := l_hCurrentNamespace
+                    l_hCurrentNamespace := {=>}
+                    l_cCurrentNamespace := ListOfEnumValuePreviousNames->Namespace_Name
+                endif
+
+                l_hCurrentEnumeration[ListOfEnumValuePreviousNames->NameFrom] := ListOfEnumValuePreviousNames->NameTo
+            endscan
+            l_hCurrentNamespace[l_cCurrentEnumeration] := l_hCurrentEnumeration
+            l_hRenameEnumValue[l_cCurrentNamespace] := l_hCurrentNamespace
+            l_hRenameTree["EnumValue"] := l_hRenameEnumValue
+
+        endif
+        // ----------------------------------------------------
+
+        l_cSourceCode += [ "Rename"=>]
+        l_cSourceCode += el_ValToExp( l_hRenameTree )
         l_cSourceCode += [,;]+CRLF
+
+    endif
+
+    if l_nNumberOfNamespaces > 0
+        l_cSourceCode += [ "Namespaces"=>{;]+CRLF
+        select ListOfNamespaces
+        scan all
+            l_nNamespaceCounter++
+            l_cSourceCode += l_cSchemaIndent+'"'+SanitizeForHash(ListOfNamespaces->Namespace_Name)+'"'
+            if l_nNamespaceCounter < l_nNumberOfNamespaces
+                l_cSourceCode += [,;]+CRLF
+            else
+                l_cSourceCode += [},;]+CRLF
+            endif
+        endscan
+    endif
+
+    if l_nNumberOfTables > 0
+        // l_cSourceCode += [,;]+CRLF
         l_cSourceCode += [ "Tables"=>;]+CRLF
 
         select ListOfTables
@@ -624,7 +954,8 @@ if l_lContinue
             l_cSourceCode += '};'+CRLF
             
         endscan
-        l_cSourceCode += l_cSchemaIndent+"}"+iif(l_nNumberOfEnumerations > 0,",","")+";"+CRLF
+        // l_cSourceCode += l_cSchemaIndent+"}"+iif(l_nNumberOfEnumerations > 0,",","")+";"+CRLF
+        l_cSourceCode += l_cSchemaIndent+"},;"+CRLF
     endif
 
     if l_nNumberOfEnumerations > 0
@@ -700,8 +1031,10 @@ if l_lContinue
             l_cSourceCode += '}};'+CRLF
 
         endscan
-        l_cSourceCode += l_cSchemaIndent+"};"+CRLF
+        l_cSourceCode += l_cSchemaIndent+"},;"+CRLF
     endif
+
+    l_cSourceCode += [ "GenerationSource"=>"DataWharf"]
 
     l_cSourceCode += [}]
 endif
@@ -720,7 +1053,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
+local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2160,7 +2493,7 @@ local l_cBackupCode := ""
 
 local l_lContinue := .t.
 local l_oDB_ListOfRecords    := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_WharfConfig["Tables"]
+local l_hTableSchema         := oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"]
 
 local l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2471,7 +2804,7 @@ if !empty(par_iApplicationPk)
             // l_cHtml += [<option value="4"]+iif(l_nBackendType==4,[ selected],[])+[>MSSQL</option>]
             l_cHtml += [</select>]
 
-            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Export to Harbour_ORM" onclick="$('#ActionOnSubmit').val('ExportToHarbourORM');document.form.submit();" role="button">]
+            l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Export to Harbour_ORM (WharfConfig)" onclick="$('#ActionOnSubmit').val('ExportToHarbourORM');document.form.submit();" role="button">]
             l_cHtml += [<input type="button" class="btn btn-primary rounded ms-3" value="Export to JSON" onclick="$('#ActionOnSubmit').val('ExportToJSON');document.form.submit();" role="button">]
 
         l_cHtml += [</div>]
@@ -2543,5 +2876,75 @@ if len(l_cText) < par_nLength
 endif
 return l_cText 
 //=================================================================================================================
+//Code created using Harbour provided function hb_ValToExp() with the following changes
+//Copyright 2007 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
+//under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2
+//Removed Raw Mode and support to Objects, Pointers, Symbols, CodeBlocks and added Carriage returns and indentation.
 
+static function el_ValToExp( xVal )
+RETURN s_valToExp(1, xVal )
 
+static function s_valToExp(nIndent ,xVal, cInd, hRefs, cRefs )
+
+   LOCAL cVal, cKey
+   LOCAL tmp
+   LOCAL v := ValType( xVal )
+
+   SWITCH v
+   CASE "C"
+   CASE "M" ; RETURN hb_StrToExp( xVal )
+   CASE "N" ; RETURN hb_ntos( xVal )
+   CASE "D" ; RETURN iif( Empty( xVal ), "0d00000000", "0d" + DToS( xVal ) )
+   CASE "T" ; RETURN 't"' + hb_TSToStr( xVal, .T. ) + '"'
+   CASE "L" ; RETURN iif( xVal, ".T.", ".F." )
+   CASE "A"
+   CASE "H"
+      tmp := __vmItemID( xVal )
+      IF cInd == NIL
+         cInd := cRefs := ""
+         hRefs := { tmp => cInd }
+      ELSEIF tmp $ hRefs
+         IF !( cRefs == "" )
+            cRefs += ","
+         ENDIF
+         cRefs += "{{" + cInd + "}," + hRefs[ tmp ] + "}"
+         RETURN "NIL"
+      ELSE
+         hRefs[ tmp ] := "{" + cInd + "}"
+         cInd += ","
+      ENDIF
+
+      IF v == "H"
+         IF Empty( xVal )
+            cVal := "{=>}"
+         ELSE
+            cVal := "{"
+            FOR EACH tmp IN xVal
+               cKey := s_valToExp(nIndent+1, tmp:__enumKey() )
+               cVal += iif( tmp:__enumIsFirst(), "", "," ) + ;
+                  ";"+CRLF+replicate(" ",4*nIndent)+cKey + "=>"+;
+                  s_valToExp(nIndent+1, tmp, cInd + cKey, hRefs, @cRefs )
+            NEXT
+            cVal += "}"
+         ENDIF
+      ELSE
+         cVal := "{"
+         cVal += "}"
+      ENDIF
+
+      IF cInd == ""
+         IF ! Empty( cRefs )
+            cVal := "__itemSetRef( " + cVal + ", {" + cRefs + "} )"
+         ENDIF
+      ENDIF
+      EXIT
+   OTHERWISE
+      IF xVal == NIL
+         cVal := "NIL"
+      ELSE
+         cVal := "???:" + v
+      ENDIF
+   ENDSWITCH
+
+   RETURN cVal
+//=================================================================================================================

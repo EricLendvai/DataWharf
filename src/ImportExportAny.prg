@@ -143,7 +143,7 @@ local l_hFields
 local l_cFieldName
 local l_nListOfImportData := select("ImportSource"+par_cTableName)
 local l_xValue
-local l_hTableSchema := oFcgi:p_o_SQLConnection:p_TableSchema
+local l_hTableSchema := oFcgi:p_o_SQLConnection:p_hMetadataTable
 
 if hb_HHasKey(l_hTableSchema,"public."+par_cTableName)
     l_aTableInfo := l_hTableSchema["public."+par_cTableName]
