@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 03/07/2024 v 4.4
+* Allow connections to DataWharf's own PostgreSQL database to be retried by refreshing any web page. This makes the application more resilient in case the database was not running at first or the connection is lost.
+
 ## 03/06/2024 v 4.3
 * Option to duplicate table now also duplicated related indexes.
 * Option to duplicate Column, Enumeration and Enumeration Values.
