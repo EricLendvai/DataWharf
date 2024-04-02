@@ -1,6 +1,7 @@
 
 DataWharf.prg
 SelfConfiguration.prg
+SelfDataMigration.prg
 LoadSchema.prg
 DeltaSchema.prg
 VisualizeApplications.prg

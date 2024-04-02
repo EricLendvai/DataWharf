@@ -4,7 +4,7 @@
 // The function should be implemented in any if the API_*.prg, without using a STATIC prefix (making the functions reachable from anywhere inside the FastCGI exe, including DataWharf.prg)
 
 data p_APIs init ;
-{"ApplicationInformation"         => @GetApplicationInformation(),;
+{"DataWharfInformation"           => @APIGetDataWharfInformation(),;
  "Projects"                       => @APIGetListOfProjects(),;
  "Models"                         => @APIGetListOfModels(),;
  "Packages"                       => @APIGetListOfPackages(),;
@@ -14,5 +14,7 @@ data p_APIs init ;
  "Classes"                        => @APIGetListOfEntities(),;
  "Applications"                   => @APIGetListOfApplications(),;
  "ApplicationJSONConfigurationExport"    => @APIGetApplicationJSONConfigurationExport(),;
- "ApplicationHarbourConfigurationExport" => @APIGetApplicationHarbourConfigurationExport()}
- 
+ "ApplicationHarbourConfigurationExport" => @APIGetApplicationHarbourConfigurationExport(),;
+ "CreateUpdateNamespaces"         => @APICreateUpdateNamespaces(),;
+ "CreateUpdateEnumerations"       => @APICreateUpdateEnumerations(),;
+ "CreateUpdateTables"             => @APICreateUpdateTables()}

@@ -41,7 +41,7 @@ hb_cdpSelect("UTF8")
 
 set century on
 
-hb_DirCreate(OUTPUT_FOLDER+hb_ps())
+hb_DirCreate(el_AddPs(OUTPUT_FOLDER))
 
 oFcgi := MyFcgi():New()    // Used a subclass of hb_Fcgi
 
@@ -169,10 +169,6 @@ local l_oDB2
 local l_cSecuritySalt
 local l_cSecurityDefaultPassword
 local l_iCurrentDataVersion
-local l_cVisPos
-local l_cTableName
-local l_cColumnName
-local l_cName
 
 local l_cSitePath
 local l_cPageName
@@ -218,11 +214,14 @@ local l_cFileName
 local l_oJWT
 local l_nTokenAccessMode
 local l_cConnectionErrorMessage := ""
+local l_cSQLCommand
+local l_nWharfConfigAppliedStatus
+local l_nContentSize
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
 
-// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestStart.txt")
+// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),el_AddPs(OUTPUT_FOLDER)+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestStart.txt")
 
 ::p_cThisAppTitle := ::GetAppConfig("APPLICATION_TITLE")
 if empty(::p_cThisAppTitle)
@@ -275,11 +274,13 @@ if !l_lNoPostgresConnection  //If still possibly connected, test if the ORM sche
     else
         l_lNoPostgresConnection := .t.
     endif
+    CloseAlias("ListOfNamespaces")
 endif
 
 if l_lNoPostgresConnection
     if !(::p_o_SQLConnection == NIL)
         ::p_o_SQLConnection:Disconnect()  //Just in case a connection still existed
+        ::p_o_SQLConnection := NIL
     endif
 
     // SendToDebugView("Reconnecting to SQL Server")
@@ -301,583 +302,163 @@ if l_lNoPostgresConnection
         :SetHarbourORMNamespace("ORM")
         :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
         :SetPrimaryKeyFieldName("pk")
-        :SetApplicationName("DataWharf")
+        // :SetApplicationName("DataWharf")   Can only be set once connected.
 
         if :Connect() < 0
-            ::p_o_SQLConnection := NIL
+            // ::p_o_SQLConnection := NIL
             l_cConnectionErrorMessage := :GetErrorMessage()
 
         else
-            UpdateSchema(::p_o_SQLConnection)
+            :SetApplicationName("DataWharf - 0")  // Temporary name until we have a FastCGIRunLog record.
 
-            l_oDB1 := hb_SQLData(::p_o_SQLConnection)
-            l_oDB2 := hb_SQLData(::p_o_SQLConnection)
-            // l_oDB3 := hb_SQLData(::p_o_SQLConnection)
+            l_nWharfConfigAppliedStatus := :GetWharfConfigAppliedStatus()
 
-            l_iCurrentDataVersion := :GetSchemaDefinitionVersion("Core")
+            do case
+            case l_nWharfConfigAppliedStatus < 0
+                l_cConnectionErrorMessage := "Failed to get WharfConfig Applied Information."
+            case l_nWharfConfigAppliedStatus == 3
+                l_cConnectionErrorMessage := "Future Schema. Use a newer Application version."
+            otherwise
 
-            with object l_oDB1
-                :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
-                :Field("FastCGIRunLog.dati"              ,{"S","now()"})
-                :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
-                :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
-                :Field("FastCGIRunLog.OSInfo"            ,OS())
-                :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
-                if :Add()
-                    v_iFastCGIRunLogPk := :Key()
-                else
-                    v_iFastCGIRunLogPk := -1
-                endif
-            endwith
-            :SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
+                l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+                l_oDB2 := hb_SQLData(::p_o_SQLConnection)
 
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 1
-                with object l_oDB1
-                    :Table("58b648b9-ec53-40ba-8e29-a8b4e99beb36","Diagram")
-                    :Column("Diagram.pk" , "pk")
-                    :Where([Length(Trim(Diagram.LinkUID)) = 0])
-                    :SQL("ListOfDiagramToUpdate")
-                    select ListOfDiagramToUpdate
-                    scan all
-                        with object l_oDB2
-                            :Table("c8e52a98-8b65-4632-8241-efc426025ca6","Diagram")
-                            :Field("Diagram.LinkUID" , ::p_o_SQLConnection:GetUUIDString())
-                            :Update(ListOfDiagramToUpdate->pk)
-                        endwith
-                    endscan
-                endwith
-                l_iCurrentDataVersion := 1
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 4
-                if ::p_o_SQLConnection:TableExists("public.Property")
-                    ::p_o_SQLConnection:DeleteTable("public.Property")
-                endif
+                // Get the number of DataWharf connections
+                l_cSQLCommand := [SELECT pg_advisory_lock(123456) as result]
+                if ::p_o_SQLConnection:SQLExec("Lock",l_cSQLCommand)
+                    ::p_o_SQLConnection:SQLExec("ce2607d5-a3d7-492e-b8c0-0769a8ccf5d0","SELECT application_name FROM pg_stat_activity  where application_name ilike 'DataWharf - %';","ListOfDataWharfConnections")
 
-                if ::p_o_SQLConnection:TableExists("public.PropertyColumnMapping")
-                    ::p_o_SQLConnection:DeleteTable("public.PropertyColumnMapping")
-                endif
+                    if ("ListOfDataWharfConnections")->(reccount()) == 1
+                        // Only the current EXE is connected.
 
-                if ::p_o_SQLConnection:FieldExists("public.Model","fk_Application")
-                    ::p_o_SQLConnection:DeleteField("public.Model","fk_Application")
-                endif
-
-                if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevelML")
-                    ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevelML")
-                endif
-
-                if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
-                    with object l_oDB1
-                        :Table("bcc58496-5077-47ee-a955-fa5d071dd576","UserAccessApplication")
-                        :Column("UserAccessApplication.pk"         ,"pk")
-                        :Column("UserAccessApplication.AccessLevel","UserAccessApplication_AccessLevel")
-                        :SQL("ListOfRecordsToFix")
-                        select ListOfRecordsToFix
-                        scan all for ListOfRecordsToFix->UserAccessApplication_AccessLevel > 0
-                            with object l_oDB2
-                                :Table("d4a5eada-fd4c-4d6c-ae2e-446f45be2f19","UserAccessApplication")
-                                :Field("UserAccessApplication.AccessLevelDD" , ListOfRecordsToFix->UserAccessApplication_AccessLevel)
-                                :Field("UserAccessApplication.AccessLevel"   , 0)
-                                :Update(ListOfRecordsToFix->pk)
-                            endwith
-                        endscan
-                    endwith
-
-                    ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
-                endif
-
-                l_iCurrentDataVersion := 4
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 5
-                if ::p_o_SQLConnection:FieldExists("public.UserAccessApplication","AccessLevel")
-                    ::p_o_SQLConnection:DeleteField("public.UserAccessApplication","AccessLevel")
-                endif
-                l_iCurrentDataVersion := 5
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 6
-                if ::p_o_SQLConnection:TableExists("public.AssociationEnd")
-                    ::p_o_SQLConnection:DeleteTable("public.AssociationEnd")
-                endif
-                l_iCurrentDataVersion := 6
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 7
-                if ::p_o_SQLConnection:FieldExists("public.Attribute","fk_Association")
-                    ::p_o_SQLConnection:DeleteField("public.Attribute","fk_Association")
-                endif
-
-                l_iCurrentDataVersion := 7
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 8
-                if ::p_o_SQLConnection:TableExists("public.ConceptualDiagram")
-                    ::p_o_SQLConnection:DeleteTable("public.ConceptualDiagram")
-                endif
-                if ::p_o_SQLConnection:FieldExists("public.DiagramEntity","fk_ConceptualDiagram")
-                    ::p_o_SQLConnection:DeleteField("public.DiagramEntity","fk_ConceptualDiagram")
-                endif
-                l_iCurrentDataVersion := 8
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 9
-                with object l_oDB1
-                    :Table("dcbb495b-7a14-4ba0-9d2b-eefc5a41fac3","ModelingDiagram")
-                    :Column("ModelingDiagram.pk" , "pk")
-                    :Where([Length(Trim(ModelingDiagram.LinkUID)) = 0])
-                    :SQL("ListOfModelingDiagramToUpdate")
-                    select ListOfModelingDiagramToUpdate
-                    scan all
-                        with object l_oDB2
-                            :Table("214e97ca-df84-4b5a-bf7d-f4a1ba22b24e","ModelingDiagram")
-                            :Field("ModelingDiagram.LinkUID" , ::p_o_SQLConnection:GetUUIDString())
-                            :Update(ListOfModelingDiagramToUpdate->pk)
-                        endwith
-                    endscan
-                endwith
-                l_iCurrentDataVersion := 9
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 10
-                if ::p_o_SQLConnection:FieldExists("public.Entity","Scope") .and. ::p_o_SQLConnection:FieldExists("public.Entity","Information")
-
-                    with object l_oDB1
-
-                        :Table("bcc58496-5077-47ee-a955-fa5d071dd576","Entity")
-                        :Column("Entity.pk"   ,"pk")
-                        :Column("Entity.Scope","Entity_Scope")
-                        :SQL("ListOfRecordsToFix")
-                        select ListOfRecordsToFix
-                        scan all for len(nvl(ListOfRecordsToFix->Entity_Scope,"")) > 0
-                            with object l_oDB2
-                                :Table("12140112-62ef-49c7-84db-c79c859d31f8","Entity")
-                                :Field("Entity.Information" , ListOfRecordsToFix->Entity_Scope)
-                                :Update(ListOfRecordsToFix->pk)
-                            endwith
-                        endscan
-
-                    endwith
-
-                    ::p_o_SQLConnection:DeleteField("public.Entity","Scope")
-                endif
-                l_iCurrentDataVersion := 10
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 11
-                if ::p_o_SQLConnection:FieldExists("public.Attribute","Order") .and. ::p_o_SQLConnection:FieldExists("public.Attribute","TreeOrder1")
-
-                    with object l_oDB1
-
-                        :Table("405e7421-717f-45cf-b108-3f758b5d05b3","Attribute")
-                        :Column("Attribute.pk"   ,"pk")
-                        :Column("Attribute.Order","Attribute_Order")
-                        :SQL("ListOfRecordsToFix")
-                        select ListOfRecordsToFix
-                        scan all
-                            with object l_oDB2
-                                :Table("dcbff351-7f65-416c-854e-94028fc5c67e","Attribute")
-                                :Field("Attribute.TreeOrder1" , ListOfRecordsToFix->Attribute_Order)
-                                :Update(ListOfRecordsToFix->pk)
-                            endwith
-                        endscan
-
-                    endwith
-
-                    ::p_o_SQLConnection:DeleteField("public.Attribute","Order")
-                endif
-                l_iCurrentDataVersion := 11
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 14
-                with object l_oDB1
-                    :Table("bb6ceea9-72f0-471f-b555-0affd9359cb3","Diagram")
-                    :Column("Diagram.pk"     , "pk")
-                    :Column("Diagram.VisPos" , "Diagram_VisPos")
-                    :Where([Diagram.VisPos is not null])
-                    :Where([Diagram.VisPos not like '%T%'])
-                    :SQL("ListOfDiagramToUpdate")
-                    select ListOfDiagramToUpdate
-                    scan all
-                        l_cVisPos := Strtran(ListOfDiagramToUpdate->Diagram_VisPos,[{"x],chr(1))
-                        l_cVisPos := Strtran(l_cVisPos,[,"y],chr(2))
-                        l_cVisPos := Strtran(l_cVisPos,[{"],[{"T])
-                        l_cVisPos := Strtran(l_cVisPos,[,"],[,"T])
-                        l_cVisPos := Strtran(l_cVisPos,chr(1),[{"x])
-                        l_cVisPos := Strtran(l_cVisPos,chr(2),[,"y])
-
-                        with object l_oDB2
-                            :Table("ed4bed4f-30d0-4dd7-9639-4314e80c0cd5","Diagram")
-                            :Field("Diagram.VisPos" , l_cVisPos)
-                            :Update(ListOfDiagramToUpdate->pk)
-                        endwith
-                    endscan
-                endwith
-
-                l_iCurrentDataVersion := 14
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 15
-                with object l_oDB1
-                    :Table("6a473090-8c14-47f7-a1dc-95f79a4e45b4","Diagram")
-                    :Column("Diagram.pk" , "pk")
-                    :Where([Diagram.RenderMode = 0])
-                    :SQL("ListOfDiagramToUpdate")
-                    select ListOfDiagramToUpdate
-                    scan all
-                        with object l_oDB2
-                            :Table("ed08301f-15d4-4ae4-b7b1-838974333135","Diagram")
-                            :Field("Diagram.RenderMode" , RENDERMODE_VISJS)
-                            :Update(ListOfDiagramToUpdate->pk)
-                        endwith
-                    endscan
-                endwith
-
-                l_iCurrentDataVersion := 15
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 16
-                with object l_oDB1
-                    For each l_cTableName in {"Application","Column","Diagram","Enumeration","EnumValue","Index","Namespace","Project","Table","Association","Attribute","DataType","Entity","ModelEnumeration","ModelingDiagram","Package"}
-                        :Table("28f6f015-c468-4199-a5d2-c25dee474fff",l_cTableName)
-                        :Column(l_cTableName+".pk" , "pk")
-
-                        :Where(l_cTableName+[.UseStatus = 0])
-                        :SQL("ListOfRecordsToUpdate")
-                        select ListOfRecordsToUpdate
-                        scan all
-                            with object l_oDB2
-                                :Table("091cf769-4ced-4276-be6b-cf7dc50dd546",l_cTableName)
-                                :Field(l_cTableName+".UseStatus" , USESTATUS_UNKNOWN)
-                                :Update(ListOfRecordsToUpdate->pk)
-                            endwith
-                        endscan
-                    endfor
-                endwith
-
-                l_iCurrentDataVersion := 17
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            // Skipped version 17 since changed logic from "l_iCurrentDataVersion <=" to "l_iCurrentDataVersion <"
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 18
-                with object l_oDB1
-                    :Table("5de9d15e-1af2-4f12-9762-ffdfc779a750","EnumValue")
-                    :Column("EnumValue.Pk"   , "Pk")
-                    :Column("EnumValue.Name" , "EnumValue_Name")
-                    :SQL("ListOfRecordsToUpdate")
-                    select ListOfRecordsToUpdate
-                    scan all
-                        l_cName := SanitizeInputAlphaNumeric(ListOfRecordsToUpdate->EnumValue_Name)
-                        if !(ListOfRecordsToUpdate->EnumValue_Name == l_cName)
-                            with object l_oDB2
-                                :Table("1b2715fd-fad5-4c0d-a24a-f8b5c4b21be6","EnumValue")
-                                :Field("EnumValue.Name" , l_cName)
-                                :Update(ListOfRecordsToUpdate->pk)
+                        //== Log current FastCGI Executable ====================
+                        if v_iFastCGIRunLogPk <= 0
+                            with object l_oDB1
+                                :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
+                                :Field("FastCGIRunLog.dati"              ,{"S","now()"})
+                                :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
+                                :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
+                                :Field("FastCGIRunLog.OSInfo"            ,OS())
+                                :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
+                                if :Add()
+                                    v_iFastCGIRunLogPk := :Key()
+                                    oFcgi:p_o_SQLConnection:SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
+                                else
+                                    v_iFastCGIRunLogPk := -1
+                                endif
                             endwith
                         endif
-                    endscan
-                endwith
+                        //== Clean up any StreamFile folders and Volatile files.
+                        PurgeStreamFileFolders()
+                        PurgeVolatileFiles()
 
-                l_iCurrentDataVersion := 18
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 19
-                if ::p_o_SQLConnection:FieldExists("public.Application","AllowDestructiveDelete")
-                    ::p_o_SQLConnection:DeleteField("public.Application","AllowDestructiveDelete")
-                endif
+                        //== Update Schema and data version ====================
 
-                l_iCurrentDataVersion := 19
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 20
-                if ::p_o_SQLConnection:FieldExists("public.Model","AllowDestructiveDelete")
-                    ::p_o_SQLConnection:DeleteField("public.Model","AllowDestructiveDelete")
-                endif
+                        UpdateSchema(::p_o_SQLConnection)
 
-                l_iCurrentDataVersion := 20
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 21
-                if ::p_o_SQLConnection:TableExists("public.Version")
-                    ::p_o_SQLConnection:DeleteTable("public.Version")
-                endif
+                        l_iCurrentDataVersion := SelfDataMigration()
 
-                l_iCurrentDataVersion := 21
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 22
-                with object l_oDB1
-                    :Table("6dd31de7-15fb-4388-ae7b-9578fb8407b2","UserSetting")
-                    :Column("UserSetting.pk" , "pk")
-                    :Where([UserSetting.ValueType = 0])
-                    :SQL("ListOfUserSettingToUpdate")
-                    select ListOfUserSettingToUpdate
-                    scan all
-                        with object l_oDB2
-                            :Table("c35a9c9b-eced-4121-aabe-3adf4fa73678","UserSetting")
-                            :Field("UserSetting.ValueType" , 1)
-                            :Update(ListOfUserSettingToUpdate->pk)
-                        endwith
-                    endscan
-                endwith
 
-                l_iCurrentDataVersion := 22
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 23
-                with object l_oDB1
-                    For each l_cTableName in {"Column","Index","TemplateColumn"}
-                        :Table("288ea878-51a6-48b7-9fb0-1c417ff28276",l_cTableName)
-                        :Column(l_cTableName+".pk" , "pk")
 
-                        :Where(l_cTableName+[.UsedBy = 0])
-                        :SQL("ListOfRecordsToUpdate")
-                        select ListOfRecordsToUpdate
-                        scan all
-                            with object l_oDB2
-                                :Table("8f7f9c0d-b9db-42c7-ac9f-ee08085e59ea",l_cTableName)
-                                :Field(l_cTableName+".UsedBy" , USEDBY_ALLSERVERS)
-                                :Update(ListOfRecordsToUpdate->pk)
+                    else
+                        //Not the first concurrent connection
+                        l_iCurrentDataVersion := :GetSchemaDefinitionVersion("Core")
+
+                        if v_iFastCGIRunLogPk <= 0
+                            with object l_oDB1
+                                :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
+                                :Field("FastCGIRunLog.dati"              ,{"S","now()"})
+                                :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
+                                :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
+                                :Field("FastCGIRunLog.OSInfo"            ,OS())
+                                :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
+                                if :Add()
+                                    v_iFastCGIRunLogPk := :Key()
+                                    oFcgi:p_o_SQLConnection:SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
+                                else
+                                    v_iFastCGIRunLogPk := -1
+                                endif
                             endwith
-                        endscan
-                    endfor
-                endwith
-
-                l_iCurrentDataVersion := 23
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            // Skipped Version 24 During Coding
-            if l_iCurrentDataVersion < 25
-                for each l_cTableName in {"Column","TemplateColumn"}
-                    if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"Primary") .and. ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"UsedAs")
-
-                        with object l_oDB1
-
-                            :Table("6b7d02de-44b0-43a8-8830-2d51481c984f",l_cTableName)
-                            :Column(l_cTableName+".pk"     ,"pk")
-                            :Column(l_cTableName+".Primary","Primary")
-                            if l_cTableName == "Column"
-                                :Column(l_cTableName+".fk_TableForeign" ,"fk_TableForeign")
-                            endif
-                            :Column(l_cTableName+".UsedAs"     ,"UsedAs")
-                            :SQL("ListOfRecordsToFix")
-                            select ListOfRecordsToFix
-                            scan all for ListOfRecordsToFix->UsedAs = 0
-                                with object l_oDB2
-                                    :Table("aa892b84-4e5d-44b3-aa8b-3295b845b79b",l_cTableName)
-
-                                    if (l_cTableName == "Column") .and. nvl(ListOfRecordsToFix->fk_TableForeign,0) > 0
-                                        :Field(l_cTableName+".UsedAs" , 3)
-                                    else
-                                        :Field(l_cTableName+".UsedAs" , iif(ListOfRecordsToFix->Primary,2,1))
-                                    endif
-                                    
-                                    :Update(ListOfRecordsToFix->pk)
-                                endwith
-                            endscan
-
-                        endwith
-
-                        ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"Primary")
+                        endif
                     endif
-                endfor
-                l_iCurrentDataVersion := 25
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 26
-                for each l_cTableName in {"Column","TemplateColumn"}
-                    if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"Default")       .and. ;
-                    ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultPreset") .and. ;
-                    ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultType")   .and. ;
-                    ::p_o_SQLConnection:FieldExists("public."+l_cTableName,"DefaultCustom")
 
-                        with object l_oDB1
+                    CloseAlias("ListOfDataWharfConnections")
+                    
+                    l_cSQLCommand := [SELECT pg_advisory_unlock(123456) as result]
+                    ::p_o_SQLConnection:SQLExec("UnLock",l_cSQLCommand)
 
-                            :Table("c0032c60-0265-4d75-949b-769b5a77d140",l_cTableName)
-                            :Column(l_cTableName+".pk"           ,"pk")
-                            :Column(l_cTableName+".Type"         ,"Type")
-                            :Column(l_cTableName+".Default"      ,"Default")
-                            :Column(l_cTableName+".UsedAs"       ,"UsedAs")
-                            :SQL("ListOfRecordsToFix")
-                            select ListOfRecordsToFix
-                            scan all
-                                with object l_oDB2
-                                    :Table("5454c915-b133-4f11-92d3-cc8c847ad2e4",l_cTableName)
-
-                                    if !empty(nvl(ListOfRecordsToFix->Default,""))
-                                        :Field(l_cTableName+".DefaultType"   , 1)
-                                        :Field(l_cTableName+".DefaultCustom" , ListOfRecordsToFix->Default)
-                                    else
-                                        :Field(l_cTableName+".DefaultType" , 0)
-                                    endif
-                                    
-                                    :Update(ListOfRecordsToFix->pk)
-                                endwith
-                            endscan
-
-                        endwith
-
-                        ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"DefaultPreset")
-                        ::p_o_SQLConnection:DeleteField("public."+l_cTableName,"Default")
-                    endif
-                endfor
-                l_iCurrentDataVersion := 26
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 27
-                for each l_cTableName in {"TemplateColumn"}
-                    for each l_cColumnName in {"ForeignKeyUse","ForeignKeyOptional","OnDelete","Required","Primary"}
-                        if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,l_cColumnName)
-                            ::p_o_SQLConnection:DeleteField("public."+l_cTableName,l_cColumnName)
-                        endif
-                    endfor
-                endfor
-                l_iCurrentDataVersion := 27
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            // if l_iCurrentDataVersion < 28
-            //     l_iCurrentDataVersion := 28
-            //     :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            // endif
-            //Skipped Version 28 and merged all actions in Version 29
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 29
-
-                :ForeignKeyConvertAllZeroToNull(oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"])
-                :DeleteAllOrphanRecords( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
-
-                for each l_cTableName in {"Application"}
-                    for each l_cColumnName in {"PrimaryKeyDefaultInteger",;
-                                            "PrimaryKeyDefaultUUID",;
-                                            "PrimaryKeyType",;
-                                            "ForeignKeyTypeMatchPrimaryKey",;
-                                            "ForeignKeyIsNullable",;
-                                            "ForeignKeyNoDefault",;
-                                            "TestIdentifierMaxLengthAsPostgres",;
-                                            "TestMaxEnumerationNameLength",;
-                                            "TestMaxColumnNameLength",;
-                                            "TestMaxIndexNameLength"}
-                        if ::p_o_SQLConnection:FieldExists("public."+l_cTableName,l_cColumnName)
-                            ::p_o_SQLConnection:DeleteField("public."+l_cTableName,l_cColumnName)
-                        endif
-                    endfor
-                endfor
-
-                if ::p_o_SQLConnection:FieldExists("public.Column","PrimaryMode")
-                    ::p_o_SQLConnection:DeleteField("public.Column","PrimaryMode")
                 endif
 
-                if ::p_o_SQLConnection:FieldExists("public.TemplateColumn","PrimaryMode")
-                    ::p_o_SQLConnection:DeleteField("public.TemplateColumn","PrimaryMode")
-                endif
+                l_nWharfConfigAppliedStatus := :GetWharfConfigAppliedStatus()
 
-                l_iCurrentDataVersion := 29
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            if l_iCurrentDataVersion < 30
-                with object l_oDB1
-                    For each l_cTableName in {"Namespace","Table","Column","Enumeration","EnumValue","Index","TemplateTable","TemplateColumn","Tag"}
-                        :Table("f9be0f0b-1a63-4442-a7e4-89cf2ce1745a",l_cTableName)
-                        :Column(l_cTableName+".pk" , "pk")
+                do case
+                case hb_IsNil(l_iCurrentDataVersion) .or. l_iCurrentDataVersion < GetLatestDataVersionNumber()
+                    l_cConnectionErrorMessage := "Maintenance in Progress, try later."
+                case l_nWharfConfigAppliedStatus < 0
+                    l_cConnectionErrorMessage := "Failed to get WharfConfig Applied Information."
+                case l_nWharfConfigAppliedStatus == 1
+                    l_cConnectionErrorMessage := "No WharfConfig Applied Information."
+                case l_nWharfConfigAppliedStatus == 2
+                    l_cConnectionErrorMessage := "Schema needs to be updated."
+                case l_nWharfConfigAppliedStatus == 3
+                    l_cConnectionErrorMessage := "Future Schema. Use a newer Application version."
+                otherwise
+                    l_cConnectionErrorMessage := ""
+                    
+                    l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
+                    l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
 
-                        :Where([Length(Trim(]+l_cTableName+[.LinkUID)) = 0])
-                        :SQL("ListOfRecordsToUpdate")
-                        select ListOfRecordsToUpdate
-                        scan all
+                    //Setup first User if none exists
+                    
+                    with object l_oDB1
+                        :Table("994ff6fd-0f5f-48eb-a882-2bab357885a1","User")
+                        :Where("User.Status = 1")
+                        if :Count() == 0
+                            :Table("09f376b4-8c89-4c7a-8e59-8a59f8f32402","User")
+                            :Field("User.id"         , "main")
+                            :Field("User.FirstName"  , "main")
+                            :Field("User.LastName"   , "account")
+                            :Field("User.AccessMode" , 4)
+                            :Field("User.Status"     , 1)
+                            :Add()
+                        endif
+
+                        :Table("eabc5786-5394-4961-aa00-2563c2494c38","User")
+                        :Column("User.pk","pk")
+                        :Where("User.Password is null")
+                        :SQL("ListOfPasswordsToReset")
+                        if :Tally > 0
                             with object l_oDB2
-                                :Table("6480d156-77ad-43b1-880e-4f5a3aaa9c8f",l_cTableName)
-                                :Field(l_cTableName+".LinkUID" , ::p_o_SQLConnection:GetUUIDString())
-                                :Update(ListOfRecordsToUpdate->pk)
+                                select ListOfPasswordsToReset
+                                scan all
+                                    :Table("7d6e5721-ec9b-46c1-9c5a-e8239a406e32","User")
+                                    :Field("User.Password" , hb_SHA512(l_cSecuritySalt+l_cSecurityDefaultPassword+Trans(ListOfPasswordsToReset->pk)))
+                                    :Update(ListOfPasswordsToReset->pk)
+                                endscan
                             endwith
-                        endscan
-                    endfor
-                endwith
-                l_iCurrentDataVersion := 30
-                :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
-            endif
-            //-----------------------------------------------------------------------------------
-            //-----------------------------------------------------------------------------------
-            //:RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
-            :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
-            //-----------------------------------------------------------------------------------
-            //-----------------------------------------------------------------------------------
-            
-            l_cSecuritySalt            := ::GetAppConfig("SECURITY_SALT")
-            l_cSecurityDefaultPassword := ::GetAppConfig("SECURITY_DEFAULT_PASSWORD")
+                        endif
 
-            //Setup first User if none exists
-            
-            with object l_oDB1
-                :Table("994ff6fd-0f5f-48eb-a882-2bab357885a1","User")
-                :Where("User.Status = 1")
-                if :Count() == 0
-                    :Table("09f376b4-8c89-4c7a-8e59-8a59f8f32402","User")
-                    :Field("User.id"         , "main")
-                    :Field("User.FirstName"  , "main")
-                    :Field("User.LastName"   , "account")
-                    :Field("User.AccessMode" , 4)
-                    :Field("User.Status"     , 1)
-                    :Add()
-                endif
-
-                :Table("eabc5786-5394-4961-aa00-2563c2494c38","User")
-                :Column("User.pk","pk")
-                :Where("User.Password is null")
-                :SQL("ListOfPasswordsToReset")
-                if :Tally > 0
-                    with object l_oDB2
-                        select ListOfPasswordsToReset
-                        scan all
-                            :Table("7d6e5721-ec9b-46c1-9c5a-e8239a406e32","User")
-                            :Field("User.Password" , hb_SHA512(l_cSecuritySalt+l_cSecurityDefaultPassword+Trans(ListOfPasswordsToReset->pk)))
-                            :Update(ListOfPasswordsToReset->pk)
-                        endscan
                     endwith
-                endif
 
-            endwith
+                    UpdateAPIEndpoint()
+                endcase
 
-            UpdateAPIEndpoint()
+            endcase
 
+            if !empty(l_cConnectionErrorMessage)
+                ::p_o_SQLConnection:Disconnect()
+                // ::p_o_SQLConnection := NIL
+            endif
         endif
     endwith
 else
     if ::p_o_SQLConnection:CheckIfSchemaCacheShouldBeUpdated()
-        UpdateSchema(::p_o_SQLConnection)
+        UpdateSchema(::p_o_SQLConnection)   //_M_ Why here
     endif
 endif
 
-
-// l_1 := val(::p_o_SQLConnection:p_hb_orm_version)
-// l_2 := val(MIN_HARBOUR_ORM_VERSION)
-// altd()
-
 do case
-case ::p_o_SQLConnection == NIL
+case hb_IsNil(::p_o_SQLConnection) .or. !::p_o_SQLConnection:Connected
     l_cHtml := [<html>]
     l_cHtml += [<body>]
     l_cHtml += [<h1>Failed to connect to Data Server</h1>]
@@ -1383,7 +964,6 @@ otherwise
                 endif
                 l_cAPIEndpointName := GetAPIURIElement(1)
                 l_cBody := [UNBUFFERED]
-
                 l_nTokenAccessMode := APIAccessCheck_Token_EndPoint(l_cAccessToken,l_cAPIEndpointName)
                 if l_nTokenAccessMode <= 0
                     oFcgi:SetHeaderValue("Status","403 Forbidden")
@@ -1440,8 +1020,11 @@ otherwise
             l_cHtml += l_cBody
 
             if l_lShowDevelopmentInfo
+                l_nContentSize = len(l_cHtml+[</body></html>])
+
                 l_TimeStamp2  := hb_DateTime()
-                l_cHtml += [<div class="m-3">Run Time = ]+trans(int((l_TimeStamp2-l_TimeStamp1)*(24*3600*1000)))+[ (ms)</div>]
+                l_cHtml += [<div class="mt-3 mx-3 mb-0">Run Time: ]+trans(int((l_TimeStamp2-l_TimeStamp1)*(24*3600*1000)))+[ (ms)</div>]
+                l_cHtml += [<div class="mt-0 mx-3 mb-3">Content Size: ]+ trim(Transform( l_nContentSize, "@b 999,999,999,999" ))+[ Bytes =  ]+trim(Transform( l_nContentSize/1024, "@b 999,999,999,999" ))+[ Kb] +[</div>]
             endif
 
             l_cHtml += [</body>]
@@ -1453,14 +1036,15 @@ endcase
 
 ::Print(l_cHtml)
 
-// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestEnd.txt")
+// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),el_AddPs(OUTPUT_FOLDER)+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_OnRequestEnd.txt")
 
 return nil
 //=================================================================================================================
 method OnShutdown() class MyFcgi
 SendToDebugView("Called from method OnShutdown")
-if !IsNull(::p_o_SQLConnection)
+if !hb_IsNil(::p_o_SQLConnection)
     ::p_o_SQLConnection:Disconnect()
+    ::p_o_SQLConnection := NIL
 endif
 return nil 
 //=================================================================================================================
@@ -1572,7 +1156,13 @@ local l_nMigrateSchemaResult := 0
 local l_lCyanAuditAware
 local l_cUpdateScript := ""
 
+SendToDebugView("In UpdateSchema")
+
 if el_AUnpack(par_o_SQLConnection:MigrateSchema(oFcgi:p_o_SQLConnection:p_hWharfConfig),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
+    if l_nMigrateSchemaResult >= 0
+        par_o_SQLConnection:RecordCurrentAppliedWharfConfig()
+    endif
+
     if l_nMigrateSchemaResult == 1
         l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
         if l_lCyanAuditAware
@@ -1582,13 +1172,16 @@ if el_AUnpack(par_o_SQLConnection:MigrateSchema(oFcgi:p_o_SQLConnection:p_hWharf
         endif
     endif
 else
-    if !empty(l_cLastError)
+    if empty(l_cLastError)
+        //No migration was needed but still ensure the WharfConfig stamp is up to date.
+        par_o_SQLConnection:RecordCurrentAppliedWharfConfig()
+    else
         SendToDebugView("PostgreSQL - Failed Migrate")
     endif
 endif
 
 if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
-    el_StrToFile(l_cUpdateScript,OUTPUT_FOLDER+hb_ps()+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
+    el_StrToFile(l_cUpdateScript,el_AddPs(OUTPUT_FOLDER)+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
 endif
 
 return nil
@@ -1727,16 +1320,24 @@ function hb_buildinfo()
 #include "BuildInfo.txt"
 return l_cBuildInfo
 //=================================================================================================================
+function SanitizeNameIdentifier(par_text)
+local l_result := alltrim(el_StrReplace(par_text,{chr(9)=>" "}))
+l_result = el_StrReplace(l_result,{"<"=>"",;
+                                   ">"=>"",;
+                                   "."=>""})
+return l_result
+//=================================================================================================================
 function SanitizeInput(par_text)
 local l_result := alltrim(el_StrReplace(par_text,{chr(9)=>" "}))
-l_result = el_StrReplace(l_result,{"<"="",">"=""})
+l_result = el_StrReplace(l_result,{"<"=>"",;
+                                   ">"=>""})
 return l_result
 //=================================================================================================================
 function SanitizeInputAlphaNumeric(par_cText)
 return SanitizeInputWithValidChars(par_cText,[_01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
 //=================================================================================================================
-function SanitizeInputSQLIdentifier(par_cSource,par_cText)
-return SanitizeInputWithValidChars(alltrim(par_cText),"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !#$#%'()*+,-./:;<=>?@[\]^`{|}")   // ~
+// function SanitizeInputSQLIdentifier(par_cSource,par_cText)
+// return SanitizeInputWithValidChars(alltrim(par_cText),"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ !#$#%'()*+,-./:;<=>?@[\]^`{|}")   // ~
 //=================================================================================================================
 function SanitizeInputWithValidChars(par_text,par_cValidChars)
 local l_result := []
@@ -2541,9 +2142,9 @@ return l_nResult
 //=================================================================================================================
 function GetStreamFileFolderForCurrentProcess()
 local l_iPID := el_GetProcessId()
-local l_cFilePath := ""
+local l_cFilePath
 
-l_cFilePath := oFCgi:PathBackend+hb_ps()+"StreamFile"
+l_cFilePath := el_AddPs(oFCgi:PathBackend)+"StreamFile"
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()+trans(l_iPID)
 hb_DirCreate(l_cFilePath)
@@ -2552,15 +2153,42 @@ l_cFilePath += hb_ps()
 return l_cFilePath
 //=================================================================================================================
 function GetStreamFileFolderForCurrentUser()
-local l_cFilePath := ""
+local l_cFilePath
 
-l_cFilePath := oFCgi:PathBackend+hb_ps()+"UserStreamFile"
+l_cFilePath := el_AddPs(oFCgi:PathBackend)+"UserStreamFile"
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()+trans(oFcgi:p_iUserPk)
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()
 
 return l_cFilePath
+//=================================================================================================================
+function PurgeStreamFileFolders()
+local l_cFilePath
+
+l_cFilePath := el_AddPs(oFCgi:PathBackend)+"UserStreamFile"+hb_ps()
+hb_DirRemoveAll(l_cFilePath)
+hb_DirCreate(l_cFilePath)
+
+l_cFilePath := el_AddPs(oFCgi:PathBackend)+"StreamFile"+hb_ps()
+hb_DirRemoveAll(l_cFilePath)
+hb_DirCreate(l_cFilePath)
+
+return nil
+//=================================================================================================================
+function PurgeVolatileFiles()
+local l_cSQLCommand
+
+with object oFcgi:p_o_SQLConnection
+    l_cSQLCommand := [SELECT lo_unlink(largeobjects.oid) FROM pg_largeobject_metadata AS largeobjects]
+    :SQLExec("PurgeVolatileFilesStep1",l_cSQLCommand)
+
+    l_cSQLCommand := [TRUNCATE TABLE "volatile"."FileStream"]
+    :SQLExec("PurgeVolatileFilesStep2",l_cSQLCommand)
+
+endwith
+
+return nil
 //=================================================================================================================
 function GetZuluTimeStampForFileNameSuffix()
 local l_cTimeStamp := hb_TSToStr(hb_TSToUTC(hb_DateTime()))
@@ -2865,7 +2493,7 @@ endcase
 return l_cResult
 //=================================================================================================================
 function GetMultiFlagSearchInput(par_cObjectName,pac_cJSON,par_cCurrentValue,par_nSize)
-local l_cHtml:= ""
+local l_cHtml
 
 // oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
 //                                                                 "suggestions :["+pac_cJSON+"],"+;
@@ -2890,5 +2518,42 @@ oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
 
 l_cHtml := [<input type="text" name="]+par_cObjectName+[" id="]+par_cObjectName+[" size="]+Trans(par_nSize)+[" maxlength="10000" value="]+FcgiPrepFieldForValue(par_cCurrentValue)+[" class="form-control TextSearchTag" placeholder="">]
    //  style="width:100px;"     TextSearchTag
+return l_cHtml
+//=================================================================================================================
+function GetFormattedUseStatusCounts(par_nCountProposed,par_nCount,par_nCountDiscontinued)
+local l_cHtml := ""
+
+if par_nCountProposed+par_nCount+par_nCountDiscontinued > 0
+    if par_nCountProposed > 0
+        l_cHtml += [<span class="text-info">]+trans(par_nCountProposed)+[</span>&nbsp;&nbsp;]
+    endif
+    l_cHtml += Trans(par_nCount)
+    if par_nCountDiscontinued > 0
+        l_cHtml += [&nbsp;&nbsp;<span class="text-danger">]+trans(par_nCountDiscontinued)+[<span>]
+    endif
+endif
+
+return l_cHtml
+//=================================================================================================================
+function GetCopyToClipboardJavaScript(par_cButtonId)
+local l_cJavaScript
+local l_cHtml
+
+l_cJavaScript := [function copyToClip(str) {]
+l_cJavaScript +=   [function listener(e) {]
+l_cJavaScript +=     [e.clipboardData.setData("text/html", str);]
+l_cJavaScript +=     [e.clipboardData.setData("text/plain", str);]
+l_cJavaScript +=     [e.preventDefault();]
+l_cJavaScript +=   [}]
+l_cJavaScript +=   [document.addEventListener("copy", listener);]
+l_cJavaScript +=   [document.execCommand("copy");]
+l_cJavaScript +=   [document.removeEventListener("copy", listener);]
+l_cJavaScript +=   [$('#]+par_cButtonId+[').addClass('btn-success').removeClass('btn-primary');]
+l_cJavaScript += [};]
+
+l_cHtml := [<script type="text/javascript" language="Javascript">]+CRLF
+l_cHtml += l_cJavaScript+CRLF
+l_cHtml += [</script>]+CRLF
+
 return l_cHtml
 //=================================================================================================================

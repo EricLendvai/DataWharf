@@ -452,7 +452,6 @@ local l_aLines
 local l_nNumberOfLines
 local l_nLineCounter := 0
 local l_cLine
-local l_nMode := 0   // 1=Building Table, 2=Loading data
 local l_cTableName
 local l_aListOfCursors := {}
 local l_aFieldValues   := {}
@@ -547,7 +546,6 @@ do while l_nLineCounter < l_nNumberOfLines
     l_cLine := l_aLines[l_nLineCounter]
 
     if left(l_cLine,1) == "!"  //Table
-        l_nMode := 1
         l_cTableName := substr(l_cLine,2)
         l_oCursor := hb_Cursor()
         AAdd(l_aListOfCursors,l_oCursor)
@@ -613,7 +611,7 @@ do while l_nLineCounter < l_nNumberOfLines
 
                 l_cLine := l_aLines[l_nLineCounter]
             enddo
-            //ExportTableToHtmlFile("ImportSource"+l_cTableName,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
+            //ExportTableToHtmlFile("ImportSource"+l_cTableName,el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
         endwith
 
     endif

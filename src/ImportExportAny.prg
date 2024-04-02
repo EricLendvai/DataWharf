@@ -9,7 +9,7 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
     l_aTableInfo := par_hTableSchema["public."+par_cTableName]
     for each l_hFields in l_aTableInfo[HB_ORM_SCHEMA_FIELD]
         l_cFieldName := l_hFields:__enumkey
-        if !el_IsInlist(l_cFieldName,'sysc','sysm')
+        if !el_IsInlist(lower(l_cFieldName),'sysc','sysm','datetime')
             par_oDB_ListOfTables:Column(par_cTableName+"."+l_cFieldName ,l_cFieldName)
         endif
     endfor
@@ -94,6 +94,9 @@ if hb_HHasKey(par_hTableSchema,"public."+par_cTableName)
 
                 case l_cFieldType == "D"
                     l_cBackupCode += DToS(l_xValue)
+
+                case l_cFieldType == "DT"
+                    l_cBackupCode += hb_TSToStr(l_xValue)
 
                 otherwise
                     l_cBackupCode += "???"

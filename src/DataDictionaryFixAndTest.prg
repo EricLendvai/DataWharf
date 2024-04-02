@@ -56,6 +56,8 @@ local l_oDB_ListOfEnumerationsString
 local l_oDB_ListOfEnumerations
 local l_oDB_ListEnumerationColumnsWithIssues
 local l_oDB_CTEEnumerationColumnsWithIssues
+local l_oDB_ListOfEnumerationsWithNoValues
+local l_oDB_ListOfEnumerationsWithDuplicateNumbers
 local l_lFixNullable
 local l_lFixDefault
 local l_aColumnTypes
@@ -68,6 +70,7 @@ local l_nColumnLength
 local l_nColumnScale
 local l_cIssue
 local l_cErrorText
+local l_iEnumerationPkLast
 
 // local l_cLastSQL
 
@@ -82,6 +85,8 @@ with object l_oDB_Application
     :Column("Application.TestForeignKeyIsNullable"                             ,"Application_TestForeignKeyIsNullable")
     :Column("Application.TestForeignKeyNoDefault"                              ,"Application_TestForeignKeyNoDefault")
     :Column("Application.TestForeignKeyMissingOnDeleteSetting"                 ,"Application_TestForeignKeyMissingOnDeleteSetting")
+    :Column("Application.TestEnumerationHasAtLeastOnePresentValue"             ,"Application_TestEnumerationHasAtLeastOnePresentValue")
+    :Column("Application.TestEnumerationValueNumberUniqueness"                 ,"Application_TestEnumerationValueNumberUniqueness")
     :Column("Application.TestNumericEnumerationWideEnough"                     ,"Application_TestNumericEnumerationWideEnough")
     :Column("Application.TestIdentifierMaxLengthAsPostgres"                    ,"Application_TestIdentifierMaxLengthAsPostgres")
     :Column("Application.TestMissingForeignKeyTable"                           ,"Application_TestMissingForeignKeyTable")
@@ -141,7 +146,7 @@ with object l_oDB_ListOfTemplateColumns
     :Join("inner","TemplateColumn" ,"","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
     :SQL("ListOfTemplateColumns")
-    // ExportTableToHtmlFile("ListOfTemplateColumns",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfTemplateColumns.html","From PostgreSQL",,200,.t.)
+    // ExportTableToHtmlFile("ListOfTemplateColumns",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfTemplateColumns.html","From PostgreSQL",,200,.t.)
 endwith
 
 with object l_oDB_ListOfNamespacesWithWarning
@@ -165,7 +170,7 @@ with object l_oDB_ListOfTablesWithWarning
     //     :Index("pk","Table_Pk")
     //     :CreateIndexes()
     // endwith
-    // ExportTableToHtmlFile("ListOfTablesWithWarning",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfTablesWithWarning.html","From PostgreSQL",,200,.t.)
+    // ExportTableToHtmlFile("ListOfTablesWithWarning",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfTablesWithWarning.html","From PostgreSQL",,200,.t.)
 endwith
 
 with object l_oDB_ListOfColumnsWithWarning
@@ -431,6 +436,7 @@ if l_oData:Application_TestTableHasPrimaryKey                                .or
    l_oData:Application_TestForeignKeyNoDefault                               .or. ;
    l_oData:Application_TestForeignKeyMissingOnDeleteSetting                  .or. ;
    l_oData:Application_TestNumericEnumerationWideEnough                      .or. ;
+   l_oData:Application_TestNumericEnumerationWideEnough                      .or. ;
    l_oData:Application_TestIdentifierMaxLengthAsPostgres                     .or. ;
    l_oData:Application_TestMissingForeignKeyTable                            .or. ;
    l_oData:Application_TestMissingEnumerationValues                          .or. ;
@@ -557,6 +563,73 @@ if l_oData:Application_TestTableHasPrimaryKey                                .or
                 l_hColumnWarning[ListOfForeignKeys->Column_Pk] := l_cWarningMessage
 
                 l_hTableColumnCountWarning[ListOfForeignKeys->Table_Pk] := hb_HGetDef(l_hTableColumnCountWarning,ListOfForeignKeys->Table_Pk,0)+l_nTestWarningCount
+            endif
+        endscan
+
+    endif
+
+    // -- Test: Enumerations must have at least one present value
+    if l_oData:Application_TestEnumerationHasAtLeastOnePresentValue
+
+        l_oDB_ListOfEnumerationsWithNoValues := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfEnumerationsWithNoValues
+
+            :Table("ca330b4e-afc0-4b2a-b5db-1a46a78f4c6a"               ,"Namespace")
+            :Column("Enumeration.Pk"                                    ,"Enumeration_Pk")
+            :Column("SUM(CASE WHEN EnumValue.Pk > 0 THEN 1 ELSE 0 END)" ,"EnumValueCount")
+            :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
+            :Join("left" ,"EnumValue"  ,"","EnumValue.fk_Enumeration = Enumeration.pk AND EnumValue.UseStatus <> ^",USESTATUS_DISCONTINUED)
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            :GroupBy("Enumeration_Pk")
+            :Having("SUM(CASE WHEN EnumValue.Pk > 0 THEN 1 ELSE 0 END) = 0")   //Postgresql cannot handle the virtual column name
+            :SQL("ListOfEnumerationsWithNoValues")
+// SendToClipboard(:LastSQL())
+
+        endwith
+
+        select ListOfEnumerationsWithNoValues
+        scan all
+            l_cWarningMessage := hb_HGetDef(l_hEnumerationWarning,ListOfEnumerationsWithNoValues->Enumeration_Pk,"")
+            l_cWarningMessage += iif(empty(l_cWarningMessage),"",CRLF)+"Enumeration has no value."
+            l_hEnumerationWarning[ListOfEnumerationsWithNoValues->Enumeration_Pk] := l_cWarningMessage
+        endscan
+
+    endif
+
+    // -- Test: Uniqueness of "Number" in Enumeration Values field in each Enumerations
+    if l_oData:Application_TestEnumerationValueNumberUniqueness
+
+        l_oDB_ListOfEnumerationsWithDuplicateNumbers := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_ListOfEnumerationsWithDuplicateNumbers
+
+            :Table("664a4cec-8019-4b15-8862-dbb9456059b2"               ,"Namespace")
+            :Column("Enumeration.Pk"                                    ,"Enumeration_Pk")
+            :Column("EnumValue.Number"                                  ,"EnumValue_Number")
+            :Column("SUM(CASE WHEN EnumValue.Pk > 0 THEN 1 ELSE 0 END)" ,"EnumValueCount")
+            :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
+            :Join("left" ,"EnumValue"  ,"","EnumValue.fk_Enumeration = Enumeration.pk AND EnumValue.UseStatus <> ^ AND EnumValue.Number IS NOT NULL",USESTATUS_DISCONTINUED)
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            :GroupBy("Enumeration_Pk")
+            :GroupBy("EnumValue_Number")
+            :Having("SUM(CASE WHEN EnumValue.Pk > 0 THEN 1 ELSE 0 END) > 1")   //Postgresql cannot handle the virtual column name
+            :SQL("ListOfEnumerationsWithDuplicateNumbers")
+
+            with object :p_oCursor
+                :Index("tag1","Enumeration_Pk")   // Not able to create a UNIQUE index, but will use l_iEnumerationPkLast afterwarnds to about duplicate reporting
+                :CreateIndexes()
+                :SetOrder("tag1")
+            endwith
+
+        endwith
+
+        l_iEnumerationPkLast := -1
+        select ListOfEnumerationsWithDuplicateNumbers
+        scan all
+            if l_iEnumerationPkLast <> ListOfEnumerationsWithDuplicateNumbers->Enumeration_Pk   // In case there is more than one duplicate number. This was easier to do so than creating a CTE, or building a UNIQUE index on Enumeration_Pk
+                l_iEnumerationPkLast := ListOfEnumerationsWithDuplicateNumbers->Enumeration_Pk
+                l_cWarningMessage := hb_HGetDef(l_hEnumerationWarning,ListOfEnumerationsWithDuplicateNumbers->Enumeration_Pk,"")
+                l_cWarningMessage += iif(empty(l_cWarningMessage),"",CRLF)+"Enumeration duplicate value number."
+                l_hEnumerationWarning[ListOfEnumerationsWithDuplicateNumbers->Enumeration_Pk] := l_cWarningMessage
             endif
         endscan
 

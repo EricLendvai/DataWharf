@@ -234,7 +234,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
         l_cErrorMessage := "Failed to retrieve Enumeration Meta data."
     else
-        // ExportTableToHtmlFile("ListOfEnumsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfEnumsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
 
         l_cExpressionNamespaces := ""
         if !empty(par_cSyncNamespaces)
@@ -444,7 +444,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfFieldsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
@@ -479,7 +479,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
                             //Find the Namespace
-                            :Table("0b38bd6e-f72d-4c15-92dc-b6bbacafbbc3","Namespace")
+                            :Tabl("0b38bd6e-f72d-4c15-92dc-b6bbacafbbc3","Namespace")
                             :Column("Namespace.pk" , "Pk")
                             :Where([Namespace.fk_Application = ^],par_iApplicationPk)
                             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cLastNamespace," ","")))
@@ -920,7 +920,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //     if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
     //         l_cErrorMessage := "Failed to retrieve Fields Meta data."
     //     else
-    //         // ExportTableToHtmlFile("ListOfIndexesForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+    //         // ExportTableToHtmlFile("ListOfIndexesForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
     //         l_cLastNamespace  := ""
     //         l_cLastTableName  := ""

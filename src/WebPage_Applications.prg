@@ -460,7 +460,9 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_nCountProposed
 local l_nCount
+local l_nCountDiscontinued
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
@@ -484,7 +486,6 @@ with object l_oDB_ListOfApplications
     :SQL("ListOfApplications")
     l_nNumberOfApplications := :Tally
 endwith
-
 
 if l_nNumberOfApplications > 0
     with object l_oDB_ListOfCustomFieldValues
@@ -525,7 +526,9 @@ endif
 with object l_oDB_ListOfTableCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Table.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
@@ -543,7 +546,9 @@ endwith
 with object l_oDB_ListOfRelationshipCounts
     :Table("e417f8cb-dffe-4e33-a817-3cd19770a2e9","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
@@ -561,9 +566,6 @@ with object l_oDB_ListOfRelationshipCounts
     endwith
 endwith
 
-
-
-
 with object l_oDB_ListOfDeploymentsCounts
     :Table("916fdb6a-bfbb-45d3-ae86-4574ab7a2636","Application")
     :Column("Application.pk" ,"Application_pk")
@@ -577,8 +579,6 @@ with object l_oDB_ListOfDeploymentsCounts
         :CreateIndexes()
     endwith
 endwith
-
-
 
 l_cHtml += [<div class="m-3">]
 
@@ -630,17 +630,35 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+
+                            if el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1")
+                                l_nCountProposed     := ListOfTableCounts->CountProposed
+                                l_nCount             := ListOfTableCounts->Count
+                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                            endif
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1") , ListOfRelationshipCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+
+                            if el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1")
+                                l_nCountProposed     := ListOfRelationshipCounts->CountProposed
+                                l_nCount             := ListOfRelationshipCounts->Count
+                                l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]

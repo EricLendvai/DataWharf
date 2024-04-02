@@ -50,15 +50,13 @@ local l_nURLTemplateColumnUsedBy := 0
 local l_cURLIndexName            := ""
 local l_nURLIndexUsedBy          := 0
 
-
-local l_cLinkUIDNamespace   := ""
-local l_cLinkUIDTable       := ""
-local l_cLinkUIDColumn      := ""
-local l_cLinkUIDIndex       := ""
-local l_cLinkUIDEnumeration := ""
-local l_cLinkUIDEnumValue   := ""
+// local l_cLinkUIDNamespace   := ""
+// local l_cLinkUIDTable       := ""
+// local l_cLinkUIDColumn      := ""
+// local l_cLinkUIDIndex       := ""
+// local l_cLinkUIDEnumeration := ""
+// local l_cLinkUIDEnumValue   := ""
 local l_cLinkUIDDeployment  := ""
-
 
 local l_cTableAKA
 local l_cEnumerationAKA
@@ -363,6 +361,8 @@ case l_cURLAction == "DataDictionarySettings"
                 :Column("Application.TestForeignKeyIsNullable"                             ,"Application_TestForeignKeyIsNullable")
                 :Column("Application.TestForeignKeyNoDefault"                              ,"Application_TestForeignKeyNoDefault")
                 :Column("Application.TestForeignKeyMissingOnDeleteSetting"                 ,"Application_TestForeignKeyMissingOnDeleteSetting")
+                :Column("Application.TestEnumerationHasAtLeastOnePresentValue"             ,"Application_TestEnumerationHasAtLeastOnePresentValue")
+                :Column("Application.TestEnumerationValueNumberUniqueness"                 ,"Application_TestEnumerationValueNumberUniqueness")
                 :Column("Application.TestNumericEnumerationWideEnough"                     ,"Application_TestNumericEnumerationWideEnough")
                 :Column("Application.TestMissingForeignKeyTable"                           ,"Application_TestMissingForeignKeyTable")
                 :Column("Application.TestMissingEnumerationValues"                         ,"Application_TestMissingEnumerationValues")
@@ -394,6 +394,8 @@ case l_cURLAction == "DataDictionarySettings"
                 l_hValues["TestForeignKeyIsNullable"]                              := l_oData:Application_TestForeignKeyIsNullable
                 l_hValues["TestForeignKeyNoDefault"]                               := l_oData:Application_TestForeignKeyNoDefault
                 l_hValues["TestForeignKeyMissingOnDeleteSetting"]                  := l_oData:Application_TestForeignKeyMissingOnDeleteSetting
+                l_hValues["TestEnumerationHasAtLeastOnePresentValue"]              := l_oData:Application_TestEnumerationHasAtLeastOnePresentValue
+                l_hValues["TestEnumerationValueNumberUniqueness"]                  := l_oData:Application_TestEnumerationValueNumberUniqueness
                 l_hValues["TestNumericEnumerationWideEnough"]                      := l_oData:Application_TestNumericEnumerationWideEnough
                 l_hValues["TestIdentifierMaxLengthAsPostgres"]                     := l_oData:Application_TestIdentifierMaxLengthAsPostgres
                 l_hValues["TestMissingForeignKeyTable"]                            := l_oData:Application_TestMissingForeignKeyTable
@@ -470,21 +472,7 @@ case el_IsInlist(l_cURLAction,"DataDictionaryExportToHarbourORM","DataDictionary
             l_cHtmlUnderHeader += [</div>]
         l_cHtmlUnderHeader += [</nav>]
 
-        l_cJavaScript := [function copyToClip(str) {]
-        l_cJavaScript +=   [function listener(e) {]
-        l_cJavaScript +=     [e.clipboardData.setData("text/html", str);]
-        l_cJavaScript +=     [e.clipboardData.setData("text/plain", str);]
-        l_cJavaScript +=     [e.preventDefault();]
-        l_cJavaScript +=   [}]
-        l_cJavaScript +=   [document.addEventListener("copy", listener);]
-        l_cJavaScript +=   [document.execCommand("copy");]
-        l_cJavaScript +=   [document.removeEventListener("copy", listener);]
-        l_cJavaScript +=   [$('#CopySourceCode').addClass('btn-success').removeClass('btn-primary');]
-        l_cJavaScript += [};]
-
-        l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
-        l_cHtml += l_cJavaScript+CRLF
-        l_cHtml += [</script>]+CRLF
+        l_cHtml += GetCopyToClipboardJavaScript("CopySourceCode")
 
         if oFcgi:isGet()
             l_cHtmlUnderHeader += [<pre id="]+l_cPrefix+[Code" class="ms-3">]
@@ -757,6 +745,7 @@ case l_cURLAction == "EditTable"
         :Column("Table.Description"     ,"Table_Description")
         :Column("Table.Information"     ,"Table_Information")
         :Column("Table.Unlogged"        ,"Table_Unlogged")
+        :Column("Table.ExternalId"      ,"Table_ExternalId")
         :Column("Table.TestWarning"     ,"Table_TestWarning")
         
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -793,6 +782,7 @@ case l_cURLAction == "EditTable"
             l_hValues["Information"]      := l_oData:Table_Information
             l_hValues["Unlogged"]         := l_oData:Table_Unlogged
             l_hValues["TestWarning"]      := l_oData:Table_TestWarning
+            l_hValues["ExternalId"]       := l_oData:Table_ExternalId            
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_TABLE,l_iTablePk,@l_hValues)
 
@@ -893,6 +883,7 @@ case l_cURLAction == "EditColumn"
         :Column("Column.TrackNameChanges"   ,"Column_TrackNameChanges")
         :Column("Column.AKA"                ,"Column_AKA")
         :Column("Column.LinkUID"            ,"Column_LinkUID")
+        :Column("Column.StaticUID"          ,"Column_StaticUID")
         :Column("Column.UsedAs"             ,"Column_UsedAs")
         :Column("Column.UsedBy"             ,"Column_UsedBy")
         :Column("Column.UseStatus"          ,"Column_UseStatus")
@@ -913,6 +904,7 @@ case l_cURLAction == "EditColumn"
         :Column("Column.OnDelete"           ,"Column_OnDelete")
         :Column("Column.fk_Enumeration"     ,"Column_fk_Enumeration")
         :Column("Column.TestWarning"        ,"Column_TestWarning")
+        :Column("Column.ExternalId"         ,"Column_ExternalId")
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -966,6 +958,7 @@ case l_cURLAction == "EditColumn"
             l_hValues["Name"]               := alltrim(l_oData:Column_Name)
             l_hValues["TrackNameChanges"]   := l_oData:Column_TrackNameChanges
             l_hValues["AKA"]                := alltrim(nvl(l_oData:Column_AKA,""))
+            l_hValues["StaticUID"]          := l_oData:Column_StaticUID
             l_hValues["UsedAs"]             := l_oData:Column_UsedAs
             l_hValues["UsedBy"]             := l_oData:Column_UsedBy
             l_hValues["UseStatus"]          := l_oData:Column_UseStatus
@@ -986,7 +979,8 @@ case l_cURLAction == "EditColumn"
             l_hValues["OnDelete"]           := l_oData:Column_OnDelete
             l_hValues["Fk_Enumeration"]     := l_oData:Column_fk_Enumeration
             l_hValues["TestWarning"]        := l_oData:Column_TestWarning
-
+            l_hValues["ExternalId"]         := l_oData:Column_ExternalId
+            
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
             //Load current Tags
@@ -1169,6 +1163,7 @@ case l_cURLAction == "EditEnumeration"
         :Column("Enumeration.ImplementAs"     ,"Enumeration_ImplementAs")
         :Column("Enumeration.ImplementLength" ,"Enumeration_ImplementLength")
         :Column("Enumeration.TestWarning"     ,"Enumeration_TestWarning")
+        :Column("Enumeration.ExternalId"      ,"Enumeration_ExternalId")
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
@@ -1204,6 +1199,7 @@ case l_cURLAction == "EditEnumeration"
             l_hValues["ImplementAs"]      := l_oData:Enumeration_ImplementAs
             l_hValues["ImplementLength"]  := l_oData:Enumeration_ImplementLength
             l_hValues["TestWarning"]      := l_oData:Enumeration_TestWarning
+            l_hValues["ExternalId"]       := l_oData:Enumeration_ExternalId
 
             l_cHtml += EnumerationEditFormBuild(l_iApplicationPk,l_cURLApplicationLinkCode,"",l_iEnumerationPk,l_hValues)
         else
@@ -1342,6 +1338,7 @@ case l_cURLAction == "EditEnumValue"
         :Column("EnumValue.UseStatus"       ,"EnumValue_UseStatus")
         :Column("EnumValue.DocStatus"       ,"EnumValue_DocStatus")
         :Column("EnumValue.Description"     ,"EnumValue_Description")
+        :Column("EnumValue.ExternalId"      ,"EnumValue_ExternalId")
         :Column("EnumValue.TestWarning"     ,"EnumValue_TestWarning")
 
         :Join("inner","Enumeration"    ,"","EnumValue.fk_Enumeration = Enumeration.pk")
@@ -1387,6 +1384,7 @@ case l_cURLAction == "EditEnumValue"
             l_hValues["DocStatus"]        := l_oData:EnumValue_DocStatus
             l_hValues["Description"]      := l_oData:EnumValue_Description
             l_hValues["TestWarning"]      := l_oData:EnumValue_TestWarning
+            l_hValues["ExternalId"]       := l_oData:EnumValue_ExternalId
 
             l_cHtml += EnumValueEditFormBuild(l_oData:Enumeration_pk,l_cURLApplicationLinkCode,l_oData,"",l_oData:EnumValue_pk,l_hValues)
         else
@@ -1424,6 +1422,7 @@ case l_cURLAction == "EditNamespace"
         :Column("Namespace.DocStatus"       ,"Namespace_DocStatus")
         :Column("Namespace.Description"     ,"Namespace_Description")
         :Column("Namespace.TestWarning"     ,"Namespace_TestWarning")
+        :Column("Namespace.ExternalId"      ,"Namespace_ExternalId")
 
         if left(l_cURLNamespaceName,1) == "~"
             :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
@@ -1450,6 +1449,7 @@ case l_cURLAction == "EditNamespace"
             l_hValues["DocStatus"]        := l_oData:Namespace_DocStatus
             l_hValues["Description"]      := l_oData:Namespace_Description
             l_hValues["TestWarning"]      := l_oData:Namespace_TestWarning
+            l_hValues["ExternalId"]       := nvl(l_oData:Namespace_ExternalId,0)
 
             CustomFieldsLoad(l_iApplicationPk,USEDON_NAMESPACE,l_iNamespacePk,@l_hValues)
 
@@ -2134,8 +2134,9 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfDataDictionaries
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
-local l_nCountNamespaces
+local l_nCountProposed
 local l_nCount
+local l_nCountDiscontinued
 local l_cInitialDiagram
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
@@ -2200,7 +2201,9 @@ endif
 with object l_oDB_ListOfNamespaceCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Namespace.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Namespace.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Namespace.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :GroupBy("Application_pk")
     if oFcgi:p_nUserAccessMode <= 1
@@ -2217,7 +2220,9 @@ endwith
 with object l_oDB_ListOfTableCounts
     :Table("9ba4289c-c846-4a4f-aec5-81d08072866a","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Table.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
@@ -2235,7 +2240,9 @@ endwith
 with object l_oDB_ListOfRelationshipCounts
     :Table("5599c14a-b4e3-4407-b462-5b334bd42adc","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
@@ -2256,7 +2263,9 @@ endwith
 with object l_oDB_ListOfColumnCounts
     :Table("97ea0070-3ca0-4bf9-9634-aa2ae6913fd1","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
@@ -2275,7 +2284,9 @@ endwith
 with object l_oDB_ListOfEnumerationCounts
     :Table("5d6d5a9f-5f0f-4c24-b112-d5faeed06a94","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Enumeration.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Enumeration.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Enumeration.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace"  ,"","Namespace.fk_Application = Application.pk")
     :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
     :GroupBy("Application_pk")
@@ -2293,7 +2304,9 @@ endwith
 with object l_oDB_ListOfIndexCounts
     :Table("0e2d5bee-76be-4b99-a898-7d9e26296c96","Application")
     :Column("Application.pk" ,"Application_pk")
-    :Column("Count(*)" ,"Count")
+    :Column("SUM(CASE WHEN Index.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+    :Column("SUM(CASE WHEN Index.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+    :Column("SUM(CASE WHEN Index.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
     :Join("inner","Namespace","","Namespace.fk_Application = Application.pk")
     :Join("inner","Table"    ,"","Table.fk_Namespace = Namespace.pk")
     :Join("inner","Index"   ,"","Index.fk_Table = Table.pk")
@@ -2378,10 +2391,18 @@ l_cHtml += [<div class="m-3">]
                 scan all
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfDataDictionaries->Application_UseStatus)+[>]
 
-                        l_nCountNamespaces := iif( el_seek(ListOfDataDictionaries->pk,"ListOfNamespaceCounts","tag1") , ListOfNamespaceCounts->Count , 0)
+                        if el_seek(ListOfDataDictionaries->pk,"ListOfNamespaceCounts","tag1")
+                            l_nCountProposed     := ListOfNamespaceCounts->CountProposed
+                            l_nCount             := ListOfNamespaceCounts->Count
+                            l_nCountDiscontinued := ListOfNamespaceCounts->CountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
+                        endif
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Application Name
-                            if l_nCountNamespaces > 0
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                                 l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
                             else
                                 l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
@@ -2393,44 +2414,90 @@ l_cHtml += [<div class="m-3">]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Namespace
-                            if !empty(l_nCountNamespaces)
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Trans(l_nCountNamespaces)+[</a>]
+
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                             endif
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Tables
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1") , ListOfTableCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Trans(l_nCount)+[</a>]
+
+                            if el_seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1")
+                                l_nCountProposed     := ListOfTableCounts->CountProposed
+                                l_nCount             := ListOfTableCounts->Count
+                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                            endif
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Columns
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+
+                            if el_seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1")
+                                l_nCountProposed     := ListOfColumnCounts->CountProposed
+                                l_nCount             := ListOfColumnCounts->Count
+                                l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Relationships
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfRelationshipCounts","tag1") , ListOfRelationshipCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+
+                            if el_seek(ListOfDataDictionaries->pk,"ListOfRelationshipCounts","tag1")
+                                l_nCountProposed     := ListOfRelationshipCounts->CountProposed
+                                l_nCount             := ListOfRelationshipCounts->Count
+                                l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Enumerations
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1") , ListOfEnumerationCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+Trans(l_nCount)+[</a>]
+
+                            if el_seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1")
+                                l_nCountProposed     := ListOfEnumerationCounts->CountProposed
+                                l_nCount             := ListOfEnumerationCounts->Count
+                                l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                            endif
+
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Indexes
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfIndexCounts","tag1") , ListOfIndexCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
+
+                            if el_seek(ListOfDataDictionaries->pk,"ListOfIndexCounts","tag1")
+                                l_nCountProposed     := ListOfIndexCounts->CountProposed
+                                l_nCount             := ListOfIndexCounts->Count
+                                l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
                             endif
+                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                            
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Diagrams
@@ -2488,6 +2555,8 @@ local l_lTestForeignKeyTypeMatchPrimaryKey                     := hb_HGetDef(par
 local l_lTestForeignKeyIsNullable                              := hb_HGetDef(par_hValues,"TestForeignKeyIsNullable"                             ,.f.)
 local l_lTestForeignKeyNoDefault                               := hb_HGetDef(par_hValues,"TestForeignKeyNoDefault"                              ,.f.)
 local l_lTestForeignKeyMissingOnDeleteSetting                  := hb_HGetDef(par_hValues,"TestForeignKeyMissingOnDeleteSetting"                 ,.f.)
+local l_lTestEnumerationHasAtLeastOnePresentValue              := hb_HGetDef(par_hValues,"TestEnumerationHasAtLeastOnePresentValue"             ,.f.)
+local l_lTestEnumerationValueNumberUniqueness                  := hb_HGetDef(par_hValues,"TestEnumerationValueNumberUniqueness"                 ,.f.)
 local l_lTestNumericEnumerationWideEnough                      := hb_HGetDef(par_hValues,"TestNumericEnumerationWideEnough"                     ,.f.)
 local l_lTestIdentifierMaxLengthAsPostgres                     := hb_HGetDef(par_hValues,"TestIdentifierMaxLengthAsPostgres"                    ,.f.)
 local l_lTestMissingForeignKeyTable                            := hb_HGetDef(par_hValues,"TestMissingForeignKeyTable"                           ,.f.)
@@ -2586,6 +2655,8 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyIsNullable"                             ,l_lTestForeignKeyIsNullable                             ,"Foreign Key must be Nullable")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyNoDefault"                              ,l_lTestForeignKeyNoDefault                              ,"Foreign Key may not have a default value")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestForeignKeyMissingOnDeleteSetting"                 ,l_lTestForeignKeyMissingOnDeleteSetting                 ,[Foreign Key missing "On Delete" setting])
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestEnumerationHasAtLeastOnePresentValue"             ,l_lTestEnumerationHasAtLeastOnePresentValue             ,"Enumerations must have at least one present value")
+                l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestEnumerationValueNumberUniqueness"                 ,l_lTestEnumerationValueNumberUniqueness                 ,[Uniqueness of "Number" in Enumeration Values field in each Enumerations])
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestNumericEnumerationWideEnough"                     ,l_lTestNumericEnumerationWideEnough                     ,"Numeric Enumerations must be large enough to handle largest Value")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMissingForeignKeyTable"                           ,l_lTestMissingForeignKeyTable                           ,"All Foreign Keys must point to a table")
                 l_cHtml += DataDictionaryEditFormBuildGroupCheckboxes("TestMissingEnumerationValues"                         ,l_lTestMissingEnumerationValues                         ,"All Enumeration Fields must point to a enumeration")
@@ -2639,6 +2710,8 @@ local l_lTestForeignKeyTypeMatchPrimaryKey
 local l_lTestForeignKeyIsNullable
 local l_lTestForeignKeyNoDefault
 local l_lTestForeignKeyMissingOnDeleteSetting
+local l_lTestEnumerationHasAtLeastOnePresentValue
+local l_lTestEnumerationValueNumberUniqueness
 local l_lTestNumericEnumerationWideEnough
 local l_lTestIdentifierMaxLengthAsPostgres
 local l_lTestMissingForeignKeyTable
@@ -2674,6 +2747,8 @@ l_lTestForeignKeyTypeMatchPrimaryKey                     := (oFcgi:GetInputValue
 l_lTestForeignKeyIsNullable                              := (oFcgi:GetInputValue("CheckTestForeignKeyIsNullable")                              == "1")
 l_lTestForeignKeyNoDefault                               := (oFcgi:GetInputValue("CheckTestForeignKeyNoDefault")                               == "1")
 l_lTestForeignKeyMissingOnDeleteSetting                  := (oFcgi:GetInputValue("CheckTestForeignKeyMissingOnDeleteSetting")                  == "1")
+l_lTestEnumerationHasAtLeastOnePresentValue              := (oFcgi:GetInputValue("CheckTestEnumerationHasAtLeastOnePresentValue")              == "1")
+l_lTestEnumerationValueNumberUniqueness                  := (oFcgi:GetInputValue("CheckTestEnumerationValueNumberUniqueness")                  == "1")
 l_lTestNumericEnumerationWideEnough                      := (oFcgi:GetInputValue("CheckTestNumericEnumerationWideEnough")                      == "1")
 l_lTestIdentifierMaxLengthAsPostgres                     := (oFcgi:GetInputValue("CheckTestIdentifierMaxLengthAsPostgres")                     == "1")
 l_lTestMissingForeignKeyTable                            := (oFcgi:GetInputValue("CheckTestMissingForeignKeyTable")                            == "1")
@@ -2712,6 +2787,8 @@ case l_cActionOnSubmit == "Save"
             :Field("Application.TestForeignKeyIsNullable"                             ,l_lTestForeignKeyIsNullable)
             :Field("Application.TestForeignKeyNoDefault"                              ,l_lTestForeignKeyNoDefault)
             :Field("Application.TestForeignKeyMissingOnDeleteSetting"                 ,l_lTestForeignKeyMissingOnDeleteSetting)
+            :Field("Application.TestEnumerationHasAtLeastOnePresentValue"             ,l_lTestEnumerationHasAtLeastOnePresentValue)
+            :Field("Application.TestEnumerationValueNumberUniqueness"                 ,l_lTestEnumerationValueNumberUniqueness)
             :Field("Application.TestNumericEnumerationWideEnough"                     ,l_lTestNumericEnumerationWideEnough)
             :Field("Application.TestIdentifierMaxLengthAsPostgres"                    ,l_lTestIdentifierMaxLengthAsPostgres)
             :Field("Application.TestMissingForeignKeyTable"                           ,l_lTestMissingForeignKeyTable)
@@ -2755,6 +2832,8 @@ case !empty(l_cErrorMessage)
     l_hValues["TestForeignKeyIsNullable"]                              := l_lTestForeignKeyIsNullable
     l_hValues["TestForeignKeyNoDefault"]                               := l_lTestForeignKeyNoDefault
     l_hValues["TestForeignKeyMissingOnDeleteSetting"]                  := l_lTestForeignKeyMissingOnDeleteSetting
+    l_hValues["TestEnumerationHasAtLeastOnePresentValue"]              := l_lTestEnumerationHasAtLeastOnePresentValue
+    l_hValues["TestEnumerationValueNumberUniqueness"]                  := l_lTestEnumerationValueNumberUniqueness
     l_hValues["TestNumericEnumerationWideEnough"]                      := l_lTestNumericEnumerationWideEnough
     l_hValues["TestIdentifierMaxLengthAsPostgres"]                     := l_lTestIdentifierMaxLengthAsPostgres
     l_hValues["TestMissingForeignKeyTable"]                            := l_lTestMissingForeignKeyTable
@@ -2795,6 +2874,7 @@ local l_nNumberOfNamespaces
 local l_nNumberOfCustomFieldValues := 0
 local l_lWarnings := .f.
 local l_nColspan
+local l_lHasExternalId :=.f.
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -2811,6 +2891,7 @@ with object l_oDB_ListOfNamespaces
     :Column("Namespace.DocStatus"       ,"Namespace_DocStatus")
     :Column("Namespace.Description"     ,"Namespace_Description")
     :Column("Namespace.TestWarning"     ,"Namespace_TestWarning")
+    :Column("Namespace.ExternalId"      ,"Namespace_ExternalId")
     :Column("Upper(Namespace.Name)"     ,"tag1")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
@@ -2835,9 +2916,12 @@ endwith
 if l_nNumberOfNamespaces > 0
 
     select ListOfNamespaces
-    scan all while !l_lWarnings
+    scan all while !l_lWarnings .or. !l_lHasExternalId
         if !empty(nvl(ListOfNamespaces->Namespace_TestWarning,""))
             l_lWarnings := .t.
+        endif
+        if nvl(ListOfNamespaces->Namespace_ExternalId,0) > 0
+            l_lHasExternalId := .t.
         endif
     endscan
 
@@ -2901,6 +2985,9 @@ else
     endif
 
     l_nColspan := 4
+    if l_lHasExternalId
+        l_nColspan++
+    endif
     if l_nNumberOfCustomFieldValues > 0
         l_nColspan++
     endif
@@ -2923,6 +3010,9 @@ else
                     l_cHtml += [<th class="text-white">Description</th>]
                     l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                     l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                    if l_lHasExternalId
+                        l_cHtml += [<th class="text-white">External Id</th>]
+                    endif
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
@@ -2961,6 +3051,13 @@ else
                             l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING)]
                         l_cHtml += [</td>]
 
+                        if l_lHasExternalId
+                            l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                                if nvl(ListOfNamespaces->Namespace_ExternalId,0) > 0
+                                    l_cHtml += trans(ListOfNamespaces->Namespace_ExternalId)
+                                endif
+                            l_cHtml += [</td>]
+                        endif
                         if l_nNumberOfCustomFieldValues > 0
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                 l_cHtml += CustomFieldsBuildGridOther(ListOfNamespaces->pk,l_hOptionValueToDescriptionMapping)
@@ -2996,6 +3093,7 @@ local l_cAKA              := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
 local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus        := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_iExternalId       := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 
 oFcgi:TraceAdd("NamespaceEditFormBuild")
 
@@ -3081,9 +3179,18 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80">]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
+    if !empty(l_iExternalId)
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">External Id</td>]
+            l_cHtml += [<td class="pb-3">]+trans(l_iExternalId)+[ (Created via API call)</td>]
+        l_cHtml += [</tr>]
+    endif
+
     l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_NAMESPACE,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelDD >= 5,[],[disabled]))
 
     l_cHtml += [</table>]
+
+    l_cHtml += [<input type="hidden" name="TextExternalId" id="TextExternalId" value="]+trans(l_iExternalId)+[">]
     
 l_cHtml += [</div>]
 
@@ -3106,6 +3213,7 @@ local l_cNamespaceAKA
 local l_iNamespaceUseStatus
 local l_iNamespaceDocStatus
 local l_cNamespaceDescription
+local l_iNamespaceExternalId
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
@@ -3123,7 +3231,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iNamespacePk               := Val(oFcgi:GetInputValue("TableKey"))
 
-l_cNamespaceName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cNamespaceName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_lNamespaceTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cNamespaceAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cNamespaceAKA)
@@ -3132,6 +3240,7 @@ endif
 l_iNamespaceUseStatus        := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_iNamespaceDocStatus        := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cNamespaceDescription      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iNamespaceExternalId       := Val(oFcgi:GetInputValue("TextExternalId"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -3296,6 +3405,7 @@ case !empty(l_cErrorMessage)
     l_hValues["UseStatus"]        := l_iNamespaceUseStatus
     l_hValues["DocStatus"]        := l_iNamespaceDocStatus
     l_hValues["Description"]      := l_cNamespaceDescription
+    l_hValues["ExternalId"]       := l_iNamespaceExternalId
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_NAMESPACE,@l_hValues)
 
@@ -3346,6 +3456,7 @@ local l_cSearchTableUsageStatus
 local l_cSearchTableDocStatus
 local l_cSearchColumnUsageStatus
 local l_cSearchColumnDocStatus
+local l_cSearchColumnStaticUID
 local l_cSearchColumnTypes
 local l_cSearchExtraFilters
 local l_cURL
@@ -3374,6 +3485,7 @@ l_cSearchTableUsageStatus       := SanitizeInput(oFcgi:GetInputValue("TextSearch
 l_cSearchTableDocStatus         := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDocStatus"))
 l_cSearchColumnUsageStatus      := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnUsageStatus"))
 l_cSearchColumnDocStatus        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDocStatus"))
+l_cSearchColumnStaticUID        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnStaticUID"))
 l_cSearchColumnTypes            := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnTypes"))
 l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearchExtraFilters"))
 
@@ -3400,6 +3512,7 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus"        ,l_cSearchTableDocStatus)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus"     ,l_cSearchColumnUsageStatus)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDocStatus"       ,l_cSearchColumnDocStatus)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID"       ,l_cSearchColumnStaticUID)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTypes"           ,l_cSearchColumnTypes)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ExtraFilters"          ,l_cSearchExtraFilters)
 
@@ -3422,6 +3535,7 @@ case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus"        ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus"     ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDocStatus"       ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID"       ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTypes"           ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ExtraFilters"          ,"")
 
@@ -3451,7 +3565,9 @@ local l_oDB_ListOfPreviousName         := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_oCursor
 local l_iTablePk
+local l_nCountProposed
 local l_nCount
+local l_nCountDiscontinued
 local l_nSearchMode
 
 local l_cSearchNamespaceName
@@ -3473,6 +3589,7 @@ local l_cSearchTableUsageStatus
 local l_cSearchTableDocStatus
 local l_cSearchColumnUsageStatus
 local l_cSearchColumnDocStatus
+local l_cSearchColumnStaticUID
 local l_cSearchColumnTypes
 local l_cSearchExtraFilters
 
@@ -3489,10 +3606,15 @@ local l_json_ColumnTypes
 local l_json_ExtraFilters
 local l_cTagInfo
 local l_ScriptFolder
+local l_lHasExternalId :=.f.
 local l_lWarnings := .f.
 local l_aColumnTypes
 local l_cCombinedPath
 local l_nNumberOfDiagramsWithAllTables
+
+local l_cLine
+local l_nMaxWidth
+local l_lExtraInfo
 
 oFcgi:TraceAdd("TableListFormBuild")
 
@@ -3517,13 +3639,14 @@ l_cSearchTableUsageStatus       := GetUserSetting("Application_"+Trans(par_iAppl
 l_cSearchTableDocStatus         := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus")
 l_cSearchColumnUsageStatus      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus")
 l_cSearchColumnDocStatus        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDocStatus")
+l_cSearchColumnStaticUID        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID")
 l_cSearchColumnTypes            := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTypes")
 l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ExtraFilters")
 
-if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnDescription)  //_M_ on Column Tags
+if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnStaticUID) .and. empty(l_cSearchColumnDescription)  //_M_ on Column Tags
     l_cColumnSearchParameters := ""
 else
-    l_cColumnSearchParameters := [Search?ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
+    l_cColumnSearchParameters := [Search?ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnStaticUID=]+hb_StrToHex(l_cSearchColumnStaticUID)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
 endif
 
 //Find out if any tags are linked to any tables, regardless of filter
@@ -3561,6 +3684,7 @@ with object l_oDB_ListOfTables
     :Column("Table.Description","Table_Description")
     :Column("Table.Information","Table_Information")
     :Column("Table.TestWarning","Table_TestWarning")
+    :Column("Table.ExternalId" ,"Table_ExternalId")
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -3581,6 +3705,7 @@ with object l_oDB_ListOfTables
                               l_cSearchTableDocStatus,;
                               l_cSearchColumnUsageStatus,;
                               l_cSearchColumnDocStatus,;
+                              l_cSearchColumnStaticUID,;
                               l_cSearchColumnTypes,;
                               l_cSearchExtraFilters;
                               )
@@ -3613,9 +3738,12 @@ if l_nNumberOfTables > 0
     endwith
 
     select ListOfTables
-    scan all while !l_lWarnings
+    scan all while !l_lWarnings .or. !l_lHasExternalId
         if !empty(nvl(ListOfTables->Table_TestWarning,""))
             l_lWarnings := .t.
+        endif
+        if nvl(ListOfTables->Table_ExternalId,0) > 0
+            l_lHasExternalId := .t.
         endif
     endscan
 
@@ -3650,6 +3778,7 @@ if l_nNumberOfTables > 0
                                   l_cSearchTableDocStatus,;
                                   l_cSearchColumnUsageStatus,;
                                   l_cSearchColumnDocStatus,;
+                                  l_cSearchColumnStaticUID,;
                                   l_cSearchColumnTypes,;
                                   l_cSearchExtraFilters;
                                   )
@@ -3694,6 +3823,7 @@ if l_nNumberOfTables > 0
                                   l_cSearchTableDocStatus,;
                                   l_cSearchColumnUsageStatus,;
                                   l_cSearchColumnDocStatus,;
+                                  l_cSearchColumnStaticUID,;
                                   l_cSearchColumnTypes,;
                                   l_cSearchExtraFilters;
                                   )
@@ -3725,7 +3855,9 @@ if l_nNumberOfTables > 0
     with object l_oDB_ListOfColumnCounts
         :Table("30c4a441-523c-40ca-85eb-e4b30f6358cc","Table")
         :Column("Table.pk" ,"Table_pk")
-        :Column("Count(*)" ,"Count")
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+        :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         :Join("inner","Column","","Column.fk_Table = Table.pk")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -3740,7 +3872,9 @@ if l_nNumberOfTables > 0
     with object l_oDB_ListOfIndexCounts
         :Table("8ed29bff-8f51-4140-a889-d22dcca7c313","Table")
         :Column("Table.pk" ,"Table_pk")
-        :Column("Count(*)" ,"Count")
+        :Column("SUM(CASE WHEN Index.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+        :Column("SUM(CASE WHEN Index.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+        :Column("SUM(CASE WHEN Index.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         :Join("inner","Index","","Index.fk_Table = Table.pk")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -3755,7 +3889,9 @@ if l_nNumberOfTables > 0
     with object l_oDB_ListOfReferencedByCounts
         :Table("50f61f99-86cd-437b-9e0f-8d949a67525d","Namespace")
         :Column("Table.pk" ,"Table_pk")
-        :Column("Count(*)" ,"Count")
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )"                                          ,"CountProposed")
+        :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )"                                      ,"CountDiscontinued")
         :Join("inner","Table","","Table.fk_Namespace = Namespace.pk")
         :Join("inner","Column","","Column.fk_TableForeign = Table.pk and Column.UsedAs = 3")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -3888,18 +4024,58 @@ l_cHtml += [}]
 
 l_cHtml += [</script>]
 
+l_cHtml += GetCopyToClipboardJavaScript("CopyRoster")
+
+l_cHtml += [<pre id="PreTablesToClipboard" style="display:none;">]
+    select ListOfTables
+    l_nMaxWidth  := 0
+    l_lExtraInfo := .f.
+
+    scan all
+        l_nMaxWidth := max(l_nMaxWidth,len(ListOfTables->Table_Name))
+        if ListOfTables->Table_UseStatus = USESTATUS_PROPOSED .or. ;
+           ListOfTables->Table_UseStatus = USESTATUS_DISCONTINUED
+            l_lExtraInfo := .t.
+        endif
+    endscan
+
+    scan all
+        if !l_lExtraInfo
+            l_cLine := ListOfTables->Table_Name
+
+        else
+            l_cLine := padr(ListOfTables->Table_Name,l_nMaxWidth)
+
+            do case
+            case ListOfTables->Table_UseStatus = USESTATUS_PROPOSED
+                l_cLine += [ (Proposed)]
+            case ListOfTables->Table_UseStatus = USESTATUS_DISCONTINUED
+                l_cLine += [ (Discontinued)]
+            endcase
+
+        endif
+
+        l_cHtml += l_cLine+CRLF
+    endscan
+
+l_cHtml += [</pre>]
+
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
-    l_cHtml += [<div class="input-group">]
+    l_cHtml += [<div class="input-group mb-3">]
+
+        if oFcgi:p_nAccessLevelDD >= 5
+            l_cHtml += GetButtonOnEditFormNew("New Table",l_cSitePath+[DataDictionaries/NewTable/]+par_cURLApplicationLinkCode+[/])
+        endif
+
+        l_cHtml += [<input type="button" role="button" value="Copy Table List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
+        l_cHtml += [copyToClip(document.getElementById('PreTablesToClipboard').innerText);return false;">]
+
+    l_cHtml += [</div><div class="input-group">]
         l_cHtml += [<table>]
             l_cHtml += [<tr>]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
-                    if oFcgi:p_nAccessLevelDD >= 5
-                        l_cHtml += GetButtonOnEditFormNew("New Table",l_cSitePath+[DataDictionaries/NewTable/]+par_cURLApplicationLinkCode+[/])
-                        l_cHtml += [<span class="ms-5"></span>]
-                    else
-                        l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
-                    endif
+                    l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
                 l_cHtml += [</td>]
                 // ----------------------------------------
                 l_cHtml += [<td valign="top">]
@@ -3976,6 +4152,13 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode3">]
+                            l_cHtml += [<td><span class="me-2">Column Static UID</span></td>]
+                            //Made maxlength larger to work around trailing blank and tabs
+                            l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+[" class="form-control">]
+                            l_cHtml += [</td>]
+                        l_cHtml += [</tr>]
+
+                        l_cHtml += [<tr class="SearchMode3">]
                             l_cHtml += [<td><span class="me-2">Column Types</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnTypes",;
@@ -4043,6 +4226,9 @@ if !empty(l_nNumberOfTables)
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_nColspan := 11
+            if l_lHasExternalId
+                l_nColspan++
+            endif
             if l_nNumberOfCustomFieldValues > 0
                 l_nColspan++
             endif
@@ -4073,10 +4259,12 @@ if !empty(l_nNumberOfTables)
                 l_cHtml += [<th class="text-white text-center">Referenced<br>By</th>]
                 l_cHtml += [<th class="text-white text-center">Diagrams</th>]
 
+                if l_lHasExternalId
+                    l_cHtml += [<th class="text-white">External Id</th>]
+                endif
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
-
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                 endif
@@ -4110,19 +4298,36 @@ if !empty(l_nNumberOfTables)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nCount := iif( el_seek(l_iTablePk,"ListOfColumnCounts","tag1") , ListOfColumnCounts->Count , 0)
-                        if l_nCount > 0
+
+                        if el_seek(l_iTablePk,"ListOfColumnCounts","tag1")
+                            l_nCountProposed     := ListOfColumnCounts->CountProposed
+                            l_nCount             := ListOfColumnCounts->Count
+                            l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
+                        endif
+
+                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cCombinedPath+;
                                                                                             l_cColumnSearchParameters+[]+;
-                                                                                            [">]+Trans(l_nCount)+[</a>]
+                                                                                            [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                         endif
+
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nCount := iif( el_seek(l_iTablePk,"ListOfIndexCounts","tag1") , ListOfIndexCounts->Count , 0)
-                        if l_nCount > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+Trans(l_nCount)+[</a>]
+                        if el_seek(l_iTablePk,"ListOfIndexCounts","tag1")
+                            l_nCountProposed     := ListOfIndexCounts->CountProposed
+                            l_nCount             := ListOfIndexCounts->Count
+                            l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
                         endif
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                     l_cHtml += [</td>]
 
                     if l_nNumberOfTags > 0
@@ -4160,10 +4365,16 @@ if !empty(l_nNumberOfTables)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nCount := iif( el_seek(l_iTablePk,"ListOfReferencedByCounts","tag1") , ListOfReferencedByCounts->Count , 0)
-                        if l_nCount > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
+                        if el_seek(l_iTablePk,"ListOfReferencedByCounts","tag1")
+                            l_nCountProposed     := ListOfReferencedByCounts->CountProposed
+                            l_nCount             := ListOfReferencedByCounts->Count
+                            l_nCountDiscontinued := ListOfReferencedByCounts->CountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
                         endif
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
@@ -4173,6 +4384,14 @@ if !empty(l_nNumberOfTables)
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableDiagrams/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
                         endif
                     l_cHtml += [</td>]
+
+                    if l_lHasExternalId
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if nvl(ListOfTables->Table_ExternalId,0) > 0
+                                l_cHtml += trans(ListOfTables->Table_ExternalId)
+                            endif
+                        l_cHtml += [</td>]
+                    endif
 
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -4195,7 +4414,7 @@ if !empty(l_nNumberOfTables)
 
 endif
 
-// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),OUTPUT_FOLDER+hb_ps()+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_TableListFormBuild.txt")
+// el_StrToFile(hb_jsonEncode(hb_orm_UsedWorkAreas(),.t.),el_AddPs(OUTPUT_FOLDER)+"WorkAreas_"+GetZuluTimeStampForFileNameSuffix()+"_TableListFormBuild.txt")
 
 return l_cHtml
 //=================================================================================================================
@@ -4214,6 +4433,7 @@ local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOW
 local l_nDocStatus        := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_cInformation      := nvl(hb_HGetDef(par_hValues,"Information",""),"")
+local l_iExternalId       := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 
 local l_cSitePath        := oFcgi:p_cSitePath
 
@@ -4503,9 +4723,18 @@ else
                 l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextInformation" id="TextInformation" rows="10" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[ class="form-control">]+FcgiPrepFieldForValue(l_cInformation)+[</textarea></td>]
             l_cHtml += [</tr>]
 
+            if !empty(l_iExternalId)
+                l_cHtml += [<tr>]
+                    l_cHtml += [<td valign="top" class="pe-2 pb-3">External Id</td>]
+                    l_cHtml += [<td class="pb-3">]+trans(l_iExternalId)+[ (Created via API call)</td>]
+                l_cHtml += [</tr>]
+            endif
+
             l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_TABLE,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelDD >= 5,[],[disabled]))
 
         l_cHtml += [</table>]
+
+        l_cHtml += [<input type="hidden" name="TextExternalId" id="TextExternalId" value="]+trans(l_iExternalId)+[">]
         
     l_cHtml += [</div>]
 
@@ -4534,6 +4763,7 @@ local l_nTableUseStatus
 local l_nTableDocStatus
 local l_cTableDescription
 local l_cTableInformation
+local l_iTableExternalId
 local l_oData
 local l_cErrorMessage := ""
 
@@ -4570,7 +4800,7 @@ l_iTablePk          := Val(oFcgi:GetInputValue("TableKey"))
 l_iTemplateTablePk  := Val(oFcgi:GetInputValue("ComboTemplateTablePk"))
 l_iNamespacePk      := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 
-l_cTableName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cTableName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_lTableTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cTableAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
@@ -4581,6 +4811,7 @@ l_nTableUseStatus        := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_nTableDocStatus        := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cTableDescription      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 l_cTableInformation      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextInformation")))
+l_iTableExternalId       := Val(oFcgi:GetInputValue("TextExternalId"))
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -5092,6 +5323,7 @@ case !empty(l_cErrorMessage)
     l_hValues["DocStatus"]       := l_nTableDocStatus
     l_hValues["Description"]     := l_cTableDescription
     l_hValues["Information"]     := l_cTableInformation
+    l_hValues["ExternalId"]      := l_iTableExternalId
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_TABLE,@l_hValues)
 
@@ -5144,14 +5376,22 @@ local l_hOptionValueToDescriptionMapping := {=>}
 
 local l_cSearchColumnName
 local l_cSearchColumnDescription
+local l_cSearchColumnStaticUID
 
 local l_cTooltipEnumValues
 local l_cURL
 local l_cName
 local l_nColspan
+
+local l_lHasExternalId :=.f.
 local l_lWarnings := .f.
 
 local l_cCombinedPath
+
+local l_cLine
+local l_nMaxWidth
+local l_lExtraInfo
+
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
@@ -5159,9 +5399,11 @@ if oFcgi:isGet() //.and. (len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p
                  //Decided to always start the search with whatever the table list last search was.
     l_cSearchColumnName        := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
     l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescription"))
+    l_cSearchColumnStaticUID   := hb_HexToStr(oFcgi:GetQueryString("ColumnStaticUID"))
 else
     l_cSearchColumnName        := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName")
     l_cSearchColumnDescription := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription")
+    l_cSearchColumnStaticUID   := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID")
 endif
 
 with object l_oDB_Application
@@ -5179,6 +5421,7 @@ with object l_oDB_ListOfColumns
     :Table("27682ad7-bafd-409f-b6ab-1057770ec119","Column")
     :Column("Column.pk"                  ,"pk")
     :Column("Column.Name"                ,"Column_Name")
+    :Column("Column.StaticUID"           ,"Column_StaticUID")
     :Column("Column.AKA"                 ,"Column_AKA")
     :Column("Column.LinkUID"             ,"Column_LinkUID")
     :Column("Column.UsedAs"              ,"Column_UsedAs")
@@ -5201,6 +5444,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.ForeignKeyOptional"  ,"Column_ForeignKeyOptional")
     :Column("Column.fk_Enumeration"      ,"Column_fk_Enumeration")
     :Column("Column.TestWarning"         ,"Column_TestWarning")
+    :Column("Column.ExternalId"          ,"Column_ExternalId")
     :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Namespace.AKA"              ,"Namespace_AKA")
     :Column("Namespace.LinkUID"          ,"Namespace_LinkUID")
@@ -5237,11 +5481,14 @@ with object l_oDB_ListOfColumns
 
     :Where("Column.fk_Table = ^",par_iTablePk)
 
-    if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+    if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
         :Distinct(.t.)
         if !empty(l_cSearchColumnName)
             :Join("left","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
             :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+        endif
+        if !empty(l_cSearchColumnStaticUID)
+            :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
         endif
         if !empty(l_cSearchColumnDescription)
             :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -5251,7 +5498,7 @@ with object l_oDB_ListOfColumns
     :SQL("ListOfColumns")
     l_nNumberOfColumnsInSearch := :Tally
 
-// ExportTableToHtmlFile("ListOfColumns",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfColumns"+".html","From PostgreSQL",,,.t.)
+// ExportTableToHtmlFile("ListOfColumns",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfColumns"+".html","From PostgreSQL",,,.t.)
 
 endwith
 
@@ -5272,9 +5519,12 @@ if l_nNumberOfColumns > 0
     endwith
 
     select ListOfColumns
-    scan all while !l_lWarnings
+    scan all while !l_lWarnings .or. !l_lHasExternalId
         if !empty(nvl(ListOfColumns->Column_TestWarning,""))
             l_lWarnings := .t.
+        endif
+        if nvl(ListOfColumns->Column_ExternalId,0) > 0
+            l_lHasExternalId := .t.
         endif
     endscan
 
@@ -5292,10 +5542,13 @@ if l_nNumberOfColumns > 0
         :Join("inner","EnumValue","","Column.fk_Enumeration > 0 and Column.fk_Enumeration = EnumValue.fk_Enumeration")
         :Where("Column.fk_Table = ^",par_iTablePk)
 
-        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
                 :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+            endif
+            if !empty(l_cSearchColumnStaticUID)
+                :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -5308,7 +5561,7 @@ if l_nNumberOfColumns > 0
             :Index("tag1","alltrim(str(Column_pk))+'*'+str(EnumValue_Order,10)")
             :CreateIndexes()
         endwith
-        // ExportTableToHtmlFile("ListOfEnumValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumValues.html","From PostgreSQL",,25,.t.)
+        // ExportTableToHtmlFile("ListOfEnumValues",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEnumValues.html","From PostgreSQL",,25,.t.)
 
     endwith
 
@@ -5320,10 +5573,13 @@ if l_nNumberOfColumns > 0
         :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Column.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
         :Where("Column.fk_Table = ^",par_iTablePk)
-        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
                 :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+            endif
+            if !empty(l_cSearchColumnStaticUID)
+                :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -5349,10 +5605,13 @@ if l_nNumberOfColumns > 0
         :Join("inner","CustomFieldValue","","CustomFieldValue.fk_Entity = Column.pk")
         :Join("inner","CustomField"     ,"","CustomFieldValue.fk_CustomField = CustomField.pk")
         :Where("Column.fk_Table = ^",par_iTablePk)
-        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnDescription)
+        if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
                 :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+            endif
+            if !empty(l_cSearchColumnStaticUID)
+                :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
             endif
             if !empty(l_cSearchColumnDescription)
                 :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
@@ -5373,7 +5632,42 @@ l_cHtml += [ .tooltip-inner {max-width: 700px;opacity: 1.0;background-color: #19
 l_cHtml += [ .tooltip.show {opacity:1.0} ]
 l_cHtml += [</style>]
 
-// ExportTableToHtmlFile("ListOfCustomFieldValues",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
+l_cHtml += GetCopyToClipboardJavaScript("CopyRoster")
+
+l_cHtml += [<pre id="PreColumnsToClipboard" style="display:none;">]
+    select ListOfColumns
+    l_nMaxWidth  := 0
+    l_lExtraInfo := .f.
+
+    scan all
+        l_nMaxWidth := max(l_nMaxWidth,len(ListOfColumns->Column_Name))
+        if ListOfColumns->Column_UseStatus = USESTATUS_PROPOSED .or. ;
+           ListOfColumns->Column_UseStatus = USESTATUS_DISCONTINUED
+            l_lExtraInfo := .t.
+        endif
+    endscan
+
+    scan all
+        if !l_lExtraInfo
+            l_cLine := ListOfColumns->Column_Name
+
+        else
+            l_cLine := padr(ListOfColumns->Column_Name,l_nMaxWidth)
+
+            do case
+            case ListOfColumns->Column_UseStatus = USESTATUS_PROPOSED
+                l_cLine += [ (Proposed)]
+            case ListOfColumns->Column_UseStatus = USESTATUS_DISCONTINUED
+                l_cLine += [ (Discontinued)]
+            endcase
+
+        endif
+
+        l_cHtml += l_cLine+CRLF
+    endscan
+l_cHtml += [</pre>]
+
+// ExportTableToHtmlFile("ListOfCustomFieldValues",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
 AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
 AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID})
@@ -5396,6 +5690,9 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             endif
         endif
         
+        l_cHtml += [<input type="button" role="button" value="Copy Column List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
+        l_cHtml += [copyToClip(document.getElementById('PreColumnsToClipboard').innerText);return false;">]
+
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
@@ -5421,8 +5718,13 @@ else
                             l_cHtml += [</tr>]
                             l_cHtml += [<tr>]
                                 l_cHtml += [<td><span class="me-2 ms-3">Column</span></td>]
-                                l_cHtml += [<td><input type="text" name="TextColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
-                                l_cHtml += [<td><input type="text" name="TextColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                                l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
+                                l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                            l_cHtml += [</tr>]
+                            l_cHtml += [<tr>]
+                                l_cHtml += [<td><span class="me-2 ms-3">Static UID</span></td>]
+                                //Made maxlength larger to work around trailing blank and tabs
+                                l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+["></td>]
                             l_cHtml += [</tr>]
                         l_cHtml += [</table>]
                     l_cHtml += [</td>]
@@ -5446,6 +5748,9 @@ else
             l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
             l_nColspan := 10
+            if l_lHasExternalId
+                l_nColspan++
+            endif
             if l_nNumberOfCustomFieldValues > 0
                 l_nColspan++
             endif
@@ -5480,10 +5785,12 @@ else
                 l_cHtml += [<th class="text-white">Description</th>]
                 l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                if l_lHasExternalId
+                    l_cHtml += [<th class="text-white">External Id</th>]
+                endif
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
-
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                 endif
@@ -5638,6 +5945,14 @@ else
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
                     l_cHtml += [</td>]
 
+                    if l_lHasExternalId
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if nvl(ListOfColumns->Column_ExternalId,0) > 0
+                                l_cHtml += trans(ListOfColumns->Column_ExternalId)
+                            endif
+                        l_cHtml += [</td>]
+                    endif
+
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
@@ -5672,25 +5987,29 @@ local l_cTableName
 local l_cTableDescription
 local l_cColumnName
 local l_cColumnDescription
+local l_cColumnStaticUID
 local l_cURL
 
 oFcgi:TraceAdd("ColumnListFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextColumnName"))
-l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextColumnDescription"))
+l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
+l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
+l_cColumnStaticUID   := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnStaticUID"))
 
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cColumnName)
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cColumnDescription)
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,l_cColumnStaticUID)
 
     l_cHtml += ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_oNavData)
 
 case l_cActionOnSubmit == "Reset"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,"")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription","")
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,"")
 
     l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
                                                                 PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)+[/]+;
@@ -5864,6 +6183,7 @@ local l_cErrorText          := hb_DefaultValue(par_cErrorText,"")
 local l_cName               := hb_HGetDef(par_hValues,"Name","")
 local l_lTrackNameChanges   := nvl(hb_HGetDef(par_hValues,"TrackNameChanges",.t.),.t.)
 local l_cAKA                := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
+local l_cStaticUID          := nvl(hb_HGetDef(par_hValues,"StaticUID",""),"")
 local l_nUsedAs             := hb_HGetDef(par_hValues,"UsedAs",1)
 local l_nUsedBy             := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
 local l_cTags               := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
@@ -5885,6 +6205,7 @@ local l_cForeignKeyUse      := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),""
 local l_iFk_Enumeration     := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
 local l_cLastNativeType     := hb_HGetDef(par_hValues,"LastNativeType","")
 local l_lShowPrimary        := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
+local l_iExternalId         := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 
 local l_iTypeCount
 
@@ -6258,6 +6579,15 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextAKA" id="TextAKA" value="]+FcgiPrepFieldForValue(l_cAKA)+[" maxlength="200" size="80"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[></td>]
     l_cHtml += [</tr>]
 
+    if !empty(l_cStaticUID)
+        l_cHtml += [<tr class="pb-5">]
+            l_cHtml += [<td class="pe-2 pb-3">Static UID</td>]
+            l_cHtml += [<td class="pb-3"><span>]+l_cStaticUID+[</span>]
+            l_cHtml += [<input type="hidden" name="TextStaticUID" id="TextStaticUID" value="]+FcgiPrepFieldForValue(l_cStaticUID)+[">]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+    endif
+
     l_cHtml += [<tr class="pb-5">]
         l_cHtml += [<td class="pe-2 pb-3">Used As</td>]
         l_cHtml += [<td class="pb-3">]
@@ -6500,9 +6830,18 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
+    if !empty(l_iExternalId)
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">External Id</td>]
+            l_cHtml += [<td class="pb-3">]+trans(l_iExternalId)+[ (Created via API call)</td>]
+        l_cHtml += [</tr>]
+    endif
+
     l_cHtml += CustomFieldsBuild(par_iApplicationPk,USEDON_COLUMN,par_iPk,par_hValues,iif(oFcgi:p_nAccessLevelDD >= 5,[],[disabled]))
 
     l_cHtml += [</table>]
+
+    l_cHtml += [<input type="hidden" name="TextExternalId" id="TextExternalId" value="]+trans(l_iExternalId)+[">]
     
 l_cHtml += [</div>]
 
@@ -6544,6 +6883,7 @@ local l_iColumnFk_TableForeign
 local l_cColumnForeignKeyUse
 local l_iColumnFk_Enumeration
 local l_lShowPrimary
+local l_iColumnExternalId
 
 local l_iColumnOrder
 local l_iTypePos   //The position in the oFcgi:p_ColumnTypes array
@@ -6579,7 +6919,7 @@ l_iColumnPk                 := Val(oFcgi:GetInputValue("TableKey"))
 
 l_lShowPrimary              := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
-l_cColumnName               := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cColumnName               := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_lColumnTrackNameChanges   := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cColumnAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cColumnAKA)
@@ -6626,6 +6966,8 @@ l_iColumnFk_Enumeration     := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
 
 l_nColumnDocStatus          := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cColumnDescription        := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+
+l_iColumnExternalId         := Val(oFcgi:GetInputValue("TextExternalId"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -7035,6 +7377,7 @@ case !empty(l_cErrorMessage)
     l_hValues["Fk_TableForeign"]    := l_iColumnFk_TableForeign
     l_hValues["ForeignKeyUse"]      := l_cColumnForeignKeyUse
     l_hValues["Fk_Enumeration"]     := l_iColumnFk_Enumeration
+    l_hValues["ExternalId"]         := l_iColumnExternalId
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_COLUMN,@l_hValues)
 
@@ -7120,7 +7463,7 @@ with object l_oDB1
     :SQL("ListOfIndexes")
     l_nNumberOfIndexes := :Tally
 
-    // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
+    // ExportTableToHtmlFile("ListOfIndexes",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,25,.t.)
 
 endwith
 
@@ -7509,7 +7852,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iIndexPk     := Val(oFcgi:GetInputValue("TableKey"))
 
 // l_cName        := SanitizeInputSQLIdentifier("Index",oFcgi:GetInputValue("TextName"))
-l_cName        := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cName        := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 
 l_nUsedBy      := Val(oFcgi:GetInputValue("ComboUsedBy"))
 l_nUseStatus   := Val(oFcgi:GetInputValue("ComboUseStatus"))
@@ -7811,7 +8154,9 @@ local l_oDB_ListOfEnumerationsEnumValueCounts := hb_SQLData(oFcgi:p_o_SQLConnect
 local l_oDB_ListOfReferencedByCounts          := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfPreviousName                := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
+local l_nCountProposed
 local l_nCount
+local l_nCountDiscontinued
 local l_nNumberOfEnumerations
 
 local l_nSearchMode
@@ -7834,6 +8179,13 @@ local l_cSearchExtraFilters
 local l_json_ExtraFilters
 
 local l_lWarnings := .f.
+local l_lHasExternalId :=.f.
+
+local l_cLine
+local l_nMaxWidth
+local l_lExtraInfo
+
+local l_nColspan
 
 oFcgi:TraceAdd("EnumerationListFormBuild")
 
@@ -7867,6 +8219,7 @@ with object l_oDB_ListOfEnumerations
     :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
     :Column("Enumeration.TestWarning"    ,"Enumeration_TestWarning")
+    :Column("Enumeration.ExternalId"     ,"Enumeration_ExternalId")
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Enumeration.Name)","tag2")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
@@ -7896,9 +8249,12 @@ endwith
 
 if l_nNumberOfEnumerations > 0
     select ListOfEnumerations
-    scan all while !l_lWarnings
+    scan all while !l_lWarnings .or. !l_lHasExternalId
         if !empty(nvl(ListOfEnumerations->Enumeration_TestWarning,""))
             l_lWarnings := .t.
+        endif
+        if nvl(ListOfEnumerations->Enumeration_ExternalId,0) > 0
+            l_lHasExternalId := .t.
         endif
     endscan
 
@@ -7920,7 +8276,12 @@ if l_nNumberOfEnumerations > 0
     with object l_oDB_ListOfEnumerationsEnumValueCounts
         :Table("0a20a86a-a519-451c-a01b-388f16a4c909","Enumeration")
         :Column("Enumeration.pk" ,"Enumeration_pk")
-        :Column("Count(*)" ,"EnumValueCount")
+        // :Column("Count(*)" ,"EnumValueCount")
+
+        :Column("SUM(CASE WHEN EnumValue.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )"                                          ,"EnumValueCountProposed")
+        :Column("SUM(CASE WHEN EnumValue.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"EnumValueCount")
+        :Column("SUM(CASE WHEN EnumValue.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )"                                      ,"EnumValueCountDiscontinued")
+
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -7935,7 +8296,12 @@ if l_nNumberOfEnumerations > 0
     with object l_oDB_ListOfReferencedByCounts
         :Table("5322e123-b074-4173-a59d-ef848e3e30fc","Enumeration")
         :Column("Enumeration.pk" ,"Enumeration_pk")
-        :Column("Count(*)" ,"ColumnCount")
+        // :Column("Count(*)" ,"ColumnCount")
+
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )"                                          ,"ColumnCountProposed")
+        :Column("SUM(CASE WHEN Column.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"ColumnCount")
+        :Column("SUM(CASE WHEN Column.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )"                                      ,"ColumnCountDiscontinued")
+
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         :Join("inner","Column","","Column.fk_Enumeration = Enumeration.pk and trim(Column.type) = 'E'")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -7998,18 +8364,58 @@ l_cHtml += [{]
 l_cHtml += [}]
 l_cHtml += [</script>]
 
+l_cHtml += GetCopyToClipboardJavaScript("CopyRoster")
+
+l_cHtml += [<pre id="PreEnumerationsToClipboard" style="display:none;">]
+    select ListOfEnumerations
+    l_nMaxWidth  := 0
+    l_lExtraInfo := .f.
+
+    scan all
+        l_nMaxWidth := max(l_nMaxWidth,len(ListOfEnumerations->Enumeration_Name))
+        if ListOfEnumerations->Enumeration_UseStatus = USESTATUS_PROPOSED .or. ;
+           ListOfEnumerations->Enumeration_UseStatus = USESTATUS_DISCONTINUED
+            l_lExtraInfo := .t.
+        endif
+    endscan
+
+    scan all
+        if !l_lExtraInfo
+            l_cLine := ListOfEnumerations->Enumeration_Name
+
+        else
+            l_cLine := padr(ListOfEnumerations->Enumeration_Name,l_nMaxWidth)
+
+            do case
+            case ListOfEnumerations->Enumeration_UseStatus = USESTATUS_PROPOSED
+                l_cLine += [ (Proposed)]
+            case ListOfEnumerations->Enumeration_UseStatus = USESTATUS_DISCONTINUED
+                l_cLine += [ (Discontinued)]
+            endcase
+
+        endif
+
+        l_cHtml += l_cLine+CRLF
+    endscan
+
+l_cHtml += [</pre>]
+
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
-    l_cHtml += [<div class="input-group">]
+    l_cHtml += [<div class="input-group mb-3">]
+
+        if oFcgi:p_nAccessLevelDD >= 5
+            l_cHtml += GetButtonOnEditFormNew("New Enumeration",l_cSitePath+[DataDictionaries/NewEnumeration/]+par_cURLApplicationLinkCode+[/])
+        endif
+
+        l_cHtml += [<input type="button" role="button" value="Copy Enumeration List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
+        l_cHtml += [copyToClip(document.getElementById('PreEnumerationsToClipboard').innerText);return false;">]
+
+    l_cHtml += [</div><div class="input-group">]
         l_cHtml += [<table>]
             l_cHtml += [<tr>]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
-                    if oFcgi:p_nAccessLevelDD >= 5
-                        l_cHtml += GetButtonOnEditFormNew("New Enumeration",l_cSitePath+[DataDictionaries/NewEnumeration/]+par_cURLApplicationLinkCode+[/])
-                        l_cHtml += [<span class="ms-5"></span>]
-                    else
-                        l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
-                    endif
+                    l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
                 l_cHtml += [</td>]
                 // ----------------------------------------
                 l_cHtml += [<td valign="top">]
@@ -8133,6 +8539,14 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [</form>]
 
 if !empty(l_nNumberOfEnumerations)
+    l_nColspan := 8
+    if l_lHasExternalId
+        l_nColspan++
+    endif
+    if l_lWarnings
+        l_nColspan++
+    endif
+
     l_cHtml += [<div class="m-3"></div>]
 
     l_cHtml += [<div class="row justify-content-center m-3">]
@@ -8140,7 +8554,7 @@ if !empty(l_nNumberOfEnumerations)
 
             l_cHtml += [<table class="table table-sm table-bordered">] //  table-striped
             l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_lWarnings,"9","8")+[">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
+                l_cHtml += [<th class="text-white text-center" colspan="]+trans(l_nColspan)+[">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
             l_cHtml += [</tr>]
 
             l_cHtml += [<tr class="bg-primary bg-gradient">]
@@ -8153,6 +8567,9 @@ if !empty(l_nNumberOfEnumerations)
                 l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                 l_cHtml += [<th class="text-white text-center">Referenced<br>By</th>]
                 // l_cHtml += [<th class="text-white text-center">Warnings</th>]
+                if l_lHasExternalId
+                    l_cHtml += [<th class="text-white">External Id</th>]
+                endif
                 if l_lWarnings
                     // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
@@ -8184,13 +8601,30 @@ if !empty(l_nNumberOfEnumerations)
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]+EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength)+[</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
-                        if l_nCount > 0
+                        // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
+                        // if l_nCount > 0
+                        //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
+                        //                                                                         PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
+                        //                                                                         PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                        //                                                                         [">]+Trans(l_nCount)+[</a>]
+                        // endif
+
+                        if el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1")
+                            l_nCountProposed     := ListOfEnumerationsEnumValueCounts->EnumValueCountProposed
+                            l_nCount             := ListOfEnumerationsEnumValueCounts->EnumValueCount
+                            l_nCountDiscontinued := ListOfEnumerationsEnumValueCounts->EnumValueCountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
+                        endif
+                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
                                                                                                 PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
                                                                                                 PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
-                                                                                                [">]+Trans(l_nCount)+[</a>]
+                                                                                                [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                         endif
+
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -8206,14 +8640,39 @@ if !empty(l_nNumberOfEnumerations)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  // Referenced By
-                        l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1") , ListOfReferencedByCounts->ColumnCount , 0)
-                        if l_nCount > 0
+                        // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1") , ListOfReferencedByCounts->ColumnCount , 0)
+                        // if l_nCount > 0
+                        //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
+                        //                                                                                 PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
+                        //                                                                                 PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                        //                                                                                 [">]+Trans(l_nCount)+[</a>]
+                        // endif
+
+                        if el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1")
+                            l_nCountProposed     := ListOfReferencedByCounts->ColumnCountProposed
+                            l_nCount             := ListOfReferencedByCounts->ColumnCount
+                            l_nCountDiscontinued := ListOfReferencedByCounts->ColumnCountDiscontinued
+                        else
+                            l_nCountProposed     := 0
+                            l_nCount             := 0
+                            l_nCountDiscontinued := 0
+                        endif
+                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
                                                                                                         PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
                                                                                                         PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
-                                                                                                        [">]+Trans(l_nCount)+[</a>]
+                                                                                                        [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                         endif
+
                     l_cHtml += [</td>]
+
+                    if l_lHasExternalId
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if nvl(ListOfEnumerations->Enumeration_ExternalId,0) > 0
+                                l_cHtml += trans(ListOfEnumerations->Enumeration_ExternalId)
+                            endif
+                        l_cHtml += [</td>]
+                    endif
 
                     if l_lWarnings
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -8247,6 +8706,7 @@ local l_nDocStatus        := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
 local l_iImplementAs      := nvl(hb_HGetDef(par_hValues,"ImplementAs",ENUMERATIONIMPLEMENTAS_NATIVESQLENUM),ENUMERATIONIMPLEMENTAS_NATIVESQLENUM)
 local l_iImplementLength  := nvl(hb_HGetDef(par_hValues,"ImplementLength",1),1)
+local l_iExternalId       := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 local l_cCombinedPath
 
 local l_oDataTableInfo
@@ -8437,7 +8897,16 @@ else
         l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
         l_cHtml += [</tr>]
 
+        if !empty(l_iExternalId)
+            l_cHtml += [<tr>]
+                l_cHtml += [<td valign="top" class="pe-2 pb-3">External Id</td>]
+                l_cHtml += [<td class="pb-3">]+trans(l_iExternalId)+[ (Created via API call)</td>]
+            l_cHtml += [</tr>]
+        endif
+
         l_cHtml += [</table>]
+
+        l_cHtml += [<input type="hidden" name="TextExternalId" id="TextExternalId" value="]+trans(l_iExternalId)+[">]
         
     l_cHtml += [</div>]
 
@@ -8465,6 +8934,7 @@ local l_iEnumerationDocStatus
 local l_cEnumerationDescription
 local l_iEnumerationImplementAs
 local l_iEnumerationImplementLength
+local l_iEnumerationExternalId
 local l_hValues := {=>}
 local l_cErrorMessage := ""
 local l_oDB1
@@ -8484,7 +8954,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_iNamespacePk                  := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 
-l_cEnumerationName              := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cEnumerationName              := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_lEnumerationTrackNameChanges  := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cEnumerationAKA               := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumerationAKA)
@@ -8505,6 +8975,8 @@ else
         l_iEnumerationImplementLength := 99999
     endif
 endif
+
+l_iEnumerationExternalId := Val(oFcgi:GetInputValue("TextExternalId"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -8593,7 +9065,7 @@ case l_cActionOnSubmit == "Done"
 case l_cActionOnSubmit == "Delete"   // Enumeration
     if oFcgi:p_nAccessLevelDD >= 5
         if CheckIfAllowDestructiveEnumerationDelete(par_iApplicationPk)
-            l_cErrorMessage := CascadeDeleteEnumeration(par_iApplicationPk,l_iEnumerationPk)
+            l_cErrorMessage := CascadeDeleteEnumeration(l_iEnumerationPk)
             if empty(l_cErrorMessage)
                 l_iEnumerationPk := 0
             endif
@@ -8734,6 +9206,7 @@ case !empty(l_cErrorMessage)
     l_hValues["Description"]     := l_cEnumerationDescription
     l_hValues["ImplementAs"]     := l_iEnumerationImplementAs
     l_hValues["ImplementLength"] := l_iEnumerationImplementLength
+    l_hValues["ExternalId"]      := l_iEnumerationExternalId
 
     l_cHtml += EnumerationEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iEnumerationPk,l_hValues)
 
@@ -8775,9 +9248,14 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfEnumValues
 local l_oDB_ListOfEnumValues   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_lHasExternalId :=.f.
 local l_lWarnings := .f.
 local l_nColspan
 local l_cCombinedPath
+
+local l_cLine
+local l_nMaxWidth
+local l_lExtraInfo
 
 oFcgi:TraceAdd("EnumValueListFormBuild")
 
@@ -8793,6 +9271,7 @@ with object l_oDB_ListOfEnumValues
     :Column("EnumValue.DocStatus"  ,"EnumValue_DocStatus")
     :Column("EnumValue.Description","EnumValue_Description")
     :Column("EnumValue.Order"      ,"EnumValue_Order")
+    :Column("EnumValue.ExternalId" ,"EnumValue_ExternalId")
     :Column("EnumValue.TestWarning","EnumValue_TestWarning")
 
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
@@ -8805,6 +9284,51 @@ endwith
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
                    PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
                    PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/]
+
+l_cHtml += GetCopyToClipboardJavaScript("CopyRoster")
+
+l_cHtml += [<pre id="PreEnumValuesToClipboard" style="display:none;">]
+    select ListOfEnumValues
+    l_nMaxWidth  := 0
+    l_lExtraInfo := .f.
+
+    scan all
+        l_nMaxWidth := max(l_nMaxWidth,len(ListOfEnumValues->EnumValue_Name))
+        if ListOfEnumValues->EnumValue_UseStatus = USESTATUS_PROPOSED .or. ;
+           ListOfEnumValues->EnumValue_UseStatus = USESTATUS_DISCONTINUED .or. ;
+           !hb_IsNil(ListOfEnumValues->EnumValue_Number) .or. ;
+           (!hb_IsNil(ListOfEnumValues->EnumValue_Code) .and. !empty(ListOfEnumValues->EnumValue_Code))
+            l_lExtraInfo := .t.
+        endif
+    endscan
+
+    scan all
+        if !l_lExtraInfo
+            l_cLine := ListOfEnumValues->EnumValue_Name
+
+        else
+            l_cLine := padr(ListOfEnumValues->EnumValue_Name,l_nMaxWidth)
+
+            if !hb_IsNil(ListOfEnumValues->EnumValue_Number)
+                l_cLine += [ - Number: ]+trans(ListOfEnumValues->EnumValue_Number)
+            endif
+
+            if !hb_IsNil(ListOfEnumValues->EnumValue_Code) .and. !empty(ListOfEnumValues->EnumValue_Code)
+                l_cLine += [ - Code: ]+alltrim(ListOfEnumValues->EnumValue_Code)
+            endif
+
+            do case
+            case ListOfEnumValues->EnumValue_UseStatus = USESTATUS_PROPOSED
+                l_cLine += [ (Proposed)]
+            case ListOfEnumValues->EnumValue_UseStatus = USESTATUS_DISCONTINUED
+                l_cLine += [ (Discontinued)]
+            endcase
+
+        endif
+
+        l_cHtml += l_cLine+CRLF
+    endscan
+l_cHtml += [</pre>]
 
 AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_LinkUID})
 AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_LinkUID})
@@ -8821,6 +9345,10 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if l_nNumberOfEnumValues > 1
                 l_cHtml += GetButtonOnListFormCaptionAndRedirect("Order Values",l_cSitePath+[DataDictionaries/OrderEnumValues/]+l_cCombinedPath)
             endif
+
+            l_cHtml += [<input type="button" role="button" value="Copy Values List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
+            l_cHtml += [copyToClip(document.getElementById('PreEnumValuesToClipboard').innerText);return false;">]
+
         endif
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -8846,13 +9374,19 @@ else
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
     select ListOfEnumValues
-    scan all while !l_lWarnings
+    scan all while !l_lWarnings .or. !l_lHasExternalId
         if !empty(nvl(ListOfEnumValues->EnumValue_TestWarning,""))
             l_lWarnings := .t.
+        endif
+        if nvl(ListOfEnumValues->EnumValue_ExternalId,0) > 0
+            l_lHasExternalId := .t.
         endif
     endscan
 
     l_nColspan := 6
+    if l_lHasExternalId
+        l_nColspan++
+    endif
     if l_lWarnings
         l_nColspan++
     endif
@@ -8873,6 +9407,9 @@ else
                 l_cHtml += [<th class="text-white">Description</th>]
                 l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
                 l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
+                if l_lHasExternalId
+                    l_cHtml += [<th class="text-white">External Id</th>]
+                endif
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                 endif
@@ -8918,6 +9455,14 @@ else
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING)]
                     l_cHtml += [</td>]
+
+                    if l_lHasExternalId
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if nvl(ListOfEnumValues->EnumValue_ExternalId,0) > 0
+                                l_cHtml += trans(ListOfEnumValues->EnumValue_ExternalId)
+                            endif
+                        l_cHtml += [</td>]
+                    endif
 
                     if l_lWarnings
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -9098,6 +9643,7 @@ local l_cCode             := nvl(hb_HGetDef(par_hValues,"Code",""),"")
 local l_nUseStatus        := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
 local l_nDocStatus        := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
 local l_cDescription      := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_iExternalId       := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 local l_cCombinedPath
 local l_cSitePath := oFcgi:p_cSitePath
 
@@ -9203,8 +9749,17 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<td class="pb-3"><textarea]+UPDATE_ONTEXTAREA_SAVEBUTTON+[ name="TextDescription" id="TextDescription" rows="4" cols="80"]+iif(oFcgi:p_nAccessLevelDD >= 3,[],[ disabled])+[>]+FcgiPrepFieldForValue(l_cDescription)+[</textarea></td>]
     l_cHtml += [</tr>]
 
+    if !empty(l_iExternalId)
+        l_cHtml += [<tr>]
+            l_cHtml += [<td valign="top" class="pe-2 pb-3">External Id</td>]
+            l_cHtml += [<td class="pb-3">]+trans(l_iExternalId)+[ (Created via API call)</td>]
+        l_cHtml += [</tr>]
+    endif
+
     l_cHtml += [</table>]
     
+    l_cHtml += [<input type="hidden" name="TextExternalId" id="TextExternalId" value="]+trans(l_iExternalId)+[">]
+
 l_cHtml += [</div>]
 
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
@@ -9229,6 +9784,7 @@ local l_nEnumValueUseStatus
 local l_nEnumValueDocStatus
 local l_cEnumValueDescription
 local l_iEnumValueOrder
+local l_iEnumValueExternalId
 local l_aSQLResult   := {}
 local l_hValues := {=>}
 local l_cErrorMessage := ""
@@ -9245,7 +9801,7 @@ oFcgi:TraceAdd("EnumValueEditFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumValuePk               := Val(oFcgi:GetInputValue("EnumerationKey"))
-l_cEnumValueName             := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cEnumValueName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_lEnumValueTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cEnumValueAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumValueAKA)
@@ -9257,6 +9813,7 @@ l_cEnumValueCode             := SanitizeInput(oFcgi:GetInputValue("TextCode"))
 l_nEnumValueUseStatus        := Val(oFcgi:GetInputValue("ComboUseStatus"))
 l_nEnumValueDocStatus        := Val(oFcgi:GetInputValue("ComboDocStatus"))
 l_cEnumValueDescription      := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_iEnumValueExternalId       := Val(oFcgi:GetInputValue("TextExternalId"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -9447,13 +10004,14 @@ endcase
 
 do case
 case !empty(l_cErrorMessage)
-    l_hValues["Name"]            := l_cEnumValueName
-    l_hValues["AKA"]             := l_cEnumValueAKA
-    l_hValues["Number"]          := l_cEnumValueNumber
-    l_hValues["Code"]            := l_cEnumValueCode
-    l_hValues["UseStatus"]       := l_nEnumValueUseStatus
-    l_hValues["DocStatus"]       := l_nEnumValueDocStatus
-    l_hValues["Description"]     := l_cEnumValueDescription
+    l_hValues["Name"]        := l_cEnumValueName
+    l_hValues["AKA"]         := l_cEnumValueAKA
+    l_hValues["Number"]      := l_cEnumValueNumber
+    l_hValues["Code"]        := l_cEnumValueCode
+    l_hValues["UseStatus"]   := l_nEnumValueUseStatus
+    l_hValues["DocStatus"]   := l_nEnumValueDocStatus
+    l_hValues["Description"] := l_cEnumValueDescription
+    l_hValues["ExternalId"]  := l_iEnumValueExternalId
 
     l_cHtml += EnumValueEditFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData,l_cErrorMessage,l_iEnumValuePk,l_hValues)
 
@@ -9650,22 +10208,7 @@ else
 
     if !empty(par_cScript)
 
-        l_cJavaScript := [function copyToClip(str) {]
-        l_cJavaScript +=   [function listener(e) {]
-        l_cJavaScript +=     [e.clipboardData.setData("text/html", str);]
-        l_cJavaScript +=     [e.clipboardData.setData("text/plain", str);]
-        l_cJavaScript +=     [e.preventDefault();]
-        l_cJavaScript +=   [}]
-        l_cJavaScript +=   [document.addEventListener("copy", listener);]
-        l_cJavaScript +=   [document.execCommand("copy");]
-        l_cJavaScript +=   [document.removeEventListener("copy", listener);]
-        l_cJavaScript +=   [$('#CopySourceCode').addClass('btn-success').removeClass('btn-primary');]
-        l_cJavaScript += [};]
-
-        l_cHtml += [<script type="text/javascript" language="Javascript">]+CRLF
-        l_cHtml += l_cJavaScript+CRLF
-        l_cHtml += [</script>]+CRLF
-
+        l_cHtml += GetCopyToClipboardJavaScript("CopySourceCode")
 
         l_cHtml += [<div class="m-3">]
             l_cHtml += [<div class="fs-4">]
@@ -10452,7 +10995,7 @@ case l_cActionOnSubmit == "Done"
 case l_cActionOnSubmit == "Delete"   // Tag
     if oFcgi:p_nAccessLevelDD >= 5
         if CheckIfAllowDestructiveTableDelete(par_iApplicationPk)
-            l_cErrorMessage := CascadeDeleteTag(par_iApplicationPk,l_iTagPk)
+            l_cErrorMessage := CascadeDeleteTag(l_iTagPk)
             if empty(l_cErrorMessage)
                 oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
             endif
@@ -10749,7 +11292,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iTemplateTablePk   := Val(oFcgi:GetInputValue("TemplateTableKey"))
 
 // l_cTemplateTableName := SanitizeInputSQLIdentifier("Table",oFcgi:GetInputValue("TextName"))
-l_cTemplateTableName := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cTemplateTableName := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -10811,7 +11354,7 @@ case l_cActionOnSubmit == "Done"
     
 case l_cActionOnSubmit == "Delete"   // Table
     if oFcgi:p_nAccessLevelDD >= 5
-        l_cErrorMessage := CascadeDeleteTemplateTable(par_iApplicationPk,l_iTemplateTablePk)
+        l_cErrorMessage := CascadeDeleteTemplateTable(l_iTemplateTablePk)
         if empty(l_cErrorMessage)
             l_iTemplateTablePk := 0
         endif
@@ -11687,7 +12230,7 @@ l_iPk                 := Val(oFcgi:GetInputValue("TableKey"))
 l_lShowPrimary        := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
 // l_cName               := SanitizeInputSQLIdentifier("Column",oFcgi:GetInputValue("TextName"))
-l_cName               := SanitizeInput(oFcgi:GetInputValue("TextName"))
+l_cName               := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 l_cAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cAKA)
     l_cAKA := NIL

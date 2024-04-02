@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.4"
+#define BUILDVERSION "4.5"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,9 +14,9 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "4.5"
-#define MIN_HARBOUR_EL_VERSION   "4.1"
-#define MIN_HARBOUR_FCGI_VERSION "1.8"
+#define MIN_HARBOUR_ORM_VERSION  "4.6"
+#define MIN_HARBOUR_EL_VERSION   "4.3"
+#define MIN_HARBOUR_FCGI_VERSION "1.9"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
@@ -191,3 +191,4 @@
 #define COLUMN_USEDAS_PRIMARY_KEY 2
 #define COLUMN_USEDAS_FOREIGN_KEY 3
 #define COLUMN_USEDAS_SUPPORT     4
+

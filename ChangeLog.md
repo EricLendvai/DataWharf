@@ -1,5 +1,21 @@
 # DataWharf - Change Log
 
+## 04/02/2024 v 4.5
+* Added Previous Name Tables to Export/Import.
+* Dots (periods) are not allowed, and will be automatically removed, in Namespaces, Tables, Columns, Enumerations, and Indexes.
+* New integrity test: Enumerations must have at least one present value.
+* New integrity test: Uniqueness of "Number" in Enumeration Values field in each Enumerations.
+* Automatic prevention for running old versions of the DataWharf application. The WharfConfig tables in the ORM namespace will help detect those scenarios. 
+* Automatic removal of StreamFile Folders and "volatile"."FileStream" data when a first connection to the DataWharf PostgreSQL database occurs.
+* New "Static UID" value for all columns. Will be used for creating Indexes and Constraints in future version of DataWharf.
+* Counts on List of Applications, Enumerations, Tables are color coded to represent Proposed and Discontinued elements.
+* Export to Harbour_ORM and generations of migrations scrips will not include Proposed elements.
+* New "Copy .... List To Clipboard" feature in list of Tables, Columns, Enumerations and Enumeration Values.
+* New API Endpoints: CreateUpdateNamespaces, CreateUpdateEnumerations, CreateUpdateTables. See the file API_Documentation.md for instructions and examples.   
+* New ExternalId Column in Namespace, Table, Column, Enumeration and Enumeration Values can be used to link to a 3rd party dictionary. Can only be set when using the new API Endpoints.
+* Personal Note: Over-Engineering is good when made for the right reason. DataWharf is set to auto-fix its own schema, and ready to be deployed in a farm of web servers.   
+PostgreSQL server and Google (the company) are good examples of using the Over-Engineering practices.
+
 ## 03/07/2024 v 4.4
 * Allow connections to DataWharf's own PostgreSQL database to be retried by refreshing any web page. This makes the application more resilient in case the database was not running at first or the connection is lost.
 

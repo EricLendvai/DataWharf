@@ -1684,7 +1684,7 @@ if l_nNumberOfModels > 0
             :CreateIndexes()
         endwith
     endwith
-// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts1",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfModelsLinkedModelCounts1.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts1",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfModelsLinkedModelCounts1.html","From PostgreSQL",,25,.t.)
 
 
 //     with object l_oDB_ListOfModelsLinkedModelCounts2
@@ -1700,7 +1700,7 @@ if l_nNumberOfModels > 0
 //             :CreateIndexes()
 //         endwith
 //     endwith
-// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts2",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfModelsLinkedModelCounts2.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("ListOfModelsLinkedModelCounts2",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfModelsLinkedModelCounts2.html","From PostgreSQL",,25,.t.)
 
 
     with object l_oDB_ListOfModelsModelingDiagramCounts
@@ -3157,7 +3157,6 @@ local l_cSelectedAssociationPk
 
 local l_nNumberOfPackages
 local l_nNumberOfEntities
-local l_nNumberOfAssociations
 
 local l_cTreeIdPrefix := [packagesTree-]
 
@@ -3202,7 +3201,6 @@ with object l_oDB_ListOfAssociations
     //:Join("left outer","Package","","Association.fk_Package = Package.pk")
     :OrderBy("Association_Name")
     :SQL("ListOfAssociations")
-    l_nNumberOfAssociations := :Tally
 endwith
 
 //This is using https://github.com/chrisv2/bs5treeview

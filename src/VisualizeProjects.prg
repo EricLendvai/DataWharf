@@ -370,7 +370,7 @@ with object l_oDB_ListOfEdgesEntityEntity
         l_nNumberOfLinksInDiagram += (:Tally / 2)    // 2 record will be paired for each link
         //Pairs of records should be created
 
- //ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
+ //ExportTableToHtmlFile("ListOfEdgesEntityEntity",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     else
         // A subset of Entities
@@ -421,7 +421,7 @@ with object l_oDB_ListOfEdgesEntityEntity
                 endif
             endif
         endscan
-        // ExportTableToHtmlFile("ListOfEdgesEntityEntity",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
+        // ExportTableToHtmlFile("ListOfEdgesEntityEntity",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEdgesEntityEntity.html","From PostgreSQL",,25,.t.)
 
     endif
 endwith

@@ -1,21 +1,6 @@
 #include "DataWharf.ch"
 
 //=================================================================================================================
-// Example: /api/GetApplicationInformation
-function GetApplicationInformation(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
-
-local l_cResponse := {=>}
-
-l_cResponse["ApplicationName"]    := oFcgi:p_cThisAppTitle
-l_cResponse["ApplicationVersion"] := BUILDVERSION
-l_cResponse["SiteBuildInfo"]      :=hb_buildinfo()
-
-// _M_ Should we also return the PostgreSQL host name and database name?
-
-return hb_jsonEncode(l_cResponse)
-//=================================================================================================================
-
-//=================================================================================================================
 // Example: /api/projects/v1
 function APIGetListOfProjects(par_cAccessToken,par_cAPIEndpointName,par_nTokenAccessMode)
 

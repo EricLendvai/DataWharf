@@ -102,8 +102,13 @@ local l_cHtml := ""
 local l_cHtmlPrevious
 local l_cHtmlNext
 local l_FoundRecord
+local l_cURLPath := par_cURLPath
 
-l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Back To "+par_cItems,l_cSitePath+[DataDictionaries/]+par_cListAction+[/]+par_cURLPath+[/])
+if right(l_cURLPath,1) <> "/"    // Sometimes only the Application LinkCode is received, other time a series of element path elements.
+    l_cURLPath += "/"
+endif
+
+l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Back To "+par_cItems,l_cSitePath+[DataDictionaries/]+par_cListAction+[/]+l_cURLPath)
 
 if par_nNumberOfTemplateColumns > 1
     l_FoundRecord    := .f.
@@ -113,7 +118,7 @@ if par_nNumberOfTemplateColumns > 1
     scan all
         if l_FoundRecord
             l_cHtmlNext := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cEditAction+[/]+;
-                                                                                         par_cURLPath+[/]+;
+                                                                                         l_cURLPath+;
                                                                                          eval(par_bCode)+;
                                                                                          ["><span class="bi-arrow-right"></span>&nbsp;]+par_cItem+[</a>]
             exit
@@ -122,7 +127,7 @@ if par_nNumberOfTemplateColumns > 1
                 l_FoundRecord := .t.
             else
                 l_cHtmlPrevious := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cEditAction+[/]+;
-                                                                                                 par_cURLPath+[/]+;
+                                                                                                 l_cURLPath+;
                                                                                                  eval(par_bCode)+;
                                                                                                  ["><span class="bi-arrow-left"></span>&nbsp;]+par_cItem+[</a>]
             endif
@@ -136,7 +141,7 @@ endif
 
 return l_cHtml
 //=================================================================================================================
-function GetNextPreviousTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTablePk,par_cURLAction)
+function GetNextPreviousTable(par_iApplicationPk,par_cURLPath,par_iTablePk,par_cURLAction)
 local l_cHtml := ""
 local l_oDB_ListOfTables       := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_AnyTags            := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -163,6 +168,7 @@ local l_cSearchTableUsageStatus
 local l_cSearchTableDocStatus
 local l_cSearchColumnUsageStatus
 local l_cSearchColumnDocStatus
+local l_cSearchColumnStaticUID
 local l_cSearchColumnTypes
 local l_cSearchExtraFilters
 
@@ -197,6 +203,7 @@ l_cSearchTableUsageStatus       := GetUserSetting("Application_"+Trans(par_iAppl
 l_cSearchTableDocStatus         := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus")
 l_cSearchColumnUsageStatus      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus")
 l_cSearchColumnDocStatus        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDocStatus")
+l_cSearchColumnStaticUID        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID")
 l_cSearchColumnTypes            := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTypes")
 l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ExtraFilters")
 
@@ -247,6 +254,7 @@ with object l_oDB_ListOfTables
                               l_cSearchTableDocStatus,;
                               l_cSearchColumnUsageStatus,;
                               l_cSearchColumnDocStatus,;
+                              l_cSearchColumnStaticUID,;
                               l_cSearchColumnTypes,;
                               l_cSearchExtraFilters;
                               )
@@ -255,7 +263,7 @@ with object l_oDB_ListOfTables
     :OrderBy("tag2")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTablePk,par_cURLApplicationLinkCode,:Tally,"Table","Tables","ListTables",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTablePk,par_cURLPath,:Tally,"Table","Tables","ListTables",par_cURLAction,l_bCode)
     // SendToClipboard(:LastSQL())
 
 endwith
@@ -263,7 +271,7 @@ endwith
 return l_cHtml
 //=================================================================================================================
 function GetNextPreviousColumn(par_iTablePk,par_cURLPath,par_iColumnPk)
-local l_cHtml := ""
+local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
@@ -283,14 +291,13 @@ with object l_oDB_ListOfColumns
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    // l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iColumnPk,par_cURLPath,:Tally,"Column","Columns","ListColumns","EditColumn",l_bCode)
     l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iColumnPk,par_cURLPath,:Tally,"Column","Columns","ListColumns","EditColumn",l_bCode)
 endwith
 
 return l_cHtml
 //=================================================================================================================
 function GetNextPreviousTemplateColumn(par_iTemplateTablePk,par_cURLPath,par_iTemplateColumnPk)
-local l_cHtml := ""
+local l_cHtml
 local l_oDB_ListOfTemplateColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
@@ -310,21 +317,20 @@ with object l_oDB_ListOfTemplateColumns
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    // l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateColumnPk,par_cURLPath,:Tally,"Template Column","Template Columns","ListTemplateColumns","EditTemplateColumn",l_bCode)
     l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateColumnPk,par_cURLPath,:Tally,"Column","Columns","ListTemplateColumns","EditTemplateColumn",l_bCode)
 endwith
 
 return l_cHtml
 //=================================================================================================================
 function GetNextPreviousEnumValue(par_iEnumerationPk,par_cURLPath,par_iEnumValuePk)
-local l_cHtml := ""
+local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
 return PrepareForURLSQLIdentifier("EnumValue",ListOfRecords->EnumValue_Name,ListOfRecords->EnumValue_LinkUID)+[/]
 }
 
-oFcgi:TraceAdd("GetNextPreviousColumn")
+oFcgi:TraceAdd("GetNextPreviousEnumValue")
 
 with object l_oDB_ListOfColumns
     :Table("a27cc2ee-8d6f-4db0-9653-77ded3821548","EnumValue")
@@ -343,7 +349,7 @@ endwith
 return l_cHtml
 //=================================================================================================================
 function GetNextPreviousIndex(par_iTablePk,par_cURLPath,par_iIndexPk)
-local l_cHtml := ""
+local l_cHtml
 local l_oDB_ListOfIndexes := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
@@ -370,8 +376,8 @@ return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
 //=================================================================================================================
-function GetNextPreviousEnumeration(par_iApplicationPk,par_cURLApplicationLinkCode,par_iEnumerationPk,par_cURLAction)
-local l_cHtml := ""
+function GetNextPreviousEnumeration(par_iApplicationPk,par_cURLPath,par_iEnumerationPk,par_cURLAction)
+local l_cHtml
 local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_nSearchMode
@@ -442,15 +448,15 @@ with object l_oDB_ListOfEnumerations
     :OrderBy("tag2")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumerationPk,par_cURLApplicationLinkCode,:Tally,"Enumeration","Enumerations","ListEnumerations",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumerationPk,par_cURLPath,:Tally,"Enumeration","Enumerations","ListEnumerations",par_cURLAction,l_bCode)
     // SendToClipboard(:LastSQL())
 
 endwith
 
 return l_cHtml
 //=================================================================================================================
-function GetNextPreviousTemplateTable(par_iApplicationPk,par_cURLApplicationLinkCode,par_iTemplateTablePk,par_cURLAction)
-local l_cHtml := ""
+function GetNextPreviousTemplateTable(par_iApplicationPk,par_cURLPath,par_iTemplateTablePk,par_cURLAction)
+local l_cHtml
 local l_oDB_ListOfTemplateTable := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
@@ -470,7 +476,7 @@ with object l_oDB_ListOfTemplateTable
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateTablePk,par_cURLApplicationLinkCode,:Tally,"Template Table","Template Tables","ListTemplateTables",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateTablePk,par_cURLPath,:Tally,"Template Table","Template Tables","ListTemplateTables",par_cURLAction,l_bCode)
     // SendToClipboard(:LastSQL())
 
 endwith
@@ -688,7 +694,7 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
-function CascadeDeleteEnumeration(par_iApplicationPk,par_iEnumerationPk)
+function CascadeDeleteEnumeration(par_iEnumerationPk)
 local l_cErrorMessage := ""
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -718,7 +724,7 @@ with object l_oDB1
 endwith
 return l_cErrorMessage
 //=================================================================================================================
-function CascadeDeleteTag(par_iApplicationPk,par_iTagPk)
+function CascadeDeleteTag(par_iTagPk)
 
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)  // Since executing a select at this level, may not pass l_oDB1 for reuse.
 local l_cErrorMessage := ""
@@ -767,7 +773,7 @@ endwith
 
 return l_cErrorMessage
 //=================================================================================================================
-function CascadeDeleteTemplateTable(par_iApplicationPk,par_iTemplateTablePk)
+function CascadeDeleteTemplateTable(par_iTemplateTablePk)
 local l_cErrorMessage := ""
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -868,24 +874,25 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-function TableListFormAddFiltering(par_oDB,;
-                                          par_nSearchMode,;
-                                          par_cSearchNamespaceName,;
-                                          par_cSearchNamespaceDescription,;
-                                          par_cSearchTableName,;
-                                          par_cSearchTableDescription,;
-                                          par_cSearchColumnName,;
-                                          par_cSearchColumnDescription,;
-                                          par_cSearchEnumerationName,;
-                                          par_cSearchEnumerationDescription,;
-                                          par_cSearchTableTags,;
-                                          par_cSearchTableUsageStatus,;
-                                          par_cSearchTableDocStatus,;
-                                          par_cSearchColumnUsageStatus,;
-                                          par_cSearchColumnDocStatus,;
-                                          par_cSearchColumnTypes,;
-                                          par_cSearchExtraFilters;
-                                        )
+function TableListFormAddFiltering( par_oDB,;
+                                    par_nSearchMode,;
+                                    par_cSearchNamespaceName,;
+                                    par_cSearchNamespaceDescription,;
+                                    par_cSearchTableName,;
+                                    par_cSearchTableDescription,;
+                                    par_cSearchColumnName,;
+                                    par_cSearchColumnDescription,;
+                                    par_cSearchEnumerationName,;
+                                    par_cSearchEnumerationDescription,;
+                                    par_cSearchTableTags,;
+                                    par_cSearchTableUsageStatus,;
+                                    par_cSearchTableDocStatus,;
+                                    par_cSearchColumnUsageStatus,;
+                                    par_cSearchColumnDocStatus,;
+                                    par_cSearchColumnStaticUID,;
+                                    par_cSearchColumnTypes,;
+                                    par_cSearchExtraFilters;
+                                )
 local l_lJoinColumns     := .f.
 local l_lJoinEnumeration := .f.
 local l_aColumnTypeCode
@@ -973,6 +980,11 @@ with object par_oDB
                 l_lJoinColumns := .t.
                 :Where("Column.DocStatus in ("+l_cSQLList+")")
             endif
+        endif
+
+        if !empty(par_cSearchColumnStaticUID)
+            l_lJoinColumns := .t.
+            :Where("Column.StaticUID = ^",par_cSearchColumnStaticUID)
         endif
 
         if !empty(par_cSearchColumnTypes)
@@ -1262,10 +1274,9 @@ if !empty(par_iPk)
     //Get Previous Names
     with object l_oDB_ListOfPreviousName
         :Table("678ac09c-093a-4e9e-a88b-f8fd4374baaf",par_cRootTable+"PreviousName")
-        :Column(par_cRootTable+"PreviousName.Pk"      ,"PreviousName_Pk")
-        :Column(par_cRootTable+"PreviousName.Name"    ,"PreviousName_Name")
-        // :Column(par_cRootTable+"PreviousName.DateTime","tag1")
-        :Column(par_cRootTable+"PreviousName.Pk","tag1")                            //Since it is an incremental field
+        :Column(par_cRootTable+"PreviousName.Pk"  ,"PreviousName_Pk")
+        :Column(par_cRootTable+"PreviousName.Name","PreviousName_Name")
+        :Column(par_cRootTable+"PreviousName.Pk"  ,"tag1")                            //Since it is an incremental field
         :Where(par_cRootTable+"PreviousName.fk_"+par_cRootTable+" = ^",par_iPk)
         :OrderBy("tag1","desc")
         :SQL("ListOfPreviousName")
@@ -1312,9 +1323,9 @@ if !empty(par_iPk) .and. oFcgi:p_nAccessLevelDD >= 5
     l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB_ListOfPreviousName
         :Table("678ac09c-093a-4e9e-a88b-f8fd4374baaf",par_cRootTable+"PreviousName")
-        :Column(par_cRootTable+"PreviousName.Pk"      ,"PreviousName_Pk")
-        :Column(par_cRootTable+"PreviousName.Name"    ,"PreviousName_Name")
-        :Column(par_cRootTable+"PreviousName.DateTime","tag1")
+        :Column(par_cRootTable+"PreviousName.Pk"  ,"PreviousName_Pk")
+        :Column(par_cRootTable+"PreviousName.Name","PreviousName_Name")
+        :Column(par_cRootTable+"PreviousName.Pk"  ,"tag1")
         :Where(par_cRootTable+"PreviousName.fk_"+par_cRootTable+" = ^",par_iPk)
         :OrderBy("tag1","desc")
         :SQL("ListOfPreviousName")

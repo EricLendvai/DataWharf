@@ -137,7 +137,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfFieldsForLoads",OUTPUT_FOLDER+hb_ps()+"MySQL_ListOfFieldsForLoads.html","From MySQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MySQL_ListOfFieldsForLoads.html","From MySQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
@@ -617,7 +617,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
         l_cErrorMessage := "Failed to retrieve Enumeration Meta data."
     else
-        // ExportTableToHtmlFile("ListOfEnumsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfEnumsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
 
         l_cLastNamespace       := ""
         l_cLastEnumerationName := ""
@@ -776,7 +776,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfFieldsForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
@@ -1369,7 +1369,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            // ExportTableToHtmlFile("ListOfFieldsForLoads",OUTPUT_FOLDER+hb_ps()+"MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
@@ -1817,7 +1817,7 @@ with object l_oDB_AllTableColumnsChildrenForForeignKeys
 
 endwith
 
-// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
+// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
 // Pre-load the list of foreign keys in such a matter if can be tested when comparing indexes.
 select AllTableColumnsChildrenForForeignKeys
 scan all for el_IsInlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
@@ -1863,7 +1863,7 @@ if par_nSyncSetForeignKey > 1
                         endwith
 
                     endwith
-    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",OUTPUT_FOLDER+hb_ps()+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
+    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
 
                     select ListOfFieldsForeignKeys
                     scan all
@@ -1935,7 +1935,7 @@ if par_nSyncSetForeignKey > 1
             :SQL("FieldToMarkAsForeignKeys")
 
             // SendToClipboard(:LastSQL())
-            // ExportTableToHtmlFile("FieldToMarkAsForeignKeys",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
+            // ExportTableToHtmlFile("FieldToMarkAsForeignKeys",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_FieldToMarkAsForeignKeys.html","From PostgreSQL",,25,.t.)
 
             if :Tally > 0
                 with object l_oDB2
@@ -1968,7 +1968,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
-            ExportTableToHtmlFile("ListOfIndexesForLoads",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+            ExportTableToHtmlFile("ListOfIndexesForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""

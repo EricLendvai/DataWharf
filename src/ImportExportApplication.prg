@@ -24,7 +24,6 @@ local l_nNumberOfTableRenames
 local l_nNumberOfColumnRenames
 local l_nNumberOfEnumerationRenames
 local l_nNumberOfEnumValueRenames
-local l_nRenameCounter
 
 local l_iTablePk
 local l_iEnumerationPk
@@ -130,7 +129,7 @@ with object l_oDB_ListOfNamespaces
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :Column("Namespace.Name"        ,"Namespace_Name")
     :Column("upper(Namespace.Name)" ,"tag1")
-    :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
+    :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
     :OrderBy("tag1")
     :SQL("ListOfNamespaces")
     l_nNumberOfNamespaces := :Tally
@@ -163,9 +162,9 @@ if l_lContinue
         :GroupBy("tag1")
         :GroupBy("tag2")
 
-        :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
 
         :OrderBy("tag1")
         :OrderBy("tag2")
@@ -218,9 +217,9 @@ if l_lContinue
         
         :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
 
-        :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-        :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
         :SQL("ListOfColumns")
         if :Tally < 0
@@ -230,7 +229,9 @@ if l_lContinue
                 :Index("tag1","strtran(str(Table_pk,10)+str(Column_Order,10),' ','0')")   // Fixed length of the numbers with leading '0'
                 :CreateIndexes()
             endwith
-// ExportTableToHtmlFile("ListOfColumns",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfColumns_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
+// ExportTableToHtmlFile("ListOfColumns",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfColumns_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
+// SendToClipboard(:LastSQL())
+
         endif
     endwith
 endif
@@ -251,9 +252,9 @@ if l_lContinue
         // :Column("EnumValue.Name"       ,"EnumValue_Name")
         // :Column("EnumValue.Order"      ,"EnumValue_Order")
         // :Column("EnumValue.Number"     ,"EnumValue_Number")
-        :Where("Namespace.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
-        :Where("Enumeration.UseStatus <= ^" ,USESTATUS_TOBEDISCONTINUED)
-        :Where("EnumValue.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Namespace.UseStatus NOT IN (^,^)"  ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Enumeration.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("EnumValue.UseStatus NOT IN (^,^)"  ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :OrderBy("tag1")
         :OrderBy("tag2")
         :Distinct(.t.)
@@ -279,9 +280,9 @@ if l_lContinue
         :Column("EnumValue.UseStatus"  ,"EnumValue_UseStatus")
         :Column("EnumValue.Description","EnumValue_Description")
 
-        :Where("Namespace.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
-        :Where("Enumeration.UseStatus <= ^" ,USESTATUS_TOBEDISCONTINUED)
-        :Where("EnumValue.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+        :Where("Namespace.UseStatus NOT IN (^,^)"  ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("Enumeration.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("EnumValue.UseStatus NOT IN (^,^)"  ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :OrderBy("Enumeration_Pk")
         :OrderBy("EnumValue_Order")
         :SQL("ListOfEnumValues")
@@ -295,7 +296,6 @@ if l_lContinue
         endif
     endwith
 endif
-
 
 if l_lContinue
     if l_lAddForeignKeyIndexORMExport
@@ -319,13 +319,13 @@ if l_lContinue
             :Column("Index.Unique"     ,"Index_Unique")
             :Column("Index.Algo"       ,"Index_Algo")
 
-            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-            :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Index.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
 
             :Where("Index.UsedBy = ^ OR Index.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
 
-            //Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+            //Future Use        :Where("Column.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         endwith
 
         with object l_oDB_ListOfIndexes_OnForeignKey
@@ -344,9 +344,9 @@ if l_lContinue
             :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
             :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
 
-            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-            :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         endwith
 
         with object l_oDB_ListOfIndexes
@@ -361,7 +361,7 @@ if l_lContinue
             if :Tally < 0
                 l_lContinue := .f.
             else
-            // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfIndexes",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
                 with object :p_oCursor
                     :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
                     :CreateIndexes()
@@ -388,13 +388,13 @@ if l_lContinue
             :Column("Index.Unique"     ,"Index_Unique")
             :Column("Index.Algo"       ,"Index_Algo")
 
-            :Where("Namespace.UseStatus <= ^",USESTATUS_TOBEDISCONTINUED)
-            :Where("Table.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
-            :Where("Index.UseStatus <= ^"    ,USESTATUS_TOBEDISCONTINUED)
+            :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("Index.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
 
             :Where("Index.UsedBy = ^ OR Index.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
             
-            //Future Use        :Where("Column.UseStatus <= ^"   ,USESTATUS_TOBEDISCONTINUED)
+            //Future Use        :Where("Column.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
 
             :SQL("ListOfIndexes")
             // SendToClipboard(:LastSQL())
@@ -402,7 +402,7 @@ if l_lContinue
             if :Tally < 0
                 l_lContinue := .f.
             else
-            // ExportTableToHtmlFile("ListOfIndexes",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfIndexes",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexes.html","From PostgreSQL",,200,.t.)
                 with object :p_oCursor
                     :Index("tag1","padr(strtran(str(Table_pk,10),' ','0')+Index_Name,240)")   // Fixed length of the number with leading '0'
                     :CreateIndexes()
@@ -413,7 +413,6 @@ if l_lContinue
 
     endif
 endif
-
 
 //123456
 if l_lContinue   // Load all the Previous Names. This will be used to do all the renaming first.
@@ -489,8 +488,6 @@ if l_lContinue   // Load all the Previous Names. This will be used to do all the
         l_nNumberOfColumnRenames := :Tally
     endwith
 
-
-
     with object l_oDB_ListOfEnumerationPreviousNames
         :Table("91dd80f2-c9ef-4119-9f6e-9ec589c06d1c","Namespace")
         :Column("Namespace.Name"        ,"Namespace_Name")
@@ -538,7 +535,7 @@ if l_lContinue   // Load all the Previous Names. This will be used to do all the
 endif
 
 if l_lContinue
-    l_cSchemaIndent := space(4)
+    // l_cSchemaIndent := space(4)
     l_cSourceCode := [{"HarbourORMVersion"=>]+HB_ORM_BUILDVERSION+[,;]+CRLF
     l_cSourceCode += [ "DataWharfVersion"=>]+BUILDVERSION+[,;]+CRLF
     l_cSourceCode += [ "Backend"=>"]+par_cBackend+[",;]+CRLF
@@ -582,7 +579,7 @@ if l_lContinue
             l_hRenameTree["Table"] := l_hRenameTable
         endif
         // ----------------------------------------------------
-        // ExportTableToHtmlFile("ListOfColumnPreviousNames",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfColumnPreviousNames_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfColumnPreviousNames",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfColumnPreviousNames_ForHarbourToORM.html","From PostgreSQL",,200,.t.)
         if l_nNumberOfColumnRenames > 0
             l_hRenameColumn := {=>}
 
@@ -1084,6 +1081,21 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000001","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","NamespacePreviousName" ,"","NamespacePreviousName.fk_Namespace = Namespace.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"NamespacePreviousName")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+// ExportTableToHtmlFile("ListOfRecords",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfPreviousNamespaceName.html","From PostgreSQL",,200,.t.)
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"NamespacePreviousName","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000005","Namespace")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
@@ -1094,6 +1106,21 @@ with object l_oDB_ListOfRecords
         l_lContinue := .f.
     else
         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Table","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000002","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","TablePreviousName" ,"","TablePreviousName.fk_Table = Table.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"TablePreviousName")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"TablePreviousName","ListOfRecords")
     endif
 endwith
 
@@ -1114,6 +1141,22 @@ with object l_oDB_ListOfRecords
 endwith
 
 with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000003","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Table"  ,"","Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Column" ,"","Column.fk_Table = Table.pk")
+    :Join("inner","ColumnPreviousName" ,"","ColumnPreviousName.fk_Column = Column.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"ColumnPreviousName")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"ColumnPreviousName","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
     :Table("299a129d-dab1-4dad-0001-000000000007","Namespace")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :Join("inner","Enumeration" ,"","Enumeration.fk_Namespace = Namespace.pk")
@@ -1124,6 +1167,21 @@ with object l_oDB_ListOfRecords
         l_lContinue := .f.
     else
         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"Enumeration","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000004","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Enumeration" ,"","Enumeration.fk_Namespace = Namespace.pk")
+    :Join("inner","EnumerationPreviousName" ,"","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"EnumerationPreviousName")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"EnumerationPreviousName","ListOfRecords")
     endif
 endwith
 
@@ -1139,6 +1197,22 @@ with object l_oDB_ListOfRecords
         l_lContinue := .f.
     else
         l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"EnumValue","ListOfRecords")
+    endif
+endwith
+
+with object l_oDB_ListOfRecords
+    :Table("299a129d-dab1-4dad-0002-000000000005","Namespace")
+    :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+    :Join("inner","Enumeration"  ,"","Enumeration.fk_Namespace = Namespace.pk")
+    :Join("inner","EnumValue" ,"","EnumValue.fk_Enumeration = Enumeration.pk")
+    :Join("inner","EnumValuePreviousName" ,"","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
+    ExportForImports_GetFields(l_oDB_ListOfRecords,l_hTableSchema,"EnumValuePreviousName")
+    :OrderBy("pk")
+    :SQL("ListOfRecords")
+    if :Tally < 0
+        l_lContinue := .f.
+    else
+        l_cBackupCode += ExportForImports_Cursor(l_hTableSchema,"EnumValuePreviousName","ListOfRecords")
     endif
 endwith
 
@@ -1537,7 +1611,6 @@ local l_aLines
 local l_nNumberOfLines
 local l_nLineCounter := 0
 local l_cLine
-local l_nMode := 0   // 1=Building Table, 2=Loading data
 local l_cTableName
 local l_aListOfCursors := {}
 local l_aFieldValues   := {}
@@ -1558,6 +1631,7 @@ local l_hNamespacePkOldToNew     := {=>}
 local l_hTablePkOldToNew         := {=>}
 local l_hColumnPkOldToNew        := {=>}
 local l_hEnumerationPkOldToNew   := {=>}
+local l_hEnumValuePkOldToNew     := {=>}
 local l_hIndexPkOldToNew         := {=>}
 local l_hDiagramPkOldToNew       := {=>}
 local l_hTagPkOldToNew           := {=>}
@@ -1604,12 +1678,13 @@ par_cImportContent := ""  // To regain some memory, since passed by reference.
 
 l_nNumberOfLines := len(l_aLines)
 
+// altd()
+
 do while l_nLineCounter < l_nNumberOfLines
     l_nLineCounter++
     l_cLine := l_aLines[l_nLineCounter]
 
     if left(l_cLine,1) == "!"  //Table
-        l_nMode := 1
         l_cTableName := substr(l_cLine,2)
         l_oCursor := hb_Cursor()
         AAdd(l_aListOfCursors,l_oCursor)
@@ -1627,20 +1702,23 @@ do while l_nLineCounter < l_nNumberOfLines
                 AAdd(l_aTableStructure,{l_aFieldStructure[2],l_aFieldStructure[3],val(l_aFieldStructure[4]),val(l_aFieldStructure[5]),strtran(l_aFieldStructure[6],"+","")})
 
                 l_cCursorFieldType := l_aFieldStructure[3]
-                if el_IsInlist(l_cCursorFieldType,"C","CV","M")
-                    l_cCursorFieldType := "M"  //overwrite to ensure will have enough space to store encoded field value
+                do case
+                case el_IsInlist(l_cCursorFieldType,"C","CV","M")
+                    l_cCursorFieldType := "M"   //overwrite to ensure will have enough space to store encoded field value
                     l_cCursorFieldLen  := 0
                     l_cCursorFieldDec  := 0
-                else
+                otherwise
                     l_cCursorFieldLen  := val(l_aFieldStructure[4])
                     l_cCursorFieldDec  := val(l_aFieldStructure[5])
+                endcase
+                if l_cCursorFieldType <> "DT"   //Due to a bug in creating DateTime fields in cursor, and may have export a DateTime discontinued field, will skip this.
+                    :Field(l_aFieldStructure[2],l_cCursorFieldType,l_cCursorFieldLen,l_cCursorFieldDec,strtran(l_aFieldStructure[6],"+",""))
                 endif
-                :Field(l_aFieldStructure[2],l_cCursorFieldType,l_cCursorFieldLen,l_cCursorFieldDec,strtran(l_aFieldStructure[6],"+",""))
-
                 l_nLineCounter++
                 l_cLine := l_aLines[l_nLineCounter]
             enddo
-            :CreateCursor("ImportSource"+l_cTableName)
+
+           :CreateCursor("ImportSource"+l_cTableName)
 
             do while left(l_cLine,1) == "^"
                 l_nLineCounter++
@@ -1650,6 +1728,11 @@ do while l_nLineCounter < l_nNumberOfLines
                     if l_aFieldValues[l_nFieldCounter+1] == "|"
                         l_xValue := nil
                     else
+                        if l_aTableStructure[l_nFieldCounter,2] == "DT"   //Due to a bug in creating DateTime fields in cursor, and may have export a DateTime discontinued field, will skip this.
+                            l_cLine := l_aLines[l_nLineCounter]
+                            loop
+                        endif
+
                         switch l_aTableStructure[l_nFieldCounter,2]
                         case "I"
                         case "N"
@@ -1666,16 +1749,22 @@ do while l_nLineCounter < l_nNumberOfLines
                         case "D"
                             l_xValue := SToD(l_aFieldValues[l_nFieldCounter+1])
                             exit
+                        case "DT"   
+                            l_xValue := hb_StrToTS(l_aFieldValues[l_nFieldCounter+1])     //Left code here even though will be skipped
+                            exit
                         otherwise
                             l_xValue := l_aFieldValues[l_nFieldCounter+1]
                         endswitch
                     endif
-                    :SetFieldValue(l_aTableStructure[l_nFieldCounter,1] , l_xValue )
+                    if l_aTableStructure[l_nFieldCounter,2] <> "DT"   //Due to a bug in creating DateTime fields in cursor, and may have export a DateTime discontinued field, will skip this.
+                        :SetFieldValue(l_aTableStructure[l_nFieldCounter,1] , l_xValue )
+                    endif
                 endfor
 
                 l_cLine := l_aLines[l_nLineCounter]
             enddo
-            // ExportTableToHtmlFile("ImportSource"+l_cTableName,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
+           
+            // ExportTableToHtmlFile("ImportSource"+l_cTableName,el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ImportSource"+l_cTableName+".html","From PostgreSQL",,,.t.)
         endwith
 
     endif
@@ -1689,6 +1778,13 @@ enddo
 // Enumeration
 // Column
 // EnumValue
+
+// NamespacePreviousName
+// TablePreviousName
+// EnumerationPreviousName
+// ColumnPreviousName
+// EnumValuePreviousName
+
 // Index
 // IndexColumn
 // Diagram
@@ -1749,7 +1845,7 @@ with object l_oDB_ListOfCurrentRecords
     endwith
 endwith
 
-// ExportTableToHtmlFile("ListOfCurrentRecords",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCurrentRecords.html","From PostgreSQL",,,.t.)
+// ExportTableToHtmlFile("ListOfCurrentRecords",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfCurrentRecords.html","From PostgreSQL",,,.t.)
 
 select ImportSourceTable
 l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.Table")
@@ -1916,12 +2012,94 @@ scan all
         SendToDebugView("Failure to find Enumeration Parent Key on EnumValue Import" ,l_iParentKeyImport)
     else
         if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(hb_StrReplace(ImportSourceEnumValue->Name,hb_StrReplace(ImportSourceEnumValue->Name,l_cValidNameChars,'') ,''))+'*' ,"ListOfCurrentRecords","tag1")
-            SendToDebugView("Import: EnumValue Already on file in Enumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            // SendToDebugView("Import: EnumValue Already on file in Enumeration (pk="+trans(l_iParentKeyCurrent)+")",ListOfCurrentRecords->Name)
+            l_hEnumValuePkOldToNew[ImportSourceEnumValue->pk] := ListOfCurrentRecords->pk
         else
             with object l_oDBImport
                 :Table("df873645-94d3-4ba5-85cf-000000000010","EnumValue")
                 :Field("fk_Enumeration"       ,l_iParentKeyCurrent)
                 ImportAddRecordSetField(l_oDBImport,"EnumValue","*fk_Enumeration*",l_aColumns)
+                if :Add()
+                    //Log the old key, new key
+                    l_hEnumValuePkOldToNew[ImportSourceEnumValue->pk] := :Key()
+                endif
+            endwith
+        endif
+    endif
+endscan
+
+//12345
+//-------------------------------------------------------------------------------------------------------------------------
+// Import NamespacePreviousName
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-100000000001","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
+    :Column("NamespacePreviousName.fk_Namespace","fk_Namespace")
+    :Column("NamespacePreviousName.Pk"          ,"pk")
+    :Column("NamespacePreviousName.Name"        ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("tag1","padr(alltrim(str(fk_Namespace))+'*'+upper(strtran(Name,' ',''))+'*',240)")  // IMPORTANT - Had to Pad the index expression otherwise the searcher would only work on the shortest string. Also could not use trans(), had to use Harbour native functions.
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceNamespacePreviousName
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.NamespacePreviousName")
+scan all
+    l_iParentKeyImport  := ImportSourceNamespacePreviousName->fk_Namespace
+    l_iParentKeyCurrent := hb_HGetDef(l_hNamespacePkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find Namespace Parent Key on NamespacePreviousName Import" ,l_iParentKeyImport)
+    else
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceNamespacePreviousName->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-100000000002","NamespacePreviousName")
+                :Field("fk_Namespace",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"NamespacePreviousName","*fk_Namespace*",l_aColumns)
+                if :Add()
+                endif
+                
+            endwith
+        endif
+    endif
+endscan
+
+//-------------------------------------------------------------------------------------------------------------------------
+// Import TablePreviousName
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-100000000003","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table" ,"" ,"Table.fk_Namespace = Namespace.pk")
+    :Join("inner","TablePreviousName","","TablePreviousName.fk_Table = Table.pk")
+    :Column("TablePreviousName.fk_Table","fk_Table")
+    :Column("TablePreviousName.Pk"      ,"pk")
+    :Column("TablePreviousName.Name"    ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("tag1","padr(alltrim(str(fk_Table))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceTablePreviousName
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.TablePreviousName")
+scan all
+    l_iParentKeyImport  := ImportSourceTablePreviousName->fk_Table
+    l_iParentKeyCurrent := hb_HGetDef(l_hTablePkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find Table Parent Key on TablePreviousName Import" ,l_iParentKeyImport)
+    else
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceTablePreviousName->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-100000000004","TablePreviousName")
+                :Field("fk_Table",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"TablePreviousName","*fk_Table*",l_aColumns)
                 if :Add()
                 endif
             endwith
@@ -1929,6 +2107,126 @@ scan all
     endif
 endscan
 
+//-------------------------------------------------------------------------------------------------------------------------
+// Import ColumnPreviousName
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-100000000005","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Table"  ,"" ,"Table.fk_Namespace = Namespace.pk")
+    :Join("inner","Column" ,"" ,"Column.fk_Table = Table.pk")
+    :Join("inner","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
+    :Column("ColumnPreviousName.fk_Column","fk_Column")
+    :Column("ColumnPreviousName.Pk"      ,"pk")
+    :Column("ColumnPreviousName.Name"    ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("tag1","padr(alltrim(str(fk_Column))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceColumnPreviousName
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.ColumnPreviousName")
+scan all
+    l_iParentKeyImport  := ImportSourceColumnPreviousName->fk_Column
+    l_iParentKeyCurrent := hb_HGetDef(l_hColumnPkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find Column Parent Key on ColumnPreviousName Import" ,l_iParentKeyImport)
+    else
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceColumnPreviousName->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-100000000006","ColumnPreviousName")
+                :Field("fk_Column",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"ColumnPreviousName","*fk_Column*",l_aColumns)
+                if :Add()
+                endif
+            endwith
+        endif
+    endif
+endscan
+
+//-------------------------------------------------------------------------------------------------------------------------
+// Import EnumerationPreviousName
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-100000000007","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Enumeration" ,"" ,"Enumeration.fk_Namespace = Namespace.pk")
+    :Join("inner","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
+    :Column("EnumerationPreviousName.fk_Enumeration","fk_Enumeration")
+    :Column("EnumerationPreviousName.Pk"            ,"pk")
+    :Column("EnumerationPreviousName.Name"          ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("tag1","padr(alltrim(str(fk_Enumeration))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceEnumerationPreviousName
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.EnumerationPreviousName")
+scan all
+    l_iParentKeyImport  := ImportSourceEnumerationPreviousName->fk_Enumeration
+    l_iParentKeyCurrent := hb_HGetDef(l_hEnumerationPkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find Enumeration Parent Key on EnumerationPreviousName Import" ,l_iParentKeyImport)
+    else
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumerationPreviousName->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-100000000008","EnumerationPreviousName")
+                :Field("fk_Enumeration",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"EnumerationPreviousName","*fk_Enumeration*",l_aColumns)
+                if :Add()
+                endif
+            endwith
+        endif
+    endif
+endscan
+
+//-------------------------------------------------------------------------------------------------------------------------
+// Import EnumValuePreviousName
+with object l_oDB_ListOfCurrentRecords
+    :Table("df873645-94d3-4ba5-85cf-100000000009","Namespace")
+    :Where("Namespace.fk_Application = ^" , par_iApplicationPk)
+    :Join("inner","Enumeration" ,"" ,"Enumeration.fk_Namespace = Namespace.pk")
+    :Join("inner","EnumValue"   ,"" ,"EnumValue.fk_Enumeration = Enumeration.pk")
+    :Join("inner","EnumValuePreviousName","","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
+    :Column("EnumValuePreviousName.fk_EnumValue","fk_EnumValue")
+    :Column("EnumValuePreviousName.Pk"            ,"pk")
+    :Column("EnumValuePreviousName.Name"          ,"name")
+    :SQL("ListOfCurrentRecords")
+    with object :p_oCursor
+        :Index("tag1","padr(alltrim(str(fk_EnumValue))+'*'+upper(strtran(Name,' ',''))+'*',240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+select ImportSourceEnumValuePreviousName
+l_aColumns := oFcgi:p_o_SQLConnection:GetColumnsConfiguration("public.EnumValuePreviousName")
+scan all
+    l_iParentKeyImport  := ImportSourceEnumValuePreviousName->fk_EnumValue
+    l_iParentKeyCurrent := hb_HGetDef(l_hEnumValuePkOldToNew,l_iParentKeyImport,0)
+
+    if empty(l_iParentKeyCurrent)
+        SendToDebugView("Failure to find EnumValue Parent Key on EnumValuePreviousName Import" ,l_iParentKeyImport)
+    else
+        if el_seek(alltrim(str(l_iParentKeyCurrent))+'*'+upper(strtran(ImportSourceEnumValuePreviousName->Name,' ',''))+'*' ,"ListOfCurrentRecords","tag1")
+        else
+            with object l_oDBImport
+                :Table("df873645-94d3-4ba5-85cf-100000000010","EnumValuePreviousName")
+                :Field("fk_EnumValue",l_iParentKeyCurrent)
+                ImportAddRecordSetField(l_oDBImport,"EnumValuePreviousName","*fk_EnumValue*",l_aColumns)
+                if :Add()
+                endif
+            endwith
+        endif
+    endif
+endscan
+
+//-------------------------------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------------------------------
 // Import Index
 with object l_oDB_ListOfCurrentRecords

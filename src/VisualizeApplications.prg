@@ -300,8 +300,8 @@ with object l_oDB_ListOfLinks
                 dbDelete()
             endif
         endscan
-        // ExportTableToHtmlFile("ListOfTables",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfTables.html","From PostgreSQL",,200,.t.)
-        // ExportTableToHtmlFile("ListOfLinks" ,OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfLinks.html" ,"From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfTables",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfTables.html","From PostgreSQL",,200,.t.)
+        // ExportTableToHtmlFile("ListOfLinks" ,el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfLinks.html" ,"From PostgreSQL",,200,.t.)
     endif
 endwith
 
@@ -2269,7 +2269,7 @@ if len(l_aNodes) == 1
                     :SetOrder("pk")
                 endwith
             endif
-            // ExportTableToHtmlFile("ListOfCurrentTablesInDiagram",OUTPUT_FOLDER+hb_ps()+"PostgreSQL_ListOfCurrentTablesInDiagram.html","From PostgreSQL",,25,.t.)
+            // ExportTableToHtmlFile("ListOfCurrentTablesInDiagram",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfCurrentTablesInDiagram.html","From PostgreSQL",,25,.t.)
         endwith
 
 
