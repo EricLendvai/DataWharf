@@ -10503,7 +10503,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                     :SetApplicationName("DataWharf")
 
                     :SetHarbourORMNamespace("nohborm")
-// altd()
+
                     l_iSQLHandle := :Connect()
                     do case
                     case l_iSQLHandle == 0
@@ -10523,50 +10523,52 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                                 l_cMacro := Strtran(l_cMacro,[;],"")
                                 l_hWharfConfig := &( l_cMacro )
 
+                                //MigrateSchema return values: 0 = Nothing Migrated, 1 = Migrated, -1 = Error Migrating
                                 if el_AUnpack(l_o_SQLConnection:MigrateSchema(l_hWharfConfig),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
                                     l_cErrorMessage := "Success - Migrated Structure"
 
-                                    if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
-                                        l_cErrorMessage := "Success - Structure and Foreign Key Constraints Migrated"
+                                    // if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                    //     l_cErrorMessage := "Success - Structure and Foreign Key Constraints Migrated"
+                                    // else
+                                    //     if empty(l_cLastError)
+                                    //         l_cErrorMessage := "Success - Structure Migrated and Foreign Key Constraints did not change."
+                                    //     else
+                                    //         l_cErrorMessage := "Structure Migrated but Failed To Migrate Foreign Key Constraints"
+                                    //         l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                    //         SendToDebugView("PostgreSQL - Failed Update")
+                                    //     endif
+                                    // endif
+
+                                else
+                                    if l_nMigrateResult == 0
+                                        l_cErrorMessage := "Success - Nothing Changed."
                                     else
                                         if empty(l_cLastError)
-                                            l_cErrorMessage := "Success - Structure Migrated and Foreign Key Constraints did not change."
+                                            l_cErrorMessage := "Unknown Error Occurred."
                                         else
-                                            l_cErrorMessage := "Structure Migrated but Failed To Migrate Foreign Key Constraints"
+                                            l_cErrorMessage := "Failed to Update Structure."
                                             l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
                                             SendToDebugView("PostgreSQL - Failed Update")
                                         endif
                                     endif
 
-                                    // if l_nMigrateResult == 1
-                                    //     l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
-                                    //     if l_lCyanAuditAware
-                                    //         //Ensure Cyanaudit is up to date
-                                    //         oFcgi:p_o_SQLConnection:SQLExec("a1bf5168-18e2-42ee-b0bd-6bfd252fa7a8","SELECT cyanaudit.fn_update_audit_fields('public');")
-                                    //         //SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
+                                    // if empty(l_cLastError)
+                                    //     if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                    //         l_cErrorMessage := "Success - Structure did not change and Foreign Key Constraints Migrated"
+                                    //     else
+                                    //         if empty(l_cLastError)
+                                    //             l_cErrorMessage := "Success - Structure and Foreign Key Constraints did not change."
+                                    //         else
+                                    //             l_cErrorMessage := "Structure did not change but Failed To Migrate Foreign Key Constraints"
+                                    //             l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                    //             SendToDebugView("PostgreSQL - Failed Update")
+                                    //         endif
                                     //     endif
+                                    // else
+                                    //     l_cErrorMessage := "Failed To Migrate Structure"
+                                    //     l_cErrorDetail := l_cLastError+[<br>Script Generated to migrate structure:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                    //     SendToDebugView("PostgreSQL - Failed Update")
                                     // endif
-                                else
-                                    if empty(l_cLastError)
-
-                                        if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
-                                            l_cErrorMessage := "Success - Structure did not change and Foreign Key Constraints Migrated"
-                                        else
-                                            if empty(l_cLastError)
-                                                l_cErrorMessage := "Success - Structure and Foreign Key Constraints did not change."
-                                            else
-                                                l_cErrorMessage := "Structure did not change but Failed To Migrate Foreign Key Constraints"
-                                                l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                                SendToDebugView("PostgreSQL - Failed Update")
-                                            endif
-                                        endif
-
-
-                                    else
-                                        l_cErrorMessage := "Failed To Migrate Structure"
-                                        l_cErrorDetail := l_cLastError+[<br>Script Generated to migrate structure:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                        SendToDebugView("PostgreSQL - Failed Update")
-                                    endif
                                 endif
 
                             endif

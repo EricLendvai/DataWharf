@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 04/04/2024 v 4.6
+* Enhancement on PostgreSQL migration scripts to handle Foreign Key Constraints.
+* Indexes and Foreign Key Names that are beyond PostgreSQL length limit will be replace using StaticUID from Columns or Indexes.
+
 ## 04/02/2024 v 4.5
 * Added Previous Name Tables to Export/Import.
 * Dots (periods) are not allowed, and will be automatically removed, in Namespaces, Tables, Columns, Enumerations, and Indexes.

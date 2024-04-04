@@ -513,8 +513,8 @@ with object oFcgi:p_o_SQLConnection
     endif
     //-----------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------
-    //:RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
-    :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
+    // :RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
+    // :MigrateForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )        // Not needed since including in the UpdateSchema()
     //-----------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------
 

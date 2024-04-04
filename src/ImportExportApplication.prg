@@ -46,6 +46,7 @@ local l_nMaxExpressionLength
 local l_nFieldUsedAs
 local l_cFieldUsedBy
 local l_cFieldName
+local l_cFieldStaticUID
 local l_cFieldType
 local l_cFieldTypeEnumName
 local l_nFieldLen
@@ -192,6 +193,7 @@ if l_lContinue
         :Join("left", "Namespace"  ,"ParentNamespace","ParentTable.fk_Namespace = ParentNamespace.pk")
         :Column("Table.Pk"             ,"Table_Pk")
         :Column("Column.Name"          ,"Column_Name")
+        :Column("Column.StaticUID"     ,"Column_StaticUID")
         :Column("Column.Order"         ,"Column_Order")
         :Column("Column.Type"          ,"Column_Type")
         :Column("Column.Length"        ,"Column_Length")
@@ -318,6 +320,8 @@ if l_lContinue
             :Column("Index.Expression" ,"Index_Expression")
             :Column("Index.Unique"     ,"Index_Unique")
             :Column("Index.Algo"       ,"Index_Algo")
+            :Column("0"                ,"ForeignKey")
+            :Column("Index.StaticUID"  ,"StaticUID")
 
             :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
             :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
@@ -336,6 +340,8 @@ if l_lContinue
             :Column("Column.Name"        ,"Index_Expression")
             :Column("false"              ,"Index_Unique")
             :Column("1"                  ,"Index_Algo")
+            :Column("1"                  ,"ForeignKey")
+            :Column("Column.StaticUID"   ,"StaticUID")
 
             :Join("inner","Table","","Column.fk_Table = Table.pk")
             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -387,6 +393,8 @@ if l_lContinue
             :Column("Index.Expression" ,"Index_Expression")
             :Column("Index.Unique"     ,"Index_Unique")
             :Column("Index.Algo"       ,"Index_Algo")
+            :Column("0"                ,"ForeignKey")
+            :Column("Index.StaticUID"  ,"StaticUID")
 
             :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
             :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
@@ -490,11 +498,11 @@ if l_lContinue   // Load all the Previous Names. This will be used to do all the
 
     with object l_oDB_ListOfEnumerationPreviousNames
         :Table("91dd80f2-c9ef-4119-9f6e-9ec589c06d1c","Namespace")
-        :Column("Namespace.Name"        ,"Namespace_Name")
+        :Column("Namespace.Name"              ,"Namespace_Name")
         :Column("Enumeration.Name"            ,"NameTo")
         :Column("EnumerationPreviousName.Name","NameFrom")
 
-        :Column("lower(Namespace.Name)"        ,"tag1")
+        :Column("lower(Namespace.Name)"              ,"tag1")
         :Column("lower(Enumeration.Name)"            ,"tag2")
         :Column("lower(EnumerationPreviousName.Name)","tag3")
 
@@ -510,17 +518,17 @@ if l_lContinue   // Load all the Previous Names. This will be used to do all the
 
     with object l_oDB_ListOfEnumValuePreviousNames
         :Table("70e73f93-c824-45e8-8814-71863f6960b6","Namespace")
-        :Column("Namespace.Name"         ,"Namespace_Name")
-        :Column("Enumeration.Name"             ,"Enumeration_Name")
+        :Column("Namespace.Name"            ,"Namespace_Name")
+        :Column("Enumeration.Name"          ,"Enumeration_Name")
         :Column("EnumValue.Name"            ,"NameTo")
         :Column("EnumValuePreviousName.Name","NameFrom")
 
-        :Column("lower(Namespace.Name)"         ,"tag1")
-        :Column("lower(Enumeration.Name)"             ,"tag2")
+        :Column("lower(Namespace.Name)"            ,"tag1")
+        :Column("lower(Enumeration.Name)"          ,"tag2")
         :Column("lower(EnumValue.Name)"            ,"tag3")
         :Column("lower(EnumValuePreviousName.Name)","tag4")
 
-        :Join("inner","Enumeration"             ,"","Enumeration.fk_Namespace = Namespace.pk")
+        :Join("inner","Enumeration"          ,"","Enumeration.fk_Namespace = Namespace.pk")
         :Join("inner","EnumValue"            ,"","EnumValue.fk_Enumeration = Enumeration.pk")
         :Join("inner","EnumValuePreviousName","","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
         :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -730,6 +738,7 @@ if l_lContinue
                     l_nFieldUsedAs      := ListOfColumns->Column_UsedAs
                     l_cFieldUsedBy      := ListOfColumns->Column_UsedBy
                     l_cFieldName        := ListOfColumns->Column_Name
+                    l_cFieldStaticUID   := ListOfColumns->Column_StaticUID
 // l_cFieldName := el_StringFilterCharacters(l_cFieldName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
                     l_cSourceCodeFields += iif(empty(l_cSourceCodeFields) , CRLF+l_cSchemaIndent+l_cIndent+"{" , ";"+l_cFieldDescription+CRLF+l_cSchemaIndent+l_cIndent+"," )
@@ -827,6 +836,9 @@ if l_lContinue
                             endif
                             if ListOfColumns->Column_ForeignKeyOptional
                                 l_cSourceCodeFields += ',"ForeignKeyOptional"=>.t.'
+                            endif
+                            if !empty(l_cFieldStaticUID)
+                                l_cSourceCodeFields += ',"StaticUID"=>"'+l_cFieldStaticUID+'"'
                             endif
                         endif
                         l_cSourceCodeFields += ','
@@ -928,7 +940,16 @@ if l_lContinue
                     if ListOfIndexes->Index_Unique
                         l_cSourceCodeIndexes += ',"'+HB_ORM_SCHEMA_INDEX_UNIQUE+'"=>.t.'
                     endif
+                    if ListOfIndexes->ForeignKey == 1
+                        l_cSourceCodeIndexes += ',"ForForeignKey"=>.t.'
+                    endif
+                    if !empty(ListOfIndexes->StaticUID)
+                        l_cSourceCodeIndexes += ',"StaticUID"=>"'+alltrim(ListOfIndexes->StaticUID)+'"'
+                    endif
                     
+            // :Column("0"                ,"ForeignKey")
+            // :Column("Index.StaticUID"  ,"StaticUID")
+
                     l_cSourceCodeIndexes += "}"
 
                 endscan

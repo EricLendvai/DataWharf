@@ -1,11 +1,11 @@
 //As of DataWharf 3, its own configuration is defined using a "DataWharf" application managed in DataWharf itself.
 function Config()
 return ;
-{"HarbourORMVersion"=>4.6,;
- "DataWharfVersion"=>4.5,;
+{"HarbourORMVersion"=>4.7,;
+ "DataWharfVersion"=>4.6,;
  "Backend"=>"PostgreSQL",;
- "GenerationTime"=>"2024-04-02T09:21:20.733Z",;
- "GenerationSignature"=>"311e9c90-b6c4-4bc6-af07-d1eb963f38a8",;
+ "GenerationTime"=>"2024-04-04T09:46:01.139Z",;
+ "GenerationSignature"=>"242d3068-b713-44ec-a7d7-778b11e20321",;
  "Rename"=>{;
     "Column"=>{;
         "public"=>{;
@@ -19,11 +19,11 @@ return ;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_APIToken"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_APIEndpoint"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIEndpoint","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};
+        ,"fk_APIToken"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","StaticUID"=>"ece25b5f-1596-4129-ac64-ca02e7fa1741","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_APIEndpoint"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIEndpoint","StaticUID"=>"6b653693-4a7c-41a6-a941-435ac0087c82","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};
                                  ,"Indexes"=>;
-        {"fk_apiendpoint"=>{"Expression"=>"fk_APIEndpoint"};
-        ,"fk_apitoken"   =>{"Expression"=>"fk_APIToken"}}};
+        {"fk_apiendpoint"=>{"Expression"=>"fk_APIEndpoint","ForForeignKey"=>.t.,"StaticUID"=>"6b653693-4a7c-41a6-a941-435ac0087c82"};
+        ,"fk_apitoken"   =>{"Expression"=>"fk_APIToken","ForForeignKey"=>.t.,"StaticUID"=>"ece25b5f-1596-4129-ac64-ca02e7fa1741"}}};
     ,"public.APIEndpoint"=>{"Fields"=>;
         {"pk"    =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"  =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -31,7 +31,7 @@ return ;
         ,"Name"  =>{"Type"=>"CV","Length"=>200};   //List of keys of p_APIs hash property.
         ,"Status"=>{"Type"=>"N","Length"=>1}};   //1="Active", 2="InactiveRemoved"   
                            ,"Indexes"=>;
-        {"name"=>{"Expression"=>"Name"}}};
+        {"name"=>{"Expression"=>"Name","StaticUID"=>"b59cc46a-40b4-4306-a9ad-5f131a68cf80"}}};
     ,"public.APIToken"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -43,27 +43,27 @@ return ;
         ,"AccessMode" =>{"Type"=>"N","Length"=>1};   //1="ProjectAndApplicationSpecific", 2="AllProjectsAndApplicationsReadOnly", 3="AllProjectsAndApplicationsFullAccess"   Used if Type = 1.
         ,"Status"     =>{"Type"=>"N","Length"=>1}};   //1="Active", 2="Inactive"   
                         ,"Indexes"=>;
-        {"key"=>{"Expression"=>"Key"}}};
+        {"key"=>{"Expression"=>"Key","StaticUID"=>"4ddae536-d36c-40ca-9e4f-052b0d6e30a5"}}};
     ,"public.APITokenAccessApplication"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_APIToken"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_APIToken"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","StaticUID"=>"84c11133-3414-4726-ae4c-7fc81d805ab7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"320eb0da-8cc5-4596-9555-741159b7a7dd","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"AccessLevelDD" =>{"Type"=>"N","Length"=>1}};   //1="None", 2="ReadOnly", 3="UpdateDescriptionandInformationEntries", 4="UpdateDescriptionandInformationEntriesandDiagrams", 5="UpdateAnythingAndImportAndExport", 6="UpdateAnythingAndSyncSchema"   
                                          ,"Indexes"=>;
-        {"fk_apitoken"   =>{"Expression"=>"fk_APIToken"};
-        ,"fk_application"=>{"Expression"=>"fk_Application"}}};
+        {"fk_apitoken"   =>{"Expression"=>"fk_APIToken","ForForeignKey"=>.t.,"StaticUID"=>"84c11133-3414-4726-ae4c-7fc81d805ab7"};
+        ,"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"320eb0da-8cc5-4596-9555-741159b7a7dd"}}};
     ,"public.APITokenAccessProject"=>{"Fields"=>;
         {"pk"           =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_APIToken"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Project"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_APIToken"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.APIToken","StaticUID"=>"bf5bde8a-1365-4298-966e-4c6526548dec","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Project"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","StaticUID"=>"afad42ec-78a2-4173-beee-0826bf96f460","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"AccessLevelML"=>{"Type"=>"N","Length"=>1}};   //1="None", 2="ReadOnly", 3="UpdateDescriptionAndInformationEntries", 4="UpdateDescriptionandInformationEntriesAndDiagrams", 5="UpdateAnything"   
                                      ,"Indexes"=>;
-        {"fk_apitoken"=>{"Expression"=>"fk_APIToken"};
-        ,"fk_project" =>{"Expression"=>"fk_Project"}}};
+        {"fk_apitoken"=>{"Expression"=>"fk_APIToken","ForForeignKey"=>.t.,"StaticUID"=>"bf5bde8a-1365-4298-966e-4c6526548dec"};
+        ,"fk_project" =>{"Expression"=>"fk_Project","ForForeignKey"=>.t.,"StaticUID"=>"afad42ec-78a2-4173-beee-0826bf96f460"}}};
     ,"public.Application"=>{"Fields"=>;
         {"pk"                                                   =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"                                                 =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -101,39 +101,39 @@ return ;
         ,"TestUniquenessCaseInsensitiveIdentifiers"             =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Check uniqueness of case insensitive identifiers
         ,"TestUniquenessTableSQLEnumerationIdentifiers"         =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"}};   //Check uniqueness between Table and SQLEnum Enumeration names in same Namespace
                            ,"Indexes"=>;
-        {"linkcode"=>{"Expression"=>"LinkCode"}}};
+        {"linkcode"=>{"Expression"=>"LinkCode","StaticUID"=>"1a83bc37-cc4d-4e9b-bc3b-3d600b8c0024"}}};
     ,"public.ApplicationCustomField"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","StaticUID"=>"b5943052-204e-44f6-9354-3f38664eb9ed","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"88af4c23-1ef7-46c1-a753-139f3feb30a0","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Order"         =>{"Type"=>"I"}};   //Display Order.
                                       ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"};
-        ,"fk_customfield"=>{"Expression"=>"fk_CustomField"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"88af4c23-1ef7-46c1-a753-139f3feb30a0"};
+        ,"fk_customfield"=>{"Expression"=>"fk_CustomField","ForForeignKey"=>.t.,"StaticUID"=>"b5943052-204e-44f6-9354-3f38664eb9ed"}}};
     ,"public.Association"=>{"Fields"=>;
         {"pk"               =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"             =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"             =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Model"         =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Package"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"         =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"fd8125c3-2b9d-4e03-a670-6be1d32b028c","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Package"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"StaticUID"=>"d35205dd-deaa-4775-a3e6-5d1a804520b5","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"          =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"             =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Display in the middle of the association representation.
         ,"NumberOfEndpoints"=>{"Type"=>"N","Length"=>2};   //Must more than 1 and less than 99. This will assist in visualization.
         ,"Description"      =>{"Type"=>"M","Nullable"=>.t.};   //Meaning of the association. Display when clicking on the association.
         ,"UseStatus"        =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
                            ,"Indexes"=>;
-        {"fk_model"  =>{"Expression"=>"fk_Model"};
-        ,"fk_package"=>{"Expression"=>"fk_Package"}}};
+        {"fk_model"  =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"fd8125c3-2b9d-4e03-a670-6be1d32b028c"};
+        ,"fk_package"=>{"Expression"=>"fk_Package","ForForeignKey"=>.t.,"StaticUID"=>"d35205dd-deaa-4775-a3e6-5d1a804520b5"}}};
     ,"public.Attribute"=>{"Fields"=>;
         {"pk"                 =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Entity"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_DataType"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.DataType","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Attribute"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Attribute","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};   //To provide tree-like structure.
-        ,"fk_ModelEnumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelEnumeration","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Entity"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","StaticUID"=>"9f361281-a30c-414f-ad69-0c95bf86fcff","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_DataType"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.DataType","StaticUID"=>"5e03735b-5f67-4d67-8c50-037a5234bfb1","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Attribute"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Attribute","ForeignKeyOptional"=>.t.,"StaticUID"=>"887eb721-de66-4660-abb5-1c0ef4d06b9c","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};   //To provide tree-like structure.
+        ,"fk_ModelEnumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelEnumeration","ForeignKeyOptional"=>.t.,"StaticUID"=>"d52b3af6-45f2-4282-a894-ed00bc46f63b","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"            =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"               =>{"Type"=>"CV","Length"=>200};
         ,"BoundLower"         =>{"Type"=>"CV","Length"=>4,"Nullable"=>.t.};
@@ -146,17 +146,17 @@ return ;
         ,"TreeLevel"          =>{"Type"=>"I"};   //Denormalized Tree dept. Can be used to assist indentation on display.Unique in Entity.
         ,"TreeOrder1"         =>{"Type"=>"I"}};   //Order full list. Unique in Entity. (NOT Denormalized but actually used and fixed as needed.).
                          ,"Indexes"=>;
-        {"fk_attribute"       =>{"Expression"=>"fk_Attribute"};
-        ,"fk_datatype"        =>{"Expression"=>"fk_DataType"};
-        ,"fk_entity"          =>{"Expression"=>"fk_Entity"};
-        ,"fk_modelenumeration"=>{"Expression"=>"fk_ModelEnumeration"}}};
+        {"fk_attribute"       =>{"Expression"=>"fk_Attribute","ForForeignKey"=>.t.,"StaticUID"=>"887eb721-de66-4660-abb5-1c0ef4d06b9c"};
+        ,"fk_datatype"        =>{"Expression"=>"fk_DataType","ForForeignKey"=>.t.,"StaticUID"=>"5e03735b-5f67-4d67-8c50-037a5234bfb1"};
+        ,"fk_entity"          =>{"Expression"=>"fk_Entity","ForForeignKey"=>.t.,"StaticUID"=>"9f361281-a30c-414f-ad69-0c95bf86fcff"};
+        ,"fk_modelenumeration"=>{"Expression"=>"fk_ModelEnumeration","ForForeignKey"=>.t.,"StaticUID"=>"d52b3af6-45f2-4282-a894-ed00bc46f63b"}}};
     ,"public.Column"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Table"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_TableForeign"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};   //Parent Table if this is a foreign key.
-        ,"fk_Enumeration"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Table"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"fe11d52d-b096-4f09-a971-a1bde78574ae","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_TableForeign"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"StaticUID"=>"2dd28840-5eaa-449a-af23-1dc63b2028da","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};   //Parent Table if this is a foreign key.
+        ,"fk_Enumeration"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","ForeignKeyOptional"=>.t.,"StaticUID"=>"88422d35-5dd7-43c6-aef9-ec9b0f94bff6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"Order"             =>{"Type"=>"I"};   //Display order only. Is not used to enforce column position in tables.
         ,"LinkUID"           =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"StaticUID"         =>{"Type"=>"C","Length"=>36,"Default"=>"gen_random_uuid()::char(36)","OnDelete"=>"Protect"};   //Will be remember between imports/exports, and optionally used to name Foreign Key constraints and Foreign Key Indexes.
@@ -183,27 +183,27 @@ return ;
         ,"LastNativeType"    =>{"Type"=>"M","Nullable"=>.t.};   //Set during the last "Load Schema". This is the native column type provided by the backend server.
         ,"ExternalId"        =>{"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Used if syncing with a 3rd party dictionary and via DataWharf API calls.
                       ,"Indexes"=>;
-        {"fk_enumeration" =>{"Expression"=>"fk_Enumeration"};
-        ,"fk_table"       =>{"Expression"=>"fk_Table"};
-        ,"fk_tableforeign"=>{"Expression"=>"fk_TableForeign"}}};
+        {"fk_enumeration" =>{"Expression"=>"fk_Enumeration","ForForeignKey"=>.t.,"StaticUID"=>"88422d35-5dd7-43c6-aef9-ec9b0f94bff6"};
+        ,"fk_table"       =>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"fe11d52d-b096-4f09-a971-a1bde78574ae"};
+        ,"fk_tableforeign"=>{"Expression"=>"fk_TableForeign","ForForeignKey"=>.t.,"StaticUID"=>"2dd28840-5eaa-449a-af23-1dc63b2028da"}}};
     ,"public.ColumnMapping"=>{"Fields"=>;
         {"pk"           =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_ColumnFrom"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_ColumnTo"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_ColumnFrom"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","StaticUID"=>"9191497d-d31d-42f8-9857-22f2b1e2a027","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_ColumnTo"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","StaticUID"=>"ab1e4484-432a-4e28-aa3f-71f19dd97ce6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"Description"  =>{"Type"=>"M","Nullable"=>.t.}};   //Text representation of the value.
                              ,"Indexes"=>;
-        {"fk_columnfrom"=>{"Expression"=>"fk_ColumnFrom"};
-        ,"fk_columnto"  =>{"Expression"=>"fk_ColumnTo"}}};
+        {"fk_columnfrom"=>{"Expression"=>"fk_ColumnFrom","ForForeignKey"=>.t.,"StaticUID"=>"9191497d-d31d-42f8-9857-22f2b1e2a027"};
+        ,"fk_columnto"  =>{"Expression"=>"fk_ColumnTo","ForForeignKey"=>.t.,"StaticUID"=>"ab1e4484-432a-4e28-aa3f-71f19dd97ce6"}}};
     ,"public.ColumnPreviousName"=>{"Fields"=>;
         {"pk"       =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Creation Time
         ,"sysm"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Last modified time
-        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","StaticUID"=>"5a54f363-87e8-41e1-b3b7-a1dde4d9de42","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Name"     =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Previous name
                                   ,"Indexes"=>;
-        {"fk_column"=>{"Expression"=>"fk_Column"}}};
+        {"fk_column"=>{"Expression"=>"fk_Column","ForForeignKey"=>.t.,"StaticUID"=>"5a54f363-87e8-41e1-b3b7-a1dde4d9de42"}}};
     ,"public.CustomField"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -224,21 +224,21 @@ return ;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","StaticUID"=>"437e8013-f984-428b-ad48-aa815b3033db","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"fk_Entity"     =>{"Type"=>"I","Nullable"=>.t.};   //Foreign key to "table", "column", ... depending of the type of custom field, see value in public.CustomField.UsedOn. MAY NOT BE FLAGGED AS FOREIGN KEY since does not have a single parent table.
         ,"ValueI"        =>{"Type"=>"I","Nullable"=>.t.};   //Used if public.CustomField.Type = 2.
         ,"ValueM"        =>{"Type"=>"M","Nullable"=>.t.};   //Used if public.CustomField.Type = 3 or 4.
         ,"ValueD"        =>{"Type"=>"D","Nullable"=>.t.}};   //Used if public.CustomField.Type = 5.
                                 ,"Indexes"=>;
-        {"fk_customfield"=>{"Expression"=>"fk_CustomField"};
-        ,"fk_entity"     =>{"Expression"=>"fk_Entity"}}};
+        {"fk_customfield"=>{"Expression"=>"fk_CustomField","ForForeignKey"=>.t.,"StaticUID"=>"437e8013-f984-428b-ad48-aa815b3033db"};
+        ,"fk_entity"     =>{"Expression"=>"fk_Entity","StaticUID"=>"f3c39c66-43ff-4ba3-a545-017ce12a14e9"}}};
     ,"public.DataType"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_DataType"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.DataType","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Model"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_PrimitiveType"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.PrimitiveType","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_DataType"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.DataType","ForeignKeyOptional"=>.t.,"StaticUID"=>"2dc871aa-443a-4cfd-8225-143520097ae0","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"66e9f8f5-9e2d-4dc9-9f0c-80dc89e356d2","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_PrimitiveType"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.PrimitiveType","ForeignKeyOptional"=>.t.,"StaticUID"=>"81784790-fc09-484e-9262-632b2559c815","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
         ,"Description"     =>{"Type"=>"M","Nullable"=>.t.};
@@ -248,15 +248,15 @@ return ;
         ,"TreeLevel"       =>{"Type"=>"I"};   //Denormalized Tree dept. Can be used to assist indentation on display.Unique in Model.
         ,"TreeOrder1"      =>{"Type"=>"I"}};   //Denormalized used to order full list. Unique in Model.
                         ,"Indexes"=>;
-        {"fk_datatype"     =>{"Expression"=>"fk_DataType"};
-        ,"fk_model"        =>{"Expression"=>"fk_Model"};
-        ,"fk_primitivetype"=>{"Expression"=>"fk_PrimitiveType"}}};
+        {"fk_datatype"     =>{"Expression"=>"fk_DataType","ForForeignKey"=>.t.,"StaticUID"=>"2dc871aa-443a-4cfd-8225-143520097ae0"};
+        ,"fk_model"        =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"66e9f8f5-9e2d-4dc9-9f0c-80dc89e356d2"};
+        ,"fk_primitivetype"=>{"Expression"=>"fk_PrimitiveType","ForForeignKey"=>.t.,"StaticUID"=>"81784790-fc09-484e-9262-632b2559c815"}}};
     ,"public.Deployment"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Application"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //If the deployment is user specific.
+        ,"fk_Application"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"fa7a8071-a8d2-4c78-ba08-41816e570af8","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","ForeignKeyOptional"=>.t.,"StaticUID"=>"cad85680-af13-4007-9896-7c82be4cba36","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //If the deployment is user specific.
         ,"LinkUID"           =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"              =>{"Type"=>"CV","Length"=>200};
         ,"Description"       =>{"Type"=>"M","Nullable"=>.t.};
@@ -274,13 +274,13 @@ return ;
         ,"SetForeignKey"     =>{"Type"=>"N","Length"=>1,"Nullable"=>.t.};   //1="Not", 2="ForeignKeyRestrictions", 3="Onp_TableName", 4="Onfk_TableName", 5="OnTableName_id"   Connection Info to detect foreign keys.
         ,"AllowUpdates"      =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"}};   //If the "Update" option can be executed under the "Deployment Tools".
                           ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"};
-        ,"fk_user"       =>{"Expression"=>"fk_User"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"fa7a8071-a8d2-4c78-ba08-41816e570af8"};
+        ,"fk_user"       =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"cad85680-af13-4007-9896-7c82be4cba36"}}};
     ,"public.Diagram"=>{"Fields"=>;
         {"pk"                 =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Application"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Application"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"bb48265a-5911-4242-8b66-f3c4c4e661bf","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"            =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"               =>{"Type"=>"CV","Length"=>200};
         ,"UseStatus"          =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
@@ -294,58 +294,58 @@ return ;
         ,"VisPos"             =>{"Type"=>"M","Nullable"=>.t.};   //Last Visualization Positions for VisJs mode.
         ,"MxgPos"             =>{"Type"=>"M","Nullable"=>.t.}};   //The layout of all tables and relationship, in JSon format for mxgraph mode.
                        ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"bb48265a-5911-4242-8b66-f3c4c4e661bf"}}};
     ,"public.DiagramEntity"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Entity"         =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
+        ,"fk_Entity"         =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","StaticUID"=>"dbe7899a-18f5-48a3-89e8-4ad20ee287ff","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","StaticUID"=>"7da7dbf7-9033-4dd9-8653-f5a52748cea8","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
                              ,"Indexes"=>;
-        {"fk_entity"         =>{"Expression"=>"fk_Entity"};
-        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram"}}};
+        {"fk_entity"         =>{"Expression"=>"fk_Entity","ForForeignKey"=>.t.,"StaticUID"=>"dbe7899a-18f5-48a3-89e8-4ad20ee287ff"};
+        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram","ForForeignKey"=>.t.,"StaticUID"=>"7da7dbf7-9033-4dd9-8653-f5a52748cea8"}}};
     ,"public.DiagramTable"=>{"Fields"=>;
         {"pk"        =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"      =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"      =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Diagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Table"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
+        ,"fk_Diagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","StaticUID"=>"14106be5-9c55-4526-a0e6-f28b3af613cb","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"eb8b5de6-2285-49a0-b7a9-889d5be03f3d","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
                             ,"Indexes"=>;
-        {"fk_diagram"=>{"Expression"=>"fk_Diagram"};
-        ,"fk_table"  =>{"Expression"=>"fk_Table"}}};
+        {"fk_diagram"=>{"Expression"=>"fk_Diagram","ForForeignKey"=>.t.,"StaticUID"=>"14106be5-9c55-4526-a0e6-f28b3af613cb"};
+        ,"fk_table"  =>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"eb8b5de6-2285-49a0-b7a9-889d5be03f3d"}}};
     ,"public.Endpoint"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Entity"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Association"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Association","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Entity"     =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","StaticUID"=>"183241a4-c762-4a59-9c43-9f6ba2ca7320","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Association"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Association","StaticUID"=>"00df8b98-1e07-4039-acec-358749151b98","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"Name"          =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Showing near the entity in a representation.
         ,"BoundLower"    =>{"Type"=>"CV","Length"=>4,"Nullable"=>.t.};
         ,"BoundUpper"    =>{"Type"=>"CV","Length"=>4,"Nullable"=>.t.};
         ,"IsContainment" =>{"Type"=>"L"};   //If should show a diamond.
         ,"Description"   =>{"Type"=>"M","Nullable"=>.t.}};   //Not certain if needed.
                         ,"Indexes"=>;
-        {"fk_association"=>{"Expression"=>"fk_Association"};
-        ,"fk_entity"     =>{"Expression"=>"fk_Entity"}}};
+        {"fk_association"=>{"Expression"=>"fk_Association","ForForeignKey"=>.t.,"StaticUID"=>"00df8b98-1e07-4039-acec-358749151b98"};
+        ,"fk_entity"     =>{"Expression"=>"fk_Entity","ForForeignKey"=>.t.,"StaticUID"=>"183241a4-c762-4a59-9c43-9f6ba2ca7320"}}};
     ,"public.Entity"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Package" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Model"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Package" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"StaticUID"=>"7ec8a0c4-eb93-4190-80e6-1f2db0ebf867","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"df90877f-f50e-4dfc-9547-baf3eae69135","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>200};
         ,"Description"=>{"Type"=>"M","Nullable"=>.t.};   //AKA Definition.
         ,"Information"=>{"Type"=>"M","Nullable"=>.t.};   //Should support mark down (md).
         ,"UseStatus"  =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
                       ,"Indexes"=>;
-        {"fk_model"  =>{"Expression"=>"fk_Model"};
-        ,"fk_package"=>{"Expression"=>"fk_Package"}}};
+        {"fk_model"  =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"df90877f-f50e-4dfc-9547-baf3eae69135"};
+        ,"fk_package"=>{"Expression"=>"fk_Package","ForForeignKey"=>.t.,"StaticUID"=>"7ec8a0c4-eb93-4190-80e6-1f2db0ebf867"}}};
     ,"public.Enumeration"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Namespace"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Namespace"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","StaticUID"=>"f4853881-4992-453b-a4db-b4c280aec9ba","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
         ,"TrackNameChanges"=>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};
@@ -358,20 +358,20 @@ return ;
         ,"TestWarning"     =>{"Type"=>"M","Nullable"=>.t.};   //Last Test Run warning messages.
         ,"ExternalId"      =>{"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Used if syncing with a 3rd party dictionary and via DataWharf API calls.
                            ,"Indexes"=>;
-        {"fk_namespace"=>{"Expression"=>"fk_Namespace"}}};
+        {"fk_namespace"=>{"Expression"=>"fk_Namespace","ForForeignKey"=>.t.,"StaticUID"=>"f4853881-4992-453b-a4db-b4c280aec9ba"}}};
     ,"public.EnumerationPreviousName"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Creation Time
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Last modified time
-        ,"fk_Enumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Enumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","StaticUID"=>"20a32034-0b2a-46f0-9136-a6b04a3a21c5","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Name"          =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Previous name
                                        ,"Indexes"=>;
-        {"fk_enumeration"=>{"Expression"=>"fk_Enumeration"}}};
+        {"fk_enumeration"=>{"Expression"=>"fk_Enumeration","ForForeignKey"=>.t.,"StaticUID"=>"20a32034-0b2a-46f0-9136-a6b04a3a21c5"}}};
     ,"public.EnumValue"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Enumeration"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Enumeration"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Enumeration","StaticUID"=>"215df085-5d83-4aae-8474-ed8f835971bc","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Number"          =>{"Type"=>"I","Nullable"=>.t.};   //Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
         ,"Order"           =>{"Type"=>"I"};   //Display Order
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
@@ -385,15 +385,15 @@ return ;
         ,"TestWarning"     =>{"Type"=>"M","Nullable"=>.t.,"OnDelete"=>"Protect"};   //Last Test Run warning messages.
         ,"ExternalId"      =>{"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Used if syncing with a 3rd party dictionary and via DataWharf API calls.
                          ,"Indexes"=>;
-        {"fk_enumeration"=>{"Expression"=>"fk_Enumeration"}}};
+        {"fk_enumeration"=>{"Expression"=>"fk_Enumeration","ForForeignKey"=>.t.,"StaticUID"=>"215df085-5d83-4aae-8474-ed8f835971bc"}}};
     ,"public.EnumValuePreviousName"=>{"Fields"=>;
         {"pk"          =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Creation Time
         ,"sysm"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Last modified time
-        ,"fk_EnumValue"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.EnumValue","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_EnumValue"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.EnumValue","StaticUID"=>"a30ab9a2-2efa-4dd6-bdab-f6d449ab51a7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Name"        =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Previous name
                                      ,"Indexes"=>;
-        {"fk_enumvalue"=>{"Expression"=>"fk_EnumValue"}}};
+        {"fk_enumvalue"=>{"Expression"=>"fk_EnumValue","ForForeignKey"=>.t.,"StaticUID"=>"a30ab9a2-2efa-4dd6-bdab-f6d449ab51a7"}}};
     ,"public.FastCGIRunLog"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -411,7 +411,7 @@ return ;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Table"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"89340608-02a1-4e96-9e24-cf4ce4e47ab7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>200};
         ,"Unique"     =>{"Type"=>"L"};
@@ -421,43 +421,44 @@ return ;
         ,"UsedBy"     =>{"Type"=>"N","Length"=>1};   //1="AllServers", 2="MySQLOnly", 3="PostgreSQLOnly"   
         ,"UseStatus"  =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
         ,"DocStatus"  =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Missing", 2="NotNeeded", 3="Composing", 4="Complete"   
-        ,"TestWarning"=>{"Type"=>"M","Nullable"=>.t.}};   //Last Test Run warning messages.
+        ,"TestWarning"=>{"Type"=>"M","Nullable"=>.t.};   //Last Test Run warning messages.
+        ,"StaticUID"  =>{"Type"=>"C","Length"=>36,"Default"=>"gen_random_uuid()::char(36)","OnDelete"=>"Protect"}};   //Will be remember between imports/exports, and optionally used to name Indexes as "dw_"+StaticUID+"_idx"
                      ,"Indexes"=>;
-        {"fk_table"=>{"Expression"=>"fk_Table"}}};
+        {"fk_table"=>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"89340608-02a1-4e96-9e24-cf4ce4e47ab7"}}};
     ,"public.IndexColumn"=>{"Fields"=>;
         {"pk"       =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Index" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Index","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
+        ,"fk_Index" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Index","StaticUID"=>"0bd4ef7f-92f8-466c-a5bb-9a67784fc1df","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","StaticUID"=>"f44129f7-fdc1-4896-b4a8-5bc40e30bcd7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
                            ,"Indexes"=>;
-        {"fk_column"=>{"Expression"=>"fk_Column"};
-        ,"fk_index" =>{"Expression"=>"fk_Index"}}};
+        {"fk_column"=>{"Expression"=>"fk_Column","ForForeignKey"=>.t.,"StaticUID"=>"f44129f7-fdc1-4896-b4a8-5bc40e30bcd7"};
+        ,"fk_index" =>{"Expression"=>"fk_Index","ForForeignKey"=>.t.,"StaticUID"=>"0bd4ef7f-92f8-466c-a5bb-9a67784fc1df"}}};
     ,"public.LinkedEntity"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Description"=>{"Type"=>"M","Nullable"=>.t.};
-        ,"fk_Entity1" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //From / To
-        ,"fk_Entity2" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //From / To
+        ,"fk_Entity1" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","StaticUID"=>"24357d16-b167-424f-850e-f28104de91c0","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //From / To
+        ,"fk_Entity2" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Entity","StaticUID"=>"26635c8d-98e2-4a16-80d6-bbd5e65e8790","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //From / To
                             ,"Indexes"=>;
-        {"fk_entity1"=>{"Expression"=>"fk_Entity1"};
-        ,"fk_entity2"=>{"Expression"=>"fk_Entity2"}}};
+        {"fk_entity1"=>{"Expression"=>"fk_Entity1","ForForeignKey"=>.t.,"StaticUID"=>"24357d16-b167-424f-850e-f28104de91c0"};
+        ,"fk_entity2"=>{"Expression"=>"fk_Entity2","ForForeignKey"=>.t.,"StaticUID"=>"26635c8d-98e2-4a16-80d6-bbd5e65e8790"}}};
     ,"public.LinkedModel"=>{"Fields"=>;
         {"pk"       =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Model1"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //From / To
-        ,"fk_Model2"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //From / To
+        ,"fk_Model1"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"884e0f64-986c-46db-b49b-5c0333230dd6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //From / To
+        ,"fk_Model2"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"09dd3c8b-dc7f-4a6d-b085-d4b196974407","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //From / To
                            ,"Indexes"=>;
-        {"fk_model1"=>{"Expression"=>"fk_Model1"};
-        ,"fk_model2"=>{"Expression"=>"fk_Model2"}}};
+        {"fk_model1"=>{"Expression"=>"fk_Model1","ForForeignKey"=>.t.,"StaticUID"=>"884e0f64-986c-46db-b49b-5c0333230dd6"};
+        ,"fk_model2"=>{"Expression"=>"fk_Model2","ForForeignKey"=>.t.,"StaticUID"=>"09dd3c8b-dc7f-4a6d-b085-d4b196974407"}}};
     ,"public.LoginLogs"=>{"Fields"=>;
         {"pk"       =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_User"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"c6e465e7-e727-475d-abaf-6fb2a5dd6314","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"TimeIn"   =>{"Type"=>"DT","Scale"=>2};
         ,"TimeOut"  =>{"Type"=>"DT","Scale"=>2,"Nullable"=>.t.};
         ,"IP"       =>{"Type"=>"CV","Length"=>45};
@@ -465,45 +466,45 @@ return ;
         ,"Attempts" =>{"Type"=>"I"};   //Counter on the number of attempts to login.
         ,"Status"   =>{"Type"=>"N","Length"=>1}};   //1="LoggedIn", 2="UserLogout", 3="ImplicitLogout"   
                          ,"Indexes"=>;
-        {"fk_user"=>{"Expression"=>"fk_User"}}};
+        {"fk_user"=>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"c6e465e7-e727-475d-abaf-6fb2a5dd6314"}}};
     ,"public.Model"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Project" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Project" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","StaticUID"=>"ccbef3f3-c42b-4059-b189-a6930840b9d1","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>100};   //Unique in application.
         ,"Description"=>{"Type"=>"M","Nullable"=>.t.};
         ,"Stage"      =>{"Type"=>"N","Length"=>1}};   //1="Proposed", 2="Draft", 3="Beta", 4="Stable", 5="InUse", 6="Discontinued"   
                      ,"Indexes"=>;
-        {"fk_project"=>{"Expression"=>"fk_Project"}}};
+        {"fk_project"=>{"Expression"=>"fk_Project","ForForeignKey"=>.t.,"StaticUID"=>"ccbef3f3-c42b-4059-b189-a6930840b9d1"}}};
     ,"public.ModelEnumeration"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Model"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"fe7621b7-7b6b-426c-90a9-9b426a01ddb6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>200};
         ,"Description"=>{"Type"=>"M","Nullable"=>.t.};
         ,"UseStatus"  =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
                                 ,"Indexes"=>;
-        {"fk_model"=>{"Expression"=>"fk_Model"}}};
+        {"fk_model"=>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"fe7621b7-7b6b-426c-90a9-9b426a01ddb6"}}};
     ,"public.ModelEnumValue"=>{"Fields"=>;
         {"pk"                 =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"               =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_ModelEnumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelEnumeration","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_ModelEnumeration"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelEnumeration","StaticUID"=>"cfa657b9-85b8-4253-8b49-6cea7b5abe03","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Number"             =>{"Type"=>"I","Nullable"=>.t.};   //Optional. If the enum is not implemented as a Enum SQL type, but more as a pseudo value.
         ,"Order"              =>{"Type"=>"I"};   //Display Order.
         ,"Name"               =>{"Type"=>"CV","Length"=>200};
         ,"Description"        =>{"Type"=>"M","Nullable"=>.t.}};
                               ,"Indexes"=>;
-        {"fk_modelenumeration"=>{"Expression"=>"fk_ModelEnumeration"}}};
+        {"fk_modelenumeration"=>{"Expression"=>"fk_ModelEnumeration","ForForeignKey"=>.t.,"StaticUID"=>"cfa657b9-85b8-4253-8b49-6cea7b5abe03"}}};
     ,"public.ModelingDiagram"=>{"Fields"=>;
         {"pk"                    =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"                  =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"                  =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Model"              =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"              =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"f8d164b2-e526-456a-b90d-b87212f216d4","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"               =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"                  =>{"Type"=>"CV","Length"=>200};
         ,"NodeShowDescription"   =>{"Type"=>"L"};   //True If the node description should be included.
@@ -514,12 +515,12 @@ return ;
         ,"AssociationEndShowName"=>{"Type"=>"L"};   //True If the association end name should be shown.
         ,"UseStatus"             =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
                                ,"Indexes"=>;
-        {"fk_model"=>{"Expression"=>"fk_Model"}}};
+        {"fk_model"=>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"f8d164b2-e526-456a-b90d-b87212f216d4"}}};
     ,"public.Namespace"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Application"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Application"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"7085d780-e953-4666-9a79-9b6167e8ab76","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
         ,"TrackNameChanges"=>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};
@@ -530,21 +531,21 @@ return ;
         ,"TestWarning"     =>{"Type"=>"M","Nullable"=>.t.,"OnDelete"=>"Protect"};   //Last Test Run warning messages.
         ,"ExternalId"      =>{"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Used if syncing with a 3rd party dictionary and via DataWharf API calls.
                          ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"7085d780-e953-4666-9a79-9b6167e8ab76"}}};
     ,"public.NamespacePreviousName"=>{"Fields"=>;
         {"pk"          =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Creation Time
         ,"sysm"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Last modified time
-        ,"fk_Namespace"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Namespace"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","StaticUID"=>"8d48f41c-e68b-4971-9e95-6dbf4b40ec2d","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Name"        =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Previous name
                                      ,"Indexes"=>;
-        {"fk_namespace"=>{"Expression"=>"fk_Namespace"}}};
+        {"fk_namespace"=>{"Expression"=>"fk_Namespace","ForForeignKey"=>.t.,"StaticUID"=>"8d48f41c-e68b-4971-9e95-6dbf4b40ec2d"}}};
     ,"public.Package"=>{"Fields"=>;
         {"pk"        =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"      =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"      =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Package"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
-        ,"fk_Model"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Package"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Package","ForeignKeyOptional"=>.t.,"StaticUID"=>"ae46f6cf-a0a3-41a6-a0fa-e662f9151adb","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Model"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"08f15327-9ab7-4735-9f2d-40abd54ba0d7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"   =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"      =>{"Type"=>"CV","Length"=>200};
         ,"UseStatus" =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Unknown", 2="Proposed", 3="UnderDevelopment", 4="Active", 5="ToBeDiscontinued", 6="Discontinued"   
@@ -553,18 +554,18 @@ return ;
         ,"TreeLevel" =>{"Type"=>"I"};   //Denormalized Tree dept. Can be used to assist indentation on display.Unique in Model.
         ,"TreeOrder1"=>{"Type"=>"I"}};   //Denormalized used to order full list. Unique in Model.
                        ,"Indexes"=>;
-        {"fk_model"  =>{"Expression"=>"fk_Model"};
-        ,"fk_package"=>{"Expression"=>"fk_Package"}}};
+        {"fk_model"  =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"08f15327-9ab7-4735-9f2d-40abd54ba0d7"};
+        ,"fk_package"=>{"Expression"=>"fk_Package","ForForeignKey"=>.t.,"StaticUID"=>"ae46f6cf-a0a3-41a6-a0fa-e662f9151adb"}}};
     ,"public.PrimitiveType"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Project" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Project" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","StaticUID"=>"4b9b11b2-925a-44e4-8ce8-4d273eaab7ec","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"    =>{"Type"=>"C","Length"=>36};   //Used to create direct link, Is a UUID generated by calling postgresql "select gen_random_uuid()".
         ,"Name"       =>{"Type"=>"CV","Length"=>200};
         ,"Description"=>{"Type"=>"M","Nullable"=>.t.}};
                              ,"Indexes"=>;
-        {"fk_project"=>{"Expression"=>"fk_Project"}}};
+        {"fk_project"=>{"Expression"=>"fk_Project","ForForeignKey"=>.t.,"StaticUID"=>"4b9b11b2-925a-44e4-8ce8-4d273eaab7ec"}}};
     ,"public.Project"=>{"Fields"=>;
         {"pk"                            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"                          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -595,17 +596,17 @@ return ;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Project"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_CustomField"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.CustomField","StaticUID"=>"e7dad858-b323-43e2-9dd9-0834714d9005","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Project"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","StaticUID"=>"23f60c3a-62dd-4d93-9bc4-3353e43fa939","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Order"         =>{"Type"=>"I"}};   //Display Order.
                                   ,"Indexes"=>;
-        {"fk_customfield"=>{"Expression"=>"fk_CustomField"};
-        ,"fk_project"    =>{"Expression"=>"fk_Project"}}};
+        {"fk_customfield"=>{"Expression"=>"fk_CustomField","ForForeignKey"=>.t.,"StaticUID"=>"e7dad858-b323-43e2-9dd9-0834714d9005"};
+        ,"fk_project"    =>{"Expression"=>"fk_Project","ForForeignKey"=>.t.,"StaticUID"=>"23f60c3a-62dd-4d93-9bc4-3353e43fa939"}}};
     ,"public.Table"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Namespace"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Namespace"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Namespace","StaticUID"=>"238553d0-8ea9-4935-8a81-df70b741521e","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
         ,"TrackNameChanges"=>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};
@@ -618,30 +619,30 @@ return ;
         ,"TestWarning"     =>{"Type"=>"M","Nullable"=>.t.};   //Last Test Run warning messages.
         ,"ExternalId"      =>{"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Used if syncing with a 3rd party dictionary and via DataWharf API calls.
                      ,"Indexes"=>;
-        {"fk_namespace"=>{"Expression"=>"fk_Namespace"}}};
+        {"fk_namespace"=>{"Expression"=>"fk_Namespace","ForForeignKey"=>.t.,"StaticUID"=>"238553d0-8ea9-4935-8a81-df70b741521e"}}};
     ,"public.TableMapping"=>{"Fields"=>;
         {"pk"          =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"        =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_TableFrom"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_TableTo"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_TableFrom"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"7e617a5d-df76-4e6a-bf30-87ac7dba5159","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_TableTo"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"8cdcb757-d99e-4ade-9724-278e218e8356","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Description" =>{"Type"=>"M"}};   //Text representation of the value.
                             ,"Indexes"=>;
-        {"fk_tablefrom"=>{"Expression"=>"fk_TableFrom"};
-        ,"fk_tableto"  =>{"Expression"=>"fk_TableTo"}}};
+        {"fk_tablefrom"=>{"Expression"=>"fk_TableFrom","ForForeignKey"=>.t.,"StaticUID"=>"7e617a5d-df76-4e6a-bf30-87ac7dba5159"};
+        ,"fk_tableto"  =>{"Expression"=>"fk_TableTo","ForForeignKey"=>.t.,"StaticUID"=>"8cdcb757-d99e-4ade-9724-278e218e8356"}}};
     ,"public.TablePreviousName"=>{"Fields"=>;
         {"pk"      =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"    =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Creation Time
         ,"sysm"    =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};   //Last modified time
-        ,"fk_Table"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"e6d3d864-bee8-4c0f-b230-0b292b1d14da","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Name"    =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.,"OnDelete"=>"Protect"}};   //Previous name
                                  ,"Indexes"=>;
-        {"fk_table"=>{"Expression"=>"fk_Table"}}};
+        {"fk_table"=>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"e6d3d864-bee8-4c0f-b230-0b292b1d14da"}}};
     ,"public.Tag"=>{"Fields"=>;
         {"pk"             =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"           =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Application" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"48565ef7-20c0-4d3c-bfc1-6f4b5f83c238","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"LinkUID"        =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};
         ,"Code"           =>{"Type"=>"CV","Length"=>10};
         ,"Name"           =>{"Type"=>"CV","Length"=>100};
@@ -649,30 +650,30 @@ return ;
         ,"ColumnUseStatus"=>{"Type"=>"N","Length"=>1};   //1="DoNotUse", 2="Active", 3="Discontinued"   
         ,"Description"    =>{"Type"=>"M","Nullable"=>.t.}};
                    ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"48565ef7-20c0-4d3c-bfc1-6f4b5f83c238"}}};
     ,"public.TagColumn"=>{"Fields"=>;
         {"pk"       =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"     =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Tag"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Tag","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
+        ,"fk_Tag"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Tag","StaticUID"=>"9f281e7d-f08a-4b3e-96fc-a15e1c398ce6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Column"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Column","StaticUID"=>"ea6abc39-da5b-41c2-b6ef-1acd925c6a8c","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
                          ,"Indexes"=>;
-        {"fk_column"=>{"Expression"=>"fk_Column"};
-        ,"fk_tag"   =>{"Expression"=>"fk_Tag"}}};
+        {"fk_column"=>{"Expression"=>"fk_Column","ForForeignKey"=>.t.,"StaticUID"=>"ea6abc39-da5b-41c2-b6ef-1acd925c6a8c"};
+        ,"fk_tag"   =>{"Expression"=>"fk_Tag","ForForeignKey"=>.t.,"StaticUID"=>"9f281e7d-f08a-4b3e-96fc-a15e1c398ce6"}}};
     ,"public.TagTable"=>{"Fields"=>;
         {"pk"      =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"    =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"    =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Tag"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Tag","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Table"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
+        ,"fk_Tag"  =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Tag","StaticUID"=>"f8c08fa1-b025-43ea-8742-4c5a5baa03d9","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","StaticUID"=>"ed5438c9-f8ad-4a86-a501-babe0ff73a5a","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};
                         ,"Indexes"=>;
-        {"fk_table"=>{"Expression"=>"fk_Table"};
-        ,"fk_tag"  =>{"Expression"=>"fk_Tag"}}};
+        {"fk_table"=>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"ed5438c9-f8ad-4a86-a501-babe0ff73a5a"};
+        ,"fk_tag"  =>{"Expression"=>"fk_Tag","ForForeignKey"=>.t.,"StaticUID"=>"f8c08fa1-b025-43ea-8742-4c5a5baa03d9"}}};
     ,"public.TemplateColumn"=>{"Fields"=>;
         {"pk"              =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"            =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_TemplateTable"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.TemplateTable","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_TemplateTable"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.TemplateTable","StaticUID"=>"1e486610-07f0-4427-87f0-2af203c9b2d0","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"Order"           =>{"Type"=>"I"};   //Display Order.
         ,"LinkUID"         =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"            =>{"Type"=>"CV","Length"=>200};
@@ -691,16 +692,16 @@ return ;
         ,"Unicode"         =>{"Type"=>"L"};   //Only Applicable to Character types.
         ,"Description"     =>{"Type"=>"M","Nullable"=>.t.}};
                               ,"Indexes"=>;
-        {"fk_templatetable"=>{"Expression"=>"fk_TemplateTable"}}};
+        {"fk_templatetable"=>{"Expression"=>"fk_TemplateTable","ForForeignKey"=>.t.,"StaticUID"=>"1e486610-07f0-4427-87f0-2af203c9b2d0"}}};
     ,"public.TemplateTable"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"1055ebfa-fa0b-42e6-8514-66f8ff7ca8e7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Protect"};
         ,"LinkUID"       =>{"Type"=>"C","Length"=>36,"OnDelete"=>"Protect"};   //Used to create direct link, if the name is not URL friendly, Is a UUID generated by calling Postgresql "select gen_random_uuid()".
         ,"Name"          =>{"Type"=>"CV","Length"=>200}};
                              ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"1055ebfa-fa0b-42e6-8514-66f8ff7ca8e7"}}};
     ,"public.User"=>{"Fields"=>;
         {"pk"         =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"       =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
@@ -717,78 +718,78 @@ return ;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"e7791bca-b2ee-4963-a695-b05b8a5d84c3","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"07b3b7fe-dee1-4fa7-9597-48b10bba3901","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"AccessLevelDD" =>{"Type"=>"N","Length"=>1}};   //1="None", 2="ReadOnly", 3="EditDescriptionAndInformationEntries", 4="EditDescriptionAndInformationEntriesAndDiagrams", 5="EditAnythingAndImportExport", 6="EditAnythingAndSyncSchema", 7="FullAccess"   Data Dictionary Access Level for User in Application.
                                      ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"};
-        ,"fk_user"       =>{"Expression"=>"fk_User"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"07b3b7fe-dee1-4fa7-9597-48b10bba3901"};
+        ,"fk_user"       =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"e7791bca-b2ee-4963-a695-b05b8a5d84c3"}}};
     ,"public.UserAccessProject"=>{"Fields"=>;
         {"pk"           =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"         =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Project"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_User"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"4fb3eeda-d39e-45d0-acec-f0d5a4af4c29","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Project"   =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Project","StaticUID"=>"5c19d13f-73dd-45cf-818d-766d1489acb7","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"AccessLevelML"=>{"Type"=>"N","Length"=>1}};   //1="None", 2="ReadOnly", 3="EditDescriptionAndInformationEntries", 4="EditDescriptionAndInformationEntriesAndDiagrams", 5="EditAnything", 7="FullAccess"   
                                  ,"Indexes"=>;
-        {"fk_project"=>{"Expression"=>"fk_Project"};
-        ,"fk_user"   =>{"Expression"=>"fk_User"}}};
+        {"fk_project"=>{"Expression"=>"fk_Project","ForForeignKey"=>.t.,"StaticUID"=>"5c19d13f-73dd-45cf-818d-766d1489acb7"};
+        ,"fk_user"   =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"4fb3eeda-d39e-45d0-acec-f0d5a4af4c29"}}};
     ,"public.UserSetting"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Diagram"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Application Diagram.
-        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Modeling Diagram.
+        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"f63a4c31-e59e-4181-bbf1-9c1be42acb5a","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Diagram"        =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.,"StaticUID"=>"ace5f6ff-0556-4eb3-bab9-feaa957fa4a6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Application Diagram.
+        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","ForeignKeyOptional"=>.t.,"StaticUID"=>"78106a37-43b1-4e5d-ab5b-f11c5fb9d244","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Used only if setting is specific to a particular Modeling Diagram.
         ,"KeyC"              =>{"Type"=>"CV","Length"=>100};   //Any Text that will be know in the app.
         ,"ValueC"            =>{"Type"=>"M"};   //Text representation of the value.
         ,"ValueType"         =>{"Type"=>"N","Length"=>1,"Default"=>"1"}};   //1="String", 2="Integer", 3="Date", 4="BlobMemo"   
                            ,"Indexes"=>;
-        {"fk_diagram"        =>{"Expression"=>"fk_Diagram"};
-        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram"};
-        ,"fk_user"           =>{"Expression"=>"fk_User"};
-        ,"keyc"              =>{"Expression"=>"KeyC"}}};
+        {"fk_diagram"        =>{"Expression"=>"fk_Diagram","ForForeignKey"=>.t.,"StaticUID"=>"ace5f6ff-0556-4eb3-bab9-feaa957fa4a6"};
+        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram","ForForeignKey"=>.t.,"StaticUID"=>"78106a37-43b1-4e5d-ab5b-f11c5fb9d244"};
+        ,"fk_user"           =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"f63a4c31-e59e-4181-bbf1-9c1be42acb5a"};
+        ,"keyc"              =>{"Expression"=>"KeyC","StaticUID"=>"8510a77c-4da8-4c87-a886-58796571aa23"}}};
     ,"public.UserSettingApplication"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Diagram"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Last Diagram used by the user while in an application.
-        ,"fk_Deployment" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Deployment","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //Last Deployment used by the user while in an application.
+        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"64ca7af8-e3d7-4ede-bdbc-917a19a0e9c8","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","StaticUID"=>"a3c00534-04aa-480b-a3b8-09763b799847","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Diagram"    =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Diagram","ForeignKeyOptional"=>.t.,"StaticUID"=>"41e91e4f-3f00-4555-94fe-4607046a38d0","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};   //Last Diagram used by the user while in an application.
+        ,"fk_Deployment" =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Deployment","ForeignKeyOptional"=>.t.,"StaticUID"=>"5adc3a3f-8c11-452d-91cb-43a890ed17d6","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //Last Deployment used by the user while in an application.
                                       ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"};
-        ,"fk_deployment" =>{"Expression"=>"fk_Deployment"};
-        ,"fk_diagram"    =>{"Expression"=>"fk_Diagram"};
-        ,"fk_user"       =>{"Expression"=>"fk_User"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"a3c00534-04aa-480b-a3b8-09763b799847"};
+        ,"fk_deployment" =>{"Expression"=>"fk_Deployment","ForForeignKey"=>.t.,"StaticUID"=>"5adc3a3f-8c11-452d-91cb-43a890ed17d6"};
+        ,"fk_diagram"    =>{"Expression"=>"fk_Diagram","ForForeignKey"=>.t.,"StaticUID"=>"41e91e4f-3f00-4555-94fe-4607046a38d0"};
+        ,"fk_user"       =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"64ca7af8-e3d7-4ede-bdbc-917a19a0e9c8"}}};
     ,"public.UserSettingModel"=>{"Fields"=>;
         {"pk"                =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"              =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
-        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Model"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //Last Accessed Diagram, to help default the menu to restart on that diagram.
+        ,"fk_User"           =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"d1ea2898-49f1-4ea1-af2c-61eaf9d4b90e","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Model"          =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","StaticUID"=>"a8d29f39-427d-493c-bcfd-40efd8ed1c23","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_ModelingDiagram"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.ModelingDiagram","StaticUID"=>"a293eca1-4ec6-4ffd-a351-a115c193d8e4","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"}};   //Last Accessed Diagram, to help default the menu to restart on that diagram.
                                 ,"Indexes"=>;
-        {"fk_model"          =>{"Expression"=>"fk_Model"};
-        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram"};
-        ,"fk_user"           =>{"Expression"=>"fk_User"}}};
+        {"fk_model"          =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"a8d29f39-427d-493c-bcfd-40efd8ed1c23"};
+        ,"fk_modelingdiagram"=>{"Expression"=>"fk_ModelingDiagram","ForForeignKey"=>.t.,"StaticUID"=>"a293eca1-4ec6-4ffd-a351-a115c193d8e4"};
+        ,"fk_user"           =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"d1ea2898-49f1-4ea1-af2c-61eaf9d4b90e"}}};
     ,"volatile.FileStream"=>{"Fields"=>;
         {"pk"            =>{"UsedAs"=>"Primary","Type"=>"I","Default"=>"Wharf-AutoIncrement()","AutoIncrement"=>.t.};
         ,"sysc"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"sysm"          =>{"Type"=>"DT","Scale"=>6,"Nullable"=>.t.};
         ,"type"          =>{"Type"=>"N","Length"=>1,"Nullable"=>.t.};   //1="ApplicationExport", 2="ApplicationImport", 3="ModelExport", 4="ModelImport", 5="TableExport"   
-        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Model"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
-        ,"fk_Table"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_User"       =>{"UsedAs"=>"Foreign","ParentTable"=>"public.User","StaticUID"=>"d7515894-da1a-42f2-8a0a-b6d368a5d3f3","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Application"=>{"UsedAs"=>"Foreign","ParentTable"=>"public.Application","ForeignKeyOptional"=>.t.,"StaticUID"=>"43959654-0dc8-43ac-99fa-b72e441d6641","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Model"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Model","ForeignKeyOptional"=>.t.,"StaticUID"=>"2c8c21fa-b116-49ee-9dd0-c98dac23410d","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
+        ,"fk_Table"      =>{"UsedAs"=>"Foreign","ParentTable"=>"public.Table","ForeignKeyOptional"=>.t.,"StaticUID"=>"7ff144eb-9451-40cc-8a3e-799a866a6da2","Type"=>"I","Nullable"=>.t.,"OnDelete"=>"Cascade"};
         ,"LinkUID"       =>{"Type"=>"C","Length"=>36};
         ,"oid"           =>{"Type"=>"OID","Nullable"=>.t.};   //To the PostgreSQL Large Object.
         ,"FileName"      =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.}};
                             ,"Indexes"=>;
-        {"fk_application"=>{"Expression"=>"fk_Application"};
-        ,"fk_model"      =>{"Expression"=>"fk_Model"};
-        ,"fk_table"      =>{"Expression"=>"fk_Table"};
-        ,"fk_user"       =>{"Expression"=>"fk_User"}}};
+        {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"43959654-0dc8-43ac-99fa-b72e441d6641"};
+        ,"fk_model"      =>{"Expression"=>"fk_Model","ForForeignKey"=>.t.,"StaticUID"=>"2c8c21fa-b116-49ee-9dd0-c98dac23410d"};
+        ,"fk_table"      =>{"Expression"=>"fk_Table","ForForeignKey"=>.t.,"StaticUID"=>"7ff144eb-9451-40cc-8a3e-799a866a6da2"};
+        ,"fk_user"       =>{"Expression"=>"fk_User","ForForeignKey"=>.t.,"StaticUID"=>"d7515894-da1a-42f2-8a0a-b6d368a5d3f3"}}};
     },;
 "Enumerations"=>;
     {"public.APIEndpointStatus"=>{;

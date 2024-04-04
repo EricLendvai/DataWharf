@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.5"
+#define BUILDVERSION "4.6"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,7 +14,7 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "4.6"
+#define MIN_HARBOUR_ORM_VERSION  "4.7"
 #define MIN_HARBOUR_EL_VERSION   "4.3"
 #define MIN_HARBOUR_FCGI_VERSION "1.9"
 
