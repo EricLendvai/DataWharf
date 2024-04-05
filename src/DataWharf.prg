@@ -287,12 +287,12 @@ if l_lNoPostgresConnection
     ::p_o_SQLConnection := hb_SQLConnect()
     with object ::p_o_SQLConnection
         :SetBackendType("PostgreSQL")
-        :SetDriver(::GetAppConfig("POSTGRESDRIVER"))
-        :SetServer(::GetAppConfig("POSTGRESHOST"))
-        :SetPort(val(::GetAppConfig("POSTGRESPORT")))
-        :SetUser(::GetAppConfig("POSTGRESID"))
+        :SetDriver(l_cPostgresDriver)
+        :SetServer(l_cPostgresHost)
+        :SetPort(l_iPostgresPort)
+        :SetUser(l_cPostgresId)
         :SetPassword(::GetAppConfig("POSTGRESPASSWORD"))
-        :SetDatabase(::GetAppConfig("POSTGRESDATABASE"))
+        :SetDatabase(l_cPostgresDatabase)
         :SetCurrentNamespaceName("public")
 
         :LoadWharfConfiguration(Config())
@@ -309,6 +309,10 @@ if l_lNoPostgresConnection
             l_cConnectionErrorMessage := :GetErrorMessage()
 
         else
+            if v_iFastCGIRunLogPk <= 0 .and. !::p_o_SQLConnection:TableExists("public.FastCGIRunLog")   //Test if the minimum table is missing
+                UpdateSchema(::p_o_SQLConnection)
+            endif
+
             :SetApplicationName("DataWharf - 0")  // Temporary name until we have a FastCGIRunLog record.
 
             l_nWharfConfigAppliedStatus := :GetWharfConfigAppliedStatus()
@@ -326,7 +330,7 @@ if l_lNoPostgresConnection
                 // Get the number of DataWharf connections
                 l_cSQLCommand := [SELECT pg_advisory_lock(123456) as result]
                 if ::p_o_SQLConnection:SQLExec("Lock",l_cSQLCommand)
-                    ::p_o_SQLConnection:SQLExec("ce2607d5-a3d7-492e-b8c0-0769a8ccf5d0","SELECT application_name FROM pg_stat_activity  where application_name ilike 'DataWharf - %';","ListOfDataWharfConnections")
+                    ::p_o_SQLConnection:SQLExec("ce2607d5-a3d7-492e-b8c0-0769a8ccf5d0","SELECT application_name FROM pg_stat_activity where datname = '"+l_cPostgresDatabase+"' and application_name ilike 'DataWharf - %';","ListOfDataWharfConnections")
 
                     if ("ListOfDataWharfConnections")->(reccount()) == 1
                         // Only the current EXE is connected.
@@ -457,6 +461,14 @@ else
     endif
 endif
 
+
+// local l_cPostgresDriver         := ::GetAppConfig("POSTGRESDRIVER")
+// local l_cPostgresHost           := ::GetAppConfig("POSTGRESHOST")
+// local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
+// local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
+// local l_cPostgresId             := ::GetAppConfig("POSTGRESID")
+
+
 do case
 case hb_IsNil(::p_o_SQLConnection) .or. !::p_o_SQLConnection:Connected
     l_cHtml := [<html>]
@@ -472,7 +484,7 @@ case hb_IsNil(::p_o_SQLConnection) .or. !::p_o_SQLConnection:Connected
     l_cHtml += [<h2>Host: ]+l_cPostgresHost+[</h2>]
     l_cHtml += [<h2>Port: ]+trans(l_iPostgresPort)+[</h2>]
     l_cHtml += [<h2>User ID: ]+l_cPostgresId+[</h2>]
-    l_cHtml += [<h2>Password: ]+::GetAppConfig("POSTGRESPASSWORD")+[</h2>]
+    // l_cHtml += [<h2>Password: ]+::GetAppConfig("POSTGRESPASSWORD")+[</h2>]
     l_cHtml += [<h2>Database: ]+l_cPostgresDatabase+[</h>]
     
     l_cHtml += [</body>]

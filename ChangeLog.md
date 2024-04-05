@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 04/04/2024 v 4.7
+* Minor Fix on Initial creation of DataWharf's own database.
+
 ## 04/04/2024 v 4.6
 * Enhancement on PostgreSQL migration scripts to handle Foreign Key Constraints.
 * Indexes and Foreign Key Names that are beyond PostgreSQL length limit will be replace using StaticUID from Columns or Indexes.

@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.6"
+#define BUILDVERSION "4.7"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
