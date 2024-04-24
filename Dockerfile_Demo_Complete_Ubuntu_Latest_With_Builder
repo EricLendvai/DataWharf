@@ -60,6 +60,7 @@ RUN git clone https://github.com/EricLendvai/Harbour_EL/
 ADD https://api.github.com/repos/EricLendvai/Harbour_ORM/git/refs/heads/main RepoVersionHarbour_ORM.json
 RUN git clone https://github.com/EricLendvai/Harbour_ORM/
 
+
 #Will be used for future web apps builds and when building hb_orm
 ENV HB_EL_ROOT /src/Harbour_EL
 ENV HB_ORM_ROOT /src/Harbour_ORM
@@ -153,14 +154,12 @@ COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-
 
 RUN mkdir -p /var/www/Harbour_websites/fcgi_DataWharf/backend/
 COPY ./config_demo.txt /var/www/Harbour_websites/fcgi_DataWharf/backend/config.txt
-
 #RUN cp /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/www/Harbour_websites/fcgi_DataWharf/backend/FCGIDataWharf.exe
 
 COPY ./FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 
 RUN chown -R www-data:www-data /var/www/Harbour_websites
-
 
 # To make it possible to Delta/Load Datadictionary install additional ODBC drivers
 RUN apt-get -y install curl
@@ -187,7 +186,6 @@ RUN apt install ./mysql-community-client-plugins.deb
 RUN rm -f ./mysqlodbc.deb
 RUN wget -O ./mysqlodbc.deb https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-odbc_8.0.33-1ubuntu22.04_amd64.deb
 RUN apt install ./mysqlodbc.deb
-
 
 EXPOSE 80 
 
