@@ -262,6 +262,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :Column("Enumeration.Pk"          , "Enumeration_Pk")
             :Column("Namespace.Name"          , "Namespace_Name")
             :Column("Enumeration.Name"        , "Enumeration_Name")
+            :Column("Enumeration.UseStatus"   , "Enumeration_UseStatus")
             :Column("upper(Namespace.Name)"   , "tag1")
             :Column("upper(Enumeration.Name)" , "tag2")
             :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
@@ -278,13 +279,16 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :SQL("ListOfEnumerations")
             select ListOfEnumerations
             scan all
-                l_hCurrentListOfEnumerations[ListOfEnumerations->Namespace_Name+"*"+ListOfEnumerations->Enumeration_Name+"*"] := {ListOfEnumerations->Enumeration_Pk,ListOfEnumerations->Namespace_Name+"."+ListOfEnumerations->Enumeration_Name}
+                l_hCurrentListOfEnumerations[ListOfEnumerations->Namespace_Name+"*"+ListOfEnumerations->Enumeration_Name+"*"] := {ListOfEnumerations->Enumeration_Pk,;
+                                                                                                                                  ListOfEnumerations->Namespace_Name+"."+ListOfEnumerations->Enumeration_Name,;
+                                                                                                                                  ListOfEnumerations->Enumeration_UseStatus}
             endscan
 
             :Table("991803aa-7329-4c7a-bd22-171da990a6a6","Namespace")
             :Column("Table.Pk"              , "Table_Pk")
             :Column("Namespace.Name"        , "Namespace_Name")
             :Column("Table.Name"            , "Table_Name")
+            :Column("Table.UseStatus"       , "Table_UseStatus")
             :Column("upper(Namespace.Name)" , "tag1")
             :Column("upper(Table.Name)"     , "tag2")
             :Join("inner","Table","","Table.fk_Namespace = Namespace.pk")
@@ -300,7 +304,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             :SQL("ListOfTables")
             select ListOfTables
             scan all
-                l_hCurrentListOfTables[ListOfTables->Namespace_Name+"*"+ListOfTables->Table_Name+"*"] := {ListOfTables->Table_Pk,ListOfTables->Namespace_Name+"."+ListOfTables->Table_Name}
+                l_hCurrentListOfTables[ListOfTables->Namespace_Name+"*"+ListOfTables->Table_Name+"*"] := {ListOfTables->Table_Pk,;
+                                                                                                          ListOfTables->Namespace_Name+"."+ListOfTables->Table_Name,;
+                                                                                                          ListOfTables->Table_UseStatus}
             endscan
 
         endwith
@@ -382,6 +388,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Column("EnumValue.Pk"          , "Pk")
                         :Column("EnumValue.Order"       , "EnumValue_Order")
                         :Column("EnumValue.Name"        , "EnumValue_Name")
+                        :Column("EnumValue.UseStatus"   , "EnumValue_UseStatus")
                         :Column("upper(EnumValue.Name)" , "tag1")
                         :Where("EnumValue.fk_Enumeration = ^" , l_iEnumerationPk)
                         :OrderBy("EnumValue_Order") //,"Desc"
@@ -398,7 +405,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             else
                                 select ListOfEnumValuesInEnumeration
                                 scan all
-                                    l_hCurrentListOfEnumValues[l_cLastNamespace+"*"+l_cLastEnumerationName+"*"+ListOfEnumValuesInEnumeration->EnumValue_Name+"*"] := {ListOfEnumValuesInEnumeration->Pk,l_cLastNamespace+"."+l_cLastEnumerationName+"."+ListOfEnumValuesInEnumeration->EnumValue_Name}
+                                    l_hCurrentListOfEnumValues[l_cLastNamespace+"*"+l_cLastEnumerationName+"*"+ListOfEnumValuesInEnumeration->EnumValue_Name+"*"] := {ListOfEnumValuesInEnumeration->Pk,;
+                                                                                                                                                                      l_cLastNamespace+"."+l_cLastEnumerationName+"."+ListOfEnumValuesInEnumeration->EnumValue_Name,;
+                                                                                                                                                                      ListOfEnumValuesInEnumeration->EnumValue_UseStatus}
                                     l_LastEnumValueOrder := ListOfEnumValuesInEnumeration->EnumValue_Order   // since Ascending now, the last loop will have the biggest value
                                 endscan
                             endif
@@ -562,7 +571,9 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 select ListOfColumnsInTable
                                 scan all
                                     if ListOfColumnsInTable->Column_UseStatus != USESTATUS_DISCONTINUED
-                                        l_hCurrentListOfColumns[l_cLastNamespace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfColumnsInTable->Pk,l_cLastNamespace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name}
+                                        l_hCurrentListOfColumns[l_cLastNamespace+"*"+l_cLastTableName+"*"+ListOfColumnsInTable->Column_Name+"*"] := {ListOfColumnsInTable->Pk,;
+                                                                                                                                                     l_cLastNamespace+"."+l_cLastTableName+"."+ListOfColumnsInTable->Column_Name,;
+                                                                                                                                                     ListOfColumnsInTable->Column_UseStatus}
                                         l_LastColumnOrder := ListOfColumnsInTable->Column_Order   // since Ascending now, the last loop will have the biggest value
                                     endif
                                 endscan
@@ -1010,19 +1021,27 @@ endcase
 //--Report any non existing elements-----------
 if empty(l_cErrorMessage)
     for each l_aEnumerationInfo in l_hCurrentListOfEnumerations
-        AAdd(l_aListOfMessages,[Physical Database does not have the enumeration: "]+l_aEnumerationInfo[2]+["])
+        if !(l_aEnumerationInfo[3] == USESTATUS_PROPOSED .or. l_aEnumerationInfo[3] == USESTATUS_DISCONTINUED)
+            AAdd(l_aListOfMessages,[Physical Database does not have the enumeration: "]+l_aEnumerationInfo[2]+["])
+        endif
     endfor
 
     for each l_aEnumValueInfo in l_hCurrentListOfEnumValues
-        AAdd(l_aListOfMessages,[Physical Database does not have the enumeration value: "]+l_aEnumValueInfo[2]+["])
+        if !(l_aEnumValueInfo[3] == USESTATUS_PROPOSED .or. l_aEnumValueInfo[3] == USESTATUS_DISCONTINUED)
+            AAdd(l_aListOfMessages,[Physical Database does not have the enumeration value: "]+l_aEnumValueInfo[2]+["])
+        endif
     endfor
 
     for each l_aTableInfo in l_hCurrentListOfTables
-        AAdd(l_aListOfMessages,[Physical Database does not have the table: "]+l_aTableInfo[2]+["])
+        if !(l_aTableInfo[3] == USESTATUS_PROPOSED .or. l_aTableInfo[3] == USESTATUS_DISCONTINUED)
+            AAdd(l_aListOfMessages,[Physical Database does not have the table: "]+l_aTableInfo[2]+["])
+        endif
     endfor
 
     for each l_aColumnInfo in l_hCurrentListOfColumns
-        AAdd(l_aListOfMessages,[Physical Database does not have the column: "]+l_aColumnInfo[2]+["])
+        if !(l_aColumnInfo[3] == USESTATUS_PROPOSED .or. l_aColumnInfo[3] == USESTATUS_DISCONTINUED)
+            AAdd(l_aListOfMessages,[Physical Database does not have the column: "]+l_aColumnInfo[2]+["])
+        endif
     endfor
 endif
 

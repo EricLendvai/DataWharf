@@ -777,9 +777,6 @@ if l_lContinue
                             l_cFieldDescription := space(3)+[/]+[/]+l_cFieldDescription
                         endif
                     endif
-                    // if lower(l_cFieldName) == lower(::p_PrimaryKeyFieldName)
-                    //     l_lFieldAutoIncrement := .t.
-                    // endif
 
                     //Overwrite Enumeration field type when the are not "NativeSQLEnum"
                     if l_cFieldType == "E"

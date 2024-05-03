@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 5/03/2024 v 4.8
+* Use of newer Harbour_ORM which now will determine the primary key field name from the WharfConfig data loaded before a connection occurs. Includes fix on Migration code.
+* Deployment Tool Delta will not ignore mismatch on Proposed and Discontinued elements.
+
 ## 04/04/2024 v 4.7
 * Minor Fix on Initial creation of DataWharf's own database.
 

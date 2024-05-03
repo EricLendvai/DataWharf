@@ -10323,15 +10323,15 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
 
                 //Add a new record
                 :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c6","UserSettingApplication")
-                :Field("UserSettingApplication.fk_Deployment"    ,l_nFk_Deployment)
+                :Field("UserSettingApplication.fk_Deployment" ,l_nFk_Deployment)
                 :Field("UserSettingApplication.fk_User"       ,oFcgi:p_iUserPk)
                 :Field("UserSettingApplication.fk_Application",par_iApplicationPk)
                 :Add()
 
             case :Tally == 1
-                if ListOfUserSettingApplication->fk_Deployment     <> l_nFk_Deployment
+                if ListOfUserSettingApplication->fk_Deployment <> l_nFk_Deployment
                     :Table("ed077f50-c5c2-4ed0-bb97-5b9aedc081c7","UserSettingApplication")
-                    :Field("UserSettingApplication.fk_Deployment"    ,l_nFk_Deployment)
+                    :Field("UserSettingApplication.fk_Deployment",l_nFk_Deployment)
                     :Update(ListOfUserSettingApplication->pk)
                 endif
 
@@ -10499,7 +10499,6 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                     :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
                     :MySQLEngineConvertIdentifierToLowerCase := .f.
 
-//Why is this needed?                    :SetPrimaryKeyFieldName("pk")
                     :SetApplicationName("DataWharf")
 
                     :SetHarbourORMNamespace("nohborm")

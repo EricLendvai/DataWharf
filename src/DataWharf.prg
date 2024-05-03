@@ -301,7 +301,7 @@ if l_lNoPostgresConnection
 
         :SetHarbourORMNamespace("ORM")
         :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
-        :SetPrimaryKeyFieldName("pk")
+        // :SetPrimaryKeyFieldName("pk")
         // :SetApplicationName("DataWharf")   Can only be set once connected.
 
         if :Connect() < 0
