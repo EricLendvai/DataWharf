@@ -75,6 +75,8 @@ local l_iChildColumnKey
 local l_hForeignKeys := {=>}
 local l_lExpressionOnForeignKey
 
+local l_nOnDelete
+
 hb_HCaseMatch(l_hTables,.f.)
 hb_HCaseMatch(l_hColumns,.f.)
 hb_HCaseMatch(l_hForeignKeys,.f.)
@@ -425,15 +427,20 @@ l_cColumnDefaultCustom := ""
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
-                                ListOfColumnsInDataDictionary->Column_Type           := "I"
-                                ListOfColumnsInDataDictionary->Column_Length         := nil
-                                ListOfColumnsInDataDictionary->Column_Scale          := nil
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
-                                ListOfColumnsInDataDictionary->Column_Type           := "N"
-                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
-                                ListOfColumnsInDataDictionary->Column_Scale          := 0
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_VARCHAR
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             endcase
                         endif
 
@@ -442,10 +449,12 @@ l_cColumnDefaultCustom := ""
                            ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength         .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale          .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable       .and. ;
-                           ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and. ;
                            ListOfColumnsInDataDictionary->Column_DefaultType            == l_nColumnDefaultType    .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")  == l_cColumnDefaultCustom  .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
+
+                        // For now removed the comparing of Unicode 05/04/2024
+                        //    ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and. 
 
                         else
                             if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
@@ -461,7 +470,7 @@ l_cColumnDefaultCustom := ""
                                         :Field("Column.Length"        ,l_nColumnLength)
                                         :Field("Column.Scale"         ,l_nColumnScale)
                                         :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
                                         :Field("Column.DefaultType"   ,l_nColumnDefaultType)
                                         :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
                                         :Field("Column.LastNativeType",l_cColumnLastNativeType)
@@ -1122,25 +1131,25 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 //Make a reverse GetColumnDefault()
 do case
 case nvl(ListOfFieldsForLoads->field_is_identity,.f.)
-    l_nColumnDefaultType   := 15
+    l_nColumnDefaultType   := 15   // AutoIncrement
     l_cColumnDefaultCustom := ""
     
 case empty(l_cColumnDefault)
-    do case
-    case l_cColumnType == "L" .and. !l_lColumnNullable
-        l_nColumnDefaultType   := 13
-        l_cColumnDefaultCustom := ""
-    otherwise
+    // do case
+    // case l_cColumnType == "L" .and. !l_lColumnNullable
+    //     l_nColumnDefaultType   := 13   // False
+    //     l_cColumnDefaultCustom := ""
+    // otherwise
         l_nColumnDefaultType   := 0
         l_cColumnDefaultCustom := ""
-    endcase
+    // endcase
 
 case l_cColumnType == "D" .and. lower(l_cColumnDefault) == "current_date()"
-    l_nColumnDefaultType   := 10
+    l_nColumnDefaultType   := 10   // Today
     l_cColumnDefaultCustom := ""
 
 case el_IsInlist(l_cColumnType,"TOZ","TO","DTZ","DT") .and. lower(l_cColumnDefault) == "now()"
-    l_nColumnDefaultType   := 11
+    l_nColumnDefaultType   := 11   // Now
     l_cColumnDefaultCustom := ""
 
 // case el_IsInlist(l_cColumnType,"I","IB","IS","N")   //_M_ Logic not implemented yet since it depends of the size of the integer.
@@ -1152,15 +1161,15 @@ case el_IsInlist(l_cColumnType,"TOZ","TO","DTZ","DT") .and. lower(l_cColumnDefau
 //     endcase
 
 case l_cColumnType == "UUI" .and. lower(l_cColumnDefault) == "gen_random_uuid()"
-    l_nColumnDefaultType   := 12
+    l_nColumnDefaultType   := 12   // RandomUuid (Random uuid)
     l_cColumnDefaultCustom := ""
 
 case l_cColumnType == "L" .and. lower(l_cColumnDefault) == "false"
-    l_nColumnDefaultType   := 13
+    l_nColumnDefaultType   := 13   // False
     l_cColumnDefaultCustom := ""
 
 case l_cColumnType == "L" .and. lower(l_cColumnDefault) == "true"
-    l_nColumnDefaultType   := 14
+    l_nColumnDefaultType   := 14   // True
     l_cColumnDefaultCustom := ""
 
 case el_IsInlist(l_cColumnType,"I","IB") .and. el_IsInlist(l_cColumnDefault,"Wharf-AutoIncrement()","AutoIncrement()")
@@ -1185,19 +1194,24 @@ endcase
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
                         l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
 
-                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric or VarChar
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
-                                ListOfColumnsInDataDictionary->Column_Type           := "I"
-                                ListOfColumnsInDataDictionary->Column_Length         := nil
-                                ListOfColumnsInDataDictionary->Column_Scale          := nil
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
-                                ListOfColumnsInDataDictionary->Column_Type           := "N"
-                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
-                                ListOfColumnsInDataDictionary->Column_Scale          := 0
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_VARCHAR
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             endcase
                         endif
 
@@ -1206,11 +1220,13 @@ endcase
                            ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength         .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale          .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable       .and. ;
-                           ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_DefaultType,-1)    == l_nColumnDefaultType    .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")  == l_cColumnDefaultCustom  .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType .and. ;
                            ListOfColumnsInDataDictionary->Column_fk_Enumeration         == l_iFk_Enumeration
+
+                        // For now removed the comparing of Unicode 05/04/2024
+                        //    ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and.
 
                         else
                             if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
@@ -1228,7 +1244,7 @@ endcase
                                         :Field("Column.Length"        ,l_nColumnLength)
                                         :Field("Column.Scale"         ,l_nColumnScale)
                                         :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
                                         :Field("Column.DefaultType"   ,l_nColumnDefaultType)
                                         :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
                                         :Field("Column.LastNativeType",l_cColumnLastNativeType)
@@ -1693,15 +1709,20 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
                             do case
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
-                                ListOfColumnsInDataDictionary->Column_Type           := "I"
-                                ListOfColumnsInDataDictionary->Column_Length         := nil
-                                ListOfColumnsInDataDictionary->Column_Scale          := nil
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
-                                ListOfColumnsInDataDictionary->Column_Type           := "N"
-                                ListOfColumnsInDataDictionary->Column_Length         := nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementLength,0)
-                                ListOfColumnsInDataDictionary->Column_Scale          := 0
-                                ListOfColumnsInDataDictionary->Column_fk_Enumeration := 0
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_VARCHAR
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
                             endcase
                         endif
                         
@@ -1710,9 +1731,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                            ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength      .and. ;
                            ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale       .and. ;
                            ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable    .and. ;
-                           ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode     .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")        == l_cColumnDefaultCustom     .and. ;
                            nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
+
+                            // For now removed comparing Unicode 05/04/2024
+                            // ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode     .and.
 
                         else
                             if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
@@ -1727,7 +1750,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                         :Field("Column.Length"        ,l_nColumnLength)
                                         :Field("Column.Scale"         ,l_nColumnScale)
                                         :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        :Field("Column.Unicode"       ,l_lColumnUnicode)
+                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)   // For now removed updating Unicode 05/04/2024
                                         :Field("Column.DefaultCustom"       ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
                                         :Field("Column.LastNativeType",l_cColumnLastNativeType)
                                         if :Update(l_iColumnPk)
@@ -1792,6 +1815,8 @@ with object l_oDB_AllTableColumnsChildrenForForeignKeys
     :Column("Column.pk"              , "Pk")
     :Column("Column.fk_TableForeign" , "Column_fk_TableForeign")
     :Column("Column.UseStatus"       , "Column_UseStatus")
+    :Column("Column.UsedAs"          , "Column_UsedAs")
+    :Column("Column.OnDelete"        , "Column_OnDelete")
 
     :Column("concat(lower(Namespace.Name),'.',lower(Table.Name))","SchemaTableName")
     :Column("lower(Column.Name)"                                 ,"ColumnName")
@@ -1801,13 +1826,9 @@ with object l_oDB_AllTableColumnsChildrenForForeignKeys
     :Join("inner","Table","","Column.fk_Table = Table.pk")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
-    // :Where("Column.fk_TableForeign IS NOT NULL")             // Only needing the foreign key fields.
-    :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.
+    // :Where("Column.fk_TableForeign > 0")             // For now will get all the columns of every table in the Application. Later will reduce the list to foreign keys only.
     :SQL("AllTableColumnsChildrenForForeignKeys")
-
-// SendToClipboard(:LastSQL())
-// break
-// altd()
+    // SendToClipboard(:LastSQL())
 
     with object :p_oCursor
         :Index("tag1","padr(tag1,240)")
@@ -1817,18 +1838,6 @@ with object l_oDB_AllTableColumnsChildrenForForeignKeys
 
 endwith
 
-// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
-// Pre-load the list of foreign keys in such a matter if can be tested when comparing indexes.
-select AllTableColumnsChildrenForForeignKeys
-scan all for el_IsInlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
-    if empty(hb_HPos(l_hForeignKeys,alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)))
-        l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)] := {}           // Initialize list of Foreign key fields for the list of Hash Tables
-    endif
-    AAdd(l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)],alltrim(AllTableColumnsChildrenForForeignKeys->ColumnName))
-endscan
-
-// DebugHashToFile(l_hForeignKeys,"d:\DebugHashToFile.txt")
-// break
 
 if par_nSyncSetForeignKey > 1
     with object l_oDB1
@@ -1837,13 +1846,14 @@ if par_nSyncSetForeignKey > 1
             //Use Foreign Constraint to set UsedAs as Foreign Key
             do case
             case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
+                //_M_ add support to only public.<TableName> but other name spaces
                 l_cSQLCommandForeignKeys += [SELECT cast(concat('*public*',lower(TABLE_NAME),'*',lower(COLUMN_NAME),'*') AS CHAR(255)) AS childcolumn,]
                 l_cSQLCommandForeignKeys += [       cast(concat('*public*',lower(REFERENCED_TABLE_NAME),'*')             AS CHAR(255)) AS parenttable]
                 l_cSQLCommandForeignKeys += [ FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE]
                 l_cSQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
 
                 if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
-                    l_cErrorMessage := "Failed to retrieve Fields Meta data."
+                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
 
                 else
                     l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -1863,7 +1873,7 @@ if par_nSyncSetForeignKey > 1
                         endwith
 
                     endwith
-    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
+                    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
 
                     select ListOfFieldsForeignKeys
                     scan all
@@ -1874,12 +1884,13 @@ if par_nSyncSetForeignKey > 1
                         l_iChildColumnKey := iif( el_seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
 
                         if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
-                            if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey
-                                if AllTableColumnsChildrenForForeignKeys->Column_UseStatus <= USESTATUS_PROPOSED  // Only  1 = Unknown and 2 = Proposed" can be auto linked
+                            if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey .or. ;
+                               AllTableColumnsChildrenForForeignKeys->Column_UsedAs          <> COLUMN_USEDAS_FOREIGN_KEY
+                                if (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_PROPOSED) .or. (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_DISCONTINUED)
                                     :Table("088fd706-ec0f-445f-9c06-bfd6fe20a80d","Column")
                                     :Field("Column.fk_TableForeign",l_iParentTableKey)
                                     :Field("Column.UsedAs"         ,COLUMN_USEDAS_FOREIGN_KEY)
-
+                                    //_M_  How to determine the OnDelete in MySQL ?
                                     if :Update(l_iChildColumnKey)
                                         l_iUpdatedColumns += 1
                                     else
@@ -1893,9 +1904,102 @@ if par_nSyncSetForeignKey > 1
                 endif
 
             case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
-                //12345678  _M_ Add support to load the foreign keys from Postgresql. That logic already exists in hb_orm in GenerateMigrateForeignKeyConstraintsScript()
-                
+                l_cSQLCommandForeignKeys := [select ]
+                l_cSQLCommandForeignKeys += [    concat('*',lower(con."ChildNamespace"),'*',lower(con."ChildTable"),'*',lower(att2.attname),'*') as childcolumn,]
+                l_cSQLCommandForeignKeys += [    concat('*',lower(ns.nspname),'*',lower(cl.relname),'*') as parenttable,]
+                l_cSQLCommandForeignKeys += [    con.conname          as "ConstraintName",]
+                l_cSQLCommandForeignKeys += [    con."UpdateAction"   as "UpdateAction",]
+                l_cSQLCommandForeignKeys += [    con."DeleteAction"   as "DeleteAction"]
+                l_cSQLCommandForeignKeys += [from]
+                l_cSQLCommandForeignKeys += [   (select ]
+                l_cSQLCommandForeignKeys += [        unnest(con1.conkey)  as "parent", ]
+                l_cSQLCommandForeignKeys += [        unnest(con1.confkey) as "child", ]
+                l_cSQLCommandForeignKeys += [        con1.confrelid, ]
+                l_cSQLCommandForeignKeys += [        con1.conrelid,]
+                l_cSQLCommandForeignKeys += [        con1.conname,]
+                l_cSQLCommandForeignKeys += [        con1.confupdtype as "UpdateAction",]
+                l_cSQLCommandForeignKeys += [        con1.confdeltype as "DeleteAction",]
+                l_cSQLCommandForeignKeys += [        cl.relname     as "ChildTable",]
+                l_cSQLCommandForeignKeys += [        ns.nspname     as "ChildNamespace"]
+                l_cSQLCommandForeignKeys += [    from ]
+                l_cSQLCommandForeignKeys += [        pg_class cl]
+                l_cSQLCommandForeignKeys += [        join pg_namespace ns on cl.relnamespace = ns.oid]
+                l_cSQLCommandForeignKeys += [        join pg_constraint con1 on con1.conrelid = cl.oid]
+                l_cSQLCommandForeignKeys += [    where con1.contype = 'f']
+                l_cSQLCommandForeignKeys += [    and   ns.nspname not in ('cyanaudit')]
+                l_cSQLCommandForeignKeys += [   ) con]
+                l_cSQLCommandForeignKeys += [   join pg_attribute att  on att.attrelid = con.confrelid and att.attnum = con.child]
+                l_cSQLCommandForeignKeys += [   join pg_class     cl   on cl.oid = con.confrelid]
+                l_cSQLCommandForeignKeys += [   join pg_namespace ns   on cl.relnamespace = ns.oid]
+                l_cSQLCommandForeignKeys += [   join pg_attribute att2 on att2.attrelid = con.conrelid and att2.attnum = con.parent]
+
+                if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
+                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
+
+                else
+                    l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+                    with object l_oDB_AllTablesAsParentsForForeignKeys
+                        :Table("8c90e531-cac1-4ee8-9d9c-722eec3fa47e","Table")
+                        :Column("Table.pk" , "Pk")
+                        :Column("cast(concat('*',lower(Namespace.Name),'*',lower(Table.Name),'*') as char(255))", "tag1")
+                        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+                        :SQL("AllTablesAsParentsForForeignKeys")
+
+                        with object :p_oCursor
+                            :Index("tag1","padr(tag1,240)")
+                            :CreateIndexes()
+                            // :SetOrder("tag1")
+                        endwith
+
+                    endwith
+                    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
+
+                    select ListOfFieldsForeignKeys
+                    scan all
+                        // l_cTableName := ListOfFieldsForeignKeys->childtablename
+                        // l_cTableName := ListOfFieldsForeignKeys->childcolumnname
+
+                        l_iParentTableKey := iif( el_seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
+                        l_iChildColumnKey := iif( el_seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
+
+                        do case
+                        case ListOfFieldsForeignKeys->DeleteAction == 'r'
+                            l_nOnDelete := 2
+                        case ListOfFieldsForeignKeys->DeleteAction == 'c'
+                            l_nOnDelete := 3
+                        case ListOfFieldsForeignKeys->DeleteAction == 'n'
+                            l_nOnDelete := 4
+                        otherwise
+                            l_nOnDelete := 1
+                        endcase
+
+                        if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
+                            if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey         .or. ;
+                               AllTableColumnsChildrenForForeignKeys->Column_UsedAs          <> COLUMN_USEDAS_FOREIGN_KEY .or. ;
+                               AllTableColumnsChildrenForForeignKeys->Column_OnDelete        <> l_nOnDelete
+                               
+                                if (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_PROPOSED) .or. (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_DISCONTINUED)
+                                    :Table("2e27fe45-f201-44ae-b1d6-f4d05c559e62","Column")
+                                    :Field("Column.fk_TableForeign",l_iParentTableKey)
+                                    :Field("Column.UsedAs"         ,COLUMN_USEDAS_FOREIGN_KEY)
+                                    :Field("Column.OnDelete"       ,l_nOnDelete)
+
+                                    if :Update(l_iChildColumnKey)
+                                        l_iUpdatedColumns += 1
+                                    else
+                                        //_M_ report error
+                                    endif
+                                endif
+                            endif
+                        endif
+
+                    endscan
+                endif
+
             case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
+                //_M_
             endcase
 
 
@@ -1929,7 +2033,6 @@ if par_nSyncSetForeignKey > 1
             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
             :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 
-            // :Where("Column.fk_TableForeign IS NULL")
             :Where("Column.fk_TableForeign = 0")
 
             :SQL("FieldToMarkAsForeignKeys")
@@ -1958,6 +2061,33 @@ if par_nSyncSetForeignKey > 1
 endif
 
 
+//Update the list of Foreign Keys, since the load could have updated records
+with object l_oDB_AllTableColumnsChildrenForForeignKeys
+    // Add an extra Where clause
+    :Where("Column.fk_TableForeign > 0")             // Only needing the foreign key fields.               ACTUALLY We don't know which field could be a foreign key
+    :SQL("AllTableColumnsChildrenForForeignKeys")
+
+    // Don't Need the index anymore
+    // with object :p_oCursor
+    //     :Index("tag1","padr(tag1,240)")
+    //     :CreateIndexes()
+    // endwith
+
+endwith
+
+// ExportTableToHtmlFile("AllTableColumnsChildrenForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTableColumnsChildrenForForeignKeys.html","From PostgreSQL",,25,.t.)
+// Pre-load the list of foreign keys in such a matter if can be tested when comparing indexes.
+select AllTableColumnsChildrenForForeignKeys
+scan all for el_IsInlist(alltrim(AllTableColumnsChildrenForForeignKeys->ColumnType),"I","IB","UUI")   // Only deal with foreign key of this list of types
+    if empty(hb_HPos(l_hForeignKeys,alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)))
+        l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)] := {}           // Initialize list of Foreign key fields for the list of Hash Tables
+    endif
+    AAdd(l_hForeignKeys[alltrim(AllTableColumnsChildrenForForeignKeys->SchemaTableName)],alltrim(AllTableColumnsChildrenForForeignKeys->ColumnName))
+endscan
+
+// DebugHashToFile(l_hForeignKeys,"d:\DebugHashToFile.txt")
+// break
+
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
@@ -1965,6 +2095,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 // altd()
     //--Load Indexes----------------
     if empty(l_cErrorMessage)
+
+
         if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
             l_cErrorMessage := "Failed to retrieve Fields Meta data."
         else
@@ -1973,7 +2105,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
             l_cIndexName      := ""
-// altd()
+
             select ListOfIndexesForLoads
             scan all while empty(l_cErrorMessage)
                 if !(ListOfIndexesForLoads->namespace_name == l_cLastNamespace .and. ListOfIndexesForLoads->table_name == l_cLastTableName)

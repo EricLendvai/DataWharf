@@ -1,6 +1,11 @@
 # DataWharf - Change Log
 
-## 5/03/2024 v 4.8
+## 05/05/2024 v 4.9
+* Fixed possible data dictionary setting overwrite when using "Deployment Tools" "Load".
+* Added new "Prevent Load From Deployments" in "Data Dictionary Settings". Set to True by default. Only turn off if not using DataWharf as source of truth / Active Data Dictionary.
+* In "Deployment Tools", "Load" is now able to set foreign keys and OnDelete settings when accessing PostgreSQL databases, from the actual constraints in the database being scanned. When configuring a Deployment ensure you set the "Set Foreign Key" option to "Foreign Key Restrictions".
+
+## 05/03/2024 v 4.8
 * Use of newer Harbour_ORM which now will determine the primary key field name from the WharfConfig data loaded before a connection occurs. Includes fix on Migration code.
 * Deployment Tool Delta will not ignore mismatch on Proposed and Discontinued elements.
 

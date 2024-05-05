@@ -355,6 +355,7 @@ case l_cURLAction == "DataDictionarySettings"
                 :Column("Application.AddForeignKeyIndexORMExport"                          ,"Application_AddForeignKeyIndexORMExport")
                 :Column("Application.SetMissingOnDeleteToProtect"                          ,"Application_SetMissingOnDeleteToProtect")
                 :Column("Application.NoNamespaceChangeOnTablesAndEnumerations"             ,"Application_NoNamespaceChangeOnTablesAndEnumerations")
+                :Column("Application.PreventLoadFromDeployments"                           ,"Application_PreventLoadFromDeployments")
                 :Column("Application.KeyConfig"                                            ,"Application_KeyConfig")
                 :Column("Application.TestTableHasPrimaryKey"                               ,"Application_TestTableHasPrimaryKey")
                 :Column("Application.TestForeignKeyTypeMatchPrimaryKey"                    ,"Application_TestForeignKeyTypeMatchPrimaryKey")
@@ -388,6 +389,7 @@ case l_cURLAction == "DataDictionarySettings"
                 l_hValues["AddForeignKeyIndexORMExport"]                           := l_oData:Application_AddForeignKeyIndexORMExport
                 l_hValues["SetMissingOnDeleteToProtect"]                           := l_oData:Application_SetMissingOnDeleteToProtect
                 l_hValues["NoNamespaceChangeOnTablesAndEnumerations"]              := l_oData:Application_NoNamespaceChangeOnTablesAndEnumerations
+                l_hValues["PreventLoadFromDeployments"]                            := l_oData:Application_PreventLoadFromDeployments
                 l_hValues["KeyConfig"]                                             := l_oData:Application_KeyConfig
                 l_hValues["TestTableHasPrimaryKey"]                                := l_oData:Application_TestTableHasPrimaryKey
                 l_hValues["TestForeignKeyTypeMatchPrimaryKey"]                     := l_oData:Application_TestForeignKeyTypeMatchPrimaryKey
@@ -2083,7 +2085,8 @@ l_cHtml += [<ul class="nav nav-tabs">]
         endif
     endif
     //--------------------------------------------------------------------------------------
-    if l_iNumberOfNameSpace > 0
+    // if l_iNumberOfNameSpace > 0
+    //Deployment tools should be available to load a database
         l_cHtml += [<li class="nav-item">]
             with object l_oDB1
                 :Table("fa9ced84-f14e-4ef0-9047-ca77a564b327","Deployment")
@@ -2096,7 +2099,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
             endwith
             l_cHtml += [<a class="TopTabs nav-link]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools (]+Trans(l_iReccount)+[)</a>]
         l_cHtml += [</li>]
-    endif
+    // endif
     //--------------------------------------------------------------------------------------
     l_cHtml += [<li class="nav-item">]
         with object l_oDB1
@@ -2549,6 +2552,7 @@ local l_cSupportColumns                                        := nvl(hb_HGetDef
 local l_lAddForeignKeyIndexORMExport                           := hb_HGetDef(par_hValues,"AddForeignKeyIndexORMExport"                          ,.f.)
 local l_lSetMissingOnDeleteToProtect                           := hb_HGetDef(par_hValues,"SetMissingOnDeleteToProtect"                          ,.f.)
 local l_lNoNamespaceChangeOnTablesAndEnumerations              := hb_HGetDef(par_hValues,"NoNamespaceChangeOnTablesAndEnumerations"             ,.f.)
+local l_lPreventLoadFromDeployments                            := hb_HGetDef(par_hValues,"PreventLoadFromDeployments"                           ,.f.)
 local l_nKeyConfig                                             := hb_HGetDef(par_hValues,"KeyConfig"                                            ,1)
 local l_lTestTableHasPrimaryKey                                := hb_HGetDef(par_hValues,"TestTableHasPrimaryKey"                               ,.f.)
 local l_lTestForeignKeyTypeMatchPrimaryKey                     := hb_HGetDef(par_hValues,"TestForeignKeyTypeMatchPrimaryKey"                    ,.f.)
@@ -2636,9 +2640,17 @@ l_cHtml += [<div class="m-3">]
 
         l_cObjectId := "CheckNoNamespaceChangeOnTablesAndEnumerations"
         l_cHtml += [<tr class="pb-3">]
+            l_cHtml += [<td class="pe-2 pb-1"></td>]
+            l_cHtml += [<td class="pb-1">]
+                l_cHtml += GetCheckboxOnEditForm(l_cObjectId,l_lNoNamespaceChangeOnTablesAndEnumerations,[Prevent Changing Namespace on Existing Tables and Enumeration])
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cObjectId := "CheckPreventLoadFromDeployments"
+        l_cHtml += [<tr class="pb-3">]
             l_cHtml += [<td class="pe-2 pb-3"></td>]
             l_cHtml += [<td class="pb-3">]
-                l_cHtml += GetCheckboxOnEditForm(l_cObjectId,l_lNoNamespaceChangeOnTablesAndEnumerations,[Prevent Changing Namespace on Existing Tables and Enumeration])
+                l_cHtml += GetCheckboxOnEditForm(l_cObjectId,l_lPreventLoadFromDeployments,[Prevent Load From Deployments])
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
@@ -2704,6 +2716,7 @@ local l_cApplicationSupportColumns
 local l_lAddForeignKeyIndexORMExport
 local l_lSetMissingOnDeleteToProtect
 local l_lNoNamespaceChangeOnTablesAndEnumerations
+local l_lPreventLoadFromDeployments
 local l_nKeyConfig
 local l_lTestTableHasPrimaryKey
 local l_lTestForeignKeyTypeMatchPrimaryKey
@@ -2741,6 +2754,7 @@ l_cApplicationSupportColumns                             := SanitizeInput(oFcgi:
 l_lAddForeignKeyIndexORMExport                           := (oFcgi:GetInputValue("CheckAddForeignKeyIndexORMExport")                           == "1")
 l_lSetMissingOnDeleteToProtect                           := (oFcgi:GetInputValue("CheckSetMissingOnDeleteToProtect")                           == "1")
 l_lNoNamespaceChangeOnTablesAndEnumerations              := (oFcgi:GetInputValue("CheckNoNamespaceChangeOnTablesAndEnumerations")              == "1")
+l_lPreventLoadFromDeployments                            := (oFcgi:GetInputValue("CheckPreventLoadFromDeployments")                            == "1")
 l_nKeyConfig                                             := Val(oFcgi:GetInputValue("ComboKeyConfig"))
 l_lTestTableHasPrimaryKey                                := (oFcgi:GetInputValue("CheckTestTableHasPrimaryKey")                                == "1")
 l_lTestForeignKeyTypeMatchPrimaryKey                     := (oFcgi:GetInputValue("CheckTestForeignKeyTypeMatchPrimaryKey")                     == "1")
@@ -2781,6 +2795,7 @@ case l_cActionOnSubmit == "Save"
             :Field("Application.AddForeignKeyIndexORMExport"                          ,l_lAddForeignKeyIndexORMExport)
             :Field("Application.SetMissingOnDeleteToProtect"                          ,l_lSetMissingOnDeleteToProtect)
             :Field("Application.NoNamespaceChangeOnTablesAndEnumerations"             ,l_lNoNamespaceChangeOnTablesAndEnumerations)
+            :Field("Application.PreventLoadFromDeployments"                           ,l_lPreventLoadFromDeployments)
             :Field("Application.KeyConfig"                                            ,l_nKeyConfig)
             :Field("Application.TestTableHasPrimaryKey"                               ,l_lTestTableHasPrimaryKey)
             :Field("Application.TestForeignKeyTypeMatchPrimaryKey"                    ,l_lTestForeignKeyTypeMatchPrimaryKey)
@@ -2826,6 +2841,7 @@ case !empty(l_cErrorMessage)
     l_hValues["AddForeignKeyIndexORMExport"]                           := l_lAddForeignKeyIndexORMExport
     l_hValues["SetMissingOnDeleteToProtect"]                           := l_lSetMissingOnDeleteToProtect
     l_hValues["NoNamespaceChangeOnTablesAndEnumerations"]              := l_lNoNamespaceChangeOnTablesAndEnumerations
+    l_hValues["PreventLoadFromDeployments"]                            := l_lPreventLoadFromDeployments
     l_hValues["KeyConfig"]                                             := l_nKeyConfig
     l_hValues["TestTableHasPrimaryKey"]                                := l_lTestTableHasPrimaryKey
     l_hValues["TestForeignKeyTypeMatchPrimaryKey"]                     := l_lTestForeignKeyTypeMatchPrimaryKey
@@ -10256,6 +10272,7 @@ local l_cConnectPasswordEnvVarName
 local l_cErrorMessage := ""
 local l_oDB1
 local l_oDB_ListOfDeployments
+local l_oDB_Application
 
 local l_cPreviousDefaultRDD
 local l_cConnectionString
@@ -10281,6 +10298,8 @@ local l_aInstructions
 local l_cStatement
 local l_nPos
 local l_lAllowUpdates
+local l_oData_Application
+local l_lApplicationPreventLoadFromDeployments
 
 oFcgi:TraceAdd("DataDictionaryDeploymentToolsFormOnSubmit")
 
@@ -10297,7 +10316,21 @@ case l_cActionOnSubmit == "ListMyDeployments"
 case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
     l_lAllowUpdates := .f.
 
+    if l_cActionOnSubmit == "Load"
+        l_oDB_Application := hb_SQLData(oFcgi:p_o_SQLConnection)
+        with object l_oDB_Application
+            :Table("dbd47323-ebf2-4ffe-8db6-d12c1edfa48a","Application")
+            :Column("Application.PreventLoadFromDeployments" , "Application_PreventLoadFromDeployments")
+            l_oData_Application := :Get(par_iApplicationPk)
+            l_lApplicationPreventLoadFromDeployments := nvl(l_oData_Application:Application_PreventLoadFromDeployments,.t.)
+            if l_lApplicationPreventLoadFromDeployments
+                l_cErrorMessage := ["Prevent Load From Deployments" is currently set under the "Data Dictionary Settings".]
+            endif
+        endwith
+    endif
+
     do case
+    case !empty(l_cErrorMessage)
     case empty(l_nFk_Deployment)
         l_cErrorMessage := "Select a Deployment"
 

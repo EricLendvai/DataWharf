@@ -1,16 +1,20 @@
 //As of DataWharf 3, its own configuration is defined using a "DataWharf" application managed in DataWharf itself.
 function Config()
 return ;
-{"HarbourORMVersion"=>4.7,;
- "DataWharfVersion"=>4.6,;
+{"HarbourORMVersion"=>4.8,;
+ "DataWharfVersion"=>4.9,;
  "Backend"=>"PostgreSQL",;
- "GenerationTime"=>"2024-04-04T09:46:01.139Z",;
- "GenerationSignature"=>"242d3068-b713-44ec-a7d7-778b11e20321",;
+ "GenerationTime"=>"2024-05-05T10:45:39.303Z",;
+ "GenerationSignature"=>"1ca6177e-f94f-41b1-a1c2-cef9c157f772",;
  "Rename"=>{;
     "Column"=>{;
         "public"=>{;
             "Application"=>{;
-                "TestSQLEnumerationHasAtLeastOnePresentValue"=>"TestEnumerationHasAtLeastOnePresentValue"}}}},;
+                "TestSQLEnumerationHasAtLeastOnePresentValue"=>"TestEnumerationHasAtLeastOnePresentValue"}}},;
+    "EnumValue"=>{;
+        "public"=>{;
+            "SetForeignKey"=>{;
+                "ForeignKeyRestrictions"=>"ForeignKeyConstraints"}}}},;
  "Namespaces"=>{;
     "public",;
     "volatile"},;
@@ -79,6 +83,7 @@ return ;
         ,"KeyConfig"                                            =>{"Type"=>"N","Length"=>1,"Default"=>"1"};   //1="Any", 2="Integer", 3="IntegerBig"   
         ,"SetMissingOnDeleteToProtect"                          =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"};
         ,"NoNamespaceChangeOnTablesAndEnumerations"             =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //Prevent Changing Namespace on Existing Tables and Enumeration. Changing the Namespace would cause new Tables and Enumerations to be created.
+        ,"PreventLoadFromDeployments"                           =>{"Type"=>"L","Default"=>"Wharf-True","OnDelete"=>"Protect"};   //If the "Load" option can be used to update database from deployments.
         ,"TestTableHasPrimaryKey"                               =>{"Type"=>"L","Default"=>"Wharf-True"};   //Table must have a Primary Key.
         ,"TestForeignKeyTypeMatchPrimaryKey"                    =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key Type must match Primary Key Type.
         ,"TestForeignKeyIsNullable"                             =>{"Type"=>"L","Default"=>"Wharf-True"};   //Foreign Key must be Nullable.
@@ -176,7 +181,7 @@ return ;
         ,"DefaultCustom"     =>{"Type"=>"M","Nullable"=>.t.};   //Text version of the default value/expression. Either "DefaultCustom" or "DefaultType" can be used.
         ,"ForeignKeyUse"     =>{"Type"=>"CV","Length"=>120,"Nullable"=>.t.};   //Short Description used during Visualization.
         ,"ForeignKeyOptional"=>{"Type"=>"L"};
-        ,"OnDelete"          =>{"Type"=>"N","Length"=>1,"Default"=>"0"};   //1="NotSet", 2="Protect", 3="Cascade", 4="BreakLink"   Use on Foreign Keys, referential integrity rule to be applied when related parent record is deleted.
+        ,"OnDelete"          =>{"Type"=>"N","Length"=>1};   //1="NotSet", 2="Protect", 3="Cascade", 4="BreakLink"   Use on Foreign Keys, referential integrity rule to be applied when related parent record is deleted.
         ,"Unicode"           =>{"Type"=>"L","Default"=>"Wharf-True"};   //Only Applicable to Character types.
         ,"Description"       =>{"Type"=>"M","Nullable"=>.t.};
         ,"TestWarning"       =>{"Type"=>"M","Nullable"=>.t.};   //Last Test Run warning messages.
@@ -271,7 +276,7 @@ return ;
         ,"PasswordCrypt"     =>{"Type"=>"R","Nullable"=>.t.};   //Used if PasswordStorage = 1.
         ,"PasswordConfigKey" =>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used if PasswordStorage = 2. Key Name in config.txt.
         ,"PasswordEnvVarName"=>{"Type"=>"CV","Length"=>200,"Nullable"=>.t.};   //Used if PasswordStorage = 3. Name of Environment Variable to use to retrieve password.
-        ,"SetForeignKey"     =>{"Type"=>"N","Length"=>1,"Nullable"=>.t.};   //1="Not", 2="ForeignKeyRestrictions", 3="Onp_TableName", 4="Onfk_TableName", 5="OnTableName_id"   Connection Info to detect foreign keys.
+        ,"SetForeignKey"     =>{"Type"=>"N","Length"=>1,"Nullable"=>.t.};   //1="Not", 2="ForeignKeyConstraints", 3="Onp_TableName", 4="Onfk_TableName", 5="OnTableName_id"   Connection Info to detect foreign keys.
         ,"AllowUpdates"      =>{"Type"=>"L","Default"=>"Wharf-False","OnDelete"=>"Protect"}};   //If the "Update" option can be executed under the "Deployment Tools".
                           ,"Indexes"=>;
         {"fk_application"=>{"Expression"=>"fk_Application","ForForeignKey"=>.t.,"StaticUID"=>"fa7a8071-a8d2-4c78-ba08-41816e570af8"};
@@ -987,11 +992,11 @@ return ;
         "ImplementAs"=>"Numeric",;
         "ImplementLength"=>1,;
         "Values"=>;
-            {"Not"                   =>{"Order"=>1,"Number"=>1};
-            ,"ForeignKeyRestrictions"=>{"Order"=>2,"Number"=>2};
-            ,"Onp_TableName"         =>{"Order"=>3,"Number"=>3};
-            ,"Onfk_TableName"        =>{"Order"=>4,"Number"=>4};
-            ,"OnTableName_id"        =>{"Order"=>5,"Number"=>5}}};
+            {"Not"                  =>{"Order"=>1,"Number"=>1};
+            ,"ForeignKeyConstraints"=>{"Order"=>2,"Number"=>2};
+            ,"Onp_TableName"        =>{"Order"=>3,"Number"=>3};
+            ,"Onfk_TableName"       =>{"Order"=>4,"Number"=>4};
+            ,"OnTableName_id"       =>{"Order"=>5,"Number"=>5}}};
     ,"public.TagUseStatus"=>{;
         "ImplementAs"=>"Numeric",;
         "ImplementLength"=>1,;

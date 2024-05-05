@@ -1367,7 +1367,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not","Foreign Key Restrictions","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(el_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
+                            l_cHtml += {"","Not","Foreign Key Constraints","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(el_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
@@ -1538,7 +1538,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboSetForeignKey" id="ComboSetForeignKey">]
                 l_cHtml += [<option value="0"]+iif(l_nSetForeignKey==0,[ selected],[])+[></option>]
                 l_cHtml += [<option value="1"]+iif(l_nSetForeignKey==1,[ selected],[])+[>Not</option>]
-                l_cHtml += [<option value="2"]+iif(l_nSetForeignKey==2,[ selected],[])+[>Foreign Key Restrictions</option>]
+                l_cHtml += [<option value="2"]+iif(l_nSetForeignKey==2,[ selected],[])+[>Foreign Key Constraints</option>]
                 l_cHtml += [<option value="3"]+iif(l_nSetForeignKey==3,[ selected],[])+[>On p_&lt;TableName&gt;</option>]
                 l_cHtml += [<option value="4"]+iif(l_nSetForeignKey==4,[ selected],[])+[>On fk_&lt;TableName&gt;</option>]
                 l_cHtml += [<option value="5"]+iif(l_nSetForeignKey==5,[ selected],[])+[>On &lt;TableName&gt;_id</option>]
