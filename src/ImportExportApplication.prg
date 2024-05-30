@@ -46,6 +46,7 @@ local l_nMaxExpressionLength
 local l_nFieldUsedAs
 local l_cFieldUsedBy
 local l_cFieldName
+local l_cFieldAKA
 local l_cFieldStaticUID
 local l_cFieldType
 local l_cFieldTypeEnumName
@@ -91,6 +92,7 @@ local l_cCurrentTable
 local l_hCurrentTable
 local l_cCurrentEnumeration
 local l_hCurrentEnumeration
+local l_cAKA
 
 oFcgi:p_o_SQLConnection:SetForeignKeyNullAndZeroParity(.f.)  //To ensure we keep the null values
 
@@ -153,12 +155,14 @@ if l_lContinue
 
         :Column("Namespace.Name"        ,"Namespace_Name")
         :Column("Table.Name"            ,"Table_Name")
+        :Column("Table.AKA"             ,"Table_AKA")
         :Column("Table.Pk"              ,"Table_pk")
         :Column("upper(Namespace.Name)" ,"tag1")
         :Column("upper(Table.Name)"     ,"tag2")
         :Column("Table.Unlogged"        ,"Table_Unlogged")
         :GroupBy("Namespace_Name")
         :GroupBy("Table_Name")
+        :GroupBy("Table_AKA")
         :GroupBy("Table_pk")
         :GroupBy("tag1")
         :GroupBy("tag2")
@@ -193,6 +197,7 @@ if l_lContinue
         :Join("left", "Namespace"  ,"ParentNamespace","ParentTable.fk_Namespace = ParentNamespace.pk")
         :Column("Table.Pk"             ,"Table_Pk")
         :Column("Column.Name"          ,"Column_Name")
+        :Column("Column.AKA"           ,"Column_AKA")
         :Column("Column.StaticUID"     ,"Column_StaticUID")
         :Column("Column.Order"         ,"Column_Order")
         :Column("Column.Type"          ,"Column_Type")
@@ -738,6 +743,7 @@ if l_lContinue
                     l_nFieldUsedAs      := ListOfColumns->Column_UsedAs
                     l_cFieldUsedBy      := ListOfColumns->Column_UsedBy
                     l_cFieldName        := ListOfColumns->Column_Name
+                    l_cFieldAKA         := alltrim(nvl(ListOfColumns->Column_AKA,""))
                     l_cFieldStaticUID   := ListOfColumns->Column_StaticUID
 // l_cFieldName := el_StringFilterCharacters(l_cFieldName,"_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -866,6 +872,12 @@ if l_lContinue
                         l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
                     endif
 
+                    l_cFieldAKA := strtran(l_cFieldAKA,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
+                    l_cFieldAKA := strtran(l_cFieldAKA,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+                    if !empty(l_cFieldAKA)
+                        l_cSourceCodeFields += [,"AKA"=>"]+l_cFieldAKA+["]
+                    endif
+
 //_M_ What about Unicode and other field attributes?
                     l_cSourceCodeFields += "}"
 
@@ -966,6 +978,14 @@ if l_lContinue
                 l_cSourceCode += l_cSourceCodeIndexes
                 l_cSourceCode += iif(ListOfTables->Table_Unlogged,[;]+CRLF+l_cSchemaIndent+l_cIndentHashElement+[,"Unlogged"=>.T.],[])
             endif
+
+            l_cAKA := nvl(ListOfTables->Table_AKA,"")
+            l_cAKA := strtran(l_cAKA,["],[]) // remove PostgreSQL token delimiter. Will be added as needed when creating indexes.
+            l_cAKA := strtran(l_cAKA,['],[]) // remove MySQL token delimiter. Will be added as needed when creating indexes.
+            if !empty(l_cAKA)
+                l_cSourceCode += [;]+CRLF+l_cSchemaIndent+l_cIndentHashElement+[,"AKA"=>"]+l_cAKA+["]
+            endif
+
             l_cSourceCode += '};'+CRLF
             
         endscan

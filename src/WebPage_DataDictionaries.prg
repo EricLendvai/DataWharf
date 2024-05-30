@@ -352,6 +352,7 @@ case l_cURLAction == "DataDictionarySettings"
             with object l_oDB1
                 :Table("62f3e291-c7c0-4da7-8874-c839c7c3938c","public.Application")
                 :Column("Application.SupportColumns"                                       ,"Application_SupportColumns")
+                :Column("Application.SupportColumnsDateTimeConfig"                         ,"Application_SupportColumnsDateTimeConfig")
                 :Column("Application.AddForeignKeyIndexORMExport"                          ,"Application_AddForeignKeyIndexORMExport")
                 :Column("Application.SetMissingOnDeleteToProtect"                          ,"Application_SetMissingOnDeleteToProtect")
                 :Column("Application.NoNamespaceChangeOnTablesAndEnumerations"             ,"Application_NoNamespaceChangeOnTablesAndEnumerations")
@@ -386,6 +387,7 @@ case l_cURLAction == "DataDictionarySettings"
                 l_hValues["Name"]                                                  := l_cApplicationName
                 l_hValues["LinkCode"]                                              := l_cURLApplicationLinkCode
                 l_hValues["SupportColumns"]                                        := l_oData:Application_SupportColumns
+                l_hValues["SupportColumnsDateTimeConfig"]                          := l_oData:Application_SupportColumnsDateTimeConfig
                 l_hValues["AddForeignKeyIndexORMExport"]                           := l_oData:Application_AddForeignKeyIndexORMExport
                 l_hValues["SetMissingOnDeleteToProtect"]                           := l_oData:Application_SetMissingOnDeleteToProtect
                 l_hValues["NoNamespaceChangeOnTablesAndEnumerations"]              := l_oData:Application_NoNamespaceChangeOnTablesAndEnumerations
@@ -2549,6 +2551,7 @@ local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 
 local l_cSupportColumns                                        := nvl(hb_HGetDef(par_hValues,"SupportColumns",""),"")
+local l_nSupportColumnsDateTimeConfig                          := hb_HGetDef(par_hValues,"SupportColumnsDateTimeConfig"                         ,1)
 local l_lAddForeignKeyIndexORMExport                           := hb_HGetDef(par_hValues,"AddForeignKeyIndexORMExport"                          ,.f.)
 local l_lSetMissingOnDeleteToProtect                           := hb_HGetDef(par_hValues,"SetMissingOnDeleteToProtect"                          ,.f.)
 local l_lNoNamespaceChangeOnTablesAndEnumerations              := hb_HGetDef(par_hValues,"NoNamespaceChangeOnTablesAndEnumerations"             ,.f.)
@@ -2608,6 +2611,17 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<td class="pb-3">]
                 l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextSupportColumns" id="TextSupportColumns" value="]+FcgiPrepFieldForValue(l_cSupportColumns)+[" size="80">]
                 l_cHtml += [<br><span class="small">Blank separated list of column names.<br>If the "Used As" property of columns is not set, but its name is in the list above, it will be displayed as "Implicit Support".</span>]
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+
+        l_cHtml += [<tr class="pb-3">]
+            l_cHtml += [<td class="pe-2 pb-3">Date/Time Support Columns</td>]
+            l_cHtml += [<td class="pb-3">]
+                l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboSupportColumnsDateTimeConfig" id="ComboSupportColumnsDateTimeConfig">]
+                    l_cHtml += [<option value="1"]+iif(l_nSupportColumnsDateTimeConfig==1,[ selected],[])+[>Do not change "Support" columns of type Date and Time</option>]
+                    l_cHtml += [<option value="2"]+iif(l_nSupportColumnsDateTimeConfig==2,[ selected],[])+[>Make all "Support" columns of type Date and Time as "Without Time Zone"</option>]
+                    l_cHtml += [<option value="3"]+iif(l_nSupportColumnsDateTimeConfig==3,[ selected],[])+[>Make all "Support" columns of type Date and Time as "With Time Zone"</option>]
+                l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
 
@@ -2713,6 +2727,7 @@ local l_cActionOnSubmit
 
 local l_iApplicationPk
 local l_cApplicationSupportColumns
+local l_nSupportColumnsDateTimeConfig
 local l_lAddForeignKeyIndexORMExport
 local l_lSetMissingOnDeleteToProtect
 local l_lNoNamespaceChangeOnTablesAndEnumerations
@@ -2751,6 +2766,7 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iApplicationPk                                         := Val(oFcgi:GetInputValue("TableKey"))
 l_cApplicationSupportColumns                             := SanitizeInput(oFcgi:GetInputValue("TextSupportColumns"))
+l_nSupportColumnsDateTimeConfig                          := Val(oFcgi:GetInputValue("ComboSupportColumnsDateTimeConfig"))
 l_lAddForeignKeyIndexORMExport                           := (oFcgi:GetInputValue("CheckAddForeignKeyIndexORMExport")                           == "1")
 l_lSetMissingOnDeleteToProtect                           := (oFcgi:GetInputValue("CheckSetMissingOnDeleteToProtect")                           == "1")
 l_lNoNamespaceChangeOnTablesAndEnumerations              := (oFcgi:GetInputValue("CheckNoNamespaceChangeOnTablesAndEnumerations")              == "1")
@@ -2792,6 +2808,7 @@ case l_cActionOnSubmit == "Save"
         with object l_oDB1
             :Table("3cbf7dbb-cdec-483d-9660-a9043820b170","Application")
             :Field("Application.SupportColumns"                                       ,iif(empty(l_cApplicationSupportColumns),NULL,l_cApplicationSupportColumns))
+            :Field("Application.SupportColumnsDateTimeConfig"                         ,l_nSupportColumnsDateTimeConfig)
             :Field("Application.AddForeignKeyIndexORMExport"                          ,l_lAddForeignKeyIndexORMExport)
             :Field("Application.SetMissingOnDeleteToProtect"                          ,l_lSetMissingOnDeleteToProtect)
             :Field("Application.NoNamespaceChangeOnTablesAndEnumerations"             ,l_lNoNamespaceChangeOnTablesAndEnumerations)
@@ -2838,6 +2855,7 @@ do case
 
 case !empty(l_cErrorMessage)
     l_hValues["SupportColumns"]                                        := l_cApplicationSupportColumns
+    l_hValues["SupportColumnsDateTimeConfig"]                          := l_nSupportColumnsDateTimeConfig
     l_hValues["AddForeignKeyIndexORMExport"]                           := l_lAddForeignKeyIndexORMExport
     l_hValues["SetMissingOnDeleteToProtect"]                           := l_lSetMissingOnDeleteToProtect
     l_hValues["NoNamespaceChangeOnTablesAndEnumerations"]              := l_lNoNamespaceChangeOnTablesAndEnumerations

@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 05/30/2024 v 4.10
+* Added AKA for Tables and Columns in "Harbour Export to Harbour_ORM".
+* New "Date/Time Support Columns" mode option in "Data Dictionary Settings". This can be used to mark all the creation datetime and last modified datetime columns to "Without Time Zone" or "With Time Zone".
+* Requires Harbour_ORM version 4.9.
+
 ## 05/05/2024 v 4.9
 * Fixed possible data dictionary setting overwrite when using "Deployment Tools" "Load".
 * Added new "Prevent Load From Deployments" in "Data Dictionary Settings". Set to True by default. Only turn off if not using DataWharf as source of truth / Active Data Dictionary.

@@ -19,6 +19,7 @@ local l_oDB_ListOfForeignKeys
 local l_oDB_ListOfPrimaryKeys
 local l_oDB_ListOfColumnOfTypeEnumeration
 local l_oDB_ListOfForeignKeysNotMatchingPrimaryKeys
+local l_oDB_ListOfColumnsSupportDateTime
 // local l_oDB_ListOfIndexesOnPrimaryOrForeignKeys
 local l_oDB_CTEForeignKeysNotMatchingPrimaryKeys
 local l_oDB_ListOfIssues
@@ -71,12 +72,15 @@ local l_nColumnScale
 local l_cIssue
 local l_cErrorText
 local l_iEnumerationPkLast
+local l_cApplicationSupportColumns
+local l_cApplicationSupportColumnsForQuery
 
 // local l_cLastSQL
 
 with object l_oDB_Application
     :Table("d9689368-d768-4058-abb3-0cf4f0a1ddc3","Application")
 
+    :Column("Application.SupportColumnsDateTimeConfig"                         ,"Application_SupportColumnsDateTimeConfig")
     :Column("Application.KeyConfig"                                            ,"Application_KeyConfig")
     :Column("Application.SupportColumns"                                       ,"Application_SupportColumns")
     :Column("Application.SetMissingOnDeleteToProtect"                          ,"Application_SetMissingOnDeleteToProtect")
@@ -105,6 +109,14 @@ with object l_oDB_Application
     // :Column("Application.TestUniquenessTableSQLEnumerationIdentifiers"         ,"Application_TestUniquenessTableSQLEnumerationIdentifiers")
 
     l_oData := :Get(par_iApplicationPk)
+
+    l_cApplicationSupportColumns := nvl(l_oData:Application_SupportColumns,"")
+    l_cApplicationSupportColumns := strtran(l_cApplicationSupportColumns,',',' ')
+    do while '  ' $ l_cApplicationSupportColumns
+        l_cApplicationSupportColumns := strtran(l_cApplicationSupportColumns,'  ',' ')
+    enddo
+    l_cApplicationSupportColumns := alltrim(l_cApplicationSupportColumns)
+
 endwith
 
 with object l_oDB_ListOfTables
@@ -427,6 +439,53 @@ if el_IsInlist(l_oData:Application_KeyConfig,2,3)
 
         endif
     endscan
+
+endif
+
+if el_IsInlist(l_oData:Application_SupportColumnsDateTimeConfig,2,3)
+
+    l_oDB_ListOfColumnsSupportDateTime := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+    with object l_oDB_ListOfColumnsSupportDateTime
+        :Table("8cdf8b51-948b-42c4-b6c4-2284f4f96184","Namespace")
+        :Column("Column.Pk"           ,"Column_Pk")
+        :Column("Column.Name"         ,"Column_Name")
+        :Column("Column.Type"         ,"Column_Type")
+        if empty(l_cApplicationSupportColumns)
+            :Where("Column.UsedAs = ^" , COLUMN_USEDAS_SUPPORT)
+        else
+            l_cApplicationSupportColumnsForQuery := "'"+strtran(upper(l_cApplicationSupportColumns)," ","','")+"'"
+            :Where("Column.UsedAs = ^ or upper(trim(Column.Name)) IN ("+l_cApplicationSupportColumnsForQuery+")" , COLUMN_USEDAS_SUPPORT)
+        endif
+        :Join("inner","Table" ,"","Table.fk_Namespace = Namespace.pk")
+        :Join("inner","Column","","Column.fk_Table = Table.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :Where("trim(Column.Type) in ('DTZ','DT','T')")
+        if l_oData:Application_SupportColumnsDateTimeConfig == 2
+            :Where("trim(Column.Type) <> ^" , "DT")
+        else
+            :Where("trim(Column.Type) <> ^" , "DTZ")
+        endif
+        :SQL("ListOfColumnsSupportDateTime")
+        // SendToClipboard(:LastSQL())
+
+        if :Tally > 0
+            select ListOfColumnsSupportDateTime
+            scan all
+                with object l_oDB_Record
+                    :Table("f317ea0f-53d0-4da0-99c3-071cbd4faefe","Column")
+                    if l_oData:Application_SupportColumnsDateTimeConfig == 2
+                        :Field("Column.Type","DT")
+                    else
+                        :Field("Column.Type","DTZ")
+                    endif
+                    :Update(ListOfColumnsSupportDateTime->Column_Pk)
+                endwith
+            endscan
+        endif
+
+    endwith
+    // ExportTableToHtmlFile("ListOfColumnsSupportDateTime",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfColumnsSupportDateTime.html","From PostgreSQL",,200,.t.)
 
 endif
 
