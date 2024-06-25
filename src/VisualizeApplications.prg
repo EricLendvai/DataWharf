@@ -52,6 +52,7 @@ local l_nMultiEdgeTotalCount
 local l_nMultiEdgeCount
 local l_cHashKey
 local l_cArrowType
+local l_cJSEditMode
 
 oFcgi:TraceAdd("DataDictionaryVisualizeDiagramBuild")
 
@@ -345,6 +346,19 @@ l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value
 l_cHtml += [<input type="hidden" id="TextNodePositions" name="TextNodePositions" value="">]
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+Trans(l_iDiagramPk)+[">]
 
+//---------------------------------------------------------------------------
+//Get the current URL and add a reference to the current diagram LinkUID
+l_cProtocol := oFcgi:RequestSettings["Protocol"]
+l_nPort     := oFcgi:RequestSettings["Port"]
+l_cURL := l_cProtocol+"://"+oFcgi:RequestSettings["Host"]
+if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .and. l_nPort == 443))
+    l_cURL += ":"+Trans(l_nPort)
+endif
+l_cURL += oFcgi:p_cSitePath
+l_cURL += oFcgi:RequestSettings["Path"]
+l_cURL += [?InitialDiagram=]+l_cDiagram_LinkUID
+//---------------------------------------------------------------------------
+
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
@@ -372,28 +386,15 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
             //Code used to debug the positions.
             l_cHtml += [">]
+
+            // l_cHtml += [<input type="button" role="button" value="Cancel" id="ButtonCancelLayout" class="btn btn-primary rounded ms-3">]
+
+            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cURL+[">Cancel</a>]
+
+            l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3 RemoveOnEdit" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
         endif
         //---------------------------------------------------------------------------
-        // l_cHtml += [<input type="button" role="button" value="Reset Layout" class="btn btn-primary rounded me-3" onclick="]
-        
-        // // l_cHtml += [$.ajax({]
-        // // l_cHtml += [  type: 'GET',]
-        // // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
-        // // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos=reset',]
-        // // l_cHtml += [  cache: false ]
-        // // l_cHtml += [});]
-
-        // //Code used to debug the positions.
-        // l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
-        // l_cHtml += [$('#ActionOnSubmit').val('ResetLayout');document.form.submit();]
-
-        // l_cHtml += [">]
-        //---------------------------------------------------------------------------
-        if oFcgi:p_nAccessLevelDD >= 4
-             l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
-        endif
-        //---------------------------------------------------------------------------
-         l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3">]
+         l_cHtml += [<select id="ComboDiagramPk" name="ComboDiagramPk" onchange="$('#TextDiagramPk').val(this.value);$('#ActionOnSubmit').val('Show');document.form.submit();" class="ms-3 RemoveOnEdit">]
 
             select ListOfDiagrams
             scan all
@@ -402,23 +403,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
          l_cHtml += [</select>]
         //---------------------------------------------------------------------------
         if oFcgi:p_nAccessLevelDD >= 4
-             l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
-             l_cHtml += [<input type="button" role="button" value="Duplicate" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();">]
+             l_cHtml += [<input type="button" role="button" value="New Diagram" class="btn btn-primary rounded ms-3 RemoveOnEdit" onclick="$('#ActionOnSubmit').val('NewDiagram');document.form.submit();">]
+             l_cHtml += [<input type="button" role="button" value="Duplicate" class="btn btn-primary rounded ms-3 RemoveOnEdit" onclick="$('#ActionOnSubmit').val('DuplicateDiagram');document.form.submit();">]
         endif
         //---------------------------------------------------------------------------
-         l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
+         l_cHtml += [<input type="button" role="button" value="My Settings" class="btn btn-primary rounded ms-3 RemoveOnEdit" onclick="$('#ActionOnSubmit').val('MyDiagramSettings');document.form.submit();">]
         //---------------------------------------------------------------------------
-
-        //Get the current URL and add a reference to the current diagram LinkUID
-        l_cProtocol := oFcgi:RequestSettings["Protocol"]
-        l_nPort     := oFcgi:RequestSettings["Port"]
-        l_cURL := l_cProtocol+"://"+oFcgi:RequestSettings["Host"]
-        if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .and. l_nPort == 443))
-            l_cURL += ":"+Trans(l_nPort)
-        endif
-        l_cURL += oFcgi:p_cSitePath
-        l_cURL += oFcgi:RequestSettings["Path"]
-        l_cURL += [?InitialDiagram=]+l_cDiagram_LinkUID
 
         l_cHtml += [<input type="button" role="button" value="Copy Diagram Link To Clipboard" class="btn btn-primary rounded ms-3" id="CopyLink" onclick="]
         
@@ -804,13 +794,15 @@ l_cJS += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
 
+l_cJSEditMode := "$('.TopTabs').addClass('disabled');$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();"
+
 // if GRAPH_LIB_DD == "mxgraph"
 if l_nRenderMode == RENDERMODE_MXGRAPH
     l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
     l_cHtml += '    var changes = evt.getProperty("edit").changes;'
     l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
     l_cHtml += '        if(changes[i].constructor.name ==  "mxGeometryChange") {'
-    l_cHtml += '           $("#ButtonSaveLayout").addClass("btn-warning").removeClass("btn-primary");'
+    l_cHtml += "           "+l_cJSEditMode
     l_cHtml += '        }'
     l_cHtml += '    }'
     l_cHtml += ' });'
@@ -819,7 +811,7 @@ else
     l_cHtml += ' network.on("dragStart", function (params) {'
     l_cHtml += '   params.event = "[original event]";'
     // l_cHtml += '   debugger;'
-    l_cHtml += "   if (params['nodes'].length == 1) {$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');};"
+    l_cHtml += "   if (params['nodes'].length == 1) {"+l_cJSEditMode+"};"
     l_cHtml += '      });'
     l_cHtml += [network.fit();]
 endif

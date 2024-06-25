@@ -6566,6 +6566,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += GetConfirmationModalFormsDuplicate("Only the Column definition will be duplicated.")
                 endif
 
+                l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Order Columns",l_cSitePath+[DataDictionaries/OrderColumns/]+l_cCombinedPath)   // Did not optimize to hide if there is only 1 column, since this is a rare situation.
+
             endif
         endif
     l_cHtml += [</div>]
@@ -6954,8 +6956,10 @@ l_iColumnPk                 := Val(oFcgi:GetInputValue("TableKey"))
 l_lShowPrimary              := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
 l_cColumnName               := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
+
 l_lColumnTrackNameChanges   := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
 l_cColumnAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
+//l_cColumnAKA := replicate("a",500)
 if empty(l_cColumnAKA)
     l_cColumnAKA := NIL
 endif

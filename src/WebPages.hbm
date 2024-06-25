@@ -10,4 +10,4 @@ WebPage_About.prg
 WebPage_Health.prg
 WebPage_Settings.prg
 WebPage_APITokens.prg
-WebPage_DataWharfErrors.prg
+WebPage_ErrorExplorer.prg

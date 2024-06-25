@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.10"
+#define BUILDVERSION "4.11"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -14,9 +14,9 @@
 // #ifdef __PLATFORM__WINDOWS
 // #endif
 
-#define MIN_HARBOUR_ORM_VERSION  "4.9"
-#define MIN_HARBOUR_EL_VERSION   "4.3"
-#define MIN_HARBOUR_FCGI_VERSION "1.9"
+#define MIN_HARBOUR_ORM_VERSION  "4.10"
+#define MIN_HARBOUR_EL_VERSION   "4.4"
+#define MIN_HARBOUR_FCGI_VERSION "1.10"
 
 #define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
 #define VISJS_SCRIPT_VERSION         "2022_02_15_001"
@@ -46,7 +46,6 @@
 
 #define GOINEDITMODE "$('.TopTabs').addClass('disabled');$('.RemoveOnEdit').remove();$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary').removeClass('disabled');$('#ButtonDoneCancel').val('Cancel');"
 
-//Following to be removed
 #define UPDATE_ONSELECT_SAVEBUTTON            [ onchange="ToggleEditFormMode();" ]
 #define UPDATE_ONTEXTAREA_SAVEBUTTON          [ onKeyPress="ToggleEditFormMode();" onchange="ToggleEditFormMode();" ]
 #define UPDATE_ONCHECKBOXINPUT_SAVEBUTTON     [ type="checkbox" onchange="ToggleEditFormMode(); " ]

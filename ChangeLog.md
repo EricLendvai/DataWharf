@@ -1,5 +1,12 @@
 # DataWharf - Change Log
 
+## 06/23/2024 v 4.11
+* Changed all Date Time fields to use "With Time Zone".
+* Added "Order Columns" on "Edit Column". This makes it easier to set the order of a newly created column.
+* Enhanced Application and Model Diagrams to go in "Edit Mode" and prevent selecting options that would loose changes. New "Cancel" button.
+* New "Error Explorer" under "Settings" to allow to review application and data access errors. Mainly created to prototype similar feature in WharfSystems.
+* Added support to Time Zones. Each user logging in DataWharf will have its Time Zone initially set to the browser. Use the new menu option "My Settings" to specify any other PostgreSQL supported time zones. Any list that includes reference to date and times will be display in the currently selected time zone. This will ensure time is independent from the location of the users.
+
 ## 05/30/2024 v 4.10
 * Added AKA for Tables and Columns in "Harbour Export to Harbour_ORM".
 * New "Date/Time Support Columns" mode option in "Data Dictionary Settings". This can be used to mark all the creation datetime and last modified datetime columns to "Without Time Zone" or "With Time Zone".

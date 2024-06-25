@@ -19,6 +19,7 @@ private v_iFastCGIRunLogPk := 0    // Will be the FastCGIRunLog.pk of the curren
 private v_hPageMapping := {"home"             => {"Home"                     ,1,.t.,@BuildPageHome()},;
                            "About"            => {"About"                    ,0,.t.,@BuildPageAbout()},;   //Does not require to be logged in.
                            "ChangePassword"   => {"Change Password"          ,1,.t.,@BuildPageChangePassword()},;
+                           "MySettings"       => {"My Settings"              ,1,.t.,@BuildPageMySettings()},;
                            "Projects"         => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
                            "Project"          => {"Projects"                 ,1,.t.,@BuildPageProjects()},;
                            "Applications"     => {"Applications"             ,1,.t.,@BuildPageApplications()},;
@@ -30,7 +31,7 @@ private v_hPageMapping := {"home"             => {"Home"                     ,1,
                            "CustomFields"     => {"Custom Fields"            ,1,.t.,@BuildPageCustomFields()},;
                            "Users"            => {"Users"                    ,1,.t.,@BuildPageUsers()},;
                            "APITokens"        => {"API Tokens"               ,1,.t.,@BuildPageAPITokens()},;
-                           "DataWharfErrors"  => {"Recent Errors"            ,1,.t.,@BuildPageDataWharfErrors()},;
+                           "ErrorExplorer"    => {"Error Explorer"           ,1,.t.,@BuildPageErrorExplorer()},;
                            "Health"           => {"Health"                   ,0,.f.,@BuildPageHealth()} }   //Does not require to be logged in.
 
 hb_HCaseMatch(v_hPageMapping,.f.)
@@ -66,8 +67,9 @@ class MyFcgi from hb_Fcgi
     data p_nUserAccessMode      init 0   // User based access level. Comes from "User.AccessMode"
     data p_nAccessLevelDD       init 0   // Current Application Data Dictionary "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
     data p_nAccessLevelML       init 0   // Current Application Modeling        "UserAccessApplication.AccessLevelDD if ::p_nUserAccessMode == 1 otherwise either 1 or 7
-    data p_cSitePath            init ""  // Used to help with site relative path
-    
+    data p_cSitePath            init ""  // Used to help with site relative path.
+    data p_cUserTimeZoneName    init ""  // PostgreSQL timezone name to use when displaying timestamps.
+
     //Used in Modeling. ANF stands for "AlternateNameFor"
     data p_ANFModel             init "Model"
     data p_ANFModels            init "Models"
@@ -122,6 +124,11 @@ class MyFcgi from hb_Fcgi
     data p_cThisAppColorHeaderTextWhite  init ""
     data p_lThisAppColorHeaderTextWhite  init .f.
     data p_cThisAppLogoThemeName         init ""
+
+    data p_hCacheTimeZone                init {=>}
+
+    data p_LocalisationDateFormat init "mm/dd/yyyy"
+    data p_LocalisationTimeFormat init "hh:mm:ss pm"
 
     method OnFirstRequest()
     method OnRequest()
@@ -181,6 +188,7 @@ local l_cPassword
 local l_cSessionCookie
 local l_iUserPk
 local l_cUserName
+local l_cUserTimeZoneName := ""
 local l_nUserAccessMode
 local l_nLoginLogsPk
 local l_cAction
@@ -217,6 +225,12 @@ local l_cConnectionErrorMessage := ""
 local l_cSQLCommand
 local l_nWharfConfigAppliedStatus
 local l_nContentSize
+local l_cTimeZoneName
+local l_iTimeZonePk
+local l_cWebUserAgent
+local l_bSha256
+local l_iWebUserAgentPk
+
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
@@ -246,11 +260,12 @@ endif
 
 //Reset transient properties
 
-::p_iUserPk         := 0
-::p_cUserName       := ""
-::p_nUserAccessMode := 0
-::p_nAccessLevelDD  := 0
-::p_cSitePath       := ::RequestSettings["SitePath"]
+::p_iUserPk           := 0
+::p_cUserName         := ""
+::p_nUserAccessMode   := 0
+::p_nAccessLevelDD    := 0
+::p_cSitePath         := ::RequestSettings["SitePath"]
+::p_cUserTimeZoneName := ""
 
 l_cSitePath := ::p_cSitePath
 
@@ -286,6 +301,7 @@ if l_lNoPostgresConnection
     // SendToDebugView("Reconnecting to SQL Server")
     ::p_o_SQLConnection := hb_SQLConnect()
     with object ::p_o_SQLConnection
+        :ClearCurrentUserPk()
         :SetBackendType("PostgreSQL")
         :SetDriver(l_cPostgresDriver)
         :SetServer(l_cPostgresHost)
@@ -303,6 +319,8 @@ if l_lNoPostgresConnection
         :PostgreSQLIdentifierCasing := HB_ORM_POSTGRESQL_CASE_SENSITIVE
         // :SetPrimaryKeyFieldName("pk")
         // :SetApplicationName("DataWharf")   Can only be set once connected.
+        :SetApplicationVersion(BUILDVERSION)
+        :SetApplicationBuildInfo(hb_buildinfo())
 
         if :Connect() < 0
             // ::p_o_SQLConnection := NIL
@@ -339,11 +357,12 @@ if l_lNoPostgresConnection
                         if v_iFastCGIRunLogPk <= 0
                             with object l_oDB1
                                 :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
-                                :Field("FastCGIRunLog.dati"              ,{"S","now()"})
-                                :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
-                                :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
-                                :Field("FastCGIRunLog.OSInfo"            ,OS())
-                                :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
+                                :Field("FastCGIRunLog.Datetime"            ,{"S","now()"})
+                                :Field("FastCGIRunLog.ApplicationVersion"  ,BUILDVERSION)
+                                :Field("FastCGIRunLog.ApplicationBuildInfo",hb_buildinfo())
+                                :Field("FastCGIRunLog.IP"                  ,::RequestSettings["ClientIP"])
+                                :Field("FastCGIRunLog.OSInfo"              ,OS())
+                                :Field("FastCGIRunLog.HostInfo"            ,hb_osCPU())
                                 if :Add()
                                     v_iFastCGIRunLogPk := :Key()
                                     oFcgi:p_o_SQLConnection:SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
@@ -371,11 +390,12 @@ if l_lNoPostgresConnection
                         if v_iFastCGIRunLogPk <= 0
                             with object l_oDB1
                                 :Table("cf798fea-198b-4831-aafa-55d6135dfed1","FastCGIRunLog")
-                                :Field("FastCGIRunLog.dati"              ,{"S","now()"})
-                                :Field("FastCGIRunLog.ApplicationVersion",BUILDVERSION)
-                                :Field("FastCGIRunLog.IP"                ,::RequestSettings["ClientIP"])
-                                :Field("FastCGIRunLog.OSInfo"            ,OS())
-                                :Field("FastCGIRunLog.HostInfo"          ,hb_osCPU())
+                                :Field("FastCGIRunLog.Datetime"            ,{"S","now()"})
+                                :Field("FastCGIRunLog.ApplicationVersion"  ,BUILDVERSION)
+                                :Field("FastCGIRunLog.ApplicationBuildInfo",hb_buildinfo())
+                                :Field("FastCGIRunLog.IP"                  ,::RequestSettings["ClientIP"])
+                                :Field("FastCGIRunLog.OSInfo"              ,OS())
+                                :Field("FastCGIRunLog.HostInfo"            ,hb_osCPU())
                                 if :Add()
                                     v_iFastCGIRunLogPk := :Key()
                                     oFcgi:p_o_SQLConnection:SetApplicationName("DataWharf - "+trans(v_iFastCGIRunLogPk))
@@ -445,6 +465,7 @@ if l_lNoPostgresConnection
                     endwith
 
                     UpdateAPIEndpoint()
+                    UpdateTimeZoneTable()
                 endcase
 
             endcase
@@ -456,6 +477,7 @@ if l_lNoPostgresConnection
         endif
     endwith
 else
+    ::p_o_SQLConnection:ClearCurrentUserPk()
     if ::p_o_SQLConnection:CheckIfSchemaCacheShouldBeUpdated()
         UpdateSchema(::p_o_SQLConnection)   //_M_ Why here
     endif
@@ -467,7 +489,6 @@ endif
 // local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
 // local l_cPostgresDatabase       := ::GetAppConfig("POSTGRESDATABASE")
 // local l_cPostgresId             := ::GetAppConfig("POSTGRESID")
-
 
 do case
 case hb_IsNil(::p_o_SQLConnection) .or. !::p_o_SQLConnection:Connected
@@ -528,6 +549,8 @@ otherwise
         l_cHtml += [</html>]
 
     else
+        ::p_o_SQLConnection:ClearTimeZoneName()
+
         if l_lCyanAuditAware
             //Ensure no user specific cyanaudit is being identified
             ::p_o_SQLConnection:SQLExec("6d20b707-04df-47c1-85b1-2f3e73570680","SELECT cyanaudit.fn_set_current_uid( 0 );")
@@ -638,7 +661,6 @@ otherwise
         with object l_oDB1
             :Table("ea9c6e26-008e-4cad-ae70-28257020c27e","FastCGIRunLog")
             :Field("FastCGIRunLog.RequestCount"      ,{"S",'"RequestCount" + 1'})
-// altd()
             :Update(v_iFastCGIRunLogPk)
         endwith
 
@@ -722,20 +744,25 @@ otherwise
                     //check if user is already in local DB
                     with object l_oDB1
                         :Table("0405BFDF-8347-46DA-9C4C-BFF6E883CC94","public.User")
-                        :Column("User.pk"        ,"User_pk")
+                        :Column("User.pk"         ,"User_pk")
                         :Column("User.AccessMode" ,"User_AccessMode")
+                        :Column("TimeZone.Name"   ,"TimeZone_Name")
+                        :Join("left","TimeZone","","User.fk_TimeZone = TimeZone.pk")
                         :Where("trim(User.id) = ^",l_cUserID)
                         :SQL("ListOfResults")
 
                         if :Tally == 1
                             l_iUserPk := ListOfResults->User_Pk
-                            l_nUserAccessMode := ListOfResults->User_AccessMode
+                            oFcgi:p_o_SQLConnection:SetCurrentUserPk(l_iUserPk)
+                            l_nUserAccessMode   := ListOfResults->User_AccessMode
+                            l_cUserTimeZoneName := nvl(ListOfResults->TimeZone_Name,"UTC")
                         else
                             //first time user login, create with default access rights
                             AutoProvisionUser(l_cUserID, l_oJWT:GetPayloadData('given_name'), l_oJWT:GetPayloadData('family_name'))
                             :SQL("ListOfResults")
                             if :Tally == 1
                                 l_iUserPk := ListOfResults->User_Pk
+                                oFcgi:p_o_SQLConnection:SetCurrentUserPk(l_iUserPk)
                                 l_nUserAccessMode := ListOfResults->User_AccessMode
                             endif
                         endif
@@ -752,21 +779,25 @@ otherwise
                 if !empty(l_nLoggedInPk)
                     // Verify if valid loggin
                     l_oDB1:Table("4edc82f8-f58e-4013-98a3-22732b408319","public.LoginLogs")
-                    l_oDB1:Column("LoginLogs.Status","LoginLogs_Status")
+                    l_oDB1:Column("LoginLogs.Status"   ,"LoginLogs_Status")
                     l_oDB1:Column("User.pk"         ,"User_pk")
                     l_oDB1:Column("User.FirstName"  ,"User_FirstName")
                     l_oDB1:Column("User.LastName"   ,"User_LastName")
                     l_oDB1:Column("User.AccessMode" ,"User_AccessMode")
+                    l_oDB1:Column("TimeZone.Name"   ,"TimeZone_Name")
                     l_oDB1:Where("LoginLogs.pk = ^",l_nLoggedInPk)
                     l_oDB1:Where("Trim(LoginLogs.Signature) = ^",l_cLoggedInSignature)
                     l_oDB1:Where("User.Status = 1")
                     l_oDB1:Join("inner","User","","LoginLogs.fk_User = User.pk")
+                    l_oDB1:Join("left","TimeZone","","User.fk_TimeZone = TimeZone.pk")
                     l_oDB1:SQL("ListOfResults")
                     if l_oDB1:Tally = 1
-                        l_lLoggedIn       := .t.
-                        l_iUserPk         := ListOfResults->User_pk
-                        l_cUserName       := alltrim(ListOfResults->User_FirstName)+" "+alltrim(ListOfResults->User_LastName)
-                        l_nUserAccessMode := ListOfResults->User_AccessMode
+                        l_lLoggedIn         := .t.
+                        l_iUserPk           := ListOfResults->User_pk
+                        l_cUserTimeZoneName := nvl(ListOfResults->TimeZone_Name,"UTC")
+                        oFcgi:p_o_SQLConnection:SetCurrentUserPk(l_iUserPk)
+                        l_cUserName         := alltrim(ListOfResults->User_FirstName)+" "+alltrim(ListOfResults->User_LastName)
+                        l_nUserAccessMode   := ListOfResults->User_AccessMode
                     else
                         // Clear the cookie
                         ::DeleteCookie(COOKIE_PREFIX+"SessionID")
@@ -799,16 +830,20 @@ otherwise
                         l_cBody += BuildPageLoginScreen()
                     else
                         //Post
-                        l_cUserID   := SanitizeInput(oFcgi:GetInputValue("TextID"))
-                        l_cPassword := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
+                        l_cUserID       := SanitizeInput(oFcgi:GetInputValue("TextID"))
+                        l_cPassword     := SanitizeInput(oFcgi:GetInputValue("TextPassword"))
+                        l_cTimeZoneName := SanitizeInput(oFcgi:GetInputValue("TextTimeZoneName"))
 
                         with object l_oDB1
                             :Table("6bad4ae5-6bb2-4bdb-97b9-6adacb2a8327","public.User")
-                            :Column("User.pk"        ,"User_pk")
-                            :Column("User.FirstName" ,"User_FirstName")
-                            :Column("User.LastName"  ,"User_LastName")
-                            :Column("User.Password"  ,"User_Password")
-                            :Column("User.AccessMode","User_AccessMode")
+                            :Column("User.pk"         ,"User_pk")
+                            :Column("User.FirstName"  ,"User_FirstName")
+                            :Column("User.LastName"   ,"User_LastName")
+                            :Column("User.Password"   ,"User_Password")
+                            :Column("User.AccessMode" ,"User_AccessMode")
+                            :Column("User.fk_TimeZone","User_fk_TimeZone")
+                            :Join("left","TimeZone","","User.fk_TimeZone = TimeZone.pk")
+                            :Column("TimeZone.Name" , "TimeZone_Name")
                             :Where("trim(User.id) = ^",l_cUserID)
                             // :Where("trim(User.Password) = ^",l_cPassword)
                             :Where("User.Status = 1")
@@ -816,6 +851,7 @@ otherwise
 
                             if :Tally == 1
                                 l_iUserPk := ListOfResults->User_Pk
+                                oFcgi:p_o_SQLConnection:SetCurrentUserPk(l_iUserPk)
 
                                 //Check if valid Password
                                 l_cSecuritySalt := oFcgi:GetAppConfig("SECURITY_SALT")
@@ -825,8 +861,67 @@ otherwise
                                     l_cSignature      := ::GenerateRandomString(10,"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
                                     l_nUserAccessMode := ListOfResults->User_AccessMode
 
+                                    //Update User.fk_TimeZone if was null
+                                    if empty(ListOfResults->User_fk_TimeZone)     // The ORM converts any null foreign keys to 0.
+
+                                        l_cTimeZoneName := NormalizeTimeZoneName(l_cTimeZoneName)
+                                        l_iTimeZonePk   := GetTimeZonePkFromName(l_cTimeZoneName)
+                                        if l_iTimeZonePk == 0
+                                            l_cTimeZoneName := "UTC"
+                                        endif
+
+                                        if !empty(l_iTimeZonePk)
+                                            :Table("14b6a3b7-3066-414e-aa1f-d0bdd242ad47","User")
+                                            :Field("User.fk_TimeZone" , l_iTimeZonePk)
+                                            :Update(l_iUserPk)
+                                        endif
+
+                                        l_cUserTimeZoneName := l_cTimeZoneName
+                                    else
+                                        l_cUserTimeZoneName := nvl(ListOfResults->TimeZone_Name,"UTC")
+                                    endif
+
+                                    // Record the WebUserAgent - Begin
+                                    l_cWebUserAgent := nvl(oFcgi:GetEnvironment("HTTP_USER_AGENT"),"Unknown")
+                                    l_bSha256       := hb_SHA256(l_cWebUserAgent,.t.)
+
+                                    :Table("8d6524eb-e99e-44c6-8e93-a17cce14be57","WebUserAgent")
+                                    :Column("WebUserAgent.pk"       ,"pk")
+                                    :Column("WebUserAgent.AgentInfo","AgentInfo")
+                                    :Where([WebUserAgent.Sha256 = decode(']+hb_StrToHex(l_bSha256,"")+[','hex')])   //_M_ decide how to make this generic
+                                    :SQL("ListOfWebUserAgent")
+
+                                    do case
+                                    case :Tally > 0
+                                        l_iWebUserAgentPk := 0
+                                        select ListOfWebUserAgent   // Since in theory more than one text could create the same hash we need to deal with collisions. 2**256 out of 1, which is one out of 1.15E77 
+                                        scan all
+                                            if ListOfWebUserAgent->AgentInfo == l_cWebUserAgent
+                                                l_iWebUserAgentPk := ListOfWebUserAgent->pk
+                                                exit
+                                            endif
+                                        endif
+                                    case :Tally < 0   // Failed to query
+                                        l_iWebUserAgentPk := -1
+                                    otherwise
+                                        l_iWebUserAgentPk := 0
+                                    endif
+
+                                    if l_iWebUserAgentPk == 0
+                                        :Table("60ac3c71-2ceb-4799-bec6-bd6651a0a6f2","WebUserAgent")
+                                        :Field("WebUserAgent.Sha256"   ,l_bSha256)
+                                        :Field("WebUserAgent.AgentInfo",l_cWebUserAgent)
+                                        if :Add()
+                                            l_iWebUserAgentPk := :Key()
+                                        endif
+                                    endif
+                                    // Record the WebUserAgent - End
+
                                     :Table("a58f5d2a-929a-4327-8694-9656377638ec","LoginLogs")
                                     :Field("LoginLogs.fk_User"  ,l_iUserPk)
+                                    if l_iWebUserAgentPk > 0
+                                        :Field("LoginLogs.fk_WebUserAgent",l_iWebUserAgentPk)   // Record the WebUserAgent
+                                    endif
                                     :Field("LoginLogs.TimeIn"   ,{"S","now()"})
                                     :Field("LoginLogs.IP"       ,l_cIP)
                                     :Field("LoginLogs.Attempts" ,1)   //_M_ for later use to prevent brute force attacks
@@ -859,16 +954,23 @@ otherwise
         endif
 
         if l_lLoggedIn
-            ::p_iUserPk         := l_iUserPk
-            ::p_cUserName       := l_cUserName
-            ::p_nUserAccessMode := l_nUserAccessMode
+            ::p_iUserPk           := l_iUserPk
+            ::p_cUserName         := l_cUserName
+            ::p_nUserAccessMode   := l_nUserAccessMode
+            ::p_cUserTimeZoneName := l_cUserTimeZoneName
 
             //Since we now know the current user access mode, will check if this would be an invalid access right.
             if ((::p_nUserAccessMode < 4) .and. lower(l_cPageName) == "users")         .or. ;  // block from going to "Users" web page, unless "Root Admin" access right.
-            ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
+               ((::p_nUserAccessMode < 3) .and. lower(l_cPageName) == "customfields")          // block from going to "CustomFields" web page, unless "All Application Full Access access right.
                 ::Redirect(l_cSitePath+"home")
                 return nil
             endif
+
+if l_cAction == "crash"
+    l_cAction += 4
+endif
+
+            ::p_o_SQLConnection:SetTimeZoneName(::p_cUserTimeZoneName)
 
             if l_lCyanAuditAware
                 //Tell Cyanaudit to log future entries as the current user.
@@ -1064,36 +1166,82 @@ method OnError(par_oError) class MyFcgi
 local l_oDB1
 local l_lNoPostgresConnection
 local l_cErrorInfo
+local l_bSha256
+local l_iUserPk
+local l_iFastCGIErrorPk
 
-    try
-////        SendToDebugView("Called from MyFcgi OnError")
-        ::ClearOutputBuffer()
-        ::Print("<h1>Error Occurred</h1>")
-        ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
-        l_cErrorInfo := FcgiGetErrorInfo(par_oError)
-        ::Print("<div>"+l_cErrorInfo+"</div>")
-        ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(v_iFastCGIRunLogPk,0))+"</div>")
-        ::Print("<div>"+::TraceList(4)+"</div>")
+try
+    l_iUserPk := ::p_iUserPk
+catch
+    l_iUserPk := 0
+endtry
 
-        //  ::hb_Fcgi:OnError(par_oError)
-        ::Finish()
+try
+    ::ClearOutputBuffer()
+    ::Print("<h1>Error Occurred</h1>")
+    ::Print("<h2>"+hb_buildinfo()+" - Current Time: "+hb_DToC(hb_DateTime())+"</h2>")
+    l_cErrorInfo := FcgiGetErrorInfo(par_oError)
+    ::Print("<div>"+l_cErrorInfo+"</div>")
+    ::Print("<div>FastCGIRunLog.pk = "+Trans(nvl(v_iFastCGIRunLogPk,0))+"</div>")
+    ::Print("<div>"+::TraceList(4)+"</div>")
 
-        if !empty(l_cErrorInfo)
-            l_lNoPostgresConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
-            if !l_lNoPostgresConnection
-                l_oDB1 := hb_SQLData(::p_o_SQLConnection)
-                with object l_oDB1
-                    :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIRunLog")
-                    :Field("FastCGIRunLog.ErrorInfo",l_cErrorInfo)
-                    :Update(v_iFastCGIRunLogPk)
-                endwith
-            endif
+    if !empty(l_cErrorInfo)
+        l_bSha256 := hb_SHA256(l_cErrorInfo,.t.)
+        l_lNoPostgresConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
+        if !l_lNoPostgresConnection
+            l_oDB1 := hb_SQLData(::p_o_SQLConnection)
+            with object l_oDB1
+
+                :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIError")
+                :Column("FastCGIError.pk"          ,"pk")
+                :Column("FastCGIError.ErrorMessage","ErrorMessage")
+                :Where([FastCGIError.Sha256 = decode(']+hb_StrToHex(l_bSha256,"")+[','hex')])   //_M_ decide how to make this generic
+                :SQL("ListOfFastCGIError")
+
+                // SendToClipboard(:LastSQL())
+                do case
+                case :Tally > 0
+                    l_iFastCGIErrorPk := 0
+                    select ListOfFastCGIError   // Since in theory more than one text could create the same hash we need to deal with collisions. 2**256 out of 1, which is one out of 1.15E77 
+                    scan all
+                        if ListOfFastCGIError->ErrorMessage == l_cErrorInfo
+                            l_iFastCGIErrorPk := ListOfFastCGIError->pk
+                            exit
+                        endif
+                    endif
+                case :Tally < 0   // Failed to query
+                    l_iFastCGIErrorPk := -1
+                otherwise
+                    l_iFastCGIErrorPk := 0
+                endif
+
+                if l_iFastCGIErrorPk == 0
+                    :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIError")
+                    :Field("FastCGIError.Sha256"      ,l_bSha256)
+                    :Field("FastCGIError.ErrorMessage",l_cErrorInfo)
+                    if :Add()
+                        l_iFastCGIErrorPk := :Key()
+                    endif
+                endif
+
+                :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIRunLog")
+                :Field("FastCGIRunLog.fk_User",l_iUserPk)
+                if l_iFastCGIErrorPk > 0
+                    :Field("FastCGIRunLog.fk_FastCGIError",l_iFastCGIErrorPk)
+                endif
+                :Field("FastCGIRunLog.ErrorDatetime",{"S","now()"})
+
+                :Update(v_iFastCGIRunLogPk)
+            endwith
         endif
+    endif
 
-    catch
-    endtry
-    
-    BREAK
+    ::Finish()
+
+catch
+endtry
+
+BREAK
 return nil
 //=================================================================================================================
 //=================================================================================================================
@@ -1170,6 +1318,7 @@ local l_cUpdateScript := ""
 
 SendToDebugView("In UpdateSchema")
 
+// altd()
 if el_AUnpack(par_o_SQLConnection:MigrateSchema(oFcgi:p_o_SQLConnection:p_hWharfConfig),@l_nMigrateSchemaResult,@l_cUpdateScript,@l_cLastError) > 0
     if l_nMigrateSchemaResult >= 0
         par_o_SQLConnection:RecordCurrentAppliedWharfConfig()
@@ -1192,9 +1341,9 @@ else
     endif
 endif
 
-if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
-    el_StrToFile(l_cUpdateScript,el_AddPs(OUTPUT_FOLDER)+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
-endif
+// if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
+//     el_StrToFile(l_cUpdateScript,el_AddPs(OUTPUT_FOLDER)+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
+// endif
 
 return nil
 //=================================================================================================================
@@ -1283,9 +1432,10 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
             //     l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
             // endif
 
-                    if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
+                    // if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
+                    if .t.
 // l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(el_IsInlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","datawharferrors")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(el_IsInlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","mysettings","errorexplorer")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
 
                         l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;top: 70%;left: -50%;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
                             if l_lShowMenuProjects
@@ -1304,12 +1454,13 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                                 if APIUSE
                                     l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "apitokens"  ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[APITokens">API Tokens</a></li>]
                                 endif
-                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "recenterrors"   ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[DataWharfErrors">Recent Errors</a></li>]
+                                l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "errorexplorer"  ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ErrorExplorer">Error Explorer</a></li>]
                                 l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "users"          ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[Users">Users</a></li>]
                             endif
                             if l_lShowChangePassword
                                 l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "changepassword"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[ChangePassword">Change Password</a></li>]
                             endif
+                            l_cHtml += [<li><a class="dropdown-item]+iif(lower(par_cCurrentPage) == "mysettings"     ,[ active border" aria-current="page],[])+[" href="]+l_cSitePath+[MySettings">My Settings</a></li>]
 
                         l_cHtml += [</ul>]
                         l_cHtml += [</li>]
@@ -1319,9 +1470,11 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 
                 l_cHtml += [</ul>]
                 l_cHtml += [<div class="text-end">]
-                    l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a>]
+                    l_cHtml += [<div class="text-center">]
+                        l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a>]
+                        l_cHtml += [<div class="small">Time Zone: ]+oFcgi:p_cUserTimeZoneName+[</div>]
+                    l_cHtml += [</div>]
                 l_cHtml += [</div>]
-            //l_cHtml += [</div>]
         endif
     l_cHtml += [</div>]    
 l_cHtml += [</header>]
@@ -1505,8 +1658,27 @@ local l_cHtml := ""
 local l_cUserID       := hb_DefaultValue(par_cUserID,"")
 local l_cPassword     := hb_DefaultValue(par_cPassword,"")
 local l_cErrorMessage := hb_DefaultValue(par_cErrorMessage,"")
+local l_cJS
+
+l_cJS := [<script type="text/javascript" language="Javascript">]+CRLF
+    // l_cJS += 'function GetTimeZoneOffset() {'
+    //     l_cJS += [var offset = new Date();]
+    //     l_cJS += [offset = offset.getTimezoneOffset();]
+    // l_cJS += 'return offset;}'+CRLF
+    l_cJS += 'function GetTimeZoneName() {'
+        l_cJS += [var TimeZoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;]
+    l_cJS += 'return TimeZoneName;}'+CRLF
+l_cJS += [</script>]
+
+oFcgi:p_cHeader += CRLF + l_cJS + CRLF
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data" class="form-horizontal">]
+
+    // oFcgi:p_cjQueryScript += [$('#TextUTCOffset').val(GetTimeZoneOffset());]
+    // l_cHtml += [<input type="hidden" id="TextUTCOffset" name="TextUTCOffset" value="">]
+
+    l_cHtml += [<input type="hidden" id="TextTimeZoneName" name="TextTimeZoneName" value="">]
+    oFcgi:p_cjQueryScript += [$('#TextTimeZoneName').val(GetTimeZoneName());]
 
     if !empty(l_cErrorMessage)
         l_cHtml += [<div class="alert alert-danger" role="alert">]+l_cErrorMessage+[</div>]
@@ -2568,4 +2740,112 @@ l_cHtml += l_cJavaScript+CRLF
 l_cHtml += [</script>]+CRLF
 
 return l_cHtml
+//=================================================================================================================
+function UpdateTimeZoneTable()
+
+local l_oDB_ListOfTimeZone := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cSQLCommand
+
+l_cSQLCommand := [SELECT name   as "Name",]
+l_cSQLCommand +=        [abbrev as "Abbreviation",]
+l_cSQLCommand +=        [(EXTRACT(EPOCH FROM utc_offset)/60)::int as "UTCOffset",]
+l_cSQLCommand +=        [is_dst as "DaylightSavingTime"]
+l_cSQLCommand +=  [FROM pg_timezone_names]
+
+if oFcgi:p_o_SQLConnection:SQLExec("17d64c89-9c87-4d7a-b3e6-7bf80162447e",l_cSQLCommand,"ListOfPostgresTimeZone")
+
+    with object l_oDB_ListOfTimeZone
+        :Table("748e96a3-a095-43e4-90ab-9eef7090288a","TimeZone")
+        :Column("TimeZone.Pk"                ,"pk")
+        :Column("TimeZone.Name"              ,"TimeZone_Name")
+        :Column("TimeZone.Abbreviation"      ,"TimeZone_Abbreviation")
+        :Column("TimeZone.UTCOffset"         ,"TimeZone_UTCOffset")
+        :Column("TimeZone.DaylightSavingTime","TimeZone_DaylightSavingTime")
+        :Column("TimeZone.Status"            ,"TimeZone_Status")
+        :SQL("ListOfTimeZone")
+        if :Tally >= 0
+            with object :p_oCursor
+                :Index("tag1","lower(TimeZone_Name)+'*'")
+                :CreateIndexes()
+            endwith
+
+            select ListOfPostgresTimeZone
+            scan all
+                if el_seek(lower(alltrim(ListOfPostgresTimeZone->name))+"*","ListOfTimeZone","tag1")
+                    if alltrim(ListOfTimeZone->TimeZone_Abbreviation) <> alltrim(ListOfPostgresTimeZone->Abbreviation) .or. ;
+                       ListOfTimeZone->TimeZone_UTCOffset             <> ListOfPostgresTimeZone->UTCOffset             .or. ;
+                       ListOfTimeZone->TimeZone_DaylightSavingTime    <> ListOfPostgresTimeZone->DaylightSavingTime
+                        with object l_oDB1
+                            :Table("7ed8244d-8691-41a1-9302-ac0f961f67d0","TimeZone")
+                            :Field("TimeZone.Abbreviation"      ,alltrim(ListOfPostgresTimeZone->Abbreviation))
+                            :Field("TimeZone.UTCOffset"         ,ListOfPostgresTimeZone->UTCOffset)
+                            :Field("TimeZone.DaylightSavingTime",ListOfPostgresTimeZone->DaylightSavingTime)
+                            :Update(ListOfTimeZone->pk)
+                        endwith
+                    endif
+                else
+                    with object l_oDB1
+                        :Table("a993d2b8-a0ec-4454-b02a-66945376c504","TimeZone")
+                        :Field("TimeZone.Name"              ,alltrim(ListOfPostgresTimeZone->Name))
+                        :Field("TimeZone.Abbreviation"      ,alltrim(ListOfPostgresTimeZone->Abbreviation))
+                        :Field("TimeZone.UTCOffset"         ,ListOfPostgresTimeZone->UTCOffset)
+                        :Field("TimeZone.DaylightSavingTime",ListOfPostgresTimeZone->DaylightSavingTime)
+                        :Field("TimeZone.Status"            ,1)
+                        :Add()
+                    endwith
+                endif
+            endscan
+
+        endif
+    endwith
+
+endif
+CloseAlias("ListOfPostgresTimeZone")
+
+return nil
+//=================================================================================================================
+function CacheTimeZone()
+local l_select := iif(used(),select(),0)
+local l_oDB_ListOfTimeZone := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+hb_HCaseMatch(oFcgi:p_hCacheTimeZone,.f.)
+oFcgi:p_hCacheTimeZone := {=>}
+
+with object l_oDB_ListOfTimeZone
+    :Table("748e96a3-a095-43e4-90ab-9eef7090288a","TimeZone")
+    :Column("TimeZone.Pk"   ,"pk")
+    :Column("TimeZone.Name" ,"TimeZone_Name")
+    :Where("TimeZone.Status = 1")
+    :SQL("ListOfTimeZone")
+    if :Tally >= 0
+        select ListOfTimeZone
+        scan all
+            oFcgi:p_hCacheTimeZone[ListOfTimeZone->TimeZone_Name] := ListOfTimeZone->pk
+        endscan
+    endif
+endwith
+
+select (l_select)
+return nil
+//=================================================================================================================
+function GetTimeZonePkFromName(par_cTimeZoneName)
+local l_iTimeZonePk
+if len(oFcgi:p_hCacheTimeZone) == 0
+    CacheTimeZone()
+endif
+l_iTimeZonePk   := hb_hGetDef(oFcgi:p_hCacheTimeZone,par_cTimeZoneName,0)
+return l_iTimeZonePk
+//=================================================================================================================
+function NormalizeTimeZoneName(par_cName)
+local l_cTimeZoneName
+local l_hMapping := {"America/Los_Angeles" => "US/Pacific" ,;
+                     "America/New_York"    => "US/Eastern" ,;
+                     "America/Denver"      => "US/Mountain",;
+                     "America/Chicago"     => "US/Central" ,;
+                     "America/Phoenix"     => "US/Arizona" ,;
+                     "Pacific/Honolulu"    => "US/Hawaii"   }
+
+l_cTimeZoneName := hb_hGetDef(l_hMapping,par_cName,par_cName)
+return l_cTimeZoneName
 //=================================================================================================================

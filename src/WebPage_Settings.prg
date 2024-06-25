@@ -1,28 +1,11 @@
 #include "DataWharf.ch"
 
 //=================================================================================================================
-// function BuildPageSettings()
-// local l_cHtml := []
-// local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
-
-// oFcgi:TraceAdd("BuildPageSettings")
-
-// l_cHtml += [<div class="m-3"></div>]   //Spacer
-
-// l_cHtml += [<div class="row justify-content-center">]
-
-//     l_cHtml += [<div>Settings</div>]
-
-// l_cHtml += [</div>]
-
-// return l_cHtml
-//=================================================================================================================
 function BuildPageChangePassword()
 local l_cHtml := []
-local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
+// local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 oFcgi:TraceAdd("BuildPageChangePassword")
-
 
 if oFcgi:isGet()
     l_cHtml += BuildPageChangePasswordFormBuild()
@@ -73,22 +56,22 @@ l_cHtml += [<div class="row justify-content-center">]
                 // l_cHtml += [</div>]
 
                 l_cHtml += [<div class="form-group mt-4">]
-                    l_cHtml += [<label class="control-label" for="TextPassword">Current Password</label>]
+                    l_cHtml += [<label class="control-label" for="TextCurrentPassword">Current Password</label>]
                     l_cHtml += [<input class="form-control mt-2" type="password" autocomplete="off" name="TextCurrentPassword" id="TextCurrentPassword" placeholder="Enter your current password" maxlength="200" size="30" value="]+FcgiPrepFieldForValue(l_cCurrentPassword)+[">]
                 l_cHtml += [</div>]
 
                 l_cHtml += [<div class="form-group mt-4">]
-                    l_cHtml += [<label class="control-label" for="TextPassword">New Password</label>]
+                    l_cHtml += [<label class="control-label" for="TextNewPassword1">New Password</label>]
                     l_cHtml += [<input class="form-control mt-2" type="password" autocomplete="off" name="TextNewPassword1" id="TextNewPassword1" placeholder="Enter new password" maxlength="200" size="30" value="]+FcgiPrepFieldForValue(l_cNewPassword1)+[">]
                 l_cHtml += [</div>]
 
                 l_cHtml += [<div class="form-group mt-4">]
-                    l_cHtml += [<label class="control-label" for="TextPassword">Re-Enter New Password</label>]
+                    l_cHtml += [<label class="control-label" for="TextNewPassword2">Re-Enter New Password</label>]
                     l_cHtml += [<input class="form-control mt-2" type="password" autocomplete="off" name="TextNewPassword2" id="TextNewPassword2" placeholder="Re-enter new password" maxlength="200" size="30" value="]+FcgiPrepFieldForValue(l_cNewPassword2)+[">]
                 l_cHtml += [</div>]
 
                 l_cHtml += [<div class="mt-4">]
-                    l_cHtml += [<span><input type="submit" class="btn btn-primary" value="Change Password" onclick="$('#ActionOnSubmit').val('Change');document.form.submit();" role="button"></span>]
+                    l_cHtml += [<span><input type="submit" class="btn btn-primary" value="Change Password" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button"></span>]
                     l_cHtml += [<span><input type="submit" class="btn btn-primary ms-4" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button"></span>]
                 l_cHtml += [</div>]
 
@@ -104,8 +87,6 @@ l_cHtml += [<div class="row justify-content-center">]
         oFcgi:p_cjQueryScript += [ $('#TextCurrentPassword').focus();]
         
     l_cHtml += [</form>]
-
-
 
 l_cHtml += [</div>]
 
@@ -133,10 +114,8 @@ l_cCurrentPassword    := SanitizeInput(oFcgi:GetInputValue("TextCurrentPassword"
 l_cNewPassword1       := SanitizeInput(oFcgi:GetInputValue("TextNewPassword1"))
 l_cNewPassword2       := SanitizeInput(oFcgi:GetInputValue("TextNewPassword2"))
 
-// altd()
-
 do case
-case l_cActionOnSubmit == "Change"
+case l_cActionOnSubmit == "Save"
 
     do case
     case empty(l_cCurrentPassword)
@@ -187,47 +166,184 @@ otherwise
 
 endcase
 
-// if !empty(l_cErrorMessage)
-//     l_hValues["FirstName"]   := l_cUserFirstName
-//     l_hValues["LastName"]    := l_cUserLastName
-//     l_hValues["ID"]          := l_cUserID
-//     l_hValues["Password"]    := l_cUserPassword
-//     l_hValues["AccessMode"]  := l_iUserAccessMode
-//     l_hValues["Status"]      := l_iUserStatus
-//     l_hValues["Description"] := l_cUserDescription
+return l_cHtml
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+function BuildPageMySettings()
+local l_cHtml := []
+local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-//     if !used("ListOfApplications")
-//         with Object l_oDB_ListOfApplications
-//             :Table("11ff420c-c516-4a77-8df5-c5223f6e0bf1","Application")
-//             :Column("Application.pk" ,"pk")
-//             :SQL("ListOfApplications")
-//         endwith
-//     endif
-//     select ListOfApplications
-//     scan all
-//         l_nAccessLevelDD := val(oFcgi:GetInputValue("ComboApplicationSecLevelDD"+Trans(ListOfApplications->pk)))
-//         if l_nAccessLevelDD > 1 // No need to store the none, since not having a selection will mean "None"
-//             l_hValues["Application"+Trans(ListOfApplications->pk)] := l_nAccessLevelDD
-//         endif
-//     endscan
+oFcgi:TraceAdd("BuildPageMySettings")
 
-//     if !used("ListOfProjects")
-//         with Object l_oDB_ListOfProjects
-//             :Table("f576f41c-dcc4-4cd6-932e-871c75e541cd","Project")
-//             :Column("Project.pk" ,"pk")
-//             :SQL("ListOfProjects")
-//         endwith
-//     endif
-//     select ListOfProjects
-//     scan all
-//         l_nAccessLevelML := val(oFcgi:GetInputValue("ComboProjectSecLevelML"+Trans(ListOfProjects->pk)))
-//         if l_nAccessLevelML > 1 // No need to store the none, since not having a selection will mean "None"
-//             l_hValues["Project"+Trans(ListOfProjects->pk)] := l_nAccessLevelML
-//         endif
-//     endscan
-
-//     l_cHtml += UserEditFormBuild(l_iUserPk,l_cErrorMessage,l_hValues)
-// endif
+if oFcgi:isGet()
+    l_cHtml += BuildPageMySettingsFormBuild()
+else
+    l_cHtml += BuildPageMySettingsFormOnSubmit()
+endif
 
 return l_cHtml
 //=================================================================================================================
+function BuildPageMySettingsFormBuild(par_cErrorMessage)
+local l_cHtml := []
+local l_cErrorMessage := hb_DefaultValue(par_cErrorMessage,"")
+local l_iFk_TimeZone := 0
+local l_cSitePath := oFcgi:p_cSitePath
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_TimeZone := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_json_TimeZones
+local l_cObjectName
+local l_hTimeZoneNames := {=>}
+local l_cTimeZoneInfo
+local l_oData
+
+SetSelect2Support()
+
+with object l_oDB1
+    :Table("14b6a3b7-3066-414e-aa1f-d0bdd242ad47","User")
+    :Column("User.fk_TimeZone" , "User_fk_TimeZone")
+    l_oData := :Get(oFcgi:p_iUserPk)
+    if :Tally == 1
+        l_iFk_TimeZone := l_oData:User_fk_TimeZone
+    endif
+endwith
+
+l_cHtml += [<nav class="navbar navbar-default bg-secondary">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<a class="navbar-brand text-white ms-3" href="]+l_cSitePath+[DataDictionaries/">Settings - My Settings</a>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+
+if !empty(l_cErrorMessage)
+    l_cHtml += [<div class="alert alert-danger" role="alert">]+l_cErrorMessage+[</div>]
+endif
+
+l_cHtml += [<div class="m-3"></div>]   //Spacer
+
+l_cHtml += [<div class="row justify-content-center">]
+
+    l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data" class="form-horizontal">]
+
+        l_cHtml += [<input type="hidden" name="formname" value="MySettings">]
+        l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+
+        l_cHtml += [<div class="row">]
+            l_cHtml += [<div class="w-50 mx-auto">]
+
+
+                with object l_oDB_TimeZone
+                    :Table("acc16d84-8158-45e7-851c-67dd2fa24cbf","TimeZone")
+                    :Column("TimeZone.pk"         ,"pk")
+                    :Column("TimeZone.Name"       ,"TimeZone_Name")
+                    :Column("upper(TimeZone.Name)","tag1")
+                    :OrderBy("tag1")
+                    :Where("TimeZone.Status = 1")
+                    :SQL("ListOfTimeZone")
+                endwith
+
+                l_json_TimeZones := []
+                select ListOfTimeZone
+                scan all
+                    if !empty(l_json_TimeZones)
+                        l_json_TimeZones += [,]
+                    endif
+                    l_cTimeZoneInfo := trim(ListOfTimeZone->TimeZone_Name)
+                    l_cTimeZoneInfo := strtran(l_cTimeZoneInfo,"\","-")
+                    l_cTimeZoneInfo := strtran(l_cTimeZoneInfo,"'","")
+
+                    l_json_TimeZones += "{id:"+trans(ListOfTimeZone->pk)+",text:'"+l_cTimeZoneInfo+"'}"
+                    l_hTimeZoneNames[ListOfTimeZone->pk] := l_cTimeZoneInfo
+                endscan
+                l_json_TimeZones := "["+l_json_TimeZones+"]"
+
+                
+
+                l_cObjectName := "ComboFk_TimeZone"
+
+                ActivatejQuerySelect2("#"+l_cObjectName,l_json_TimeZones)
+
+                l_cHtml += [<div class="form-group mt-4">]
+                    l_cHtml += [<label class="control-label" for="]+l_cObjectName+[">Time Zone</label>]
+
+                    l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity ms-2 InputField" style="width:600px">]
+                        if l_iFk_TimeZone == 0
+                            oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
+                        else
+                            l_cHtml += [<option value="]+Trans(l_iFk_TimeZone)+[" selected="selected">]+hb_HGetDef(l_hTimeZoneNames,l_iFk_TimeZone,"")+[</option>]
+                        endif
+                    l_cHtml += [</select>]
+                l_cHtml += [</div>]
+
+                l_cHtml += [<div class="mt-4">]
+                    l_cHtml += [<span><input type="submit" class="btn btn-primary" id="ButtonSave" name="ButtonSave" value="Save" onclick="$('#ActionOnSubmit').val('Save');document.form.submit();" role="button"></span>]
+                    l_cHtml += [<span><input type="submit" class="btn btn-primary ms-4" value="Cancel" onclick="$('#ActionOnSubmit').val('Cancel');document.form.submit();" role="button"></span>]
+                l_cHtml += [</div>]
+
+            l_cHtml += [</div>]
+        l_cHtml += [</div>]
+
+        oFcgi:p_cjQueryScript += [ $(".InputField").change(() => { $('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');}); ]
+
+    l_cHtml += [</form>]
+
+l_cHtml += [</div>]
+
+return l_cHtml
+//=================================================================================================================
+function BuildPageMySettingsFormOnSubmit()
+local l_cHtml := []
+local l_cActionOnSubmit
+
+local l_iFk_TimeZone
+
+local l_cErrorMessage := ""
+local l_iUserPk
+local l_oData
+local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+oFcgi:TraceAdd("BuildPageMySettingsFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_iFk_TimeZone    := val(oFcgi:GetInputValue("ComboFk_TimeZone"))
+
+do case
+case l_cActionOnSubmit == "Save"
+
+    do case
+    case empty(l_iFk_TimeZone)
+        l_cErrorMessage := "Missing Time Zone."
+    otherwise
+        l_iUserPk := oFcgi:p_iUserPk
+
+        with object l_oDB1
+            :Table("fc18900e-ed37-4634-a266-52becfee6df1","public.User")
+            :Column("User.fk_TimeZone"  ,"User_fk_TimeZone")
+            l_oData := :Get(l_iUserPk)
+            if :Tally == 1
+
+                if l_oData:User_fk_TimeZone <> l_iFk_TimeZone
+                    :Table("cf40153f-3c18-404e-8cf5-4d863c4d73f0","User")
+                    :Field("User.fk_TimeZone", l_iFk_TimeZone )
+                    :Update(l_iUserPk)
+                endif
+            else
+                l_cErrorMessage := "Failed to find your account."
+            endif
+        endwith
+
+    endcase
+    if empty(l_cErrorMessage)
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Home")
+    else
+        l_cHtml += BuildPageMySettingsFormBuild(l_cErrorMessage)
+    endif
+
+otherwise
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Home")
+
+endcase
+
+return l_cHtml
+//=================================================================================================================
+

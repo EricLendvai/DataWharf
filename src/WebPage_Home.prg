@@ -18,7 +18,7 @@ l_cHtml += [<div class="container">]
                 :Table("c5f56e48-2b2a-4f06-a951-f72238cfe7d7","LoginLogs")
                 :Limit(10)
                 :Column("LoginLogs.TimeIn","TimeIn")
-                :Column("LoginLogs.IP"    ,"IP")
+                :Column("LoginLogs.IP"                  ,"IP")
                 :Where("LoginLogs.fk_User = ^",oFcgi:p_iUserPk)
                 :OrderBy("TimeIn","desc")
                 :SQL("ListOfRecords")

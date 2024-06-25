@@ -757,7 +757,7 @@ if l_lContinue
                     // l_cFieldDefaultCustom := ListOfColumns->Column_DefaultCustom
                     l_cFieldDefault         := GetColumnDefault(.t.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
                     l_lFieldNullable        := ListOfColumns->Column_Nullable
-                    l_lFieldAutoIncrement   := (l_nFieldUsedAs = 2)
+                    l_lFieldAutoIncrement   := (l_nFieldUsedAs = COLUMN_USEDAS_PRIMARY_KEY)
                     l_lFieldArray           := ListOfColumns->Column_Array
                     l_cFieldAttributes      := iif(l_lFieldNullable,"N","")+iif(l_lFieldAutoIncrement,"+","")+iif(l_lFieldArray,"A","")
 
@@ -828,12 +828,9 @@ if l_lContinue
                     //     l_cSourceCodeFields += '"BackendType"=>"PostgreSQL",'
                     // endcase
 
-// hb_orm_SendToDebugView(l_cSourceCodeFields)
-// hb_orm_SendToDebugView('"'+HB_ORM_SCHEMA_FIELD_TYPE+'"=>"'+l_cFieldType+'"')
-
-                    if el_IsInlist(l_nFieldUsedAs,2,3,4)
+                    if el_IsInlist(l_nFieldUsedAs,COLUMN_USEDAS_PRIMARY_KEY,COLUMN_USEDAS_FOREIGN_KEY,COLUMN_USEDAS_SUPPORT)
                         l_cSourceCodeFields += '"'+HB_ORM_SCHEMA_FIELD_USEDAS+'"=>"'+{"","Primary","Foreign","Support"}[l_nFieldUsedAs]+'"'
-                        if l_nFieldUsedAs == 3  // Foreign
+                        if l_nFieldUsedAs == COLUMN_USEDAS_FOREIGN_KEY
                             if !hb_orm_isnull("ListOfColumns","ParentNamespace_Name") .and. !hb_orm_isnull("ListOfColumns","ParentTable_Name")
                                 l_cSourceCodeFields += ',"ParentTable"=>"'+ListOfColumns->ParentNamespace_Name+"."+ListOfColumns->ParentTable_Name+'"'
                             endif
@@ -868,7 +865,7 @@ if l_lContinue
                     if l_lFieldArray
                         l_cSourceCodeFields += ',"'+HB_ORM_SCHEMA_FIELD_ARRAY+'"=>.t.'
                     endif
-                    if el_IsInlist(ListOfColumns->Column_OnDelete,2,3,4)
+                    if l_nFieldUsedAs == COLUMN_USEDAS_FOREIGN_KEY .and. el_IsInlist(ListOfColumns->Column_OnDelete,2,3,4)
                         l_cSourceCodeFields += ',"OnDelete"=>"'+{"","Protect","Cascade","BreakLink"}[ListOfColumns->Column_OnDelete]+'"'
                     endif
 

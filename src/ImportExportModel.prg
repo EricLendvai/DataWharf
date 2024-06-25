@@ -339,7 +339,7 @@ local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
 oFcgi:TraceAdd("ModelImportStep1FormBuild")
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
-l_cHtml += [<input type="hidden" name="formname" value="Steo1">]
+l_cHtml += [<input type="hidden" name="formname" value="Step1">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
 l_cHtml += [<input type="hidden" name="ModelKey" value="]+trans(par_iPk)+[">]
 
