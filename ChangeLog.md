@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 06/26/2024 v 4.12
+* Usage of Latest hb_orm library.
+
 ## 06/23/2024 v 4.11
 * Changed all Date Time fields to use "With Time Zone".
 * Added "Order Columns" on "Edit Column". This makes it easier to set the order of a newly created column.
