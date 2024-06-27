@@ -1213,7 +1213,7 @@ try
                     l_iFastCGIErrorPk := -1
                 otherwise
                     l_iFastCGIErrorPk := 0
-                endif
+                endcase
 
                 if l_iFastCGIErrorPk == 0
                     :Table("94c6f301-f0db-4cce-b0b7-15fd49ad29ba","FastCGIError")

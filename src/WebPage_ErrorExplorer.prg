@@ -193,7 +193,7 @@ case l_cURLAction == "ApplicationErrors"
 
         :SQL("ListOfApplicationErrors")
         l_nNumberOfErrors := :Tally
-        SendToClipboard(:LastSQL())
+        // SendToClipboard(:LastSQL())
     endwith
 
     //--------------------------------------------------------------------------------------------
@@ -378,13 +378,14 @@ case l_cURLAction == "DataErrors"
         :Column("SchemaAndDataErrorLog.datetime"             , "SchemaAndDataErrorLog_datetime")
         :Column("SchemaAndDataErrorLog.eventid"              , "SchemaAndDataErrorLog_eventid")
         :Column("SchemaAndDataErrorLog.ip"                   , "SchemaAndDataErrorLog_ip")
-        :Column("SchemaAndDataErrorLog.NamespaceName"        , "SchemaAndDataErrorLog_NamespaceName")
+        :Column("SchemaAndDataErrorLog.namespacename"        , "SchemaAndDataErrorLog_namespacename")
         :Column("SchemaAndDataErrorLog.Tablename"            , "SchemaAndDataErrorLog_Tablename")
         :Column("SchemaAndDataErrorLog.RecordPk"             , "SchemaAndDataErrorLog_RecordPk")
-        :Column("SchemaAndDataErrorLog.ErrorMessage"         , "SchemaAndDataErrorLog_ErrorMessage")
+        :Column("SchemaAndDataErrorMessage.ErrorMessage"     , "SchemaAndDataErrorMessage_ErrorMessage")
         :Column("SchemaAndDataErrorLog.ApplicationVersion"   , "SchemaAndDataErrorLog_ApplicationVersion")
         :Column("SchemaAndDataErrorLog.ApplicationBuildInfo" , "SchemaAndDataErrorLog_ApplicationBuildInfo")
 
+        :Join("left",oFcgi:p_o_SQLConnection:GetHarbourORMNamespace()+".SchemaAndDataErrorMessage","SchemaAndDataErrorMessage","SchemaAndDataErrorLog.fk_SchemaAndDataErrorMessage = SchemaAndDataErrorMessage.pk")
         :Join("left","public.User","User","SchemaAndDataErrorLog.fk_User = User.pk")
         :Column("User.FirstName" , "User_FirstName")
         :Column("User.LastName"  , "User_LastName")
@@ -488,7 +489,7 @@ case l_cURLAction == "DataErrors"
                             l_cHtml += [</td>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorLog_ErrorMessage,""),chr(13),"<br>")
+                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,""),chr(13),"<br>")
                             l_cHtml += [</td>]
 
                         l_cHtml += [</tr>]
@@ -515,9 +516,10 @@ case l_cURLAction == "DistinctDataErrors"
     with object l_oDB_ListOfDataErrors
         :Table("0e532340-cc3e-4f69-9fc9-f9e75f7f1ffe",oFcgi:p_o_SQLConnection:GetHarbourORMNamespace()+".SchemaAndDataErrorLog","SchemaAndDataErrorLog")
         :Distinct(.t.)
-        :Column("SchemaAndDataErrorLog.ErrorMessage"  , "SchemaAndDataErrorLog_ErrorMessage")
+        :Column("SchemaAndDataErrorMessage.ErrorMessage"  , "SchemaAndDataErrorMessage_ErrorMessage")
+        :Join("left",oFcgi:p_o_SQLConnection:GetHarbourORMNamespace()+".SchemaAndDataErrorMessage","SchemaAndDataErrorMessage","SchemaAndDataErrorLog.fk_SchemaAndDataErrorMessage = SchemaAndDataErrorMessage.pk")
         :Limit(MAX_TO_DISPLAY_IN_GRID)
-        :OrderBy("SchemaAndDataErrorLog_ErrorMessage")
+        :OrderBy("SchemaAndDataErrorMessage_ErrorMessage")
 
         AddLogFilteringOnDatetimeRangeMore(l_oDB_ListOfDataErrors,;
                                            l_lMyErrors,l_lCurrentApplicationVersion,l_lCurrentApplicationBuild,;
@@ -564,7 +566,7 @@ case l_cURLAction == "DistinctDataErrors"
                         l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorLog_ErrorMessage,""),chr(13),"<br>")
+                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,""),chr(13),"<br>")
                             l_cHtml += [</td>]
 
                         l_cHtml += [</tr>]
@@ -1179,9 +1181,11 @@ if empty(l_cErrorMessage)
                                            l_cDatetimeRangeToWithMicroSeconds)
 
         l_nTotalNumberOfDataErrors := :Count()
+// SendToClipboard(:LastSQL())
         //------------------------------------------------------------------------------------------------------------------------------
         :Table("891248b7-744d-4879-8077-2142108f6633",oFcgi:p_o_SQLConnection:GetHarbourORMNamespace()+".SchemaAndDataErrorLog","SchemaAndDataErrorLog")
-        :Column("SchemaAndDataErrorLog.ErrorMessage" , "SchemaAndDataErrorLog_ErrorMessage")
+        :Column("SchemaAndDataErrorMessage.ErrorMessage" , "SchemaAndDataErrorMessage_ErrorMessage")
+        :Join("left",oFcgi:p_o_SQLConnection:GetHarbourORMNamespace()+".SchemaAndDataErrorMessage","SchemaAndDataErrorMessage","SchemaAndDataErrorLog.fk_SchemaAndDataErrorMessage = SchemaAndDataErrorMessage.pk")
         :Distinct(.t.)
 
         AddLogFilteringOnDatetimeRangeMore(l_oDB_ListOfDataErrors,;
@@ -1359,28 +1363,28 @@ if par_lCurrentApplicationBuild
 endif
 
 if !empty(par_cCurrentDatetimeWithMicroSeconds)
-    par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" <= TO_TIMESTAMP('"+par_cCurrentDatetimeWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'")
+    par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" "+HB_ORM_INVALUEWITCH+" <= TO_TIMESTAMP('"+par_cCurrentDatetimeWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'"+HB_ORM_INVALUEWITCH)
 endif
 
 do case
 case par_nDatetimeRangeMode == 1   // Since my last review
     if !empty(par_cLastReviewedDatetimeWithMicroSeconds)
-        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" > TO_TIMESTAMP('"+par_cLastReviewedDatetimeWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'")
+        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" "+HB_ORM_INVALUEWITCH+" > TO_TIMESTAMP('"+par_cLastReviewedDatetimeWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'"+HB_ORM_INVALUEWITCH)
     endif
 
 case par_nDatetimeRangeMode == 2   // All
 
 case par_nDatetimeRangeMode == 3   // After
     if !empty(par_cDatetimeRangeFromWithMicroSeconds)
-        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" >= TO_TIMESTAMP('"+par_cDatetimeRangeFromWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'")
+        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" "+HB_ORM_INVALUEWITCH+" >= TO_TIMESTAMP('"+par_cDatetimeRangeFromWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'"+HB_ORM_INVALUEWITCH)
     endif
 
 case par_nDatetimeRangeMode == 4   // Between
     if !empty(par_cDatetimeRangeFromWithMicroSeconds)
-        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" >= TO_TIMESTAMP('"+par_cDatetimeRangeFromWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'")
+        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" "+HB_ORM_INVALUEWITCH+" >= TO_TIMESTAMP('"+par_cDatetimeRangeFromWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'"+HB_ORM_INVALUEWITCH)
     endif
     if !empty(par_cDatetimeRangeToWithMicroSeconds)
-        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" <= TO_TIMESTAMP('"+par_cDatetimeRangeToWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'")
+        par_oDB_ListOfApplicationErrors:Where(par_cTableName+"."+par_cDatetimeColumnName+" "+HB_ORM_INVALUEWITCH+" <= TO_TIMESTAMP('"+par_cDatetimeRangeToWithMicroSeconds+"','YYYY-MM-DD HH24:MI:SS.US')::timestamp AT TIME ZONE '"+oFcgi:p_cUserTimeZoneName+"'"+HB_ORM_INVALUEWITCH)
     endif
 
 endcase

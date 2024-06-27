@@ -1,7 +1,10 @@
 # DataWharf - Change Log
 
+## 06/27/2024 v 4.13
+* Usage to Latest hb_orm library.
+
 ## 06/26/2024 v 4.12
-* Usage of Latest hb_orm library.
+* Usage to Latest hb_orm library.
 
 ## 06/23/2024 v 4.11
 * Changed all Date Time fields to use "With Time Zone".

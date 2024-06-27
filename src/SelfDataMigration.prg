@@ -491,7 +491,7 @@ with object oFcgi:p_o_SQLConnection
                 scan all
                     with object l_oDB2
                         :Table("6480d156-77ad-43b1-880e-4f5a3aaa9c8f",l_cTableName)
-                        :Field(l_cTableName+".LinkUID" , :GetUUIDString())
+                        :Field(l_cTableName+".LinkUID" , oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Update(ListOfRecordsToUpdate->pk)
                     endwith
                 endscan
