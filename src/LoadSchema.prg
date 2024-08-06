@@ -1821,14 +1821,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
     l_cSQLCommandFields  += [        CASE WHEN TBLRW.nullable = 'Y' THEN 1 ELSE 0 END AS field_nullable,]
     // l_cSQLCommandFields  += [        --cast(TBLRW.data_default as STRING)   as field_default,     --This will fail since data_default is a LONG, and no idea why.]
     l_cSQLCommandFields  += [        CASE WHEN TBLRW.identity_column = 'YES' THEN 1 ELSE 0 END AS field_is_identity,]
-    l_cSQLCommandFields  += [        ''   as field_default,]
-    l_cSQLCommandFields  += [        DBAC.comments]    // Not used yet.
+    l_cSQLCommandFields  += [        ''   as field_default]
+//    l_cSQLCommandFields  += [        DBAC.comments]    // Not used yet.
     l_cSQLCommandFields  += [  FROM all_tab_cols TBLRW]
     l_cSQLCommandFields  += [  INNER JOIN all_objects DBAO  ON TBLRW.owner = DBAO.owner AND TBLRW.table_name = DBAO.object_name]
-    l_cSQLCommandFields  += [  LEFT OUTER JOIN all_col_comments DBAC ON TBLRW.owner = DBAC.owner AND TBLRW.table_name = DBAC.table_name AND TBLRW.column_name = DBAC.column_name]
+//    l_cSQLCommandFields  += [  LEFT OUTER JOIN all_col_comments DBAC ON TBLRW.owner = DBAC.owner AND TBLRW.table_name = DBAC.table_name AND TBLRW.column_name = DBAC.column_name]
     l_cSQLCommandFields  += [  WHERE DBAO.ORACLE_MAINTAINED = 'N']
-
-    // l_cSQLCommandFields  += [  AND    lower(TBLRW.owner) in ('eric')]
 
     if !empty(par_cSyncNamespaces)
         l_cSQLCommandFields  += [ AND lower(TBLRW.owner) in (]
