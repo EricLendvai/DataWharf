@@ -32,7 +32,7 @@ local l_nColumnScale
 local l_lColumnNullable
 local l_lColumnUnicode
 local l_cColumnDefault
-local l_cColumnLastNativeType
+local l_cColumnLastNativeTypePostgreSQL
 local l_lColumnAutoIncrement
 local l_cColumnAttributes
 local l_iFk_Enumeration
@@ -533,22 +533,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     // Load all the Table current Columns
                     with object l_oDB_ListOfColumnsInTable
                         :Table("088a71c4-f56d-4b18-8dc9-df25eee291f8","Column")
-                        :Column("Column.Pk"             , "Pk")
-                        :Column("Column.Order"          , "Column_Order")
-                        :Column("Column.Name"           , "Column_Name")
-                        :Column("upper(Column.Name)"    , "tag1")
-                        :Column("Column.UsedAs"         , "Column_UsedAs")
-                        :Column("Column.Type"           , "Column_Type")
-                        :Column("Column.Array"          , "Column_Array")
-                        :Column("Column.Length"         , "Column_Length")
-                        :Column("Column.Scale"          , "Column_Scale")
-                        :Column("Column.Nullable"       , "Column_Nullable")
-                        :Column("Column.Unicode"        , "Column_Unicode")
-                        :Column("Column.DefaultType"    , "Column_DefaultType")
-                        :Column("Column.DefaultCustom"  , "Column_DefaultCustom")
-                        :Column("Column.LastNativeType" , "Column_LastNativeType")
-                        :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
-                        :Column("Column.UseStatus"      , "Column_UseStatus")
+                        :Column("Column.Pk"                       , "Pk")
+                        :Column("Column.Order"                    , "Column_Order")
+                        :Column("Column.Name"                     , "Column_Name")
+                        :Column("upper(Column.Name)"              , "tag1")
+                        :Column("Column.UsedAs"                   , "Column_UsedAs")
+                        :Column("Column.Type"                     , "Column_Type")
+                        :Column("Column.Array"                    , "Column_Array")
+                        :Column("Column.Length"                   , "Column_Length")
+                        :Column("Column.Scale"                    , "Column_Scale")
+                        :Column("Column.Nullable"                 , "Column_Nullable")
+                        :Column("Column.Unicode"                  , "Column_Unicode")
+                        :Column("Column.DefaultType"              , "Column_DefaultType")
+                        :Column("Column.DefaultCustom"            , "Column_DefaultCustom")
+                        :Column("Column.LastNativeTypePostgreSQL" , "Column_LastNativeTypePostgreSQL")
+                        :Column("Column.fk_Enumeration"           , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"                , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order") // ,"Desc"
 
@@ -596,18 +596,18 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
                     hb_HDel(l_hCurrentListOfColumns,l_cLastNamespace+"*"+l_cLastTableName+"*"+l_cColumnName+"*")
 
-                    l_lColumnNullable       := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
-                    l_lColumnUnicode        := .f.
-                    l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
-                    l_lColumnArray          := ListOfFieldsForLoads->field_array
-                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
+                    l_lColumnNullable                 := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnUnicode                  := .f.
+                    l_cColumnDefault                  := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_lColumnArray                    := ListOfFieldsForLoads->field_array
+                    l_cColumnLastNativeTypePostgreSQL := nvl(ListOfFieldsForLoads->field_type,"")
                     if l_cColumnDefault == "NULL"
                         l_cColumnDefault := ""
                     endif
-                    l_cColumnDefault  := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
-                    l_cColumnLastNativeType := l_cColumnLastNativeType + iif(l_lColumnArray,"[]","")
+                    l_cColumnDefault  := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeTypePostgreSQL,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
+                    l_cColumnLastNativeTypePostgreSQL := l_cColumnLastNativeTypePostgreSQL + iif(l_lColumnArray,"[]","")
                     
-                    if l_cColumnLastNativeType == "character"
+                    if l_cColumnLastNativeTypePostgreSQL == "character"
                         l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
                     endif
                     if !hb_orm_isnull("ListOfFieldsForLoads","enumeration_name")
@@ -624,7 +624,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     // l_lColumnArray := (ListOfFieldsForLoads->field_type == "ARRAY")
                     // switch iif(ListOfFieldsForLoads->field_type == "ARRAY",nvl(ListOfFieldsForLoads->field_type_extra,"unknown"),ListOfFieldsForLoads->field_type)
 
-                    switch ListOfFieldsForLoads->field_type
+                    switch lower(ListOfFieldsForLoads->field_type)
                     case "integer"
                         l_cColumnType   := "I"
                         l_nColumnLength := NIL
@@ -756,7 +756,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_nColumnScale  := NIL
                         exit
 
-                    case "USER-DEFINED"
+                    case "user-defined"
                         l_cColumnType   := "E"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL

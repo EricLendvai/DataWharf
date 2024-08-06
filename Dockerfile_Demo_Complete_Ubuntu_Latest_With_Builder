@@ -188,6 +188,20 @@ RUN rm -f ./mysqlodbc.deb
 RUN wget -O ./mysqlodbc.deb https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-odbc_8.0.33-1ubuntu22.04_amd64.deb
 RUN apt install ./mysqlodbc.deb
 
+# Install Oracle instant client and odbc driver (client is a dependency of the odbc driver)
+WORKDIR /etc
+RUN rm -f ./oracle-instantclient-basiclite.rpm
+RUN apt-get install -y libaio1 alien
+RUN wget -O ./oracle-instantclient-basiclite.rpm https://download.oracle.com/otn_software/linux/instantclient/2340000/oracle-instantclient-basiclite-23.4.0.24.05-1.el9.x86_64.rpm
+RUN alien -i --scripts oracle-instantclient-basiclite.rpm
+#RUN rm -f oracle-instantclient-basiclite.rpm
+ENV LD_LIBRARY_PATH="/usr/lib/oracle/23/client64/lib:${LD_LIBRARY_PATH}"
+RUN rm -f ./oracle-instantclient-odbc.rpm
+RUN wget -O ./oracle-instantclient-odbc.rpm https://download.oracle.com/otn_software/linux/instantclient/2340000/oracle-instantclient-odbc-23.4.0.24.05-1.el9.x86_64.rpm
+RUN alien -i --scripts oracle-instantclient-odbc.rpm
+RUN /usr/lib/oracle/23/client64/bin/odbc_update_ini.sh "/" "/usr/lib/oracle/23/client64/lib" "Oracle"
+#RUN /etc/init.d/apache2 restart
+
 
 EXPOSE 80 
 

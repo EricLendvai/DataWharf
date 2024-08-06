@@ -896,14 +896,12 @@ case l_cActionOnSubmit == "Save"
                         if empty(l_iApplicationPk)
                             if :Add()
                                 l_iApplicationPk := :Key()
-                                // oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to add Application."
                             endif
                         else
                             if :Update(l_iApplicationPk)
                                 CustomFieldsSave(l_iApplicationPk,USEDON_APPLICATION,l_iApplicationPk)
-                                // oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationInfo/"+l_cApplicationLinkCode+"/")
                             else
                                 l_cErrorMessage := "Failed to update Application."
                             endif
@@ -913,10 +911,6 @@ case l_cActionOnSubmit == "Save"
             endif
         endcase
     endif
-
-    // if empty(l_cErrorMessage)
-    //     l_iApplicationPk := 0
-    // endif
 
 case l_cActionOnSubmit == "Cancel"
 
@@ -1054,8 +1048,8 @@ otherwise
     with object l_oDB1
         :Table("f7d2bb71-41d3-46d7-8544-5b0db3db991b","Application")
         :Column("Application.LinkCode","Application_LinkCode")
-        l_oData := l_oDB1:Get(l_iApplicationPk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iApplicationPk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ApplicationSettings/"+l_oData:Application_LinkCode+"/")
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/")
@@ -1329,7 +1323,7 @@ else
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","MariaDB","MySQL","PostgreSQL","MSSQL"}[iif(el_between(ListOfDeployments->Deployment_BackendType,1,4),ListOfDeployments->Deployment_BackendType+1,1)]
+                            l_cHtml += {"","MariaDB","MySQL","PostgreSQL","MSSQL","Oracle"}[iif(el_between(ListOfDeployments->Deployment_BackendType,1,5),ListOfDeployments->Deployment_BackendType+1,1)]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1470,6 +1464,7 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [<option value="2"]+iif(l_nBackendType==2,[ selected],[])+[>MySQL</option>]
                 l_cHtml += [<option value="3"]+iif(l_nBackendType==3,[ selected],[])+[>PostgreSQL</option>]
                 l_cHtml += [<option value="4"]+iif(l_nBackendType==4,[ selected],[])+[>MSSQL</option>]
+                l_cHtml += [<option value="5"]+iif(l_nBackendType==5,[ selected],[])+[>Oracle</option>]
                 l_cHtml += [</select>]
             l_cHtml += [</td>]
         l_cHtml += [</tr>]
@@ -1628,6 +1623,7 @@ local l_hValues := {=>}
 
 local l_oDB1
 local l_oDB2
+local l_oData
 
 oFcgi:TraceAdd("DeploymentEditFormOnSubmit")
 
@@ -1731,21 +1727,26 @@ case l_cActionOnSubmit == "Save"
 
                 endwith
 
-                if par_lPersonal
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
-                else
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
-                endif
+                // if par_lPersonal
+                //     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
+                // else
+                //     oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")  //+l_cDeploymentName+"/"
+                // endif
             endif
         endif
     endif
 
-case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
-    if par_lPersonal
-        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")
-    else
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
-    endif
+// case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
+//     if par_lPersonal
+//         oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")
+//     else
+//         oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+//     endif
+
+case l_cActionOnSubmit == "Cancel"
+
+case l_cActionOnSubmit == "Done"
+    l_iDeploymentPk := 0
 
 case l_cActionOnSubmit == "Delete"   // Deployment
     //_M_ Add code to verify the deployment being deleted belongs to current logged in user
@@ -1774,7 +1775,8 @@ case l_cActionOnSubmit == "Delete"   // Deployment
             endif
 
             if :Delete("08e836c0-5ee8-4732-b76f-a303a4c5bf91","Deployment",l_iDeploymentPk)
-                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+                // oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+                l_iDeploymentPk := 0
             else
                 l_cErrorMessage := "Unable to delete deployment."
             endif
@@ -1784,7 +1786,8 @@ case l_cActionOnSubmit == "Delete"   // Deployment
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["Name"]               := l_cDeploymentName
     l_hValues["Status"]             := l_iDeploymentStatus
     l_hValues["Description"]        := l_cDeploymentDescription
@@ -1800,7 +1803,38 @@ if !empty(l_cErrorMessage)
     l_hValues["SetForeignKey"]      := l_nDeploymentSetForeignKey
 
     l_cHtml += DeploymentEditFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode,l_cErrorMessage,l_iDeploymentPk,l_hValues,par_lPersonal)
-endif
+
+case empty(l_iDeploymentPk)
+    if par_lPersonal
+        oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")
+    else
+        oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+    endif
+
+otherwise
+    if hb_IsNil(l_oDB1)
+        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    endif
+    with object l_oDB1
+        :Table("858553f2-260a-4306-88c7-e8e4ce3c68f2","Deployment")
+        :Column("Deployment.LinkUID" , "Deployment_LinkUID")
+        l_oData := :Get(l_iDeploymentPk)
+        if :Tally == 1
+            if par_lPersonal
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditMyDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_LinkUID)+"/")
+            else
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/EditDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_LinkUID)+"/")
+            endif
+        else
+            if par_lPersonal
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListMyDeployments/"+par_cURLApplicationLinkCode+"/")
+            else
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/ListDeployments/"+par_cURLApplicationLinkCode+"/")
+            endif
+        endif
+    endwith
+
+endcase
 
 return l_cHtml
 //=================================================================================================================

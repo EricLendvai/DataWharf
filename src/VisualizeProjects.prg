@@ -1117,7 +1117,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
-                    endwith        
+                    endwith
                 endif
             endwith
             if l_nNumberOfCurrentEntitiesInDiagram < 0
@@ -1209,7 +1209,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
-                    endwith        
+                    endwith
                 endif
             endwith
             if l_nNumberOfCurrentEntitiesInDiagram < 0
@@ -1582,7 +1582,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
-            endwith        
+            endwith
         endwith
 
         select ListOfAllEntitiesInModel

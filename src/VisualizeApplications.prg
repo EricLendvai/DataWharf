@@ -924,7 +924,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
-                    endwith        
+                    endwith
                 endif
             endwith
             if l_nNumberOfCurrentTablesInDiagram < 0
@@ -1012,7 +1012,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
                         :Index("pk","pk")
                         :CreateIndexes()
                         :SetOrder("pk")
-                    endwith        
+                    endwith
                 endif
             endwith
             if l_nNumberOfCurrentTablesInDiagram < 0
@@ -1434,7 +1434,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Index("pk","pk")
                 :CreateIndexes()
                 :SetOrder("pk")
-            endwith        
+            endwith
         endwith
 
         select ListOfAllTablesInApplication

@@ -98,6 +98,7 @@ class MyFcgi from hb_Fcgi
                                   { "IB","Integer Big (8 bytes)"                        ,.f.,.f.,nil,.f.,.f.,"bigint"                     ,"BIGINT"                        },;
                                   { "IS","Integer Small (2 bytes)"                      ,.f.,.f.,nil,.f.,.f.,"smallint"                   ,"SMALLINT"                      },;
                                   {  "N","Numeric"                                      ,.t.,.t.,nil,.f.,.f.,"numeric"                    ,"DECIMAL"                       },;
+                                  {  "F","Float"                                        ,.f.,.f.,nil,.f.,.f.,"real"                       ,"FLOAT"                         },;
                                   {  "C","Character String"                             ,.t.,.f.,nil,.f.,.t.,"character"                  ,"CHAR"                          },;
                                   { "CV","Character String Varying"                     ,.t.,.f.,nil,.f.,.t.,"character varying"          ,"VARCHAR"                       },;
                                   {  "B","Binary String"                                ,.t.,.f.,nil,.f.,.f.,"bit"                        ,"BINARY"                        },;
@@ -1014,7 +1015,7 @@ endif
                         :Column("FileStream.pk"      ,"pk")
                         :Column("FileStream.FileName","FileName")
                         :Column("FileStream.type"    ,"Type")
-                        :Where("FileStream.fk_User = ^" , oFCgi:p_iUserPk)
+                        :Where("FileStream.fk_User = ^" , oFcgi:p_iUserPk)
                         :Where("FileStream.LinkUID = ^" , l_cLinkUID)
                         :SQL("ListOfFileStream")
 
@@ -2328,7 +2329,7 @@ function GetStreamFileFolderForCurrentProcess()
 local l_iPID := el_GetProcessId()
 local l_cFilePath
 
-l_cFilePath := el_AddPs(oFCgi:PathBackend)+"StreamFile"
+l_cFilePath := el_AddPs(oFcgi:PathBackend)+"StreamFile"
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()+trans(l_iPID)
 hb_DirCreate(l_cFilePath)
@@ -2339,7 +2340,7 @@ return l_cFilePath
 function GetStreamFileFolderForCurrentUser()
 local l_cFilePath
 
-l_cFilePath := el_AddPs(oFCgi:PathBackend)+"UserStreamFile"
+l_cFilePath := el_AddPs(oFcgi:PathBackend)+"UserStreamFile"
 hb_DirCreate(l_cFilePath)
 l_cFilePath += hb_ps()+trans(oFcgi:p_iUserPk)
 hb_DirCreate(l_cFilePath)
@@ -2350,11 +2351,11 @@ return l_cFilePath
 function PurgeStreamFileFolders()
 local l_cFilePath
 
-l_cFilePath := el_AddPs(oFCgi:PathBackend)+"UserStreamFile"+hb_ps()
+l_cFilePath := el_AddPs(oFcgi:PathBackend)+"UserStreamFile"+hb_ps()
 hb_DirRemoveAll(l_cFilePath)
 hb_DirCreate(l_cFilePath)
 
-l_cFilePath := el_AddPs(oFCgi:PathBackend)+"StreamFile"+hb_ps()
+l_cFilePath := el_AddPs(oFcgi:PathBackend)+"StreamFile"+hb_ps()
 hb_DirRemoveAll(l_cFilePath)
 hb_DirCreate(l_cFilePath)
 
@@ -2848,4 +2849,37 @@ local l_hMapping := {"America/Los_Angeles" => "US/Pacific" ,;
 
 l_cTimeZoneName := hb_hGetDef(l_hMapping,par_cName,par_cName)
 return l_cTimeZoneName
+//=================================================================================================================
+function UpdateTnsnamesOra()
+local l_oDB_ListOfDeployment := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_cFilePath := el_AddPs(oFcgi:PathBackend)+"tnsnames.ora"
+local l_cContent := ""
+
+with object l_oDB_ListOfDeployment
+    :Table("748e96a3-a095-43e4-90ab-9eef7090288b","Deployment")
+    :Column("Deployment.LinkUID" ,"Deployment_LinkUID")
+    :Column("Deployment.Server"  ,"Deployment_Server")
+    :Column("Deployment.Port"    ,"Deployment_Port")
+    :Column("Deployment.Database","Deployment_Database")
+    :Where("Deployment.BackendType = ^",HB_ORM_BACKENDTYPE_ORACLE)
+    :SQL("ListOfDeployment")
+    if :Tally >= 1
+        select ListOfDeployment
+        scan all
+            l_cContent += alltrim(ListOfDeployment->Deployment_LinkUID)+" = "+CRLF
+            l_cContent += "  (DESCRIPTION ="+CRLF
+            l_cContent += "    (ADDRESS_LIST ="+CRLF
+            l_cContent += "      (ADDRESS = (PROTOCOL = TCP)(HOST = "+alltrim(ListOfDeployment->Deployment_Server)+")(PORT = "+trans(ListOfDeployment->Deployment_Port)+"))"+CRLF
+            l_cContent += "    )"+CRLF
+            l_cContent += "    (CONNECT_DATA ="+CRLF
+            l_cContent += "      (SERVICE_NAME = "+upper(alltrim(ListOfDeployment->Deployment_Database))+")"+CRLF
+            l_cContent += "    )"+CRLF
+            l_cContent += "  )"+CRLF
+            l_cContent += CRLF
+        endscan
+    endif
+    el_StrToFile(l_cContent,l_cFilePath,.f.)
+endwith
+
+return nil
 //=================================================================================================================

@@ -35,7 +35,10 @@ local l_lColumnUnicode
 local l_cColumnDefault
 local l_nColumnDefaultType
 local l_cColumnDefaultCustom
-local l_cColumnLastNativeType
+local l_cColumnLastNativeTypeMySQL
+local l_cColumnLastNativeTypePostgreSQL
+local l_cColumnLastNativeTypeMSSQL
+local l_cColumnLastNativeTypeOracle
 local l_iFk_Enumeration
 
 local l_cIndexName
@@ -77,6 +80,9 @@ local l_lExpressionOnForeignKey
 
 local l_nOnDelete
 
+local l_lUpdatedType
+local l_lUpdatedName
+
 hb_HCaseMatch(l_hTables,.f.)
 hb_HCaseMatch(l_hColumns,.f.)
 hb_HCaseMatch(l_hForeignKeys,.f.)
@@ -87,6 +93,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     //To work around performance issues when querying meta database
     l_cSQLCommand := [SET enable_nestloop = false;]
     SQLExec(par_SQLHandle,l_cSQLCommand)
+case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
+case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 endcase
 
 // If switching to MySQL to store our own tables, have to deal with variables/fields: IndexUnique, ColumnNullable
@@ -94,7 +102,7 @@ endcase
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 l_oDB2 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-///////////////////////////////===========================================================================================================
+//===========================================================================================================
 
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
@@ -231,22 +239,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                     // Load all the tables current columns
                     with object l_oDB2
                         :Table("a2a7bc00-d9d6-48df-90b1-ceb4f43cca28","Column")
-                        :Column("Column.Pk"             , "Pk")
-                        :Column("Column.Order"          , "Column_Order")
-                        :Column("Column.Name"           , "Column_Name")
-                        :Column("upper(Column.Name)"    , "tag1")
-                        :Column("Column.UsedAs"         , "Column_UsedAs")
-                        :Column("Column.Type"           , "Column_Type")
-                        :Column("Column.Array"          , "Column_Array")
-                        :Column("Column.Length"         , "Column_Length")
-                        :Column("Column.Scale"          , "Column_Scale")
-                        :Column("Column.Nullable"       , "Column_Nullable")
-                        :Column("Column.Unicode"        , "Column_Unicode")
-                        :Column("Column.DefaultType"    , "Column_DefaultType")
-                        :Column("Column.DefaultCustom"  , "Column_DefaultCustom")
-                        :Column("Column.LastNativeType" , "Column_LastNativeType")
-                        :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
-                        :Column("Column.UseStatus"      , "Column_UseStatus")
+                        :Column("Column.Pk"                  , "Pk")
+                        :Column("Column.Order"               , "Column_Order")
+                        :Column("Column.Name"                , "Column_Name")
+                        :Column("upper(Column.Name)"         , "tag1")
+                        :Column("Column.UsedAs"              , "Column_UsedAs")
+                        :Column("Column.Type"                , "Column_Type")
+                        :Column("Column.Array"               , "Column_Array")
+                        :Column("Column.Length"              , "Column_Length")
+                        :Column("Column.Scale"               , "Column_Scale")
+                        :Column("Column.Nullable"            , "Column_Nullable")
+                        :Column("Column.Unicode"             , "Column_Unicode")
+                        :Column("Column.DefaultType"         , "Column_DefaultType")
+                        :Column("Column.DefaultCustom"       , "Column_DefaultCustom")
+                        :Column("Column.LastNativeTypeMySQL" , "Column_LastNativeTypeMySQL")
+                        :Column("Column.fk_Enumeration"      , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"           , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
 
@@ -279,10 +287,10 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                 if empty(l_cErrorMessage)
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable
-                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
-                    l_lColumnNullable       := (ListOfFieldsForLoads->field_nullable == 1)      // Since the information_schema does not follow odbc driver setting to return boolean as logical
-                    l_lColumnUnicode        := .f.
-                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
+                    l_cColumnName                := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable            := (ListOfFieldsForLoads->field_nullable == 1)      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnUnicode             := .f.
+                    l_cColumnLastNativeTypeMySQL := nvl(ListOfFieldsForLoads->field_type,"")
 
                     l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
                     if l_cColumnDefault == "NULL"
@@ -290,7 +298,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                     endif
 
                     l_lColumnArray := .f.
-                    switch ListOfFieldsForLoads->field_type
+                    switch lower(ListOfFieldsForLoads->field_type)
                     case "int"
                         l_cColumnType   := "I"
                         l_nColumnLength := NIL
@@ -313,6 +321,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength
                         l_nColumnScale  := ListOfFieldsForLoads->field_decimals
+                        exit
+
+                    case "float"
+                        l_cColumnType   := "F"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "char"
@@ -412,11 +426,6 @@ l_cColumnDefaultCustom := ""
                         l_cColumnDefault := ""
                     endif
 
-
-
-
-
-
 //_M_ l_lColumnPrimary vs AutoIncrement
 
                     if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
@@ -444,14 +453,14 @@ l_cColumnDefaultCustom := ""
                             endcase
                         endif
 
-                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType           .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray          .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength         .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale          .and. ;
-                           ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable       .and. ;
-                           ListOfColumnsInDataDictionary->Column_DefaultType            == l_nColumnDefaultType    .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")  == l_cColumnDefaultCustom  .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))          == l_cColumnType                .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)              == l_lColumnArray               .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                      == l_nColumnLength              .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                       == l_nColumnScale               .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable                    == l_lColumnNullable            .and. ;
+                           ListOfColumnsInDataDictionary->Column_DefaultType                 == l_nColumnDefaultType         .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")       == l_cColumnDefaultCustom       .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeTypeMySQL,"") == l_cColumnLastNativeTypeMySQL
 
                         // For now removed the comparing of Unicode 05/04/2024
                         //    ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and. 
@@ -465,15 +474,15 @@ l_cColumnDefaultCustom := ""
                                     with object l_oDB1
                                         l_LastColumnOrder += 1
                                         :Table("b6c0c818-cf30-4f08-aefc-c2c18d5bd35b","Column")
-                                        :Field("Column.Type"          ,l_cColumnType)
-                                        :Field("Column.Array"         ,l_lColumnArray)
-                                        :Field("Column.Length"        ,l_nColumnLength)
-                                        :Field("Column.Scale"         ,l_nColumnScale)
-                                        :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
-                                        :Field("Column.DefaultType"   ,l_nColumnDefaultType)
-                                        :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                        :Field("Column.Type"               ,l_cColumnType)
+                                        :Field("Column.Array"              ,l_lColumnArray)
+                                        :Field("Column.Length"             ,l_nColumnLength)
+                                        :Field("Column.Scale"              ,l_nColumnScale)
+                                        :Field("Column.Nullable"           ,l_lColumnNullable)
+                                        // :Field("Column.Unicode"            ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
+                                        :Field("Column.DefaultType"        ,l_nColumnDefaultType)
+                                        :Field("Column.DefaultCustom"      ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                                        :Field("Column.LastNativeTypeMySQL",l_cColumnLastNativeTypeMySQL)
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
@@ -489,20 +498,20 @@ l_cColumnDefaultCustom := ""
                         with object l_oDB1
                             l_LastColumnOrder += 1
                             :Table("f697ccfd-86b3-4b9a-ab4c-acc9d626515e","Column")
-                            :Field("Column.Name"          ,l_cColumnName)
-                            :Field("Column.Order"         ,l_LastColumnOrder)
-                            :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
-                            :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Array"         ,l_lColumnArray)
-                            :Field("Column.Length"        ,l_nColumnLength)
-                            :Field("Column.Scale"         ,l_nColumnScale)
-                            :Field("Column.Nullable"      ,l_lColumnNullable)
-                            :Field("Column.Unicode"       ,l_lColumnUnicode)
-                            :Field("Column.DefaultType"   ,l_nColumnDefaultType)
-                            :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
+                            :Field("Column.Name"               ,l_cColumnName)
+                            :Field("Column.Order"              ,l_LastColumnOrder)
+                            :Field("Column.fk_Table"           ,l_iTablePk)
+                            :Field("Column.UseStatus"          ,USESTATUS_UNKNOWN)
+                            :Field("Column.Type"               ,l_cColumnType)
+                            :Field("Column.Array"              ,l_lColumnArray)
+                            :Field("Column.Length"             ,l_nColumnLength)
+                            :Field("Column.Scale"              ,l_nColumnScale)
+                            :Field("Column.Nullable"           ,l_lColumnNullable)
+                            :Field("Column.Unicode"            ,l_lColumnUnicode)
+                            :Field("Column.DefaultType"        ,l_nColumnDefaultType)
+                            :Field("Column.DefaultCustom"      ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                            :Field("Column.LastNativeTypeMySQL",l_cColumnLastNativeTypeMySQL)
+                            :Field("Column.UsedBy"             ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -523,11 +532,6 @@ l_cColumnDefaultCustom := ""
     endif
 
 //===========================================================================================================
-
-
-
-
-
 
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandEnums := [SELECT namespaces.nspname as namespace_name,]
@@ -874,26 +878,25 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     endwith
 
-
                     // Load all the tables current columns
                     with object l_oDB2
                         :Table("088a71c4-f56d-4b18-8dc9-df25eee291f8","Column")
-                        :Column("Column.Pk"             , "Pk")
-                        :Column("Column.Order"          , "Column_Order")
-                        :Column("Column.Name"           , "Column_Name")
-                        :Column("upper(Column.Name)"    , "tag1")
-                        :Column("Column.UsedAs"         , "Column_UsedAs")
-                        :Column("Column.Type"           , "Column_Type")
-                        :Column("Column.Array"          , "Column_Array")
-                        :Column("Column.Length"         , "Column_Length")
-                        :Column("Column.Scale"          , "Column_Scale")
-                        :Column("Column.Nullable"       , "Column_Nullable")
-                        :Column("Column.Unicode"        , "Column_Unicode")
-                        :Column("Column.DefaultType"    , "Column_DefaultType")
-                        :Column("Column.DefaultCustom"  , "Column_DefaultCustom")
-                        :Column("Column.LastNativeType" , "Column_LastNativeType")
-                        :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
-                        :Column("Column.UseStatus"      , "Column_UseStatus")
+                        :Column("Column.Pk"                       , "Pk")
+                        :Column("Column.Order"                    , "Column_Order")
+                        :Column("Column.Name"                     , "Column_Name")
+                        :Column("upper(Column.Name)"              , "tag1")
+                        :Column("Column.UsedAs"                   , "Column_UsedAs")
+                        :Column("Column.Type"                     , "Column_Type")
+                        :Column("Column.Array"                    , "Column_Array")
+                        :Column("Column.Length"                   , "Column_Length")
+                        :Column("Column.Scale"                    , "Column_Scale")
+                        :Column("Column.Nullable"                 , "Column_Nullable")
+                        :Column("Column.Unicode"                  , "Column_Unicode")
+                        :Column("Column.DefaultType"              , "Column_DefaultType")
+                        :Column("Column.DefaultCustom"            , "Column_DefaultCustom")
+                        :Column("Column.LastNativeTypePostgreSQL" , "Column_LastNativeTypePostgreSQL")
+                        :Column("Column.fk_Enumeration"           , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"                , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
 
@@ -926,21 +929,21 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 if empty(l_cErrorMessage)
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
-                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
-                    l_lColumnNullable       := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
-                    l_lColumnUnicode        := .f.
-                    l_cColumnDefault        := nvl(ListOfFieldsForLoads->field_default,"")
-                    l_lColumnArray          := ListOfFieldsForLoads->field_array
-                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
+                    l_cColumnName                     := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable                 := ListOfFieldsForLoads->field_nullable      // Since the information_schema does not follow odbc driver setting to return boolean as logical
+                    l_lColumnUnicode                  := .f.
+                    l_cColumnDefault                  := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_lColumnArray                    := ListOfFieldsForLoads->field_array
+                    l_cColumnLastNativeTypePostgreSQL := nvl(ListOfFieldsForLoads->field_type,"")
 
                     if l_cColumnDefault == "NULL"
                         l_cColumnDefault := ""
                     endif
 
-                    l_cColumnDefault  := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeType,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
-                    l_cColumnLastNativeType := l_cColumnLastNativeType+iif(l_lColumnArray,"[]","")
+                    l_cColumnDefault  := strtran(l_cColumnDefault,"::"+l_cColumnLastNativeTypePostgreSQL,"")  //Remove casting to the same field type. (PostgreSQL specific behavior)
+                    l_cColumnLastNativeTypePostgreSQL := l_cColumnLastNativeTypePostgreSQL+iif(l_lColumnArray,"[]","")
 
-                    if l_cColumnLastNativeType == "character"
+                    if l_cColumnLastNativeTypePostgreSQL == "character"
                         l_cColumnDefault := strtran(l_cColumnDefault,"::bpchar","")
                     endif
                     if !hb_orm_isnull("ListOfFieldsForLoads","enumeration_name")
@@ -957,7 +960,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     // l_lColumnArray := (ListOfFieldsForLoads->field_type == "ARRAY")
                     // switch iif(ListOfFieldsForLoads->field_type == "ARRAY",nvl(ListOfFieldsForLoads->field_type_extra,"unknown"),ListOfFieldsForLoads->field_type)
 
-                    switch ListOfFieldsForLoads->field_type
+                    switch lower(ListOfFieldsForLoads->field_type)
                     case "integer"
                         l_cColumnType   := "I"
                         l_nColumnLength := NIL
@@ -980,6 +983,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_nlength
                         l_nColumnScale  := ListOfFieldsForLoads->field_decimals
+                        exit
+
+                    case "real"
+                        l_cColumnType   := "F"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
                         exit
 
                     case "character"
@@ -1089,7 +1098,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_nColumnScale  := NIL
                         exit
 
-                    case "USER-DEFINED"
+                    case "user-defined"
                         l_cColumnType   := "E"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL
@@ -1183,12 +1192,6 @@ otherwise
 endcase
 
 
-
-
-
-
-
-
 //_M_ l_lColumnPrimary vs AutoIncrement
                     if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
                         l_iColumnPk := ListOfColumnsInDataDictionary->Pk
@@ -1215,15 +1218,15 @@ endcase
                             endcase
                         endif
 
-                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType           .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray          .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength         .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale          .and. ;
-                           ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable       .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_DefaultType,-1)    == l_nColumnDefaultType    .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")  == l_cColumnDefaultCustom  .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType .and. ;
-                           ListOfColumnsInDataDictionary->Column_fk_Enumeration         == l_iFk_Enumeration
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))               == l_cColumnType                     .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)                   == l_lColumnArray                    .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                           == l_nColumnLength                   .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                            == l_nColumnScale                    .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable                         == l_lColumnNullable                 .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_DefaultType,-1)              == l_nColumnDefaultType              .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")            == l_cColumnDefaultCustom            .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeTypePostgreSQL,"") == l_cColumnLastNativeTypePostgreSQL .and. ;
+                           ListOfColumnsInDataDictionary->Column_fk_Enumeration                   == l_iFk_Enumeration
 
                         // For now removed the comparing of Unicode 05/04/2024
                         //    ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode        .and.
@@ -1238,17 +1241,17 @@ endcase
                                     with object l_oDB1
                                         l_LastColumnOrder += 1
                                         :Table("288eca6a-be39-47cc-a70a-908d6b45059f","Column")
-                                        // :Field("Column.UsedAs"        ,l_nColumnUsedAs)  //_M_
-                                        :Field("Column.Type"          ,l_cColumnType)
-                                        :Field("Column.Array"         ,l_lColumnArray)
-                                        :Field("Column.Length"        ,l_nColumnLength)
-                                        :Field("Column.Scale"         ,l_nColumnScale)
-                                        :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
-                                        :Field("Column.DefaultType"   ,l_nColumnDefaultType)
-                                        :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                                        :Field("Column.fk_Enumeration",l_iFk_Enumeration)
+                                        // :Field("Column.UsedAs"                  ,l_nColumnUsedAs)  //_M_
+                                        :Field("Column.Type"                    ,l_cColumnType)
+                                        :Field("Column.Array"                   ,l_lColumnArray)
+                                        :Field("Column.Length"                  ,l_nColumnLength)
+                                        :Field("Column.Scale"                   ,l_nColumnScale)
+                                        :Field("Column.Nullable"                ,l_lColumnNullable)
+                                        // :Field("Column.Unicode"                 ,l_lColumnUnicode)  // For now removed updating Unicode 05/04/2024
+                                        :Field("Column.DefaultType"             ,l_nColumnDefaultType)
+                                        :Field("Column.DefaultCustom"           ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                                        :Field("Column.LastNativeTypePostgreSQL",l_cColumnLastNativeTypePostgreSQL)
+                                        :Field("Column.fk_Enumeration"          ,l_iFk_Enumeration)
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
@@ -1264,22 +1267,22 @@ endcase
                         with object l_oDB1
                             l_LastColumnOrder += 1
                             :Table("6c3137a2-395e-488c-bc71-94990c022851","Column")
-                            :Field("Column.UsedAs"        ,l_nColumnUsedAs)
-                            :Field("Column.Name"          ,l_cColumnName)
-                            :Field("Column.Order"         ,l_LastColumnOrder)
-                            :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
-                            :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Array"         ,l_lColumnArray)
-                            :Field("Column.Length"        ,l_nColumnLength)
-                            :Field("Column.Scale"         ,l_nColumnScale)
-                            :Field("Column.Nullable"      ,l_lColumnNullable)
-                            :Field("Column.Unicode"       ,l_lColumnUnicode)
-                            :Field("Column.DefaultType"   ,l_nColumnDefaultType)
-                            :Field("Column.DefaultCustom" ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                            :Field("Column.fk_Enumeration",l_iFk_Enumeration)
-                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
+                            :Field("Column.UsedAs"                  ,l_nColumnUsedAs)
+                            :Field("Column.Name"                    ,l_cColumnName)
+                            :Field("Column.Order"                   ,l_LastColumnOrder)
+                            :Field("Column.fk_Table"                ,l_iTablePk)
+                            :Field("Column.UseStatus"               ,USESTATUS_UNKNOWN)
+                            :Field("Column.Type"                    ,l_cColumnType)
+                            :Field("Column.Array"                   ,l_lColumnArray)
+                            :Field("Column.Length"                  ,l_nColumnLength)
+                            :Field("Column.Scale"                   ,l_nColumnScale)
+                            :Field("Column.Nullable"                ,l_lColumnNullable)
+                            :Field("Column.Unicode"                 ,l_lColumnUnicode)
+                            :Field("Column.DefaultType"             ,l_nColumnDefaultType)
+                            :Field("Column.DefaultCustom"           ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                            :Field("Column.LastNativeTypePostgreSQL",l_cColumnLastNativeTypePostgreSQL)
+                            :Field("Column.fk_Enumeration"          ,l_iFk_Enumeration)
+                            :Field("Column.UsedBy"                  ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -1477,22 +1480,22 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                     // Load all the tables current columns
                     with object l_oDB2
                         :Table("a36ed01d-69c5-403a-bdc4-6f0835fbb4cc","Column")
-                        :Column("Column.Pk"             , "Pk")
-                        :Column("Column.Order"          , "Column_Order")
-                        :Column("Column.Name"           , "Column_Name")
-                        :Column("upper(Column.Name)"    , "tag1")
-                        :Column("Column.UsedAs"         , "Column_UsedAs")
-                        :Column("Column.Type"           , "Column_Type")
-                        :Column("Column.Array"          , "Column_Array")
-                        :Column("Column.Length"         , "Column_Length")
-                        :Column("Column.Scale"          , "Column_Scale")
-                        :Column("Column.Nullable"       , "Column_Nullable")
-                        :Column("Column.Unicode"        , "Column_Unicode")
-                        :Column("Column.DefaultType"    , "Column_DefaultType")
-                        :Column("Column.DefaultCustom"  , "Column_DefaultCustom")
-                        :Column("Column.LastNativeType" , "Column_LastNativeType")
-                        :Column("Column.fk_Enumeration" , "Column_fk_Enumeration")
-                        :Column("Column.UseStatus"      , "Column_UseStatus")
+                        :Column("Column.Pk"                  , "Pk")
+                        :Column("Column.Order"               , "Column_Order")
+                        :Column("Column.Name"                , "Column_Name")
+                        :Column("upper(Column.Name)"         , "tag1")
+                        :Column("Column.UsedAs"              , "Column_UsedAs")
+                        :Column("Column.Type"                , "Column_Type")
+                        :Column("Column.Array"               , "Column_Array")
+                        :Column("Column.Length"              , "Column_Length")
+                        :Column("Column.Scale"               , "Column_Scale")
+                        :Column("Column.Nullable"            , "Column_Nullable")
+                        :Column("Column.Unicode"             , "Column_Unicode")
+                        :Column("Column.DefaultType"         , "Column_DefaultType")
+                        :Column("Column.DefaultCustom"       , "Column_DefaultCustom")
+                        :Column("Column.LastNativeTypeMSSQL" , "Column_LastNativeTypeMSSQL")
+                        :Column("Column.fk_Enumeration"      , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"           , "Column_UseStatus")
                         :Where("Column.fk_Table = ^" , l_iTablePk)
                         :OrderBy("Column_Order","Desc")
 
@@ -1525,19 +1528,19 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                 if empty(l_cErrorMessage)
                     //Check existence of Column and add if needed
                     //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
-                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
-                    l_lColumnNullable       := (ListOfFieldsForLoads->field_nullable == 1)
-                    l_lColumnUnicode        := .f.
-                    l_cColumnDefaultCustom  := nvl(ListOfFieldsForLoads->field_default,"")
-                    l_cColumnLastNativeType := nvl(ListOfFieldsForLoads->field_type,"")
-                    l_iFk_Enumeration       := 0
+                    l_cColumnName                := alltrim(ListOfFieldsForLoads->field_name)
+                    l_lColumnNullable            := (ListOfFieldsForLoads->field_nullable == 1)
+                    l_lColumnUnicode             := .f.
+                    l_cColumnDefaultCustom       := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_cColumnLastNativeTypeMSSQL := nvl(ListOfFieldsForLoads->field_type,"")
+                    l_iFk_Enumeration            := 0
 
                     if l_cColumnDefaultCustom == "NULL"
                         l_cColumnDefaultCustom := ""
                     endif
 
                     l_lColumnArray := .f.
-                    switch ListOfFieldsForLoads->field_type
+                    switch lower(ListOfFieldsForLoads->field_type)
                     case "int"
                         l_cColumnType   := "I"
                         l_nColumnLength := NIL
@@ -1726,13 +1729,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             endcase
                         endif
                         
-                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))     == l_cColumnType        .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)         == l_lColumnArray       .and. ;
-                           ListOfColumnsInDataDictionary->Column_Length                 == l_nColumnLength      .and. ;
-                           ListOfColumnsInDataDictionary->Column_Scale                  == l_nColumnScale       .and. ;
-                           ListOfColumnsInDataDictionary->Column_Nullable               == l_lColumnNullable    .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")        == l_cColumnDefaultCustom     .and. ;
-                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeType,"") == l_cColumnLastNativeType
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))          == l_cColumnType                .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)              == l_lColumnArray               .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                      == l_nColumnLength              .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                       == l_nColumnScale               .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable                    == l_lColumnNullable            .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")       == l_cColumnDefaultCustom       .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeTypeMSSQL,"") == l_cColumnLastNativeTypeMSSQL
 
                             // For now removed comparing Unicode 05/04/2024
                             // ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode     .and.
@@ -1745,14 +1748,14 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                     with object l_oDB1
                                         l_LastColumnOrder += 1
                                         :Table("9b7db810-3732-4f16-bd3d-05516388e5a2","Column")
-                                        :Field("Column.Type"          ,l_cColumnType)
-                                        :Field("Column.Array"         ,l_lColumnArray)
-                                        :Field("Column.Length"        ,l_nColumnLength)
-                                        :Field("Column.Scale"         ,l_nColumnScale)
-                                        :Field("Column.Nullable"      ,l_lColumnNullable)
-                                        // :Field("Column.Unicode"       ,l_lColumnUnicode)   // For now removed updating Unicode 05/04/2024
-                                        :Field("Column.DefaultCustom"       ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                                        :Field("Column.LastNativeType",l_cColumnLastNativeType)
+                                        :Field("Column.Type"               ,l_cColumnType)
+                                        :Field("Column.Array"              ,l_lColumnArray)
+                                        :Field("Column.Length"             ,l_nColumnLength)
+                                        :Field("Column.Scale"              ,l_nColumnScale)
+                                        :Field("Column.Nullable"           ,l_lColumnNullable)
+                                        // :Field("Column.Unicode"            ,l_lColumnUnicode)   // For now removed updating Unicode 05/04/2024
+                                        :Field("Column.DefaultCustom"      ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                                        :Field("Column.LastNativeTypeMSSQL",l_cColumnLastNativeTypeMSSQL)
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
@@ -1768,19 +1771,19 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         with object l_oDB1
                             l_LastColumnOrder += 1
                             :Table("26aaff95-0863-4762-9153-a47bd8979677","Column")
-                            :Field("Column.Name"          ,l_cColumnName)
-                            :Field("Column.Order"         ,l_LastColumnOrder)
-                            :Field("Column.fk_Table"      ,l_iTablePk)
-                            :Field("Column.UseStatus"     ,USESTATUS_UNKNOWN)
-                            :Field("Column.Type"          ,l_cColumnType)
-                            :Field("Column.Array"         ,l_lColumnArray)
-                            :Field("Column.Length"        ,l_nColumnLength)
-                            :Field("Column.Scale"         ,l_nColumnScale)
-                            :Field("Column.Nullable"      ,l_lColumnNullable)
-                            :Field("Column.Unicode"       ,l_lColumnUnicode)
-                            :Field("Column.DefaultCustom"       ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
-                            :Field("Column.LastNativeType",l_cColumnLastNativeType)
-                            :Field("Column.UsedBy"        ,USEDBY_ALLSERVERS)
+                            :Field("Column.Name"               ,l_cColumnName)
+                            :Field("Column.Order"              ,l_LastColumnOrder)
+                            :Field("Column.fk_Table"           ,l_iTablePk)
+                            :Field("Column.UseStatus"          ,USESTATUS_UNKNOWN)
+                            :Field("Column.Type"               ,l_cColumnType)
+                            :Field("Column.Array"              ,l_lColumnArray)
+                            :Field("Column.Length"             ,l_nColumnLength)
+                            :Field("Column.Scale"              ,l_nColumnScale)
+                            :Field("Column.Nullable"           ,l_lColumnNullable)
+                            :Field("Column.Unicode"            ,l_lColumnUnicode)
+                            :Field("Column.DefaultCustom"      ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                            :Field("Column.LastNativeTypeMSSQL",l_cColumnLastNativeTypeMSSQL)
+                            :Field("Column.UsedBy"             ,USEDBY_ALLSERVERS)
                             if :Add()
                                 l_iNewColumns += 1
                                 l_iColumnPk := :Key()
@@ -1800,7 +1803,479 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
     endif
 
+case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 
+    //ORACLE Does not support Enumeration as individual defined element.
+    l_cSQLCommandEnums := []
+
+    // used cast( as Varchar2(254)) to deal with odbc bug on Linux (Ubuntu)
+
+    l_cSQLCommandFields  += [SELECT  cast(TBLRW.owner as VARCHAR2(254))       as namespace_name,]
+    l_cSQLCommandFields  += [        cast(TBLRW.table_name as VARCHAR2(254))  as table_name,]
+    l_cSQLCommandFields  += [        TBLRW.column_id                          as field_position,]
+    l_cSQLCommandFields  += [        cast(TBLRW.column_name as VARCHAR2(254)) as field_name,]
+    l_cSQLCommandFields  += [        cast(TBLRW.data_type as VARCHAR2(254))   as field_type,]
+    l_cSQLCommandFields  += [        TBLRW.data_length    as field_length,]
+    l_cSQLCommandFields  += [        TBLRW.data_precision as field_precision,]
+    l_cSQLCommandFields  += [        TBLRW.data_scale     as field_scale,]
+    l_cSQLCommandFields  += [        CASE WHEN TBLRW.nullable = 'Y' THEN 1 ELSE 0 END AS field_nullable,]
+    // l_cSQLCommandFields  += [        --cast(TBLRW.data_default as STRING)   as field_default,     --This will fail since data_default is a LONG, and no idea why.]
+    l_cSQLCommandFields  += [        CASE WHEN TBLRW.identity_column = 'YES' THEN 1 ELSE 0 END AS field_is_identity,]
+    l_cSQLCommandFields  += [        ''   as field_default,]
+    l_cSQLCommandFields  += [        DBAC.comments]    // Not used yet.
+    l_cSQLCommandFields  += [  FROM all_tab_cols TBLRW]
+    l_cSQLCommandFields  += [  INNER JOIN all_objects DBAO  ON TBLRW.owner = DBAO.owner AND TBLRW.table_name = DBAO.object_name]
+    l_cSQLCommandFields  += [  LEFT OUTER JOIN all_col_comments DBAC ON TBLRW.owner = DBAC.owner AND TBLRW.table_name = DBAC.table_name AND TBLRW.column_name = DBAC.column_name]
+    l_cSQLCommandFields  += [  WHERE DBAO.ORACLE_MAINTAINED = 'N']
+
+    // l_cSQLCommandFields  += [  AND    lower(TBLRW.owner) in ('eric')]
+
+    if !empty(par_cSyncNamespaces)
+        l_cSQLCommandFields  += [ AND lower(TBLRW.owner) in (]
+        l_aNamespaces := hb_ATokens(par_cSyncNamespaces,",",.f.)
+        l_iFirstNamespace := .t.
+        for l_iPosition := 1 to len(l_aNamespaces)
+            l_aNamespaces[l_iPosition] := strtran(l_aNamespaces[l_iPosition],['],[])
+            if !empty(l_aNamespaces[l_iPosition])
+                if l_iFirstNamespace
+                    l_iFirstNamespace := .f.
+                else
+                    l_cSQLCommandFields += [,]
+                endif
+                l_cSQLCommandFields += [']+lower(l_aNamespaces[l_iPosition])+[']
+            endif
+        endfor
+        l_cSQLCommandFields  += [)]
+    endif
+
+    l_cSQLCommandFields  += [ ORDER BY TBLRW.owner,TBLRW.table_name,TBLRW.column_id]
+
+// SendToClipboard(l_cSQLCommandFields)
+
+    l_cSQLCommandIndexes := [] // for now
+
+
+//--Load Enumerations-----------
+    //No supported in ORACLE. Pseudo enumeration can be defined as a validation to STRING fields: https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/enum.html
+
+
+
+//--Load Tables-----------
+    if empty(l_cErrorMessage)
+        if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
+SendToClipboard(l_cSQLCommandFields)
+            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+        else
+            // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
+
+            l_cLastNamespace  := ""
+            l_cLastTableName  := ""
+            l_cColumnName     := ""
+
+            select ListOfFieldsForLoads
+            scan all while empty(l_cErrorMessage)
+                if !(ListOfFieldsForLoads->namespace_name == l_cLastNamespace .and. ListOfFieldsForLoads->table_name == l_cLastTableName)
+                    //New Table being defined
+                    //Check if the table already on file
+
+                    l_cLastNamespace := alltrim(ListOfFieldsForLoads->namespace_name)
+                    l_cLastTableName := alltrim(ListOfFieldsForLoads->table_name)
+
+                    //Assume if names is all upper case that they where not entered in a case-sensitive matter, than make them lower case.
+                    if l_cLastNamespace == upper(l_cLastNamespace)
+                        l_cLastNamespace := lower(l_cLastNamespace)
+                    endif
+
+                    if l_cLastTableName == upper(l_cLastTableName)
+                        l_cLastTableName := lower(l_cLastTableName)
+                    endif
+
+                    l_iNamespacePk   := -1
+                    l_iTablePk       := -1
+
+                    with object l_oDB1
+                        :Table("9a89874c-c096-4f4a-8bf8-19ae756638ec","Table")
+                        :Column("Table.fk_Namespace", "fk_Namespace")
+                        :Column("Table.pk"          , "Pk")
+                        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                        :Where([Namespace.fk_Application = ^],par_iApplicationPk)
+                        :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cLastNamespace," ","")))
+                        :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cLastTableName," ","")))
+                        l_aSQLResult := {}
+                        :SQL(@l_aSQLResult)
+
+                        do case
+                        case :Tally == -1  //Failed to query
+                            l_cErrorMessage := "Failed to Query Meta database. Error 401."
+                            exit
+                        case empty(:Tally)
+                            //Tables is not in datadic, load it.
+                            //Find the Namespace
+                            :Table("c7d6ed0f-edc0-4206-8e58-9688b8b4c519","Namespace")
+                            :Column("Namespace.pk" , "Pk")
+                            :Where([Namespace.fk_Application = ^],par_iApplicationPk)
+                            :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cLastNamespace," ","")))
+                            l_aSQLResult := {}
+                            :SQL(@l_aSQLResult)
+
+                            do case
+                            case :Tally == -1  //Failed to query
+                                l_cErrorMessage := "Failed to Query Meta database. Error 402."
+                            case empty(:Tally)
+                                //Add the Namespace
+                                :Table("8874a9cb-ceba-4fa2-9f4c-ef0f72e06568","Namespace")
+                                :Field("Namespace.Name"          ,l_cLastNamespace)
+                                :Field("Namespace.fk_Application",par_iApplicationPk)
+                                :Field("Namespace.UseStatus"     ,USESTATUS_UNKNOWN)
+                                if :Add()
+                                    l_iNewNamespace += 1
+                                    l_iNamespacePk := :Key()
+                                else
+                                    l_cErrorMessage := "Failed to add Namespace record."
+                                endif
+
+                            case :Tally == 1
+                                l_iNamespacePk := l_aSQLResult[1,1]
+                            otherwise
+                                l_cErrorMessage := "Failed to Query Meta database. Error 403."
+                            endcase
+
+                            if l_iNamespacePk > 0
+                                :Table("8921c96e-9bc6-443a-b6bb-56cb73efce0f","Table")
+                                :Field("Table.Name"        ,l_cLastTableName)
+                                :Field("Table.fk_Namespace",l_iNamespacePk)
+                                :Field("Table.UseStatus"   ,USESTATUS_UNKNOWN)
+                                if :Add()
+                                    l_iNewTables += 1
+                                    l_iTablePk := :Key()
+                                    l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
+                                else
+                                    l_cErrorMessage := "Failed to add Table record."
+                                endif
+                            endif
+
+                        case :Tally == 1
+                            l_iNamespacePk   := l_aSQLResult[1,1]
+                            l_iTablePk       := l_aSQLResult[1,2]
+                            l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
+
+                        otherwise
+                            l_cErrorMessage := "Failed to Query Meta database. Error 404."
+                        endcase
+
+                    endwith
+
+                    // Load all the tables current columns
+                    with object l_oDB2
+                        :Table("a36ed01d-69c5-403a-bdc4-6f0835fbb4cd","Column")
+                        :Column("Column.Pk"                   , "Pk")
+                        :Column("Column.Order"                , "Column_Order")
+                        :Column("Column.Name"                 , "Column_Name")
+                        :Column("upper(Column.Name)"          , "tag1")
+                        :Column("Column.UsedAs"               , "Column_UsedAs")
+                        :Column("Column.Type"                 , "Column_Type")
+                        :Column("Column.Array"                , "Column_Array")
+                        :Column("Column.Length"               , "Column_Length")
+                        :Column("Column.Scale"                , "Column_Scale")
+                        :Column("Column.Nullable"             , "Column_Nullable")
+                        :Column("Column.Unicode"              , "Column_Unicode")
+                        :Column("Column.DefaultType"          , "Column_DefaultType")
+                        :Column("Column.DefaultCustom"        , "Column_DefaultCustom")
+                        :Column("Column.LastNativeTypeOracle" , "Column_LastNativeTypeOracle")
+                        :Column("Column.fk_Enumeration"       , "Column_fk_Enumeration")
+                        :Column("Column.UseStatus"            , "Column_UseStatus")
+                        :Where("Column.fk_Table = ^" , l_iTablePk)
+                        :OrderBy("Column_Order","Desc")
+
+                        :Join("left","Enumeration","","Column.fk_Enumeration = Enumeration.pk")
+                        :Column("Enumeration.ImplementAs"     , "Enumeration_ImplementAs")    // 1 = Native SQL Enum, 2 = Integer, 3 = Numeric, 4 = Var Char (EnumValue Name)
+                        :Column("Enumeration.ImplementLength" , "Enumeration_ImplementLength")
+
+                        :SQL("ListOfColumnsInDataDictionary")
+
+                        if :Tally < 0
+                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 305."
+                        else
+                            if :Tally == 0
+                                l_LastColumnOrder := 0
+                            else
+                                l_LastColumnOrder := ListOfColumnsInDataDictionary->Column_Order
+                            endif
+
+                            with object :p_oCursor
+                                :Index("tag1","padr(tag1+'*',240)")
+                                :CreateIndexes()
+                            endwith
+
+                        endif
+
+                    endwith
+
+                endif
+
+                if empty(l_cErrorMessage)
+                    //Check existence of Column and add if needed
+                    //Get the column Name, Type, Length, Scale, Nullable and fk_Enumeration
+                    l_cColumnName           := alltrim(ListOfFieldsForLoads->field_name)
+                    if l_cColumnName == upper(l_cColumnName)
+                        l_cColumnName := lower(l_cColumnName)
+                    endif
+                    l_lColumnNullable             := (ListOfFieldsForLoads->field_nullable == 1)
+                    l_lColumnUnicode              := .f.
+                    l_cColumnDefaultCustom        := nvl(ListOfFieldsForLoads->field_default,"")
+                    l_cColumnLastNativeTypeOracle := nvl(ListOfFieldsForLoads->field_type,"")
+                    l_iFk_Enumeration             := 0
+
+                    if l_cColumnDefaultCustom == "NULL"
+                        l_cColumnDefaultCustom := ""
+                    endif
+
+                    if ListOfFieldsForLoads->field_is_identity == 1
+                        l_nColumnUsedAs = COLUMN_USEDAS_PRIMARY_KEY
+                    else
+                        l_nColumnUsedAs = 1                            //Regular Field
+                    endif
+
+                    l_lColumnArray := .f.
+                    do case
+                    case ListOfFieldsForLoads->field_type == "VARCHAR2"
+                        l_cColumnType   := "CV"
+                        l_nColumnLength := ListOfFieldsForLoads->field_length
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "NUMBER"            .and.;
+                         !hb_orm_isnull("ListOfFieldsForLoads","field_length")   .and.;
+                         ListOfFieldsForLoads->field_length == 22                .and.;
+                         hb_orm_isnull("ListOfFieldsForLoads","field_precision") .and.;
+                         !hb_orm_isnull("ListOfFieldsForLoads","field_scale")    .and.;
+                         ListOfFieldsForLoads->field_scale == 0
+                        l_cColumnType   := "I"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "NUMBER"             .and.;
+                         !hb_orm_isnull("ListOfFieldsForLoads","field_precision") .and.;
+                         !hb_orm_isnull("ListOfFieldsForLoads","field_scale")
+                        l_cColumnType   := "N"
+                        l_nColumnLength := ListOfFieldsForLoads->field_precision
+                        l_nColumnScale  := ListOfFieldsForLoads->field_scale
+
+                    case ListOfFieldsForLoads->field_type == "DATE"
+                        l_cColumnType   := "D"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    case "TIMESTAMP" $ ListOfFieldsForLoads->field_type .and. "WITH TIME ZONE" $ ListOfFieldsForLoads->field_type
+                        l_cColumnType   := "DTZ"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_scale
+
+                    case ListOfFieldsForLoads->field_type == "CHAR"
+                        l_cColumnType   := "C"
+                        l_nColumnLength := ListOfFieldsForLoads->field_length
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "LONG"
+                        l_cColumnType   := "CV"
+                        l_nColumnLength := 32700
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "CLOB"
+                        l_cColumnType   := "M"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "RAW"
+                        l_cColumnType   := "B"
+                        l_nColumnLength := ListOfFieldsForLoads->field_length
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "FLOAT"
+                        l_cColumnType   := "F"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    // case ListOfFieldsForLoads->field_type == "nchar"
+                    //     l_cColumnType     := "C"
+                    //     l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                    //     l_nColumnScale    := NIL
+                    //     l_lColumnUnicode  := .t.
+                    //     //_M_ mark as Unicode
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "nvarchar"
+                    //     l_cColumnType     := "CV"
+                    //     l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                    //     l_nColumnScale    := NIL
+                    //     l_lColumnUnicode  := .t.
+                    //     //_M_ mark as Unicode
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "ntext"
+                    //     l_cColumnType     := "M"
+                    //     l_nColumnLength   := NIL
+                    //     l_nColumnScale    := NIL
+                    //     l_lColumnUnicode  := .t.
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "datetime"   //timestamp without time zone
+                    //     l_cColumnType   := "DT"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := 3
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "datetime2"   //timestamp without time zone and some precision
+                    //     l_cColumnType   := "DT"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := ListOfFieldsForLoads->field_tlength
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "datetimeoffset"   //timestamp with time zone
+                    //     l_cColumnType   := "DTZ"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := ListOfFieldsForLoads->field_tlength
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "smalldatetime"  //timestamp without time zone and no precision
+                    //     l_cColumnType   := "DT"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := 0
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "time"   // time without time zone
+                    //     l_cColumnType   := "TO"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := ListOfFieldsForLoads->field_tlength
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "money"
+                    //     l_cColumnType   := "Y"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := NIL
+                    //     exit
+
+                    // case ListOfFieldsForLoads->field_type == "uniqueidentifier"
+                    //     l_cColumnType   := "UUI"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := NIL
+                    //     exit
+
+
+                    otherwise
+                        l_cColumnType   := "?"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        // Altd()
+                    endcase
+
+                    if el_seek(upper(l_cColumnName)+'*',"ListOfColumnsInDataDictionary","tag1")
+                        l_iColumnPk := ListOfColumnsInDataDictionary->Pk
+                        l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+
+                        // In case the field is marked as an Enumeration, but is actually stored as an integer or numeric
+                        if trim(nvl(ListOfColumnsInDataDictionary->Column_Type,"")) == "E"
+                            do case
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_INTEGER
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_NUMERIC
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            case nvl(ListOfColumnsInDataDictionary->Enumeration_ImplementAs,0) == ENUMERATIONIMPLEMENTAS_VARCHAR
+                                l_cColumnType      := "E"
+                                l_nColumnLength    := nil   // Set in the Enumeration Definition
+                                l_nColumnScale     := nil
+                                l_iFk_Enumeration  := ListOfColumnsInDataDictionary->Column_fk_Enumeration   // We ensure that we will not overwrite the enumeration setting
+                            endcase
+                        endif
+                        
+                        if alltrim(ListOfColumnsInDataDictionary->Column_Name)                == l_cColumnName                 .and. ;
+                           trim(nvl(ListOfColumnsInDataDictionary->Column_Type,""))           == l_cColumnType                 .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_Array,.f.)               == l_lColumnArray                .and. ;
+                           ListOfColumnsInDataDictionary->Column_Length                       == l_nColumnLength               .and. ;
+                           ListOfColumnsInDataDictionary->Column_Scale                        == l_nColumnScale                .and. ;
+                           ListOfColumnsInDataDictionary->Column_Nullable                     == l_lColumnNullable             .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_DefaultCustom,"")        == l_cColumnDefaultCustom        .and. ;
+                           nvl(ListOfColumnsInDataDictionary->Column_LastNativeTypeOracle,"") == l_cColumnLastNativeTypeOracle
+
+                            // For now removed comparing Unicode 05/04/2024
+                            // ListOfColumnsInDataDictionary->Column_Unicode                == l_lColumnUnicode     .and.
+
+                        else
+                            if ListOfColumnsInDataDictionary->Column_UseStatus >= USESTATUS_UNDERDEVELOPMENT  // Meaning at least marked as "Under Development"
+                                //_M_ report data was not updated
+                            else
+                                with object l_oDB1
+                                    l_lUpdatedType := (l_cColumnType <> "?" .or. (hb_orm_isnull("ListOfColumnsInDataDictionary","Column_Type") .or. empty(ListOfColumnsInDataDictionary->Column_Type)))
+                                    l_lUpdatedName := (alltrim(ListOfColumnsInDataDictionary->Column_Name) <> l_cColumnName)
+
+                                    if l_lUpdatedType .or. l_lUpdatedName
+                                        l_LastColumnOrder += 1
+                                        :Table("9b7db810-3732-4f16-bd3d-05516388e5a2","Column")
+                                        if l_lUpdatedType
+                                            :Field("Column.Type"                ,l_cColumnType)
+                                            :Field("Column.Array"               ,l_lColumnArray)
+                                            :Field("Column.Length"              ,l_nColumnLength)
+                                            :Field("Column.Scale"               ,l_nColumnScale)
+                                            :Field("Column.Nullable"            ,l_lColumnNullable)
+                                            // :Field("Column.Unicode"             ,l_lColumnUnicode)   // For now removed updating Unicode 05/04/2024
+                                            :Field("Column.DefaultCustom"       ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                                            :Field("Column.LastNativeTypeOracle",l_cColumnLastNativeTypeOracle)
+                                        endif
+                                        if l_lUpdatedName
+                                            :Field("Column.Name" ,l_cColumnName)
+                                        endif
+                                        if :Update(l_iColumnPk)
+                                            l_iUpdatedColumns += 1
+                                        else
+                                            l_cErrorMessage := "Failed to update Column record."
+                                        endif
+                                    endif
+                                endwith
+                            endif
+                        endif
+
+                    else
+                        //Missing Field, Add it
+                        with object l_oDB1
+                            l_LastColumnOrder += 1
+                            :Table("26aaff95-0863-4762-9153-a47bd8979677","Column")
+                            :Field("Column.UsedAs"              ,l_nColumnUsedAs)
+                            :Field("Column.Name"                ,l_cColumnName)
+                            :Field("Column.Order"               ,l_LastColumnOrder)
+                            :Field("Column.fk_Table"            ,l_iTablePk)
+                            :Field("Column.UseStatus"           ,USESTATUS_UNKNOWN)
+                            :Field("Column.Type"                ,l_cColumnType)
+                            :Field("Column.Array"               ,l_lColumnArray)
+                            :Field("Column.Length"              ,l_nColumnLength)
+                            :Field("Column.Scale"               ,l_nColumnScale)
+                            :Field("Column.Nullable"            ,l_lColumnNullable)
+                            :Field("Column.Unicode"             ,l_lColumnUnicode)
+                            :Field("Column.DefaultCustom"       ,iif(empty(l_cColumnDefaultCustom),NIL,l_cColumnDefaultCustom))
+                            :Field("Column.LastNativeTypeOracle",l_cColumnLastNativeTypeOracle)
+                            :Field("Column.UsedBy"              ,USEDBY_ALLSERVERS)
+                            if :Add()
+                                l_iNewColumns += 1
+                                l_iColumnPk := :Key()
+                                l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
+                            else
+                                l_cErrorMessage := "Failed to add Column record."
+                            endif
+                        endwith
+
+                    endif
+
+                endif
+
+            endscan
+
+        endif
+
+    endif
 
 endcase
 
@@ -1964,18 +2439,18 @@ if par_nSyncSetForeignKey > 1
                         l_iParentTableKey := iif( el_seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
                         l_iChildColumnKey := iif( el_seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
 
-                        do case
-                        case ListOfFieldsForeignKeys->DeleteAction == 'r'
-                            l_nOnDelete := 2
-                        case ListOfFieldsForeignKeys->DeleteAction == 'c'
-                            l_nOnDelete := 3
-                        case ListOfFieldsForeignKeys->DeleteAction == 'n'
-                            l_nOnDelete := 4
-                        otherwise
-                            l_nOnDelete := 1
-                        endcase
-
                         if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
+                            do case
+                            case ListOfFieldsForeignKeys->DeleteAction == 'r'
+                                l_nOnDelete := 2
+                            case ListOfFieldsForeignKeys->DeleteAction == 'c'
+                                l_nOnDelete := 3
+                            case ListOfFieldsForeignKeys->DeleteAction == 'n'
+                                l_nOnDelete := 4
+                            otherwise
+                                l_nOnDelete := 1
+                            endcase
+
                             if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey         .or. ;
                                AllTableColumnsChildrenForForeignKeys->Column_UsedAs          <> COLUMN_USEDAS_FOREIGN_KEY .or. ;
                                AllTableColumnsChildrenForForeignKeys->Column_OnDelete        <> l_nOnDelete
@@ -2000,8 +2475,86 @@ if par_nSyncSetForeignKey > 1
 
             case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                 //_M_
-            endcase
 
+            case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
+                l_cSQLCommandForeignKeys := [select uc.delete_rule DeleteAction,]
+                l_cSQLCommandForeignKeys += [       concat('*',lower(uc.owner),'*',lower(uc.table_name),'*',lower(ucc1.column_name),'*') as childcolumn,]
+                l_cSQLCommandForeignKeys += [       concat('*',lower(ucc2.owner),'*',lower(ucc2.table_name),'*') as parenttable]
+                l_cSQLCommandForeignKeys += [  from all_constraints uc  ]
+                l_cSQLCommandForeignKeys += [  join      all_cons_columns ucc1 on ucc1.constraint_name = uc.constraint_name]
+                l_cSQLCommandForeignKeys += [  left join all_constraints  ruc  on ruc.r_constraint_name = uc.constraint_name]
+                l_cSQLCommandForeignKeys += [  join      all_cons_columns ucc2 on ucc2.constraint_name = case when uc.constraint_type = 'R' then uc.r_constraint_name when uc.constraint_type = 'P' then ruc.constraint_name end]
+                l_cSQLCommandForeignKeys += [  join      all_objects      DBAO on uc.owner = DBAO.owner and uc.table_name = DBAO.object_name]
+                l_cSQLCommandForeignKeys += [  where  uc.constraint_type = 'R']
+                l_cSQLCommandForeignKeys += [   and   DBAO.ORACLE_MAINTAINED = 'N']
+
+                if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
+                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
+
+                else
+                    l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
+
+                    with object l_oDB_AllTablesAsParentsForForeignKeys
+                        :Table("8c90e531-cac1-4ee8-9d9c-722eec3fa47f","Table")
+                        :Column("Table.pk" , "Pk")
+                        :Column("cast(concat('*',lower(Namespace.Name),'*',lower(Table.Name),'*') as char(255))", "tag1")
+                        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+                        :SQL("AllTablesAsParentsForForeignKeys")
+
+                        with object :p_oCursor
+                            :Index("tag1","padr(tag1,240)")
+                            :CreateIndexes()
+                            // :SetOrder("tag1")
+                        endwith
+
+                    endwith
+                    // ExportTableToHtmlFile("AllTablesAsParentsForForeignKeys",el_AddPs(OUTPUT_FOLDER)+"AllTablesAsParentsForForeignKeys.html","From PostgreSQL",,25,.t.)
+
+                    select ListOfFieldsForeignKeys
+                    scan all
+                        // l_cTableName := ListOfFieldsForeignKeys->childtablename
+                        // l_cTableName := ListOfFieldsForeignKeys->childcolumnname
+
+                        l_iParentTableKey := iif( el_seek(ListOfFieldsForeignKeys->parenttable,"AllTablesAsParentsForForeignKeys"     ,"tag1") , AllTablesAsParentsForForeignKeys->pk      , 0)
+                        l_iChildColumnKey := iif( el_seek(ListOfFieldsForeignKeys->childcolumn,"AllTableColumnsChildrenForForeignKeys","tag1") , AllTableColumnsChildrenForForeignKeys->pk , 0)
+
+                        do case
+                        case ListOfFieldsForeignKeys->DeleteAction == 'NO ACTION' //'r'
+                            l_nOnDelete := 2
+                        case ListOfFieldsForeignKeys->DeleteAction == 'CASCADE'   //'c'
+                            l_nOnDelete := 3
+                        case ListOfFieldsForeignKeys->DeleteAction == 'SET NULL'  //'n'
+                            l_nOnDelete := 4
+                        otherwise
+                            l_nOnDelete := 1
+                        endcase
+
+                        if l_iParentTableKey > 0 .and. l_iChildColumnKey > 0
+                            if AllTableColumnsChildrenForForeignKeys->Column_fk_TableForeign <> l_iParentTableKey         .or. ;
+                               AllTableColumnsChildrenForForeignKeys->Column_UsedAs          <> COLUMN_USEDAS_FOREIGN_KEY .or. ;
+                               AllTableColumnsChildrenForForeignKeys->Column_OnDelete        <> l_nOnDelete
+                               
+                                if (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_PROPOSED) .or. (AllTableColumnsChildrenForForeignKeys->Column_UseStatus != USESTATUS_DISCONTINUED)
+                                    :Table("2e27fe45-f201-44ae-b1d6-f4d05c559e63","Column")
+                                    :Field("Column.fk_TableForeign",l_iParentTableKey)
+                                    :Field("Column.UsedAs"         ,COLUMN_USEDAS_FOREIGN_KEY)
+                                    :Field("Column.OnDelete"       ,l_nOnDelete)
+
+                                    if :Update(l_iChildColumnKey)
+                                        l_iUpdatedColumns += 1
+                                    else
+                                        //_M_ report error
+                                    endif
+                                endif
+                            endif
+                        endif
+
+                    endscan
+                endif
+
+
+            endcase
 
         else
             :Table("5e32612b-fcf7-4f16-84f2-583df8673e3a","Column")

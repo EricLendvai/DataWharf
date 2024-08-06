@@ -577,6 +577,7 @@ local l_oDB_ListOfProjects                  := hb_SQLData(oFcgi:p_o_SQLConnectio
 
 local l_cTableName
 local l_cTableDescription
+local l_oData
 
 oFcgi:TraceAdd("UserEditFormOnSubmit")
 
@@ -673,7 +674,7 @@ case l_cActionOnSubmit == "Save"
                             :Index("pk","pk")
                             :CreateIndexes()
                             :SetOrder("pk")
-                        endwith        
+                        endwith
                     endwith
 
                     select ListOfApplications
@@ -734,7 +735,7 @@ case l_cActionOnSubmit == "Save"
                             :Index("pk","pk")
                             :CreateIndexes()
                             :SetOrder("pk")
-                        endwith        
+                        endwith
                     endwith
 
                     select ListOfProjects
@@ -775,19 +776,14 @@ case l_cActionOnSubmit == "Save"
 
                 //-----------------------------------------------
 
-                if empty(l_cErrorMessage)
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"Users/ListUsers/")
-                endif
             endwith
         endif
     endcase
 
-case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
-    if empty(l_iUserPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Users")
-    else
-        oFcgi:Redirect(oFcgi:p_cSitePath+"Users/ListUsers/")  // +par_cURLUserID+"/"
-    endif
+case l_cActionOnSubmit == "Cancel"
+
+case l_cActionOnSubmit == "Done"
+    l_iUserPk := 0
 
 case l_cActionOnSubmit == "Delete"   // User
     if l_iUserPk == oFcgi:p_iUserPk
@@ -858,13 +854,14 @@ case l_cActionOnSubmit == "Delete"   // User
 
         if empty(l_cErrorMessage)
             l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","User",l_iUserPk)
-            oFcgi:Redirect(oFcgi:p_cSitePath+"Users/")
+            l_iUserPk := 0
         endif
     endif
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["FirstName"]   := l_cUserFirstName
     l_hValues["LastName"]    := l_cUserLastName
     l_hValues["ID"]          := l_cUserID
@@ -904,7 +901,23 @@ if !empty(l_cErrorMessage)
     endscan
 
     l_cHtml += UserEditFormBuild(l_iUserPk,l_cErrorMessage,l_hValues)
-endif
+
+case empty(l_iUserPk)
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Users/")
+
+otherwise
+    with object l_oDB1
+        :Table("c00c4781-3bd1-48bc-b74e-9f12b32804f1","User")
+        :Column("User.ID","User_ID")
+        l_oData := :Get(l_iUserPk)
+        if :Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Users/EditUser/"+alltrim(l_oData:User_ID)+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Users/")
+        endif
+    endwith
+
+endcase
 
 return l_cHtml
 //=================================================================================================================

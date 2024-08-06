@@ -874,41 +874,44 @@ case l_cURLAction == "EditColumn"
     with object l_oDB1
         :Table("0f8ba8eb-5046-4183-97de-5182a7a0ef2a","Column")
 
-        :Column("Column.pk"                 ,"Column_pk")
-        :Column("Namespace.pk"              ,"Namespace_pk")
-        :Column("Table.pk"                  ,"Table_pk")
-        :Column("Namespace.Name"            ,"Namespace_Name")
-        :Column("Namespace.AKA"             ,"Namespace_AKA")
-        :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
-        :Column("Table.Name"                ,"Table_Name")
-        :Column("Table.AKA"                 ,"Table_AKA")
-        :Column("Table.LinkUID"             ,"Table_LinkUID")
-        :Column("Column.Name"               ,"Column_Name")
-        :Column("Column.TrackNameChanges"   ,"Column_TrackNameChanges")
-        :Column("Column.AKA"                ,"Column_AKA")
-        :Column("Column.LinkUID"            ,"Column_LinkUID")
-        :Column("Column.StaticUID"          ,"Column_StaticUID")
-        :Column("Column.UsedAs"             ,"Column_UsedAs")
-        :Column("Column.UsedBy"             ,"Column_UsedBy")
-        :Column("Column.UseStatus"          ,"Column_UseStatus")
-        :Column("Column.DocStatus"          ,"Column_DocStatus")
-        :Column("Column.Description"        ,"Column_Description")
-        :Column("Column.Type"               ,"Column_Type")
-        :Column("Column.Array"              ,"Column_Array")
-        :Column("Column.Length"             ,"Column_Length")
-        :Column("Column.Scale"              ,"Column_Scale")
-        :Column("Column.Nullable"           ,"Column_Nullable")
-        :Column("Column.Unicode"            ,"Column_Unicode")
-        :Column("Column.DefaultType"        ,"Column_DefaultType")
-        :Column("Column.DefaultCustom"      ,"Column_DefaultCustom")
-        :Column("Column.LastNativeType"     ,"Column_LastNativeType")
-        :Column("Column.fk_TableForeign"    ,"Column_fk_TableForeign")
-        :Column("Column.ForeignKeyUse"      ,"Column_ForeignKeyUse")
-        :Column("Column.ForeignKeyOptional" ,"Column_ForeignKeyOptional")
-        :Column("Column.OnDelete"           ,"Column_OnDelete")
-        :Column("Column.fk_Enumeration"     ,"Column_fk_Enumeration")
-        :Column("Column.TestWarning"        ,"Column_TestWarning")
-        :Column("Column.ExternalId"         ,"Column_ExternalId")
+        :Column("Column.pk"                       ,"Column_pk")
+        :Column("Namespace.pk"                    ,"Namespace_pk")
+        :Column("Table.pk"                        ,"Table_pk")
+        :Column("Namespace.Name"                  ,"Namespace_Name")
+        :Column("Namespace.AKA"                   ,"Namespace_AKA")
+        :Column("Namespace.LinkUID"               ,"Namespace_LinkUID")
+        :Column("Table.Name"                      ,"Table_Name")
+        :Column("Table.AKA"                       ,"Table_AKA")
+        :Column("Table.LinkUID"                   ,"Table_LinkUID")
+        :Column("Column.Name"                     ,"Column_Name")
+        :Column("Column.TrackNameChanges"         ,"Column_TrackNameChanges")
+        :Column("Column.AKA"                      ,"Column_AKA")
+        :Column("Column.LinkUID"                  ,"Column_LinkUID")
+        :Column("Column.StaticUID"                ,"Column_StaticUID")
+        :Column("Column.UsedAs"                   ,"Column_UsedAs")
+        :Column("Column.UsedBy"                   ,"Column_UsedBy")
+        :Column("Column.UseStatus"                ,"Column_UseStatus")
+        :Column("Column.DocStatus"                ,"Column_DocStatus")
+        :Column("Column.Description"              ,"Column_Description")
+        :Column("Column.Type"                     ,"Column_Type")
+        :Column("Column.Array"                    ,"Column_Array")
+        :Column("Column.Length"                   ,"Column_Length")
+        :Column("Column.Scale"                    ,"Column_Scale")
+        :Column("Column.Nullable"                 ,"Column_Nullable")
+        :Column("Column.Unicode"                  ,"Column_Unicode")
+        :Column("Column.DefaultType"              ,"Column_DefaultType")
+        :Column("Column.DefaultCustom"            ,"Column_DefaultCustom")
+        :Column("Column.LastNativeTypeMySQL"      ,"Column_LastNativeTypeMySQL")
+        :Column("Column.LastNativeTypePostgreSQL" ,"Column_LastNativeTypePostgreSQL")
+        :Column("Column.LastNativeTypeMSSQL"      ,"Column_LastNativeTypeMSSQL")
+        :Column("Column.LastNativeTypeOracle"     ,"Column_LastNativeTypeOracle")
+        :Column("Column.fk_TableForeign"          ,"Column_fk_TableForeign")
+        :Column("Column.ForeignKeyUse"            ,"Column_ForeignKeyUse")
+        :Column("Column.ForeignKeyOptional"       ,"Column_ForeignKeyOptional")
+        :Column("Column.OnDelete"                 ,"Column_OnDelete")
+        :Column("Column.fk_Enumeration"           ,"Column_fk_Enumeration")
+        :Column("Column.TestWarning"              ,"Column_TestWarning")
+        :Column("Column.ExternalId"               ,"Column_ExternalId")
 
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -959,31 +962,34 @@ case l_cURLAction == "EditColumn"
                 l_hValues["ShowPrimary"] := empty(:Tally)
             endwith
 
-            l_hValues["Name"]               := alltrim(l_oData:Column_Name)
-            l_hValues["TrackNameChanges"]   := l_oData:Column_TrackNameChanges
-            l_hValues["AKA"]                := alltrim(nvl(l_oData:Column_AKA,""))
-            l_hValues["StaticUID"]          := l_oData:Column_StaticUID
-            l_hValues["UsedAs"]             := l_oData:Column_UsedAs
-            l_hValues["UsedBy"]             := l_oData:Column_UsedBy
-            l_hValues["UseStatus"]          := l_oData:Column_UseStatus
-            l_hValues["DocStatus"]          := l_oData:Column_DocStatus
-            l_hValues["Description"]        := l_oData:Column_Description
-            l_hValues["Type"]               := alltrim(l_oData:Column_Type)
-            l_hValues["Array"]              := l_oData:Column_Array
-            l_hValues["Length"]             := l_oData:Column_Length
-            l_hValues["Scale"]              := l_oData:Column_Scale
-            l_hValues["Nullable"]           := l_oData:Column_Nullable
-            l_hValues["Unicode"]            := l_oData:Column_Unicode
-            l_hValues["DefaultType"]        := l_oData:Column_DefaultType
-            l_hValues["DefaultCustom"]      := l_oData:Column_DefaultCustom
-            l_hValues["LastNativeType"]     := l_oData:Column_LastNativeType
-            l_hValues["Fk_TableForeign"]    := l_oData:Column_fk_TableForeign
-            l_hValues["ForeignKeyUse"]      := l_oData:Column_ForeignKeyUse
-            l_hValues["ForeignKeyOptional"] := l_oData:Column_ForeignKeyOptional
-            l_hValues["OnDelete"]           := l_oData:Column_OnDelete
-            l_hValues["Fk_Enumeration"]     := l_oData:Column_fk_Enumeration
-            l_hValues["TestWarning"]        := l_oData:Column_TestWarning
-            l_hValues["ExternalId"]         := l_oData:Column_ExternalId
+            l_hValues["Name"]                     := alltrim(l_oData:Column_Name)
+            l_hValues["TrackNameChanges"]         := l_oData:Column_TrackNameChanges
+            l_hValues["AKA"]                      := alltrim(nvl(l_oData:Column_AKA,""))
+            l_hValues["StaticUID"]                := l_oData:Column_StaticUID
+            l_hValues["UsedAs"]                   := l_oData:Column_UsedAs
+            l_hValues["UsedBy"]                   := l_oData:Column_UsedBy
+            l_hValues["UseStatus"]                := l_oData:Column_UseStatus
+            l_hValues["DocStatus"]                := l_oData:Column_DocStatus
+            l_hValues["Description"]              := l_oData:Column_Description
+            l_hValues["Type"]                     := alltrim(l_oData:Column_Type)
+            l_hValues["Array"]                    := l_oData:Column_Array
+            l_hValues["Length"]                   := l_oData:Column_Length
+            l_hValues["Scale"]                    := l_oData:Column_Scale
+            l_hValues["Nullable"]                 := l_oData:Column_Nullable
+            l_hValues["Unicode"]                  := l_oData:Column_Unicode
+            l_hValues["DefaultType"]              := l_oData:Column_DefaultType
+            l_hValues["DefaultCustom"]            := l_oData:Column_DefaultCustom
+            l_hValues["LastNativeTypeMySQL"]      := l_oData:Column_LastNativeTypeMySQL
+            l_hValues["LastNativeTypePostgreSQL"] := l_oData:Column_LastNativeTypePostgreSQL
+            l_hValues["LastNativeTypeMSSQL"]      := l_oData:Column_LastNativeTypeMSSQL
+            l_hValues["LastNativeTypeOracle"]     := l_oData:Column_LastNativeTypeOracle
+            l_hValues["Fk_TableForeign"]          := l_oData:Column_fk_TableForeign
+            l_hValues["ForeignKeyUse"]            := l_oData:Column_ForeignKeyUse
+            l_hValues["ForeignKeyOptional"]       := l_oData:Column_ForeignKeyOptional
+            l_hValues["OnDelete"]                 := l_oData:Column_OnDelete
+            l_hValues["Fk_Enumeration"]           := l_oData:Column_fk_Enumeration
+            l_hValues["TestWarning"]              := l_oData:Column_TestWarning
+            l_hValues["ExternalId"]               := l_oData:Column_ExternalId
             
             CustomFieldsLoad(l_iApplicationPk,USEDON_COLUMN,l_iColumnPk,@l_hValues)
 
@@ -3457,8 +3463,8 @@ otherwise
         :Table("4fc421b6-82b8-4998-b3f6-704e911037c3","Namespace")
         :Column("Namespace.Name"   ,"Namespace_Name")
         :Column("Namespace.LinkUID","Namespace_LinkUID")
-        l_oData := l_oDB1:Get(l_iNamespacePk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iNamespacePk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditNamespace/"+par_cURLApplicationLinkCode+"/"+;
                                               PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/";
                                               )
@@ -5197,8 +5203,6 @@ case l_cActionOnSubmit == "Duplicate"   // Table
             :Column("Column.Unicode"           ,"Column_Unicode")
             :Column("Column.Description"       ,"Column_Description")
             // :Column("Column.TestWarning"       ,"Column_TestWarning")
-            // :Column("Column.LastNativeType"    ,"Column_LastNativeType")
-
             :SQL("ListOfColumns")
         endwith
 
@@ -6213,33 +6217,36 @@ return l_cHtml
 static function ColumnEditFormBuild(par_iApplicationPk,par_iNamespacePk,par_iTablePk,par_cURLApplicationLinkCode,par_oNavData,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
-local l_cErrorText          := hb_DefaultValue(par_cErrorText,"")
-local l_cName               := hb_HGetDef(par_hValues,"Name","")
-local l_lTrackNameChanges   := nvl(hb_HGetDef(par_hValues,"TrackNameChanges",.t.),.t.)
-local l_cAKA                := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
-local l_cStaticUID          := nvl(hb_HGetDef(par_hValues,"StaticUID",""),"")
-local l_nUsedAs             := hb_HGetDef(par_hValues,"UsedAs",1)
-local l_nUsedBy             := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
-local l_cTags               := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
-local l_nUseStatus          := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
-local l_nDocStatus          := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
-local l_cDescription        := nvl(hb_HGetDef(par_hValues,"Description",""),"")
-local l_cType               := alltrim(hb_HGetDef(par_hValues,"Type",""))
-local l_lArray              := hb_HGetDef(par_hValues,"Array",.f.)
-local l_cLength             := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
-local l_cScale              := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
-local l_lNullable           := hb_HGetDef(par_hValues,"Nullable",.t.)
-local l_lForeignKeyOptional := hb_HGetDef(par_hValues,"ForeignKeyOptional",.f.)
-local l_nOnDelete           := max(1,hb_HGetDef(par_hValues,"OnDelete",2))
-local l_nDefaultType        := nvl(hb_HGetDef(par_hValues,"DefaultType",0),0)
-local l_cDefaultCustom      := nvl(hb_HGetDef(par_hValues,"DefaultCustom",""),"")
-local l_lUnicode            := hb_HGetDef(par_hValues,"Unicode",.t.)
-local l_iFk_TableForeign    := nvl(hb_HGetDef(par_hValues,"Fk_TableForeign",0),0)
-local l_cForeignKeyUse      := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
-local l_iFk_Enumeration     := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
-local l_cLastNativeType     := hb_HGetDef(par_hValues,"LastNativeType","")
-local l_lShowPrimary        := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
-local l_iExternalId         := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
+local l_cErrorText                := hb_DefaultValue(par_cErrorText,"")
+local l_cName                     := hb_HGetDef(par_hValues,"Name","")
+local l_lTrackNameChanges         := nvl(hb_HGetDef(par_hValues,"TrackNameChanges",.t.),.t.)
+local l_cAKA                      := nvl(hb_HGetDef(par_hValues,"AKA",""),"")
+local l_cStaticUID                := nvl(hb_HGetDef(par_hValues,"StaticUID",""),"")
+local l_nUsedAs                   := hb_HGetDef(par_hValues,"UsedAs",1)
+local l_nUsedBy                   := hb_HGetDef(par_hValues,"UsedBy",USEDBY_ALLSERVERS)
+local l_cTags                     := nvl(hb_HGetDef(par_hValues,"Tags",""),"")
+local l_nUseStatus                := hb_HGetDef(par_hValues,"UseStatus",USESTATUS_UNKNOWN)
+local l_nDocStatus                := hb_HGetDef(par_hValues,"DocStatus",DOCTATUS_MISSING)
+local l_cDescription              := nvl(hb_HGetDef(par_hValues,"Description",""),"")
+local l_cType                     := alltrim(hb_HGetDef(par_hValues,"Type",""))
+local l_lArray                    := hb_HGetDef(par_hValues,"Array",.f.)
+local l_cLength                   := Trans(nvl(hb_HGetDef(par_hValues,"Length",0),0))
+local l_cScale                    := Trans(nvl(hb_HGetDef(par_hValues,"Scale",0),0))
+local l_lNullable                 := hb_HGetDef(par_hValues,"Nullable",.t.)
+local l_lForeignKeyOptional       := hb_HGetDef(par_hValues,"ForeignKeyOptional",.f.)
+local l_nOnDelete                 := max(1,hb_HGetDef(par_hValues,"OnDelete",2))
+local l_nDefaultType              := nvl(hb_HGetDef(par_hValues,"DefaultType",0),0)
+local l_cDefaultCustom            := nvl(hb_HGetDef(par_hValues,"DefaultCustom",""),"")
+local l_lUnicode                  := hb_HGetDef(par_hValues,"Unicode",.t.)
+local l_iFk_TableForeign          := nvl(hb_HGetDef(par_hValues,"Fk_TableForeign",0),0)
+local l_cForeignKeyUse            := nvl(hb_HGetDef(par_hValues,"ForeignKeyUse",""),"")
+local l_iFk_Enumeration           := nvl(hb_HGetDef(par_hValues,"Fk_Enumeration",0),0)
+local l_cLastNativeTypeMySQL      := hb_HGetDef(par_hValues,"LastNativeTypeMySQL","")
+local l_cLastNativeTypePostgreSQL := hb_HGetDef(par_hValues,"LastNativeTypePostgreSQL","")
+local l_cLastNativeTypeMSSQL      := hb_HGetDef(par_hValues,"LastNativeTypeMSSQL","")
+local l_cLastNativeTypeOracle     := hb_HGetDef(par_hValues,"LastNativeTypeOracle","")
+local l_lShowPrimary              := hb_HGetDef(par_hValues,"ShowPrimary",.f.)
+local l_iExternalId               := nvl(hb_HGetDef(par_hValues,"ExternalId",0),0)
 
 local l_iTypeCount
 
@@ -6692,9 +6699,21 @@ l_cHtml += [<div class="m-3">]
                 l_cHtml += [</select>]
             l_cHtml += [</span>]
 
-            if !empty(nvl(l_cLastNativeType,""))
-                l_cHtml += [<span class="pe-5" id="SpanLastNativeType">Last Sync/Log Type: ] + l_cLastNativeType + [</span>]
-                l_cHtml += [<input type="hidden" name="TextLastNativeType" value="]+FcgiPrepFieldForValue(l_cLastNativeType)+[">]
+            if !empty(nvl(l_cLastNativeTypeMySQL,""))
+                l_cHtml += [<span class="pe-5" id="SpanLastNativeTypeMySQL">Last MySQL Engine Load Type: ] + l_cLastNativeTypeMySQL + [</span>]
+                l_cHtml += [<input type="hidden" name="TextLastNativeTypeMySQL" value="]     +FcgiPrepFieldForValue(l_cLastNativeTypeMySQL)+[">]
+            endif
+            if !empty(nvl(l_cLastNativeTypePostgreSQL,""))
+                l_cHtml += [<span class="pe-5" id="SpanLastNativeTypePostgreSQL">Last PostgreSQL Load Type: ] + l_cLastNativeTypePostgreSQL + [</span>]
+                l_cHtml += [<input type="hidden" name="TextLastNativeTypePostgreSQL" value="]+FcgiPrepFieldForValue(l_cLastNativeTypePostgreSQL)+[">]
+            endif
+            if !empty(nvl(l_cLastNativeTypeMSSQL,""))
+                l_cHtml += [<span class="pe-5" id="SpanLastNativeTypeMSSQL">Last MSSQL Load Type: ] + l_cLastNativeTypeMSSQL + [</span>]
+                l_cHtml += [<input type="hidden" name="TextLastNativeTypeMSSQL" value="]     +FcgiPrepFieldForValue(l_cLastNativeTypeMSSQL)+[">]
+            endif
+            if !empty(nvl(l_cLastNativeTypeOracle,""))
+                l_cHtml += [<span class="pe-5" id="SpanLastNativeTypeOracle">Last Oracle Load Type: ] + l_cLastNativeTypeOracle + [</span>]
+                l_cHtml += [<input type="hidden" name="TextLastNativeTypeOracle" value="]    +FcgiPrepFieldForValue(l_cLastNativeTypeOracle)+[">]
             endif
 
         l_cHtml += [</td>]
@@ -6908,7 +6927,10 @@ local l_cColumnLength
 local l_nColumnLength
 local l_cColumnScale
 local l_nColumnScale
-local l_cColumnLastNativeType
+local l_cColumnLastNativeTypeMySQL
+local l_cColumnLastNativeTypePostgreSQL
+local l_cColumnLastNativeTypeMSSQL
+local l_cColumnLastNativeTypeOracle
 local l_lColumnNullable
 local l_lColumnForeignKeyOptional
 local l_nColumnOnDelete
@@ -6964,48 +6986,51 @@ if empty(l_cColumnAKA)
     l_cColumnAKA := NIL
 endif
 
-l_nColumnUsedAs             := Val(oFcgi:GetInputValue("ComboUsedAs"))
+l_nColumnUsedAs                   := Val(oFcgi:GetInputValue("ComboUsedAs"))
 
-l_nColumnUsedBy             := Val(oFcgi:GetInputValue("ComboUsedBy"))
+l_nColumnUsedBy                   := Val(oFcgi:GetInputValue("ComboUsedBy"))
 
-l_nColumnUseStatus          := Val(oFcgi:GetInputValue("ComboUseStatus"))
+l_nColumnUseStatus                := Val(oFcgi:GetInputValue("ComboUseStatus"))
 
-l_cColumnType               := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
-l_lColumnArray              := (oFcgi:GetInputValue("CheckArray") == "1")
+l_cColumnType                     := SanitizeInputAlphaNumeric(oFcgi:GetInputValue("ComboType"))
+l_lColumnArray                    := (oFcgi:GetInputValue("CheckArray") == "1")
 
-l_cColumnLength             := SanitizeInput(oFcgi:GetInputValue("TextLength"))
-l_nColumnLength             := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
+l_cColumnLength                   := SanitizeInput(oFcgi:GetInputValue("TextLength"))
+l_nColumnLength                   := iif(empty(l_cColumnLength),NULL,val(l_cColumnLength))
 
-l_cColumnScale              := SanitizeInput(oFcgi:GetInputValue("TextScale"))
-l_nColumnScale              := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
+l_cColumnScale                    := SanitizeInput(oFcgi:GetInputValue("TextScale"))
+l_nColumnScale                    := iif(empty(l_cColumnScale),NULL,val(l_cColumnScale))
 
-l_cColumnLastNativeType     := SanitizeInput(oFcgi:GetInputValue("TextLastNativeType"))
+l_cColumnLastNativeTypeMySQL      := SanitizeInput(oFcgi:GetInputValue("Textl_cColumn"))
+l_cColumnLastNativeTypePostgreSQL := SanitizeInput(oFcgi:GetInputValue("Textl_cColumn"))
+l_cColumnLastNativeTypeMSSQL      := SanitizeInput(oFcgi:GetInputValue("Textl_cColumn"))
+l_cColumnLastNativeTypeOracle     := SanitizeInput(oFcgi:GetInputValue("Textl_cColumn"))
 
-l_lColumnNullable           := (oFcgi:GetInputValue("CheckNullable") == "1")
+l_lColumnNullable                 := (oFcgi:GetInputValue("CheckNullable") == "1")
 
-l_lColumnForeignKeyOptional := (oFcgi:GetInputValue("CheckForeignKeyOptional") == "1")
+l_lColumnForeignKeyOptional       := (oFcgi:GetInputValue("CheckForeignKeyOptional") == "1")
 
-l_nColumnOnDelete           := Val(oFcgi:GetInputValue("ComboOnDelete"))
+l_nColumnOnDelete                 := Val(oFcgi:GetInputValue("ComboOnDelete"))
 
-l_nColumnDefaultType        := Val(oFcgi:GetInputValue("ComboDefaultType"))
+l_nColumnDefaultType              := Val(oFcgi:GetInputValue("ComboDefaultType"))
 
-l_cColumnDefaultCustom      := SanitizeInput(oFcgi:GetInputValue("TextDefaultCustom"))
+l_cColumnDefaultCustom            := SanitizeInput(oFcgi:GetInputValue("TextDefaultCustom"))
 if empty(l_cColumnDefaultCustom)
     l_cColumnDefaultCustom := NIL
 endif
 
-l_lColumnUnicode            := (oFcgi:GetInputValue("CheckUnicode") == "1")
+l_lColumnUnicode                  := (oFcgi:GetInputValue("CheckUnicode") == "1")
 
-l_iColumnFk_TableForeign    := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
+l_iColumnFk_TableForeign          := Val(oFcgi:GetInputValue("ComboFk_TableForeign"))
 
-l_cColumnForeignKeyUse      := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
+l_cColumnForeignKeyUse            := SanitizeInput(oFcgi:GetInputValue("TextForeignKeyUse"))
 
-l_iColumnFk_Enumeration     := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
+l_iColumnFk_Enumeration           := Val(oFcgi:GetInputValue("ComboFk_Enumeration"))
 
-l_nColumnDocStatus          := Val(oFcgi:GetInputValue("ComboDocStatus"))
-l_cColumnDescription        := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
+l_nColumnDocStatus                := Val(oFcgi:GetInputValue("ComboDocStatus"))
+l_cColumnDescription              := MultiLineTrim(SanitizeInput(oFcgi:GetInputValue("TextDescription")))
 
-l_iColumnExternalId         := Val(oFcgi:GetInputValue("TextExternalId"))
+l_iColumnExternalId               := Val(oFcgi:GetInputValue("TextExternalId"))
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -7327,7 +7352,6 @@ case l_cActionOnSubmit == "Duplicate"   // Column
             :Column("Column.Unicode"           ,"Column_Unicode")
             :Column("Column.Description"       ,"Column_Description")
             // :Column("Column.TestWarning"       ,"Column_TestWarning")
-            // :Column("Column.LastNativeType"    ,"Column_LastNativeType")
             l_oData := :Get(l_iColumnPk)
 
             if !hb_IsNil(l_oData)
@@ -7370,7 +7394,6 @@ case l_cActionOnSubmit == "Duplicate"   // Column
                     :Field("Column.Unicode"           ,l_oData:Column_Unicode)
                     :Field("Column.Description"       ,l_oData:Column_Description)
                     // :Field("Column.TestWarning"       ,l_oData:Column_TestWarning)
-                    // :Field("Column.LastNativeType"    ,l_oData:Column_LastNativeType)
 
                     if :Add()
                         l_iColumnPk := :Key()
@@ -7393,29 +7416,32 @@ endcase
 
 do case
 case !empty(l_cErrorMessage)
-    l_hValues["Name"]               := l_cColumnName
-    l_hValues["AKA"]                := l_cColumnAKA
-    l_hValues["UsedAs"]             := l_nColumnUsedAs
-    l_hValues["UsedBy"]             := l_nColumnUsedBy
-    l_hValues["UseStatus"]          := l_nColumnUseStatus
-    l_hValues["DocStatus"]          := l_nColumnDocStatus
-    l_hValues["Description"]        := l_cColumnDescription
-    l_hValues["Type"]               := l_cColumnType
-    l_hValues["Array"]              := l_lColumnArray
-    l_hValues["Length"]             := l_nColumnLength
-    l_hValues["Scale"]              := l_nColumnScale
-    l_hValues["LastNativeType"]     := l_cColumnLastNativeType
-    l_hValues["Nullable"]           := l_lColumnNullable
-    l_hValues["ForeignKeyOptional"] := l_lColumnForeignKeyOptional
-    l_hValues["OnDelete"]           := l_nColumnOnDelete
-    l_hValues["DefaultType"]        := l_nColumnDefaultType
-    l_hValues["DefaultCustom"]      := l_cColumnDefaultCustom
-    l_hValues["Unicode"]            := l_lColumnUnicode
-    l_hValues["ShowPrimary"]        := l_lShowPrimary
-    l_hValues["Fk_TableForeign"]    := l_iColumnFk_TableForeign
-    l_hValues["ForeignKeyUse"]      := l_cColumnForeignKeyUse
-    l_hValues["Fk_Enumeration"]     := l_iColumnFk_Enumeration
-    l_hValues["ExternalId"]         := l_iColumnExternalId
+    l_hValues["Name"]                     := l_cColumnName
+    l_hValues["AKA"]                      := l_cColumnAKA
+    l_hValues["UsedAs"]                   := l_nColumnUsedAs
+    l_hValues["UsedBy"]                   := l_nColumnUsedBy
+    l_hValues["UseStatus"]                := l_nColumnUseStatus
+    l_hValues["DocStatus"]                := l_nColumnDocStatus
+    l_hValues["Description"]              := l_cColumnDescription
+    l_hValues["Type"]                     := l_cColumnType
+    l_hValues["Array"]                    := l_lColumnArray
+    l_hValues["Length"]                   := l_nColumnLength
+    l_hValues["Scale"]                    := l_nColumnScale
+    l_hValues["LastNativeTypeMySQL"]      := l_cColumnLastNativeTypeMySQL
+    l_hValues["LastNativeTypePostgreSQL"] := l_cColumnLastNativeTypePostgreSQL
+    l_hValues["LastNativeTypeMSSQL"]      := l_cColumnLastNativeTypeMSSQL
+    l_hValues["LastNativeTypeOracle"]     := l_cColumnLastNativeTypeOracle
+    l_hValues["Nullable"]                 := l_lColumnNullable
+    l_hValues["ForeignKeyOptional"]       := l_lColumnForeignKeyOptional
+    l_hValues["OnDelete"]                 := l_nColumnOnDelete
+    l_hValues["DefaultType"]              := l_nColumnDefaultType
+    l_hValues["DefaultCustom"]            := l_cColumnDefaultCustom
+    l_hValues["Unicode"]                  := l_lColumnUnicode
+    l_hValues["ShowPrimary"]              := l_lShowPrimary
+    l_hValues["Fk_TableForeign"]          := l_iColumnFk_TableForeign
+    l_hValues["ForeignKeyUse"]            := l_cColumnForeignKeyUse
+    l_hValues["Fk_Enumeration"]           := l_iColumnFk_Enumeration
+    l_hValues["ExternalId"]               := l_iColumnExternalId
 
     CustomFieldsFormToHash(par_iApplicationPk,USEDON_COLUMN,@l_hValues)
 
@@ -7446,8 +7472,8 @@ otherwise
         :Column("Column.LinkUID"    ,"Column_LinkUID")
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-        l_oData := l_oDB1:Get(l_iColumnPk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iColumnPk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+par_cURLApplicationLinkCode+"/"+;
                                                                             PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/"+;
                                                                             PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +"/"+;
@@ -8084,8 +8110,8 @@ otherwise
         :Column("Index.LinkUID"     ,"Index_LinkUID")
         :Join("inner","Table"    ,"","Index.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-        l_oData := l_oDB1:Get(l_iIndexPk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iIndexPk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditIndex/"+par_cURLApplicationLinkCode+"/"+;
                                                                            PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/"+;
                                                                            PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +"/"+;
@@ -9015,6 +9041,8 @@ else
 endif
 
 l_iEnumerationExternalId := Val(oFcgi:GetInputValue("TextExternalId"))
+
+// altd()
 
 do case
 case l_cActionOnSubmit == "Save"
@@ -10278,6 +10306,7 @@ local l_cActionOnSubmit
 
 local l_nFk_Deployment
 
+local l_cConnectLinkUID
 local l_nConnectBackendType
 local l_cConnectBackendType
 local l_cConnectServer
@@ -10398,6 +10427,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
         with object l_oDB_ListOfDeployments
             :Table("d4e737d0-d8a3-4f5e-b05a-aa87e17522b1","public.Deployment")
 
+            :Column("Deployment.LinkUID"            , "LinkUID")
             :Column("Deployment.BackendType"        , "BackendType")
             :Column("Deployment.Server"             , "Server")
             :Column("Deployment.Port"               , "Port")
@@ -10413,6 +10443,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
 
             l_oData := :Get(l_nFk_Deployment)
             if :Tally == 1
+                l_cConnectLinkUID         := alltrim(nvl(l_oData:LinkUID,""))
                 l_nConnectBackendType     := nvl(l_oData:BackendType,0)
                 l_cConnectServer          := nvl(l_oData:Server,"")
                 l_nConnectPort            := nvl(l_oData:Port,0)
@@ -10528,6 +10559,21 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                     l_cDriver := "SQL Server"
                 endif
                 exit
+            case HB_ORM_BACKENDTYPE_ORACLE
+                l_cConnectBackendType := "ORACLE"
+                l_cSQLEngineType      := HB_ORM_ENGINETYPE_ORACLE
+                l_iPort               := iif(empty(l_nConnectPort),1521,l_nConnectPort)
+                l_cDriver             := oFcgi:GetAppConfig("ODBC_DRIVER_ORACLE")
+                if empty(l_cDriver)
+#ifdef __PLATFORM__LINUX
+                    l_cDriver := "Oracle"
+#endif
+#ifdef __PLATFORM__WINDOWS
+                    l_cDriver := "Oracle in instantclient_23_4"
+#endif
+                endif
+                UpdateTnsnamesOra()
+                exit
             otherwise
                 l_iPort := -1
             endswitch
@@ -10568,107 +10614,114 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
 
                         do case
                         case l_cActionOnSubmit == "Update"
-                            if !l_lAllowUpdates
-                                l_cErrorMessage := "Deployment is not configured to allow updates."
+                            if l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL
+                                if !l_lAllowUpdates
+                                    l_cErrorMessage := "Deployment is not configured to allow updates."
+                                else
+                                    l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,.f.,l_cConnectBackendType)
+                                    l_cMacro := Strtran(l_cMacro,chr(13),"")
+                                    l_cMacro := Strtran(l_cMacro,chr(10),"")
+                                    l_cMacro := Strtran(l_cMacro,[;],"")
+                                    l_hWharfConfig := &( l_cMacro )
+
+                                    //MigrateSchema return values: 0 = Nothing Migrated, 1 = Migrated, -1 = Error Migrating
+                                    if el_AUnpack(l_o_SQLConnection:MigrateSchema(l_hWharfConfig),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                        l_cErrorMessage := "Success - Migrated Structure"
+
+                                        // if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                        //     l_cErrorMessage := "Success - Structure and Foreign Key Constraints Migrated"
+                                        // else
+                                        //     if empty(l_cLastError)
+                                        //         l_cErrorMessage := "Success - Structure Migrated and Foreign Key Constraints did not change."
+                                        //     else
+                                        //         l_cErrorMessage := "Structure Migrated but Failed To Migrate Foreign Key Constraints"
+                                        //         l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                        //         SendToDebugView("PostgreSQL - Failed Update")
+                                        //     endif
+                                        // endif
+
+                                    else
+                                        if l_nMigrateResult == 0
+                                            l_cErrorMessage := "Success - Nothing Changed."
+                                        else
+                                            if empty(l_cLastError)
+                                                l_cErrorMessage := "Unknown Error Occurred."
+                                            else
+                                                l_cErrorMessage := "Failed to Update Structure."
+                                                l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                                SendToDebugView("PostgreSQL - Failed Update")
+                                            endif
+                                        endif
+
+                                        // if empty(l_cLastError)
+                                        //     if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
+                                        //         l_cErrorMessage := "Success - Structure did not change and Foreign Key Constraints Migrated"
+                                        //     else
+                                        //         if empty(l_cLastError)
+                                        //             l_cErrorMessage := "Success - Structure and Foreign Key Constraints did not change."
+                                        //         else
+                                        //             l_cErrorMessage := "Structure did not change but Failed To Migrate Foreign Key Constraints"
+                                        //             l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                        //             SendToDebugView("PostgreSQL - Failed Update")
+                                        //         endif
+                                        //     endif
+                                        // else
+                                        //     l_cErrorMessage := "Failed To Migrate Structure"
+                                        //     l_cErrorDetail := l_cLastError+[<br>Script Generated to migrate structure:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
+                                        //     SendToDebugView("PostgreSQL - Failed Update")
+                                        // endif
+                                    endif
+
+                                endif
                             else
+                                l_cErrorMessage := "Feature not available for selected backend."
+                            endif
+                            l_cScript := ""
+
+                        case l_cActionOnSubmit == "GenerateScript"
+                            if l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL
                                 l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,.f.,l_cConnectBackendType)
                                 l_cMacro := Strtran(l_cMacro,chr(13),"")
                                 l_cMacro := Strtran(l_cMacro,chr(10),"")
                                 l_cMacro := Strtran(l_cMacro,[;],"")
                                 l_hWharfConfig := &( l_cMacro )
 
-                                //MigrateSchema return values: 0 = Nothing Migrated, 1 = Migrated, -1 = Error Migrating
-                                if el_AUnpack(l_o_SQLConnection:MigrateSchema(l_hWharfConfig),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
-                                    l_cErrorMessage := "Success - Migrated Structure"
+                                // l_cSQLScript := ""
+                                // l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
+                                // if !empty(l_cScript)
+                                //     l_cSQLScript := "--Structure Changes"+CRLF+l_cScript
+                                // endif
+                                // l_cScript := l_o_SQLConnection:GenerateMigrateForeignKeyConstraintsScript( nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) )
+                                // if !empty(l_cScript)
+                                //     if !empty(l_cSQLScript)
+                                //         l_cSQLScript += CRLF
+                                //     endif
+                                //     l_cSQLScript += "--Foreign Key Constraint Changes"+CRLF+l_cScript
+                                // endif
 
-                                    // if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
-                                    //     l_cErrorMessage := "Success - Structure and Foreign Key Constraints Migrated"
-                                    // else
-                                    //     if empty(l_cLastError)
-                                    //         l_cErrorMessage := "Success - Structure Migrated and Foreign Key Constraints did not change."
-                                    //     else
-                                    //         l_cErrorMessage := "Structure Migrated but Failed To Migrate Foreign Key Constraints"
-                                    //         l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                    //         SendToDebugView("PostgreSQL - Failed Update")
-                                    //     endif
-                                    // endif
-
-                                else
-                                    if l_nMigrateResult == 0
-                                        l_cErrorMessage := "Success - Nothing Changed."
-                                    else
-                                        if empty(l_cLastError)
-                                            l_cErrorMessage := "Unknown Error Occurred."
-                                        else
-                                            l_cErrorMessage := "Failed to Update Structure."
-                                            l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                            SendToDebugView("PostgreSQL - Failed Update")
+                                l_cSQLScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
+                                l_cScript := ""
+                                l_aInstructions := hb_ATokens(l_cSQLScript,.t.)
+                                for each l_cStatement in l_aInstructions
+                                    if !empty(l_cStatement)
+                                        l_nPos = at("/*OnFailMessage",l_cStatement)
+                                        if l_nPos > 0
+                                            l_cStatement := trim(left(l_cStatement,l_nPos-1))
                                         endif
+                                        l_cScript += l_cStatement + CRLF
+                                    else
+                                        l_cScript += CRLF
                                     endif
+                                endfor
 
-                                    // if empty(l_cLastError)
-                                    //     if el_AUnpack(l_o_SQLConnection:MigrateForeignKeyConstraints(nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>})),@l_nMigrateResult,@l_cUpdateScript,@l_cLastError) > 0
-                                    //         l_cErrorMessage := "Success - Structure did not change and Foreign Key Constraints Migrated"
-                                    //     else
-                                    //         if empty(l_cLastError)
-                                    //             l_cErrorMessage := "Success - Structure and Foreign Key Constraints did not change."
-                                    //         else
-                                    //             l_cErrorMessage := "Structure did not change but Failed To Migrate Foreign Key Constraints"
-                                    //             l_cErrorDetail := l_cLastError+[<br>Script Generated to Migrate Foreign Keys:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                    //             SendToDebugView("PostgreSQL - Failed Update")
-                                    //         endif
-                                    //     endif
-                                    // else
-                                    //     l_cErrorMessage := "Failed To Migrate Structure"
-                                    //     l_cErrorDetail := l_cLastError+[<br>Script Generated to migrate structure:<br><br>]+strtran(l_cUpdateScript,chr(13),[<br>])
-                                    //     SendToDebugView("PostgreSQL - Failed Update")
-                                    // endif
-                                endif
-
-                            endif
-                            l_cScript := ""
-
-                        case l_cActionOnSubmit == "GenerateScript"
-                            l_cMacro := ExportApplicationToHarbour_ORM(par_iApplicationPk,.f.,l_cConnectBackendType)
-                            l_cMacro := Strtran(l_cMacro,chr(13),"")
-                            l_cMacro := Strtran(l_cMacro,chr(10),"")
-                            l_cMacro := Strtran(l_cMacro,[;],"")
-                            l_hWharfConfig := &( l_cMacro )
-
-                            // l_cSQLScript := ""
-                            // l_cScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
-                            // if !empty(l_cScript)
-                            //     l_cSQLScript := "--Structure Changes"+CRLF+l_cScript
-                            // endif
-                            // l_cScript := l_o_SQLConnection:GenerateMigrateForeignKeyConstraintsScript( nvl(hb_hGetDef(l_hWharfConfig,"Tables",{=>}),{=>}) )
-                            // if !empty(l_cScript)
-                            //     if !empty(l_cSQLScript)
-                            //         l_cSQLScript += CRLF
-                            //     endif
-                            //     l_cSQLScript += "--Foreign Key Constraint Changes"+CRLF+l_cScript
-                            // endif
-
-                            l_cSQLScript := l_o_SQLConnection:GenerateMigrateSchemaScript(l_hWharfConfig)
-                            l_cScript := ""
-                            l_aInstructions := hb_ATokens(l_cSQLScript,.t.)
-                            for each l_cStatement in l_aInstructions
-                                if !empty(l_cStatement)
-                                    l_nPos = at("/*OnFailMessage",l_cStatement)
-                                    if l_nPos > 0
-                                        l_cStatement := trim(left(l_cStatement,l_nPos-1))
-                                    endif
-                                    l_cScript += l_cStatement + CRLF
+                                if empty(l_cScript)
+                                    l_cErrorMessage := "Success - Nothing is different, no Generated Script"
                                 else
-                                    l_cScript += CRLF
+                                    l_cErrorMessage := "Success - Generated Script"
                                 endif
-                            endfor
-
-                            if empty(l_cScript)
-                                l_cErrorMessage := "Success - Nothing is different, no Generated Script"
                             else
-                                l_cErrorMessage := "Success - Generated Script"
+                                l_cErrorMessage := "Feature not available for selected backend."
                             endif
-
                         endcase
 
 
@@ -10692,11 +10745,15 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                     l_cConnectionString := "Server="+l_cConnectServer+";Port="+alltrim(str(l_iPort))+";Driver={"+l_cDriver+"};Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Database="+l_cConnectDatabase+";BoolsAsChar=0;"
                 case l_nConnectBackendType == HB_ORM_BACKENDTYPE_MSSQL        // MSSQL
                     l_cConnectionString := "Driver={"+l_cDriver+"};Server="+l_cConnectServer+","+alltrim(str(l_iPort))+";Database="+l_cConnectDatabase+";Uid="+l_cConnectUser+";Pwd="+l_cConnectPassword+";Encrypt=no;Trusted_Connection=no;TrustServerCertificate=yes"  // Due to an issue with certificates had to turn off Encrypt and Trusted_Connection had to set to "no" since not using Windows Account.
-                    //"Driver=ODBC Driver 17 for SQL Server;Server=192.168.4.105;Uid=sa;PWD=rndrnd;Encrypt=no;Database=test001;Trusted_Connection=no;TrustServerCertificate=yes"
+// SendToClipboard(l_cConnectionString)
+                case l_nConnectBackendType == HB_ORM_BACKENDTYPE_ORACLE   // ORACLE
+                    //DBQ = TNS Service Name
+                    l_cConnectionString := "DRIVER={"+l_cDriver+"};Direct=True;DBQ="+l_cConnectLinkUID+";UID="+l_cConnectUser+";PWD="+l_cConnectPassword+";DBA=W"
                 otherwise
                     l_cConnectionString := ""
                     l_cErrorMessage := "Invalid 'Backend Type'"
                 endcase
+// SendToDebugView(l_cConnectionString)
 
                 if !empty(l_cConnectionString)
                     l_iSQLHandle := hb_RDDInfo( RDDI_CONNECT, { "ODBC", l_cConnectionString })
@@ -10707,7 +10764,6 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                         // l_cErrorMessage += Chr(13)+Chr(10)+l_cConnectionString
 
                     else
-                        // SendToDebugView(l_cConnectionString)
                         do case
                         case l_cActionOnSubmit == "Load"
                             if oFcgi:p_nAccessLevelDD >= 6
@@ -10715,9 +10771,13 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
                             else
                                 l_cErrorMessage := "No Access."
                             endif
-                            
+
                         case l_cActionOnSubmit == "Delta"
-                            el_AUnpack( DeltaSchema(l_iSQLHandle,par_iApplicationPk,l_cSQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+                            if l_nConnectBackendType == HB_ORM_BACKENDTYPE_POSTGRESQL
+                                el_AUnpack( DeltaSchema(l_iSQLHandle,par_iApplicationPk,l_cSQLEngineType,l_cConnectDatabase,l_cConnectNamespaces,l_nConnectSetForeignKey) ,@l_cErrorMessage,@l_aDeltaMessages)
+                            else
+                                l_cErrorMessage := "Feature not available for selected backend."
+                            endif
 
                         endcase
 
@@ -11105,8 +11165,8 @@ otherwise
         :Table("74f631ed-169f-47be-b06a-e1a727cd3ff2","Tag")
         :Column("Tag.Name"   ,"Tag_Name")
         :Column("Tag.LinkUID","Tag_LinkUID")
-        l_oData := l_oDB1:Get(l_iTagPk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iTagPk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTag/"+par_cURLApplicationLinkCode+"/"+;
                                                                          PrepareForURLSQLIdentifier("Table",l_oData:Tag_Name,l_oData:Tag_LinkUID)+"/";
                                                                          )

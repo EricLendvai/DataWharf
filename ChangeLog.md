@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 08/06/2024 v 4.14
+* Enhance UI edit mode in Modeling and Settings.
+* Install of Oracle ODBC driver in Docker containers.
+* Support to Load Oracle Deployment. Delta not available yet.
+* Last Native field type is now backend aware.
+
 ## 06/27/2024 v 4.13
 * Usage to Latest hb_orm library.
 

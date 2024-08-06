@@ -598,7 +598,7 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function APITokenEditFormOnSubmit(par_nCurrentAPITokenPk)
+static function APITokenEditFormOnSubmit()
 local l_cHtml := []
 local l_cActionOnSubmit
 
@@ -635,6 +635,7 @@ local l_oDB_ListOfCurrentAPIAccessEndpoint      := hb_SQLData(oFcgi:p_o_SQLConne
 
 local l_cTableName
 local l_cTableDescription
+local l_oData
 
 oFcgi:TraceAdd("APITokenEditFormOnSubmit")
 
@@ -712,7 +713,7 @@ case l_cActionOnSubmit == "Save"
                             :Index("pk","pk")
                             :CreateIndexes()
                             :SetOrder("pk")
-                        endwith        
+                        endwith
                     endwith
 
                     select ListOfApplications
@@ -765,7 +766,7 @@ case l_cActionOnSubmit == "Save"
                     with Object l_oDB_ListOfCurrentProjectForAPIToken
                         :Table("429cb509-354c-4daa-b8c1-32de2a55458b","APITokenAccessProject")
                         :Distinct(.t.)
-                        :Column("Project.pk"                     ,"pk")
+                        :Column("Project.pk"                         ,"pk")
                         :Column("APITokenAccessProject.pk"           ,"APITokenAccessProject_pk")
                         :Column("APITokenAccessProject.AccessLevelML","APITokenAccessProject_AccessLevelML")
                         :Join("inner","Project","","APITokenAccessProject.fk_Project = Project.pk")
@@ -775,7 +776,7 @@ case l_cActionOnSubmit == "Save"
                             :Index("pk","pk")
                             :CreateIndexes()
                             :SetOrder("pk")
-                        endwith        
+                        endwith
                     endwith
 
                     select ListOfProjects
@@ -837,7 +838,7 @@ case l_cActionOnSubmit == "Save"
                             :Index("pk","pk")
                             :CreateIndexes()
                             :SetOrder("pk")
-                        endwith        
+                        endwith
                     endwith
 
                     select ListOfAPIEndpoints
@@ -871,19 +872,14 @@ case l_cActionOnSubmit == "Save"
 
                 //-----------------------------------------------
 
-                if empty(l_cErrorMessage)
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/ListAPITokens/")
-                endif
             endwith
         endif
     endcase
 
-case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
-    if empty(l_iAPITokenPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens")
-    else
-        oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/ListAPITokens/")  // +par_cURLAPITokenLinkUID+"/"
-    endif
+case l_cActionOnSubmit == "Cancel"
+
+case l_cActionOnSubmit == "Done"
+    l_iAPITokenPk := 0
 
 case l_cActionOnSubmit == "Delete"   // APIToken
     // Run Test first if may delete the record
@@ -951,12 +947,13 @@ case l_cActionOnSubmit == "Delete"   // APIToken
 
     if empty(l_cErrorMessage)
         l_oDB_Delete:Delete("7fbbf356-f3db-463b-8c29-cb87d0377b8e","APIToken",l_iAPITokenPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/")
+        l_iAPITokenPk := 0
     endif
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["Name"]        := l_cAPITokenName
     l_hValues["Key"]         := l_cAPITokenKey
     l_hValues["AccessMode"]  := l_iAPITokenAccessMode
@@ -994,7 +991,23 @@ if !empty(l_cErrorMessage)
     endscan
 
     l_cHtml += APITokenEditFormBuild(l_iAPITokenPk,l_cErrorMessage,l_hValues)
-endif
+
+case empty(l_iAPITokenPk)
+    oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/")
+
+otherwise
+    with object l_oDB1
+        :Table("4eb191cc-610f-41b2-9fb6-8b9933679dfc","APIToken")
+        :Column("APIToken.LinkUID","APIToken_LinkUID")
+        l_oData := :Get(l_iAPITokenPk)
+        if :Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/EditAPIToken/"+alltrim(l_oData:APIToken_LinkUID)+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens")
+        endif
+    endwith
+
+endcase
 
 return l_cHtml
 //=================================================================================================================

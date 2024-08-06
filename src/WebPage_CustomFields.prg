@@ -580,6 +580,8 @@ local l_oDB_ListOfCurrentProjectForCustomField     := hb_SQLData(oFcgi:p_o_SQLCo
 local l_oDB_ListOfApplications                     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjects                         := hb_SQLData(oFcgi:p_o_SQLConnection)
 
+local l_oData
+
 oFcgi:TraceAdd("CustomFieldEditFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
@@ -742,7 +744,7 @@ case l_cActionOnSubmit == "Save"
                                 :Index("pk","pk")
                                 :CreateIndexes()
                                 :SetOrder("pk")
-                            endwith        
+                            endwith
                         endwith
 
                         select ListOfApplications
@@ -799,7 +801,7 @@ case l_cActionOnSubmit == "Save"
                                 :Index("pk","pk")
                                 :CreateIndexes()
                                 :SetOrder("pk")
-                            endwith        
+                            endwith
                         endwith
 
                         select ListOfProjects
@@ -834,20 +836,15 @@ case l_cActionOnSubmit == "Save"
                     endif
                     //-----------------------------------------------
 
-                    if empty(l_cErrorMessage)
-                        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/ListCustomFields/")
-                    endif
                 endwith
             endif
         endif
     endcase
 
-case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
-    if empty(l_iCustomFieldPk)
-        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields")
-    else
-        oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/ListCustomFields/")  // +par_cURLCustomFieldCode+"/"
-    endif
+case l_cActionOnSubmit == "Cancel"
+
+case l_cActionOnSubmit == "Done"
+    l_iCustomFieldPk := 0
 
 case l_cActionOnSubmit == "Delete"   // CustomField
     with object l_oDB1
@@ -866,7 +863,7 @@ case l_cActionOnSubmit == "Delete"   // CustomField
                 :SQL()
                 if :Tally == 0
                     :Delete("7245a056-83cb-4b8e-aed7-0b3cfa3cb458","CustomField",l_iCustomFieldPk)
-                    oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/")
+                    l_iCustomFieldPk := 0
                 else
                     l_cErrorMessage := "Related CustomFieldValue record on file"
                 endif
@@ -880,7 +877,8 @@ case l_cActionOnSubmit == "Delete"   // CustomField
 
 endcase
 
-if !empty(l_cErrorMessage)
+do case
+case !empty(l_cErrorMessage)
     l_hValues["Name"]             := l_cCustomFieldName
     l_hValues["Code"]             := l_cCustomFieldCode
     l_hValues["Label"]            := l_cCustomFieldLabel
@@ -908,7 +906,6 @@ if !empty(l_cErrorMessage)
         endif
     endscan
 
-
     if !used("ListOfProjects")
         with Object l_oDB_ListOfProjects
             :Table("34562847-7bc6-43ad-be3f-2b8fd4ca4c09","Project")
@@ -924,9 +921,24 @@ if !empty(l_cErrorMessage)
         endif
     endscan
 
-
     l_cHtml += CustomFieldEditFormBuild(l_iCustomFieldPk,l_cErrorMessage,l_hValues)
-endif
+
+case empty(l_iCustomFieldPk)
+    oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields")
+
+otherwise
+    with object l_oDB1
+        :Table("858553f2-260a-4306-88c7-e8e4ce3c68f2","CustomField")
+        :Column("CustomField.Code" , "CustomField_Code")
+        l_oData := :Get(l_iCustomFieldPk)
+        if :Tally == 1
+            oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/EditCustomField/"+alltrim(l_oData:CustomField_Code)+"/")
+        else
+            oFcgi:Redirect(oFcgi:p_cSitePath+"CustomFields/")
+        endif
+    endwith
+
+endcase
 
 return l_cHtml
 //=================================================================================================================
@@ -1017,7 +1029,6 @@ with object l_oDB_ListOfCustomFieldsFormToHash
     :Where("CustomField.UsedOn = ^" , par_UsedOn)
     :Where("CustomField.Status <= 2")
     :SQL("ListOfCustomFieldsFormToHash")
-// SendToClipboard(:LastSQL())
     if :Tally > 0
         select ListOfCustomFieldsFormToHash
         scan all
@@ -1154,7 +1165,6 @@ with object l_oDB_ListOfCustomFieldsToBuild
                         oFcgi:p_cjQueryScript += [$("#Text]+l_cObjectName+[").datepicker();]
 
                     endcase
-
 
                     // l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboDocStatus" id="ComboDocStatus">]
                     //     l_cHtml += [<option value="1"]+iif(l_nDocStatus==1,[ selected],[])+[>Missing</option>]

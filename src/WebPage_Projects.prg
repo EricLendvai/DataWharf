@@ -855,8 +855,8 @@ otherwise
     with object l_oDB1
         :Table("48ef14b8-2ded-4f9e-8075-70b2c9ae47a9","Project")
         :Column("Project.LinkUID","Project_LinkUID")
-        l_oData := l_oDB1:Get(l_iProjectPk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iProjectPk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_oData:Project_LinkUID+"/")
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
@@ -1136,14 +1136,11 @@ case empty(l_iPrimitiveTypePk)
 
 otherwise
     //Since the Name could have change the redirect URL has to be re-evaluated.
-    if hb_IsNil(l_oDB1)
-        l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
-    endif
     with object l_oDB1
         :Table("6223983f-81d6-4804-8de5-834bc0e38098","PrimitiveType")
         :Column("PrimitiveType.LinkUID","PrimitiveType_LinkUID")
-        l_oData := l_oDB1:Get(l_iPrimitiveTypePk)
-        if l_oDB1:Tally == 1
+        l_oData := :Get(l_iPrimitiveTypePk)
+        if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/EditPrimitiveType/"+l_oData:PrimitiveType_LinkUID+"/")
             // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
         else
