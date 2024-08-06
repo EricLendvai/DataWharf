@@ -81,6 +81,7 @@ ENV APACHE_PID_FILE /var/run/apache2.pid
 
 COPY ./FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
 COPY ./FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-available/
+COPY ./FilesForPublishedWebsites/LinuxApache2/apache2.conf /etc/apache2/
 
 COPY ./FilesForPublishedWebsites/backend  /var/www/Harbour_websites/fcgi_DataWharf/backend
 
@@ -100,6 +101,7 @@ RUN update-rc.d apache2  defaults
 
 
 # To make it possible to Delta/Load Datadictionary install additional ODBC drivers
+RUN apt-get update
 RUN apt-get -y install curl
 
 # Install MSSQL odbc driver

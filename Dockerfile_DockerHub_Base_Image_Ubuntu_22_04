@@ -158,6 +158,8 @@ COPY --from=builder /src/DataWharf/build/lin64/gcc/release/DataWharf.exe /var/ww
 COPY --from=builder /src/DataWharf/FilesForPublishedWebsites/website /var/www/Harbour_websites/fcgi_DataWharf/website
 
 COPY --from=builder /src/DataWharf/FilesForPublishedWebsites/LinuxApache2/DataWharf.conf /etc/apache2/sites-enabled/000-default.conf
+COPY --from=builder /src/DataWharf/FilesForPublishedWebsites/LinuxApache2/fcgid.conf /etc/apache2/mods-available/
+COPY --from=builder /src/DataWharf/FilesForPublishedWebsites/LinuxApache2/apache2.conf /etc/apache2/
 
 RUN a2enmod rewrite
 
