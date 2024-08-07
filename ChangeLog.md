@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 08/07/2024 v 4.15
+* Fix Oracle Load for setting up Primary and Foreign Keys.
+* Extended Timeout for docker to 6000 seconds, to handle loading speed for Oracle servers.
+
 ## 08/06/2024 v 4.14
 * Enhance UI edit mode in Modeling and Settings.
 * Install of Oracle ODBC driver in Docker containers.

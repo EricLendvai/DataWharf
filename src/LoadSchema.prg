@@ -5,6 +5,7 @@ local l_cSQLCommand
 local l_cSQLCommandEnums       := []
 local l_cSQLCommandFields      := []
 local l_cSQLCommandIndexes     := []
+local l_cSQLCommandPrimaryKeys := []
 local l_cSQLCommandForeignKeys := []
 local l_aNamespaces
 local l_iPosition
@@ -51,6 +52,7 @@ local l_oDB2
 
 local l_oDB_AllTablesAsParentsForForeignKeys
 local l_oDB_AllTableColumnsChildrenForForeignKeys
+local l_oDB_AllTablePrimaryKeys
 
 local l_aSQLResult := {}
 local l_cErrorMessage := ""
@@ -74,6 +76,7 @@ local l_hColumns      := {=>}  // The key is <Namespace>.<TableName>.<ColumnName
 
 local l_iParentTableKey
 local l_iChildColumnKey
+local l_iPrimaryColumnKey
 
 local l_hForeignKeys := {=>}
 local l_lExpressionOnForeignKey
@@ -2280,6 +2283,22 @@ endcase
 
 //--Try to setup Foreign Links----------------
 
+// Get all the current foreign keys (used to add missing ones (in Oracle for now))
+l_oDB_AllTablePrimaryKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
+with object l_oDB_AllTablePrimaryKeys
+    :Table("cfdb71d9-56ab-46ec-a141-348f8870809a","Column")
+    :Column("cast(concat('*',lower(Namespace.Name),'*',lower(Table.Name),'*',lower(Column.Name),'*') as char(240))", "tag1")
+    :Join("inner","Table","","Column.fk_Table = Table.pk")
+    :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+    :Where("Column.UsedAs = ^",COLUMN_USEDAS_PRIMARY_KEY)
+    :SQL("AllTablePrimaryKeys")
+    with object :p_oCursor
+        :Index("tag1","padr(tag1,240)")
+        :CreateIndexes()
+    endwith
+endwith
+
+
 //Get the list of specified Foreign Keys, to auto-detect Foreign Keys and reduce indexes on foreign keys
 
 l_oDB_AllTableColumnsChildrenForForeignKeys := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2475,9 +2494,62 @@ if par_nSyncSetForeignKey > 1
                 //_M_
 
             case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
+                // Setup any missing primary keys
+                l_cSQLCommandPrimaryKeys := [select distinct cast('*'||lower(ucc2.owner)||'*'||lower(ucc2.table_name)||'*'||lower(ucc2.column_name)||'*' AS VARCHAR2(255)) as primarykey,]
+                l_cSQLCommandPrimaryKeys += [              CAST(lower(ucc2.owner)       AS VARCHAR2(255)) as namespace_name,]
+                l_cSQLCommandPrimaryKeys += [              CAST(lower(ucc2.table_name)  AS VARCHAR2(255)) as table_name,]
+                l_cSQLCommandPrimaryKeys += [              CAST(lower(ucc2.column_name) AS VARCHAR2(255)) as column_name]
+                l_cSQLCommandPrimaryKeys += [  from all_constraints uc  ]
+                l_cSQLCommandPrimaryKeys += [  join      all_cons_columns ucc1 on ucc1.constraint_name = uc.constraint_name]
+                l_cSQLCommandPrimaryKeys += [  left join all_constraints  ruc  on ruc.r_constraint_name = uc.constraint_name]
+                l_cSQLCommandPrimaryKeys += [  join      all_cons_columns ucc2 on ucc2.constraint_name = case when uc.constraint_type = 'R' then uc.r_constraint_name when uc.constraint_type = 'P' then ruc.constraint_name end]
+                l_cSQLCommandPrimaryKeys += [  join      all_objects      DBAO on uc.owner = DBAO.owner and uc.table_name = DBAO.object_name]
+                l_cSQLCommandPrimaryKeys += [  where  uc.constraint_type = 'R']
+                l_cSQLCommandPrimaryKeys += [   and   DBAO.ORACLE_MAINTAINED = 'N']
+
+                if !SQLExec(par_SQLHandle,l_cSQLCommandPrimaryKeys,"ListOfPrimaryKeys")
+                    l_cErrorMessage := "Failed to retrieve Primary Keys Meta data."
+                else
+                    select ListOfPrimaryKeys
+                    scan all
+                        if !el_seek(ListOfPrimaryKeys->primarykey,"AllTablePrimaryKeys","tag1")  // Not already marked as a primary key
+                            // Flag the field as Primary Key
+
+                            // Is using l_oDB1
+                            :Table("ec7f6da9-009b-44a5-944d-17c8e0d7b443","Column")
+                            :Column("Column.pk","pk")
+                            :Join("inner","Table","","Column.fk_Table = Table.pk")
+                            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                            :Where("lower(Namespace.name) = ^",ListOfPrimaryKeys->namespace_name)
+                            :Where("lower(Table.name) = ^"    ,ListOfPrimaryKeys->table_name)
+                            :Where("lower(Column.name) = ^"   ,ListOfPrimaryKeys->column_name)
+                            :SQL("PrimaryKeyColumn")
+                            if :Tally == 1
+                                l_iPrimaryColumnKey := PrimaryKeyColumn->pk
+                            else
+                                l_iPrimaryColumnKey := 0
+                            endif
+                            CloseAlias("PrimaryKeyColumn")
+
+                            if l_iPrimaryColumnKey > 0
+                                :Table("04e84356-cedb-4202-93bc-3cc60d2a3146","Column")
+                                :Field("Column.UsedAs",COLUMN_USEDAS_PRIMARY_KEY)
+                                if :Update(l_iPrimaryColumnKey)
+                                    l_iUpdatedColumns += 1
+                                else
+                                    //_M_ report error
+                                endif
+                            endif
+
+                        endif
+                    endscan
+                endif
+
+                // Work on the foreign keys now
                 l_cSQLCommandForeignKeys := [select uc.delete_rule DeleteAction,]
-                l_cSQLCommandForeignKeys += [       concat('*',lower(uc.owner),'*',lower(uc.table_name),'*',lower(ucc1.column_name),'*') as childcolumn,]
-                l_cSQLCommandForeignKeys += [       concat('*',lower(ucc2.owner),'*',lower(ucc2.table_name),'*') as parenttable]
+                l_cSQLCommandForeignKeys += [       cast('*'||lower(uc.owner)  ||'*'||lower(uc.table_name)  ||'*'||lower(ucc1.column_name)||'*' AS VARCHAR2(255)) as childcolumn,]
+                l_cSQLCommandForeignKeys += [       cast('*'||lower(ucc2.owner)||'*'||lower(ucc2.table_name)||'*'                               AS VARCHAR2(255)) as parenttable,]
+                l_cSQLCommandForeignKeys += [       cast('*'||lower(ucc2.owner)||'*'||lower(ucc2.table_name)||'*'||lower(ucc2.column_name)||'*' AS VARCHAR2(255)) as primarykey]
                 l_cSQLCommandForeignKeys += [  from all_constraints uc  ]
                 l_cSQLCommandForeignKeys += [  join      all_cons_columns ucc1 on ucc1.constraint_name = uc.constraint_name]
                 l_cSQLCommandForeignKeys += [  left join all_constraints  ruc  on ruc.r_constraint_name = uc.constraint_name]
@@ -2839,6 +2911,7 @@ CloseAlias("ListOfFieldsForLoads")
 CloseAlias("ListOfEnumsForLoads")
 CloseAlias("ListOfIndexesForLoads")
 CloseAlias("ListOfFieldsForeignKeys")
+CloseAlias("ListOfPrimaryKeys")
 CloseAlias("AllTablesAsParentsForForeignKeys")
 CloseAlias("AllTableColumnsChildrenForForeignKeys")
 
@@ -2849,6 +2922,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommand := [SET enable_nestloop = true;]
     SQLExec(par_SQLHandle,l_cSQLCommand)
 endcase
+
+DataDictionaryFixAndTest(par_iApplicationPk)
 
 return l_cErrorMessage
 //-----------------------------------------------------------------------------------------------------------------
