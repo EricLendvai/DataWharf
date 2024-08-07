@@ -2535,6 +2535,7 @@ if par_nSyncSetForeignKey > 1
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->namespace_name))+"-"
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->table_name))+"-"
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->column_name))
+                                l_cErrorMessage += " Command: "+:LastSQL()
                             endif
                             CloseAlias("PrimaryKeyColumn")
 
