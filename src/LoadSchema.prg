@@ -148,7 +148,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 //--Load Tables-----------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
-            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
             // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MySQL_ListOfFieldsForLoads.html","From MySQL",,200,.t.)
 
@@ -180,7 +180,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
                         do case
                         case :Tally == -1  //Failed to query
-                            l_cErrorMessage := "Failed to Query Meta database. Error 101."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 101."
                             exit
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
@@ -194,7 +194,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 
                             do case
                             case :Tally == -1  //Failed to query
-                                l_cErrorMessage := "Failed to Query Meta database. Error 102."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 102."
                             case empty(:Tally)
                                 //Add the Namespace
                                 :Table("1b1a174d-4717-4452-b346-fe29ca359c6d","Namespace")
@@ -205,13 +205,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                                     l_iNewNamespace += 1
                                     l_iNamespacePk := :Key()
                                 else
-                                    l_cErrorMessage := "Failed to add Namespace record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Namespace record."
                                 endif
 
                             case :Tally == 1
                                 l_iNamespacePk := l_aSQLResult[1,1]
                             otherwise
-                                l_cErrorMessage := "Failed to Query Meta database. Error 103."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 103."
                             endcase
 
                             if l_iNamespacePk > 0
@@ -224,7 +224,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                                     l_iTablePk := :Key()
                                     l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
                                 else
-                                    l_cErrorMessage := "Failed to add Table record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Table record."
                                 endif
                             endif
 
@@ -234,7 +234,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                             l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
 
                         otherwise
-                            l_cErrorMessage := "Failed to Query Meta database. Error 104."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 104."
                         endcase
 
                     endwith
@@ -268,7 +268,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
                         :SQL("ListOfColumnsInDataDictionary")
 
                         if :Tally < 0
-                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 105."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to load Meta Data Columns. Error 105."
                         else
                             if :Tally == 0
                                 l_LastColumnOrder := 0
@@ -489,7 +489,7 @@ l_cColumnDefaultCustom := ""
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
-                                            l_cErrorMessage := "Failed to update Column record."
+                                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to update Column record."
                                         endif
                                     endwith
                                 endif
@@ -520,7 +520,7 @@ l_cColumnDefaultCustom := ""
                                 l_iColumnPk := :Key()
                                 l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
                             else
-                                l_cErrorMessage := "Failed to add Column record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Column record."
                             endif
                         endwith
 
@@ -631,7 +631,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 //--Load Enumerations-----------
     if !SQLExec(par_SQLHandle,l_cSQLCommandEnums,"ListOfEnumsForLoads")
-        l_cErrorMessage := "Failed to retrieve Enumeration Meta data."
+        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Enumeration Meta data."
     else
         // ExportTableToHtmlFile("ListOfEnumsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfEnumsForLoads.html","From PostgreSQL",,200,.t.)
 
@@ -663,7 +663,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     do case
                     case :Tally == -1  //Failed to query
-                        l_cErrorMessage := "Failed to Query Meta database. Error 101."
+                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 101."
                         exit
                     case empty(:Tally)
                         //Enumerations is not in datadic, load it.
@@ -677,7 +677,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                         do case
                         case :Tally == -1  //Failed to query
-                            l_cErrorMessage := "Failed to Query Meta database. Error 102."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 102."
                         case empty(:Tally)
                             //Add the Namespace
                             :Table("1e4d6164-d02d-4590-b143-02ab9e9aac2b","Namespace")
@@ -688,13 +688,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 l_iNewNamespace += 1
                                 l_iNamespacePk := :Key()
                             else
-                                l_cErrorMessage := "Failed to add Namespace record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Namespace record."
                             endif
 
                         case :Tally == 1
                             l_iNamespacePk := l_aSQLResult[1,1]
                         otherwise
-                            l_cErrorMessage := "Failed to Query Meta database. Error 103."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 103."
                         endcase
 
                         if l_iNamespacePk > 0
@@ -708,7 +708,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 l_iEnumerationPk := :Key()
                                 l_hEnumerations[l_cLastNamespace+"."+l_cLastEnumerationName] := l_iEnumerationPk
                             else
-                                l_cErrorMessage := "Failed to add Enumeration record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Enumeration record."
                             endif
                         endif
 
@@ -718,7 +718,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_hEnumerations[l_cLastNamespace+"."+l_cLastEnumerationName] := l_iEnumerationPk
 
                     otherwise
-                        l_cErrorMessage := "Failed to Query Meta database. Error 104."
+                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 104."
                     endcase
 
                 endwith
@@ -735,7 +735,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                     :SQL("ListOfEnumValuesInDataDictionary")
 
                     if :Tally < 0
-                        l_cErrorMessage := "Failed to load Meta Data EnumValue. Error 106."
+                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to load Meta Data EnumValue. Error 106."
                     else
                         if :Tally == 0
                             l_LastEnumValueOrder := 0
@@ -774,7 +774,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         if :Add()
                             l_iNewEnumValues += 1
                         else
-                            l_cErrorMessage := "Failed to add EnumValue record."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add EnumValue record."
                         endif
                     endwith
 
@@ -790,7 +790,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 //--Load Tables-----------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
-            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
             // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfFieldsForLoads.html","From PostgreSQL",,200,.t.)
 
@@ -822,7 +822,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                         do case
                         case :Tally == -1  //Failed to query
-                            l_cErrorMessage := "Failed to Query Meta database. Error 101."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 101."
                             exit
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
@@ -836,7 +836,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                             do case
                             case :Tally == -1  //Failed to query
-                                l_cErrorMessage := "Failed to Query Meta database. Error 102."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 102."
                             case empty(:Tally)
                                 //Add the Namespace
                                 :Table("1d4e6580-fc99-4002-aa7a-5734e311b947","Namespace")
@@ -847,13 +847,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                     l_iNewNamespace += 1
                                     l_iNamespacePk := :Key()
                                 else
-                                    l_cErrorMessage := "Failed to add Namespace record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Namespace record."
                                 endif
 
                             case :Tally == 1
                                 l_iNamespacePk := l_aSQLResult[1,1]
                             otherwise
-                                l_cErrorMessage := "Failed to Query Meta database. Error 103."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 103."
                             endcase
 
                             if l_iNamespacePk > 0
@@ -866,7 +866,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                     l_iTablePk := :Key()
                                     l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
                                 else
-                                    l_cErrorMessage := "Failed to add Table record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Table record."
                                 endif
                             endif
 
@@ -876,7 +876,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                             l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
 
                         otherwise
-                            l_cErrorMessage := "Failed to Query Meta database. Error 104."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 104."
                         endcase
 
                     endwith
@@ -910,7 +910,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :SQL("ListOfColumnsInDataDictionary")
 
                         if :Tally < 0
-                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 205."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to load Meta Data Columns. Error 205."
                         else
                             if :Tally == 0
                                 l_LastColumnOrder := 0
@@ -1258,7 +1258,7 @@ endcase
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
-                                            l_cErrorMessage := "Failed to update Column record."
+                                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to update Column record."
                                         endif
                                     endwith
                                 endif
@@ -1291,7 +1291,7 @@ endcase
                                 l_iColumnPk := :Key()
                                 l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
                             else
-                                l_cErrorMessage := "Failed to add Column record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Column record."
                             endif
                         endwith
 
@@ -1389,7 +1389,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 //--Load Tables-----------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
-            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
             // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
 
@@ -1421,7 +1421,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
                         do case
                         case :Tally == -1  //Failed to query
-                            l_cErrorMessage := "Failed to Query Meta database. Error 401."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 401."
                             exit
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
@@ -1435,7 +1435,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
 
                             do case
                             case :Tally == -1  //Failed to query
-                                l_cErrorMessage := "Failed to Query Meta database. Error 402."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 402."
                             case empty(:Tally)
                                 //Add the Namespace
                                 :Table("8874a9cb-ceba-4fa2-9f4c-ef0f72e06567","Namespace")
@@ -1446,13 +1446,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                     l_iNewNamespace += 1
                                     l_iNamespacePk := :Key()
                                 else
-                                    l_cErrorMessage := "Failed to add Namespace record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Namespace record."
                                 endif
 
                             case :Tally == 1
                                 l_iNamespacePk := l_aSQLResult[1,1]
                             otherwise
-                                l_cErrorMessage := "Failed to Query Meta database. Error 403."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 403."
                             endcase
 
                             if l_iNamespacePk > 0
@@ -1465,7 +1465,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                     l_iTablePk := :Key()
                                     l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
                                 else
-                                    l_cErrorMessage := "Failed to add Table record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Table record."
                                 endif
                             endif
 
@@ -1475,7 +1475,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                             l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
 
                         otherwise
-                            l_cErrorMessage := "Failed to Query Meta database. Error 404."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 404."
                         endcase
 
                     endwith
@@ -1509,7 +1509,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                         :SQL("ListOfColumnsInDataDictionary")
 
                         if :Tally < 0
-                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 305."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to load Meta Data Columns. Error 305."
                         else
                             if :Tally == 0
                                 l_LastColumnOrder := 0
@@ -1762,7 +1762,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
-                                            l_cErrorMessage := "Failed to update Column record."
+                                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to update Column record."
                                         endif
                                     endwith
                                 endif
@@ -1792,7 +1792,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_MSSQL
                                 l_iColumnPk := :Key()
                                 l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
                             else
-                                l_cErrorMessage := "Failed to add Column record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Column record."
                             endif
                         endwith
 
@@ -1864,8 +1864,8 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 //--Load Tables-----------
     if empty(l_cErrorMessage)
         if !SQLExec(par_SQLHandle,l_cSQLCommandFields,"ListOfFieldsForLoads")
-SendToClipboard(l_cSQLCommandFields)
-            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+//SendToClipboard(l_cSQLCommandFields)
+            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
             // ExportTableToHtmlFile("ListOfFieldsForLoads",el_AddPs(OUTPUT_FOLDER)+"MSSQL_ListOfFieldsForLoads.html","From MSSQL",,200,.t.)
 
@@ -1907,7 +1907,7 @@ SendToClipboard(l_cSQLCommandFields)
 
                         do case
                         case :Tally == -1  //Failed to query
-                            l_cErrorMessage := "Failed to Query Meta database. Error 401."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 401."
                             exit
                         case empty(:Tally)
                             //Tables is not in datadic, load it.
@@ -1921,7 +1921,7 @@ SendToClipboard(l_cSQLCommandFields)
 
                             do case
                             case :Tally == -1  //Failed to query
-                                l_cErrorMessage := "Failed to Query Meta database. Error 402."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 402."
                             case empty(:Tally)
                                 //Add the Namespace
                                 :Table("8874a9cb-ceba-4fa2-9f4c-ef0f72e06568","Namespace")
@@ -1932,13 +1932,13 @@ SendToClipboard(l_cSQLCommandFields)
                                     l_iNewNamespace += 1
                                     l_iNamespacePk := :Key()
                                 else
-                                    l_cErrorMessage := "Failed to add Namespace record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Namespace record."
                                 endif
 
                             case :Tally == 1
                                 l_iNamespacePk := l_aSQLResult[1,1]
                             otherwise
-                                l_cErrorMessage := "Failed to Query Meta database. Error 403."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 403."
                             endcase
 
                             if l_iNamespacePk > 0
@@ -1951,7 +1951,7 @@ SendToClipboard(l_cSQLCommandFields)
                                     l_iTablePk := :Key()
                                     l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
                                 else
-                                    l_cErrorMessage := "Failed to add Table record."
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Table record."
                                 endif
                             endif
 
@@ -1961,7 +1961,7 @@ SendToClipboard(l_cSQLCommandFields)
                             l_hTables[l_cLastNamespace+"."+l_cLastTableName] := l_iTablePk
 
                         otherwise
-                            l_cErrorMessage := "Failed to Query Meta database. Error 404."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to Query Meta database. Error 404."
                         endcase
 
                     endwith
@@ -1995,7 +1995,7 @@ SendToClipboard(l_cSQLCommandFields)
                         :SQL("ListOfColumnsInDataDictionary")
 
                         if :Tally < 0
-                            l_cErrorMessage := "Failed to load Meta Data Columns. Error 305."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to load Meta Data Columns. Error 305."
                         else
                             if :Tally == 0
                                 l_LastColumnOrder := 0
@@ -2233,7 +2233,7 @@ SendToClipboard(l_cSQLCommandFields)
                                         if :Update(l_iColumnPk)
                                             l_iUpdatedColumns += 1
                                         else
-                                            l_cErrorMessage := "Failed to update Column record."
+                                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to update Column record."
                                         endif
                                     endif
                                 endwith
@@ -2264,7 +2264,7 @@ SendToClipboard(l_cSQLCommandFields)
                                 l_iColumnPk := :Key()
                                 l_hColumns[l_cLastNamespace+"."+l_cLastTableName+"."+l_cColumnName] := l_iColumnPk
                             else
-                                l_cErrorMessage := "Failed to add Column record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Column record."
                             endif
                         endwith
 
@@ -2345,7 +2345,7 @@ if par_nSyncSetForeignKey > 1
                 l_cSQLCommandForeignKeys += [ WHERE REFERENCED_TABLE_SCHEMA = ']+par_cDatabase+[']
 
                 if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
-                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
+                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Foreign Keys Meta data."
 
                 else
                     l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2386,7 +2386,7 @@ if par_nSyncSetForeignKey > 1
                                     if :Update(l_iChildColumnKey)
                                         l_iUpdatedColumns += 1
                                     else
-                                        //_M_ report error
+                                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to mark Column as Foreign Key: "+trans(l_iParentTableKey)
                                     endif
                                 endif
                             endif
@@ -2426,7 +2426,7 @@ if par_nSyncSetForeignKey > 1
                 l_cSQLCommandForeignKeys += [   join pg_attribute att2 on att2.attrelid = con.conrelid and att2.attnum = con.parent]
 
                 if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
-                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
+                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Foreign Keys Meta data."
 
                 else
                     l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2481,7 +2481,7 @@ if par_nSyncSetForeignKey > 1
                                     if :Update(l_iChildColumnKey)
                                         l_iUpdatedColumns += 1
                                     else
-                                        //_M_ report error
+                                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to mark Column as Foreign Key: "+trans(l_iParentTableKey)
                                     endif
                                 endif
                             endif
@@ -2508,7 +2508,7 @@ if par_nSyncSetForeignKey > 1
                 l_cSQLCommandPrimaryKeys += [   and   DBAO.ORACLE_MAINTAINED = 'N']
 
                 if !SQLExec(par_SQLHandle,l_cSQLCommandPrimaryKeys,"ListOfPrimaryKeys")
-                    l_cErrorMessage := "Failed to retrieve Primary Keys Meta data."
+                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Primary Keys Meta data."
                 else
                     select ListOfPrimaryKeys
                     scan all
@@ -2531,6 +2531,10 @@ if par_nSyncSetForeignKey > 1
                                 endscan
                             else
                                 l_iPrimaryColumnKey := 0
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to find Primary Key: "
+                                l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->namespace_name))+"-"
+                                l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->table_name))+"-"
+                                l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->column_name))
                             endif
                             CloseAlias("PrimaryKeyColumn")
 
@@ -2540,7 +2544,7 @@ if par_nSyncSetForeignKey > 1
                                 if :Update(l_iPrimaryColumnKey)
                                     l_iUpdatedColumns += 1
                                 else
-                                    //_M_ report error
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to mark Column as Primary Key: "+trans(l_iPrimaryColumnKey)
                                 endif
                             endif
 
@@ -2562,7 +2566,7 @@ if par_nSyncSetForeignKey > 1
                 l_cSQLCommandForeignKeys += [   and   DBAO.ORACLE_MAINTAINED = 'N']
 
                 if !SQLExec(par_SQLHandle,l_cSQLCommandForeignKeys,"ListOfFieldsForeignKeys")
-                    l_cErrorMessage := "Failed to retrieve Foreign Keys Meta data."
+                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Foreign Keys Meta data."
 
                 else
                     l_oDB_AllTablesAsParentsForForeignKeys      := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -2617,7 +2621,7 @@ if par_nSyncSetForeignKey > 1
                                     if :Update(l_iChildColumnKey)
                                         l_iUpdatedColumns += 1
                                     else
-                                        //_M_ report error
+                                        l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to mark Column as Foreign Key: "+trans(l_iParentTableKey)
                                     endif
                                 endif
                             endif
@@ -2676,7 +2680,7 @@ if par_nSyncSetForeignKey > 1
                         if :Update(FieldToMarkAsForeignKeys->Column_pk)
                             l_iUpdatedColumns += 1
                         else
-                            l_cErrorMessage := "Failed to update Column fk_TableForeign."
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to update Column fk_TableForeign."
                             exit
                         endif
                     endscan
@@ -2724,7 +2728,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
 
         if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
-            l_cErrorMessage := "Failed to retrieve Fields Meta data."
+            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
             ExportTableToHtmlFile("ListOfIndexesForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
@@ -2751,7 +2755,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         :Where("Index.fk_Table = ^", l_iTablePk)
                         :SQL("ListOfIndexesInDataDictionary")
                         if :Tally < 0
-                            l_cErrorMessage := [Failed to Get index info.]
+                            l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+[Failed to Get index info.]
                         else
                             with object :p_oCursor
                                 :Index("tag1","padr(tag1+'*',240)")
@@ -2832,7 +2836,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 if :Update(l_iIndexPk)
                                     l_iUpdatedIndexes += 1
                                 else
-                                    l_cErrorMessage := [Failed to update Index Name.]
+                                    l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+[Failed to update Index Name.]
                                 endif
                             endwith
 
@@ -2855,7 +2859,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                                 l_iNewIndexes += 1
                                 l_iIndexPk := :Key()
                             else
-                                l_cErrorMessage := "Failed to add Index record."
+                                l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to add Index record."
                             endif
                         endwith
 
