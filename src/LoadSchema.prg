@@ -2520,12 +2520,15 @@ if par_nSyncSetForeignKey > 1
                             :Column("Column.pk","pk")
                             :Join("inner","Table","","Column.fk_Table = Table.pk")
                             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-                            :Where("lower(Namespace.name) = ^",ListOfPrimaryKeys->namespace_name)
-                            :Where("lower(Table.name) = ^"    ,ListOfPrimaryKeys->table_name)
-                            :Where("lower(Column.name) = ^"   ,ListOfPrimaryKeys->column_name)
+                            :Where("lower(Namespace.name) = ^",alltrim(lower(ListOfPrimaryKeys->namespace_name)))
+                            :Where("lower(Table.name) = ^"    ,alltrim(lower(ListOfPrimaryKeys->table_name)))
+                            :Where("lower(Column.name) = ^"   ,alltrim(lower(ListOfPrimaryKeys->column_name)))
                             :SQL("PrimaryKeyColumn")
                             if :Tally == 1
-                                l_iPrimaryColumnKey := PrimaryKeyColumn->pk
+                                select PrimaryKeyColumn
+                                scan all
+                                   l_iPrimaryColumnKey := PrimaryKeyColumn->pk
+                                endscan
                             else
                                 l_iPrimaryColumnKey := 0
                             endif
