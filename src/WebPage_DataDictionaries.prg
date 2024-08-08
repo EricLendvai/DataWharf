@@ -2906,15 +2906,20 @@ return l_cHtml
 //=================================================================================================================
 static function NamespaceListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 local l_cHtml := []
-local l_oDB_ListOfNamespaces   := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_oDB_ListOfCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfNamespaces        := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfPreviousName      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfCustomFields      := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfTableCounts       := hb_SQLData(oFcgi:p_o_SQLConnection)
+local l_oDB_ListOfEnumerationCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfNamespaces
 local l_nNumberOfCustomFieldValues := 0
 local l_lWarnings := .f.
 local l_nColspan
 local l_lHasExternalId :=.f.
+local l_nCountProposed
+local l_nCount
+local l_nCountDiscontinued
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -3001,6 +3006,38 @@ if l_nNumberOfNamespaces > 0
 
     endwith
 
+    with object l_oDB_ListOfTableCounts
+        :Table("9ba4289c-c846-4a4f-aec5-81d08072866b","Namespace")
+        :Column("Namespace.pk" ,"Namespace_pk")
+        :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+        :Column("SUM(CASE WHEN Table.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+        :Column("SUM(CASE WHEN Table.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
+        :Join("inner","Table","","Table.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :GroupBy("Namespace_pk")
+        :SQL("ListOfTableCounts")
+        with object :p_oCursor
+            :Index("tag1","Namespace_pk")
+            :CreateIndexes()
+        endwith
+    endwith
+
+    with object l_oDB_ListOfEnumerationCounts
+        :Table("5d6d5a9f-5f0f-4c24-b112-d5faeed06a95","Namespace")
+        :Column("Namespace.pk" ,"Namespace_pk")
+        :Column("SUM(CASE WHEN Enumeration.UseStatus = "+trans(USESTATUS_PROPOSED)+" THEN 1 ELSE 0 END )" ,"CountProposed")
+        :Column("SUM(CASE WHEN Enumeration.UseStatus NOT IN ("+trans(USESTATUS_PROPOSED)+","+trans(USESTATUS_DISCONTINUED)+") THEN 1 ELSE 0 END )" ,"Count")
+        :Column("SUM(CASE WHEN Enumeration.UseStatus = "+trans(USESTATUS_DISCONTINUED)+" THEN 1 ELSE 0 END )" ,"CountDiscontinued")
+        :Join("inner","Enumeration","","Enumeration.fk_Namespace = Namespace.pk")
+        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+        :GroupBy("Namespace_pk")
+        :SQL("ListOfEnumerationCounts")
+        with object :p_oCursor
+            :Index("tag1","Namespace_pk")
+            :CreateIndexes()
+        endwith
+    endwith
+
 endif
 
 if empty(l_nNumberOfNamespaces)
@@ -3024,7 +3061,7 @@ else
         l_cHtml += [<div class="m-3"></div>]   //Spacer
     endif
 
-    l_nColspan := 4
+    l_nColspan := 6
     if l_lHasExternalId
         l_nColspan++
     endif
@@ -3056,6 +3093,8 @@ else
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<th class="text-white text-center">Other</th>]
                     endif
+                    l_cHtml += [<th class="text-white text-center">Tables</th>]
+                    l_cHtml += [<th class="text-white text-center">Enumerations</th>]
                     if l_lWarnings
                         l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                     endif
@@ -3103,6 +3142,39 @@ else
                                 l_cHtml += CustomFieldsBuildGridOther(ListOfNamespaces->pk,l_hOptionValueToDescriptionMapping)
                             l_cHtml += [</td>]
                         endif
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Tables
+                            if el_seek(ListOfNamespaces->pk,"ListOfTableCounts","tag1")
+                                l_nCountProposed     := ListOfTableCounts->CountProposed
+                                l_nCount             := ListOfTableCounts->Count
+                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
+                            endif
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                // l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                            endif
+                        l_cHtml += [</td>]
+
+                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Enumerations
+                            if el_seek(ListOfNamespaces->pk,"ListOfEnumerationCounts","tag1")
+                                l_nCountProposed     := ListOfEnumerationCounts->CountProposed
+                                l_nCount             := ListOfEnumerationCounts->Count
+                                l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
+                            else
+                                l_nCountProposed     := 0
+                                l_nCount             := 0
+                                l_nCountDiscontinued := 0
+                            endif
+                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                // l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                            endif
+                        l_cHtml += [</td>]
+
                         if l_lWarnings
                             l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                 l_cHtml += TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_TestWarning,""))
@@ -3483,6 +3555,7 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_nSearchMode
+local l_nTopCount
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
 local l_cSearchTableName
@@ -3506,6 +3579,7 @@ oFcgi:TraceAdd("TableListFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSearchMode"))))
+l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
 
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
@@ -3532,6 +3606,7 @@ l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearch
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"                  ,trans(l_nSearchMode))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"                    ,trans(l_nTopCount))
 
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
@@ -3559,7 +3634,6 @@ case l_cActionOnSubmit == "Search"
     l_cHtml += TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
-    // SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"                  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,"")
@@ -3609,6 +3683,7 @@ local l_nCountProposed
 local l_nCount
 local l_nCountDiscontinued
 local l_nSearchMode
+local l_nTopCount
 
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
@@ -3659,6 +3734,7 @@ local l_lExtraInfo
 oFcgi:TraceAdd("TableListFormBuild")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
@@ -3732,6 +3808,7 @@ with object l_oDB_ListOfTables
 
     TableListFormAddFiltering(l_oDB_ListOfTables,;
                               l_nSearchMode,;
+                              l_nTopCount,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
                               l_cSearchTableName,;
@@ -3805,6 +3882,7 @@ if l_nNumberOfTables > 0
 
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_nSearchMode,;
+                                  l_nTopCount,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
@@ -3850,6 +3928,7 @@ if l_nNumberOfTables > 0
 
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_nSearchMode,;
+                                  l_nTopCount,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
@@ -4041,10 +4120,10 @@ l_cHtml += [{]
     l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").hide();$(".SearchMode3").hide();]
     l_cHtml += [   break;]
     l_cHtml += [case 2:]
-    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").show();$(".SearchMode3").hide();]
+    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").removeClass("d-none").show();$(".SearchMode3").hide();]
     l_cHtml += [   break;]
     l_cHtml += [case 3:]
-    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").show();$(".SearchMode3").show();]
+    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").removeClass("d-none").show();$(".SearchMode3").removeClass("d-none").show();]
     l_cHtml += [   break;]
     l_cHtml += [default:]
     l_cHtml += [   console.log(`Sorry, we are out of ${expr}.`);]
@@ -4125,7 +4204,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
                         l_cHtml += [</tr>]
-                        l_cHtml += [<tr class="SearchMode2">]
+                        l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Namespace</span></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceName" id="TextSearchNamespaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceDescription" id="TextSearchNamespaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceDescription)+[" class="form-control"></td>]
@@ -4135,19 +4214,19 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [<td><input type="text" name="TextSearchTableName" id="TextSearchTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchTableDescription" id="TextSearchTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
-                        l_cHtml += [<tr class="SearchMode2">]
+                        l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column</span></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
-                        l_cHtml += [<tr class="SearchMode2">]
+                        l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration</span></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationName" id="TextSearchEnumerationName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationDescription" id="TextSearchEnumerationDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
                         if !empty(l_json_TableTags)
-                            l_cHtml += [<tr class="SearchMode3">]
+                            l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                                 l_cHtml += [<td><span class="me-2">Table Tags</span></td>]
                                 l_cHtml += [<td class="AdvancedSearch" colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableTags",l_json_TableTags,l_cSearchTableTags,25)
@@ -4155,7 +4234,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</tr>]
                         endif
        
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Table Usage Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableUsageStatus",;
@@ -4164,7 +4243,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Table Doc Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableDocStatus",;
@@ -4173,7 +4252,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Usage Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnUsageStatus",;
@@ -4182,7 +4261,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Doc Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnDocStatus",;
@@ -4191,14 +4270,14 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Static UID</span></td>]
                             //Made maxlength larger to work around trailing blank and tabs
                             l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+[" class="form-control">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Types</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnTypes",;
@@ -4207,7 +4286,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchExtraFilters",;
@@ -4236,6 +4315,22 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioSearchMode" id="SearchModeRadio3" value="3" onchange="SearchModeChanged(3);SaveSearchMode(3);"]+iif(l_nSearchMode==3,[ checked],[])+[>]
                         l_cHtml +=    [<label class="form-check-label" for="SearchModeRadio3">Advanced</label>]
                         l_cHtml += [</div>]
+                    l_cHtml += [</div>]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<div class="ms-3">]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio1" value="1"]+iif(l_nTopCount==1,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio1">Top 200</label>]
+                        l_cHtml += [</div>]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio2" value="2"]+iif(l_nTopCount==2,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio2">Top 1000</label>]
+                        l_cHtml += [</div>]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio3" value="3"]+iif(l_nTopCount==3,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio3">All</label>]
                     l_cHtml += [</div>]
                 l_cHtml += [</td>]
                 // ----------------------------------------
@@ -8136,6 +8231,7 @@ local l_cHtml := []
 
 local l_cActionOnSubmit
 local l_nSearchMode
+local l_nTopCount
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
 local l_cSearchEnumValueName
@@ -8155,6 +8251,7 @@ oFcgi:TraceAdd("EnumerationListFormOnSubmit")
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSearchMode"))))
+l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
 l_cSearchEnumerationName        := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationName"))
@@ -8171,6 +8268,7 @@ l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearch
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                  ,trans(l_nSearchMode))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"                    ,trans(l_nTopCount))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,l_cSearchEnumerationName)
@@ -8187,7 +8285,6 @@ case l_cActionOnSubmit == "Search"
     l_cHtml += EnumerationListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
-    // SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,"")
@@ -8224,6 +8321,7 @@ local l_nCountDiscontinued
 local l_nNumberOfEnumerations
 
 local l_nSearchMode
+local l_nTopCount
 local l_ScriptFolder
 
 local l_cSearchNamespaceName
@@ -8254,6 +8352,7 @@ local l_nColspan
 oFcgi:TraceAdd("EnumerationListFormBuild")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
@@ -8291,6 +8390,7 @@ with object l_oDB_ListOfEnumerations
 
     EnumerationListFormAddFiltering(l_oDB_ListOfEnumerations,;
                                     l_nSearchMode,;
+                                    l_nTopCount,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
                                     l_cSearchEnumerationName,;
@@ -8406,10 +8506,10 @@ l_cHtml += [{]
     l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").hide();$(".SearchMode3").hide();]
     l_cHtml += [   break;]
     l_cHtml += [case 2:]
-    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").show();$(".SearchMode3").hide();]
+    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").removeClass("d-none").show();$(".SearchMode3").hide();]
     l_cHtml += [   break;]
     l_cHtml += [case 3:]
-    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").show();$(".SearchMode3").show();]
+    l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").removeClass("d-none").show();$(".SearchMode3").removeClass("d-none").show();]
     l_cHtml += [   break;]
     l_cHtml += [default:]
     l_cHtml += [   console.log(`Sorry, we are out of ${expr}.`);]
@@ -8491,7 +8591,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode2">]
+                        l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Namespace</span></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceName" id="TextSearchNamespaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceDescription" id="TextSearchNamespaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceDescription)+[" class="form-control"></td>]
@@ -8503,13 +8603,13 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationDescription" id="TextSearchEnumerationDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode2">]
+                        l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value</span></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumValueName" id="TextSearchEnumValueName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchValueName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumValueDescription" id="TextSearchEnumValueDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchValueDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration Usage Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationUsageStatus",;
@@ -8518,7 +8618,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration Doc Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationDocStatus",;
@@ -8527,7 +8627,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Implemented As</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationImplementAs",;
@@ -8536,7 +8636,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value Usage Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumValueUsageStatus",;
@@ -8545,7 +8645,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value Doc Status</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumValueDocStatus",;
@@ -8554,7 +8654,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += [<tr class="SearchMode3">]
+                        l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
                             l_cHtml += [<td colspan="2">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchExtraFilters",;
@@ -8583,6 +8683,22 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioSearchMode" id="SearchModeRadio3" value="3" onchange="SearchModeChanged(3);SaveSearchMode(3);"]+iif(l_nSearchMode==3,[ checked],[])+[>]
                         l_cHtml +=    [<label class="form-check-label" for="SearchModeRadio3">Advanced</label>]
                         l_cHtml += [</div>]
+                    l_cHtml += [</div>]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<div class="ms-3">]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio1" value="1"]+iif(l_nTopCount==1,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio1">Top 200</label>]
+                        l_cHtml += [</div>]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio2" value="2"]+iif(l_nTopCount==2,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio2">Top 1000</label>]
+                        l_cHtml += [</div>]
+                        l_cHtml += [<div class="form-check">]   // form-check-inline
+                        l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio3" value="3"]+iif(l_nTopCount==3,[ checked],[])+[>]
+                        l_cHtml +=    [<label class="form-check-label" for="TopCountRadio3">All</label>]
                     l_cHtml += [</div>]
                 l_cHtml += [</td>]
                 // ----------------------------------------

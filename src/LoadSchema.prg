@@ -2520,6 +2520,7 @@ if par_nSyncSetForeignKey > 1
                             :Column("Column.pk","pk")
                             :Join("inner","Table","","Column.fk_Table = Table.pk")
                             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+                            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
                             :Where("lower(Namespace.name) = ^",alltrim(lower(ListOfPrimaryKeys->namespace_name)))
                             :Where("lower(Table.name) = ^"    ,alltrim(lower(ListOfPrimaryKeys->table_name)))
                             :Where("lower(Column.name) = ^"   ,alltrim(lower(ListOfPrimaryKeys->column_name)))
@@ -2535,7 +2536,7 @@ if par_nSyncSetForeignKey > 1
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->namespace_name))+"-"
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->table_name))+"-"
                                 l_cErrorMessage += alltrim(lower(ListOfPrimaryKeys->column_name))
-                                l_cErrorMessage += " Command: "+:LastSQL()
+                                // l_cErrorMessage += " Command: "+:LastSQL()
                             endif
                             CloseAlias("PrimaryKeyColumn")
 

@@ -1,5 +1,12 @@
 # DataWharf - Change Log
 
+## 08/08/2024 v 4.16
+* Fix Oracle Load for setting up Primary and Foreign Keys.
+* Added Totals of Tables and Enumerations on Namespace list.
+* Reduced UI flickering in Table and Enumeration Search sections.
+* To handle rendering performance issues, a maximum of 500 tables can be displayed in a diagram.
+* New "Top 200"/"Top 1000"/"All" option on Table and Enumeration Searches.
+
 ## 08/07/2024 v 4.15
 * Fix Oracle Load for setting up Primary and Foreign Keys.
 * Extended Timeout for docker to 6000 seconds, to handle loading speed for Oracle servers.

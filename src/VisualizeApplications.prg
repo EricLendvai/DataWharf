@@ -1,5 +1,7 @@
 #include "DataWharf.ch"
 
+#define MAX_TABLES_TO_DISPLAY 500
+
 //=================================================================================================================
 function DataDictionaryVisualizeDiagramBuild(par_iApplicationPk,par_cErrorText,par_cApplicationName,par_cURLApplicationLinkCode,par_iDiagramPk)
 local l_cHtml := []
@@ -248,97 +250,99 @@ with object l_oDB_ListOfTables
 
 endwith
 
-// create an array with edges
-with object l_oDB_ListOfLinks
-    if l_nNumberOfSelectedTableInDiagram == 0
-        // All tables are displayed
-        :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
-        :Column("Table.pk"                 ,"pkFrom")
-        :Column("Column.fk_TableForeign"   ,"pkTo")
-        :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
-        :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
-        :Column("Column.OnDelete"          ,"Column_OnDelete")
-        :Column("Column.UseStatus"         ,"Column_UseStatus")
-        :Column("Column.pk"                ,"Column_Pk")
-        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-        :Join("inner","Column","","Column.fk_Table = Table.pk")
-        :Where("Namespace.fk_Application = ^",par_iApplicationPk)
-        // :Where("Column.fk_TableForeign IS NOT NULL")
-        :Where("Column.fk_TableForeign > 0")
-        :OrderBy("pkFrom")
-        :OrderBy("pkTo")
-        :SQL("ListOfLinks")
-        l_nNumberOfLinksInDiagram := :Tally
+if l_nNumberOfTableInDiagram <= MAX_TABLES_TO_DISPLAY
+    // create an array with edges
+    with object l_oDB_ListOfLinks
+        if l_nNumberOfSelectedTableInDiagram == 0
+            // All tables are displayed
+            :Table("8fdc0db2-ac61-4d60-95fc-ce435c6a8bac","Table")
+            :Column("Table.pk"                 ,"pkFrom")
+            :Column("Column.fk_TableForeign"   ,"pkTo")
+            :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
+            :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
+            :Column("Column.OnDelete"          ,"Column_OnDelete")
+            :Column("Column.UseStatus"         ,"Column_UseStatus")
+            :Column("Column.pk"                ,"Column_Pk")
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Join("inner","Column","","Column.fk_Table = Table.pk")
+            :Where("Namespace.fk_Application = ^",par_iApplicationPk)
+            // :Where("Column.fk_TableForeign IS NOT NULL")
+            :Where("Column.fk_TableForeign > 0")
+            :OrderBy("pkFrom")
+            :OrderBy("pkTo")
+            :SQL("ListOfLinks")
+            l_nNumberOfLinksInDiagram := :Tally
 
-    else
-        // _M_ When the Harbour_ORM will add support to CTE could avoid using el_seek and delete
-        :Table("9f3afcce-5f28-457e-965c-e294cfd628aa","DiagramTable")
-        :Distinct(.t.)
-        :Column("Table.pk"                 ,"pkFrom")
-        :Column("Column.fk_TableForeign"   ,"pkTo")
-        :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
-        :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
-        :Column("Column.OnDelete"          ,"Column_OnDelete")
-        :Column("Column.UseStatus"         ,"Column_UseStatus")
-        :Column("Column.pk"                ,"Column_Pk")
-        :Join("inner","Table"    ,"","DiagramTable.fk_Table = Table.pk")
-        :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
-        :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
-        :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
-        // :Where("Column.fk_TableForeign IS NOT NULL")
-        :Where("Column.fk_TableForeign > 0")
-        :OrderBy("pkFrom")
-        :OrderBy("pkTo")
-        :SQL("ListOfLinks")
+        else
+            // _M_ When the Harbour_ORM will add support to CTE could avoid using el_seek and delete
+            :Table("9f3afcce-5f28-457e-965c-e294cfd628aa","DiagramTable")
+            :Distinct(.t.)
+            :Column("Table.pk"                 ,"pkFrom")
+            :Column("Column.fk_TableForeign"   ,"pkTo")
+            :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
+            :Column("Column.ForeignKeyOptional","Column_ForeignKeyOptional")
+            :Column("Column.OnDelete"          ,"Column_OnDelete")
+            :Column("Column.UseStatus"         ,"Column_UseStatus")
+            :Column("Column.pk"                ,"Column_Pk")
+            :Join("inner","Table"    ,"","DiagramTable.fk_Table = Table.pk")
+            :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
+            :Join("inner","Column"   ,"","Column.fk_Table = Table.pk")
+            :Where("DiagramTable.fk_Diagram = ^" , l_iDiagramPk)
+            // :Where("Column.fk_TableForeign IS NOT NULL")
+            :Where("Column.fk_TableForeign > 0")
+            :OrderBy("pkFrom")
+            :OrderBy("pkTo")
+            :SQL("ListOfLinks")
 
-        //Reduce the list
-        l_nNumberOfLinksInDiagram := 0
-        select ListOfLinks
-        scan all
-            if el_seek(ListOfLinks->pkTo,"ListOfTables","pk")
-                l_nNumberOfLinksInDiagram++
-            else
-                dbDelete()
-            endif
-        endscan
-        // ExportTableToHtmlFile("ListOfTables",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfTables.html","From PostgreSQL",,200,.t.)
-        // ExportTableToHtmlFile("ListOfLinks" ,el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfLinks.html" ,"From PostgreSQL",,200,.t.)
+            //Reduce the list
+            l_nNumberOfLinksInDiagram := 0
+            select ListOfLinks
+            scan all
+                if el_seek(ListOfLinks->pkTo,"ListOfTables","pk")
+                    l_nNumberOfLinksInDiagram++
+                else
+                    dbDelete()
+                endif
+            endscan
+            // ExportTableToHtmlFile("ListOfTables",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfTables.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfLinks" ,el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfLinks.html" ,"From PostgreSQL",,200,.t.)
+        endif
+    endwith
+
+    // l_cHtml += '<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>'
+
+    if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
+        l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
     endif
-endwith
 
-// l_cHtml += '<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>'
+    if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
+        l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
+    endif
 
-if l_iCanvasWidth < CANVAS_WIDTH_MIN .or. l_iCanvasWidth > CANVAS_WIDTH_MAX
-    l_iCanvasWidth := CANVAS_WIDTH_DEFAULT
+    // if GRAPH_LIB_DD == "mxgraph"
+    if l_nRenderMode == RENDERMODE_MXGRAPH
+        oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/css/common.css">]
+        oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/mxClient.js"></script>]
+    //elseif GRAPH_LIB_DD == "visjs"
+    else
+        oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_]+VISJS_SCRIPT_VERSION+[/vis-network.min.js"></script>]
+    endif
+
+    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_]+DATAWHARF_SCRIPT_VERSION+[/visualization.js"></script>]
+
+    l_cHtml += [<style type="text/css">]
+
+    l_cHtml += [  #mynetwork {]
+    l_cHtml += [    width: ]+Trans(l_iCanvasWidth)+[px;]
+    l_cHtml += [    height: ]+Trans(l_iCanvasHeight)+[px;]
+    l_cHtml += [    border: 1px solid lightgray;]
+    l_cHtml += [  }]
+
+    l_cHtml += [ .tooltip-inner {max-width: 700px;opacity: 1.0;background-color: #198754;} ]
+    l_cHtml += [ .tooltip.show {opacity:1.0} ]
+
+    l_cHtml += [</style>]
 endif
-
-if l_iCanvasHeight < CANVAS_HEIGHT_MIN .or. l_iCanvasHeight > CANVAS_HEIGHT_MAX
-    l_iCanvasHeight := CANVAS_HEIGHT_DEFAULT
-endif
-
-// if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == RENDERMODE_MXGRAPH
-    oFcgi:p_cHeader += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/css/common.css">]
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/mxgraph_]+MXGRAPH_SCRIPT_VERSION+[/mxClient.js"></script>]
-//elseif GRAPH_LIB_DD == "visjs"
-else
-    oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/vis_]+VISJS_SCRIPT_VERSION+[/vis-network.min.js"></script>]
-endif
-
-oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/DataWharf_]+DATAWHARF_SCRIPT_VERSION+[/visualization.js"></script>]
-
-l_cHtml += [<style type="text/css">]
-
-l_cHtml += [  #mynetwork {]
-l_cHtml += [    width: ]+Trans(l_iCanvasWidth)+[px;]
-l_cHtml += [    height: ]+Trans(l_iCanvasHeight)+[px;]
-l_cHtml += [    border: 1px solid lightgray;]
-l_cHtml += [  }]
-
-l_cHtml += [ .tooltip-inner {max-width: 700px;opacity: 1.0;background-color: #198754;} ]
-l_cHtml += [ .tooltip.show {opacity:1.0} ]
-
-l_cHtml += [</style>]
 
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Design">]
@@ -363,34 +367,35 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
         //---------------------------------------------------------------------------
         if oFcgi:p_nAccessLevelDD >= 4
-            l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
+            if l_nNumberOfTableInDiagram <= MAX_TABLES_TO_DISPLAY
+                l_cHtml += [<input type="button" role="button" value="Save Layout" id="ButtonSaveLayout" class="btn btn-primary rounded ms-3" onclick="]
 
 
-            //Since the redraw() fails to make the edges straight, need to actually submit the entire form.
-            // l_cHtml += [$.ajax({]
-            // l_cHtml += [  type: 'GET',]
-            // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
-            // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos='+JSON.stringify(network.getPositions()),]
-            // l_cHtml += [  cache: false ]
-            // l_cHtml += [});]
+                //Since the redraw() fails to make the edges straight, need to actually submit the entire form.
+                // l_cHtml += [$.ajax({]
+                // l_cHtml += [  type: 'GET',]
+                // l_cHtml += [  url: ']+l_cSitePath+[ajax/VisualizationPositions',]
+                // l_cHtml += [  data: 'apppk=]+Trans(par_iApplicationPk)+[&pos='+JSON.stringify(network.getPositions()),]
+                // l_cHtml += [  cache: false ]
+                // l_cHtml += [});]
 
-            // if GRAPH_LIB_DD == "mxgraph"
-            if l_nRenderMode == RENDERMODE_MXGRAPH
-                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
-            // elseif GRAPH_LIB_DD == "visjs"
-            else
-                l_cHtml += [network.storePositions();]
-                l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                // if GRAPH_LIB_DD == "mxgraph"
+                if l_nRenderMode == RENDERMODE_MXGRAPH
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(getPositions(network)) );]
+                // elseif GRAPH_LIB_DD == "visjs"
+                else
+                    l_cHtml += [network.storePositions();]
+                    l_cHtml += [$('#TextNodePositions').val( JSON.stringify(network.getPositions()) );]
+                endif
+                l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
+
+                //Code used to debug the positions.
+                l_cHtml += [">]
+
+                // l_cHtml += [<input type="button" role="button" value="Cancel" id="ButtonCancelLayout" class="btn btn-primary rounded ms-3">]
+
+                l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cURL+[">Cancel</a>]
             endif
-            l_cHtml += [$('#ActionOnSubmit').val('SaveLayout');document.form.submit();]
-
-            //Code used to debug the positions.
-            l_cHtml += [">]
-
-            // l_cHtml += [<input type="button" role="button" value="Cancel" id="ButtonCancelLayout" class="btn btn-primary rounded ms-3">]
-
-            l_cHtml += [<a class="btn btn-primary rounded ms-3" href="]+l_cURL+[">Cancel</a>]
-
             l_cHtml += [<input type="button" role="button" value="Diagram Settings" class="btn btn-primary rounded ms-3 RemoveOnEdit" onclick="$('#ActionOnSubmit').val('DiagramSettings');document.form.submit();">]
         endif
         //---------------------------------------------------------------------------
@@ -420,74 +425,81 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
         l_cHtml += [;return false;">]
         //---------------------------------------------------------------------------
-        l_cHtml += [<span class="navbar-text ms-3">]
-        l_cHtml += [Tables: ]+trans(l_nNumberOfTableInDiagram)
-        l_cHtml += [ - Links: ]+trans(l_nNumberOfLinksInDiagram)
-        // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
-        // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
-        
-        l_cHtml += [</span>]
+        if l_nNumberOfTableInDiagram <= MAX_TABLES_TO_DISPLAY
+            l_cHtml += [<span class="navbar-text ms-3">]
+            l_cHtml += [Tables: ]+trans(l_nNumberOfTableInDiagram)
+            l_cHtml += [ - Links: ]+trans(l_nNumberOfLinksInDiagram)
+            // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
+            // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
+            
+            l_cHtml += [</span>]
+        endif
         //---------------------------------------------------------------------------
     
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
-
-l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
-if l_nLengthDecoded > 0
-    //migrate from x,y coordinates that may be negative
-    // if GRAPH_LIB_DD == "mxgraph"
-    if l_nRenderMode == RENDERMODE_MXGRAPH
-        for each l_hNodePosition in l_hNodePositions
-            l_cHashKey := l_hNodePosition:__enumkey
-            if left(l_cHashKey, 1) == "T"
-                if l_hNodePosition["x"] < l_nMinX
-                    l_nMinX = l_hNodePosition["x"]
-                endif
-                if l_hNodePosition["y"] < l_nMinY
-                    l_nMinY = l_hNodePosition["y"]
-                endif
-            endif
-        endfor
-        for each l_hNodePosition in l_hNodePositions
-            l_cHashKey := l_hNodePosition:__enumkey
-            if left(l_cHashKey, 1) == "T"
-                l_hNodePosition["x"] += (-l_nMinX)
-                l_hNodePosition["y"] += (-l_nMinY)
-            endif
-        endfor
-    endif
-endif
-
-l_cHtml += [<table><tr>]
-l_cHtml += [<div id="buttons" class="mb-2"></div>]
-l_cHtml += [</tr>]
-l_cHtml += [<tr>]
-//-------------------------------------
-l_cHtml += [<td valign="top">]
-l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
-l_cHtml += [</td>]
-//-------------------------------------
-
-if empty(l_cDiagramInfoScale)
-    l_nDiagramInfoScale := 1
+if l_nNumberOfTableInDiagram > MAX_TABLES_TO_DISPLAY
+    l_cHtml += [<div class="mt-5 mb-5">]
+    l_cHtml += [<span class="m-5 text-danger">A maximum number of ]+trans(MAX_TABLES_TO_DISPLAY)+[ tables can be displayed. Use the "Diagram Settings" option to change the list of tables to display.</span>]
+    l_cHtml += [</div>]
 else
-    l_nDiagramInfoScale := val(l_cDiagramInfoScale)
-    if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+    l_nLengthDecoded := hb_jsonDecode(l_cNodePositions,@l_hNodePositions)
+    if l_nLengthDecoded > 0
+        //migrate from x,y coordinates that may be negative
+        // if GRAPH_LIB_DD == "mxgraph"
+        if l_nRenderMode == RENDERMODE_MXGRAPH
+            for each l_hNodePosition in l_hNodePositions
+                l_cHashKey := l_hNodePosition:__enumkey
+                if left(l_cHashKey, 1) == "T"
+                    if l_hNodePosition["x"] < l_nMinX
+                        l_nMinX = l_hNodePosition["x"]
+                    endif
+                    if l_hNodePosition["y"] < l_nMinY
+                        l_nMinY = l_hNodePosition["y"]
+                    endif
+                endif
+            endfor
+            for each l_hNodePosition in l_hNodePositions
+                l_cHashKey := l_hNodePosition:__enumkey
+                if left(l_cHashKey, 1) == "T"
+                    l_hNodePosition["x"] += (-l_nMinX)
+                    l_hNodePosition["y"] += (-l_nMinY)
+                endif
+            endfor
+        endif
+    endif
+
+    l_cHtml += [<table><tr>]
+    l_cHtml += [<div id="buttons" class="mb-2"></div>]
+    l_cHtml += [</tr>]
+    l_cHtml += [<tr>]
+    //-------------------------------------
+    l_cHtml += [<td valign="top">]
+    l_cHtml += [<div id="mynetwork" style="overflow:scroll"></div>]
+    l_cHtml += [</td>]
+    //-------------------------------------
+
+    if empty(l_cDiagramInfoScale)
         l_nDiagramInfoScale := 1
+    else
+        l_nDiagramInfoScale := val(l_cDiagramInfoScale)
+        if l_nDiagramInfoScale < 0.4 .or. l_nDiagramInfoScale > 1.0
+            l_nDiagramInfoScale := 1
+        endif
     endif
-endif
 
 
-l_cHtml += [<td valign="top">]  // width="100%"
-if l_nDiagramInfoScale == 1
-    l_cHtml += [<div id="GraphInfo"></div>]
-else
-    l_cHtml += [<div id="GraphInfo" style="transform: scale(]+alltrim(str(l_nDiagramInfoScale,10,2))+[);transform-origin: 0 0;"></div>]
+    l_cHtml += [<td valign="top">]  // width="100%"
+    if l_nDiagramInfoScale == 1
+        l_cHtml += [<div id="GraphInfo"></div>]
+    else
+        l_cHtml += [<div id="GraphInfo" style="transform: scale(]+alltrim(str(l_nDiagramInfoScale,10,2))+[);transform-origin: 0 0;"></div>]
+    endif
+    l_cHtml += [</td>]
+    //-------------------------------------
+    l_cHtml += [</tr></table>]
 endif
-l_cHtml += [</td>]
-//-------------------------------------
-l_cHtml += [</tr></table>]
 
 //Code used to debug the positions.
 // l_cHtml += [<div><input type="text" name="TextNodePositions" id="TextNodePositions" size="100" value=""></div>]
@@ -499,330 +511,332 @@ l_cHtml += [</form>]
 // l_cHtml += [ .vis-button {background-color:#FF0000;} ]
 // l_cHtml += [</style>]
 
-l_cHtml += [<script type="text/javascript">]
+if l_nNumberOfTableInDiagram <= MAX_TABLES_TO_DISPLAY
+    l_cHtml += [<script type="text/javascript">]
 
-l_cHtml += [var network;]
+    l_cHtml += [var network;]
 
-l_cHtml += [function MakeVis(){]
+    l_cHtml += [function MakeVis(){]
 
-// create an array with nodes
-l_cHtml += 'var nodes = ['
-select ListOfTables
-scan all
-    if l_lShowNamespace
-        l_cNodeLabel := alltrim(ListOfTables->Namespace_Name)+"."
-    else
-        l_cNodeLabel := ""
-    endif
-
-    do case
-    case l_nNodeDisplayMode == 1 //Table Name and Alias
-        l_cNodeLabel += alltrim(ListOfTables->Table_Name)
-        if ListOfTables->Table_Unlogged
-            l_cNodeLabel += [\n<small><mark>UNLOGGED</mark></small>]
-        endif
-        if !hb_orm_isnull("ListOfTables","Table_AKA")
-            l_cNodeLabel += [</b>\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
+    // create an array with nodes
+    l_cHtml += 'var nodes = ['
+    select ListOfTables
+    scan all
+        if l_lShowNamespace
+            l_cNodeLabel := alltrim(ListOfTables->Namespace_Name)+"."
         else
-            l_cNodeLabel += [</b>]
+            l_cNodeLabel := ""
         endif
-    case l_nNodeDisplayMode == 2 //Table Alias or Name
-        if ListOfTables->Table_Unlogged
-            if !hb_orm_isnull("ListOfTables","Table_AKA")
-                l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[\n<small><mark>UNLOGGED</mark></small></b>]
-            else
-                l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
+
+        do case
+        case l_nNodeDisplayMode == 1 //Table Name and Alias
+            l_cNodeLabel += alltrim(ListOfTables->Table_Name)
+            if ListOfTables->Table_Unlogged
+                l_cNodeLabel += [\n<small><mark>UNLOGGED</mark></small>]
             endif
-        else
             if !hb_orm_isnull("ListOfTables","Table_AKA")
-                l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[</b>]
+                l_cNodeLabel += [</b>\n(]+ListOfTables->Table_AKA+[)]  // no &nbsp; supported
+            else
+                l_cNodeLabel += [</b>]
+            endif
+        case l_nNodeDisplayMode == 2 //Table Alias or Name
+            if ListOfTables->Table_Unlogged
+                if !hb_orm_isnull("ListOfTables","Table_AKA")
+                    l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[\n<small><mark>UNLOGGED</mark></small></b>]
+                else
+                    l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
+                endif
+            else
+                if !hb_orm_isnull("ListOfTables","Table_AKA")
+                    l_cNodeLabel += alltrim(ListOfTables->Table_AKA)+[</b>]
+                else
+                    l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[</b>]
+                endif
+            endif
+        case l_nNodeDisplayMode == 3 //Table Name
+            if ListOfTables->Table_Unlogged
+                l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
             else
                 l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[</b>]
             endif
-        endif
-    case l_nNodeDisplayMode == 3 //Table Name
-        if ListOfTables->Table_Unlogged
-            l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[\n<small><mark>UNLOGGED</mark></small></b>]
-        else
-            l_cNodeLabel += alltrim(ListOfTables->Table_Name)+[</b>]
-        endif
-    endcase
-    l_cNodeLabel := [<b>]+l_cNodeLabel
+        endcase
+        l_cNodeLabel := [<b>]+l_cNodeLabel
 
-    // if hb_orm_isnull("ListOfTables","Table_Description")
-    //     l_cTableDescription := ""
-    // else
-    //     l_cTableDescription := hb_StrReplace(ListOfTables->Table_Description,{[&]     => [&#38;],;
-    //                                                                           [\]     => [&#92;],;
-    //                                                                           chr(10) => [],;
-    //                                                                           chr(13) => [\n],;
-    //                                                                           ["]     => [&#34;],;
-    //                                                                           [']     => [&#39;]} )
-    // endif
-    l_cTableDescription := EscapeNewlineAndQuotes(ListOfTables->Table_Description)
+        // if hb_orm_isnull("ListOfTables","Table_Description")
+        //     l_cTableDescription := ""
+        // else
+        //     l_cTableDescription := hb_StrReplace(ListOfTables->Table_Description,{[&]     => [&#38;],;
+        //                                                                           [\]     => [&#92;],;
+        //                                                                           chr(10) => [],;
+        //                                                                           chr(13) => [\n],;
+        //                                                                           ["]     => [&#34;],;
+        //                                                                           [']     => [&#39;]} )
+        // endif
+        l_cTableDescription := EscapeNewlineAndQuotes(ListOfTables->Table_Description)
 
-    //Due to some bugs in the js library, had to setup font before the label.
-    l_cHtml += [{id:"T]+Trans(ListOfTables->pk)+["]
-    l_cHtml += [,font:{multi:"html",align:"left"}]
-    if empty(l_cTableDescription)
-        l_cHtml += [,label:"]+l_cNodeLabel+["]
-    else
-        if l_lNodeShowDescription
-            l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
+        //Due to some bugs in the js library, had to setup font before the label.
+        l_cHtml += [{id:"T]+Trans(ListOfTables->pk)+["]
+        l_cHtml += [,font:{multi:"html",align:"left"}]
+        if empty(l_cTableDescription)
+            l_cHtml += [,label:"]+l_cNodeLabel+["]
         else
-            if l_lNeverShowDescriptionOnHover
-                l_cHtml += [,label:"]+l_cNodeLabel+["]
+            if l_lNodeShowDescription
+                l_cHtml += [,label:"]+l_cNodeLabel+[\n]+l_cTableDescription+["]
             else
-                l_cHtml += [,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
+                if l_lNeverShowDescriptionOnHover
+                    l_cHtml += [,label:"]+l_cNodeLabel+["]
+                else
+                    l_cHtml += [,label:"]+l_cNodeLabel+[",title:"]+l_cTableDescription+["]
+                endif
             endif
         endif
-    endif
 
-    // 1 Unknown
-    // 2 Proposed
-    // 3 Under Development
-    // 4 Active
-    // 5 To Be Discontinued
-    // 6 Discontinued
+        // 1 Unknown
+        // 2 Proposed
+        // 3 Under Development
+        // 4 Active
+        // 5 To Be Discontinued
+        // 6 Discontinued
 
-    do case
-    case ListOfTables->Table_UseStatus <= USESTATUS_UNKNOWN
-        if l_lUnknownInGray
-            l_cHtml += [,color:{background:'#]+USESTATUS_1_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_1_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-        else
+        do case
+        case ListOfTables->Table_UseStatus <= USESTATUS_UNKNOWN
+            if l_lUnknownInGray
+                l_cHtml += [,color:{background:'#]+USESTATUS_1_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_1_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+            else
+                l_cHtml += [,color:{background:'#]+USESTATUS_4_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_4_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+            endif
+
+        case ListOfTables->Table_UseStatus == USESTATUS_PROPOSED
+            l_cHtml += [,color:{background:'#]+USESTATUS_2_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_2_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+        case ListOfTables->Table_UseStatus == USESTATUS_UNDERDEVELOPMENT
+            l_cHtml += [,color:{background:'#]+USESTATUS_3_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_3_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+        case ListOfTables->Table_UseStatus == USESTATUS_ACTIVE
             l_cHtml += [,color:{background:'#]+USESTATUS_4_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_4_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+        case ListOfTables->Table_UseStatus == USESTATUS_TOBEDISCONTINUED
+            l_cHtml += [,color:{background:'#]+USESTATUS_5_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_5_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+        case ListOfTables->Table_UseStatus >= USESTATUS_DISCONTINUED
+            l_cHtml += [,color:{background:'#]+USESTATUS_6_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_6_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
+
+        endcase
+
+        if l_nNodeMaxWidth > 50
+            l_cHtml += [,widthConstraint: {maximum: ]+Trans(l_nNodeMaxWidth)+[}]
+        endif
+        if l_nNodeMinHeight > 20
+            l_cHtml += [,heightConstraint: {minimum: ]+Trans(l_nNodeMinHeight)+[}]
         endif
 
-    case ListOfTables->Table_UseStatus == USESTATUS_PROPOSED
-        l_cHtml += [,color:{background:'#]+USESTATUS_2_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_2_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-
-    case ListOfTables->Table_UseStatus == USESTATUS_UNDERDEVELOPMENT
-        l_cHtml += [,color:{background:'#]+USESTATUS_3_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_3_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-
-    case ListOfTables->Table_UseStatus == USESTATUS_ACTIVE
-        l_cHtml += [,color:{background:'#]+USESTATUS_4_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_4_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-
-    case ListOfTables->Table_UseStatus == USESTATUS_TOBEDISCONTINUED
-        l_cHtml += [,color:{background:'#]+USESTATUS_5_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_5_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-
-    case ListOfTables->Table_UseStatus >= USESTATUS_DISCONTINUED
-        l_cHtml += [,color:{background:'#]+USESTATUS_6_NODE_BACKGROUND+[',highlight:{background:'#]+USESTATUS_6_NODE_HIGHLIGHT+[',border:'#]+SELECTED_NODE_BORDER+['}}]
-
-    endcase
-
-    if l_nNodeMaxWidth > 50
-        l_cHtml += [,widthConstraint: {maximum: ]+Trans(l_nNodeMaxWidth)+[}]
-    endif
-    if l_nNodeMinHeight > 20
-        l_cHtml += [,heightConstraint: {minimum: ]+Trans(l_nNodeMinHeight)+[}]
-    endif
-
-    if l_nLengthDecoded > 0
-        l_hCoordinate := hb_HGetDef(l_hNodePositions,"T"+Trans(ListOfTables->pk),{=>})
-        if len(l_hCoordinate) > 0
-            l_lAutoLayout := .f.
-            l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
-            if hb_HHasKey(l_hCoordinate, "height")
-                l_cHtml += [,height:]+Trans(l_hCoordinate["height"])
-            endif
-            if hb_HHasKey(l_hCoordinate, "width")
-                l_cHtml += [,width:]+Trans(l_hCoordinate["width"])
+        if l_nLengthDecoded > 0
+            l_hCoordinate := hb_HGetDef(l_hNodePositions,"T"+Trans(ListOfTables->pk),{=>})
+            if len(l_hCoordinate) > 0
+                l_lAutoLayout := .f.
+                l_cHtml += [,x:]+Trans(l_hCoordinate["x"])+[,y:]+Trans(l_hCoordinate["y"])
+                if hb_HHasKey(l_hCoordinate, "height")
+                    l_cHtml += [,height:]+Trans(l_hCoordinate["height"])
+                endif
+                if hb_HHasKey(l_hCoordinate, "width")
+                    l_cHtml += [,width:]+Trans(l_hCoordinate["width"])
+                endif
             endif
         endif
-    endif
 
-    if oFcgi:p_nAccessLevelDD < 4
-        l_cHtml += [,fixed: {x:true,y:true}]
-    endif
+        if oFcgi:p_nAccessLevelDD < 4
+            l_cHtml += [,fixed: {x:true,y:true}]
+        endif
 
-    l_cHtml += [},]
-endscan
-l_cHtml += '];'
+        l_cHtml += [},]
+    endscan
+    l_cHtml += '];'
 
-//Pre-Determine multi-links
-select ListOfLinks
-scan all
-    l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
-    l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
-endscan
+    //Pre-Determine multi-links
+    select ListOfLinks
+    scan all
+        l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
+        l_hMultiEdgeCounters[l_cMultiEdgeKey] := hb_HGetDef(l_hMultiEdgeCounters,l_cMultiEdgeKey,0) + 1
+    endscan
 
-l_cHtml += 'var edges = ['
+    l_cHtml += 'var edges = ['
 
-l_cMultiEdgeKeyPrevious := ""
+    l_cMultiEdgeKeyPrevious := ""
 
-select ListOfLinks
-scan all
+    select ListOfLinks
+    scan all
 
-    //1="NotSet", 2="Protect", 3="Cascade", 4="BreakLink"
-    //Arrow options:  classic,classicThin, block,blockThin,open,openThin, oval, diamond, diamondThin
+        //1="NotSet", 2="Protect", 3="Cascade", 4="BreakLink"
+        //Arrow options:  classic,classicThin, block,blockThin,open,openThin, oval, diamond, diamondThin
 
-    if ListOfLinks->Column_ForeignKeyOptional
-        l_cArrowType := "open"
-    else
-        l_cArrowType := "block"
-    endif
-    if ListOfLinks->Column_OnDelete != 2  // Not a Protected Relationship
-        l_cArrowType += "Thin"
-    endif
-
-    l_cHtml += [{id:"C]+Trans(ListOfLinks->Column_Pk)+[",from:"T]+Trans(ListOfLinks->pkFrom)+[",to:"T]+Trans(ListOfLinks->pkTo)+[",arrows:{from:{enabled: true,type:"]+l_cArrowType+["}}]
-
-    do case
-    case ListOfLinks->Column_UseStatus <= USESTATUS_UNKNOWN
-        if l_lUnknownInGray
-            l_cHtml += [,color:{color:'#]+USESTATUS_1_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_1_EDGE_HIGHLIGHT+['}]
+        if ListOfLinks->Column_ForeignKeyOptional
+            l_cArrowType := "open"
         else
+            l_cArrowType := "block"
+        endif
+        if ListOfLinks->Column_OnDelete != 2  // Not a Protected Relationship
+            l_cArrowType += "Thin"
+        endif
+
+        l_cHtml += [{id:"C]+Trans(ListOfLinks->Column_Pk)+[",from:"T]+Trans(ListOfLinks->pkFrom)+[",to:"T]+Trans(ListOfLinks->pkTo)+[",arrows:{from:{enabled: true,type:"]+l_cArrowType+["}}]
+
+        do case
+        case ListOfLinks->Column_UseStatus <= USESTATUS_UNKNOWN
+            if l_lUnknownInGray
+                l_cHtml += [,color:{color:'#]+USESTATUS_1_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_1_EDGE_HIGHLIGHT+['}]
+            else
+                l_cHtml += [,color:{color:'#]+USESTATUS_4_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_4_EDGE_HIGHLIGHT+['}]
+            endif
+        case ListOfLinks->Column_UseStatus == USESTATUS_PROPOSED
+            l_cHtml += [,color:{color:'#]+USESTATUS_2_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_2_EDGE_HIGHLIGHT+['}]
+        case ListOfLinks->Column_UseStatus == USESTATUS_UNDERDEVELOPMENT
+            l_cHtml += [,color:{color:'#]+USESTATUS_3_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_3_EDGE_HIGHLIGHT+['}]
+        case ListOfLinks->Column_UseStatus == USESTATUS_ACTIVE
             l_cHtml += [,color:{color:'#]+USESTATUS_4_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_4_EDGE_HIGHLIGHT+['}]
+        case ListOfLinks->Column_UseStatus == USESTATUS_TOBEDISCONTINUED
+            l_cHtml += [,color:{color:'#]+USESTATUS_5_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_5_EDGE_HIGHLIGHT+['}]
+        case ListOfLinks->Column_UseStatus >= USESTATUS_DISCONTINUED
+            l_cHtml += [,color:{color:'#]+USESTATUS_6_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_6_EDGE_HIGHLIGHT+['}]
+        endcase
+
+        if !empty(nvl(ListOfLinks->Column_ForeignKeyUse,""))
+            l_cHtml += [,label:"]+EscapeNewlineAndQuotes(ListOfLinks->Column_ForeignKeyUse)+["]
         endif
-    case ListOfLinks->Column_UseStatus == USESTATUS_PROPOSED
-        l_cHtml += [,color:{color:'#]+USESTATUS_2_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_2_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == USESTATUS_UNDERDEVELOPMENT
-        l_cHtml += [,color:{color:'#]+USESTATUS_3_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_3_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == USESTATUS_ACTIVE
-        l_cHtml += [,color:{color:'#]+USESTATUS_4_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_4_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus == USESTATUS_TOBEDISCONTINUED
-        l_cHtml += [,color:{color:'#]+USESTATUS_5_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_5_EDGE_HIGHLIGHT+['}]
-    case ListOfLinks->Column_UseStatus >= USESTATUS_DISCONTINUED
-        l_cHtml += [,color:{color:'#]+USESTATUS_6_EDGE_BACKGROUND+[',highlight:'#]+USESTATUS_6_EDGE_HIGHLIGHT+['}]
-    endcase
 
-    if !empty(nvl(ListOfLinks->Column_ForeignKeyUse,""))
-        l_cHtml += [,label:"]+EscapeNewlineAndQuotes(ListOfLinks->Column_ForeignKeyUse)+["]
-    endif
-
-    l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
-    l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
-    if l_nMultiEdgeTotalCount > 1
-        if l_cMultiEdgeKey == l_cMultiEdgeKeyPrevious
-            l_nMultiEdgeCount += 1
-        else
-            l_nMultiEdgeCount := 1
-            l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
+        l_cMultiEdgeKey := Trans(ListOfLinks->pkFrom)+"-"+Trans(ListOfLinks->pkTo)
+        l_nMultiEdgeTotalCount := l_hMultiEdgeCounters[l_cMultiEdgeKey]
+        if l_nMultiEdgeTotalCount > 1
+            if l_cMultiEdgeKey == l_cMultiEdgeKeyPrevious
+                l_nMultiEdgeCount += 1
+            else
+                l_nMultiEdgeCount := 1
+                l_cMultiEdgeKeyPrevious := l_cMultiEdgeKey
+            endif
+            l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
         endif
-        l_cHtml += GetMultiEdgeCurvatureJSon(l_nMultiEdgeTotalCount,l_nMultiEdgeCount)
-    endif
 
-    if l_nLengthDecoded > 0
-        l_hCoordinate := hb_HGetDef(l_hNodePositions,"C"+Trans(ListOfLinks->Column_Pk),{=>})
-        if len(l_hCoordinate) > 0
-            l_lAutoLayout := .f.
-            l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+        if l_nLengthDecoded > 0
+            l_hCoordinate := hb_HGetDef(l_hNodePositions,"C"+Trans(ListOfLinks->Column_Pk),{=>})
+            if len(l_hCoordinate) > 0
+                l_lAutoLayout := .f.
+                l_cHtml += [,points:]+hb_jsonEncode(l_hCoordinate["points"])
+            endif
         endif
+
+    // l_cHtml += [,labelFrom:"CS"]
+    // l_cHtml += [,arrowWidth:60]
+
+        
+
+        l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
+    endscan
+
+    l_cHtml += '];'
+
+    // create a network
+    l_cHtml += [  var container = document.getElementById("mynetwork");]
+
+    // if GRAPH_LIB_DD == "mxgraph"
+    if l_nRenderMode == RENDERMODE_MXGRAPH
+
+    // See visualization.js .. function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout, resetEdges) {
+        l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
+        l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
+        l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
+        l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
+        l_cHtml += '     var cellsRemoved = evt.getProperty("added");'
+        l_cHtml += '     var cellRemoved = (cellsRemoved && cellsRemoved.length >0) ? cellsRemoved[0] : null;'
+        l_cHtml += '     SelectGraphCell(cellsAdded,cellsRemoved,network);'
+        l_cHtml += '     var params = {};'
+        l_cHtml += '     if (cellAdded != null) {'
+        l_cHtml += '         if(cellAdded.id.startsWith("T")) {'
+        l_cHtml += '             params.nodes = [ cellAdded.id ];'
+        l_cHtml += '         }'
+        l_cHtml += '         else if(cellAdded.id.startsWith("C")) {'
+        l_cHtml += '             params.edges = [ cellAdded.id ];'
+        l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
+        l_cHtml += '         }'
+        l_cHtml += '     }'
+        l_cHtml += '     evt.consume();'
+
+        l_cHtml += '     network.setAllowDanglingEdges(false);'
+        l_cHtml += '     network.setDisconnectOnMove(false);'
+
+    // elseif GRAPH_LIB_DD == "visjs"
+    else
+        l_cHtml += [  var data = {]
+        l_cHtml += [    nodes: new vis.DataSet(nodes),]
+        l_cHtml += [    edges: new vis.DataSet(edges),]
+        l_cHtml += [  };]
+        l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
+
+        l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
+        if l_lNavigationControl
+            l_cHtml +=              [interaction:{navigationButtons:true},]
+        endif
+        l_cHtml +=                  [};]
+
+        l_cHtml += [  network = new vis.Network(container, data, options);]  //var
+        l_cHtml += ' network.on("click", function (params) {'
+        l_cHtml += '   params.event = "[original event]";'
     endif
 
-// l_cHtml += [,labelFrom:"CS"]
-// l_cHtml += [,arrowWidth:60]
+    // Code to filter columns
+    l_cJS := [$("#ColumnSearch").change(function() {]
+    l_cJS +=    [var l_keywords =  $(this).val();]
+    l_cJS +=    [$(".SpanColumnName").each(function (par_SpanTable){]+;
+                                                            [var l_cColumnName = $(this).text();]+;
+                                                            [if (KeywordSearch(l_keywords,l_cColumnName)) {$(this).parent().parent().parent().show();} else {$(this).parent().parent().parent().hide();}]+;
+                                                            [});]
+    l_cJS += [});]
 
-    
+    // Code to prevent the enter key from submitting the form but still trigger the .change()
+    l_cJS += [$("#ColumnSearch").keydown(function(e) {]
+    l_cJS +=    [var key = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;]
+    l_cJS +=    [if(e.keyCode == 13 && e.target.type !== 'submit') {]
+    l_cJS +=      [e.preventDefault();]
+    l_cJS +=      [return $(e.target).blur().focus();]
+    l_cJS +=    [}]
+    l_cJS += [});]
 
-    l_cHtml += [},]  //,physics: false , smooth: { type: "cubicBezier" }
-endscan
+    // Code to enable the "All" and "Core Only" button. JavaScript code executed after the right panel is loaded.
+    l_cJS += [$("#ButtonShowAll").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").show(),$(".ColumnCore").show();});]
+    l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
+    l_cJS += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
 
-l_cHtml += '];'
-
-// create a network
-l_cHtml += [  var container = document.getElementById("mynetwork");]
-
-// if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == RENDERMODE_MXGRAPH
-
-// See visualization.js .. function createGraph(container, nodes, edges, autoLayout, rerouteEdgesOnVertexMove, edgeLayout, resetEdges) {
-    l_cHtml += [ network = createGraph(container, nodes, edges, ]+iif(l_lAutoLayout,"true","false")+[, false, "orthogonal", ] + iif(l_nMinX > 0 .or. l_nMinY > 0,"true","false") + [); ]
-    l_cHtml += ' network.getSelectionModel().addListener(mxEvent.CHANGE, function (sender, evt) {'
-    l_cHtml += '     var cellsAdded = evt.getProperty("removed");'
-    l_cHtml += '     var cellAdded = (cellsAdded && cellsAdded.length >0) ? cellsAdded[0] : null;'
-    l_cHtml += '     var cellsRemoved = evt.getProperty("added");'
-    l_cHtml += '     var cellRemoved = (cellsRemoved && cellsRemoved.length >0) ? cellsRemoved[0] : null;'
-    l_cHtml += '     SelectGraphCell(cellsAdded,cellsRemoved,network);'
-    l_cHtml += '     var params = {};'
-    l_cHtml += '     if (cellAdded != null) {'
-    l_cHtml += '         if(cellAdded.id.startsWith("T")) {'
-    l_cHtml += '             params.nodes = [ cellAdded.id ];'
-    l_cHtml += '         }'
-    l_cHtml += '         else if(cellAdded.id.startsWith("C")) {'
-    l_cHtml += '             params.edges = [ cellAdded.id ];'
-    l_cHtml += '             params.items = [ { edgeId : cellAdded.id } ];'
-    l_cHtml += '         }'
-    l_cHtml += '     }'
-    l_cHtml += '     evt.consume();'
-
-    l_cHtml += '     network.setAllowDanglingEdges(false);'
-    l_cHtml += '     network.setDisconnectOnMove(false);'
-
-// elseif GRAPH_LIB_DD == "visjs"
-else
-    l_cHtml += [  var data = {]
-    l_cHtml += [    nodes: new vis.DataSet(nodes),]
-    l_cHtml += [    edges: new vis.DataSet(edges),]
-    l_cHtml += [  };]
-    l_cHtml += [  var options = {nodes:{shape:"box",margin:12,physics:false,labelHighlightBold:false},]
-
-    l_cHtml +=                  [edges:{physics:false},]   // ,selectionWidth: 2
-    if l_lNavigationControl
-        l_cHtml +=              [interaction:{navigationButtons:true},]
-    endif
-    l_cHtml +=                  [};]
-
-    l_cHtml += [  network = new vis.Network(container, data, options);]  //var
-    l_cHtml += ' network.on("click", function (params) {'
-    l_cHtml += '   params.event = "[original event]";'
-endif
-
-// Code to filter columns
-l_cJS := [$("#ColumnSearch").change(function() {]
-l_cJS +=    [var l_keywords =  $(this).val();]
-l_cJS +=    [$(".SpanColumnName").each(function (par_SpanTable){]+;
-                                                           [var l_cColumnName = $(this).text();]+;
-                                                           [if (KeywordSearch(l_keywords,l_cColumnName)) {$(this).parent().parent().parent().show();} else {$(this).parent().parent().parent().hide();}]+;
-                                                           [});]
-l_cJS += [});]
-
-// Code to prevent the enter key from submitting the form but still trigger the .change()
-l_cJS += [$("#ColumnSearch").keydown(function(e) {]
-l_cJS +=    [var key = e.charCode ? e.charCode : e.keyCode ? e.keyCode : 0;]
-l_cJS +=    [if(e.keyCode == 13 && e.target.type !== 'submit') {]
-l_cJS +=      [e.preventDefault();]
-l_cJS +=      [return $(e.target).blur().focus();]
-l_cJS +=    [}]
-l_cJS += [});]
-
-// Code to enable the "All" and "Core Only" button. JavaScript code executed after the right panel is loaded.
-l_cJS += [$("#ButtonShowAll").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").show(),$(".ColumnCore").show();});]
-l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
-l_cJS += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
-
-l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
-l_cHtml += '      });'
-
-l_cJSEditMode := "$('.TopTabs').addClass('disabled');$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();"
-
-// if GRAPH_LIB_DD == "mxgraph"
-if l_nRenderMode == RENDERMODE_MXGRAPH
-    l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
-    l_cHtml += '    var changes = evt.getProperty("edit").changes;'
-    l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
-    l_cHtml += '        if(changes[i].constructor.name ==  "mxGeometryChange") {'
-    l_cHtml += "           "+l_cJSEditMode
-    l_cHtml += '        }'
-    l_cHtml += '    }'
-    l_cHtml += ' });'
-// elseif GRAPH_LIB_DD == "visjs"
-else
-    l_cHtml += ' network.on("dragStart", function (params) {'
-    l_cHtml += '   params.event = "[original event]";'
-    // l_cHtml += '   debugger;'
-    l_cHtml += "   if (params['nodes'].length == 1) {"+l_cJSEditMode+"};"
+    l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
     l_cHtml += '      });'
-    l_cHtml += [network.fit();]
+
+    l_cJSEditMode := "$('.TopTabs').addClass('disabled');$('#ButtonSaveLayout').addClass('btn-warning').removeClass('btn-primary');$('.RemoveOnEdit').remove();"
+
+    // if GRAPH_LIB_DD == "mxgraph"
+    if l_nRenderMode == RENDERMODE_MXGRAPH
+        l_cHtml += ' network.model.addListener(mxEvent.CHANGE, function (sender, evt) {'
+        l_cHtml += '    var changes = evt.getProperty("edit").changes;'
+        l_cHtml += '    for (var i = 0; i < changes.length; i++) { '
+        l_cHtml += '        if(changes[i].constructor.name ==  "mxGeometryChange") {'
+        l_cHtml += "           "+l_cJSEditMode
+        l_cHtml += '        }'
+        l_cHtml += '    }'
+        l_cHtml += ' });'
+    // elseif GRAPH_LIB_DD == "visjs"
+    else
+        l_cHtml += ' network.on("dragStart", function (params) {'
+        l_cHtml += '   params.event = "[original event]";'
+        // l_cHtml += '   debugger;'
+        l_cHtml += "   if (params['nodes'].length == 1) {"+l_cJSEditMode+"};"
+        l_cHtml += '      });'
+        l_cHtml += [network.fit();]
+    endif
+
+    l_cHtml += [};]
+
+    l_cHtml += [</script>]
+
+    oFcgi:p_cjQueryScript += [MakeVis();]
+
+    // oFcgi:p_cjQueryScript += [$(document).on("keydown", "form", function(event) { return event.key != "Enter";});] // To prevent enter key from submitting form
 endif
-
-l_cHtml += [};]
-
-l_cHtml += [</script>]
-
-oFcgi:p_cjQueryScript += [MakeVis();]
-
-// oFcgi:p_cjQueryScript += [$(document).on("keydown", "form", function(event) { return event.key != "Enter";});] // To prevent enter key from submitting form
 
 return l_cHtml
 //=================================================================================================================

@@ -148,6 +148,7 @@ local l_oDB_AnyTags            := hb_SQLData(oFcgi:p_o_SQLConnection)
 // local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nSearchMode
+local l_nTopCount
 
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
@@ -183,6 +184,7 @@ return PrepareForURLSQLIdentifier("Namespace",ListOfRecords->Namespace_Name,List
 oFcgi:TraceAdd("GetNextPreviousTable")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
@@ -241,6 +243,7 @@ with object l_oDB_ListOfTables
 
     TableListFormAddFiltering(l_oDB_ListOfTables,;
                               l_nSearchMode,;
+                              l_nTopCount,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
                               l_cSearchTableName,;
@@ -381,6 +384,7 @@ local l_cHtml
 local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_nSearchMode
+local l_nTopCount
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
 local l_cSearchEnumerationName
@@ -402,6 +406,7 @@ return PrepareForURLSQLIdentifier("Namespace"  ,ListOfRecords->Namespace_Name  ,
 oFcgi:TraceAdd("GetNextPreviousEnumeration")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
@@ -430,6 +435,7 @@ with object l_oDB_ListOfEnumerations
 
     EnumerationListFormAddFiltering(l_oDB_ListOfEnumerations,;
                                     l_nSearchMode,;
+                                    l_nTopCount,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
                                     l_cSearchEnumerationName,;
@@ -876,6 +882,7 @@ return l_cHtml
 //=================================================================================================================
 function TableListFormAddFiltering( par_oDB,;
                                     par_nSearchMode,;
+                                    par_nTopCount,;
                                     par_cSearchNamespaceName,;
                                     par_cSearchNamespaceDescription,;
                                     par_cSearchTableName,;
@@ -1034,12 +1041,21 @@ with object par_oDB
         :Join("left","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
     endif
 
+    do case
+    case par_nTopCount = 3  // all
+    case par_nTopCount = 2  // 1000
+        :Limit(1000)
+    otherwise  //200
+        :Limit(200)
+    endcase
+
 endwith
 
 return nil
 //=================================================================================================================
 function EnumerationListFormAddFiltering(par_oDB,;
                                          par_nSearchMode,;
+                                         par_nTopCount,;
                                          par_cSearchNamespaceName,;
                                          par_cSearchNamespaceDescription,;
                                          par_cSearchEnumerationName,;
@@ -1140,6 +1156,15 @@ with object par_oDB
         :Join("inner","EnumValue","","EnumValue.fk_Enumeration = Enumeration.pk")
         :Join("left","EnumValuePreviousName","","EnumValuePreviousName.fk_EnumValue = EnumValue.pk")
     endif
+
+    do case
+    case par_nTopCount = 3  // all
+    case par_nTopCount = 2  // 1000
+        :Limit(1000)
+    otherwise  //200
+        :Limit(200)
+    endcase
+
 endwith
 
 return nil
