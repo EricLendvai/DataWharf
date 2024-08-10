@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 08/10/2024 v 4.19
+* Added support in Load of data structure in Oracle to timestamp without timezone, nvarchar2 and blob.
+* Export to Postgresql will skip columns of data type "Other".
+
 ## 08/10/2024 v 4.18
 * Fix on Table search when no tags exists.
 

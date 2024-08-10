@@ -2050,6 +2050,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                         l_nColumnLength := ListOfFieldsForLoads->field_length
                         l_nColumnScale  := NIL
 
+                    case ListOfFieldsForLoads->field_type == "NVARCHAR2"
+                        l_cColumnType     := "CV"
+                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnScale    := NIL
+                        l_lColumnUnicode  := .t.
+
                     case ListOfFieldsForLoads->field_type == "NUMBER"            .and.;
                          !hb_orm_isnull("ListOfFieldsForLoads","field_length")   .and.;
                          ListOfFieldsForLoads->field_length == 22                .and.;
@@ -2081,6 +2087,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                         l_nColumnLength := NIL
                         l_nColumnScale  := ListOfFieldsForLoads->field_scale
 
+                    case "TIMESTAMP" $ ListOfFieldsForLoads->field_type  // Without Timezone
+                        l_cColumnType   := "DT"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := ListOfFieldsForLoads->field_scale
+
                     case ListOfFieldsForLoads->field_type == "CHAR"
                         l_cColumnType   := "C"
                         l_nColumnLength := ListOfFieldsForLoads->field_length
@@ -2093,6 +2104,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 
                     case ListOfFieldsForLoads->field_type == "CLOB"
                         l_cColumnType   := "M"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    case ListOfFieldsForLoads->field_type == "BLOB"
+                        l_cColumnType   := "R"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL
 
@@ -2119,13 +2135,6 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                     //     //_M_ mark as Unicode
                     //     exit
 
-                    // case ListOfFieldsForLoads->field_type == "nvarchar"
-                    //     l_cColumnType     := "CV"
-                    //     l_nColumnLength   := ListOfFieldsForLoads->field_clength
-                    //     l_nColumnScale    := NIL
-                    //     l_lColumnUnicode  := .t.
-                    //     //_M_ mark as Unicode
-                    //     exit
 
                     // case ListOfFieldsForLoads->field_type == "ntext"
                     //     l_cColumnType     := "M"
@@ -2134,11 +2143,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                     //     l_lColumnUnicode  := .t.
                     //     exit
 
-                    // case ListOfFieldsForLoads->field_type == "datetime"   //timestamp without time zone
-                    //     l_cColumnType   := "DT"
-                    //     l_nColumnLength := NIL
-                    //     l_nColumnScale  := 3
-                    //     exit
+
 
                     // case ListOfFieldsForLoads->field_type == "datetime2"   //timestamp without time zone and some precision
                     //     l_cColumnType   := "DT"

@@ -170,7 +170,7 @@ if l_lContinue
         :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
-
+        :Where("trim(Column.Type) != ^","?")
         :OrderBy("tag1")
         :OrderBy("tag2")
 
@@ -227,7 +227,9 @@ if l_lContinue
         :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
         :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+        :Where("trim(Column.Type) != ^","?")
         :Where("Column.UsedBy = ^ OR Column.UsedBy = ^",USEDBY_ALLSERVERS,l_nUsedBy)
+
         :SQL("ListOfColumns")
         if :Tally < 0
             l_lContinue := .f.
@@ -358,6 +360,7 @@ if l_lContinue
             :Where("Namespace.UseStatus NOT IN (^,^)",USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
             :Where("Table.UseStatus NOT IN (^,^)"    ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
             :Where("Column.UseStatus NOT IN (^,^)"   ,USESTATUS_PROPOSED,USESTATUS_DISCONTINUED)
+            :Where("trim(Column.Type) != ^","?")
         endwith
 
         with object l_oDB_ListOfIndexes
