@@ -4124,7 +4124,9 @@ l_cHtml += [{]
     l_cHtml += [   break;]
     l_cHtml += [case 3:]
     l_cHtml += [   $(".SearchMode1").show();$(".SearchMode2").removeClass("d-none").show();$(".SearchMode3").removeClass("d-none").show();]
-        l_cHtml +=     [RefreshGetMultiFlagSearchInput_TextSearchTableTags();]
+        if !empty(l_json_TableTags)
+            l_cHtml += [RefreshGetMultiFlagSearchInput_TextSearchTableTags();]
+        endif
         l_cHtml +=     [RefreshGetMultiFlagSearchInput_TextSearchTableUsageStatus();]
         l_cHtml +=     [RefreshGetMultiFlagSearchInput_TextSearchTableDocStatus();]
         l_cHtml +=     [RefreshGetMultiFlagSearchInput_TextSearchColumnUsageStatus();]
@@ -9170,8 +9172,6 @@ else
 endif
 
 l_iEnumerationExternalId := Val(oFcgi:GetInputValue("TextExternalId"))
-
-// altd()
 
 do case
 case l_cActionOnSubmit == "Save"

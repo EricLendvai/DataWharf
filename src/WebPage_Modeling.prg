@@ -7364,7 +7364,7 @@ ActivatejQuerySelect2(".SelectEntity",l_json_Entities)
 l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
 l_cHtml += [<input type="hidden" name="formname" value="Edit">]
 l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
-altd()
+// altd()
 l_cHtml += [<input type="hidden" name="LinkedEntityKey" value="]+trans(par_iLinkedEntityPk)+[">]
 
 l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)

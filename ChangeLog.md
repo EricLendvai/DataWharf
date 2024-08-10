@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 08/10/2024 v 4.18
+* Fix on Table search when no tags exists.
+
 ## 08/09/2024 v 4.17
 * Added support for Interval data types, for now with no precision value.
 * Fixed search for data types "Other", which are created during "Load" on non supported data types.
