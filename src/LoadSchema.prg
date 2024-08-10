@@ -2052,7 +2052,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 
                     case ListOfFieldsForLoads->field_type == "NVARCHAR2"
                         l_cColumnType     := "CV"
-                        l_nColumnLength   := ListOfFieldsForLoads->field_clength
+                        l_nColumnLength   := ListOfFieldsForLoads->field_length
                         l_nColumnScale    := NIL
                         l_lColumnUnicode  := .t.
 
