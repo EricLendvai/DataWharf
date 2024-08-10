@@ -117,6 +117,7 @@ class MyFcgi from hb_Fcgi
                                   { "JS","JSON"                                         ,.f.,.f.,nil,.f.,.f.,"json"                       ,"LONGTEXT COMMENT 'Type=JS'"    },;
                                   {"JSB","JSONB"                                        ,.f.,.f.,nil,.f.,.f.,"jsonb"                      ,"LONGTEXT COMMENT 'Type=JSB"    },;      // Enhanced version used natively in PostgreSQL
                                   {"OID","Object Identifier"                            ,.f.,.f.,nil,.f.,.f.,"oid"                        ,"BIGINT COMMENT 'Type=OID'"     },;
+                                  {"ITV","Interval"                                     ,.f.,.f.,nil,.f.,.f.,"interval"                   ,"BIGINT COMMENT 'Type=ITV'"     },;
                                   {  "?","Other"                                        ,.f.,.f.,nil,.f.,.f.,""                           ,""                              };
                                  }
     
@@ -2679,17 +2680,25 @@ return l_cResult
 //=================================================================================================================
 function GetMultiFlagSearchInput(par_cObjectName,pac_cJSON,par_cCurrentValue,par_nSize)
 local l_cHtml
+local l_cJS
 
-// oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
-//                                                                 "suggestions :["+pac_cJSON+"],"+;
-//                                                                 "whiteList: true,"+;
-//                                                                 "tagLimit: 10,"+;
-//                                                                 "selectOnHover: true,"+;
-//                                                                 "showAllSuggestions: true,"+;
-//                                                                 "keepLastOnHoverTag: false,"+;
-//                                                                 "afterAdd: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }},"+;
-//                                                                 "afterRemove: function(value) { if ($('#PageLoaded').val() == '1') { "+GOINEDITMODE+" }}"+;
-//                                                                 [});]
+l_cJS := [<script type="text/javascript" language="Javascript">]+CRLF
+l_cJS += [var FlagMultiFlagSearchInputRefresh_]+par_cObjectName+[ = true;]
+l_cJS += 'function RefreshGetMultiFlagSearchInput_'+par_cObjectName+'(){'
+    l_cJS += [if (FlagMultiFlagSearchInputRefresh_]+par_cObjectName+[) {]
+        l_cJS += [FlagMultiFlagSearchInputRefresh_]+par_cObjectName+[ = false;]
+        l_cJS += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
+                                                                        "suggestions :["+pac_cJSON+"],"+;
+                                                                        "whiteList: true,"+;
+                                                                        "tagLimit: 20,"+;
+                                                                        "selectOnHover: true,"+;
+                                                                        "showAllSuggestions: true,"+;
+                                                                        "keepLastOnHoverTag: false"+;
+                                                                        [},"refresh");]
+        l_cJS += [}]
+    l_cJS += '};'
+l_cJS += [</script>]
+oFcgi:p_cHeader += CRLF + l_cJS + CRLF
 
 oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
                                                                 "suggestions :["+pac_cJSON+"],"+;
@@ -2699,7 +2708,6 @@ oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
                                                                 "showAllSuggestions: true,"+;
                                                                 "keepLastOnHoverTag: false"+;
                                                                 [});]
-
 
 l_cHtml := [<input type="text" name="]+par_cObjectName+[" id="]+par_cObjectName+[" size="]+Trans(par_nSize)+[" maxlength="10000" value="]+FcgiPrepFieldForValue(par_cCurrentValue)+[" class="form-control TextSearchTag" placeholder="">]
    //  style="width:100px;"     TextSearchTag

@@ -1101,6 +1101,12 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         l_nColumnScale  := NIL
                         exit
 
+                    case "interval"   // _M_ Add support to precision (of seconds)
+                        l_cColumnType   := "ITV"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+                        exit
+
                     case "user-defined"
                         l_cColumnType   := "E"
                         l_nColumnLength := NIL
@@ -2048,8 +2054,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                          !hb_orm_isnull("ListOfFieldsForLoads","field_length")   .and.;
                          ListOfFieldsForLoads->field_length == 22                .and.;
                          hb_orm_isnull("ListOfFieldsForLoads","field_precision") .and.;
-                         !hb_orm_isnull("ListOfFieldsForLoads","field_scale")    .and.;
-                         ListOfFieldsForLoads->field_scale == 0
+                         ((!hb_orm_isnull("ListOfFieldsForLoads","field_scale") .and. ListOfFieldsForLoads->field_scale == 0) .or. (hb_orm_isnull("ListOfFieldsForLoads","field_scale")))
                         l_cColumnType   := "I"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL
@@ -2060,6 +2065,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
                         l_cColumnType   := "N"
                         l_nColumnLength := ListOfFieldsForLoads->field_precision
                         l_nColumnScale  := ListOfFieldsForLoads->field_scale
+
+                    // case ListOfFieldsForLoads->field_type == "NUMBER"    // Since after the previous "NUMBER" case, will assume it will be an Integer
+                    //     l_cColumnType   := "I"
+                    //     l_nColumnLength := NIL
+                    //     l_nColumnScale  := NIL
 
                     case ListOfFieldsForLoads->field_type == "DATE"
                         l_cColumnType   := "D"
@@ -2093,6 +2103,11 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_ORACLE
 
                     case ListOfFieldsForLoads->field_type == "FLOAT"
                         l_cColumnType   := "F"
+                        l_nColumnLength := NIL
+                        l_nColumnScale  := NIL
+
+                    case "INTERVAL" $ ListOfFieldsForLoads->field_type  //_M_ Add support to parameters. For example INTERVAL DAY(x) TO SECOND(y)
+                        l_cColumnType   := "ITV"
                         l_nColumnLength := NIL
                         l_nColumnScale  := NIL
 
@@ -2732,7 +2747,7 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
         if !SQLExec(par_SQLHandle,l_cSQLCommandIndexes,"ListOfIndexesForLoads")
             l_cErrorMessage += iif(!empty(l_cErrorMessage),"<br>","")+"Failed to retrieve Fields Meta data."
         else
-            ExportTableToHtmlFile("ListOfIndexesForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
+            // ExportTableToHtmlFile("ListOfIndexesForLoads",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfIndexesForLoads.html","From PostgreSQL",,200,.t.)
 
             l_cLastNamespace  := ""
             l_cLastTableName  := ""
@@ -2889,11 +2904,11 @@ if empty(l_cErrorMessage)
        !empty(l_iNewIndexes)      .or. ;
        !empty(l_iUpdatedIndexes)
 
-        if !empty(l_iNewTables)
-            l_cErrorMessage += [  New Tables: ]+trans(l_iNewTables)
-        endif
         if !empty(l_iNewNamespace)
             l_cErrorMessage += [  New Namespaces: ]+trans(l_iNewNamespace)
+        endif
+        if !empty(l_iNewTables)
+            l_cErrorMessage += [  New Tables: ]+trans(l_iNewTables)
         endif
         if !empty(l_iNewColumns)
             l_cErrorMessage += [  New Columns: ]+trans(l_iNewColumns)

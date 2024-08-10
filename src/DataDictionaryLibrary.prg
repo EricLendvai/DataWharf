@@ -996,7 +996,7 @@ with object par_oDB
 
         if !empty(par_cSearchColumnTypes)
             l_cSQLList := []
-            for each l_aColumnTypeCode in hb_ATokens(  el_StringFilterCharacters(par_cSearchColumnTypes,",ABCDEFGHIJKLMNOPQRSTUVWXYZ")  ,",",.f.)
+            for each l_aColumnTypeCode in hb_ATokens(  el_StringFilterCharacters(par_cSearchColumnTypes,",ABCDEFGHIJKLMNOPQRSTUVWXYZ?")  ,",",.f.)
                 if !empty(l_cSQLList)
                     l_cSQLList += [,]
                 endif
@@ -1004,7 +1004,7 @@ with object par_oDB
             endfor
             if !empty(l_cSQLList)
                 l_lJoinColumns := .t.
-                :Where("Column.Type in ("+l_cSQLList+")")
+                :Where("trim(Column.Type) in ("+l_cSQLList+")")
             endif
         endif
 

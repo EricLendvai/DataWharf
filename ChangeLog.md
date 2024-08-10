@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 08/09/2024 v 4.17
+* Added support for Interval data types, for now with no precision value.
+* Fixed search for data types "Other", which are created during "Load" on non supported data types.
+
 ## 08/08/2024 v 4.16
 * Fix Oracle Load for setting up Primary and Foreign Keys.
 * Added Totals of Tables and Enumerations on Namespace list.
