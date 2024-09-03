@@ -1222,10 +1222,12 @@ case l_cURLAction == "ListEnumValues"
 
     l_oData := GetEnumerationInfoBasedOnURL(l_iApplicationPk,l_cURLNamespaceName,l_cURLEnumerationName)
     if !hb_IsNil(l_oData)
-
-        l_cHtml += EnumValueListFormBuild(l_iApplicationPk,l_oData:Enumeration_Pk,l_cURLApplicationLinkCode,l_oData)
+        if oFcgi:isGet()
+            l_cHtml += EnumValueListFormBuild(l_iApplicationPk,l_oData:Enumeration_Pk,l_cURLApplicationLinkCode,l_oData)
+        else
+            l_cHtml += EnumValueListFormOnSubmit(l_iApplicationPk,l_oData:Enumeration_Pk,l_cURLApplicationLinkCode,l_oData)
+        endif
     endif
-
 
 case l_cURLAction == "EnumerationReferencedBy"
     l_cHtml += DataDictionaryHeaderBuild(l_iApplicationPk,l_cApplicationName,l_cApplicationElement,l_cSitePath,l_cURLApplicationLinkCode)
@@ -1316,7 +1318,7 @@ case l_cURLAction == "NewEnumValue"
         if l_oDB1:Tally == 1
             if oFcgi:isGet()
                 oFcgi:p_cjQueryScript += GOINEDITMODE
-                l_cHtml += EnumValueEditFormBuild(l_oData:Enumeration_Pk,l_cURLApplicationLinkCode,l_oData,"",0,{=>})
+                l_cHtml += EnumValueEditFormBuild(l_iApplicationPk,l_oData:Enumeration_Pk,l_cURLApplicationLinkCode,l_oData,"",0,{=>})
             else
                 l_cHtml += EnumValueEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_oData:Enumeration_Pk,l_oData)
             endif
@@ -1373,7 +1375,7 @@ case l_cURLAction == "EditEnumValue"
 
         :Limit(1)  // In case we have duplicate pick one of them
         l_oData := :SQL()
-// SendToClipboard(:LastSQL())
+        // SendToClipboard(:LastSQL())
     endwith
 
     if l_oDB1:Tally != 1
@@ -1396,7 +1398,7 @@ case l_cURLAction == "EditEnumValue"
             l_hValues["TestWarning"]      := l_oData:EnumValue_TestWarning
             l_hValues["ExternalId"]       := l_oData:EnumValue_ExternalId
 
-            l_cHtml += EnumValueEditFormBuild(l_oData:Enumeration_pk,l_cURLApplicationLinkCode,l_oData,"",l_oData:EnumValue_pk,l_hValues)
+            l_cHtml += EnumValueEditFormBuild(l_iApplicationPk,l_oData:Enumeration_pk,l_cURLApplicationLinkCode,l_oData,"",l_oData:EnumValue_pk,l_hValues)
         else
             l_cHtml += EnumValueEditFormOnSubmit(l_iApplicationPk,l_cURLApplicationLinkCode,l_oData:Enumeration_Pk,l_oData)
         endif
@@ -3310,6 +3312,8 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
+l_cHtml += BuildRecordEditInfo("Namespace",par_iPk)
+
 l_cHtml += [</form>]
 
 return l_cHtml
@@ -3556,6 +3560,8 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_nSearchMode
 local l_nTopCount
+local l_nLastUpdated
+local l_lShowLastUpdated
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
 local l_cSearchTableName
@@ -3580,21 +3586,17 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSearchMode"))))
 l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
-
+l_nLastUpdated                  := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
+l_lShowLastUpdated              := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
-
 l_cSearchTableName              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableName"))
 l_cSearchTableDescription       := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDescription"))
-
 l_cSearchColumnName             := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
 l_cSearchColumnDescription      := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
-
 l_cSearchEnumerationName        := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationName"))
 l_cSearchEnumerationDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationDescription"))
-
 l_cSearchTableTags              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableTags"))
-
 l_cSearchTableUsageStatus       := SanitizeInput(oFcgi:GetInputValue("TextSearchTableUsageStatus"))
 l_cSearchTableDocStatus         := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDocStatus"))
 l_cSearchColumnUsageStatus      := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnUsageStatus"))
@@ -3606,23 +3608,19 @@ l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearch
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"                  ,trans(l_nSearchMode))
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"                    ,trans(l_nTopCount))
-
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"              ,trans(l_nTopCount))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"           ,trans(l_nLastUpdated))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ShowLastUpdated"       ,iif(l_lShowLastUpdated,"1","0"))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
-
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,l_cSearchTableName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,l_cSearchTableDescription)
-
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName"            ,l_cSearchColumnName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription"     ,l_cSearchColumnDescription)
-
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName"       ,l_cSearchEnumerationName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription",l_cSearchEnumerationDescription)
-
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags"             ,l_cSearchTableTags)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTags"            ,"")   // _M_
-
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableUsageStatus"      ,l_cSearchTableUsageStatus)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus"        ,l_cSearchTableDocStatus)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus"     ,l_cSearchColumnUsageStatus)
@@ -3684,22 +3682,18 @@ local l_nCount
 local l_nCountDiscontinued
 local l_nSearchMode
 local l_nTopCount
-
+local l_nLastUpdated
+local l_lShowLastUpdated
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
-
 local l_cSearchTableName
 local l_cSearchTableDescription
-
 local l_cSearchColumnName
 local l_cSearchColumnDescription
-
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
-
 local l_cSearchTableTags
 local l_cSearchColumnTags
-
 local l_cSearchTableUsageStatus
 local l_cSearchTableDocStatus
 local l_cSearchColumnUsageStatus
@@ -3707,7 +3701,6 @@ local l_cSearchColumnDocStatus
 local l_cSearchColumnStaticUID
 local l_cSearchColumnTypes
 local l_cSearchExtraFilters
-
 local l_nNumberOfTables := 0
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
@@ -3734,23 +3727,19 @@ local l_lExtraInfo
 oFcgi:TraceAdd("TableListFormBuild")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"))))
-l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"))))
-
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"))))
+l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"))))
+l_lShowLastUpdated              := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ShowLastUpdated") == "1")
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
-
 l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
-
 l_cSearchColumnName             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
 l_cSearchColumnDescription      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
-
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName")
 l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription")
-
 l_cSearchTableTags              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags")
 l_cSearchColumnTags             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTags")
-
 l_cSearchTableUsageStatus       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableUsageStatus")
 l_cSearchTableDocStatus         := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus")
 l_cSearchColumnUsageStatus      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus")
@@ -3801,6 +3790,12 @@ with object l_oDB_ListOfTables
     :Column("Table.Information","Table_Information")
     :Column("Table.TestWarning","Table_TestWarning")
     :Column("Table.ExternalId" ,"Table_ExternalId")
+
+    if l_lShowLastUpdated
+        :Column([to_char(now()-GREATEST(Table.sysm,Table.sysr), ]+HB_ORM_INVALUEWITCH+['DD "Days" HH24 "Hours" MI "Minutes" SS "Seconds"')]+HB_ORM_INVALUEWITCH ,"LastUpdated")
+        :Column([CASE WHEN Table.sysr IS NOT NULL AND Table.sysm IS NOT NULL AND Table.sysr > Table.sysm THEN true ELSE false END],"Inherited")
+    endif
+
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -3809,6 +3804,7 @@ with object l_oDB_ListOfTables
     TableListFormAddFiltering(l_oDB_ListOfTables,;
                               l_nSearchMode,;
                               l_nTopCount,;
+                              l_nLastUpdated,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
                               l_cSearchTableName,;
@@ -3883,6 +3879,7 @@ if l_nNumberOfTables > 0
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_nSearchMode,;
                                   l_nTopCount,;
+                                  l_nLastUpdated,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
@@ -3929,6 +3926,7 @@ if l_nNumberOfTables > 0
         TableListFormAddFiltering(l_oDB_CustomField,;
                                   l_nSearchMode,;
                                   l_nTopCount,;
+                                  l_nLastUpdated,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
                                   l_cSearchTableName,;
@@ -4198,7 +4196,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" role="button" value="Copy Table List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
         l_cHtml += [copyToClip(document.getElementById('PreTablesToClipboard').innerText);return false;">]
 
-    l_cHtml += [</div><div class="input-group">]
+    l_cHtml += [</div>]
+    l_cHtml += [<div class="input-group">]
         l_cHtml += [<table>]
             l_cHtml += [<tr>]
                 // ----------------------------------------
@@ -4304,6 +4303,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+
                         oFcgi:p_cjQueryScript += [SearchModeChanged(]+trans(l_nSearchMode)+[);]   // Calling the Javascript function needs to be done after the amsifySuggestags objects are activated.
 
                     l_cHtml += [</table>]
@@ -4340,6 +4341,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         l_cHtml += [<div class="form-check">]   // form-check-inline
                         l_cHtml +=    [<input class="form-check-input" type="radio" name="RadioTopCount" id="TopCountRadio3" value="3"]+iif(l_nTopCount==3,[ checked],[])+[>]
                         l_cHtml +=    [<label class="form-check-label" for="TopCountRadio3">All</label>]
+                        l_cHtml += [</div>]
                     l_cHtml += [</div>]
                 l_cHtml += [</td>]
                 // ----------------------------------------
@@ -4379,6 +4381,9 @@ if !empty(l_nNumberOfTables)
             if l_nNumberOfTags > 0
                 l_nColspan++
             endif
+            if l_lShowLastUpdated
+                l_nColspan++
+            endif
             if l_lWarnings
                 l_nColspan++
             endif
@@ -4409,6 +4414,9 @@ if !empty(l_nNumberOfTables)
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="text-white text-center">Other</th>]
                 endif
+                if l_lShowLastUpdated
+                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
+                endif
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
                 endif
@@ -4430,7 +4438,7 @@ if !empty(l_nNumberOfTables)
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cCombinedPath+[/">]+TextToHtml(ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA))+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cCombinedPath+[">]+TextToHtml(ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA))+[</a>]
 
                         if el_seek(trans(ListOfTables->pk)+'*',"ListOfPreviousName","tag1")
                             select ListOfPreviousName
@@ -4540,6 +4548,16 @@ if !empty(l_nNumberOfTables)
                     if l_nNumberOfCustomFieldValues > 0
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += CustomFieldsBuildGridOther(l_iTablePk,l_hOptionValueToDescriptionMapping)
+                        l_cHtml += [</td>]
+                    endif
+
+                    if l_lShowLastUpdated
+                        l_cHtml += [<td class="GridDataControlCells]+iif(ListOfTables->Inherited," fst-italic","")+[" valign="top" align="right">]
+                            if left(ListOfTables->LastUpdated,1) == "0"
+                                l_cHtml += substr(ListOfTables->LastUpdated,2)
+                            else
+                                l_cHtml += ListOfTables->LastUpdated
+                            endif
                         l_cHtml += [</td>]
                     endif
 
@@ -4885,6 +4903,8 @@ else
     oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
     oFcgi:p_cjQueryScript += [$('#TextInformation').resizable();]
+
+    l_cHtml += BuildRecordEditInfo("Table",par_iPk)
 
     l_cHtml += [</form>]
 
@@ -5534,6 +5554,9 @@ local l_cLine
 local l_nMaxWidth
 local l_lExtraInfo
 
+local l_nLastUpdated
+local l_lShowLastUpdated
+
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
@@ -5542,11 +5565,16 @@ if oFcgi:isGet() //.and. (len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p
     l_cSearchColumnName        := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
     l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescription"))
     l_cSearchColumnStaticUID   := hb_HexToStr(oFcgi:GetQueryString("ColumnStaticUID"))
+
 else
     l_cSearchColumnName        := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName")
     l_cSearchColumnDescription := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription")
     l_cSearchColumnStaticUID   := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID")
+
 endif
+
+l_nLastUpdated     := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_LastUpdated"))))
+l_lShowLastUpdated := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_ShowLastUpdated") == "1")
 
 with object l_oDB_Application
     :Table("526421bf-2c80-465b-b858-8b485d1a20d0","Application")
@@ -5623,19 +5651,12 @@ with object l_oDB_ListOfColumns
 
     :Where("Column.fk_Table = ^",par_iTablePk)
 
-    if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
-        :Distinct(.t.)
-        if !empty(l_cSearchColumnName)
-            :Join("left","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
-            :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
-        endif
-        if !empty(l_cSearchColumnStaticUID)
-            :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
-        endif
-        if !empty(l_cSearchColumnDescription)
-            :KeywordCondition(l_cSearchColumnDescription,"Column.Description")
-        endif
+    if l_lShowLastUpdated
+        :Column([to_char(now()-Column.sysm, ]+HB_ORM_INVALUEWITCH+['DD "Days" HH24 "Hours" MI "Minutes" SS "Seconds"')]+HB_ORM_INVALUEWITCH ,"LastUpdated")
     endif
+
+    ColumnListFormAddFiltering(l_oDB_ListOfColumns,l_cSearchColumnName,l_cSearchColumnStaticUID,l_cSearchColumnDescription,l_nLastUpdated)
+
     :OrderBy("Column_Order")
     :SQL("ListOfColumns")
     l_nNumberOfColumnsInSearch := :Tally
@@ -5838,50 +5859,57 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
 
+//Search Bar
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="List">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<table>]
+            l_cHtml += [<tr>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td valign="top">]
+                    l_cHtml += [<table>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td></td>]
+                            l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                            l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
+                        l_cHtml += [</tr>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td><span class="me-2">Column</span></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
+                        l_cHtml += [</tr>]
+                        l_cHtml += [<tr>]
+                            l_cHtml += [<td><span class="me-2">Static UID</span></td>]
+                            //Made maxlength larger to work around trailing blank and tabs
+                            l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+["></td>]
+                        l_cHtml += [</tr>]
+
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+
+                    l_cHtml += [</table>]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+                    l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+            l_cHtml += [</tr>]
+        l_cHtml += [</table>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+l_cHtml += [</form>]
+
 if l_nNumberOfColumns <= 0
     l_cHtml += GetNoRecordsOnFile("No Column on file.")
 
 else
-    //Search Bar
-    l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
-    l_cHtml += [<input type="hidden" name="formname" value="List">]
-    l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
-    l_cHtml += [<nav class="navbar navbar-light bg-light">]
-        l_cHtml += [<div class="input-group">]
-            l_cHtml += [<table>]
-                l_cHtml += [<tr>]
-                    // ----------------------------------------
-                    l_cHtml += [<td valign="top">]
-                        l_cHtml += [<table>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td></td>]
-                                l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
-                                l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
-                            l_cHtml += [</tr>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td><span class="me-2 ms-3">Column</span></td>]
-                                l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
-                                l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
-                            l_cHtml += [</tr>]
-                            l_cHtml += [<tr>]
-                                l_cHtml += [<td><span class="me-2 ms-3">Static UID</span></td>]
-                                //Made maxlength larger to work around trailing blank and tabs
-                                l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+["></td>]
-                            l_cHtml += [</tr>]
-                        l_cHtml += [</table>]
-                    l_cHtml += [</td>]
-                    // ----------------------------------------
-                    l_cHtml += [<td>]  // valign="top"
-                        l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
-                        l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
-                    l_cHtml += [</td>]
-                    // ----------------------------------------
-                l_cHtml += [</tr>]
-            l_cHtml += [</table>]
-        l_cHtml += [</div>]
-    l_cHtml += [</nav>]
-    l_cHtml += [</form>]
-
     l_cHtml += [<div class="m-3"></div>]   //Spacer
 
     l_cHtml += [<div class="row justify-content-center m-3">]
@@ -5894,6 +5922,9 @@ else
                 l_nColspan++
             endif
             if l_nNumberOfCustomFieldValues > 0
+                l_nColspan++
+            endif
+            if l_lShowLastUpdated
                 l_nColspan++
             endif
             if l_lWarnings
@@ -5913,7 +5944,7 @@ else
             l_cHtml += [<tr class="bg-primary bg-gradient">]
 
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<th class="text-center"><a href="]+l_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath+[/]+["><span class="text-white bi-plus-lg"></span></a></th>]
+                    l_cHtml += [<th class="text-center"><a href="]+l_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath+["><span class="text-white bi-plus-lg"></span></a></th>]
                 else
                     l_cHtml += [<th class="text-white"></th>]
                 endif
@@ -5932,6 +5963,9 @@ else
                 endif
                 if l_nNumberOfCustomFieldValues > 0
                     l_cHtml += [<th class="text-white text-center">Other</th>]
+                endif
+                if l_lShowLastUpdated
+                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
                 endif
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
@@ -6101,6 +6135,16 @@ else
                         l_cHtml += [</td>]
                     endif
 
+                    if l_lShowLastUpdated
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if left(ListOfColumns->LastUpdated,1) == "0"
+                                l_cHtml += substr(ListOfColumns->LastUpdated,2)
+                            else
+                                l_cHtml += ListOfColumns->LastUpdated
+                            endif
+                        l_cHtml += [</td>]
+                    endif
+
                     if l_lWarnings
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
@@ -6131,6 +6175,8 @@ local l_cColumnName
 local l_cColumnDescription
 local l_cColumnStaticUID
 local l_cURL
+local l_nLastUpdated
+local l_lShowLastUpdated
 
 oFcgi:TraceAdd("ColumnListFormOnSubmit")
 
@@ -6139,12 +6185,17 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
 l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
 l_cColumnStaticUID   := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnStaticUID"))
+l_nLastUpdated       := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
+l_lShowLastUpdated   := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
 
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cColumnName)
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cColumnDescription)
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,l_cColumnStaticUID)
+
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_LastUpdated"      ,trans(l_nLastUpdated))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_ShowLastUpdated"  ,iif(l_lShowLastUpdated,"1","0"))
 
     l_cHtml += ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_oNavData)
 
@@ -6660,7 +6711,7 @@ l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Column","Tab
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += GetNextPreviousColumn(par_iTablePk,l_cCombinedPath,par_iPk)
+        l_cHtml += GetNextPreviousColumn(par_iApplicationPk,par_iTablePk,l_cCombinedPath,par_iPk)
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += GetButtonOnEditFormSave()
         endif
@@ -7008,6 +7059,8 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
+l_cHtml += BuildRecordEditInfo("Column",par_iPk)
+
 l_cHtml += [</form>]
 
 return l_cHtml
@@ -7234,7 +7287,7 @@ case l_cActionOnSubmit == "Save"
                         if :tally <> 0
                             l_cErrorMessage := [Another column is already marked as "Primary".]
                         endif
-        //SendToClipboard(:LastSQL())
+                        //SendToClipboard(:LastSQL())
                     endwith
                 endif
             endif
@@ -7987,6 +8040,8 @@ oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
 
+l_cHtml += BuildRecordEditInfo("Index",par_iPk)
+
 l_cHtml += [</form>]
 
 l_cHtml += GetConfirmationModalFormsDelete()
@@ -8049,7 +8104,7 @@ case l_cActionOnSubmit == "Save"
                     :Where([Index.pk != ^],l_iIndexPk)
                 endif
                 :SQL()
-//SendToClipboard(:LastSQL())
+                //SendToClipboard(:LastSQL())
             endwith
             if l_oDB1:Tally <> 0
                 l_cErrorMessage := "Duplicate Name"
@@ -8241,6 +8296,8 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_nSearchMode
 local l_nTopCount
+local l_nLastUpdated
+local l_lShowLastUpdated
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
 local l_cSearchEnumValueName
@@ -8261,6 +8318,8 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSearchMode"))))
 l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
+l_nLastUpdated                  := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
+l_lShowLastUpdated              := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
 l_cSearchEnumerationName        := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationName"))
@@ -8277,7 +8336,9 @@ l_cSearchExtraFilters           := SanitizeInput(oFcgi:GetInputValue("TextSearch
 do case
 case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"                  ,trans(l_nSearchMode))
-    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"                    ,trans(l_nTopCount))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"              ,trans(l_nTopCount))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"           ,trans(l_nLastUpdated))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ShowLastUpdated"       ,iif(l_lShowLastUpdated,"1","0"))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,l_cSearchEnumerationName)
@@ -8331,6 +8392,8 @@ local l_nNumberOfEnumerations
 
 local l_nSearchMode
 local l_nTopCount
+local l_nLastUpdated
+local l_lShowLastUpdated
 local l_ScriptFolder
 
 local l_cSearchNamespaceName
@@ -8361,8 +8424,9 @@ local l_nColspan
 oFcgi:TraceAdd("EnumerationListFormBuild")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"))))
-l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"))))
-
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"))))
+l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"))))
+l_lShowLastUpdated              := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ShowLastUpdated") == "1")
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName")
@@ -8392,6 +8456,12 @@ with object l_oDB_ListOfEnumerations
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
     :Column("Enumeration.TestWarning"    ,"Enumeration_TestWarning")
     :Column("Enumeration.ExternalId"     ,"Enumeration_ExternalId")
+
+    if l_lShowLastUpdated
+        :Column([to_char(now()-GREATEST(Enumeration.sysm,Enumeration.sysr), ]+HB_ORM_INVALUEWITCH+['DD "Days" HH24 "Hours" MI "Minutes" SS "Seconds"')]+HB_ORM_INVALUEWITCH ,"LastUpdated")
+        :Column([CASE WHEN Enumeration.sysr IS NOT NULL AND Enumeration.sysm IS NOT NULL AND Enumeration.sysr > Enumeration.sysm THEN true ELSE false END],"Inherited")
+    endif
+
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Enumeration.Name)","tag2")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
@@ -8400,6 +8470,7 @@ with object l_oDB_ListOfEnumerations
     EnumerationListFormAddFiltering(l_oDB_ListOfEnumerations,;
                                     l_nSearchMode,;
                                     l_nTopCount,;
+                                    l_nLastUpdated,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
                                     l_cSearchEnumerationName,;
@@ -8418,6 +8489,9 @@ with object l_oDB_ListOfEnumerations
     :OrderBy("tag2")
     :SQL("ListOfEnumerations")
     l_nNumberOfEnumerations := :Tally
+
+    // SendToClipboard(:LastSQL())
+
 endwith
 
 if l_nNumberOfEnumerations > 0
@@ -8589,7 +8663,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [<input type="button" role="button" value="Copy Enumeration List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
         l_cHtml += [copyToClip(document.getElementById('PreEnumerationsToClipboard').innerText);return false;">]
 
-    l_cHtml += [</div><div class="input-group">]
+    l_cHtml += [</div>]
+    l_cHtml += [<div class="input-group">]
         l_cHtml += [<table>]
             l_cHtml += [<tr>]
                 // ----------------------------------------
@@ -8678,10 +8753,12 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+
+                        oFcgi:p_cjQueryScript += [SearchModeChanged(]+trans(l_nSearchMode)+[);]   // Calling the Javascript function needs to be done after the amsifySuggestags objects are activated.
                     l_cHtml += [</table>]
                 l_cHtml += [</td>]
 
-                oFcgi:p_cjQueryScript += [SearchModeChanged(]+trans(l_nSearchMode)+[);]   // Calling the Javascript function needs to be done after the amsifySuggestags objects are activated.
 
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
@@ -8738,6 +8815,9 @@ if !empty(l_nNumberOfEnumerations)
     if l_lHasExternalId
         l_nColspan++
     endif
+    if l_lShowLastUpdated
+        l_nColspan++
+    endif
     if l_lWarnings
         l_nColspan++
     endif
@@ -8764,6 +8844,9 @@ if !empty(l_nNumberOfEnumerations)
                 // l_cHtml += [<th class="text-white text-center">Warnings</th>]
                 if l_lHasExternalId
                     l_cHtml += [<th class="text-white">External Id</th>]
+                endif
+                if l_lShowLastUpdated
+                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
                 endif
                 if l_lWarnings
                     // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
@@ -8865,6 +8948,16 @@ if !empty(l_nNumberOfEnumerations)
                         l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
                             if nvl(ListOfEnumerations->Enumeration_ExternalId,0) > 0
                                 l_cHtml += trans(ListOfEnumerations->Enumeration_ExternalId)
+                            endif
+                        l_cHtml += [</td>]
+                    endif
+
+                    if l_lShowLastUpdated
+                        l_cHtml += [<td class="GridDataControlCells]+iif(ListOfEnumerations->Inherited," fst-italic","")+[" valign="top" align="right">]
+                            if left(ListOfEnumerations->LastUpdated,1) == "0"
+                                l_cHtml += substr(ListOfEnumerations->LastUpdated,2)
+                            else
+                                l_cHtml += ListOfEnumerations->LastUpdated
                             endif
                         l_cHtml += [</td>]
                     endif
@@ -9108,6 +9201,8 @@ else
     oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
     oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+
+    l_cHtml += BuildRecordEditInfo("Enumeration",par_iPk)
 
     l_cHtml += [</form>]
 
@@ -9452,6 +9547,12 @@ local l_cLine
 local l_nMaxWidth
 local l_lExtraInfo
 
+local l_nLastUpdated
+local l_lShowLastUpdated
+
+l_nLastUpdated     := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_LastUpdated"))))
+l_lShowLastUpdated := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_ShowLastUpdated") == "1")
+
 oFcgi:TraceAdd("EnumValueListFormBuild")
 
 with object l_oDB_ListOfEnumValues
@@ -9470,6 +9571,12 @@ with object l_oDB_ListOfEnumValues
     :Column("EnumValue.TestWarning","EnumValue_TestWarning")
 
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
+
+    if l_lShowLastUpdated
+        :Column([to_char(now()-EnumValue.sysm, ]+HB_ORM_INVALUEWITCH+['DD "Days" HH24 "Hours" MI "Minutes" SS "Seconds"')]+HB_ORM_INVALUEWITCH ,"LastUpdated")
+    endif
+
+    EnumValueListFormAddFiltering(l_oDB_ListOfEnumValues,l_nLastUpdated)
 
     :OrderBy("EnumValue_order")
     :SQL("ListOfEnumValues")
@@ -9540,13 +9647,43 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             if l_nNumberOfEnumValues > 1
                 l_cHtml += GetButtonOnListFormCaptionAndRedirect("Order Values",l_cSitePath+[DataDictionaries/OrderEnumValues/]+l_cCombinedPath)
             endif
-
-            l_cHtml += [<input type="button" role="button" value="Copy Values List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
-            l_cHtml += [copyToClip(document.getElementById('PreEnumValuesToClipboard').innerText);return false;">]
-
         endif
+
+        l_cHtml += [<input type="button" role="button" value="Copy Values List To Clipboard" class="btn btn-primary rounded ms-3" id="CopyRoster" onclick="]
+        l_cHtml += [copyToClip(document.getElementById('PreEnumValuesToClipboard').innerText);return false;">]
+
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
+
+//Search Bar
+l_cHtml += [<form action="" method="post" name="form" enctype="multipart/form-data">]
+l_cHtml += [<input type="hidden" name="formname" value="List">]
+l_cHtml += [<input type="hidden" id="ActionOnSubmit" name="ActionOnSubmit" value="">]
+l_cHtml += [<nav class="navbar navbar-light bg-light">]
+    l_cHtml += [<div class="input-group">]
+        l_cHtml += [<table>]
+            l_cHtml += [<tr>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<span class="ms-3"></span>]  //To make some spacing
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td valign="top">]
+                    l_cHtml += [<table>]
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.t.)
+                    l_cHtml += [</table>]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+                l_cHtml += [<td>]  // valign="top"
+                    l_cHtml += [<input type="submit" class="btn btn-primary rounded ms-5 me-3" value="Search" onclick="$('#ActionOnSubmit').val('Search');document.form.submit();" role="button">]
+                    // l_cHtml += [<input type="button" class="btn btn-primary rounded me-5" value="Reset" onclick="$('#ActionOnSubmit').val('Reset');document.form.submit();" role="button">]
+                l_cHtml += [</td>]
+                // ----------------------------------------
+            l_cHtml += [</tr>]
+        l_cHtml += [</table>]
+    l_cHtml += [</div>]
+l_cHtml += [</nav>]
+l_cHtml += [</form>]
 
 if l_nNumberOfEnumValues <= 0
     l_cHtml += GetNoRecordsOnFile("No Value on file.")
@@ -9582,6 +9719,9 @@ else
     if l_lHasExternalId
         l_nColspan++
     endif
+    if l_lShowLastUpdated
+        l_nColspan++
+    endif
     if l_lWarnings
         l_nColspan++
     endif
@@ -9604,6 +9744,9 @@ else
                 l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
                 if l_lHasExternalId
                     l_cHtml += [<th class="text-white">External Id</th>]
+                endif
+                if l_lShowLastUpdated
+                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
                 endif
                 if l_lWarnings
                     l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
@@ -9659,6 +9802,16 @@ else
                         l_cHtml += [</td>]
                     endif
 
+                    if l_lShowLastUpdated
+                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
+                            if left(ListOfEnumValues->LastUpdated,1) == "0"
+                                l_cHtml += substr(ListOfEnumValues->LastUpdated,2)
+                            else
+                                l_cHtml += ListOfEnumValues->LastUpdated
+                            endif
+                        l_cHtml += [</td>]
+                    endif
+
                     if l_lWarnings
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_TestWarning,""))
@@ -9675,6 +9828,42 @@ else
 endif
 
 return l_cHtml
+//=================================================================================================================
+static function EnumValueListFormOnSubmit(par_iApplicationPk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData)
+local l_cHtml := []
+
+local l_cActionOnSubmit
+// local l_cURL
+local l_nLastUpdated
+local l_lShowLastUpdated
+
+oFcgi:TraceAdd("EnumValueListFormOnSubmit")
+
+l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
+
+l_nLastUpdated     := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
+l_lShowLastUpdated := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
+
+do case
+case l_cActionOnSubmit == "Search"
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_LastUpdated"    ,trans(l_nLastUpdated))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_ShowLastUpdated",iif(l_lShowLastUpdated,"1","0"))
+
+    l_cHtml += EnumValueListFormBuild(par_iApplicationPk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData)
+
+// case l_cActionOnSubmit == "Reset"
+//     l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
+//                                                                 PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)+[/]+;
+//                                                                 PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name      ,par_oNavData:Table_LinkUID)    +[/]
+//     oFcgi:Redirect(l_cURL)
+
+otherwise
+    l_cHtml += EnumValueListFormBuild(par_iApplicationPk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData)
+
+endcase
+
+return l_cHtml
+
 //=================================================================================================================
 static function EnumValueOrderFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData)
 local l_cHtml := []
@@ -9773,6 +9962,8 @@ local l_cEnumValuePkOrder
 local l_oDB1
 local l_aOrderedPks
 local l_Counter
+local l_nLastUpdated
+local l_lShowLastUpdated
 
 oFcgi:TraceAdd("EnumValueOrderFormOnSubmit")
 
@@ -9822,7 +10013,7 @@ endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function EnumValueEditFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData,par_cErrorText,par_iPk,par_hValues)
+static function EnumValueEditFormBuild(par_iApplicationPk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData,par_cErrorText,par_iPk,par_hValues)
 
 local l_cHtml := ""
 local l_cErrorText := hb_DefaultValue(par_cErrorText,"")
@@ -9862,7 +10053,7 @@ l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Value","Enum
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group">]
-        l_cHtml += GetNextPreviousEnumValue(par_iEnumerationPk,l_cCombinedPath,par_iPk)
+        l_cHtml += GetNextPreviousEnumValue(par_iApplicationPk,par_iEnumerationPk,l_cCombinedPath,par_iPk)
         if oFcgi:p_nAccessLevelDD >= 3
             l_cHtml += GetButtonOnEditFormSave()
         endif
@@ -9960,6 +10151,8 @@ l_cHtml += [</div>]
 oFcgi:p_cjQueryScript += [$('#TextName').focus();]
 
 oFcgi:p_cjQueryScript += [$('#TextDescription').resizable();]
+
+l_cHtml += BuildRecordEditInfo("EnumValue",par_iPk)
 
 l_cHtml += [</form>]
 
@@ -10208,7 +10401,7 @@ case !empty(l_cErrorMessage)
     l_hValues["Description"] := l_cEnumValueDescription
     l_hValues["ExternalId"]  := l_iEnumValueExternalId
 
-    l_cHtml += EnumValueEditFormBuild(par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData,l_cErrorMessage,l_iEnumValuePk,l_hValues)
+    l_cHtml += EnumValueEditFormBuild(par_iApplicationPk,par_iEnumerationPk,par_cURLApplicationLinkCode,par_oNavData,l_cErrorMessage,l_iEnumValuePk,l_hValues)
 
 case empty(l_iEnumValuePk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+;
@@ -10471,7 +10664,6 @@ local l_hWharfConfig
 
 local l_cLastError := ""
 local l_nMigrateResult := 0
-//local l_lCyanAuditAware
 local l_cUpdateScript := ""
 local l_cSQLScript
 local l_aInstructions

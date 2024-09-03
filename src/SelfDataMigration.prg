@@ -511,6 +511,18 @@ with object oFcgi:p_o_SQLConnection
         l_iCurrentDataVersion := 31   // UPDATE THE CODE BELOW AS WELL GetLatestDataVersionNumber()
         :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
     endif
+
+    //-----------------------------------------------------------------------------------
+    if l_iCurrentDataVersion < 32
+        FixNonNormalizedTableFields()
+        FixNonNormalizedEnumerationFields()
+
+        l_iCurrentDataVersion := 32
+        :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+    endif
+    //-----------------------------------------------------------------------------------
+
+
     //-----------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------
     // :RemoveWharfForeignKeyConstraints( oFcgi:p_o_SQLConnection:p_hWharfConfig["Tables"] )
@@ -523,5 +535,5 @@ endwith
 return l_iCurrentDataVersion
 //=================================================================================================================
 function GetLatestDataVersionNumber()
-return 31
+return 32
 //=================================================================================================================

@@ -65,7 +65,7 @@ endif
 if empty(l_cCurrentDatetimeWithMicroSeconds)
     l_cCurrentDatetimeForDisplay := ""
 else
-    l_cCurrentDatetimeForDisplay := hb_ttoc(hb_CtoT(left(l_cCurrentDatetimeWithMicroSeconds,19), "yyyy-mm-dd", "hh:mm:ss"),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
+    l_cCurrentDatetimeForDisplay := hb_ttoc(hb_CtoT(left(l_cCurrentDatetimeWithMicroSeconds,19),HB_TTOC_FORMAT),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
 endif
 
 if l_cURLAction <> "Dashboard"
@@ -134,14 +134,14 @@ if l_cURLAction <> "Dashboard"
         if !empty(l_cQueryParameterInfo)
             l_cQueryParameterInfo += [, ]
         endif
-        l_cQueryParameterInfo += [After: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeFrom,"T"," ")+":00", "yyyy-mm-dd", "hh:mm:ss"),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
+        l_cQueryParameterInfo += [After: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeFrom,"T"," ")+":00",HB_TTOC_FORMAT),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
 
     case l_nDatetimeRangeMode == 4   // Between
         if !empty(l_cQueryParameterInfo)
             l_cQueryParameterInfo += [, ]
         endif
-        l_cQueryParameterInfo += [After: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeFrom,"T"," ")+":00", "yyyy-mm-dd", "hh:mm:ss"),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
-        l_cQueryParameterInfo += [, Before: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeTo,"T"," ")+":00", "yyyy-mm-dd", "hh:mm:ss"),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
+        l_cQueryParameterInfo += [After: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeFrom,"T"," ")+":00",HB_TTOC_FORMAT),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
+        l_cQueryParameterInfo += [, Before: ]+hb_ttoc(hb_CtoT(strtran(l_cDatetimeRangeTo,"T"," ")+":00",HB_TTOC_FORMAT),oFcgi:p_LocalisationDateFormat,oFcgi:p_LocalisationTimeFormat)
 
     otherwise
     endcase

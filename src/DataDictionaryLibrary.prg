@@ -149,6 +149,7 @@ local l_oDB_AnyTags            := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_nSearchMode
 local l_nTopCount
+local l_nLastUpdated
 
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
@@ -184,7 +185,8 @@ return PrepareForURLSQLIdentifier("Namespace",ListOfRecords->Namespace_Name,List
 oFcgi:TraceAdd("GetNextPreviousTable")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"))))
-l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableTop_Count"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"))))
+l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
@@ -244,6 +246,7 @@ with object l_oDB_ListOfTables
     TableListFormAddFiltering(l_oDB_ListOfTables,;
                               l_nSearchMode,;
                               l_nTopCount,;
+                              l_nLastUpdated,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
                               l_cSearchTableName,;
@@ -273,7 +276,7 @@ endwith
 
 return l_cHtml
 //=================================================================================================================
-function GetNextPreviousColumn(par_iTablePk,par_cURLPath,par_iColumnPk)
+function GetNextPreviousColumn(par_iApplicationPk,par_iTablePk,par_cURLPath,par_iColumnPk)
 local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -281,7 +284,17 @@ local l_bCode := {||
 return PrepareForURLSQLIdentifier("Column",ListOfRecords->Column_Name,ListOfRecords->Column_LinkUID)+[/]
 }
 
+local l_cSearchColumnName
+local l_cSearchColumnStaticUID
+local l_cSearchColumnDescription
+local l_nLastUpdated
+
 oFcgi:TraceAdd("GetNextPreviousColumn")
+
+l_cSearchColumnName        := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName")
+l_cSearchColumnDescription := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription")
+l_cSearchColumnStaticUID   := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID")
+l_nLastUpdated := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_LastUpdated"))))
 
 with object l_oDB_ListOfColumns
     :Table("82c9374b-830e-47b7-8203-244e422ad7ba","Column")
@@ -290,6 +303,8 @@ with object l_oDB_ListOfColumns
     :Column("Column.LinkUID","Column_LinkUID")
     :Column("Column.Order","tag1")
     :Where("Column.fk_Table = ^",par_iTablePk)
+
+    ColumnListFormAddFiltering(l_oDB_ListOfColumns,l_cSearchColumnName,l_cSearchColumnStaticUID,l_cSearchColumnDescription,l_nLastUpdated)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
@@ -325,7 +340,7 @@ endwith
 
 return l_cHtml
 //=================================================================================================================
-function GetNextPreviousEnumValue(par_iEnumerationPk,par_cURLPath,par_iEnumValuePk)
+function GetNextPreviousEnumValue(par_iApplicationPk,par_iEnumerationPk,par_cURLPath,par_iEnumValuePk)
 local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -333,7 +348,11 @@ local l_bCode := {||
 return PrepareForURLSQLIdentifier("EnumValue",ListOfRecords->EnumValue_Name,ListOfRecords->EnumValue_LinkUID)+[/]
 }
 
+local l_nLastUpdated
+
 oFcgi:TraceAdd("GetNextPreviousEnumValue")
+
+l_nLastUpdated := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_LastUpdated"))))
 
 with object l_oDB_ListOfColumns
     :Table("a27cc2ee-8d6f-4db0-9653-77ded3821548","EnumValue")
@@ -342,6 +361,8 @@ with object l_oDB_ListOfColumns
     :Column("EnumValue.LinkUID","EnumValue_LinkUID")
     :Column("EnumValue.Order","tag1")
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
+
+    EnumValueListFormAddFiltering(l_oDB_ListOfColumns,l_nLastUpdated)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
@@ -385,6 +406,7 @@ local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_nSearchMode
 local l_nTopCount
+local l_nLastUpdated
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
 local l_cSearchEnumerationName
@@ -406,7 +428,8 @@ return PrepareForURLSQLIdentifier("Namespace"  ,ListOfRecords->Namespace_Name  ,
 oFcgi:TraceAdd("GetNextPreviousEnumeration")
 
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"))))
-l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationTop_Count"))))
+l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"))))
+l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"))))
 
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
@@ -436,6 +459,7 @@ with object l_oDB_ListOfEnumerations
     EnumerationListFormAddFiltering(l_oDB_ListOfEnumerations,;
                                     l_nSearchMode,;
                                     l_nTopCount,;
+                                    l_nLastUpdated,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
                                     l_cSearchEnumerationName,;
@@ -883,6 +907,7 @@ return l_cHtml
 function TableListFormAddFiltering( par_oDB,;
                                     par_nSearchMode,;
                                     par_nTopCount,;
+                                    par_nLastUpdated,;
                                     par_cSearchNamespaceName,;
                                     par_cSearchNamespaceDescription,;
                                     par_cSearchTableName,;
@@ -1049,13 +1074,46 @@ with object par_oDB
         :Limit(200)
     endcase
 
+    FilterOnLastUpdatedWithSysr(par_oDB,"Table",par_nLastUpdated)
+
 endwith
 
+return nil
+//=================================================================================================================
+function FilterOnLastUpdated(par_oDB,par_cTable,par_nLastUpdated)
+    do case
+    case par_nLastUpdated == 2 // Within an hour
+        par_oDB:Where("now()-"+par_cTable+".sysm <= ^","1 hour")
+    case par_nLastUpdated == 3 // Within a day
+        par_oDB:Where("now()-"+par_cTable+".sysm <= ^","1 day")
+    case par_nLastUpdated == 4 // Within a week
+        par_oDB:Where("now()-"+par_cTable+".sysm <= ^","1 week")
+    case par_nLastUpdated == 5 // Within a month
+        par_oDB:Where("now()-"+par_cTable+".sysm <= ^","1 month")
+    case par_nLastUpdated == 6 // Within a year
+        par_oDB:Where("now()-"+par_cTable+".sysm <= ^","1 year")
+    endcase
+return nil
+//=================================================================================================================
+function FilterOnLastUpdatedWithSysr(par_oDB,par_cTable,par_nLastUpdated)
+    do case
+    case par_nLastUpdated == 2 // Within an hour
+        par_oDB:Where("now()-GREATEST("+par_cTable+".sysm,"+par_cTable+".sysr) <= ^","1 hour")
+    case par_nLastUpdated == 3 // Within a day
+        par_oDB:Where("now()-GREATEST("+par_cTable+".sysm,"+par_cTable+".sysr) <= ^","1 day")
+    case par_nLastUpdated == 4 // Within a week
+        par_oDB:Where("now()-GREATEST("+par_cTable+".sysm,"+par_cTable+".sysr) <= ^","1 week")
+    case par_nLastUpdated == 5 // Within a month
+        par_oDB:Where("now()-GREATEST("+par_cTable+".sysm,"+par_cTable+".sysr) <= ^","1 month")
+    case par_nLastUpdated == 6 // Within a year
+        par_oDB:Where("now()-GREATEST("+par_cTable+".sysm,"+par_cTable+".sysr) <= ^","1 year")
+    endcase
 return nil
 //=================================================================================================================
 function EnumerationListFormAddFiltering(par_oDB,;
                                          par_nSearchMode,;
                                          par_nTopCount,;
+                                         par_nLastUpdated,;
                                          par_cSearchNamespaceName,;
                                          par_cSearchNamespaceDescription,;
                                          par_cSearchEnumerationName,;
@@ -1164,6 +1222,8 @@ with object par_oDB
     otherwise  //200
         :Limit(200)
     endcase
+
+    FilterOnLastUpdatedWithSysr(par_oDB,"Enumeration",par_nLastUpdated)
 
 endwith
 
@@ -1438,4 +1498,33 @@ else
     l_cName := par_cNameFromSourceRecord
 endif
 return l_cName+"_"+strtran(par_cLinkUIDNewRecord,"-","")
+//=================================================================================================================
+function ColumnListFormAddFiltering( par_oDB,par_cSearchColumnName,par_cSearchColumnStaticUID,par_cSearchColumnDescription,par_nLastUpdated)
+with object par_oDB
+
+    if !empty(par_cSearchColumnName) .or. !empty(par_cSearchColumnStaticUID) .or. !empty(par_cSearchColumnDescription)
+        :Distinct(.t.)
+        if !empty(par_cSearchColumnName)
+            :Join("left","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
+            :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+        endif
+        if !empty(par_cSearchColumnStaticUID)
+            :Where("Column.StaticUID = ^",par_cSearchColumnStaticUID)
+        endif
+        if !empty(par_cSearchColumnDescription)
+            :KeywordCondition(par_cSearchColumnDescription,"Column.Description")
+        endif
+    endif
+
+    FilterOnLastUpdated(par_oDB,"Column",par_nLastUpdated)
+endwith
+
+return nil
+//=================================================================================================================
+function EnumValueListFormAddFiltering( par_oDB,par_nLastUpdated)
+with object par_oDB
+    FilterOnLastUpdated(par_oDB,"EnumValue",par_nLastUpdated)
+endwith
+
+return nil
 //=================================================================================================================

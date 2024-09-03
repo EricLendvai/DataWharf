@@ -1,5 +1,10 @@
 # DataWharf - Change Log
 
+## 09/02/2024 v 4.20
+* Option to display Last Updated time and filter out records on Tables, Columns, Enumerations and Enum Values. (For now Deletes are not visible, but still tracked if Cyanaudit is installed and enabled.)
+* When Cyanaudit is enabled, it is possible to see all Add/Update events for Namespaces, Table, Columns, Enumerations and Enum Values.
+* When Cyanaudit is enabled, new indexes will be added to some cyanaudit tables. Warning: it could take a few minutes for indexes to be created. This will slow down start of new version, but only if the indexes are missing.
+
 ## 08/10/2024 v 4.19
 * Added support in Load of data structure in Oracle to timestamp without timezone, nvarchar2 and blob.
 * Export to Postgresql will skip columns of data type "Other".

@@ -1588,10 +1588,8 @@ for each l_cWarningMessage in l_hEnumValueWarning   //Process the remaining Enum
 endfor
 hb_HClear(l_hEnumValueWarning)
 
-
-
-
-
+FixNonNormalizedTableFields()
+FixNonNormalizedEnumerationFields()
 
 return nil
 //=================================================================================================================

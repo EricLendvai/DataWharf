@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.19"
+#define BUILDVERSION "4.20"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -23,8 +23,13 @@
 #define MXGRAPH_SCRIPT_VERSION       "18_0_1"
 #define BOOTSTRAP_SCRIPT_VERSION     "5_0_2"
 // #define BOOTSTRAP_SCRIPT_VERSION     "5_3_2"
+
 #define JQUERYUI_SCRIPT_VERSION      "1_12_1_NoTooltip"
 #define JQUERY_SCRIPT_VERSION        "3_6_0"
+
+//#define JQUERY_SCRIPT_VERSION        "3_7_1"
+//#define JQUERYUI_SCRIPT_VERSION      "1_14_0_NoTooltip"
+
 #define JQUERYSELECT2_SCRIPT_VERSION "2022_01_01"
 #define MARKED_SCRIPT_VERSION        "2022_02_23_001"
 #define BSTREEVIEW_SCRIPT_VERSION    "1_2_0"
@@ -191,3 +196,5 @@
 #define COLUMN_USEDAS_FOREIGN_KEY 3
 #define COLUMN_USEDAS_SUPPORT     4
 
+#define HB_TTOC_FORMAT         "yyyy-mm-dd", "hh:mm:ss"
+#define HB_TTOC_FORMAT_WITH_MS "yyyy-mm-dd", "hh:mm:ss.fff"

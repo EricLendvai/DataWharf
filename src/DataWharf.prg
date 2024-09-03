@@ -132,6 +132,8 @@ class MyFcgi from hb_Fcgi
     data p_LocalisationDateFormat init "mm/dd/yyyy"
     data p_LocalisationTimeFormat init "hh:mm:ss pm"
 
+    data p_lCyanAuditAware init .f.
+
     method OnFirstRequest()
     method OnRequest()
     method OnShutdown()
@@ -143,6 +145,8 @@ class MyFcgi from hb_Fcgi
     method Self() inline Self
 
     method Redirect(par_cURL)
+
+    method FixCyanAuditIndexes()
 
     #include "api.txt"
 
@@ -202,7 +206,6 @@ local l_aWebPageHandle
 local l_aPathElements
 local l_iLoop
 local l_cAjaxAction
-local l_lCyanAuditAware         := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
 local l_cPostgresDriver         := ::GetAppConfig("POSTGRESDRIVER")
 local l_cPostgresHost           := ::GetAppConfig("POSTGRESHOST")
 local l_iPostgresPort           := val(::GetAppConfig("POSTGRESPORT"))
@@ -268,6 +271,7 @@ endif
 ::p_nAccessLevelDD    := 0
 ::p_cSitePath         := ::RequestSettings["SitePath"]
 ::p_cUserTimeZoneName := ""
+::p_lCyanAuditAware   := (upper(left(::GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
 
 l_cSitePath := ::p_cSitePath
 
@@ -553,7 +557,7 @@ otherwise
     else
         ::p_o_SQLConnection:ClearTimeZoneName()
 
-        if l_lCyanAuditAware
+        if ::p_lCyanAuditAware
             //Ensure no user specific cyanaudit is being identified
             ::p_o_SQLConnection:SQLExec("6d20b707-04df-47c1-85b1-2f3e73570680","SELECT cyanaudit.fn_set_current_uid( 0 );")
         endif
@@ -619,27 +623,38 @@ otherwise
             ::p_cjQueryScript := ""
 
             if l_aWebPageHandle[WEBPAGEHANDLE_BUILDHEADER]
+                l_cPageHeaderHtml += CRLF
 
                 // l_cPageHeaderHtml += [<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=UTF-8">]
 
-                l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]
-                l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]
-                l_cPageHeaderHtml += [<title>]+oFcgi:p_cThisAppTitle+[</title>]
 
-                l_cPageHeaderHtml += [<link rel="icon" href="images/favicon_]+::p_cThisAppLogoThemeName+[.ico" type="image/x-icon">]
+                l_cPageHeaderHtml += [<meta http-equiv="X-UA-Compatible" content="IE=edge">]+CRLF
+                l_cPageHeaderHtml += [<meta http-equiv="Content-Type" content="text/html;charset=utf-8">]+CRLF
+                l_cPageHeaderHtml += [<title>]+oFcgi:p_cThisAppTitle+[</title>]+CRLF
 
-                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]
+                l_cPageHeaderHtml += [<link rel="icon" href="images/favicon_]+::p_cThisAppLogoThemeName+[.ico" type="image/x-icon">]+CRLF
 
-                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/icons/font/bootstrap-icons.css">]
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/css/bootstrap.min.css">]+CRLF
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/icons/font/bootstrap-icons.css">]+CRLF
 
-                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/Themes/smoothness/jQueryUI.css">]
-                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[datawharf.css">]
 
-                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery.min.js"></script>]
-                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/js/bootstrap.bundle.min.js"></script>]
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/Themes/smoothness/jQueryUI.css">]+CRLF
+                // _M_ later Chang location of JQueryUI css files 1.14
+                // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.css">]+CRLF
+                // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.structure.min.css">]+CRLF
+                // l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.theme.min.css">]+CRLF
 
-                // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]
-                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.js"></script>]
+                l_cPageHeaderHtml += [<link rel="stylesheet" type="text/css" href="]+l_cSitePath+[datawharf.css">]+CRLF
+
+                // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery.js"></script>]+CRLF
+                // l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery-migrate.js"></script>]+CRLF
+                
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQuery_]+JQUERY_SCRIPT_VERSION+[/jquery.min.js"></script>]+CRLF
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/Bootstrap_]+BOOTSTRAP_SCRIPT_VERSION+[/js/bootstrap.bundle.min.js"></script>]+CRLF
+
+
+                // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]+CRLF
+                l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.js"></script>]+CRLF
 
                 ::p_cHeader := l_cPageHeaderHtml
             endif
@@ -974,7 +989,7 @@ endif
 
             ::p_o_SQLConnection:SetTimeZoneName(::p_cUserTimeZoneName)
 
-            if l_lCyanAuditAware
+            if ::p_lCyanAuditAware
                 //Tell Cyanaudit to log future entries as the current user.
                 ::p_o_SQLConnection:SQLExec("6b78107a-1717-4366-9000-bb7d2e5fafd0","SELECT cyanaudit.fn_set_current_uid( "+Trans(::p_iUserPk)+" );")
             endif
@@ -996,6 +1011,9 @@ endif
                         exit
                     case "GetMLInfo"
                         l_cBody += GetMLInfoDuringVisualization()
+                        exit
+                    case "GetChangeLog"
+                        l_cBody += GetChangeLog()
                         exit
                     endswitch
 
@@ -1315,7 +1333,6 @@ return nil
 function UpdateSchema(par_o_SQLConnection)
 local l_cLastError := ""
 local l_nMigrateSchemaResult := 0
-local l_lCyanAuditAware
 local l_cUpdateScript := ""
 
 SendToDebugView("In UpdateSchema")
@@ -1327,8 +1344,7 @@ if el_AUnpack(par_o_SQLConnection:MigrateSchema(oFcgi:p_o_SQLConnection:p_hWharf
     endif
 
     if l_nMigrateSchemaResult == 1
-        l_lCyanAuditAware := (upper(left(oFcgi:GetAppConfig("CYANAUDIT_TRAC_USER"),1)) == "Y")
-        if l_lCyanAuditAware
+        if oFcgi:p_lCyanAuditAware
             //Ensure Cyanaudit is up to date
             oFcgi:p_o_SQLConnection:SQLExec("a1bf5168-18e2-42ee-b0bd-6bfd252fa7a8","SELECT cyanaudit.fn_update_audit_fields('public');")
             //SendToDebugView("PostgreSQL - Updated Cyanaudit triggers")
@@ -1346,6 +1362,8 @@ endif
 // if !empty(l_cUpdateScript) .and. (upper(left(oFcgi:GetAppConfig("ShowDevelopmentInfo"),1)) == "Y")
 //     el_StrToFile(l_cUpdateScript,el_AddPs(OUTPUT_FOLDER)+"UpdateScript_"+GetZuluTimeStampForFileNameSuffix()+".txt")
 // endif
+
+oFcgi:FixCyanAuditIndexes()
 
 return nil
 //=================================================================================================================
@@ -2888,6 +2906,250 @@ with object l_oDB_ListOfDeployment
     endif
     el_StrToFile(l_cContent,l_cFilePath,.f.)
 endwith
+
+return nil
+//=================================================================================================================
+function BuildSearchOptionsOnLastUpdated(par_nLastUpdated,par_lShowLastUpdated,par_lExtraSpacer)
+local l_cHtml
+
+l_cHtml := [<tr class="SearchMode1">]
+    l_cHtml += [<td class="pt-2"><span class="me-2">Last Updated</span></td>]
+    l_cHtml += [<td class="pt-2">]  //  colspan="2"
+        l_cHtml += [<select name="ComboLastUpdated" id="ComboLastUpdated" class="">]
+            l_cHtml += [<option value="1"]+iif(par_nLastUpdated==1,[ selected],[])+[>Anytime</option>]
+            l_cHtml += [<option value="2"]+iif(par_nLastUpdated==2,[ selected],[])+[>Within an Hour</option>]
+            l_cHtml += [<option value="3"]+iif(par_nLastUpdated==3,[ selected],[])+[>Within a Day</option>]
+            l_cHtml += [<option value="4"]+iif(par_nLastUpdated==4,[ selected],[])+[>Within a Week</option>]
+            l_cHtml += [<option value="5"]+iif(par_nLastUpdated==5,[ selected],[])+[>Within a Month</option>]
+            l_cHtml += [<option value="6"]+iif(par_nLastUpdated==6,[ selected],[])+[>Within a Year</option>]
+        l_cHtml += [</select>]
+    l_cHtml += [</td>]
+    if par_lExtraSpacer
+        l_cHtml += [<td>&nbsp;&nbsp;&nbsp;</td>]
+    endif
+    l_cHtml += [<td class="pt-2">]
+        l_cHtml += [<span class="form-check form-switch">]
+        l_cHtml += [<input type="checkbox" name="CheckboxShowLastUpdatedSince" id="CheckboxShowLastUpdatedSince" value="1"]+iif(par_lShowLastUpdated," checked","")+[ class="form-check-input">]
+        l_cHtml += [<label class="form-check-label" for="CheckboxShowLastUpdatedSince">&nbsp;Display Last Updated Information</label>]
+        l_cHtml += [</span>]
+    l_cHtml += [</td>]
+l_cHtml += [</tr>]
+
+return l_cHtml
+//=================================================================================================================
+function BuildRecordEditInfo(par_cTableName,par_iPk)
+local l_cHtml := ""
+
+local l_cSitePath := oFcgi:p_cSitePath
+
+local l_oDB1
+local l_oData
+local l_cJS
+
+local l_cTimeStamp := GetZuluTimeStampForFileNameSuffix()
+local l_DialogMaxWidth  := 800
+local l_DialogMaxHeight := 600
+
+if par_iPk >= 0
+    l_cHtml += [<style type="text/css">]
+    l_cHtml += [ .LinkHover {color: BlueViolet;text-decoration: underline;} ]
+    l_cHtml += [ .OnLinkToViewChangeLog {color: blue;cursor: pointer;} ]
+    l_cHtml += [</style>]
+
+    l_cJS := CRLF
+    l_cJS += [<script type="text/javascript" Language="Javascript">] + CRLF
+
+    l_cJS += [function DWFChangeLog(par_title){]
+    l_cJS +=                              [$('<div>').dialog({]
+    // l_cJS +=                                [open: function(){ $(this).load(']+l_cSitePath+[ajax/GetChangeLog?tstamp=]+l_cTimeStamp+[&table=]+par_cTableName+[&pk=]+trans(par_iPk)+['); },]  //_M_
+    // See fix from https://stackoverflow.com/questions/17367736/jquery-ui-dialog-missing-close-icon
+    l_cJS +=                                [open: function(event, ui){$(this).closest(".ui-dialog").find(".ui-dialog-titlebar-close").removeClass("ui-dialog-titlebar-close").html("<span class='ui-button-icon-primary ui-icon ui-icon-closethick'></span>").attr("class","ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close");]
+    // Fix the styling of the Cancel button
+    l_cJS +=                                                          [$(this).closest(".ui-dialog").find(".ui-dialog-buttonset").find("button").attr("class","ui-button ui-corner-all ui-widget");]
+    // Ajax load of log. This will reduce the time to generate the page.
+    l_cJS +=                                                          [$(this).load(']+l_cSitePath+[ajax/GetChangeLog?tstamp=]+l_cTimeStamp+[&table=]+par_cTableName+[&pk=]+trans(par_iPk)+['); },]  //_M_
+    l_cJS +=                                [buttons: {]
+    l_cJS +=                                          [ "Cancel": function() {]
+    l_cJS +=                                                                 [$(this).dialog("close"); }]
+    l_cJS +=                                          [ } ,]
+    // l_cJS +=                                [beforeClose: function( event, ui ) {$('.HBWDialogField').remove();} ,]
+    l_cJS +=                                [modal: true,]
+    l_cJS +=                                [width: Math.min( (($(window).width() - 20)) , ]+trans(l_DialogMaxWidth)+[),]
+    l_cJS +=                                [height: Math.min( (($(window).height() - 20)) , ]+trans(l_DialogMaxHeight)+[),]
+    l_cJS +=                                [title: 'View Change Log']
+    l_cJS +=                              [});]
+    l_cJS +=                             [}] + CRLF
+
+    l_cJS += [</script>] + CRLF
+
+    oFcgi:p_cHeader += CRLF + l_cJS + CRLF
+
+    l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
+    with object l_oDB1
+        :Table("8d26a6a7-2fda-40af-a03d-6182f5168e59",par_cTableName)
+        :Column(par_cTableName+".sysm","sysm")
+        l_oData := :Get(par_iPk)
+        if :Tally == 1
+            l_cHtml += [<div class="m-3">]
+                if oFcgi:p_lCyanAuditAware
+                    l_cHtml += [<span id="GETINFO" class="OnLinkToViewChangeLog">]+"Last Updated On: "+hb_Ttoc(l_oData:sysm,HB_TTOC_FORMAT_WITH_MS)+[</span>]
+
+                    l_cJS := [$("#GETINFO").click(function() {DWFChangeLog("Change Log Table: ]+par_cTableName+[ Pk: ]+Trans(par_iPk)+[")});]
+
+                    l_cJS += [$('.OnLinkToViewChangeLog').hover(]
+                    l_cJS +=        [function(){ $(this).addClass('LinkHover') },]
+                    l_cJS +=        [function(){ $(this).removeClass('LinkHover') }]
+                    l_cJS += [);]
+
+                    oFcgi:p_cjQueryScript += l_cJS
+                else
+                    l_cHtml += [<span id="GETINFO">]+"Last Updated On: "+hb_Ttoc(l_oData:sysm,HB_TTOC_FORMAT_WITH_MS)+[</span>]
+                endif
+            l_cHtml += [</div>]
+        endif
+    endwith
+
+endif
+
+return l_cHtml
+//=================================================================================================================
+function GetChangeLog()
+local l_cHtml := ""
+local l_cSQLCommand
+
+local l_tRecordedLast := NIL
+local l_lDetailMode := .f.
+local l_lIsInsert
+
+local l_cTableName := oFcgi:GetQueryString("table")    //_M_ Safe content
+local l_cTablePk   := val(oFcgi:GetQueryString("pk"))
+
+local l_lFoundEntries := .f.
+
+// l_cHtml += " "+l_cTableName
+// l_cHtml += " "+trans(l_cTablePk)
+
+l_cSQLCommand := [SELECT ae.recorded,]
+l_cSQLCommand += [    ae.uid,]
+l_cSQLCommand += [    "user"."FirstName" as "User_FirstName",]
+l_cSQLCommand += [    "user"."LastName" as "User_LastName",]
+l_cSQLCommand += [    ae.txid,]
+l_cSQLCommand += [    att.label AS description,]
+// l_cSQLCommand += [        CASE]
+// l_cSQLCommand += [            WHEN af.table_schema::text = ANY (current_schemas(true)) THEN af.table_name::text]
+// l_cSQLCommand += [            ELSE (af.table_schema::text || '.'::text) || af.table_name::text]
+// l_cSQLCommand += [        END::character varying AS table_name,]
+l_cSQLCommand += [    af.column_name,]
+// l_cSQLCommand += [    ae.pk_vals,]
+l_cSQLCommand += [    ae.row_op AS op,]
+l_cSQLCommand += [    ae.old_value,]
+l_cSQLCommand += [    ae.new_value]
+l_cSQLCommand += [   FROM cyanaudit.tb_audit_event ae ]
+l_cSQLCommand += [     JOIN cyanaudit.tb_audit_field af ON  af.audit_field = ae.audit_field]
+l_cSQLCommand += [     LEFT JOIN cyanaudit.tb_audit_transaction_type att ON att.audit_transaction_type = ae.audit_transaction_type]
+l_cSQLCommand += [  left join "public"."User" as "user" on ae.uid = "user"."pk"]
+// l_cSQLCommand += [--WHERE ae.recorded >= (NOW() - INTERVAL '10 hour')]
+l_cSQLCommand += "  WHERE ae.pk_vals[1] = '"+trans(l_cTablePk)+"'"
+l_cSQLCommand += [  AND   af.table_name = ']+l_cTableName+[']
+l_cSQLCommand += [  AND   af.column_name not in ('sysc','sysm','sysr')]
+// l_cSQLCommand += [--AND att.label = 'SomeText']
+l_cSQLCommand += [  ORDER BY ae.recorded DESC, af.table_name, af.column_name]
+// l_cSQLCommand += [  --LIMIT 100]
+
+if oFcgi:p_o_SQLConnection:SQLExec("f7c97b61-8246-4734-9a78-cf2d48798f08",l_cSQLCommand,"ListOfChanges")
+    select ListOfChanges
+    scan all
+        if !l_lFoundEntries
+            l_lFoundEntries := .t.
+            l_cHtml += [<div class="m-3">]   //<span class="pe-2 pb-3">
+        endif
+        if hb_IsNil(l_tRecordedLast) .or. l_tRecordedLast <> ListOfChanges->recorded
+            l_tRecordedLast := ListOfChanges->recorded
+            l_lIsInsert := (ListOfChanges->op == "I")
+            if l_lDetailMode
+                l_cHtml += [</table>]
+            endif
+            l_lDetailMode := .t.
+            l_cHtml += [<table border="1" class="mb-3">]
+                l_cHtml += [<tr>]
+                    l_cHtml += [<td colspan="]+iif(l_lIsInsert,"2","3")+[" class="p-1">]
+                        l_cHtml += iif(l_lIsInsert,"Created On: ","Updated On: ")+hb_Ttoc(ListOfChanges->recorded,HB_TTOC_FORMAT_WITH_MS)
+                        l_cHtml += " "
+                        l_cHtml += nvl(ListOfChanges->User_FirstName,"")
+                        l_cHtml += " "
+                        l_cHtml += nvl(ListOfChanges->User_LastName,"")
+                    l_cHtml += [</td>]
+                l_cHtml += [</tr>]
+                l_cHtml += [<tr>]
+                    l_cHtml += [<td class="p-1">Field</td>]
+                    if l_lIsInsert
+                        l_cHtml += [<td class="p-1">Value</td>]
+                    else
+                        l_cHtml += [<td class="p-1">From</td>]
+                        l_cHtml += [<td class="p-1">To</td>]
+                    endif
+                l_cHtml += [</tr>]
+        endif
+        l_cHtml += [<tr>]
+            l_cHtml += [<td class="p-1">]
+                l_cHtml += ListOfChanges->column_name
+            l_cHtml += [</td>]
+            if !l_lIsInsert
+                l_cHtml += [<td class="p-1">]
+                    l_cHtml += nvl(ListOfChanges->old_value,"")
+                l_cHtml += [</td>]
+            endif
+            
+            l_cHtml += [<td class="p-1">]
+                l_cHtml += nvl(ListOfChanges->new_value,"")
+            l_cHtml += [</td>]
+        l_cHtml += [</tr>]
+        
+    endscan
+    if l_lFoundEntries
+        if l_lDetailMode
+            l_cHtml += [</table>]
+        endif
+        l_cHtml += [</div>]
+    else
+        l_cHtml += [No Change Logs on File.]
+    endif
+endif
+CloseAlias("ListOfChanges")
+
+return l_cHtml
+//=================================================================================================================
+method FixCyanAuditIndexes() class MyFcgi
+local l_cSQLCommand
+local l_cTableName
+
+if ::p_lCyanAuditAware
+
+    l_cSQLCommand := [select table_name from information_schema.tables WHERE table_schema = 'cyanaudit' and table_name = 'tb_audit_field']
+    if ::p_o_SQLConnection:SQLExec("f2a2a596-d34f-4f62-b6e9-85174cf56a29",l_cSQLCommand,"ListOfCyanAuditTables")
+        if ("ListOfCyanAuditTables")->(reccount()) == 1
+            l_cSQLCommand := [CREATE INDEX IF NOT EXISTS tb_audit_field_table_name_idx ON cyanaudit.tb_audit_field USING btree (table_name ASC NULLS LAST) WITH (deduplicate_items=False);]
+            ::p_o_SQLConnection:SQLExec("57584e51-1072-4967-bc05-6fd3209c498a",l_cSQLCommand)
+        endif
+    endif
+    CloseAlias("ListOfCyanAuditTables")
+
+    l_cSQLCommand := [SELECT table_name FROM information_schema.tables WHERE table_schema = 'cyanaudit' AND table_name like 'tb_audit_event_%']
+    if ::p_o_SQLConnection:SQLExec("2859b9f7-3cee-47c8-bf9c-72236fd5d725",l_cSQLCommand,"ListOfCyanAuditTables")
+        select ListOfCyanAuditTables
+        scan all
+            l_cTableName := alltrim(ListOfCyanAuditTables->table_name)
+            l_cSQLCommand := "CREATE INDEX IF NOT EXISTS "+l_cTableName+"_pk_vals2_idx ON cyanaudit."+l_cTableName+" USING btree ((pk_vals[1]) ASC NULLS LAST);"
+            ::p_o_SQLConnection:SQLExec("1c0b8ee8-7fab-43e6-b8eb-09647eb09a42",l_cSQLCommand)
+
+            // Since the index is not on a single column, had to trigger an ANALYZE to ensure the Postgresql query engine will use the new index during queries.
+            l_cSQLCommand := "ANALYZE cyanaudit."+l_cTableName
+            ::p_o_SQLConnection:SQLExec("1c0b8ee8-7fab-43e6-b8eb-09647eb09a43",l_cSQLCommand)
+        endscan
+    endif
+    CloseAlias("ListOfCyanAuditTables")
+
+endif
 
 return nil
 //=================================================================================================================
