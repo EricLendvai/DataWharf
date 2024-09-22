@@ -50,13 +50,13 @@ local l_nURLTemplateColumnUsedBy := 0
 local l_cURLIndexName            := ""
 local l_nURLIndexUsedBy          := 0
 
-// local l_cLinkUIDNamespace   := ""
-// local l_cLinkUIDTable       := ""
-// local l_cLinkUIDColumn      := ""
-// local l_cLinkUIDIndex       := ""
-// local l_cLinkUIDEnumeration := ""
-// local l_cLinkUIDEnumValue   := ""
-local l_cLinkUIDDeployment  := ""
+// local l_cUIDNamespace   := ""
+// local l_cUIDTable       := ""
+// local l_cUIDColumn      := ""
+// local l_cUIDIndex       := ""
+// local l_cUIDEnumeration := ""
+// local l_cUIDEnumValue   := ""
+local l_cUIDDeployment  := ""
 
 local l_cTableAKA
 local l_cEnumerationAKA
@@ -64,7 +64,7 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfPrimaryColumns
 local l_oDBListOfTagsOnFile
 local l_cTags
-local l_cLinkUID
+local l_cUID
 local l_cJavaScript
 
 local l_nFk_Deployment
@@ -166,40 +166,40 @@ oFcgi:TraceAdd("BuildPageDataDictionaries")
 // DataDictionaries/NewTemplateColumn/<ApplicationLinkCode>/<TableName>/
 // DataDictionaries/EditTemplateColumn/<ApplicationLinkCode>/<TableName>/<ColumnName>
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLApplicationLinkCode := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLApplicationLinkCode := oFcgi:p_aURLPathElements[3]
     endif
 
     if el_IsInlist(l_cURLAction,"EditNamespace","EditTable","EditEnumeration","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue","TableExportForDataWharfImports","TableReferencedBy","TableDiagrams","EnumerationReferencedBy")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cURLNamespaceName := oFcgi:p_URLPathElements[4]
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            l_cURLNamespaceName := oFcgi:p_aURLPathElements[4]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditTable","ListColumns","OrderColumns","NewColumn","EditColumn","ListIndexes","NewIndex","EditIndex","TableExportForDataWharfImports","TableReferencedBy","TableDiagrams")
-        if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
-            l_cURLTableName := oFcgi:p_URLPathElements[5]
+        if len(oFcgi:p_aURLPathElements) >= 5 .and. !empty(oFcgi:p_aURLPathElements[5])
+            l_cURLTableName := oFcgi:p_aURLPathElements[5]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditEnumeration","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue","EnumerationReferencedBy")
-        if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
-            l_cURLEnumerationName := oFcgi:p_URLPathElements[5]
+        if len(oFcgi:p_aURLPathElements) >= 5 .and. !empty(oFcgi:p_aURLPathElements[5])
+            l_cURLEnumerationName := oFcgi:p_aURLPathElements[5]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditTag")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cURLTagCode := oFcgi:p_URLPathElements[4]
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            l_cURLTagCode := oFcgi:p_aURLPathElements[4]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditColumn")
-        if len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6])
-            l_cURLColumnName := oFcgi:p_URLPathElements[6]
+        if len(oFcgi:p_aURLPathElements) >= 6 .and. !empty(oFcgi:p_aURLPathElements[6])
+            l_cURLColumnName := oFcgi:p_aURLPathElements[6]
             l_nPos := at(":",l_cURLColumnName)
             if empty(l_nPos)
                 l_nURLColumnUsedBy := 0
@@ -211,8 +211,8 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     endif
 
     if el_IsInlist(l_cURLAction,"EditIndex")
-        if len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6])
-            l_cURLIndexName := oFcgi:p_URLPathElements[6]
+        if len(oFcgi:p_aURLPathElements) >= 6 .and. !empty(oFcgi:p_aURLPathElements[6])
+            l_cURLIndexName := oFcgi:p_aURLPathElements[6]
             l_nPos := at(":",l_cURLIndexName)
             if empty(l_nPos)
                 l_nURLIndexUsedBy := 0
@@ -224,20 +224,20 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     endif
 
     if el_IsInlist(l_cURLAction,"EditEnumValue")
-        if len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6])
-            l_cURLEnumValueName := oFcgi:p_URLPathElements[6]
+        if len(oFcgi:p_aURLPathElements) >= 6 .and. !empty(oFcgi:p_aURLPathElements[6])
+            l_cURLEnumValueName := oFcgi:p_aURLPathElements[6]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditTemplateTable","ListTemplateColumns","OrderTemplateColumns","NewTemplateColumn","EditTemplateColumn")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cURLTemplateTableName := oFcgi:p_URLPathElements[4]
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            l_cURLTemplateTableName := oFcgi:p_aURLPathElements[4]
         endif
     endif
 
     if el_IsInlist(l_cURLAction,"EditTemplateColumn")
-        if len(oFcgi:p_URLPathElements) >= 5 .and. !empty(oFcgi:p_URLPathElements[5])
-            l_cURLTemplateColumnName := oFcgi:p_URLPathElements[5]
+        if len(oFcgi:p_aURLPathElements) >= 5 .and. !empty(oFcgi:p_aURLPathElements[5])
+            l_cURLTemplateColumnName := oFcgi:p_aURLPathElements[5]
             l_nPos := at(":",l_cURLTemplateColumnName)
             if empty(l_nPos)
                 l_nURLTemplateColumnUsedBy := 0
@@ -249,8 +249,8 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     endif
 
     if el_IsInlist(l_cURLAction,"EditMyDeployment")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cLinkUIDDeployment := oFcgi:p_URLPathElements[4]
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            l_cUIDDeployment := oFcgi:p_aURLPathElements[4]
         endif
     endif
 
@@ -283,8 +283,8 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
         l_cApplicationElement := "DEVELOPMENTTOOLS"
 
     case el_IsInlist(l_cURLAction,"Visualize")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            if el_IsInlist(oFcgi:p_URLPathElements[4],"resources","css","mxgraph")
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            if el_IsInlist(oFcgi:p_aURLPathElements[4],"resources","css","mxgraph")
                 return [<div>Bad URL - calling for some css or resources - bug in mxgraph</div>]
             endif
         endif
@@ -509,19 +509,19 @@ case l_cURLAction == "DataDictionaryExportForDataWharfImports"
                 l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[DataDictionaries/DataDictionaryExport/]+l_cURLApplicationLinkCode+[/]+[">Other Export</a>]
 
                 if oFcgi:isGet()
-                    l_cLinkUID := ExportApplicationForImports(l_iApplicationPk)
+                    l_cUID := ExportApplicationForImports(l_iApplicationPk)
 
-                    if !empty(l_cLinkUID)
-                        l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+["]+[>Download Export File</a>]
+                    if !empty(l_cUID)
+                        l_cHtmlUnderHeader += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cUID+["]+[>Download Export File</a>]
                     endif
                 else
-                    l_cLinkUID := ""
+                    l_cUID := ""
                 endif
 
             l_cHtmlUnderHeader += [</div>]
         l_cHtmlUnderHeader += [</nav>]
 
-        if empty(l_cLinkUID)
+        if empty(l_cUID)
             l_cHtmlUnderHeader += [<p class="ms-3">Failed to create an Export file.</p>]
         else
             l_cHtmlUnderHeader += [<p class="ms-3">The Export file was created as a ZIP file. Use the "Download Export File" button.</p>]
@@ -618,7 +618,7 @@ case l_cURLAction = "EditMyDeployment"
         :Column("Deployment.AllowUpdates"       , "Deployment_AllowUpdates")
 
         :Where("Deployment.fk_Application = ^",l_iApplicationPk)
-        :Where("Deployment.LinkUID = ^"       ,l_cLinkUIDDeployment)
+        :Where("Deployment.UID = ^"       ,l_cUIDDeployment)
         :Where("Deployment.fk_User = ^"       ,oFcgi:p_iUserPk)
         l_oData := :SQL()
     endwith
@@ -658,7 +658,7 @@ case l_cURLAction == "Visualize"
         with object l_oDB1
             :Table("4ce05f54-56f4-4141-9d33-634c3a661d66","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
-            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("Diagram.UID"    ,"Diagram_UID")
             :Column("upper(Diagram.Name)","Tag1")
             :Where("Diagram.fk_Application = ^" , l_iApplicationPk)
             :OrderBy("tag1")
@@ -666,10 +666,10 @@ case l_cURLAction == "Visualize"
             if :Tally > 0
                 l_iDiagramPk   := ListOfDiagrams->Diagram_pk
 
-                l_cLinkUID = oFcgi:GetQueryString("InitialDiagram")
-                if !empty(l_cLinkUID)
+                l_cUID = oFcgi:GetQueryString("InitialDiagram")
+                if !empty(l_cUID)
                     select ListOfDiagrams
-                    locate for ListOfDiagrams->Diagram_LinkUID == l_cLinkUID
+                    locate for ListOfDiagrams->Diagram_UID == l_cUID
                     if found()
                         l_iDiagramPk := ListOfDiagrams->Diagram_pk
                     endif
@@ -756,12 +756,12 @@ case l_cURLAction == "EditTable"
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
         if left(l_cURLTableName,1) == "~"
-            :Where([Table.LinkUID = ^],substr(l_cURLTableName,2))
+            :Where([Table.UID = ^],substr(l_cURLTableName,2))
         else
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         endif
@@ -879,14 +879,14 @@ case l_cURLAction == "EditColumn"
         :Column("Table.pk"                        ,"Table_pk")
         :Column("Namespace.Name"                  ,"Namespace_Name")
         :Column("Namespace.AKA"                   ,"Namespace_AKA")
-        :Column("Namespace.LinkUID"               ,"Namespace_LinkUID")
+        :Column("Namespace.UID"               ,"Namespace_UID")
         :Column("Table.Name"                      ,"Table_Name")
         :Column("Table.AKA"                       ,"Table_AKA")
-        :Column("Table.LinkUID"                   ,"Table_LinkUID")
+        :Column("Table.UID"                   ,"Table_UID")
         :Column("Column.Name"                     ,"Column_Name")
         :Column("Column.TrackNameChanges"         ,"Column_TrackNameChanges")
         :Column("Column.AKA"                      ,"Column_AKA")
-        :Column("Column.LinkUID"                  ,"Column_LinkUID")
+        :Column("Column.UID"                  ,"Column_UID")
         :Column("Column.StaticUID"                ,"Column_StaticUID")
         :Column("Column.UsedAs"                   ,"Column_UsedAs")
         :Column("Column.UsedBy"                   ,"Column_UsedBy")
@@ -919,18 +919,18 @@ case l_cURLAction == "EditColumn"
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
         if left(l_cURLTableName,1) == "~"
-            :Where([Table.LinkUID = ^],substr(l_cURLTableName,2))
+            :Where([Table.UID = ^],substr(l_cURLTableName,2))
         else
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         endif
 
         if left(l_cURLColumnName,1) == "~"
-            :Where([Column.LinkUID = ^],substr(l_cURLColumnName,2))
+            :Where([Column.UID = ^],substr(l_cURLColumnName,2))
         else
             :Where([lower(replace(Column.Name,' ','')) = ^],lower(StrTran(l_cURLColumnName," ","")))
         endif
@@ -1055,10 +1055,10 @@ case l_cURLAction == "EditIndex"
 
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Table.LinkUID"    ,"Table_LinkUID")
+        :Column("Table.UID"    ,"Table_UID")
         :Column("Namespace.Name"   ,"Namespace_Name")
         :Column("Namespace.AKA"    ,"Namespace_AKA")
-        :Column("Namespace.LinkUID","Namespace_LinkUID")
+        :Column("Namespace.UID","Namespace_UID")
 
         :Column("Index.Name"        ,"Index_Name")
         :Column("Index.UsedBy"      ,"Index_UsedBy")
@@ -1076,18 +1076,18 @@ case l_cURLAction == "EditIndex"
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
         if left(l_cURLTableName,1) == "~"
-            :Where([Table.LinkUID = ^],substr(l_cURLTableName,2))
+            :Where([Table.UID = ^],substr(l_cURLTableName,2))
         else
             :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
         endif
 
         if left(l_cURLIndexName,1) == "~"
-            :Where([Index.LinkUID = ^],substr(l_cURLIndexName,2))
+            :Where([Index.UID = ^],substr(l_cURLIndexName,2))
         else
             :Where([lower(replace(Index.Name,' ','')) = ^],lower(StrTran(l_cURLIndexName," ","")))
         endif
@@ -1178,13 +1178,13 @@ case l_cURLAction == "EditEnumeration"
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
         
         if left(l_cURLEnumerationName,1) == "~"
-            :Where([Enumeration.LinkUID = ^],substr(l_cURLEnumerationName,2))
+            :Where([Enumeration.UID = ^],substr(l_cURLEnumerationName,2))
         else
             :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
         endif
@@ -1247,21 +1247,21 @@ case l_cURLAction == "OrderEnumValues"
             :Table("0d12fc1c-3b02-4e00-ace2-21eb385eff84","Enumeration")
             :Column("Namespace.Name"     ,"Namespace_Name")
             :Column("Namespace.AKA"      ,"Namespace_AKA")
-            :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+            :Column("Namespace.UID"  ,"Namespace_UID")
             :Column("Enumeration.pk"     ,"Enumeration_Pk")
             :Column("Enumeration.Name"   ,"Enumeration_Name")
             :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-            :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+            :Column("Enumeration.UID","Enumeration_UID")
             :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
             :Where("Namespace.fk_Application = ^",l_iApplicationPk)
 
             if left(l_cURLNamespaceName,1) == "~"
-                :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+                :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
             else
                 :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             endif
             if left(l_cURLEnumerationName,1) == "~"
-                :Where([Enumeration.LinkUID = ^],substr(l_cURLEnumerationName,2))
+                :Where([Enumeration.UID = ^],substr(l_cURLEnumerationName,2))
             else
                 :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
             endif
@@ -1291,22 +1291,22 @@ case l_cURLAction == "NewEnumValue"
             :Column("Namespace.Pk"       ,"Namespace_Pk")
             :Column("Namespace.Name"     ,"Namespace_Name")
             :Column("Namespace.AKA"      ,"Namespace_AKA")
-            :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+            :Column("Namespace.UID"  ,"Namespace_UID")
             :Column("Enumeration.Pk"     ,"Enumeration_Pk")
             :Column("Enumeration.Name"   ,"Enumeration_Name")
             :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-            :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+            :Column("Enumeration.UID","Enumeration_UID")
             :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
             :Where("Namespace.fk_Application = ^",l_iApplicationPk)
 
             if left(l_cURLNamespaceName,1) == "~"
-                :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+                :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
             else
                 :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             endif
 
             if left(l_cURLEnumerationName,1) == "~"
-                :Where([Enumeration.LinkUID = ^],substr(l_cURLEnumerationName,2))
+                :Where([Enumeration.UID = ^],substr(l_cURLEnumerationName,2))
             else
                 :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
             endif
@@ -1337,14 +1337,14 @@ case l_cURLAction == "EditEnumValue"
         :Column("Enumeration.pk"            ,"Enumeration_pk")
         :Column("Namespace.Name"            ,"Namespace_Name")
         :Column("Namespace.AKA"             ,"Namespace_AKA")
-        :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
+        :Column("Namespace.UID"         ,"Namespace_UID")
         :Column("Enumeration.Name"          ,"Enumeration_Name")
         :Column("Enumeration.AKA"           ,"Enumeration_AKA")
-        :Column("Enumeration.LinkUID"       ,"Enumeration_LinkUID")
+        :Column("Enumeration.UID"       ,"Enumeration_UID")
         :Column("EnumValue.Name"            ,"EnumValue_Name")
         :Column("EnumValue.TrackNameChanges","EnumValue_TrackNameChanges")
         :Column("EnumValue.AKA"             ,"EnumValue_AKA")
-        :Column("EnumValue.LinkUID"         ,"EnumValue_LinkUID")
+        :Column("EnumValue.UID"         ,"EnumValue_UID")
         :Column("EnumValue.Number"          ,"EnumValue_Number")
         :Column("EnumValue.Code"            ,"EnumValue_Code")
         :Column("EnumValue.UseStatus"       ,"EnumValue_UseStatus")
@@ -1358,17 +1358,17 @@ case l_cURLAction == "EditEnumValue"
         :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
         if left(l_cURLEnumerationName,1) == "~"
-            :Where([Enumeration.LinkUID = ^],substr(l_cURLEnumerationName,2))
+            :Where([Enumeration.UID = ^],substr(l_cURLEnumerationName,2))
         else
             :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(l_cURLEnumerationName," ","")))
         endif
         if left(l_cURLEnumValueName,1) == "~"
-            :Where([EnumValue.LinkUID = ^],substr(l_cURLEnumValueName,2))
+            :Where([EnumValue.UID = ^],substr(l_cURLEnumValueName,2))
         else
             :Where([lower(replace(EnumValue.Name,' ','')) = ^],lower(StrTran(l_cURLEnumValueName," ","")))
         endif
@@ -1437,7 +1437,7 @@ case l_cURLAction == "EditNamespace"
         :Column("Namespace.ExternalId"      ,"Namespace_ExternalId")
 
         if left(l_cURLNamespaceName,1) == "~"
-            :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+            :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
         else
             :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
         endif
@@ -1495,7 +1495,7 @@ case l_cURLAction == "EditTag"
         :Table("a5a2cd08-7783-4151-905d-da7c3cb3a2af","Tag")
         :Column("Tag.pk"             , "Tag_Pk")
         :Column("Tag.Name"           , "Tag_Name")
-        :Column("Tag.LinkUID"        , "Tag_LinkUID")
+        :Column("Tag.UID"        , "Tag_UID")
         :Column("Tag.Code"           , "Tag_Code")
         :Column("Tag.TableUseStatus" , "Tag_TableUseStatus")
         :Column("Tag.ColumnUseStatus", "Tag_ColumnUseStatus")
@@ -1554,11 +1554,11 @@ case l_cURLAction == "EditTemplateTable"
         :Table("9de1a987-56bf-4965-8fac-dbfdcb2f8183","TemplateTable")
         :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
         :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+        :Column("TemplateTable.UID","TemplateTable_UID")
         :Where([TemplateTable.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
-            :Where([TemplateTable.LinkUID = ^],substr(l_cURLTemplateTableName,2))
+            :Where([TemplateTable.UID = ^],substr(l_cURLTemplateTableName,2))
         else
             :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
         endif
@@ -1589,11 +1589,11 @@ case l_cURLAction == "ListTemplateColumns"
         :Table("61820e1b-b440-4c71-8e1a-a34b90062fa9","TemplateTable")
         :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
         :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+        :Column("TemplateTable.UID","TemplateTable_UID")
         :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
-            :Where([TemplateTable.LinkUID = ^],substr(l_cURLTemplateTableName,2))
+            :Where([TemplateTable.UID = ^],substr(l_cURLTemplateTableName,2))
         else
             :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
         endif
@@ -1620,11 +1620,11 @@ case l_cURLAction == "OrderTemplateColumns"
         :Table("31de69df-b5ea-4d10-9787-f7e0ab490da6","TemplateTable")
         :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
         :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+        :Column("TemplateTable.UID","TemplateTable_UID")
         :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
-            :Where([TemplateTable.LinkUID = ^],substr(l_cURLTemplateTableName,2))
+            :Where([TemplateTable.UID = ^],substr(l_cURLTemplateTableName,2))
         else
             :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
         endif
@@ -1652,11 +1652,11 @@ case l_cURLAction == "NewTemplateColumn"
             :Table("f0f14f13-3c12-40b5-b45f-db93c25d651c","TemplateTable")
             :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
             :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-            :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+            :Column("TemplateTable.UID","TemplateTable_UID")
             :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
             if left(l_cURLTemplateTableName,1) == "~"
-                :Where([TemplateTable.LinkUID = ^],substr(l_cURLTemplateTableName,2))
+                :Where([TemplateTable.UID = ^],substr(l_cURLTemplateTableName,2))
             else
                 :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
             endif
@@ -1694,7 +1694,7 @@ case l_cURLAction == "EditTemplateColumn"
         :Column("TemplateColumn.pk"           ,"TemplateColumn_pk")
         :Column("TemplateTable.pk"            ,"TemplateTable_pk")
         :Column("TemplateTable.Name"          ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID"       ,"TemplateTable_LinkUID")
+        :Column("TemplateTable.UID"       ,"TemplateTable_UID")
         :Column("TemplateColumn.Name"         ,"TemplateColumn_Name")
         :Column("TemplateColumn.AKA"          ,"TemplateColumn_AKA")
         :Column("TemplateColumn.UsedAs"       ,"TemplateColumn_UsedAs")
@@ -1715,13 +1715,13 @@ case l_cURLAction == "EditTemplateColumn"
         :Where([TemplateTable.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
-            :Where([TemplateTable.LinkUID = ^],substr(l_cURLTemplateTableName,2))
+            :Where([TemplateTable.UID = ^],substr(l_cURLTemplateTableName,2))
         else
             :Where([lower(replace(TemplateTable.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateTableName," ","")))
         endif
 
         if left(l_cURLTemplateColumnName,1) == "~"
-            :Where([TemplateColumn.LinkUID = ^],substr(l_cURLTemplateColumnName,2))
+            :Where([TemplateColumn.UID = ^],substr(l_cURLTemplateColumnName,2))
         else
             :Where([lower(replace(TemplateColumn.Name,' ','')) = ^],lower(StrTran(l_cURLTemplateColumnName," ","")))
         endif
@@ -1784,20 +1784,20 @@ case l_cURLAction == "TableExportForDataWharfImports"
             :Column("Table.pk"         ,"Table_Pk")
             :Column("Namespace.Name"   ,"Namespace_Name")
             :Column("Namespace.AKA"    ,"Namespace_AKA")
-            :Column("Namespace.LinkUID","Namespace_LinkUID")
+            :Column("Namespace.UID","Namespace_UID")
             :Column("Table.Name"       ,"Table_Name")
             :Column("Table.AKA"        ,"Table_AKA")
-            :Column("Table.LinkUID"    ,"Table_LinkUID")
+            :Column("Table.UID"    ,"Table_UID")
             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
             :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
             if left(l_cURLNamespaceName,1) == "~"
-                :Where([Namespace.LinkUID = ^],substr(l_cURLNamespaceName,2))
+                :Where([Namespace.UID = ^],substr(l_cURLNamespaceName,2))
             else
                 :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(l_cURLNamespaceName," ","")))
             endif
             if left(l_cURLTableName,1) == "~"
-                :Where([Table.LinkUID = ^],substr(l_cURLTableName,2))
+                :Where([Table.UID = ^],substr(l_cURLTableName,2))
             else
                 :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(l_cURLTableName," ","")))
             endif
@@ -1812,14 +1812,14 @@ case l_cURLAction == "TableExportForDataWharfImports"
 
             l_iTablePk := l_oData:Table_Pk
             if !empty(l_iTablePk)
-                AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_LinkUID})
-                AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_LinkUID}    )
+                AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_UID})
+                AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_UID}    )
 
                 l_cHtml += GetAboveNavbarHeading("Export for DataWharf Imports","Table",AssembleNavbarInfo("Build"))
 
                 l_cCombinedPath := l_cURLApplicationLinkCode+[/]+;
-                                   PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                                   PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
+                                   PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+[/]+;
+                                   PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +[/]
 
                 l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<div class="input-group RemoveOnEdit mb-3">]
@@ -1827,17 +1827,17 @@ case l_cURLAction == "TableExportForDataWharfImports"
                         l_cHtml += GetTableExtendedButtonRelatedOnEditForm("Export",l_iTablePk,l_cCombinedPath)
                     l_cHtml += [</div><div class="input-group">]
                         if oFcgi:isGet()
-                            l_cLinkUID := ExportTableForImports(l_iTablePk)
-                            if !empty(l_cLinkUID)
-                                l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cLinkUID+["]+[>Download Export File</a>]
+                            l_cUID := ExportTableForImports(l_iTablePk)
+                            if !empty(l_cUID)
+                                l_cHtml += [<a class="btn btn-primary rounded ms-3 align-middle" href="]+l_cSitePath+[streamfile?id=]+l_cUID+["]+[>Download Export File</a>]
                             endif
                         else
-                            l_cLinkUID := ""
+                            l_cUID := ""
                         endif
                     l_cHtml += [</div>]
                 l_cHtml += [</nav>]
 
-                if empty(l_cLinkUID)
+                if empty(l_cUID)
                     l_cHtml += [<p class="ms-3">Failed to create an Export file.</p>]
                 else
                     l_cHtml += [<p class="ms-3">The Export file was created as a ZIP file. Use the "Download Export File" button.</p>]
@@ -1887,10 +1887,10 @@ function FormatColumnTypeInfo(par_cColumnType,;
                               par_cTableNamespaceName,;
                               par_cEnumerationNamespaceName,;
                               par_cEnumerationNamespaceAKA,;
-                              par_cEnumerationNamespaceLinkUID,;
+                              par_cEnumerationNamespaceUID,;
                               par_cEnumerationName,;
                               par_cEnumerationAKA,;
-                              par_cEnumerationLinkUID,;
+                              par_cEnumerationUID,;
                               par_iEnumerationImplementAs,;
                               par_iEnumerationImplementLength,;
                               par_cSitePath,;
@@ -1918,8 +1918,8 @@ if l_iTypePos > 0
             l_cResult += [&nbsp;(]
             l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
                                     par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+;
-                                                                                     PrepareForURLSQLIdentifier("Namespace",par_cEnumerationNamespaceName,par_cEnumerationNamespaceLinkUID)+[/]+;
-                                                                                     PrepareForURLSQLIdentifier("Namespace",par_cEnumerationName         ,par_cEnumerationLinkUID)         +[/"]
+                                                                                     PrepareForURLSQLIdentifier("Namespace",par_cEnumerationNamespaceName,par_cEnumerationNamespaceUID)+[/]+;
+                                                                                     PrepareForURLSQLIdentifier("Namespace",par_cEnumerationName         ,par_cEnumerationUID)         +[/"]
             if empty(par_cTooltipEnumValues)
                 l_cResult += [>]
             else
@@ -1998,7 +1998,7 @@ endwith
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
 l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Application: ]+par_cApplicationName+[</span></div>]
-l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[DataDictionaries/">Other Applications</a></div>]
+l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="TopTabs btn btn-primary rounded" href="]+l_cSitePath+[DataDictionaries/">Other Applications</a></div>]
 l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
@@ -2020,14 +2020,14 @@ l_cHtml += [<ul class="nav nav-tabs">]
             with object l_oDB1
                 :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
                 :Column("UserSettingApplication.pk","pk")
-                :Column("Diagram.LinkUID"          ,"Diagram_LinkUID")
+                :Column("Diagram.UID"          ,"Diagram_UID")
                 :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
                 :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
                 :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
                 :SQL("ListOfUserSettingApplication")
                 // hb_orm_SendToDebugView(:GetLastEventId(),:LastSQL())
                 if :Tally == 1
-                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplication->Diagram_LinkUID
+                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplication->Diagram_UID
                 else
                     l_cInitialDiagram := ""
                 endif
@@ -2364,7 +2364,7 @@ l_cHtml += [<div class="m-3">]
         with object l_oDB_ListOfUserSettingApplicationDefaultDiagram
             :Table("620799a2-adb9-40dc-8136-5a6007fead0f","UserSettingApplication")
             :Column("UserSettingApplication.fk_Application","ApplicationPk")
-            :Column("Diagram.LinkUID"                      ,"Diagram_LinkUID")
+            :Column("Diagram.UID"                      ,"Diagram_UID")
             :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
             :SQL("ListOfUserSettingApplicationDefaultDiagram")
@@ -2518,7 +2518,7 @@ l_cHtml += [<div class="m-3">]
                             if !empty(l_nCount)
                                 //Will check if we have a previously accessed diagram.
                                 if el_seek(ListOfDataDictionaries->pk,"ListOfUserSettingApplicationDefaultDiagram","ApplicationPk")
-                                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplicationDefaultDiagram->Diagram_LinkUID
+                                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplicationDefaultDiagram->Diagram_UID
                                 else
                                     l_cInitialDiagram := ""
                                 endif
@@ -2930,7 +2930,7 @@ oFcgi:TraceAdd("NamespaceListFormBuild")
 with object l_oDB_ListOfNamespaces
     :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","Namespace")
     :Column("Namespace.pk"              ,"pk")
-    :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
+    :Column("Namespace.UID"         ,"Namespace_UID")
     :Column("Namespace.Name"            ,"Namespace_Name")
     :Column("Namespace.TrackNameChanges","Namespace_TrackNameChanges")
     :Column("Namespace.AKA"             ,"Namespace_AKA")
@@ -3108,7 +3108,7 @@ else
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNamespace/]+par_cURLApplicationLinkCode+[/]+;
-                                                                PrepareForURLSQLIdentifier("Namespace",ListOfNamespaces->Namespace_Name,ListOfNamespaces->Namespace_LinkUID)+;
+                                                                PrepareForURLSQLIdentifier("Namespace",ListOfNamespaces->Namespace_Name,ListOfNamespaces->Namespace_UID)+;
                                                                 [/">]+TextToHtml(ListOfNamespaces->Namespace_Name+FormatAKAForDisplay(ListOfNamespaces->Namespace_AKA))+[</a>]
                         
                             if el_seek(trans(ListOfNamespaces->pk)+'*',"ListOfPreviousName","tag1")
@@ -3336,7 +3336,7 @@ local l_hValues := {=>}
 
 local l_oDB1
 local l_oData
-local l_cLinkUID
+local l_cUID
 local l_cName
 local l_nPos
 local l_lDuplicate
@@ -3348,7 +3348,13 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 l_iNamespacePk               := Val(oFcgi:GetInputValue("TableKey"))
 
 l_cNamespaceName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
-l_lNamespaceTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+
+if empty(l_iNamespacePk)
+    l_lNamespaceTrackNameChanges := .t.
+else
+    l_lNamespaceTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+endif
+
 l_cNamespaceAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cNamespaceAKA)
     l_cNamespaceAKA := NIL
@@ -3409,7 +3415,7 @@ case l_cActionOnSubmit == "Save"
                         :Field("Namespace.Description"         ,iif(empty(l_cNamespaceDescription),NULL,l_cNamespaceDescription))
                         if empty(l_iNamespacePk)
                             :Field("Namespace.fk_Application"  ,par_iApplicationPk)
-                            :Field("Namespace.LinkUID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                            :Field("Namespace.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
                             if :Add()
                                 l_iNamespacePk := :Key()
                             else
@@ -3478,7 +3484,7 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("e4baa6fb-b62d-49ef-8e88-d68552f9e460","Namespace")
-            :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
+            :Column("Namespace.UID"         ,"Namespace_UID")
             :Column("Namespace.Name"            ,"Namespace_Name")
             :Column("Namespace.TrackNameChanges","Namespace_TrackNameChanges")
             :Column("Namespace.UseStatus"       ,"Namespace_UseStatus")
@@ -3487,11 +3493,11 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
             l_oData := :Get(l_iNamespacePk)
 
             if !hb_IsNil(l_oData)
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                l_cName := OnDuplicateSanitizeName(l_oData:Namespace_Name,l_cLinkUID,l_oData:Namespace_LinkUID)
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:Namespace_Name,l_cUID,l_oData:Namespace_UID)
                 
                 :Table("b9552326-f36e-4f9a-a353-087f54f4ee08","Namespace")
-                :Field("Namespace.LinkUID"         ,l_cLinkUID)
+                :Field("Namespace.UID"         ,l_cUID)
                 :Field("Namespace.Name"            ,l_cName)
                 :Field("Namespace.TrackNameChanges",l_oData:Namespace_TrackNameChanges)
                 :Field("Namespace.UseStatus"       ,l_oData:Namespace_UseStatus)
@@ -3538,11 +3544,11 @@ otherwise
     with object l_oDB1
         :Table("4fc421b6-82b8-4998-b3f6-704e911037c3","Namespace")
         :Column("Namespace.Name"   ,"Namespace_Name")
-        :Column("Namespace.LinkUID","Namespace_LinkUID")
+        :Column("Namespace.UID","Namespace_UID")
         l_oData := :Get(l_iNamespacePk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditNamespace/"+par_cURLApplicationLinkCode+"/"+;
-                                              PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/";
+                                              PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+"/";
                                               )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListNamespaces/"+par_cURLApplicationLinkCode+"/")
@@ -3562,13 +3568,17 @@ local l_nSearchMode
 local l_nTopCount
 local l_nLastUpdated
 local l_lShowLastUpdated
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
+local l_nSearchTableMode
 local l_cSearchTableName
 local l_cSearchTableDescription
 local l_cSearchTableTags
+local l_nSearchColumnMode
 local l_cSearchColumnName
 local l_cSearchColumnDescription
+local l_nSearchEnumerationMode
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
 local l_cSearchTableUsageStatus
@@ -3588,12 +3598,16 @@ l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSea
 l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
 l_lShowLastUpdated              := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
+l_nSearchNamespaceMode          := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchNamespaceMode"))))
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
+l_nSearchTableMode              := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchTableMode"))))
 l_cSearchTableName              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableName"))
 l_cSearchTableDescription       := SanitizeInput(oFcgi:GetInputValue("TextSearchTableDescription"))
+l_nSearchColumnMode             := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchColumnMode"))))
 l_cSearchColumnName             := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
 l_cSearchColumnDescription      := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
+l_nSearchEnumerationMode        := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchEnumerationMode"))))
 l_cSearchEnumerationName        := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationName"))
 l_cSearchEnumerationDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationDescription"))
 l_cSearchTableTags              := SanitizeInput(oFcgi:GetInputValue("TextSearchTableTags"))
@@ -3611,12 +3625,16 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"              ,trans(l_nTopCount))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"           ,trans(l_nLastUpdated))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ShowLastUpdated"       ,iif(l_lShowLastUpdated,"1","0"))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceMode"         ,trans(l_nSearchNamespaceMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableMode"             ,trans(l_nSearchTableMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,l_cSearchTableName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,l_cSearchTableDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnMode"            ,trans(l_nSearchColumnMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName"            ,l_cSearchColumnName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription"     ,l_cSearchColumnDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationMode"       ,trans(l_nSearchEnumerationMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName"       ,l_cSearchEnumerationName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription",l_cSearchEnumerationDescription)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags"             ,l_cSearchTableTags)
@@ -3632,12 +3650,16 @@ case l_cActionOnSubmit == "Search"
     l_cHtml += TableListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceMode"         ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName"         ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableMode"             ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName"             ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription"      ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnMode"            ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName"            ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription"     ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationMode"       ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName"       ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription","")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags"             ,"")
@@ -3684,12 +3706,16 @@ local l_nSearchMode
 local l_nTopCount
 local l_nLastUpdated
 local l_lShowLastUpdated
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
+local l_nSearchTableMode
 local l_cSearchTableName
 local l_cSearchTableDescription
+local l_nSearchColumnMode
 local l_cSearchColumnName
 local l_cSearchColumnDescription
+local l_nSearchEnumerationMode
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
 local l_cSearchTableTags
@@ -3730,12 +3756,16 @@ l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"
 l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"))))
 l_lShowLastUpdated              := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ShowLastUpdated") == "1")
+l_nSearchNamespaceMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceMode"))))
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
+l_nSearchTableMode              := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableMode"))))
 l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
+l_nSearchColumnMode             := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnMode"))))
 l_cSearchColumnName             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
 l_cSearchColumnDescription      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
+l_nSearchEnumerationMode        := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationMode"))))
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName")
 l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription")
 l_cSearchTableTags              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags")
@@ -3751,7 +3781,7 @@ l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iAppl
 if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnStaticUID) .and. empty(l_cSearchColumnDescription)  //_M_ on Column Tags
     l_cColumnSearchParameters := ""
 else
-    l_cColumnSearchParameters := [Search?ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnStaticUID=]+hb_StrToHex(l_cSearchColumnStaticUID)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
+    l_cColumnSearchParameters := [Search?ColumnMode=]+trans(l_nSearchColumnMode)+[&ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnStaticUID=]+hb_StrToHex(l_cSearchColumnStaticUID)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
 endif
 
 //Find out if any tags are linked to any tables, regardless of filter
@@ -3777,10 +3807,10 @@ endwith
 with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
     :Column("Table.pk"         ,"pk")
-    :Column("Namespace.LinkUID","Namespace_LinkUID")
+    :Column("Namespace.UID","Namespace_UID")
     :Column("Namespace.Name"   ,"Namespace_Name")
     :Column("Namespace.AKA"    ,"Namespace_AKA")
-    :Column("Table.LinkUID"    ,"Table_LinkUID")
+    :Column("Table.UID"    ,"Table_UID")
     :Column("Table.Name"       ,"Table_Name")
     :Column("Table.AKA"        ,"Table_AKA")
     :Column("Table.Unlogged"   ,"Table_Unlogged")
@@ -3805,12 +3835,16 @@ with object l_oDB_ListOfTables
                               l_nSearchMode,;
                               l_nTopCount,;
                               l_nLastUpdated,;
+                              l_nSearchNamespaceMode,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
+                              l_nSearchTableMode,;
                               l_cSearchTableName,;
                               l_cSearchTableDescription,;
+                              l_nSearchColumnMode,;
                               l_cSearchColumnName,;
                               l_cSearchColumnDescription,;
+                              l_nSearchEnumerationMode,;
                               l_cSearchEnumerationName,;
                               l_cSearchEnumerationDescription,;
                               l_cSearchTableTags,;
@@ -3880,12 +3914,16 @@ if l_nNumberOfTables > 0
                                   l_nSearchMode,;
                                   l_nTopCount,;
                                   l_nLastUpdated,;
+                                  l_nSearchNamespaceMode,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
+                                  l_nSearchTableMode,;
                                   l_cSearchTableName,;
                                   l_cSearchTableDescription,;
+                                  l_nSearchColumnMode,;
                                   l_cSearchColumnName,;
                                   l_cSearchColumnDescription,;
+                                  l_nSearchEnumerationMode,;
                                   l_cSearchEnumerationName,;
                                   l_cSearchEnumerationDescription,;
                                   l_cSearchTableTags,;
@@ -3927,12 +3965,16 @@ if l_nNumberOfTables > 0
                                   l_nSearchMode,;
                                   l_nTopCount,;
                                   l_nLastUpdated,;
+                                  l_nSearchNamespaceMode,;
                                   l_cSearchNamespaceName,;
                                   l_cSearchNamespaceDescription,;
+                                  l_nSearchTableMode,;
                                   l_cSearchTableName,;
                                   l_cSearchTableDescription,;
+                                  l_nSearchColumnMode,;
                                   l_cSearchColumnName,;
                                   l_cSearchColumnDescription,;
+                                  l_nSearchEnumerationMode,;
                                   l_cSearchEnumerationName,;
                                   l_cSearchEnumerationDescription,;
                                   l_cSearchTableTags,;
@@ -4209,26 +4251,30 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<table>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td></td>]
-                            l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                            l_cHtml += [<td class="justify-content-center" align="center" colspan="2">Name</td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Namespace</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchNamespaceMode",l_nSearchNamespaceMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceName" id="TextSearchNamespaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceDescription" id="TextSearchNamespaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr class="SearchMode1">]
                             l_cHtml += [<td><span class="me-2">Table</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchTableMode",l_nSearchTableMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchTableName" id="TextSearchTableName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchTableDescription" id="TextSearchTableDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchTableDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchColumnMode",l_nSearchColumnMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchEnumerationMode",l_nSearchEnumerationMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationName" id="TextSearchEnumerationName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationDescription" id="TextSearchEnumerationDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
@@ -4236,7 +4282,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         if !empty(l_json_TableTags)
                             l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                                 l_cHtml += [<td><span class="me-2">Table Tags</span></td>]
-                                l_cHtml += [<td class="AdvancedSearch" colspan="2">]
+                                l_cHtml += [<td class="AdvancedSearch" colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableTags",l_json_TableTags,l_cSearchTableTags,25)
                                 l_cHtml += [</td>]
                             l_cHtml += [</tr>]
@@ -4244,7 +4290,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
        
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Table Usage Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableUsageStatus",;
                                                                    "{tag:'Unknown',value:1},{tag:'Proposed',value:2},{tag:'Under Development',value:3},{tag:'Active',value:4},{tag:'To Be Discontinued',value:5},{tag:'Discontinued',value:6}",;
                                                                    l_cSearchTableUsageStatus,25)
@@ -4253,7 +4299,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Table Doc Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchTableDocStatus",;
                                                                    "{tag:'Missing',value:1},{tag:'Not Needed',value:2},{tag:'Composing',value:3},{tag:'Completed',value:4}",;
                                                                    l_cSearchTableDocStatus,25)
@@ -4262,7 +4308,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Usage Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnUsageStatus",;
                                                                    "{tag:'Unknown',value:1},{tag:'Proposed',value:2},{tag:'Under Development',value:3},{tag:'Active',value:4},{tag:'To Be Discontinued',value:5},{tag:'Discontinued',value:6}",;
                                                                    l_cSearchColumnUsageStatus,25)
@@ -4271,7 +4317,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Doc Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnDocStatus",;
                                                                    "{tag:'Missing',value:1},{tag:'Not Needed',value:2},{tag:'Composing',value:3},{tag:'Completed',value:4}",;
                                                                    l_cSearchColumnDocStatus,25)
@@ -4281,13 +4327,13 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Static UID</span></td>]
                             //Made maxlength larger to work around trailing blank and tabs
-                            l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+[" class="form-control">]
+                            l_cHtml += [<td colspan="3"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+[" class="form-control">]
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Column Types</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchColumnTypes",;
                                                                    l_json_ColumnTypes,;
                                                                    l_cSearchColumnTypes,25)
@@ -4296,14 +4342,14 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchExtraFilters",;
                                                                    l_json_ExtraFilters,;
                                                                    l_cSearchExtraFilters,25)
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.,"2")
 
                         oFcgi:p_cjQueryScript += [SearchModeChanged(]+trans(l_nSearchMode)+[);]   // Calling the Javascript function needs to be done after the amsifySuggestags objects are activated.
 
@@ -4428,8 +4474,8 @@ if !empty(l_nNumberOfTables)
                 l_iTablePk := ListOfTables->pk
 
                 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                   PrepareForURLSQLIdentifier("Namespace",ListOfTables->Namespace_Name,ListOfTables->Namespace_LinkUID)+[/]+;
-                                   PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_LinkUID)    +[/]
+                                   PrepareForURLSQLIdentifier("Namespace",ListOfTables->Namespace_Name,ListOfTables->Namespace_UID)+[/]+;
+                                   PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_UID)    +[/]
 
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTables->Table_UseStatus)+[>]
 
@@ -4687,10 +4733,10 @@ with object l_oDB1
         :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
         :Column("Namespace.Name"   ,"Namespace_Name")
         :Column("Namespace.AKA"    ,"Namespace_AKA")
-        :Column("Namespace.LinkUID","Namespace_LinkUID")
+        :Column("Namespace.UID","Namespace_UID")
         :Column("Table.Name"       ,"Table_Name")
         :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Table.LinkUID"    ,"Table_LinkUID")
+        :Column("Table.UID"    ,"Table_UID")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oDataTableInfo := :Get(par_iPk)
     endif
@@ -4699,7 +4745,7 @@ with object l_oDB1
     :Column("Namespace.pk"         ,"pk")
     :Column("Namespace.Name"       ,"Namespace_Name")
     :Column("Namespace.AKA"        ,"Namespace_AKA")
-    :Column("Namespace.LinkUID"    ,"Namespace_LinkUID")
+    :Column("Namespace.UID"    ,"Namespace_UID")
     :Column("Upper(Namespace.Name)","tag1")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
@@ -4737,14 +4783,14 @@ else
     if empty(par_iPk)
         l_cHtml += GetAboveNavbarHeading("New Table")
     else
-        AssembleNavbarInfo("Add",{"Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_AKA,l_oDataTableInfo:Namespace_LinkUID})
-        AssembleNavbarInfo("Add",{"Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_AKA    ,l_oDataTableInfo:Table_LinkUID}    )
+        AssembleNavbarInfo("Add",{"Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_AKA,l_oDataTableInfo:Namespace_UID})
+        AssembleNavbarInfo("Add",{"Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_AKA    ,l_oDataTableInfo:Table_UID}    )
 
         l_cHtml += GetAboveNavbarHeading("Edit","Table",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_LinkUID)+[/]+;
-                           PrepareForURLSQLIdentifier("Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oDataTableInfo:Namespace_Name,l_oDataTableInfo:Namespace_UID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oDataTableInfo:Table_Name    ,l_oDataTableInfo:Table_UID)    +[/]
 
     endif
 
@@ -4944,7 +4990,7 @@ local l_aTagsSelected
 local l_cTagSelected
 local l_iTagSelectedPk
 local l_iTagTablePk
-local l_cLinkUID
+local l_cUID
 local l_cName
 local l_nPos
 local l_oDB_ListOfColumns
@@ -4965,7 +5011,13 @@ l_iTemplateTablePk  := Val(oFcgi:GetInputValue("ComboTemplateTablePk"))
 l_iNamespacePk      := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 
 l_cTableName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
-l_lTableTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+
+if empty(l_iTablePk)
+    l_lTableTrackNameChanges := .t.
+else
+    l_lTableTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+endif
+
 l_cTableAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cTableAKA)
     l_cTableAKA := NIL
@@ -5044,7 +5096,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Table.Description" ,iif(empty(l_cTableDescription),NULL,l_cTableDescription))
                 :Field("Table.Information" ,iif(empty(l_cTableInformation),NULL,l_cTableInformation))
                 if empty(l_iTablePk)
-                    :Field("Table.LinkUID",oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("Table.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iTablePk := :Key()
                     else
@@ -5148,7 +5200,7 @@ case l_cActionOnSubmit == "Save"
                                     scan all
                                         :Table("ab1b0120-bb64-4cfb-b6bc-e6a740594915","Column")
                                         :Field("Column.fk_Table"     ,l_iTablePk)
-                                        :Field("Column.LinkUID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                        :Field("Column.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
                                         :Field("Column.Order"        ,ListOfTemplateColumns->TemplateColumn_Order)
                                         :Field("Column.Name"         ,ListOfTemplateColumns->TemplateColumn_Name)
                                         :Field("Column.AKA"          ,ListOfTemplateColumns->TemplateColumn_AKA)
@@ -5306,7 +5358,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
             :Column("Column.fk_TableForeign"   ,"Column_fk_TableForeign")
             :Column("Column.fk_Enumeration"    ,"Column_fk_Enumeration")
             :Column("Column.Order"             ,"Column_Order")
-            // :Column("Column.LinkUID"           ,"Column_LinkUID")
+            // :Column("Column.UID"           ,"Column_UID")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.TrackNameChanges"  ,"Column_TrackNameChanges")
             :Column("Column.AKA"               ,"Column_AKA")
@@ -5334,7 +5386,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
             :Table("5d7ddbdb-8eda-4bbb-9a61-90b23a270a82","Index")
             :Where("Index.fk_Table = ^",l_iTablePk)
 
-            // :Column("Index.LinkUID"    ,"Index_LinkUID")
+            // :Column("Index.UID"    ,"Index_UID")
             :Column("Index.Pk"         ,"Pk")
             :Column("Index.Name"       ,"Index_Name")
             :Column("Index.Unique"     ,"Index_Unique")
@@ -5362,7 +5414,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
         with object l_oDB1
             :Table("3608cda1-4f7b-4230-ba03-68352d791fa5","Table")
             :Column("Table.fk_Namespace"    ,"Table_fk_Namespace")
-            :Column("Table.LinkUID"         ,"Table_LinkUID")
+            :Column("Table.UID"         ,"Table_UID")
             :Column("Table.Name"            ,"Table_Name")
             :Column("Table.TrackNameChanges","Table_TrackNameChanges")
             :Column("Table.UseStatus"       ,"Table_UseStatus")
@@ -5373,13 +5425,13 @@ case l_cActionOnSubmit == "Duplicate"   // Table
             l_oData := :Get(l_iTablePk)
 
             if !hb_IsNil(l_oData)
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                l_cName := OnDuplicateSanitizeName(l_oData:Table_Name,l_cLinkUID,l_oData:Table_LinkUID)
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:Table_Name,l_cUID,l_oData:Table_UID)
                 
                 :Table("00b39c52-09d8-4132-9c17-2402267cfd1e","Table")
                 :Field("Table.fk_Namespace"    ,l_oData:Table_fk_Namespace)
                 :Field("Table.Name"            ,l_cName)
-                :Field("Table.LinkUID"         ,l_cLinkUID)
+                :Field("Table.UID"         ,l_cUID)
                 :Field("Table.TrackNameChanges",l_oData:Table_TrackNameChanges)
                 :Field("Table.UseStatus"       ,l_oData:Table_UseStatus)
                 :Field("Table.DocStatus"       ,l_oData:Table_DocStatus)
@@ -5394,7 +5446,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Column")
                         :Field("Column.fk_Table"           ,l_iTablePk)
-                        :Field("Column.LinkUID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Column.UID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("Column.fk_TableForeign"   ,ListOfColumns->Column_fk_TableForeign)
                         :Field("Column.fk_Enumeration"    ,ListOfColumns->Column_fk_Enumeration)
                         :Field("Column.Order"             ,ListOfColumns->Column_Order)
@@ -5430,7 +5482,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Index")
                         :Field("Index.fk_Table"   ,l_iTablePk)
-                        :Field("Index.LinkUID"    ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Index.UID"    ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("Index.Name"       ,ListOfIndexes->Index_Name)
                         :Field("Index.Unique"     ,ListOfIndexes->Index_Unique)
                         :Field("Index.Expression" ,ListOfIndexes->Index_Expression)
@@ -5498,15 +5550,15 @@ otherwise
     with object l_oDB1
         :Table("95c1f7a1-500d-4451-95bd-2c4d9df9114a","Table")
         :Column("Namespace.Name"   ,"Namespace_Name")
-        :Column("Namespace.LinkUID","Namespace_LinkUID")
+        :Column("Namespace.UID","Namespace_UID")
         :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.LinkUID"    ,"Table_LinkUID")
+        :Column("Table.UID"    ,"Table_UID")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iTablePk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTable/"+par_cURLApplicationLinkCode+"/"+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/"+;
-                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +"/";
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+"/"+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +"/";
                            )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTables/"+par_cURLApplicationLinkCode+"/")
@@ -5536,6 +5588,7 @@ local l_cApplicationSupportColumns
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
+local l_nSearchColumnMode
 local l_cSearchColumnName
 local l_cSearchColumnDescription
 local l_cSearchColumnStaticUID
@@ -5557,20 +5610,19 @@ local l_lExtraInfo
 local l_nLastUpdated
 local l_lShowLastUpdated
 
-
 oFcgi:TraceAdd("ColumnListFormBuild")
 
-if oFcgi:isGet() //.and. (len(oFcgi:p_URLPathElements) >= 6 .and. !empty(oFcgi:p_URLPathElements[6]) .and. lower(oFcgi:p_URLPathElements[6]) == "search")  //First access to column list coming from list of tables where the last search included column criteria.
+if oFcgi:isGet() //.and. (len(oFcgi:p_aURLPathElements) >= 6 .and. !empty(oFcgi:p_aURLPathElements[6]) .and. lower(oFcgi:p_aURLPathElements[6]) == "search")  //First access to column list coming from list of tables where the last search included column criteria.
                  //Decided to always start the search with whatever the table list last search was.
+    l_nSearchColumnMode        := min(4,max(1,val(oFcgi:GetQueryString("ColumnMode"))))
     l_cSearchColumnName        := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
     l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescription"))
     l_cSearchColumnStaticUID   := hb_HexToStr(oFcgi:GetQueryString("ColumnStaticUID"))
-
 else
+    l_nSearchColumnMode        := min(4,max(1,val(GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnMode"))))
     l_cSearchColumnName        := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName")
     l_cSearchColumnDescription := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription")
     l_cSearchColumnStaticUID   := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID")
-
 endif
 
 l_nLastUpdated     := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_LastUpdated"))))
@@ -5593,7 +5645,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.Name"                ,"Column_Name")
     :Column("Column.StaticUID"           ,"Column_StaticUID")
     :Column("Column.AKA"                 ,"Column_AKA")
-    :Column("Column.LinkUID"             ,"Column_LinkUID")
+    :Column("Column.UID"             ,"Column_UID")
     :Column("Column.UsedAs"              ,"Column_UsedAs")
     :Column("Column.UsedBy"              ,"Column_UsedBy")
     :Column("Column.UseStatus"           ,"Column_UseStatus")
@@ -5617,14 +5669,14 @@ with object l_oDB_ListOfColumns
     :Column("Column.ExternalId"          ,"Column_ExternalId")
     :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Namespace.AKA"              ,"Namespace_AKA")
-    :Column("Namespace.LinkUID"          ,"Namespace_LinkUID")
+    :Column("Namespace.UID"          ,"Namespace_UID")
     :Column("Table.Name"                 ,"Table_Name")
     :Column("Table.AKA"                  ,"Table_AKA")
-    :Column("Table.LinkUID"              ,"Table_LinkUID")
+    :Column("Table.UID"              ,"Table_UID")
     :Column("Enumeration.Pk"             ,"Enumeration_Pk")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
     :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-    :Column("Enumeration.LinkUID"        ,"Enumeration_LinkUID")
+    :Column("Enumeration.UID"        ,"Enumeration_UID")
     :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
 
@@ -5639,15 +5691,15 @@ with object l_oDB_ListOfColumns
 
     :Column("ForeignNameSpace.Name"          ,"ForeignNameSpace_Name")
     :Column("ForeignNameSpace.AKA"           ,"ForeignNameSpace_AKA")
-    :Column("ForeignNameSpace.LinkUID"       ,"ForeignNameSpace_LinkUID")
+    :Column("ForeignNameSpace.UID"       ,"ForeignNameSpace_UID")
 
     :Column("ForeignTable.Name"              ,"ForeignTable_Name")
     :Column("ForeignTable.AKA"               ,"ForeignTable_AKA")
-    :Column("ForeignTable.LinkUID"           ,"ForeignTable_LinkUID")
+    :Column("ForeignTable.UID"           ,"ForeignTable_UID")
 
     :Column("EnumerationNamespace.Name"      ,"EnumerationNamespace_Name")
     :Column("EnumerationNamespace.AKA"       ,"EnumerationNamespace_AKA")
-    :Column("EnumerationNamespace.LinkUID"   ,"EnumerationNamespace_LinkUID")
+    :Column("EnumerationNamespace.UID"   ,"EnumerationNamespace_UID")
 
     :Where("Column.fk_Table = ^",par_iTablePk)
 
@@ -5655,7 +5707,12 @@ with object l_oDB_ListOfColumns
         :Column([to_char(now()-Column.sysm, ]+HB_ORM_INVALUEWITCH+['DD "Days" HH24 "Hours" MI "Minutes" SS "Seconds"')]+HB_ORM_INVALUEWITCH ,"LastUpdated")
     endif
 
-    ColumnListFormAddFiltering(l_oDB_ListOfColumns,l_cSearchColumnName,l_cSearchColumnStaticUID,l_cSearchColumnDescription,l_nLastUpdated)
+    ColumnListFormAddFiltering(l_oDB_ListOfColumns,;
+                               l_nSearchColumnMode,;
+                               l_cSearchColumnName,;
+                               l_cSearchColumnStaticUID,;
+                               l_cSearchColumnDescription,;
+                               l_nLastUpdated)
 
     :OrderBy("Column_Order")
     :SQL("ListOfColumns")
@@ -5708,7 +5765,19 @@ if l_nNumberOfColumns > 0
         if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+                // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+
+                do case
+                case l_nSearchColumnMode == 2  //Starting
+                    :Where([lower(Column.Name) like ^],lower(l_cSearchColumnName)+"%")
+                case l_nSearchColumnMode == 3  //Ending
+                    :Where([lower(Column.Name) like ^],"%"+lower(l_cSearchColumnName))
+                case l_nSearchColumnMode == 4  //Exact
+                    :Where([lower(Column.Name) = ^],lower(l_cSearchColumnName))
+                otherwise
+                    // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")      // Not needed since this restrictions is to get the list of EnumValues, if too much is returned, they are going to be dropped in any case
+                endcase
+
             endif
             if !empty(l_cSearchColumnStaticUID)
                 :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
@@ -5739,7 +5808,19 @@ if l_nNumberOfColumns > 0
         if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+                // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+
+                do case
+                case l_nSearchColumnMode == 2  //Starting
+                    :Where([lower(Column.Name) like ^],lower(l_cSearchColumnName)+"%")
+                case l_nSearchColumnMode == 3  //Ending
+                    :Where([lower(Column.Name) like ^],"%"+lower(l_cSearchColumnName))
+                case l_nSearchColumnMode == 4  //Exact
+                    :Where([lower(Column.Name) = ^],lower(l_cSearchColumnName))
+                otherwise
+                    // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")      // Not needed since this restrictions is to get the list of custom fields, if too much is returned, they are going to be dropped in any case
+                endcase
+
             endif
             if !empty(l_cSearchColumnStaticUID)
                 :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
@@ -5771,7 +5852,19 @@ if l_nNumberOfColumns > 0
         if !empty(l_cSearchColumnName) .or. !empty(l_cSearchColumnStaticUID) .or. !empty(l_cSearchColumnDescription)
             :Distinct(.t.)
             if !empty(l_cSearchColumnName)
-                :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+                // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA)")
+                
+                do case
+                case l_nSearchColumnMode == 2  //Starting
+                    :Where([lower(Column.Name) like ^],lower(l_cSearchColumnName)+"%")
+                case l_nSearchColumnMode == 3  //Ending
+                    :Where([lower(Column.Name) like ^],"%"+lower(l_cSearchColumnName))
+                case l_nSearchColumnMode == 4  //Exact
+                    :Where([lower(Column.Name) = ^],lower(l_cSearchColumnName))
+                otherwise
+                    // :KeywordCondition(l_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")      // Not needed since this restrictions is to get the list of custom fields, if too much is returned, they are going to be dropped in any case
+                endcase
+
             endif
             if !empty(l_cSearchColumnStaticUID)
                 :Where("Column.StaticUID = ^",l_cSearchColumnStaticUID)
@@ -5832,14 +5925,14 @@ l_cHtml += [</pre>]
 
 // ExportTableToHtmlFile("ListOfCustomFieldValues",el_AddPs(OUTPUT_FOLDER)+"PostgreSQL_ListOfCustomFieldValues.html","From PostgreSQL",,25,.t.)
 
-AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_UID})
 
 l_cHtml += GetAboveNavbarHeading("Columns","Table",AssembleNavbarInfo("Build"))
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+[/]+;
-                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +[/]
+                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+[/]+;
+                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +[/]
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
     l_cHtml += [<div class="input-group RemoveOnEdit mb-3">]
@@ -5876,21 +5969,22 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                     l_cHtml += [<table>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td></td>]
-                            l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                            l_cHtml += [<td class="justify-content-center" align="center" colspan="2">Name</td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td><span class="me-2">Column</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchColumnMode",l_nSearchColumnMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnName" id="TextSearchColumnName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnName)+["></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchColumnDescription" id="TextSearchColumnDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchColumnDescription)+["></td>]
                         l_cHtml += [</tr>]
                         l_cHtml += [<tr>]
                             l_cHtml += [<td><span class="me-2">Static UID</span></td>]
                             //Made maxlength larger to work around trailing blank and tabs
-                            l_cHtml += [<td colspan="2"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+["></td>]
+                            l_cHtml += [<td colspan="3"><input type="text" name="TextSearchColumnStaticUID" id="TextSearchColumnStaticUID" size="36" maxlength="50" value="]+FcgiPrepFieldForValue(l_cSearchColumnStaticUID)+["></td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.,"2")
 
                     l_cHtml += [</table>]
                 l_cHtml += [</td>]
@@ -5994,7 +6088,7 @@ else
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                              PrepareForURLSQLIdentifier("Column",ListOfColumns->Column_Name,ListOfColumns->Column_LinkUID)+[/]
+                                                                              PrepareForURLSQLIdentifier("Column",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]
                         l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
                         if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                             l_cURL  += [:]+trans(ListOfColumns->Column_UsedBy)
@@ -6046,10 +6140,10 @@ else
                                                         ListOfColumns->Namespace_Name,;
                                                         ListOfColumns->EnumerationNamespace_Name,;
                                                         ListOfColumns->EnumerationNamespace_AKA,;
-                                                        ListOfColumns->EnumerationNamespace_LinkUID,;
+                                                        ListOfColumns->EnumerationNamespace_UID,;
                                                         ListOfColumns->Enumeration_Name,;
                                                         ListOfColumns->Enumeration_AKA,;
-                                                        ListOfColumns->Enumeration_LinkUID,;
+                                                        ListOfColumns->Enumeration_UID,;
                                                         ListOfColumns->Enumeration_ImplementAs,;
                                                         ListOfColumns->Enumeration_ImplementLength,;
                                                         l_cSitePath,;
@@ -6076,8 +6170,8 @@ else
                         if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
                             l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
                                                 l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+;
-                                                                                            PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_LinkUID)+"/"+;
-                                                                                            PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_LinkUID)    +[/]+;
+                                                                                            PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
+                                                                                            PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
                                                                                             [">]
 
                             if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
@@ -6171,9 +6265,10 @@ local l_cHtml := []
 local l_cActionOnSubmit
 local l_cTableName
 local l_cTableDescription
-local l_cColumnName
-local l_cColumnDescription
-local l_cColumnStaticUID
+local l_nSearchColumnMode
+local l_cSearchColumnName
+local l_cSearchColumnDescription
+local l_cSearchColumnStaticUID
 local l_cURL
 local l_nLastUpdated
 local l_lShowLastUpdated
@@ -6182,17 +6277,19 @@ oFcgi:TraceAdd("ColumnListFormOnSubmit")
 
 l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
-l_cColumnName        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
-l_cColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
-l_cColumnStaticUID   := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnStaticUID"))
-l_nLastUpdated       := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
-l_lShowLastUpdated   := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
+l_nSearchColumnMode        := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchColumnMode"))))
+l_cSearchColumnName        := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnName"))
+l_cSearchColumnDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnDescription"))
+l_cSearchColumnStaticUID   := SanitizeInput(oFcgi:GetInputValue("TextSearchColumnStaticUID"))
+l_nLastUpdated             := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
+l_lShowLastUpdated         := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
 
 do case
 case l_cActionOnSubmit == "Search"
-    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cColumnName)
-    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cColumnDescription)
-    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,l_cColumnStaticUID)
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnMode"       ,trans(l_nSearchColumnMode))
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,l_cSearchColumnName)
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription",l_cSearchColumnDescription)
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,l_cSearchColumnStaticUID)
 
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_LastUpdated"      ,trans(l_nLastUpdated))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_ColumnSearch_ShowLastUpdated"  ,iif(l_lShowLastUpdated,"1","0"))
@@ -6200,13 +6297,14 @@ case l_cActionOnSubmit == "Search"
     l_cHtml += ColumnListFormBuild(par_iApplicationPk,par_iTablePk,par_cURLApplicationLinkCode,par_oNavData)
 
 case l_cActionOnSubmit == "Reset"
+    SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnMode"       ,"1")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName"       ,"")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription","")
     SaveUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID"  ,"")
 
     l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)+[/]+;
-                                                                PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name      ,par_oNavData:Table_LinkUID)    +[/]
+                                                                PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)+[/]+;
+                                                                PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name      ,par_oNavData:Table_UID)    +[/]
     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -6270,8 +6368,8 @@ oFcgi:p_cjQueryScript += [$( "#sortable" ).disableSelection();]
 //The following line sets the width of all the "li" to the max width of the same "li"s. This fixes a bug in .sortable with dragging the widest "li"
 oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sortable li').map(function(){ return $(this).width(); }).get()) );]
 
-AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_UID})
 
 l_cHtml += GetAboveNavbarHeading("Order Columns","Table",AssembleNavbarInfo("Build"))
 
@@ -6282,8 +6380,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += GetButtonOnOrderListFormSave()
         endif
         l_cHtml += GetButtonCancelAndRedirect(l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                          PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+[/]+;
-                                                                                          PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +[/];
+                                                                                          PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+[/]+;
+                                                                                          PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +[/];
                                                                                           )
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -6360,8 +6458,8 @@ case l_cActionOnSubmit == "Save"
     endif
 
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +"/";
+                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+"/"+;
+                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +"/";
                                                                      )
 
 endcase
@@ -6701,11 +6799,11 @@ l_cHtml += [<input type="hidden" name="CheckShowPrimary" value="]+iif(l_lShowPri
 l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+[/]+;
-                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +[/]
+                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+[/]+;
+                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +[/]
 
-AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_UID})
 
 l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Column","Table",AssembleNavbarInfo("Build"))
 
@@ -7120,7 +7218,7 @@ local l_cTagSelected
 local l_iTagSelectedPk
 local l_iTagColumnPk
 
-local l_cLinkUID
+local l_cUID
 local l_cName
 local l_nPos
 
@@ -7136,7 +7234,12 @@ l_lShowPrimary              := (oFcgi:GetInputValue("CheckShowPrimary") == "1")
 
 l_cColumnName               := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
 
-l_lColumnTrackNameChanges   := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+if empty(l_iColumnPk)
+    l_lColumnTrackNameChanges := .t.
+else
+    l_lColumnTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+endif
+
 l_cColumnAKA                := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 // l_cColumnAKA := replicate("a",500)
 if empty(l_cColumnAKA)
@@ -7365,7 +7468,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iColumnPk)
                     :Field("Column.fk_Table",par_iTablePk)
                     :Field("Column.Order"   ,l_iColumnOrder)
-                    :Field("Column.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("Column.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iColumnPk := :Key()
                     else
@@ -7488,7 +7591,7 @@ case l_cActionOnSubmit == "Duplicate"   // Column
             :Column("Column.fk_TableForeign"   ,"Column_fk_TableForeign")
             :Column("Column.fk_Enumeration"    ,"Column_fk_Enumeration")
             :Column("Column.Order"             ,"Column_Order")
-            :Column("Column.LinkUID"           ,"Column_LinkUID")
+            :Column("Column.UID"           ,"Column_UID")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.TrackNameChanges"  ,"Column_TrackNameChanges")
             :Column("Column.AKA"               ,"Column_AKA")
@@ -7519,14 +7622,14 @@ case l_cActionOnSubmit == "Duplicate"   // Column
                     l_iColumnPk := 0
 
                 else
-                    l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                    l_cName := OnDuplicateSanitizeName(l_oData:Column_Name,l_cLinkUID,l_oData:Column_LinkUID)
+                    l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                    l_cName := OnDuplicateSanitizeName(l_oData:Column_Name,l_cUID,l_oData:Column_UID)
                     
                     l_iTablePk := l_oData:Column_fk_Table
 
                     :Table("c90aba01-148b-470c-b4af-a223992a2fe3","Column")
                     :Field("Column.fk_Table"          ,l_iTablePk)
-                    :Field("Column.LinkUID"           ,l_cLinkUID)
+                    :Field("Column.UID"           ,l_cUID)
                     :Field("Column.Name"              ,l_cName)
 
                     :Field("Column.fk_TableForeign"   ,l_oData:Column_fk_TableForeign)
@@ -7606,8 +7709,8 @@ case !empty(l_cErrorMessage)
 
 case empty(l_iColumnPk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +"/";
+                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+"/"+;
+                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +"/";
                                                                      )
 
 otherwise
@@ -7620,26 +7723,26 @@ otherwise
         :Table("b74fe317-938c-4ca8-8172-f69e73efd40b","Column")
         :Column("Namespace.Name"    ,"Namespace_Name")
         :Column("Namespace.AKA"     ,"Namespace_AKA")
-        :Column("Namespace.LinkUID" ,"Namespace_LinkUID")
+        :Column("Namespace.UID" ,"Namespace_UID")
         :Column("Table.Name"        ,"Table_Name")
         :Column("Table.AKA"         ,"Table_AKA")
-        :Column("Table.LinkUID"     ,"Table_LinkUID")
+        :Column("Table.UID"     ,"Table_UID")
         :Column("Column.Name"       ,"Column_Name")
         :Column("Column.AKA"        ,"Column_AKA")
-        :Column("Column.LinkUID"    ,"Column_LinkUID")
+        :Column("Column.UID"    ,"Column_UID")
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iColumnPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+par_cURLApplicationLinkCode+"/"+;
-                                                                            PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/"+;
-                                                                            PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +"/"+;
-                                                                            PrepareForURLSQLIdentifier("Column"   ,l_oData:Column_Name   ,l_oData:Column_LinkUID)   +"/";
+                                                                            PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+"/"+;
+                                                                            PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +"/"+;
+                                                                            PrepareForURLSQLIdentifier("Column"   ,l_oData:Column_Name   ,l_oData:Column_UID)   +"/";
                                                                             )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +"/";
+                                                                             PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+"/"+;
+                                                                             PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +"/";
                                                                              )
         endif
     endif
@@ -7669,7 +7772,7 @@ with object l_oDB1
     :Table("0154af03-a45d-4a8a-811f-c45d09da73f7","Index")
     :Column("Index.pk"             ,"pk")
     :Column("Index.Name"           ,"Index_Name")
-    :Column("Index.LinkUID"        ,"Index_LinkUID")
+    :Column("Index.UID"        ,"Index_UID")
     :Column("Index.UsedBy"         ,"Index_UsedBy")
     :Column("Index.Expression"     ,"Index_Expression")
     :Column("Index.Unique"         ,"Index_Unique")
@@ -7689,11 +7792,11 @@ with object l_oDB1
 endwith
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+[/]+;
-                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +[/]
+                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+[/]+;
+                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +[/]
 
-AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID}    )
+AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_UID}    )
 
 if l_nNumberOfIndexes > 0
     select ListOfIndexes
@@ -7780,7 +7883,7 @@ else
 
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cURL  := l_cSitePath+[DataDictionaries/EditIndex/]+l_cCombinedPath+PrepareForURLSQLIdentifier("Index",alltrim(ListOfIndexes->Index_Name),ListOfIndexes->Index_LinkUID)
+                        l_cURL  := l_cSitePath+[DataDictionaries/EditIndex/]+l_cCombinedPath+PrepareForURLSQLIdentifier("Index",alltrim(ListOfIndexes->Index_Name),ListOfIndexes->Index_UID)
                         l_cName := alltrim(ListOfIndexes->Index_Name)
                         if ListOfIndexes->Index_UsedBy <> USEDBY_ALLSERVERS
                             l_cURL  += [:]+trans(ListOfIndexes->Index_UsedBy)
@@ -7872,11 +7975,11 @@ l_cHtml += [<input type="hidden" name="TableKey" value="]+trans(par_iPk)+[">]
 l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+[/]+;
-                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +[/]
+                   PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+[/]+;
+                   PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +[/]
 
-AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_AKA,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_AKA    ,par_oNavData:Table_UID})
 
 l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Index","Table",AssembleNavbarInfo("Build"))
 
@@ -8130,7 +8233,7 @@ case l_cActionOnSubmit == "Save"
         
             if empty(l_iIndexPk)
                 :Field("Index.fk_Table",par_iTablePk)
-                :Field("Index.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Index.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iIndexPk := :Key()
                 else
@@ -8248,8 +8351,8 @@ case !empty(l_cErrorMessage)
 
 case empty(l_iIndexPk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+"/"+;
-                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +"/";
+                                                                     PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+"/"+;
+                                                                     PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +"/";
                                                                      )
 
 otherwise
@@ -8261,25 +8364,25 @@ otherwise
         :Table("c4b21f9e-b53d-4c50-b9f6-869e30fb6c2e","Index")
         :Column("Namespace.Name"    ,"Namespace_Name")
         :Column("Namespace.AKA"     ,"Namespace_AKA")
-        :Column("Namespace.LinkUID" ,"Namespace_LinkUID")
+        :Column("Namespace.UID" ,"Namespace_UID")
         :Column("Table.Name"        ,"Table_Name")
         :Column("Table.AKA"         ,"Table_AKA")
-        :Column("Table.LinkUID"     ,"Table_LinkUID")
+        :Column("Table.UID"     ,"Table_UID")
         :Column("Index.Name"        ,"Index_Name")
-        :Column("Index.LinkUID"     ,"Index_LinkUID")
+        :Column("Index.UID"     ,"Index_UID")
         :Join("inner","Table"    ,"","Index.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iIndexPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditIndex/"+par_cURLApplicationLinkCode+"/"+;
-                                                                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+"/"+;
-                                                                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +"/"+;
-                                                                           PrepareForURLSQLIdentifier("Index"    ,l_oData:Index_Name    ,l_oData:Index_LinkUID)    +"/";
+                                                                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+"/"+;
+                                                                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +"/"+;
+                                                                           PrepareForURLSQLIdentifier("Index"    ,l_oData:Index_Name    ,l_oData:Index_UID)    +"/";
                                                                            )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListIndexes/"+par_cURLApplicationLinkCode+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_LinkUID)+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_LinkUID)    +"/";
+                                                                             PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name,par_oNavData:Namespace_UID)+"/"+;
+                                                                             PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name    ,par_oNavData:Table_UID)    +"/";
                                                                              )
         endif
     endif
@@ -8298,12 +8401,15 @@ local l_nSearchMode
 local l_nTopCount
 local l_nLastUpdated
 local l_lShowLastUpdated
-local l_cSearchEnumerationName
-local l_cSearchEnumerationDescription
-local l_cSearchEnumValueName
-local l_cSearchEnumValueDescription
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
+local l_nSearchEnumerationMode
+local l_cSearchEnumerationName
+local l_cSearchEnumerationDescription
+local l_nSearchEnumValueMode
+local l_cSearchEnumValueName
+local l_cSearchEnumValueDescription
 local l_cSearchEnumerationUsageStatus
 local l_cSearchEnumerationDocStatus
 local l_cSearchEnumValueUsageStatus
@@ -8320,10 +8426,13 @@ l_nSearchMode                   := min(3,max(1,val(oFcgi:GetInputValue("RadioSea
 l_nTopCount                     := min(3,max(1,val(oFcgi:GetInputValue("RadioTopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(oFcgi:GetInputValue("ComboLastUpdated"))))
 l_lShowLastUpdated              := (oFcgi:GetInputValue("CheckboxShowLastUpdatedSince") == "1")
+l_nSearchNamespaceMode          := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchNamespaceMode"))))
 l_cSearchNamespaceName          := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceName"))
 l_cSearchNamespaceDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchNamespaceDescription"))
+l_nSearchEnumerationMode        := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchEnumerationMode"))))
 l_cSearchEnumerationName        := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationName"))
 l_cSearchEnumerationDescription := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationDescription"))
+l_nSearchEnumValueMode          := min(4,max(1,val(oFcgi:GetInputValue("ComboSearchEnumValueMode"))))
 l_cSearchEnumValueName          := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumValueName"))
 l_cSearchEnumValueDescription   := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumValueDescription"))
 l_cSearchEnumerationUsageStatus := SanitizeInput(oFcgi:GetInputValue("TextSearchEnumerationUsageStatus"))
@@ -8339,10 +8448,13 @@ case l_cActionOnSubmit == "Search"
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"              ,trans(l_nTopCount))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"           ,trans(l_nLastUpdated))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ShowLastUpdated"       ,iif(l_lShowLastUpdated,"1","0"))
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceMode"         ,trans(l_nSearchNamespaceMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,l_cSearchNamespaceName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,l_cSearchNamespaceDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationMode"       ,trans(l_nSearchEnumerationMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,l_cSearchEnumerationName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription",l_cSearchEnumerationDescription)
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueMode"         ,trans(l_nSearchEnumValueMode))
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"         ,l_cSearchEnumValueName)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"  ,l_cSearchEnumValueDescription)
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus",l_cSearchEnumerationUsageStatus)
@@ -8355,10 +8467,13 @@ case l_cActionOnSubmit == "Search"
     l_cHtml += EnumerationListFormBuild(par_iApplicationPk,par_cURLApplicationLinkCode)
 
 case l_cActionOnSubmit == "Reset"
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceMode"         ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName"         ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription"  ,"")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationMode"       ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName"       ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription","")
+    SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueMode"         ,"1")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName"         ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription"  ,"")
     SaveUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus","")
@@ -8395,20 +8510,20 @@ local l_nTopCount
 local l_nLastUpdated
 local l_lShowLastUpdated
 local l_ScriptFolder
-
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
+local l_nSearchEnumerationMode
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
-local l_cSearchValueName
-local l_cSearchValueDescription
-
+local l_nSearchEnumValueMode
+local l_cSearchEnumValueName
+local l_cSearchEnumValueDescription
 local l_cSearchEnumerationUsageStatus
 local l_cSearchEnumerationDocStatus
 local l_cSearchEnumValueUsageStatus
 local l_cSearchEnumValueDocStatus
 local l_cSearchEnumerationImplementAs
-
 local l_cSearchExtraFilters
 local l_json_ExtraFilters
 
@@ -8427,12 +8542,15 @@ l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"
 l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"))))
 l_lShowLastUpdated              := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_ShowLastUpdated") == "1")
+l_nSearchNamespaceMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceMode"))))
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
+l_nSearchEnumerationMode        := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationMode"))))
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName")
 l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription")
-l_cSearchValueName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName")
-l_cSearchValueDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription")
+l_nSearchEnumValueMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueMode"))))
+l_cSearchEnumValueName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName")
+l_cSearchEnumValueDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription")
 l_cSearchEnumerationUsageStatus := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus")
 l_cSearchEnumerationDocStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus")
 l_cSearchEnumValueUsageStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus")
@@ -8445,10 +8563,10 @@ with object l_oDB_ListOfEnumerations
     :Column("Enumeration.pk"             ,"pk")
     :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Namespace.AKA"              ,"Namespace_AKA")
-    :Column("Namespace.LinkUID"          ,"Namespace_LinkUID")
+    :Column("Namespace.UID"          ,"Namespace_UID")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
     :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-    :Column("Enumeration.LinkUID"        ,"Enumeration_LinkUID")
+    :Column("Enumeration.UID"        ,"Enumeration_UID")
     :Column("Enumeration.UseStatus"      ,"Enumeration_UseStatus")
     :Column("Enumeration.DocStatus"      ,"Enumeration_DocStatus")
     :Column("Enumeration.Description"    ,"Enumeration_Description")
@@ -8471,12 +8589,15 @@ with object l_oDB_ListOfEnumerations
                                     l_nSearchMode,;
                                     l_nTopCount,;
                                     l_nLastUpdated,;
+                                    l_nSearchNamespaceMode,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
+                                    l_nSearchEnumerationMode,;
                                     l_cSearchEnumerationName,;
                                     l_cSearchEnumerationDescription,;
-                                    l_cSearchValueName,;
-                                    l_cSearchValueDescription,;
+                                    l_nSearchEnumValueMode,;
+                                    l_cSearchEnumValueName,;
+                                    l_cSearchEnumValueDescription,;
                                     l_cSearchEnumerationUsageStatus,;
                                     l_cSearchEnumerationDocStatus,;
                                     l_cSearchEnumValueUsageStatus,;
@@ -8677,31 +8798,34 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr>]
                             l_cHtml += [<td></td>]
-                            l_cHtml += [<td class="justify-content-center" align="center">Name</td>]
+                            l_cHtml += [<td class="justify-content-center" align="center" colspan="2">Name</td>]
                             l_cHtml += [<td class="justify-content-center" align="center">Description</td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Namespace</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchNamespaceMode",l_nSearchNamespaceMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceName" id="TextSearchNamespaceName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchNamespaceDescription" id="TextSearchNamespaceDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchNamespaceDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode1">]
                             l_cHtml += [<td><span class="me-2">Enumeration</span></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchEnumerationMode",l_nSearchEnumerationMode)+[</td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationName" id="TextSearchEnumerationName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationName)+[" class="form-control"></td>]
                             l_cHtml += [<td><input type="text" name="TextSearchEnumerationDescription" id="TextSearchEnumerationDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumerationDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode2]+iif(l_nSearchMode < 2,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value</span></td>]
-                            l_cHtml += [<td><input type="text" name="TextSearchEnumValueName" id="TextSearchEnumValueName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchValueName)+[" class="form-control"></td>]
-                            l_cHtml += [<td><input type="text" name="TextSearchEnumValueDescription" id="TextSearchEnumValueDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchValueDescription)+[" class="form-control"></td>]
+                            l_cHtml += [<td>]+BuildSearchTextMode("ComboSearchEnumValueMode",l_nSearchEnumValueMode)+[</td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchEnumValueName" id="TextSearchEnumValueName" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumValueName)+[" class="form-control"></td>]
+                            l_cHtml += [<td><input type="text" name="TextSearchEnumValueDescription" id="TextSearchEnumValueDescription" size="25" maxlength="100" value="]+FcgiPrepFieldForValue(l_cSearchEnumValueDescription)+[" class="form-control"></td>]
                         l_cHtml += [</tr>]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration Usage Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationUsageStatus",;
                                                                    "{tag:'Unknown',value:1},{tag:'Proposed',value:2},{tag:'Under Development',value:3},{tag:'Active',value:4},{tag:'To Be Discontinued',value:5},{tag:'Discontinued',value:6}",;
                                                                    l_cSearchEnumerationUsageStatus,25)
@@ -8710,7 +8834,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Enumeration Doc Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationDocStatus",;
                                                                    "{tag:'Missing',value:1},{tag:'Not Needed',value:2},{tag:'Composing',value:3},{tag:'Completed',value:4}",;
                                                                    l_cSearchEnumerationDocStatus,25)
@@ -8719,7 +8843,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Implemented As</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumerationImplementAs",;
                                                                    "{tag:'SQL Enum',value:1},{tag:'Integer',value:2},{tag:'Numeric',value:3},{tag:'String',value:4}",;
                                                                    l_cSearchEnumerationImplementAs,25)
@@ -8728,7 +8852,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value Usage Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumValueUsageStatus",;
                                                                    "{tag:'Unknown',value:1},{tag:'Proposed',value:2},{tag:'Under Development',value:3},{tag:'Active',value:4},{tag:'To Be Discontinued',value:5},{tag:'Discontinued',value:6}",;
                                                                    l_cSearchEnumValueUsageStatus,25)
@@ -8737,7 +8861,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Value Doc Status</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchEnumValueDocStatus",;
                                                                    "{tag:'Missing',value:1},{tag:'Not Needed',value:2},{tag:'Composing',value:3},{tag:'Completed',value:4}",;
                                                                    l_cSearchEnumValueDocStatus,25)
@@ -8746,14 +8870,14 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
 
                         l_cHtml += [<tr class="SearchMode3]+iif(l_nSearchMode < 3,[ d-none],[])+[">]
                             l_cHtml += [<td><span class="me-2">Extra Filters</span></td>]
-                            l_cHtml += [<td colspan="2">]
+                            l_cHtml += [<td colspan="3">]
                                 l_cHtml += GetMultiFlagSearchInput("TextSearchExtraFilters",;
                                                                    l_json_ExtraFilters,;
                                                                    l_cSearchExtraFilters,25)
                             l_cHtml += [</td>]
                         l_cHtml += [</tr>]
 
-                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.)
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.f.,"2")
 
                         oFcgi:p_cjQueryScript += [SearchModeChanged(]+trans(l_nSearchMode)+[);]   // Calling the Javascript function needs to be done after the amsifySuggestags objects are activated.
                     l_cHtml += [</table>]
@@ -8863,8 +8987,8 @@ if !empty(l_nNumberOfEnumerations)
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                               PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
-                                                                                               PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                                                                                                [">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
                     
                         if el_seek(trans(ListOfEnumerations->pk)+'*',"ListOfPreviousName","tag1")
@@ -8882,8 +9006,8 @@ if !empty(l_nNumberOfEnumerations)
                         // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
                         // if l_nCount > 0
                         //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
-                        //                                                                         PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
-                        //                                                                         PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                        //                                                                         PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                        //                                                                         PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                         //                                                                         [">]+Trans(l_nCount)+[</a>]
                         // endif
 
@@ -8898,8 +9022,8 @@ if !empty(l_nNumberOfEnumerations)
                         endif
                         if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
-                                                                                                PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                                                                                                PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                                                                PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                                                                                                 [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                         endif
 
@@ -8921,8 +9045,8 @@ if !empty(l_nNumberOfEnumerations)
                         // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1") , ListOfReferencedByCounts->ColumnCount , 0)
                         // if l_nCount > 0
                         //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
-                        //                                                                                 PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
-                        //                                                                                 PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                        //                                                                                 PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                        //                                                                                 PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                         //                                                                                 [">]+Trans(l_nCount)+[</a>]
                         // endif
 
@@ -8937,8 +9061,8 @@ if !empty(l_nNumberOfEnumerations)
                         endif
                         if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
                             l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_LinkUID)+[/]+;
-                                                                                                        PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_LinkUID)+[/]+;
+                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                                                                        PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                                                                                                         [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                         endif
 
@@ -9010,9 +9134,9 @@ with object l_oDB1
     if !empty(par_iPk)
         :Table("fe972943-4a6c-4e04-b03a-5969abc9a8c6","Enumeration")
         :Column("Namespace.Name"     ,"Namespace_Name")
-        :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+        :Column("Namespace.UID"  ,"Namespace_UID")
         :Column("Enumeration.Name"   ,"Enumeration_Name")
-        :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+        :Column("Enumeration.UID","Enumeration_UID")
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         l_oDataTableInfo := :Get(par_iPk)
     endif
@@ -9065,8 +9189,8 @@ else
 
     if !empty(par_iPk)
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace"  ,l_oDataTableInfo:Namespace_Name  ,l_oDataTableInfo:Namespace_LinkUID)  +[/]+;
-                           PrepareForURLSQLIdentifier("Enumeration",l_oDataTableInfo:Enumeration_Name,l_oDataTableInfo:Enumeration_LinkUID)+[/]
+                           PrepareForURLSQLIdentifier("Namespace"  ,l_oDataTableInfo:Namespace_Name  ,l_oDataTableInfo:Namespace_UID)  +[/]+;
+                           PrepareForURLSQLIdentifier("Enumeration",l_oDataTableInfo:Enumeration_Name,l_oDataTableInfo:Enumeration_UID)+[/]
     endif
 
     l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -9230,7 +9354,7 @@ local l_cErrorMessage := ""
 local l_oDB1
 local l_oData
 local l_lDuplicate
-local l_cLinkUID
+local l_cUID
 local l_cName
 local l_nPos
 local l_oDB_ListOfEnumValues
@@ -9245,7 +9369,13 @@ l_iEnumerationPk                := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_iNamespacePk                  := Val(oFcgi:GetInputValue("ComboNamespacePk"))
 
 l_cEnumerationName              := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
-l_lEnumerationTrackNameChanges  := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+
+if empty(l_iEnumerationPk)
+    l_lEnumerationTrackNameChanges := .t.
+else
+    l_lEnumerationTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+endif
+
 l_cEnumerationAKA               := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumerationAKA)
     l_cEnumerationAKA := NIL
@@ -9332,7 +9462,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Enumeration.DocStatus"  ,l_iEnumerationDocStatus)
                 :Field("Enumeration.Description",iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
                 if empty(l_iEnumerationPk)
-                    :Field("Enumeration.LinkUID",oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("Enumeration.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iEnumerationPk := :Key()
                     else
@@ -9400,7 +9530,7 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
 
             :Column("EnumValue.Number"            ,"EnumValue_Number")
             :Column("EnumValue.Order"             ,"EnumValue_Order")
-            // :Column("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+            // :Column("EnumValue.UID"           ,"EnumValue_UID")
             :Column("EnumValue.Name"              ,"EnumValue_Name")
             :Column("EnumValue.TrackNameChanges"  ,"EnumValue_TrackNameChanges")
             :Column("EnumValue.AKA"               ,"EnumValue_AKA")
@@ -9417,7 +9547,7 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
             :Table("6e30d9b3-ac94-4a89-9df7-17083e62949b","Enumeration")
             :Column("Enumeration.fk_Namespace"    ,"Enumeration_fk_Namespace")
             :Column("Enumeration.Name"            ,"Enumeration_Name")
-            :Column("Enumeration.LinkUID"         ,"Enumeration_LinkUID")
+            :Column("Enumeration.UID"         ,"Enumeration_UID")
             :Column("Enumeration.TrackNameChanges","Enumeration_TrackNameChanges")
             :Column("Enumeration.ImplementAs"     ,"Enumeration_ImplementAs")
             :Column("Enumeration.ImplementLength" ,"Enumeration_ImplementLength")
@@ -9428,13 +9558,13 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
             l_oData := :Get(l_iEnumerationPk)
 
             if !hb_IsNil(l_oData)
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                l_cName := OnDuplicateSanitizeName(l_oData:Enumeration_Name,l_cLinkUID,l_oData:Enumeration_LinkUID)
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:Enumeration_Name,l_cUID,l_oData:Enumeration_UID)
                 
                 :Table("c7deaef4-1e08-4ea7-b1d7-2fa30a858be8","Enumeration")
                 :Field("Enumeration.fk_Namespace"    ,l_oData:Enumeration_fk_Namespace)
                 :Field("Enumeration.Name"            ,l_cName)
-                :Field("Enumeration.LinkUID"         ,l_cLinkUID)
+                :Field("Enumeration.UID"         ,l_cUID)
 
                 :Field("Enumeration.TrackNameChanges",l_oData:Enumeration_TrackNameChanges)
                 :Field("Enumeration.ImplementAs"     ,l_oData:Enumeration_ImplementAs)
@@ -9450,11 +9580,11 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
                     scan all
                         :Table("11b1eb0a-0e1c-4a3d-b816-a3ea802c4816","EnumValue")
                         :Field("EnumValue.fk_Enumeration"     ,l_iEnumerationPk)
-                        :Field("EnumValue.LinkUID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("EnumValue.UID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
 
                         :Field("EnumValue.Number"            ,ListOfEnumValues->EnumValue_Number)
                         :Field("EnumValue.Order"             ,ListOfEnumValues->EnumValue_Order)
-                        // :Field("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+                        // :Field("EnumValue.UID"           ,"EnumValue_UID")
                         :Field("EnumValue.Name"              ,ListOfEnumValues->EnumValue_Name)
                         :Field("EnumValue.TrackNameChanges"  ,ListOfEnumValues->EnumValue_TrackNameChanges)
                         :Field("EnumValue.AKA"               ,ListOfEnumValues->EnumValue_AKA)
@@ -9510,15 +9640,15 @@ otherwise
     with object l_oDB1
         :Table("da356f83-c733-465e-a73c-e0af9e06d192","Enumeration")
         :Column("Namespace.Name"     ,"Namespace_Name")
-        :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+        :Column("Namespace.UID"  ,"Namespace_UID")
         :Column("Enumeration.Name"   ,"Enumeration_Name")
-        :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+        :Column("Enumeration.UID","Enumeration_UID")
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iEnumerationPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditEnumeration/"+par_cURLApplicationLinkCode+"/"+;
-                                                                                 PrepareForURLSQLIdentifier("Namespace"  ,l_oData:Namespace_Name  ,l_oData:Namespace_LinkUID)  +"/"+;
-                                                                                 PrepareForURLSQLIdentifier("Enumeration",l_oData:Enumeration_Name,l_oData:Enumeration_LinkUID)+"/";
+                                                                                 PrepareForURLSQLIdentifier("Namespace"  ,l_oData:Namespace_Name  ,l_oData:Namespace_UID)  +"/"+;
+                                                                                 PrepareForURLSQLIdentifier("Enumeration",l_oData:Enumeration_Name,l_oData:Enumeration_UID)+"/";
                                                                                  )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumerations/"+par_cURLApplicationLinkCode+"/")
@@ -9558,7 +9688,7 @@ oFcgi:TraceAdd("EnumValueListFormBuild")
 with object l_oDB_ListOfEnumValues
     :Table("6e36b50f-9e7c-43d6-bba3-00d402a649d0","EnumValue")
     :Column("EnumValue.pk"         ,"pk")
-    :Column("EnumValue.LinkUID"    ,"EnumValue_LinkUID")
+    :Column("EnumValue.UID"    ,"EnumValue_UID")
     :Column("EnumValue.Name"       ,"EnumValue_Name")
     :Column("EnumValue.AKA"        ,"EnumValue_AKA")
     :Column("EnumValue.Number"     ,"EnumValue_Number")
@@ -9584,8 +9714,8 @@ with object l_oDB_ListOfEnumValues
 endwith
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
-                   PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/]
+                   PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +[/]+;
+                   PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+[/]
 
 l_cHtml += GetCopyToClipboardJavaScript("CopyRoster")
 
@@ -9632,8 +9762,8 @@ l_cHtml += [<pre id="PreEnumValuesToClipboard" style="display:none;">]
     endscan
 l_cHtml += [</pre>]
 
-AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_UID})
 
 l_cHtml += GetAboveNavbarHeading("Values","Enumeration",AssembleNavbarInfo("Build"))
 
@@ -9670,7 +9800,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 // ----------------------------------------
                 l_cHtml += [<td valign="top">]
                     l_cHtml += [<table>]
-                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.t.)
+                        l_cHtml += BuildSearchOptionsOnLastUpdated(l_nLastUpdated,l_lShowLastUpdated,.t.,"1")
                     l_cHtml += [</table>]
                 l_cHtml += [</td>]
                 // ----------------------------------------
@@ -9759,7 +9889,7 @@ else
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+l_cCombinedPath+;
-                                                                                             PrepareForURLSQLIdentifier("EnumValue"  ,ListOfEnumValues->EnumValue_Name  ,ListOfEnumValues->EnumValue_LinkUID)+[/]+;
+                                                                                             PrepareForURLSQLIdentifier("EnumValue"  ,ListOfEnumValues->EnumValue_Name  ,ListOfEnumValues->EnumValue_UID)+[/]+;
                                                                                              [">]+FcgiPrepFieldForValue(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA))+[</a>]
 
                         if el_seek(trans(ListOfEnumValues->pk)+'*',"ListOfPreviousName","tag1")
@@ -9853,8 +9983,8 @@ case l_cActionOnSubmit == "Search"
 
 // case l_cActionOnSubmit == "Reset"
 //     l_cURL := oFcgi:p_cSitePath+"DataDictionaries/ListColumns/"+par_cURLApplicationLinkCode+"/"+;
-//                                                                 PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)+[/]+;
-//                                                                 PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name      ,par_oNavData:Table_LinkUID)    +[/]
+//                                                                 PrepareForURLSQLIdentifier("Namespace",par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)+[/]+;
+//                                                                 PrepareForURLSQLIdentifier("Table"    ,par_oNavData:Table_Name      ,par_oNavData:Table_UID)    +[/]
 //     oFcgi:Redirect(l_cURL)
 
 otherwise
@@ -9917,8 +10047,8 @@ oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sort
 
 select ListOfEnumValues
 
-AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_UID})
 
 l_cHtml += GetAboveNavbarHeading("Order Values","Enumeration",AssembleNavbarInfo("Build"))
 
@@ -9928,8 +10058,8 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += GetButtonOnOrderListFormSave()
         endif
         l_cHtml += GetButtonCancelAndRedirect(l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                             PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
-                                                                                             PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/];
+                                                                                             PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +[/]+;
+                                                                                             PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+[/];
                                                                                             )
     l_cHtml += [</div>]
 l_cHtml += [</nav>]
@@ -10004,8 +10134,8 @@ case l_cActionOnSubmit == "Save"
     endif
 
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+;
-                                                                        PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +"/"+;
-                                                                        PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+"/";
+                                                                        PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +"/"+;
+                                                                        PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+"/";
                                                                         )
 
 endcase
@@ -10043,11 +10173,11 @@ l_cHtml += [<input type="hidden" name="EnumerationKey" value="]+trans(par_iPk)+[
 l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
-                   PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/]
+                   PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +[/]+;
+                   PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+[/]
 
-AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_LinkUID})
-AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_LinkUID})
+AssembleNavbarInfo("Add",{"Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_AKA  ,par_oNavData:Namespace_UID})
+AssembleNavbarInfo("Add",{"Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_AKA,par_oNavData:Enumeration_UID})
 
 l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Value","Enumeration",AssembleNavbarInfo("Build"))
 
@@ -10179,7 +10309,7 @@ local l_cErrorMessage := ""
 local l_oDB1
 local l_oData
 local l_lDuplicate
-local l_cLinkUID
+local l_cUID
 local l_cName
 local l_nPos
 local l_iEnumerationPk := 0
@@ -10190,7 +10320,13 @@ l_cActionOnSubmit := oFcgi:GetInputValue("ActionOnSubmit")
 
 l_iEnumValuePk               := Val(oFcgi:GetInputValue("EnumerationKey"))
 l_cEnumValueName             := SanitizeNameIdentifier(oFcgi:GetInputValue("TextName"))
-l_lEnumValueTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+
+if empty(l_iEnumValuePk)
+    l_lEnumValueTrackNameChanges := .t.
+else
+    l_lEnumValueTrackNameChanges := (oFcgi:GetInputValue("CheckTrackNameChanges") == "1")
+endif
+
 l_cEnumValueAKA              := SanitizeInput(oFcgi:GetInputValue("TextAKA"))
 if empty(l_cEnumValueAKA)
     l_cEnumValueAKA := NIL
@@ -10298,7 +10434,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iEnumValuePk)
                     :Field("EnumValue.fk_Enumeration",par_iEnumerationPk)
                     :Field("EnumValue.Order"         ,l_iEnumValueOrder)
-                    :Field("EnumValue.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("EnumValue.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iEnumValuePk := :Key()
                     else
@@ -10340,7 +10476,7 @@ case l_cActionOnSubmit == "Duplicate"   // EnumValue
             :Column("EnumValue.fk_Enumeration"    ,"EnumValue_fk_Enumeration")
             :Column("EnumValue.Number"            ,"EnumValue_Number")
             :Column("EnumValue.Order"             ,"EnumValue_Order")
-            :Column("EnumValue.LinkUID"           ,"EnumValue_LinkUID")
+            :Column("EnumValue.UID"           ,"EnumValue_UID")
             :Column("EnumValue.Name"              ,"EnumValue_Name")
             :Column("EnumValue.TrackNameChanges"  ,"EnumValue_TrackNameChanges")
             :Column("EnumValue.AKA"               ,"EnumValue_AKA")
@@ -10352,14 +10488,14 @@ case l_cActionOnSubmit == "Duplicate"   // EnumValue
             l_oData := :Get(l_iEnumValuePk)
 
             if !hb_IsNil(l_oData)
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                l_cName := OnDuplicateSanitizeName(l_oData:EnumValue_Name,l_cLinkUID,l_oData:EnumValue_LinkUID)
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cName := OnDuplicateSanitizeName(l_oData:EnumValue_Name,l_cUID,l_oData:EnumValue_UID)
                 
                 l_iEnumerationPk := l_oData:EnumValue_fk_Enumeration
 
                 :Table("c0560ac0-6569-42b0-8372-d18463d0f2a2","EnumValue")
                 :Field("EnumValue.fk_Enumeration"    ,l_iEnumerationPk)
-                :Field("EnumValue.LinkUID"           ,l_cLinkUID)
+                :Field("EnumValue.UID"           ,l_cUID)
                 :Field("EnumValue.Name"              ,l_cName)
 
                 :Field("EnumValue.Number"            ,l_oData:EnumValue_Number)
@@ -10405,8 +10541,8 @@ case !empty(l_cErrorMessage)
 
 case empty(l_iEnumValuePk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+;
-                                                                        PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
-                                                                        PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/];
+                                                                        PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +[/]+;
+                                                                        PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+[/];
                                                                         )
 
 otherwise
@@ -10417,25 +10553,25 @@ otherwise
         :Table("0565a26a-b9c7-4fd0-ad1e-0e1ff08e64f0","EnumValue")
         :Column("Namespace.Name"     ,"Namespace_Name")
         :Column("Namespace.AKA"      ,"Namespace_AKA")
-        :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+        :Column("Namespace.UID"  ,"Namespace_UID")
         :Column("Enumeration.Name"   ,"Enumeration_Name")
         :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-        :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+        :Column("Enumeration.UID","Enumeration_UID")
         :Column("EnumValue.Name"     ,"EnumValue_Name")
-        :Column("EnumValue.LinkUID"  ,"EnumValue_LinkUID")
+        :Column("EnumValue.UID"  ,"EnumValue_UID")
         :Join("inner","Enumeration","","EnumValue.fk_Enumeration = Enumeration.pk")
         :Join("inner","Namespace"  ,"","Enumeration.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iEnumValuePk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditEnumValue/"+par_cURLApplicationLinkCode+"/"+;
-                                                                               PrepareForURLSQLIdentifier("Namespace"  ,l_oData:Namespace_Name  ,l_oData:Namespace_LinkUID)  +[/]+;
-                                                                               PrepareForURLSQLIdentifier("Enumeration",l_oData:Enumeration_Name,l_oData:Enumeration_LinkUID)+[/]+;
-                                                                               PrepareForURLSQLIdentifier("EnumValue"  ,l_oData:EnumValue_Name  ,l_oData:EnumValue_LinkUID);
+                                                                               PrepareForURLSQLIdentifier("Namespace"  ,l_oData:Namespace_Name  ,l_oData:Namespace_UID)  +[/]+;
+                                                                               PrepareForURLSQLIdentifier("Enumeration",l_oData:Enumeration_Name,l_oData:Enumeration_UID)+[/]+;
+                                                                               PrepareForURLSQLIdentifier("EnumValue"  ,l_oData:EnumValue_Name  ,l_oData:EnumValue_UID);
                                                                                )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListEnumValues/"+par_cURLApplicationLinkCode+"/"+;
-                                                                                PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_LinkUID)  +[/]+;
-                                                                                PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_LinkUID)+[/];
+                                                                                PrepareForURLSQLIdentifier("Namespace"  ,par_oNavData:Namespace_Name  ,par_oNavData:Namespace_UID)  +[/]+;
+                                                                                PrepareForURLSQLIdentifier("Enumeration",par_oNavData:Enumeration_Name,par_oNavData:Enumeration_UID)+[/];
                                                                                 )
         endif
     endwith
@@ -10628,7 +10764,7 @@ local l_cActionOnSubmit
 
 local l_nFk_Deployment
 
-local l_cConnectLinkUID
+local l_cConnectUID
 local l_nConnectBackendType
 local l_cConnectBackendType
 local l_cConnectServer
@@ -10748,7 +10884,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
         with object l_oDB_ListOfDeployments
             :Table("d4e737d0-d8a3-4f5e-b05a-aa87e17522b1","public.Deployment")
 
-            :Column("Deployment.LinkUID"            , "LinkUID")
+            :Column("Deployment.UID"            , "UID")
             :Column("Deployment.BackendType"        , "BackendType")
             :Column("Deployment.Server"             , "Server")
             :Column("Deployment.Port"               , "Port")
@@ -10764,7 +10900,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
 
             l_oData := :Get(l_nFk_Deployment)
             if :Tally == 1
-                l_cConnectLinkUID         := alltrim(nvl(l_oData:LinkUID,""))
+                l_cConnectUID         := alltrim(nvl(l_oData:UID,""))
                 l_nConnectBackendType     := nvl(l_oData:BackendType,0)
                 l_cConnectServer          := nvl(l_oData:Server,"")
                 l_nConnectPort            := nvl(l_oData:Port,0)
@@ -11069,7 +11205,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
 // SendToClipboard(l_cConnectionString)
                 case l_nConnectBackendType == HB_ORM_BACKENDTYPE_ORACLE   // ORACLE
                     //DBQ = TNS Service Name
-                    l_cConnectionString := "DRIVER={"+l_cDriver+"};Direct=True;DBQ="+l_cConnectLinkUID+";UID="+l_cConnectUser+";PWD="+l_cConnectPassword+";DBA=W"
+                    l_cConnectionString := "DRIVER={"+l_cDriver+"};Direct=True;DBQ="+l_cConnectUID+";UID="+l_cConnectUser+";PWD="+l_cConnectPassword+";DBA=W"
                 otherwise
                     l_cConnectionString := ""
                     l_cErrorMessage := "Invalid 'Backend Type'"
@@ -11485,11 +11621,11 @@ otherwise
     with object l_oDB1
         :Table("74f631ed-169f-47be-b06a-e1a727cd3ff2","Tag")
         :Column("Tag.Name"   ,"Tag_Name")
-        :Column("Tag.LinkUID","Tag_LinkUID")
+        :Column("Tag.UID","Tag_UID")
         l_oData := :Get(l_iTagPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTag/"+par_cURLApplicationLinkCode+"/"+;
-                                                                         PrepareForURLSQLIdentifier("Table",l_oData:Tag_Name,l_oData:Tag_LinkUID)+"/";
+                                                                         PrepareForURLSQLIdentifier("Table",l_oData:Tag_Name,l_oData:Tag_UID)+"/";
                                                                          )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTags/"+par_cURLApplicationLinkCode+"/")
@@ -11527,7 +11663,7 @@ with object l_oDB_ListOfTemplateTables
     :Table("f99ba155-3bcd-48f8-bfde-0e9807fd029d","TemplateTable")
     :Column("TemplateTable.pk"         ,"pk")
     :Column("TemplateTable.Name"       ,"TemplateTable_Name")
-    :Column("TemplateTable.LinkUID"    ,"TemplateTable_LinkUID")
+    :Column("TemplateTable.UID"    ,"TemplateTable_UID")
     :Column("Upper(TemplateTable.Name)","tag1")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
 
@@ -11609,7 +11745,7 @@ else
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTemplateTable/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                 PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_LinkUID)+[/]+;
+                                                                                                 PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
                                                                                                  [">]+TextToHtml(ListOfTemplateTables->TemplateTable_Name)+[</a>]
 
 
@@ -11618,7 +11754,7 @@ else
                     l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
                         l_nTemplateColumnCount := iif( el_seek(l_iTemplateTablePk,"ListOfTemplateColumnCounts","tag1") , ListOfTemplateColumnCounts->TemplateColumnCount , 0)
                         l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                   PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_LinkUID)+[/]+;
+                                                                                                   PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
                                                                                                    [">]+Trans(l_nTemplateColumnCount)+[</a>]
                     l_cHtml += [</td>]
 
@@ -11650,7 +11786,7 @@ with object l_oDB1
     if !empty(par_iPk)
         :Table("48312a8d-fb40-4ba4-bd36-10a7fd1fb2e1","TemplateTable")
         :Column("TemplateTable.Name"    ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID" ,"TemplateTable_LinkUID")
+        :Column("TemplateTable.UID" ,"TemplateTable_UID")
         l_oDataTemplateTableInfo := :Get(par_iPk)
     endif
 endwith
@@ -11679,7 +11815,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 l_cHtml += GetButtonOnEditFormDelete()
             endif
             l_cHtml += GetButtonOnEditFormCaptionAndRedirect("Columns",l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                                          PrepareForURLSQLIdentifier("Table",l_oDataTemplateTableInfo:TemplateTable_Name,l_oDataTemplateTableInfo:TemplateTable_LinkUID)+[/];
+                                                                                                                          PrepareForURLSQLIdentifier("Table",l_oDataTemplateTableInfo:TemplateTable_Name,l_oDataTemplateTableInfo:TemplateTable_UID)+[/];
                                                                                                                           )
         endif
     l_cHtml += [</div>]
@@ -11766,7 +11902,7 @@ case l_cActionOnSubmit == "Save"
             endif
             if empty(l_iTemplateTablePk)
                 :Field("TemplateTable.fk_Application",par_iApplicationPk)
-                :Field("TemplateTable.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("TemplateTable.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iTemplateTablePk := :Key()
                 else
@@ -11816,11 +11952,11 @@ otherwise
     with object l_oDB1
         :Table("bf3fd002-455f-4ddd-a2a8-4d930f91f4f1","TemplateTable")
         :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+        :Column("TemplateTable.UID","TemplateTable_UID")
         l_oData := :Get(l_iTemplateTablePk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTemplateTable/"+par_cURLApplicationLinkCode+"/"+;
-                                                                                   PrepareForURLSQLIdentifier("Table",l_oData:TemplateTable_Name,l_oData:TemplateTable_LinkUID)+"/";
+                                                                                   PrepareForURLSQLIdentifier("Table",l_oData:TemplateTable_Name,l_oData:TemplateTable_UID)+"/";
                                                                                    )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTemplateTables/"+par_cURLApplicationLinkCode+"/")
@@ -11864,7 +12000,7 @@ with object l_oDB_ListOfTemplateColumns
     :Column("TemplateColumn.pk"                 ,"pk")
     :Column("TemplateColumn.Name"               ,"TemplateColumn_Name")
     :Column("TemplateColumn.AKA"                ,"TemplateColumn_AKA")
-    :Column("TemplateColumn.LinkUID"            ,"TemplateColumn_LinkUID")
+    :Column("TemplateColumn.UID"            ,"TemplateColumn_UID")
     :Column("TemplateColumn.UsedAs"             ,"TemplateColumn_UsedAs")
     :Column("TemplateColumn.UsedBy"             ,"TemplateColumn_UsedBy")
     :Column("TemplateColumn.UseStatus"          ,"TemplateColumn_UseStatus")
@@ -11893,9 +12029,9 @@ l_cHtml += [ .tooltip.show {opacity:1.0} ]
 l_cHtml += [</style>]
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_LinkUID) +[/]
+                   PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_UID) +[/]
 
-AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_LinkUID})
+AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_UID})
 
 l_cHtml += GetAboveNavbarHeading("Columns","Template Table",AssembleNavbarInfo("Build"))
 
@@ -11976,7 +12112,7 @@ else
                     // Name
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                         l_cURL  := l_cSitePath+[DataDictionaries/EditTemplateColumn/]+l_cCombinedPath+;
-                                                                                      PrepareForURLSQLIdentifier("Column",ListOfTemplateColumns->TemplateColumn_Name,ListOfTemplateColumns->TemplateColumn_LinkUID)
+                                                                                      PrepareForURLSQLIdentifier("Column",ListOfTemplateColumns->TemplateColumn_Name,ListOfTemplateColumns->TemplateColumn_UID)
                         l_cName := TextToHTML(ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA))
                         if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
                             l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
@@ -11995,10 +12131,10 @@ else
                                                         "",;                                                    // ListOfTemplateColumns->Namespace_Name   (Used to decide if should display Namespace info)
                                                         ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_Name
                                                         ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_AKA
-                                                        ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_LinkUID
+                                                        ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_UID
                                                         ,;                                                      // ListOfTemplateColumns->Enumeration_Name
                                                         ,;                                                      // ListOfTemplateColumns->Enumeration_AKA
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_LinkUID
+                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_UID
                                                         ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementAs
                                                         ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementLength
                                                         l_cSitePath,;
@@ -12110,7 +12246,7 @@ oFcgi:p_cjQueryScript += [$('#sortable li').width( Math.max.apply(Math, $('#sort
 
 select ListOfTemplateColumns
 
-AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_LinkUID})
+AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_UID})
 
 l_cHtml += GetAboveNavbarHeading("Order Columns","Template Table",AssembleNavbarInfo("Build"))
 
@@ -12120,7 +12256,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += GetButtonOnOrderListFormSave()
         endif
         l_cHtml += GetButtonCancelAndRedirect(l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                  PrepareForURLSQLIdentifier("Template Table",par_oNavData:TemplateTable_Name,par_oNavData:TemplateTable_LinkUID)+[/];
+                                                                                                  PrepareForURLSQLIdentifier("Template Table",par_oNavData:TemplateTable_Name,par_oNavData:TemplateTable_UID)+[/];
                                                                                                   )
 
     l_cHtml += [</div>]
@@ -12198,7 +12334,7 @@ case l_cActionOnSubmit == "Save"
     endif
 
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTemplateColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Table",par_oNavData:TemplateTable_Name,par_oNavData:TemplateTable_LinkUID)+"/";
+                                                                             PrepareForURLSQLIdentifier("Table",par_oNavData:TemplateTable_Name,par_oNavData:TemplateTable_UID)+"/";
                                                                              )
 
 endcase
@@ -12428,9 +12564,9 @@ l_cHtml += [<input type="hidden" name="CheckShowPrimary" value="]+iif(l_lShowPri
 l_cHtml += DisplayErrorMessageOnEditForm(l_cErrorText)
 
 l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                   PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_LinkUID) +[/]
+                   PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_UID) +[/]
 
-AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_LinkUID})
+AssembleNavbarInfo("Add",{"Table" ,par_oNavData:TemplateTable_Name , ,par_oNavData:TemplateTable_UID})
 
 l_cHtml += GetAboveNavbarHeading(iif(empty(par_iPk),"New","Edit")+" Column","Template Table",AssembleNavbarInfo("Build"))
 
@@ -12825,7 +12961,7 @@ case l_cActionOnSubmit == "Save"
             if empty(l_iPk)
                 :Field("TemplateColumn.fk_TemplateTable",par_iTemplateTablePk)
                 :Field("TemplateColumn.Order"           ,l_iColumnOrder)
-                :Field("TemplateColumn.LinkUID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("TemplateColumn.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iPk := :Key()
                 else
@@ -12879,7 +13015,7 @@ case !empty(l_cErrorMessage)
 
 case empty(l_iPk)
     oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTemplateColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                             PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_LinkUID)+"/";
+                                                                             PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_UID)+"/";
                                                                              )
 
 otherwise
@@ -12889,19 +13025,19 @@ otherwise
     with object l_oDB1
         :Table("4cee721e-6260-4b54-ba33-4e24098f8c40","TemplateColumn")
         :Column("TemplateTable.Name"     , "TemplateTable_Name")
-        :Column("TemplateTable.LinkUID"  , "TemplateTable_LinkUID")
+        :Column("TemplateTable.UID"  , "TemplateTable_UID")
         :Column("TemplateColumn.Name"    , "TemplateColumn_Name")
-        :Column("TemplateColumn.LinkUID" , "TemplateColumn_LinkUID")
+        :Column("TemplateColumn.UID" , "TemplateColumn_UID")
         :Join("inner","TemplateTable","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
         l_oData := :Get(l_iPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTemplateColumn/"+par_cURLApplicationLinkCode+"/"+;
-                                                                                    PrepareForURLSQLIdentifier("Table" ,l_oData:TemplateTable_Name ,l_oData:TemplateTable_LinkUID) +"/"+;
-                                                                                    PrepareForURLSQLIdentifier("Column",l_oData:TemplateColumn_Name,l_oData:TemplateColumn_LinkUID)+"/";
+                                                                                    PrepareForURLSQLIdentifier("Table" ,l_oData:TemplateTable_Name ,l_oData:TemplateTable_UID) +"/"+;
+                                                                                    PrepareForURLSQLIdentifier("Column",l_oData:TemplateColumn_Name,l_oData:TemplateColumn_UID)+"/";
                                                                                     )
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/ListTemplateColumns/"+par_cURLApplicationLinkCode+"/"+;
-                                                                                     PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_LinkUID)+"/";
+                                                                                     PrepareForURLSQLIdentifier("Table" ,par_oNavData:TemplateTable_Name ,par_oNavData:TemplateTable_UID)+"/";
                                                                                      )
         endif
 
@@ -12933,14 +13069,14 @@ else
     l_iTablePk := l_oData:Table_Pk
     if !empty(l_iTablePk)
 
-        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_LinkUID})
-        AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_LinkUID}    )
+        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_UID})
+        AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_UID}    )
 
         l_cHtml += GetAboveNavbarHeading("Referenced By","Table",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +[/]
 
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -12955,15 +13091,15 @@ else
             :Table("0b7fc2ce-3c31-4294-a8af-1c8624e24e22","Column")
             :Column("Namespace.Name"           ,"Namespace_Name")
             :Column("Namespace.AKA"            ,"Namespace_AKA")
-            :Column("Namespace.LinkUID"        ,"Namespace_LinkUID")
+            :Column("Namespace.UID"        ,"Namespace_UID")
             :Column("Namespace.UseStatus"      ,"Namespace_UseStatus")
             :Column("Table.Name"               ,"Table_Name")
             :Column("Table.AKA"                ,"Table_AKA")
-            :Column("Table.LinkUID"            ,"Table_LinkUID")
+            :Column("Table.UID"            ,"Table_UID")
             :Column("Table.UseStatus"          ,"Table_UseStatus")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.AKA"               ,"Column_AKA")
-            :Column("Column.LinkUID"           ,"Column_LinkUID")
+            :Column("Column.UID"           ,"Column_UID")
             :Column("Column.UseStatus"         ,"Column_UseStatus")
             :Column("Column.OnDelete"          ,"Column_OnDelete")
             :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
@@ -13032,11 +13168,11 @@ else
                                         // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
 
                                         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
-                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
 
                                         l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_LinkUID)+[/]
+                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
                                         l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
                                         if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                                             l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
@@ -13105,14 +13241,14 @@ else
     l_iTablePk := l_oData:Table_Pk
     if !empty(l_iTablePk)
 
-        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_LinkUID})
-        AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_LinkUID}    )
+        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_UID})
+        AssembleNavbarInfo("Add",{"Table"    ,l_oData:Table_Name    ,l_oData:Table_AKA    ,l_oData:Table_UID}    )
 
         l_cHtml += GetAboveNavbarHeading("Referenced By","Table",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData:Table_Name    ,l_oData:Table_UID)    +[/]
 
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -13127,7 +13263,7 @@ else
 
             :Table("0d7201c8-3476-4007-bd17-5587efa3b144","Diagram")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("Diagram.UID"    ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("Diagram.fk_Application = ^",par_iApplicationPk)
@@ -13139,7 +13275,7 @@ else
         with object l_oDB_ListOfDiagramsWithTables
             :Table("18838cb1-061f-4fef-b01e-46f80878952e","DiagramTable")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("Diagram.UID"    ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
@@ -13181,7 +13317,7 @@ else
                             scan all
                                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
                                     l_cName := ListOfDiagrams->Diagram_Name
-                                    l_cURL  := l_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/?InitialDiagram=]+ListOfDiagrams->Diagram_LinkUID
+                                    l_cURL  := l_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/?InitialDiagram=]+ListOfDiagrams->Diagram_UID
 
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                         l_cHtml += [<a target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
@@ -13232,14 +13368,14 @@ else
     l_iEnumerationPk := l_oData:Enumeration_Pk
     if !empty(l_iEnumerationPk)
 
-        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_LinkUID})
-        AssembleNavbarInfo("Add",{"Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_AKA    ,l_oData:Enumeration_LinkUID}    )
+        AssembleNavbarInfo("Add",{"Namespace",l_oData:Namespace_Name,l_oData:Namespace_AKA,l_oData:Namespace_UID})
+        AssembleNavbarInfo("Add",{"Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_AKA    ,l_oData:Enumeration_UID}    )
 
         l_cHtml += GetAboveNavbarHeading("Referenced By","Enumeration",AssembleNavbarInfo("Build"))
 
         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_LinkUID)+[/]+;
-                           PrepareForURLSQLIdentifier("Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData:Namespace_Name,l_oData:Namespace_UID)+[/]+;
+                           PrepareForURLSQLIdentifier("Enumeration"    ,l_oData:Enumeration_Name    ,l_oData:Enumeration_UID)    +[/]
 
         l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [<div class="input-group">]
@@ -13254,15 +13390,15 @@ else
             :Table("4630f00d-dc28-4960-bd0f-d93c3c247146","Column")
             :Column("Namespace.Name"           ,"Namespace_Name")
             :Column("Namespace.AKA"            ,"Namespace_AKA")
-            :Column("Namespace.LinkUID"        ,"Namespace_LinkUID")
+            :Column("Namespace.UID"        ,"Namespace_UID")
             :Column("Namespace.UseStatus"      ,"Namespace_UseStatus")
             :Column("Table.Name"               ,"Table_Name")
             :Column("Table.AKA"                ,"Table_AKA")
-            :Column("Table.LinkUID"            ,"Table_LinkUID")
+            :Column("Table.UID"            ,"Table_UID")
             :Column("Table.UseStatus"          ,"Table_UseStatus")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.AKA"               ,"Column_AKA")
-            :Column("Column.LinkUID"           ,"Column_LinkUID")
+            :Column("Column.UID"           ,"Column_UID")
             :Column("Column.UseStatus"         ,"Column_UseStatus")
             :Column("Column.UsedBy"            ,"Column_UsedBy")
 
@@ -13324,11 +13460,11 @@ else
                                         // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
 
                                         l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_LinkUID)+[/]+;
-                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_LinkUID)    +[/]
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
 
                                         l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_LinkUID)+[/]
+                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
                                         l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
                                         if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                                             l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
@@ -13370,12 +13506,12 @@ if !empty(par_iPk)
         //Get the current Namespace
         :Table("91c2de20-83fa-4698-803a-23d0de8e5e96",par_cTableName)
         :Column(par_cTableName+".Name"   ,"Name")
-        :Column(par_cTableName+".LinkUID","LinkUID")
+        :Column(par_cTableName+".UID","UID")
         l_oData := :Get(par_iPk)
         if hb_IsNil(l_oData)
             l_cErrorMessage := "Failed to get current Name."
         else
-            l_cSuffix := "_"+strtran(l_oData:LinkUID,"-","")
+            l_cSuffix := "_"+strtran(l_oData:UID,"-","")
 
             //Will only try to record the Previous name, of TrackNameChanges is on and name is not from a Duplicate operation.
             if par_lTrackNameChanges .and.;

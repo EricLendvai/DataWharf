@@ -49,8 +49,8 @@ oFcgi:TraceAdd("BuildPageErrorExplorer")
 //ErrorExplorer/AutoTrimEvents
 //ErrorExplorer/DistinctAutoTrimEvents
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 else
     l_cURLAction := "Dashboard"
 endif

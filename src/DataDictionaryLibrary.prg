@@ -96,7 +96,7 @@ endwith
 return l_nCount
 //=================================================================================================================
 //=================================================================================================================
-function GetNextPreviousButtonsFromListOfRecords(par_iPk,par_cURLPath,par_nNumberOfTemplateColumns,par_cItem,par_cItems,par_cListAction,par_cEditAction,par_bCode)
+function GetNextPreviousButtonsFromListOfRecords(par_iPk,par_cURLPath,par_nNumberOfTemplateColumns,par_cItem,par_cItems,par_cListAction,par_cEditAction,par_bCode,par_cExtraSearchParameters)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_cHtml := ""
 local l_cHtmlPrevious
@@ -119,7 +119,7 @@ if par_nNumberOfTemplateColumns > 1
         if l_FoundRecord
             l_cHtmlNext := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cEditAction+[/]+;
                                                                                          l_cURLPath+;
-                                                                                         eval(par_bCode)+;
+                                                                                         eval(par_bCode)+par_cExtraSearchParameters+;
                                                                                          ["><span class="bi-arrow-right"></span>&nbsp;]+par_cItem+[</a>]
             exit
         else
@@ -128,7 +128,7 @@ if par_nNumberOfTemplateColumns > 1
             else
                 l_cHtmlPrevious := [<a class="btn btn-primary rounded ms-3 RemoveOnEdit" href="]+l_cSitePath+[DataDictionaries/]+par_cEditAction+[/]+;
                                                                                                  l_cURLPath+;
-                                                                                                 eval(par_bCode)+;
+                                                                                                 eval(par_bCode)+par_cExtraSearchParameters+;
                                                                                                  ["><span class="bi-arrow-left"></span>&nbsp;]+par_cItem+[</a>]
             endif
         endif
@@ -150,22 +150,20 @@ local l_oDB_AnyTags            := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nSearchMode
 local l_nTopCount
 local l_nLastUpdated
-
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
-
+local l_nSearchTableMode
 local l_cSearchTableName
 local l_cSearchTableDescription
-
+local l_nSearchColumnMode
 local l_cSearchColumnName
 local l_cSearchColumnDescription
-
+local l_nSearchEnumerationMode
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
-
 local l_cSearchTableTags
 local l_cSearchColumnTags
-
 local l_cSearchTableUsageStatus
 local l_cSearchTableDocStatus
 local l_cSearchColumnUsageStatus
@@ -176,38 +174,55 @@ local l_cSearchExtraFilters
 
 // local l_nNumberOfTables := 0
 local l_nNumberOfUsedTags
+local l_cColumnSearchParameters
 
+local l_lDidSendAFilterOnColumns := !empty(oFcgi:GetQueryString("ColumnMode"))
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Namespace",ListOfRecords->Namespace_Name,ListOfRecords->Namespace_LinkUID)+[/]+;
-       PrepareForURLSQLIdentifier("Table"    ,ListOfRecords->Table_Name    ,ListOfRecords->Table_LinkUID)    +[/]
+return PrepareForURLSQLIdentifier("Namespace",ListOfRecords->Namespace_Name,ListOfRecords->Namespace_UID)+[/]+;
+       PrepareForURLSQLIdentifier("Table"    ,ListOfRecords->Table_Name    ,ListOfRecords->Table_UID)    +[/]
 }
 
 oFcgi:TraceAdd("GetNextPreviousTable")
 
+if l_lDidSendAFilterOnColumns
+    l_nSearchColumnMode        := min(4,max(1,val(oFcgi:GetQueryString("ColumnMode"))))
+    l_cSearchColumnName        := hb_HexToStr(oFcgi:GetQueryString("ColumnName"))
+    l_cSearchColumnDescription := hb_HexToStr(oFcgi:GetQueryString("ColumnDescription"))
+    l_cSearchColumnStaticUID   := hb_HexToStr(oFcgi:GetQueryString("ColumnStaticUID"))
+
+    if empty(l_cSearchColumnName) .and. empty(l_cSearchColumnStaticUID) .and. empty(l_cSearchColumnDescription)  //_M_ on Column Tags
+        l_cColumnSearchParameters := ""
+    else
+        l_cColumnSearchParameters := [?ColumnMode=]+trans(l_nSearchColumnMode)+[&ColumnName=]+hb_StrToHex(l_cSearchColumnName)+[&ColumnStaticUID=]+hb_StrToHex(l_cSearchColumnStaticUID)+[&ColumnDescription=]+hb_StrToHex(l_cSearchColumnDescription)   //strtolhex
+    endif
+
+else
+    l_cColumnSearchParameters  := ""
+
+    l_nSearchColumnMode        := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnMode"))))
+    l_cSearchColumnName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
+    l_cSearchColumnDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
+    l_cSearchColumnStaticUID   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID")
+endif
+
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_Mode"))))
 l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_LastUpdated"))))
-
+l_nSearchNamespaceMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceMode"))))
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_NamespaceDescription")
-
+l_nSearchTableMode              := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableMode"))))
 l_cSearchTableName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableName")
 l_cSearchTableDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDescription")
-
-l_cSearchColumnName             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnName")
-l_cSearchColumnDescription      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDescription")
-
+l_nSearchEnumerationMode        := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationMode"))))
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationName")
 l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_EnumerationDescription")
-
 l_cSearchTableTags              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableTags")
 l_cSearchColumnTags             := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTags")
-
 l_cSearchTableUsageStatus       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableUsageStatus")
 l_cSearchTableDocStatus         := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_TableDocStatus")
 l_cSearchColumnUsageStatus      := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnUsageStatus")
 l_cSearchColumnDocStatus        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnDocStatus")
-l_cSearchColumnStaticUID        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnStaticUID")
 l_cSearchColumnTypes            := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ColumnTypes")
 l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_TableSearch_ExtraFilters")
 
@@ -235,9 +250,9 @@ with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
     :Column("Table.pk"         ,"pk")
     :Column("Namespace.Name"   ,"Namespace_Name")
-    :Column("Namespace.LinkUID","Namespace_LinkUID")
+    :Column("Namespace.UID","Namespace_UID")
     :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.LinkUID"    ,"Table_LinkUID")
+    :Column("Table.UID"    ,"Table_UID")
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -247,12 +262,16 @@ with object l_oDB_ListOfTables
                               l_nSearchMode,;
                               l_nTopCount,;
                               l_nLastUpdated,;
+                              l_nSearchNamespaceMode,;
                               l_cSearchNamespaceName,;
                               l_cSearchNamespaceDescription,;
+                              l_nSearchTableMode,;
                               l_cSearchTableName,;
                               l_cSearchTableDescription,;
+                              l_nSearchColumnMode,;
                               l_cSearchColumnName,;
                               l_cSearchColumnDescription,;
+                              l_nSearchEnumerationMode,;
                               l_cSearchEnumerationName,;
                               l_cSearchEnumerationDescription,;
                               l_cSearchTableTags,;
@@ -269,7 +288,7 @@ with object l_oDB_ListOfTables
     :OrderBy("tag2")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTablePk,par_cURLPath,:Tally,"Table","Tables","ListTables",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTablePk,par_cURLPath,:Tally,"Table","Tables","ListTables",par_cURLAction,l_bCode,l_cColumnSearchParameters)
     // SendToClipboard(:LastSQL())
 
 endwith
@@ -281,9 +300,10 @@ local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Column",ListOfRecords->Column_Name,ListOfRecords->Column_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("Column",ListOfRecords->Column_Name,ListOfRecords->Column_UID)+[/]
 }
 
+local l_nSearchColumnMode
 local l_cSearchColumnName
 local l_cSearchColumnStaticUID
 local l_cSearchColumnDescription
@@ -291,6 +311,7 @@ local l_nLastUpdated
 
 oFcgi:TraceAdd("GetNextPreviousColumn")
 
+l_nSearchColumnMode        := min(4,max(1,val(GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnMode"))))
 l_cSearchColumnName        := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnName")
 l_cSearchColumnDescription := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnDescription")
 l_cSearchColumnStaticUID   := GetUserSetting("Table_"+Trans(par_iTablePk)+"_ColumnSearch_ColumnStaticUID")
@@ -300,16 +321,21 @@ with object l_oDB_ListOfColumns
     :Table("82c9374b-830e-47b7-8203-244e422ad7ba","Column")
     :Column("Column.pk"     ,"pk")
     :Column("Column.Name"   ,"Column_Name")
-    :Column("Column.LinkUID","Column_LinkUID")
+    :Column("Column.UID","Column_UID")
     :Column("Column.Order","tag1")
     :Where("Column.fk_Table = ^",par_iTablePk)
 
-    ColumnListFormAddFiltering(l_oDB_ListOfColumns,l_cSearchColumnName,l_cSearchColumnStaticUID,l_cSearchColumnDescription,l_nLastUpdated)
+    ColumnListFormAddFiltering(l_oDB_ListOfColumns,;
+                               l_nSearchColumnMode,;
+                               l_cSearchColumnName,;
+                               l_cSearchColumnStaticUID,;
+                               l_cSearchColumnDescription,;
+                               l_nLastUpdated)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iColumnPk,par_cURLPath,:Tally,"Column","Columns","ListColumns","EditColumn",l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iColumnPk,par_cURLPath,:Tally,"Column","Columns","ListColumns","EditColumn",l_bCode,"")
 endwith
 
 return l_cHtml
@@ -319,7 +345,7 @@ local l_cHtml
 local l_oDB_ListOfTemplateColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Column",ListOfRecords->Column_Name,ListOfRecords->Column_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("Column",ListOfRecords->Column_Name,ListOfRecords->Column_UID)+[/]
 }
 
 oFcgi:TraceAdd("GetNextPreviousTemplateColumn")
@@ -328,14 +354,14 @@ with object l_oDB_ListOfTemplateColumns
     :Table("4bd5c39d-dba3-4f63-a5f4-5ea56fae3a46","TemplateColumn")
     :Column("TemplateColumn.pk"     ,"pk")
     :Column("TemplateColumn.Name"   ,"Column_Name")
-    :Column("TemplateColumn.LinkUID","Column_LinkUID")
+    :Column("TemplateColumn.UID","Column_UID")
     :Column("TemplateColumn.Order","tag1")
     :Where("TemplateColumn.fk_TemplateTable = ^",par_iTemplateTablePk)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateColumnPk,par_cURLPath,:Tally,"Column","Columns","ListTemplateColumns","EditTemplateColumn",l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateColumnPk,par_cURLPath,:Tally,"Column","Columns","ListTemplateColumns","EditTemplateColumn",l_bCode,"")
 endwith
 
 return l_cHtml
@@ -345,7 +371,7 @@ local l_cHtml
 local l_oDB_ListOfColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("EnumValue",ListOfRecords->EnumValue_Name,ListOfRecords->EnumValue_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("EnumValue",ListOfRecords->EnumValue_Name,ListOfRecords->EnumValue_UID)+[/]
 }
 
 local l_nLastUpdated
@@ -358,7 +384,7 @@ with object l_oDB_ListOfColumns
     :Table("a27cc2ee-8d6f-4db0-9653-77ded3821548","EnumValue")
     :Column("EnumValue.pk"     ,"pk")
     :Column("EnumValue.Name"   ,"EnumValue_Name")
-    :Column("EnumValue.LinkUID","EnumValue_LinkUID")
+    :Column("EnumValue.UID","EnumValue_UID")
     :Column("EnumValue.Order","tag1")
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
 
@@ -367,7 +393,7 @@ with object l_oDB_ListOfColumns
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumValuePk,par_cURLPath,:Tally,"Value","Values","ListEnumValues","EditEnumValue",l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumValuePk,par_cURLPath,:Tally,"Value","Values","ListEnumValues","EditEnumValue",l_bCode,"")
 endwith
 
 return l_cHtml
@@ -377,7 +403,7 @@ local l_cHtml
 local l_oDB_ListOfIndexes := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Index",ListOfRecords->Index_Name,ListOfRecords->Index_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("Index",ListOfRecords->Index_Name,ListOfRecords->Index_UID)+[/]
 }
 
 oFcgi:TraceAdd("GetNextPreviousIndex")
@@ -386,14 +412,14 @@ with object l_oDB_ListOfIndexes
     :Table("82c9374b-830e-47b7-8203-244e422ad7ba","Index")
     :Column("Index.pk"     ,"pk")
     :Column("Index.Name"   ,"Index_Name")
-    :Column("Index.LinkUID","Index_LinkUID")
+    :Column("Index.UID","Index_UID")
     :Column("lower(Index.Name)","tag1")
     :Where("Index.fk_Table = ^",par_iTablePk)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iIndexPk,par_cURLPath,:Tally,"Index","Indexes","ListIndexes","EditIndex",l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iIndexPk,par_cURLPath,:Tally,"Index","Indexes","ListIndexes","EditIndex",l_bCode,"")
 endwith
 
 return l_cHtml
@@ -407,12 +433,15 @@ local l_oDB_ListOfEnumerations := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_nSearchMode
 local l_nTopCount
 local l_nLastUpdated
+local l_nSearchNamespaceMode
 local l_cSearchNamespaceName
 local l_cSearchNamespaceDescription
+local l_nSearchEnumerationMode
 local l_cSearchEnumerationName
 local l_cSearchEnumerationDescription
-local l_cSearchValueName
-local l_cSearchValueDescription
+local l_nSearchEnumValueMode
+local l_cSearchEnumValueName
+local l_cSearchEnumValueDescription
 local l_cSearchEnumerationUsageStatus
 local l_cSearchEnumerationDocStatus
 local l_cSearchEnumValueUsageStatus
@@ -421,8 +450,8 @@ local l_cSearchEnumerationImplementAs
 local l_cSearchExtraFilters
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Namespace"  ,ListOfRecords->Namespace_Name  ,ListOfRecords->Namespace_LinkUID)  +[/]+;
-       PrepareForURLSQLIdentifier("Enumeration",ListOfRecords->Enumeration_Name,ListOfRecords->Enumeration_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("Namespace"  ,ListOfRecords->Namespace_Name  ,ListOfRecords->Namespace_UID)  +[/]+;
+       PrepareForURLSQLIdentifier("Enumeration",ListOfRecords->Enumeration_Name,ListOfRecords->Enumeration_UID)+[/]
 }
 
 oFcgi:TraceAdd("GetNextPreviousEnumeration")
@@ -430,13 +459,15 @@ oFcgi:TraceAdd("GetNextPreviousEnumeration")
 l_nSearchMode                   := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_Mode"))))
 l_nTopCount                     := min(3,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_TopCount"))))
 l_nLastUpdated                  := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_LastUpdated"))))
-
+l_nSearchNamespaceMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceMode"))))
 l_cSearchNamespaceName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceName")
 l_cSearchNamespaceDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_NamespaceDescription")
+l_nSearchEnumerationMode        := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationMode"))))
 l_cSearchEnumerationName        := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationName")
 l_cSearchEnumerationDescription := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDescription")
-l_cSearchValueName              := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName")
-l_cSearchValueDescription       := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription")
+l_nSearchEnumValueMode          := min(4,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueMode"))))
+l_cSearchEnumValueName          := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueName")
+l_cSearchEnumValueDescription   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueDescription")
 l_cSearchEnumerationUsageStatus := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationUsageStatus")
 l_cSearchEnumerationDocStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumerationDocStatus")
 l_cSearchEnumValueUsageStatus   := GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumerationSearch_EnumValueUsageStatus")
@@ -448,9 +479,9 @@ with object l_oDB_ListOfEnumerations
     :Table("7e3eeb26-19bc-4ca1-8187-3b3298632cc1","Enumeration")
     :Column("Enumeration.pk"     ,"pk")
     :Column("Namespace.Name"     ,"Namespace_Name")
-    :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+    :Column("Namespace.UID"  ,"Namespace_UID")
     :Column("Enumeration.Name"   ,"Enumeration_Name")
-    :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+    :Column("Enumeration.UID","Enumeration_UID")
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Enumeration.Name)","tag2")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
@@ -460,12 +491,15 @@ with object l_oDB_ListOfEnumerations
                                     l_nSearchMode,;
                                     l_nTopCount,;
                                     l_nLastUpdated,;
+                                    l_nSearchNamespaceMode,;
                                     l_cSearchNamespaceName,;
                                     l_cSearchNamespaceDescription,;
+                                    l_nSearchEnumerationMode,;
                                     l_cSearchEnumerationName,;
                                     l_cSearchEnumerationDescription,;
-                                    l_cSearchValueName,;
-                                    l_cSearchValueDescription,;
+                                    l_nSearchEnumValueMode,;
+                                    l_cSearchEnumValueName,;
+                                    l_cSearchEnumValueDescription,;
                                     l_cSearchEnumerationUsageStatus,;
                                     l_cSearchEnumerationDocStatus,;
                                     l_cSearchEnumValueUsageStatus,;
@@ -478,7 +512,7 @@ with object l_oDB_ListOfEnumerations
     :OrderBy("tag2")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumerationPk,par_cURLPath,:Tally,"Enumeration","Enumerations","ListEnumerations",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iEnumerationPk,par_cURLPath,:Tally,"Enumeration","Enumerations","ListEnumerations",par_cURLAction,l_bCode,"")
     // SendToClipboard(:LastSQL())
 
 endwith
@@ -490,7 +524,7 @@ local l_cHtml
 local l_oDB_ListOfTemplateTable := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 local l_bCode := {||
-return PrepareForURLSQLIdentifier("Table",ListOfRecords->TemplateTable_Name,ListOfRecords->TemplateTable_LinkUID)+[/]
+return PrepareForURLSQLIdentifier("Table",ListOfRecords->TemplateTable_Name,ListOfRecords->TemplateTable_UID)+[/]
 }
 
 oFcgi:TraceAdd("GetNextPreviousTemplateTable")
@@ -499,14 +533,14 @@ with object l_oDB_ListOfTemplateTable
     :Table("9a09b083-5ee8-46ca-b65a-18497c6c36fc","TemplateTable")
     :Column("TemplateTable.pk"     ,"pk")
     :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-    :Column("TemplateTable.LinkUID","TemplateTable_LinkUID")
+    :Column("TemplateTable.UID","TemplateTable_UID")
     :Column("Upper(TemplateTable.Name)","tag1")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
 
     :OrderBy("tag1")
     :SQL("ListOfRecords")
 
-    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateTablePk,par_cURLPath,:Tally,"Template Table","Template Tables","ListTemplateTables",par_cURLAction,l_bCode)
+    l_cHtml := GetNextPreviousButtonsFromListOfRecords(par_iTemplateTablePk,par_cURLPath,:Tally,"Template Table","Template Tables","ListTemplateTables",par_cURLAction,l_bCode,"")
     // SendToClipboard(:LastSQL())
 
 endwith
@@ -908,12 +942,16 @@ function TableListFormAddFiltering( par_oDB,;
                                     par_nSearchMode,;
                                     par_nTopCount,;
                                     par_nLastUpdated,;
+                                    par_nSearchNamespaceMode,;
                                     par_cSearchNamespaceName,;
                                     par_cSearchNamespaceDescription,;
+                                    par_nSearchTableMode,;
                                     par_cSearchTableName,;
                                     par_cSearchTableDescription,;
+                                    par_nSearchColumnMode,;
                                     par_cSearchColumnName,;
                                     par_cSearchColumnDescription,;
+                                    par_nSearchEnumerationMode,;
                                     par_cSearchEnumerationName,;
                                     par_cSearchEnumerationDescription,;
                                     par_cSearchTableTags,;
@@ -937,7 +975,16 @@ with object par_oDB
         if !empty(par_cSearchNamespaceName)
             :Distinct(.t.)
             :Join("left","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
-            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
+            do case
+            case par_nSearchNamespaceMode == 2  //Starting
+                :Where([lower(Namespace.Name) like ^],lower(par_cSearchNamespaceName)+"%")
+            case par_nSearchNamespaceMode == 3  //Ending
+                :Where([lower(Namespace.Name) like ^],"%"+lower(par_cSearchNamespaceName))
+            case par_nSearchNamespaceMode == 4  //Exact
+                :Where([lower(Namespace.Name) = ^],lower(par_cSearchNamespaceName))
+            otherwise
+                :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
+            endcase
         endif
         if !empty(par_cSearchNamespaceDescription)
             :KeywordCondition(par_cSearchNamespaceDescription,"Namespace.Description")
@@ -947,7 +994,16 @@ with object par_oDB
     if !empty(par_cSearchTableName)
         :Distinct(.t.)
         :Join("left","TablePreviousName","","TablePreviousName.fk_Table = Table.pk")
-        :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA,' ',TablePreviousName.Name)")
+        do case
+        case par_nSearchTableMode == 2  //Starting
+            :Where([lower(Table.Name) like ^],lower(par_cSearchTableName)+"%")
+        case par_nSearchTableMode == 3  //Ending
+            :Where([lower(Table.Name) like ^],"%"+lower(par_cSearchTableName))
+        case par_nSearchTableMode == 4  //Exact
+            :Where([lower(Table.Name) = ^],lower(par_cSearchTableName))
+        otherwise
+            :KeywordCondition(par_cSearchTableName,"CONCAT(Table.Name,' ',Table.AKA,' ',TablePreviousName.Name)")
+        endcase
     endif
     if !empty(par_cSearchTableDescription)
         :KeywordCondition(par_cSearchTableDescription,"Table.Description")
@@ -958,7 +1014,16 @@ with object par_oDB
             l_lJoinColumns := .t.
             if !empty(par_cSearchColumnName)
                 :Distinct(.t.)
-                :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+                do case
+                case par_nSearchColumnMode == 2  //Starting
+                    :Where([lower(Column.Name) like ^],lower(par_cSearchColumnName)+"%")
+                case par_nSearchColumnMode == 3  //Ending
+                    :Where([lower(Column.Name) like ^],"%"+lower(par_cSearchColumnName))
+                case par_nSearchColumnMode == 4  //Exact
+                    :Where([lower(Column.Name) = ^],lower(par_cSearchColumnName))
+                otherwise
+                    :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+                endcase
             endif
             if !empty(par_cSearchColumnDescription)
                 :KeywordCondition(par_cSearchColumnDescription,"Column.Description")
@@ -969,7 +1034,16 @@ with object par_oDB
             l_lJoinEnumeration := .t.
             if !empty(par_cSearchEnumerationName)
                 :Distinct(.t.)
-                :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
+                do case
+                case par_nSearchEnumerationMode == 2  //Starting
+                    :Where([lower(Enumeration.Name) like ^],lower(par_cSearchEnumerationName)+"%")
+                case par_nSearchEnumerationMode == 3  //Ending
+                    :Where([lower(Enumeration.Name) like ^],"%"+lower(par_cSearchEnumerationName))
+                case par_nSearchEnumerationMode == 4  //Exact
+                    :Where([lower(Enumeration.Name) = ^],lower(par_cSearchEnumerationName))
+                otherwise
+                    :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
+                endcase
             endif
             if !empty(par_cSearchEnumerationDescription)
                 :KeywordCondition(par_cSearchEnumerationDescription,"Enumeration.Description")
@@ -1114,12 +1188,15 @@ function EnumerationListFormAddFiltering(par_oDB,;
                                          par_nSearchMode,;
                                          par_nTopCount,;
                                          par_nLastUpdated,;
+                                         par_nSearchNamespaceMode,;
                                          par_cSearchNamespaceName,;
                                          par_cSearchNamespaceDescription,;
+                                         par_nSearchEnumerationMode,;
                                          par_cSearchEnumerationName,;
                                          par_cSearchEnumerationDescription,;
-                                         par_cSearchValueName,;
-                                         par_cSearchValueDescription,;
+                                         par_nSearchEnumValueMode,;
+                                         par_cSearchEnumValueName,;
+                                         par_cSearchEnumValueDescription,;
                                          par_cSearchEnumerationUsageStatus,;
                                          par_cSearchEnumerationDocStatus,;
                                          par_cSearchEnumValueUsageStatus,;
@@ -1134,7 +1211,16 @@ with object par_oDB
     if par_nSearchMode > 1
         if !empty(par_cSearchNamespaceName)
             :Join("left","NamespacePreviousName","","NamespacePreviousName.fk_Namespace = Namespace.pk")
-            :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
+            do case
+            case par_nSearchNamespaceMode == 2  //Starting
+                :Where([lower(Namespace.Name) like ^],lower(par_cSearchNamespaceName)+"%")
+            case par_nSearchNamespaceMode == 3  //Ending
+                :Where([lower(Namespace.Name) like ^],"%"+lower(par_cSearchNamespaceName))
+            case par_nSearchNamespaceMode == 4  //Exact
+                :Where([lower(Namespace.Name) = ^],lower(par_cSearchNamespaceName))
+            otherwise
+                :KeywordCondition(par_cSearchNamespaceName,"CONCAT(Namespace.Name,' ',Namespace.AKA,' ',NamespacePreviousName.Name)")
+            endcase
         endif
         if !empty(par_cSearchNamespaceDescription)
             :KeywordCondition(par_cSearchNamespaceDescription,"Namespace.Description")
@@ -1144,20 +1230,38 @@ with object par_oDB
     if !empty(par_cSearchEnumerationName)
         :Distinct(.t.)
         :Join("left","EnumerationPreviousName","","EnumerationPreviousName.fk_Enumeration = Enumeration.pk")
-        :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
+        do case
+        case par_nSearchEnumerationMode == 2  //Starting
+            :Where([lower(Enumeration.Name) like ^],lower(par_cSearchEnumerationName)+"%")
+        case par_nSearchEnumerationMode == 3  //Ending
+            :Where([lower(Enumeration.Name) like ^],"%"+lower(par_cSearchEnumerationName))
+        case par_nSearchEnumerationMode == 4  //Exact
+            :Where([lower(Enumeration.Name) = ^],lower(par_cSearchEnumerationName))
+        otherwise
+            :KeywordCondition(par_cSearchEnumerationName,"CONCAT(Enumeration.Name,' ',Enumeration.AKA,' ',EnumerationPreviousName.Name)")
+        endcase
     endif
     if !empty(par_cSearchEnumerationDescription)
         :KeywordCondition(par_cSearchEnumerationDescription,"Enumeration.Description")
     endif
 
     if par_nSearchMode > 1
-        if !empty(par_cSearchValueName) .or. !empty(par_cSearchValueDescription)
+        if !empty(par_cSearchEnumValueName) .or. !empty(par_cSearchEnumValueDescription)
             l_lJoinEnumValues := .t.
-            if !empty(par_cSearchValueName)
-                :KeywordCondition(par_cSearchValueName,"CONCAT(EnumValue.Name,' ',EnumValue.AKA,' ',EnumValuePreviousName.Name)")
+            if !empty(par_cSearchEnumValueName)
+                do case
+                case par_nSearchEnumValueMode == 2  //Starting
+                    :Where([lower(EnumValue.Name) like ^],lower(par_cSearchEnumValueName)+"%")
+                case par_nSearchEnumValueMode == 3  //Ending
+                    :Where([lower(EnumValue.Name) like ^],"%"+lower(par_cSearchEnumValueName))
+                case par_nSearchEnumValueMode == 4  //Exact
+                    :Where([lower(EnumValue.Name) = ^],lower(par_cSearchEnumValueName))
+                otherwise
+                    :KeywordCondition(par_cSearchEnumValueName,"CONCAT(EnumValue.Name,' ',EnumValue.AKA,' ',EnumValuePreviousName.Name)")
+                endcase
             endif
-            if !empty(par_cSearchValueDescription)
-                :KeywordCondition(par_cSearchValueDescription,"EnumValue.Description")
+            if !empty(par_cSearchEnumValueDescription)
+                :KeywordCondition(par_cSearchEnumValueDescription,"EnumValue.Description")
             endif
         endif
     endif
@@ -1259,21 +1363,21 @@ with object l_oDB1
     :Column("Namespace.Pk"     ,"Namespace_Pk")
     :Column("Namespace.Name"   ,"Namespace_Name")
     :Column("Namespace.AKA"    ,"Namespace_AKA")
-    :Column("Namespace.LinkUID","Namespace_LinkUID")
+    :Column("Namespace.UID","Namespace_UID")
     :Column("Table.pk"         ,"Table_Pk")
     :Column("Table.Name"       ,"Table_Name")
     :Column("Table.AKA"        ,"Table_AKA")
-    :Column("Table.LinkUID"    ,"Table_LinkUID")
+    :Column("Table.UID"    ,"Table_UID")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Where([Namespace.fk_Application = ^],par_iApplicationPk)
 
     if left(par_cURLNamespaceName,1) == "~"
-        :Where([Namespace.LinkUID = ^],substr(par_cURLNamespaceName,2))
+        :Where([Namespace.UID = ^],substr(par_cURLNamespaceName,2))
     else
         :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(par_cURLNamespaceName," ","")))
     endif
     if left(par_cURLTableName,1) == "~"
-        :Where([Table.LinkUID = ^],substr(par_cURLTableName,2))
+        :Where([Table.UID = ^],substr(par_cURLTableName,2))
     else
         :Where([lower(replace(Table.Name,' ','')) = ^],lower(StrTran(par_cURLTableName," ","")))
     endif
@@ -1297,21 +1401,21 @@ with object l_oDB1
     :Table("8122e1ae-644c-4b30-bfa6-779400a520e0","Enumeration")
     :Column("Namespace.Name"     ,"Namespace_Name")
     :Column("Namespace.AKA"      ,"Namespace_AKA")
-    :Column("Namespace.LinkUID"  ,"Namespace_LinkUID")
+    :Column("Namespace.UID"  ,"Namespace_UID")
     :Column("Enumeration.pk"     ,"Enumeration_Pk")
     :Column("Enumeration.Name"   ,"Enumeration_Name")
     :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-    :Column("Enumeration.LinkUID","Enumeration_LinkUID")
+    :Column("Enumeration.UID","Enumeration_UID")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 
     if left(par_cURLNamespaceName,1) == "~"
-        :Where([Namespace.LinkUID = ^],substr(par_cURLNamespaceName,2))
+        :Where([Namespace.UID = ^],substr(par_cURLNamespaceName,2))
     else
         :Where([lower(replace(Namespace.Name,' ','')) = ^],lower(StrTran(par_cURLNamespaceName," ","")))
     endif
     if left(par_cURLEnumerationName,1) == "~"
-        :Where([Enumeration.LinkUID = ^],substr(par_cURLEnumerationName,2))
+        :Where([Enumeration.UID = ^],substr(par_cURLEnumerationName,2))
     else
         :Where([lower(replace(Enumeration.Name,' ','')) = ^],lower(StrTran(par_cURLEnumerationName," ","")))
     endif
@@ -1486,27 +1590,41 @@ endwith
 
 return nil
 //=================================================================================================================
-function OnDuplicateSanitizeName(par_cNameFromSourceRecord,par_cLinkUIDNewRecord,par_cLinkUIDFromSourceRecord)
+function OnDuplicateSanitizeName(par_cNameFromSourceRecord,par_cUIDNewRecord,par_cUIDFromSourceRecord)
 local l_cName
 local l_nPos
 local l_cSuffix
-l_cSuffix := "_"+strtran(par_cLinkUIDFromSourceRecord,"-","")
+l_cSuffix := "_"+strtran(par_cUIDFromSourceRecord,"-","")
 if right(par_cNameFromSourceRecord,len(l_cSuffix)) == l_cSuffix
     //Get rid of UID in source Name, in case we are trying to duplicate an already duplicated, not renamed, record.
     l_cName := left(par_cNameFromSourceRecord,len(par_cNameFromSourceRecord)-len(l_cSuffix))
 else
     l_cName := par_cNameFromSourceRecord
 endif
-return l_cName+"_"+strtran(par_cLinkUIDNewRecord,"-","")
+return l_cName+"_"+strtran(par_cUIDNewRecord,"-","")
 //=================================================================================================================
-function ColumnListFormAddFiltering( par_oDB,par_cSearchColumnName,par_cSearchColumnStaticUID,par_cSearchColumnDescription,par_nLastUpdated)
+function ColumnListFormAddFiltering(par_oDB,;
+                                    par_nSearchColumnMode,;
+                                    par_cSearchColumnName,;
+                                    par_cSearchColumnStaticUID,;
+                                    par_cSearchColumnDescription,;
+                                    par_nLastUpdated)
 with object par_oDB
 
     if !empty(par_cSearchColumnName) .or. !empty(par_cSearchColumnStaticUID) .or. !empty(par_cSearchColumnDescription)
         :Distinct(.t.)
         if !empty(par_cSearchColumnName)
             :Join("left","ColumnPreviousName","","ColumnPreviousName.fk_Column = Column.pk")
-            :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+            do case
+            case par_nSearchColumnMode == 2  //Starting
+                :Where([lower(Column.Name) like ^],lower(par_cSearchColumnName)+"%")
+            case par_nSearchColumnMode == 3  //Ending
+                :Where([lower(Column.Name) like ^],"%"+lower(par_cSearchColumnName))
+            case par_nSearchColumnMode == 4  //Exact
+                :Where([lower(Column.Name) = ^],lower(par_cSearchColumnName))
+            otherwise
+                :KeywordCondition(par_cSearchColumnName,"CONCAT(Column.Name,' ',Column.AKA,' ',ColumnPreviousName.Name)")
+            endcase
         endif
         if !empty(par_cSearchColumnStaticUID)
             :Where("Column.StaticUID = ^",par_cSearchColumnStaticUID)

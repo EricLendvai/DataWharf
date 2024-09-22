@@ -14,7 +14,7 @@ local l_oDB_ModelInfo        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cFilePathPID
 local l_cFilePathUser
 local l_iKey
-local l_cLinkUID
+local l_cUID
 local l_cFileName
 local l_oModelInfo
 
@@ -268,7 +268,7 @@ if l_lContinue
     with object l_oDB_ListOfFileStream
         :Table("36b191e4-39b5-4ee3-bd58-4cf39da5d882","volatile.FileStream","FileStream")
         :Column("FileStream.pk"     ,"pk")
-        :Column("FileStream.LinkUID","LinkUID")
+        :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"  , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Model = ^" , par_iModelPk)
         :Where("FileStream.type = 3")
@@ -279,7 +279,7 @@ if l_lContinue
             l_iKey := 0
         case :Tally == 1
             l_iKey     := ListOfFileStream->pk
-            l_cLinkUID := ListOfFileStream->LinkUID
+            l_cUID := ListOfFileStream->UID
             if !l_oDB_FileStream:SaveFile("f50e774d-d353-4834-8b88-5619fdb086b9","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
                 l_cFilePathUser := GetStreamFileFolderForCurrentUser()
                 hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
@@ -299,12 +299,12 @@ if l_lContinue
             endif
 
             with object l_oDB_FileStream
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                 :Table("0d0d09af-1080-4f87-a1ab-d345060730f4","volatile.FileStream","FileStream")
                 :Field("fk_User"        , oFCgi:p_iUserPk)
                 :Field("fk_Model"       , par_iModelPk)
                 :Field("type"           , 3)
-                :Field("LinkUID"        , l_cLinkUID)
+                :Field("UID"        , l_cUID)
                 :Field("FileName"       , l_cFileName)
                 if :Add()
                     l_iKey := :Key()
@@ -325,11 +325,11 @@ endif
 
 if l_iKey == 0
     //Report error
-    l_cLinkUID    := ""
+    l_cUID    := ""
     l_cBackupCode := "Export Failed"
 endif
 
-return l_cLinkUID
+return l_cUID
 //=================================================================================================================
 function ModelImportStep1FormBuild(par_iPk,par_cErrorText)
 
@@ -380,7 +380,7 @@ endif
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-function ModelImportStep1FormOnSubmit(par_iModelPk,par_cProjectLinkUID,par_cModelLinkUID)
+function ModelImportStep1FormOnSubmit(par_iModelPk,par_cProjectUID,par_cModelUID)
 local l_cHtml := []
 local l_cActionOnSubmit
 
@@ -432,13 +432,13 @@ case el_IsInlist(l_cActionOnSubmit,"Import")
     endif
 
 case el_IsInlist(l_cActionOnSubmit,"Cancel","Done")
-    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelUID+"/")
 
 endcase
 
 if empty(l_cErrorMessage)
     //To force the tallies to be refreshed
-    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/ModelImport/"+par_cModelUID+"/")
 else
     l_cHtml += ModelImportStep1FormBuild(par_iModelPk,l_cErrorMessage)
 endif

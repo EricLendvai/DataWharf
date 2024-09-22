@@ -25,7 +25,7 @@ local l_hValues := {=>}
 local l_aSQLResult := {}
 
 local l_cURLAction          := "ListAPITokens"
-local l_cURLAPITokenLinkUID := ""
+local l_cURLAPITokenUID := ""
 
 local l_cSitePath := oFcgi:p_cSitePath
 
@@ -33,17 +33,17 @@ oFcgi:TraceAdd("BuildPageAPITokens")
 
 // Variables
 // l_cURLAction
-// l_cURLAPITokenLinkUID
+// l_cURLAPITokenUID
 
 //Improved and new way:
 // APITokens/                      Same as APITokens/ListAPITokens/
 // APITokens/NewAPIToken/
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLAPITokenLinkUID := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLAPITokenUID := oFcgi:p_aURLPathElements[3]
     endif
 
 else
@@ -84,26 +84,26 @@ case l_cURLAction == "EditAPIToken"
     
     if oFcgi:isGet()
 
-        if !empty(l_cURLAPITokenLinkUID)
+        if !empty(l_cURLAPITokenUID)
 
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
             with object l_oDB1
                 :Table("b5a14bed-b62c-41ed-9a2c-044e2ac54586","APIToken")
                 :Column("APIToken.pk"         ,"pk")                    // 1
-                :Column("APIToken.LinkUID"    ,"APIToken_LinkUID")      // 2
+                :Column("APIToken.UID"    ,"APIToken_UID")      // 2
                 :Column("APIToken.Name"       ,"APIToken_Name")         // 3
                 :Column("APIToken.Key"        ,"APIToken_Key")          // 4
                 :Column("APIToken.AccessMode" ,"APIToken_AccessMode")   // 5
                 :Column("APIToken.Status"     ,"APIToken_Status")       // 6
                 :Column("APIToken.Description","APIToken_Description")  // 7
-                :Where("APIToken.LinkUID = ^" ,l_cURLAPITokenLinkUID)
+                :Where("APIToken.UID = ^" ,l_cURLAPITokenUID)
                 :SQL(@l_aSQLResult)
             endwith
 
             if l_oDB1:Tally == 1
                 l_iAPITokenPk := l_aSQLResult[1,1]
 
-                l_hValues["LinkUID"]     := l_aSQLResult[1,2]
+                l_hValues["UID"]     := l_aSQLResult[1,2]
                 l_hValues["Name"]        := l_aSQLResult[1,3]
                 l_hValues["Key"]         := l_aSQLResult[1,4]
                 l_hValues["AccessMode"]  := l_aSQLResult[1,5]
@@ -186,7 +186,7 @@ oFcgi:TraceAdd("APITokenListFormBuild")
 with object l_oDB_ListOfAPITokens
     :Table("c5e6ecfc-2a8a-4d48-817c-666d8c990269","APIToken")
     :Column("APIToken.pk"         ,"pk")
-    :Column("APIToken.LinkUID"    ,"APIToken_LinkUID")
+    :Column("APIToken.UID"    ,"APIToken_UID")
     :Column("APIToken.Name"       ,"APIToken_Name")
     :Column("APIToken.Key"        ,"APIToken_Key")
     :Column("APIToken.AccessMode" ,"APIToken_AccessMode")
@@ -292,7 +292,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[APITokens/EditAPIToken/]+alltrim(ListOfAPITokens->APIToken_LinkUID)+[/">]+alltrim(ListOfAPITokens->APIToken_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[APITokens/EditAPIToken/]+alltrim(ListOfAPITokens->APIToken_UID)+[/">]+alltrim(ListOfAPITokens->APIToken_Name)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -603,7 +603,7 @@ local l_cHtml := []
 local l_cActionOnSubmit
 
 local l_iAPITokenPk
-local l_cAPITokenLinkUID
+local l_cAPITokenUID
 local l_cAPITokenName
 local l_cAPITokenKey
 local l_iAPITokenAccessMode
@@ -678,7 +678,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("APIToken.Status"     ,l_iAPITokenStatus)
                 :Field("APIToken.Description",iif(empty(l_cAPITokenDescription),NULL,l_cAPITokenDescription))
                 if empty(l_iAPITokenPk)
-                    :Field("APIToken.LinkUID",oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("APIToken.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iAPITokenPk := :Key()
                     else
@@ -724,7 +724,7 @@ case l_cActionOnSubmit == "Save"
                                 // Remove the Application
                                 with Object l_oDB1
                                     if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","APITokenAccessApplication",ListOfCurrentApplicationForAPIToken->APITokenAccessApplication_pk)
-                                        l_cErrorMessage := "Failed to Save Application selection."
+                                        l_cErrorMessage := "Failed to delete application access setting."
                                         exit
                                     endif
                                 endwith
@@ -998,10 +998,10 @@ case empty(l_iAPITokenPk)
 otherwise
     with object l_oDB1
         :Table("4eb191cc-610f-41b2-9fb6-8b9933679dfc","APIToken")
-        :Column("APIToken.LinkUID","APIToken_LinkUID")
+        :Column("APIToken.UID","APIToken_UID")
         l_oData := :Get(l_iAPITokenPk)
         if :Tally == 1
-            oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/EditAPIToken/"+alltrim(l_oData:APIToken_LinkUID)+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens/EditAPIToken/"+alltrim(l_oData:APIToken_UID)+"/")
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"APITokens")
         endif

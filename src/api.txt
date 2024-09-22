@@ -4,17 +4,17 @@
 // The function should be implemented in any if the API_*.prg, without using a STATIC prefix (making the functions reachable from anywhere inside the FastCGI exe, including DataWharf.prg)
 
 data p_APIs init ;
-{"DataWharfInformation"           => @APIGetDataWharfInformation(),;
- "Projects"                       => @APIGetListOfProjects(),;
- "Models"                         => @APIGetListOfModels(),;
- "Packages"                       => @APIGetListOfPackages(),;
- "Associations"                   => @APIGetListOfAssociations(),;
- "Datatypes"                      => @APIGetListOfDataTypes(),;
- "Enumerations"                   => @APIGetListOfEnumerations(),;
- "Classes"                        => @APIGetListOfEntities(),;
- "Applications"                   => @APIGetListOfApplications(),;
+{"DataWharfInformation"                  => @APIGetDataWharfInformation(),;
+ "Projects"                              => @APIGetListOfProjects(),;
+ "Models"                                => @APIGetListOfModels(),;
+ "Packages"                              => @APIGetListOfPackages(),;
+ "Associations"                          => @APIGetListOfAssociations(),;
+ "Datatypes"                             => @APIGetListOfDataTypes(),;
+ "Enumerations"                          => @APIGetListOfEnumerations(),;
+ "Classes"                               => @APIGetListOfEntities(),;
+ "Applications"                          => @APIGetListOfApplications(),;
  "ApplicationJSONConfigurationExport"    => @APIGetApplicationJSONConfigurationExport(),;
  "ApplicationHarbourConfigurationExport" => @APIGetApplicationHarbourConfigurationExport(),;
- "CreateUpdateNamespaces"         => @APICreateUpdateNamespaces(),;
- "CreateUpdateEnumerations"       => @APICreateUpdateEnumerations(),;
- "CreateUpdateTables"             => @APICreateUpdateTables()}
+ "CreateUpdateNamespaces"                => @APICreateUpdateNamespaces(),;
+ "CreateUpdateEnumerations"              => @APICreateUpdateEnumerations(),;
+ "CreateUpdateTables"                    => @APICreateUpdateTables()}

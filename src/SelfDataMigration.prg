@@ -17,13 +17,13 @@ with object oFcgi:p_o_SQLConnection
         with object l_oDB1
             :Table("58b648b9-ec53-40ba-8e29-a8b4e99beb36","Diagram")
             :Column("Diagram.pk" , "pk")
-            :Where([Length(Trim(Diagram.LinkUID)) = 0])
+            :Where([Length(Trim(Diagram.UID)) = 0])
             :SQL("ListOfDiagramToUpdate")
             select ListOfDiagramToUpdate
             scan all
                 with object l_oDB2
                     :Table("c8e52a98-8b65-4632-8241-efc426025ca6","Diagram")
-                    :Field("Diagram.LinkUID" , oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("Diagram.UID" , oFcgi:p_o_SQLConnection:GetUUIDString())
                     :Update(ListOfDiagramToUpdate->pk)
                 endwith
             endscan
@@ -113,13 +113,13 @@ with object oFcgi:p_o_SQLConnection
         with object l_oDB1
             :Table("dcbb495b-7a14-4ba0-9d2b-eefc5a41fac3","ModelingDiagram")
             :Column("ModelingDiagram.pk" , "pk")
-            :Where([Length(Trim(ModelingDiagram.LinkUID)) = 0])
+            :Where([Length(Trim(ModelingDiagram.UID)) = 0])
             :SQL("ListOfModelingDiagramToUpdate")
             select ListOfModelingDiagramToUpdate
             scan all
                 with object l_oDB2
                     :Table("214e97ca-df84-4b5a-bf7d-f4a1ba22b24e","ModelingDiagram")
-                    :Field("ModelingDiagram.LinkUID" , oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("ModelingDiagram.UID" , oFcgi:p_o_SQLConnection:GetUUIDString())
                     :Update(ListOfModelingDiagramToUpdate->pk)
                 endwith
             endscan
@@ -485,13 +485,13 @@ with object oFcgi:p_o_SQLConnection
                 :Table("f9be0f0b-1a63-4442-a7e4-89cf2ce1745a",l_cTableName)
                 :Column(l_cTableName+".pk" , "pk")
 
-                :Where([Length(Trim(]+l_cTableName+[.LinkUID)) = 0])
+                :Where([Length(Trim(]+l_cTableName+[.UID)) = 0])
                 :SQL("ListOfRecordsToUpdate")
                 select ListOfRecordsToUpdate
                 scan all
                     with object l_oDB2
                         :Table("6480d156-77ad-43b1-880e-4f5a3aaa9c8f",l_cTableName)
-                        :Field(l_cTableName+".LinkUID" , oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field(l_cTableName+".UID" , oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Update(ListOfRecordsToUpdate->pk)
                     endwith
                 endscan

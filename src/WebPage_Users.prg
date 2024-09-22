@@ -43,11 +43,11 @@ oFcgi:TraceAdd("BuildPageUsers")
 // Users/                      Same as Users/ListUsers/
 // Users/NewUser/
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLUserID := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLUserID := oFcgi:p_aURLPathElements[3]
     endif
 
 else
@@ -684,7 +684,7 @@ case l_cActionOnSubmit == "Save"
                             if l_nAccessLevelDD <= 1
                                 // Remove the Application
                                 if !:Delete("3a72f1b0-7b6d-4da9-8bf7-91d8080c5ba7","UserAccessApplication",ListOfCurrentApplicationForUser->UserAccessApplication_pk)
-                                    l_cErrorMessage := "Failed to Save Application selection."
+                                    l_cErrorMessage := "Failed to delete user application access."
                                     exit
                                 endif
                             else
@@ -705,7 +705,7 @@ case l_cActionOnSubmit == "Save"
                                 :Field("UserAccessApplication.fk_User"       ,l_iUserPk)
                                 :Field("UserAccessApplication.AccessLevelDD" ,l_nAccessLevelDD)
                                 if !:Add()
-                                    l_cErrorMessage := "Failed to Save Application selection."
+                                    l_cErrorMessage := "Failed to Save User Application setting."
                                     exit
                                 endif
                             endif

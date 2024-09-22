@@ -851,10 +851,10 @@ l_cHtml += [<div class="m-3">]
                                                         "",;                                                    // ListColumnsFrom->Namespace_Name   (Used to decide if should display Namespace info)
                                                         ,;                                                      // ListColumnsFrom->EnumerationNamespace_Name
                                                         ,;                                                      // ListColumnsFrom->EnumerationNamespace_AKA
-                                                        ,;                                                      // ListColumnsFrom->EnumerationNamespace_LinkUID
+                                                        ,;                                                      // ListColumnsFrom->EnumerationNamespace_UID
                                                         ,;                                                      // ListColumnsFrom->Enumeration_Name
                                                         ,;                                                      // ListColumnsFrom->Enumeration_AKA
-                                                        ,;                                                      // ListColumnsFrom->Enumeration_LinkUID
+                                                        ,;                                                      // ListColumnsFrom->Enumeration_UID
                                                         ,;                                                      // ListColumnsFrom->Enumeration_ImplementAs
                                                         ,;                                                      // ListColumnsFrom->Enumeration_ImplementLength
                                                         ,;                                                      // l_cSitePath

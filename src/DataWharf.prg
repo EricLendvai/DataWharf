@@ -90,8 +90,8 @@ class MyFcgi from hb_Fcgi
 
 
     //In this app the first element of the URL is always a page name. 
-    data p_URLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
-    data p_PageName         init ""              //Could be altered. The original PageName is in ::p_URLPathElements[1]
+    data p_aURLPathElements  init ""   READONLY   //Array of URL elements. For example:   /<pagename>/<id>/<ParentName>/<ParentId>  will create a 4 element array.
+    data p_PageName         init ""              //Could be altered. The original PageName is in ::p_aURLPathElements[1]
 
     //                            {Code,Name,Show Length,Show Scale,Max Scale,Show Enums,Show Unicode,PostgreSQL Name, MySQL Name}
     data p_ColumnTypes      init {{  "I","Integer (4 bytes)"                            ,.f.,.f.,nil,.f.,.f.,"integer"                    ,"INT"                           },;
@@ -219,7 +219,7 @@ static l_lGetUUIDSupported := .f.  // Used to ensure the PostgreSQL database has
 local l_cAccessToken
 local l_cAPIEndpointName
 local l_sAPIFunction
-local l_cLinkUID
+local l_cUID
 local l_oDB_ListOfFileStream
 local l_oDB_FileStream
 local l_cFilePath
@@ -568,7 +568,7 @@ otherwise
         // endif
         // ::GetQueryString("p")
 
-        ::p_URLPathElements := {}
+        ::p_aURLPathElements := {}
 
         l_cPageName := substr(::GetEnvironment("REDIRECT_URL"),len(l_cSitePath)+1)
 
@@ -581,12 +581,12 @@ otherwise
         l_aPathElements := hb_ATokens(l_cPageName,"/",.f.)
         if len(l_aPathElements) > 1
             l_cPageName := l_aPathElements[1]
-            // ::p_URLPathElements := AClone(l_aPathElements)    Not supported in Harbour
+            // ::p_aURLPathElements := AClone(l_aPathElements)    Not supported in Harbour
             for l_iLoop := 1 to len(l_aPathElements)
-                AAdd(::p_URLPathElements,l_aPathElements[l_iLoop])
+                AAdd(::p_aURLPathElements,l_aPathElements[l_iLoop])
             endfor
         else
-            AAdd(::p_URLPathElements,l_cPageName)
+            AAdd(::p_aURLPathElements,l_cPageName)
         endif
 
         if empty(l_cPageName) .or.(lower(l_cPageName) == "default.html")
@@ -996,8 +996,8 @@ endif
             
             if l_cPageName == "ajax"
                 l_cBody := [UNBUFFERED]
-                if len(::p_URLPathElements) >= 2 .and. !empty(::p_URLPathElements[2])
-                    l_cAjaxAction := ::p_URLPathElements[2]
+                if len(::p_aURLPathElements) >= 2 .and. !empty(::p_aURLPathElements[2])
+                    l_cAjaxAction := ::p_aURLPathElements[2]
 
                     switch l_cAjaxAction
                     case "SaveSearchModeTable"
@@ -1024,8 +1024,8 @@ endif
                 l_oDB_ListOfFileStream := hb_SQLData(oFcgi:p_o_SQLConnection)
                 l_oDB_FileStream       := hb_SQLData(oFcgi:p_o_SQLConnection)
 
-                l_cLinkUID := oFcgi:GetQueryString("id")
-                if empty(l_cLinkUID)
+                l_cUID := oFcgi:GetQueryString("id")
+                if empty(l_cUID)
                     l_cBody := [UNBUFFEREDBad Link]
                 else
                     with object l_oDB_ListOfFileStream
@@ -1035,7 +1035,7 @@ endif
                         :Column("FileStream.FileName","FileName")
                         :Column("FileStream.type"    ,"Type")
                         :Where("FileStream.fk_User = ^" , oFcgi:p_iUserPk)
-                        :Where("FileStream.LinkUID = ^" , l_cLinkUID)
+                        :Where("FileStream.UID = ^" , l_cUID)
                         :SQL("ListOfFileStream")
 
                         if :Tally == 1
@@ -2098,8 +2098,8 @@ return l_nAccessLevelDD
 function GetAPIURIElement(par_nElementNumber) // After the API Name
 // Example:  /api/GetProjects
 local l_cResult
-if len(oFcgi:p_URLPathElements) >= 1 + par_nElementNumber
-    l_cResult := oFcgi:p_URLPathElements[1 + par_nElementNumber]
+if len(oFcgi:p_aURLPathElements) >= 1 + par_nElementNumber
+    l_cResult := oFcgi:p_aURLPathElements[1 + par_nElementNumber]
 else
     l_cResult := ""
 endif
@@ -2671,7 +2671,7 @@ endif
 
 return l_cResult
 //=================================================================================================================
-function AssembleNavbarInfo(par_cAction,par_aInfo)   // par_aInfo = {Source,Name,AKA,LinkUID}
+function AssembleNavbarInfo(par_cAction,par_aInfo)   // par_aInfo = {Source,Name,AKA,UID}
 static s_aInfo := {}
 local l_aInfo
 local l_cResult
@@ -2883,7 +2883,7 @@ local l_cContent := ""
 
 with object l_oDB_ListOfDeployment
     :Table("748e96a3-a095-43e4-90ab-9eef7090288b","Deployment")
-    :Column("Deployment.LinkUID" ,"Deployment_LinkUID")
+    :Column("Deployment.UID" ,"Deployment_UID")
     :Column("Deployment.Server"  ,"Deployment_Server")
     :Column("Deployment.Port"    ,"Deployment_Port")
     :Column("Deployment.Database","Deployment_Database")
@@ -2892,7 +2892,7 @@ with object l_oDB_ListOfDeployment
     if :Tally >= 1
         select ListOfDeployment
         scan all
-            l_cContent += alltrim(ListOfDeployment->Deployment_LinkUID)+" = "+CRLF
+            l_cContent += alltrim(ListOfDeployment->Deployment_UID)+" = "+CRLF
             l_cContent += "  (DESCRIPTION ="+CRLF
             l_cContent += "    (ADDRESS_LIST ="+CRLF
             l_cContent += "      (ADDRESS = (PROTOCOL = TCP)(HOST = "+alltrim(ListOfDeployment->Deployment_Server)+")(PORT = "+trans(ListOfDeployment->Deployment_Port)+"))"+CRLF
@@ -2909,12 +2909,12 @@ endwith
 
 return nil
 //=================================================================================================================
-function BuildSearchOptionsOnLastUpdated(par_nLastUpdated,par_lShowLastUpdated,par_lExtraSpacer)
+function BuildSearchOptionsOnLastUpdated(par_nLastUpdated,par_lShowLastUpdated,par_lExtraSpacer,par_cColspan_2ndTd)
 local l_cHtml
 
 l_cHtml := [<tr class="SearchMode1">]
     l_cHtml += [<td class="pt-2"><span class="me-2">Last Updated</span></td>]
-    l_cHtml += [<td class="pt-2">]  //  colspan="2"
+    l_cHtml += [<td class="pt-2" colspan="]+par_cColspan_2ndTd+[">]  //  colspan="2"
         l_cHtml += [<select name="ComboLastUpdated" id="ComboLastUpdated" class="">]
             l_cHtml += [<option value="1"]+iif(par_nLastUpdated==1,[ selected],[])+[>Anytime</option>]
             l_cHtml += [<option value="2"]+iif(par_nLastUpdated==2,[ selected],[])+[>Within an Hour</option>]
@@ -2935,6 +2935,16 @@ l_cHtml := [<tr class="SearchMode1">]
     l_cHtml += [</td>]
 l_cHtml += [</tr>]
 
+return l_cHtml
+//=================================================================================================================
+function BuildSearchTextMode(par_cObjectName,par_nCurrentValue)
+local l_cHtml
+l_cHtml := [<select name="]+par_cObjectName+[" id="]+par_cObjectName+[" class="">]
+    l_cHtml += [<option value="1"]+iif(par_nCurrentValue==1,[ selected],[])+[>Contains</option>]
+    l_cHtml += [<option value="2"]+iif(par_nCurrentValue==2,[ selected],[])+[>Starting</option>]
+    l_cHtml += [<option value="3"]+iif(par_nCurrentValue==3,[ selected],[])+[>Ending</option>]
+    l_cHtml += [<option value="4"]+iif(par_nCurrentValue==4,[ selected],[])+[>Exact</option>]
+l_cHtml += [</select>]
 return l_cHtml
 //=================================================================================================================
 function BuildRecordEditInfo(par_cTableName,par_iPk)

@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 09/21/2024 v 4.21
+* Default "Track Name Changes" to true.
+* Renamed all "LinkUID" columns to "UID" for DataWharf's own database.
+* Added Search Modes "Contains","Starting","Ending","Exact" for search options on "Tables" and "Enumerations". Only the "Contains" mode will also search the AKA values.
+* When searching Tables using on Columns restrictions, those restrictions are send down to Columns Search filters and will propagate when using "Next/Previous" tables.
+
 ## 09/02/2024 v 4.20
 * Option to display Last Updated time and filter out records on Tables, Columns, Enumerations and Enum Values. (For now Deletes are not visible, but still tracked if Cyanaudit is installed and enabled.)
 * When Cyanaudit is enabled, it is possible to see all Add/Update events for Namespaces, Table, Columns, Enumerations and Enum Values.

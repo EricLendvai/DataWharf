@@ -265,7 +265,7 @@ l_cHtml += [<div class="row justify-content-center">]
                 l_cHtml += [<div class="form-group mt-4">]
                     l_cHtml += [<label class="control-label" for="]+l_cObjectName+[">Time Zone</label>]
 
-                    l_cHtml += [<select name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity ms-2 InputField" style="width:600px">]
+                    l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="]+l_cObjectName+[" id="]+l_cObjectName+[" class="SelectEntity ms-2" style="width:600px">]
                         if l_iFk_TimeZone == 0
                             oFcgi:p_cjQueryScript += [$("#]+l_cObjectName+[").select2('val','0');]  // trick to not have a blank option bar.
                         else
@@ -281,8 +281,6 @@ l_cHtml += [<div class="row justify-content-center">]
 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
-
-        oFcgi:p_cjQueryScript += [ $(".InputField").change(() => { $('#ButtonSave').addClass('btn-warning').removeClass('btn-primary');}); ]
 
     l_cHtml += [</form>]
 

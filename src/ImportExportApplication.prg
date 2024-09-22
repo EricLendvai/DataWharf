@@ -1097,7 +1097,7 @@ local l_oDB_ApplicationInfo  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cFilePathPID
 local l_cFilePathUser
 local l_iKey
-local l_cLinkUID
+local l_cUID
 local l_cFileName
 local l_oInfo
 
@@ -1461,7 +1461,7 @@ if l_lContinue
     with object l_oDB_ListOfFileStream
         :Table("2abb88ca-7317-484b-8fbf-df596fd15403","volatile.FileStream","FileStream")
         :Column("FileStream.pk"     ,"pk")
-        :Column("FileStream.LinkUID","LinkUID")
+        :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"        , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Application = ^" , par_iApplicationPk)
         :Where("FileStream.type = 1")
@@ -1472,7 +1472,7 @@ if l_lContinue
             l_iKey := 0
         case :Tally == 1
             l_iKey     := ListOfFileStream->pk
-            l_cLinkUID := ListOfFileStream->LinkUID
+            l_cUID := ListOfFileStream->UID
             if !l_oDB_FileStream:SaveFile("456e02d9-c305-4504-a391-7692c51f0ec0","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
                 l_cFilePathUser := GetStreamFileFolderForCurrentUser()
                 hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
@@ -1492,12 +1492,12 @@ if l_lContinue
             endif
 
             with object l_oDB_FileStream
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                 :Table("197496b6-14c0-42aa-b7af-7b05f7c77187","volatile.FileStream","FileStream")
                 :Field("fk_User"        , oFCgi:p_iUserPk)
                 :Field("fk_Application" , par_iApplicationPk)
                 :Field("type"           , 1)
-                :Field("LinkUID"        , l_cLinkUID)
+                :Field("UID"        , l_cUID)
                 :Field("FileName"       , l_cFileName)
                 if :Add()
                     l_iKey := :Key()
@@ -1518,11 +1518,11 @@ endif
 
 if l_iKey == 0
     //Report error
-    l_cLinkUID    := ""
+    l_cUID    := ""
     l_cBackupCode := "Export Failed"
 endif
 
-return l_cLinkUID
+return l_cUID
 //=================================================================================================================
 function DataDictionaryImportStep1FormBuild(par_iApplicationPk,par_cErrorText)
 
@@ -2838,7 +2838,7 @@ local l_oDB_TableInfo        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cFilePathPID
 local l_cFilePathUser
 local l_iKey
-local l_cLinkUID
+local l_cUID
 local l_cFileName
 local l_oInfo
 
@@ -3039,7 +3039,7 @@ if l_lContinue
     with object l_oDB_ListOfFileStream
         :Table("299a129d-dab1-4dad-0002-000000000200","volatile.FileStream","FileStream")
         :Column("FileStream.pk"     ,"pk")
-        :Column("FileStream.LinkUID","LinkUID")
+        :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"  , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Table = ^" , par_iTablePk)
         :Where("FileStream.type = 5")
@@ -3050,7 +3050,7 @@ if l_lContinue
             l_iKey := 0
         case :Tally == 1
             l_iKey     := ListOfFileStream->pk
-            l_cLinkUID := ListOfFileStream->LinkUID
+            l_cUID := ListOfFileStream->UID
             if !l_oDB_FileStream:SaveFile("299a129d-dab1-4dad-0002-000000000201","volatile.FileStream",l_iKey,"oid",l_cFilePathPID+"Export.zip")
                 l_cFilePathUser := GetStreamFileFolderForCurrentUser()
                 hb_vfMoveFile(l_cFilePathPID+"Export.zip",l_cFilePathUser+"Export"+trans(l_iKey)+".zip")
@@ -3070,12 +3070,12 @@ if l_lContinue
             endif
 
             with object l_oDB_FileStream
-                l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                 :Table("299a129d-dab1-4dad-0002-000000000203","volatile.FileStream","FileStream")
                 :Field("fk_User"        , oFCgi:p_iUserPk)
                 :Field("fk_Table"       , par_iTablePk)
                 :Field("type"           , 5)
-                :Field("LinkUID"        , l_cLinkUID)
+                :Field("UID"        , l_cUID)
                 :Field("FileName"       , l_cFileName)
                 if :Add()
                     l_iKey := :Key()
@@ -3096,11 +3096,11 @@ endif
 
 if l_iKey == 0
     //Report error
-    l_cLinkUID    := ""
+    l_cUID    := ""
     l_cBackupCode := "Export Failed"
 endif
 
-return l_cLinkUID
+return l_cUID
 //=================================================================================================================
 
 

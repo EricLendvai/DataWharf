@@ -17,12 +17,12 @@ with object l_oDB_ListOfProjects
     :Table("493f214c-aa5a-4d63-a465-9d5a4adeaa48","Project")
     :Column("Project.pk"         ,"pk")
     :Column("Project.Name"       ,"Project_Name")
-    :Column("Project.LinkUID"    ,"Project_LinkUID")
+    :Column("Project.UID"    ,"Project_UID")
     :Column("Project.UseStatus"  ,"Project_UseStatus")
     :Column("Project.Description","Project_Description")
     :Column("Upper(Project.Name)","tag1")
     if !empty(l_cProjectId)
-        :Where("Project.LinkUID = ^", l_cProjectId)
+        :Where("Project.UID = ^", l_cProjectId)
     endif
     :OrderBy("tag1")
 
@@ -43,7 +43,7 @@ else
     select ListOfProjects
     scan all
         hb_HClear(l_hProjectInfo)
-        l_hProjectInfo["id"]  := ListOfProjects->Project_LinkUID
+        l_hProjectInfo["id"]  := ListOfProjects->Project_UID
         l_hProjectInfo["name"] := ListOfProjects->Project_Name
 
         AAdd(l_aListOfProjects,hb_hClone(l_hProjectInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
@@ -95,19 +95,19 @@ with object l_oDB_ListOfEntities
     :Table("9C052CE0-BD88-49B4-B5BD-A85C5A89B549","Entity")
     :Column("Entity.pk"         ,"pk")
     :Column("Entity.Name"       ,"Entity_Name")
-    :Column("Entity.LinkUID"    ,"Entity_LinkUID")
+    :Column("Entity.UID"    ,"Entity_UID")
     :Column("Entity.Information","Entity_Information")
     :Column("Entity.Description","Entity_Description")
-    :Column("Package.LinkUID"    ,"Package_LinkUID")
-    :Column("Model.LinkUID"    ,"Model_LinkUID")
+    :Column("Package.UID"    ,"Package_UID")
+    :Column("Model.UID"    ,"Model_UID")
     :Column("Upper(Entity.Name)","tag1")
     :Join("left outer","Package","","Entity.fk_Package = Package.pk")
     :Join("inner","Model","","Entity.fk_Model = Model.pk")
     if !empty(l_cEntityId)
-        :Where("Entity.LinkUID = ^", l_cEntityId)
+        :Where("Entity.UID = ^", l_cEntityId)
     else
         if !empty(l_cModelId)
-            :Where("Model.LinkUID = ^", l_cModelId)
+            :Where("Model.UID = ^", l_cModelId)
         endif
     endif
     :OrderBy("tag1")
@@ -139,7 +139,7 @@ with object l_oDB_ListOfEntitiesAndAttributes
     // :Where("Attribute.fk_Attribute IS NULL")
     :Where("Attribute.fk_Attribute = 0")
     if !empty(l_cEntityId)
-        :Where("Entity.LinkUID = ^", l_cEntityId)
+        :Where("Entity.UID = ^", l_cEntityId)
     endif
     :OrderBy("Entity_pk")
     :OrderBy("tag1")
@@ -149,11 +149,11 @@ endwith
 with object l_oDB_ListOfEntitiesAndLinkedEntitiesFrom
     :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
     :Column("Entity.pk"                     ,"Entity_pk")
-    :Column("EntityFrom.LinkUID"            ,"LinkedEntityFrom_LinkUID")
+    :Column("EntityFrom.UID"            ,"LinkedEntityFrom_UID")
     :Join("left outer","LinkedEntity","LinkedEntityFrom","LinkedEntityFrom.fk_Entity2 = Entity.pk")
     :Join("inner","Entity","EntityFrom","LinkedEntityFrom.fk_Entity1 = EntityFrom.pk")
     if !empty(l_cEntityId)
-        :Where("Entity.LinkUID = ^", l_cEntityId)
+        :Where("Entity.UID = ^", l_cEntityId)
     endif
     :OrderBy("Entity_pk")
     :SQL("ListOfEntitiesAndLinkedEntitiesFrom")
@@ -162,11 +162,11 @@ endwith
 with object l_oDB_ListOfEntitiesAndLinkedEntitiesTo
     :Table("D35B5F3B-DA5A-40C2-8CDF-C4CB323F01FC","Entity")
     :Column("Entity.pk"                     ,"Entity_pk")
-    :Column("EntityTo.LinkUID"        ,"LinkedEntityTo_LinkUID")
+    :Column("EntityTo.UID"        ,"LinkedEntityTo_UID")
     :Join("left outer","LinkedEntity","LinkedEntityTo","LinkedEntityTo.fk_Entity1 = Entity.pk")
     :Join("inner","Entity","EntityTo","LinkedEntityTo.fk_Entity2 = EntityTo.pk")
     if !empty(l_cEntityId)
-        :Where("Entity.LinkUID = ^", l_cEntityId)
+        :Where("Entity.UID = ^", l_cEntityId)
     endif
     :OrderBy("Entity_pk")
     :SQL("ListOfEntitiesAndLinkedEntitiesTo")
@@ -206,7 +206,7 @@ else
         endscan
 
         hb_HClear(l_hEntityInfo)
-        l_hEntityInfo["id"]          := ListOfEntities->Entity_LinkUID
+        l_hEntityInfo["id"]          := ListOfEntities->Entity_UID
         l_hEntityInfo["name"]        := ListOfEntities->Entity_Name
         if !empty(ListOfEntities->Entity_Description)
             l_hEntityInfo["description"] := ListOfEntities->Entity_Description
@@ -214,23 +214,23 @@ else
         if !empty(ListOfEntities->Entity_Information)
             l_hEntityInfo["information"] := ListOfEntities->Entity_Information
         endif
-        if !empty(ListOfEntities->Package_LinkUID)
-            l_hEntityInfo["package"]  := ListOfEntities->Package_LinkUID
+        if !empty(ListOfEntities->Package_UID)
+            l_hEntityInfo["package"]  := ListOfEntities->Package_UID
         endif
-        l_hEntityInfo["model"]  := ListOfEntities->Model_LinkUID
+        l_hEntityInfo["model"]  := ListOfEntities->Model_UID
         l_hEntityInfo["properties"]  := l_aListOfAttributes
 
         l_aListOfLinkedEntitiesFrom := {}
         select ListOfEntitiesAndLinkedEntitiesFrom
         scan all for ListOfEntitiesAndLinkedEntitiesFrom->Entity_pk == ListOfEntities->pk
-            AAdd(l_aListOfLinkedEntitiesFrom, ListOfEntitiesAndLinkedEntitiesFrom->LinkedEntityFrom_LinkUID)
+            AAdd(l_aListOfLinkedEntitiesFrom, ListOfEntitiesAndLinkedEntitiesFrom->LinkedEntityFrom_UID)
         endscan
         l_hEntityInfo["aspectFrom"]  := l_aListOfLinkedEntitiesFrom
 
         l_aListOfLinkedEntitiesTo := {}
         select ListOfEntitiesAndLinkedEntitiesTo
         scan all for ListOfEntitiesAndLinkedEntitiesTo->Entity_pk == ListOfEntities->pk
-            AAdd(l_aListOfLinkedEntitiesTo, ListOfEntitiesAndLinkedEntitiesTo->LinkedEntityTo_LinkUID)
+            AAdd(l_aListOfLinkedEntitiesTo, ListOfEntitiesAndLinkedEntitiesTo->LinkedEntityTo_UID)
         endscan
         l_hEntityInfo["aspectsTo"]  := l_aListOfLinkedEntitiesTo
         //add attributes as inner array:
@@ -285,19 +285,19 @@ local l_aListOfLinkedModels := {}
 local l_hModelInfo    := {=>}
 
 //_M_ Refactor to check API Token Access
-//_M_ using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+//_M_ using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 
 with object l_oDB_ListOfModels
     :Table("d498c464-b815-43eb-8649-5b609219fdba","Model")
     :Column("Model.pk"         ,"pk")
     :Column("Model.Name"       ,"Model_Name")
-    :Column("Model.LinkUID"    ,"Model_LinkUID")
+    :Column("Model.UID"    ,"Model_UID")
     :Column("Model.Stage"  ,"Model_Stage")
     :Column("Model.Description","Model_Description")
     :Column("Upper(Model.Name)","tag1")        
     :OrderBy("tag1")
     if !empty(l_cModelId)
-        :Where("Model.LinkUID = ^", l_cModelId)
+        :Where("Model.UID = ^", l_cModelId)
     endif
 
     //_M_ Add access right restrictions
@@ -313,11 +313,11 @@ endwith
 with object l_oDB_ListOfLinkedModels
     :Table("9D52E5F1-CB6B-44D3-B871-E67ECAC4B5B3","Model")
     :Column("Model.pk"                  ,"pk")
-    :Column("LinkedModelTo.LinkUID"     ,"LinkedModelTo_LinkUID")
+    :Column("LinkedModelTo.UID"     ,"LinkedModelTo_UID")
     :Join("inner","LinkedModel","","LinkedModel.fk_Model1 = Model.pk")
     :Join("inner","Model","LinkedModelTo","LinkedModelTo.pk = LinkedModel.fk_Model2")
     if !empty(l_cModelId)
-        :Where("Model.LinkUID = ^", l_cModelId)
+        :Where("Model.UID = ^", l_cModelId)
     endif
     :SQL("ListOfLinkedModels")
 endwith
@@ -329,7 +329,7 @@ else
     select ListOfModels
     scan all
         hb_HClear(l_hModelInfo)
-        l_hModelInfo["id"]    := ListOfModels->Model_LinkUID
+        l_hModelInfo["id"]    := ListOfModels->Model_UID
         l_hModelInfo["name"]  := ListOfModels->Model_Name
         l_hModelInfo["stage"] := ListOfModels->Model_Stage
         if !empty(ListOfModels->Model_Description)
@@ -338,7 +338,7 @@ else
         l_aListOfLinkedModels = {}
         select ListOfLinkedModels
         scan all for ListOfLinkedModels->pk == ListOfModels->pk
-            AAdd(l_aListOfLinkedModels, ListOfLinkedModels->LinkedModelTo_LinkUID)   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
+            AAdd(l_aListOfLinkedModels, ListOfLinkedModels->LinkedModelTo_UID)   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
         endscan
         l_hModelInfo["linkedModels"] = l_aListOfLinkedModels
         AAdd(l_aListOfModels,hb_hClone(l_hModelInfo))
@@ -376,26 +376,26 @@ local l_hPackageInfo    := {=>}
 local l_cModelId        := oFcgi:GetQueryString("model")
 
 //_M_ Refactor to check API Token Access
-//_M_ ?? using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+//_M_ ?? using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 
 
 with object l_oDB1
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","Package")
     :Column("Package.pk"         ,"pk")
     :Column("Package.Name"       ,"Package_Name")
-    :Column("Package.LinkUID"    ,"Package_LinkUID")
+    :Column("Package.UID"    ,"Package_UID")
     :Column("Package.fk_Package" ,"Package_Parent")
     :Column("Package.fk_Model"   ,"Package_Model")
-    :Column("parent.LinkUID"     ,"ParentPackage_LinkUID")
-    :Column("Model.LinkUID"      ,"Model_LinkUID")
+    :Column("parent.UID"     ,"ParentPackage_UID")
+    :Column("Model.UID"      ,"Model_UID")
     //:Column("Package.Description","Package_Description")
     :Join("left outer","Package","parent","Package.fk_Package = parent.pk")
     :Join("inner","Model","","Package.fk_Model = Model.pk")
     if !empty(l_cPackageId)
-        :Where("Package.LinkUID = ^", l_cPackageId)
+        :Where("Package.UID = ^", l_cPackageId)
     else
         if !empty(l_cModelId)
-            :Where("Model.LinkUID = ^", l_cModelId)
+            :Where("Model.UID = ^", l_cModelId)
         endif
     endif
     :Column("Upper(Package.Name)","tag1")
@@ -418,12 +418,12 @@ else
     select ListOfPackages
     scan all
         hb_HClear(l_hPackageInfo)
-        l_hPackageInfo["id"]  := ListOfPackages->Package_LinkUID
+        l_hPackageInfo["id"]  := ListOfPackages->Package_UID
         l_hPackageInfo["name"] := ListOfPackages->Package_Name
-        if !empty(ListOfPackages->ParentPackage_LinkUID)
-            l_hPackageInfo["parentPackage"] := ListOfPackages->ParentPackage_LinkUID
+        if !empty(ListOfPackages->ParentPackage_UID)
+            l_hPackageInfo["parentPackage"] := ListOfPackages->ParentPackage_UID
         endif
-        l_hPackageInfo["model"] := ListOfPackages->Model_LinkUID
+        l_hPackageInfo["model"] := ListOfPackages->Model_UID
         //l_hPackageInfo["description"] := ListOfPackages->Package_Description
 
         AAdd(l_aListOfPackages,hb_hClone(l_hPackageInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
@@ -466,25 +466,25 @@ local l_hAssociationEndsInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
 
 //_M_ Refactor to check API Token Access
-//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 
 with object l_oDB_ListOfAssociations
     :Table("9909c890-9078-419e-a6a8-71c778cea5f6","Association")
     :Column("Association.pk"         ,"pk")
     :Column("Association.Name"       ,"Association_Name")
-    :Column("Association.LinkUID"    ,"Association_LinkUID")
+    :Column("Association.UID"    ,"Association_UID")
     :Column("Association.Description"       ,"Association_Description")
     :Column("Association.fk_Model"  ,"Association_Model")
-    :Column("Package.LinkUID"  ,"Package_LinkUID")
-    :Column("Model.LinkUID"  ,"Model_LinkUID")
+    :Column("Package.UID"  ,"Package_UID")
+    :Column("Model.UID"  ,"Model_UID")
     //:Column("Association.Description","Association_Description")
     :Join("left outer","Package","","Association.fk_Package = Package.pk")
     :Join("inner","Model","","Association.fk_Model = Model.pk")
     if !empty(l_cAssociationId)
-        :Where("Association.LinkUID = ^", l_cAssociationId)
+        :Where("Association.UID = ^", l_cAssociationId)
     else
         if !empty(l_cModelId)
-            :Where("Model.LinkUID = ^", l_cModelId)
+            :Where("Model.UID = ^", l_cModelId)
         endif
     endif
     :Column("Upper(Association.Name)","tag1")
@@ -510,7 +510,7 @@ if l_nNumberOfAssociations >= 0
         :Column("Endpoint.Description"   ,"Endpoint_Description")
         :Column("Endpoint.BoundLower"    ,"Endpoint_BoundLower")
         :Column("Endpoint.BoundUpper"    ,"Endpoint_BoundUpper")
-        :Column("Entity.LinkUID","Entity_LinkUID")
+        :Column("Entity.UID","Entity_UID")
         :Join("inner","Endpoint","","Endpoint.fk_Association = Association.pk")
         :Join("inner","Entity","","Endpoint.fk_Entity = Entity.pk")
         :OrderBy("Endpoint.pk")
@@ -535,7 +535,7 @@ else
             if !empty(ListOfAssociationsAndEnds->Endpoint_Name)
                 l_hAssociationEndsInfo["name"] := ListOfAssociationsAndEnds->Endpoint_Name
             endif
-            l_hAssociationEndsInfo["type"] := ListOfAssociationsAndEnds->Entity_LinkUID
+            l_hAssociationEndsInfo["type"] := ListOfAssociationsAndEnds->Entity_UID
             if !empty(ListOfAssociationsAndEnds->Endpoint_Description)
                 l_hAssociationEndsInfo["description"] := ListOfAssociationsAndEnds->Endpoint_Description
             endif
@@ -548,15 +548,15 @@ else
             AAdd(l_aListOfAssociationEnds,hb_hClone(l_hAssociationEndsInfo))
         endscan
         hb_HClear(l_hAssociationInfo)
-        l_hAssociationInfo["id"]  := ListOfAssociations->Association_LinkUID
+        l_hAssociationInfo["id"]  := ListOfAssociations->Association_UID
         l_hAssociationInfo["name"] := ListOfAssociations->Association_Name
         if !empty(ListOfAssociations->Association_Description)
             l_hAssociationInfo["description"] := ListOfAssociations->Association_Description
         endif
-        if !empty(ListOfAssociations->Package_LinkUID)
-            l_hAssociationInfo["package"] := ListOfAssociations->Package_LinkUID
+        if !empty(ListOfAssociations->Package_UID)
+            l_hAssociationInfo["package"] := ListOfAssociations->Package_UID
         endif
-        l_hAssociationInfo["model"] := ListOfAssociations->Model_LinkUID
+        l_hAssociationInfo["model"] := ListOfAssociations->Model_UID
         l_hAssociationInfo["associationEnds"]  := l_aListOfAssociationEnds
         if !empty(ListOfAssociations->Association_Description)
             l_hAssociationInfo["description"] := ListOfAssociations->Association_Description
@@ -597,23 +597,23 @@ local l_hModelEnumerationInfo    := {=>}
 local l_cModelId         := oFcgi:GetQueryString("model")
 
 //_M_ Refactor to check API Token Access
-//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 
 with object l_oDB_ListOfTopModelEnumerations
     :Table("D1DC2101-984B-4901-BBA7-C7E258B5A23A","ModelEnumeration")
     :Column("ModelEnumeration.pk"         ,"pk")
     :Column("ModelEnumeration.Name"       ,"ModelEnumeration_Name")
-    :Column("ModelEnumeration.LinkUID"    ,"ModelEnumeration_LinkUID")
+    :Column("ModelEnumeration.UID"    ,"ModelEnumeration_UID")
     :Column("ModelEnumeration.Description","ModelEnumeration_Description")
-    :Column("Model.LinkUID"               ,"Model_LinkUID")
+    :Column("Model.UID"               ,"Model_UID")
     //:Column("ModelEnumeration.Description","ModelEnumeration_Description")
     :Join("inner","Model","","ModelEnumeration.fk_Model = Model.pk")
     // :Column("Upper(ModelEnumeration.Name)","tag1")
     if !empty(l_cModelEnumerationId)
-        :Where("ModelEnumeration.LinkUID = ^", l_cModelEnumerationId)
+        :Where("ModelEnumeration.UID = ^", l_cModelEnumerationId)
     else
         if !empty(l_cModelId)
-            :Where("Model.LinkUID = ^", l_cModelId)
+            :Where("Model.UID = ^", l_cModelId)
         endif
     endif
 
@@ -634,12 +634,12 @@ else
     select ListOfTopModelEnumerations
     scan all
         hb_HClear(l_hModelEnumerationInfo)
-        l_hModelEnumerationInfo["id"]  := ListOfTopModelEnumerations->ModelEnumeration_LinkUID
+        l_hModelEnumerationInfo["id"]  := ListOfTopModelEnumerations->ModelEnumeration_UID
         l_hModelEnumerationInfo["name"] := ListOfTopModelEnumerations->ModelEnumeration_Name
         if !empty(ListOfTopModelEnumerations->ModelEnumeration_Description)
             l_hModelEnumerationInfo["description"] := ListOfTopModelEnumerations->ModelEnumeration_Description
         endif
-        l_hModelEnumerationInfo["model"] := ListOfTopModelEnumerations->Model_LinkUID
+        l_hModelEnumerationInfo["model"] := ListOfTopModelEnumerations->Model_UID
         AAdd(l_aListOfModelEnumerations,hb_hClone(l_hModelEnumerationInfo))   //Have to clone the Hash Array since only references would be added to the top array, and thus would be overwritten during next scan loop.
 
     endscan
@@ -676,26 +676,26 @@ local l_cModelId         := oFcgi:GetQueryString("model")
 local l_xSubDataTypes
 
 //_M_ Refactor to check API Token Access
-//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+//_M_ ??using l_cModelId, find out the Project LinkCode and call APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 
 with object l_oDB_ListOfTopDataTypes
     :Table("8c65edb6-c0ab-43f3-a3eb-92f4c04c4b89","DataType")
     :Column("DataType.pk"         ,"pk")
     :Column("DataType.Name"       ,"DataType_Name")
-    :Column("DataType.LinkUID"    ,"DataType_LinkUID")
+    :Column("DataType.UID"    ,"DataType_UID")
     :Column("DataType.Description","DataType_Description")
     :Column("PrimitiveType.Name"  ,"PrimitiveType_Name")
-    :Column("Model.LinkUID"       ,"Model_LinkUID")
+    :Column("Model.UID"       ,"Model_UID")
     :Column("DataType.TreeOrder1" ,"tag1")
     //:Column("DataType.Description","DataType_Description")
     :Join("left outer","PrimitiveType","","DataType.fk_PrimitiveType = PrimitiveType.pk")
     :Join("inner","Model","","DataType.fk_Model = Model.pk")
     // :Column("Upper(DataType.Name)","tag1")
     if !empty(l_cDataTypeId)
-        :Where("DataType.LinkUID = ^", l_cDataTypeId)
+        :Where("DataType.UID = ^", l_cDataTypeId)
     else
         if !empty(l_cModelId)
-            :Where("Model.LinkUID = ^", l_cModelId)
+            :Where("Model.UID = ^", l_cModelId)
         endif
     endif
     :Where("DataType.TreeLevel = 1")
@@ -718,7 +718,7 @@ else
     select ListOfTopDataTypes
     scan all
         hb_HClear(l_hDataTypeInfo)
-        l_hDataTypeInfo["id"]  := ListOfTopDataTypes->DataType_LinkUID
+        l_hDataTypeInfo["id"]  := ListOfTopDataTypes->DataType_UID
         l_hDataTypeInfo["name"] := ListOfTopDataTypes->DataType_Name
         if !empty(ListOfTopDataTypes->DataType_Description)
             l_hDataTypeInfo["description"] := ListOfTopDataTypes->DataType_Description
@@ -726,7 +726,7 @@ else
         if !empty(ListOfTopDataTypes->PrimitiveType_Name)
             l_hDataTypeInfo["primitiveType"] := ListOfTopDataTypes->PrimitiveType_Name
         endif
-        l_hDataTypeInfo["model"] := ListOfTopDataTypes->Model_LinkUID
+        l_hDataTypeInfo["model"] := ListOfTopDataTypes->Model_UID
 
         l_xSubDataTypes := BuildDataTypeInfo(ListOfTopDataTypes->pk)
         if !hb_IsNil(l_xSubDataTypes)

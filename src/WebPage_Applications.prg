@@ -28,7 +28,7 @@ local l_aSQLResult := {}
 local l_cURLAction              := "ListApplications"
 local l_cURLApplicationLinkCode := ""
 local l_cURLVersionCode         := ""
-local l_cLinkUIDDeployment             := ""
+local l_cUIDDeployment             := ""
 local l_cSitePath := oFcgi:p_cSitePath
 
 local l_nAccessLevelDD := 1   // None by default
@@ -62,24 +62,24 @@ oFcgi:TraceAdd("BuildPageApplications")
 
 // Applications/ListDeployments/<ApplicationLinkCode>/
 // Applications/NewDeployment/<ApplicationLinkCode>/
-// Applications/EditDeployment/<ApplicationLinkCode>/<Deployment.LinkUID>
+// Applications/EditDeployment/<ApplicationLinkCode>/<Deployment.UID>
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLApplicationLinkCode := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLApplicationLinkCode := oFcgi:p_aURLPathElements[3]
     endif
 
     if el_IsInlist(l_cURLAction,"EditDeployment")
-        if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-            l_cLinkUIDDeployment := oFcgi:p_URLPathElements[4]
+        if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+            l_cUIDDeployment := oFcgi:p_aURLPathElements[4]
         endif
     endif
 
     // if el_IsInlist(l_cURLAction,"EditVersion")
-    //     if len(oFcgi:p_URLPathElements) >= 4 .and. !empty(oFcgi:p_URLPathElements[4])
-    //         l_cURLVersionCode := oFcgi:p_URLPathElements[4]
+    //     if len(oFcgi:p_aURLPathElements) >= 4 .and. !empty(oFcgi:p_aURLPathElements[4])
+    //         l_cURLVersionCode := oFcgi:p_aURLPathElements[4]
     //     endif
     // endif
 
@@ -260,7 +260,7 @@ case l_cURLAction == "EditDeployment"
         :Column("Deployment.AllowUpdates"       , "Deployment_AllowUpdates")
 
         :Where([Deployment.fk_Application = ^],l_iApplicationPk)
-        :Where([Deployment.LinkUID = ^]       ,l_cLinkUIDDeployment)
+        :Where([Deployment.UID = ^]       ,l_cUIDDeployment)
         l_oData := :SQL()
     endwith
 
@@ -314,7 +314,7 @@ oFcgi:TraceAdd("ApplicationHeaderBuild")
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
 l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Configure Application: ]+par_cApplicationName+[</span></div>]
-l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Applications/">Other Applications</a></div>]
+l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="TopTabs btn btn-primary rounded" href="]+l_cSitePath+[Applications/">Other Applications</a></div>]
 l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
@@ -1210,7 +1210,7 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
     :Table("78ba7e1c-581f-4f3e-b193-a7bf7a8c84e7","Deployment")
     :Column("Deployment.pk"                 ,"pk")
-    :Column("Deployment.LinkUID"            ,"Deployment_LinkUID")
+    :Column("Deployment.UID"            ,"Deployment_UID")
     :Column("Deployment.Name"               ,"Deployment_Name")
     :Column("Deployment.Status"             ,"Deployment_Status")
     :Column("Deployment.Description"        ,"Deployment_Description")
@@ -1308,9 +1308,9 @@ else
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
                             if par_lPersonal
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditMyDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_LinkUID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditMyDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
                             else
-                                l_cHtml += [<a href="]+l_cSitePath+[Applications/EditDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_LinkUID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
+                                l_cHtml += [<a href="]+l_cSitePath+[Applications/EditDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
                             endif
                         l_cHtml += [</td>]
 
@@ -1616,7 +1616,7 @@ local l_cDeploymentPasswordConfigKey
 local l_cDeploymentPasswordEnvVarName
 local l_lDeploymentAllowUpdates
 
-local l_cLinkUID
+local l_cUID
 
 local l_cErrorMessage := ""
 local l_hValues := {=>}
@@ -1707,9 +1707,9 @@ case l_cActionOnSubmit == "Save"
                     endif
 
                     if empty(l_iDeploymentPk)
-                        l_cLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                        l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                         :Field("Deployment.fk_Application" , par_iApplicationPk)
-                        :Field("Deployment.LinkUID"        , l_cLinkUID)
+                        :Field("Deployment.UID"        , l_cUID)
                         if par_lPersonal
                             :Field("Deployment.fk_User" , oFcgi:p_iUserPk)
                         endif
@@ -1817,13 +1817,13 @@ otherwise
     endif
     with object l_oDB1
         :Table("858553f2-260a-4306-88c7-e8e4ce3c68f2","Deployment")
-        :Column("Deployment.LinkUID" , "Deployment_LinkUID")
+        :Column("Deployment.UID" , "Deployment_UID")
         l_oData := :Get(l_iDeploymentPk)
         if :Tally == 1
             if par_lPersonal
-                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditMyDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_LinkUID)+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditMyDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_UID)+"/")
             else
-                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/EditDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_LinkUID)+"/")
+                oFcgi:Redirect(oFcgi:p_cSitePath+"Applications/EditDeployment/"+par_cURLApplicationLinkCode+"/"+alltrim(l_oData:Deployment_UID)+"/")
             endif
         else
             if par_lPersonal

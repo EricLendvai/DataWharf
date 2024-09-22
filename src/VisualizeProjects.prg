@@ -48,7 +48,7 @@ local l_iCanvasWidth
 local l_iCanvasHeight
 local l_lNavigationControl
 local l_lNeverShowDescriptionOnHover
-local l_cModelingDiagram_LinkUID
+local l_cModelingDiagram_UID
 local l_cURL
 local l_cProtocol
 local l_nPort
@@ -192,7 +192,7 @@ with object l_oDB1
     :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
     :Column("ModelingDiagram.NodeMinHeight"         ,"ModelingDiagram_NodeMinHeight")
     :Column("ModelingDiagram.NodeMaxWidth"          ,"ModelingDiagram_NodeMaxWidth")
-    :Column("ModelingDiagram.LinkUID"               ,"ModelingDiagram_LinkUID")
+    :Column("ModelingDiagram.UID"               ,"ModelingDiagram_UID")
     l_oDataModelingDiagram     := :Get(l_iModelingDiagramPk)
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
@@ -200,7 +200,7 @@ with object l_oDB1
     l_lAssociationEndShowName  := l_oDataModelingDiagram:ModelingDiagram_AssociationEndShowName
     l_nNodeMinHeight           := l_oDataModelingDiagram:ModelingDiagram_NodeMinHeight
     l_nNodeMaxWidth            := l_oDataModelingDiagram:ModelingDiagram_NodeMaxWidth
-    l_cModelingDiagram_LinkUID := l_oDataModelingDiagram:ModelingDiagram_LinkUID
+    l_cModelingDiagram_UID := l_oDataModelingDiagram:ModelingDiagram_UID
 endwith
 
 with object l_oDB_ListOfEntities
@@ -470,7 +470,7 @@ l_cHtml += [<input type="hidden" id="TextNodePositions" name="TextNodePositions"
 l_cHtml += [<input type="hidden" id="TextModelingDiagramPk" name="TextModelingDiagramPk" value="]+Trans(l_iModelingDiagramPk)+[">]
 
 //---------------------------------------------------------------------------
-//Get the current URL and add a reference to the current modeling diagram LinkUID
+//Get the current URL and add a reference to the current modeling diagram UID
 l_cProtocol := oFcgi:RequestSettings["Protocol"]
 l_nPort     := oFcgi:RequestSettings["Port"]
 l_cURL := l_cProtocol+"://"+oFcgi:RequestSettings["Host"]
@@ -478,9 +478,9 @@ if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .a
     l_cURL += ":"+Trans(l_nPort)
 endif
 l_cURL += oFcgi:p_cSitePath
-// l_cURL += [Modeling/Visualize/]+par_cModelLinkUID+[/]
+// l_cURL += [Modeling/Visualize/]+par_cModelUID+[/]
 l_cURL += oFcgi:RequestSettings["Path"]
-l_cURL += [?InitialDiagram=]+l_cModelingDiagram_LinkUID
+l_cURL += [?InitialDiagram=]+l_cModelingDiagram_UID
 //---------------------------------------------------------------------------
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -538,7 +538,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
         l_cHtml += [ - Association Nodes: ]+trans(l_nNumberOfAssociationNodes)
         l_cHtml += [ - Links: ]+trans(int(l_nNumberOfLinksInDiagram))
         // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
-        // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
+        // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_UID
         
         l_cHtml += [</span>]
         //---------------------------------------------------------------------------
@@ -1088,7 +1088,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
             //Add an initial Diagram File this should not happen, since record was already added
             :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
             :Field("ModelingDiagram.Name"    ,[All ]+oFcgi:p_ANFEntities)
-            :Field("ModelingDiagram.LinkUID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+            :Field("ModelingDiagram.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iModelingDiagramPk := :Key()
             endif
@@ -1551,7 +1551,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
                 :Field("ModelingDiagram.UseStatus"     ,USESTATUS_UNKNOWN)
                 :Field("ModelingDiagram.DocStatus"     ,DOCTATUS_MISSING)
-                :Field("ModelingDiagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iModelingDiagramPk := :Key()
                 else
@@ -1669,7 +1669,7 @@ case l_cActionOnSubmit == "Delete"
         l_oDB2:Delete("739927f0-d2cf-4ae2-99ae-88df9aa72fe2","ModelingDiagram",l_iModelingDiagramPk)
     endwith
     
-    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/Visualize/"+par_oDataHeader:Model_LinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/Visualize/"+par_oDataHeader:Model_UID+"/")
 
 case l_cActionOnSubmit == "ResetLayout"
     with object l_oDB1
@@ -1808,7 +1808,7 @@ case l_cActionOnSubmit == "DuplicateDiagram"
 
                 :Table("946aadba-5312-451a-bd00-282cba8f75e8","ModelingDiagram")
                 :Field("ModelingDiagram.fk_Model"               ,par_oDataHeader:Model_pk)
-                :Field("ModelingDiagram.LinkUID"                ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.UID"                ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("ModelingDiagram.Name"                   ,l_cModelingDiagram_Name)
                 :Field("ModelingDiagram.NodeShowDescription"    ,l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription)
                 :Field("ModelingDiagram.VisPos"                 ,l_oDataModelingDiagram:ModelingDiagram_VisPos)
@@ -2212,7 +2212,7 @@ local l_oDB_EntityCustomFields
 local l_oDB_UserAccessProject
 local l_aSQLResult := {}
 local l_cSitePath := oFcgi:p_cSitePath
-local l_cEntityLinkUID
+local l_cEntityUID
 local l_cPackageFullName
 
 local l_cEntityName
@@ -2329,7 +2329,7 @@ if len(l_aNodes) == 1
             :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
             :Column("DataType.FullName"        ,"DataType_FullName")
             :Column("Attribute.TreeOrder1"     ,"Attribute_TreeOrder1")
-            :Column("Attribute.LinkUID"        ,"Attribute_LinkUID")
+            :Column("Attribute.UID"        ,"Attribute_UID")
             :Column("Attribute.Name"           ,"Attribute_Name")
             :Column("Attribute.UseStatus"      ,"Attribute_UseStatus")
             :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
@@ -2347,7 +2347,7 @@ if len(l_aNodes) == 1
             :Table("6205145d-e049-434f-8fbe-8b900873e196","DiagramEntity")
             :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
             :Column("ModelingDiagram.Name"       ,"ModelingDiagram_Name")
-            :Column("ModelingDiagram.LinkUID"    ,"ModelingDiagram_LinkUID")
+            :Column("ModelingDiagram.UID"    ,"ModelingDiagram_UID")
             :Column("upper(ModelingDiagram.Name)","tag1")
             :Join("inner","ModelingDiagram","","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
             :Where("DiagramEntity.fk_Entity = ^",l_iEntityPk)
@@ -2462,7 +2462,7 @@ if len(l_aNodes) == 1
         l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB_InArray
             :Table("eaca66a4-e311-4e3e-a3c4-8ee000f15df4","Entity")
-            :Column("Entity.LinkUID"       ,"Entity_LinkUID")         // 1
+            :Column("Entity.UID"       ,"Entity_UID")         // 1
             :Column("Package.FullName"     ,"Package_FullName")       // 2
             :Column("Entity.Name"          ,"Entity_Name")            // 3
             :Column("Entity.Description"   ,"Entity_Description")     // 4
@@ -2476,7 +2476,7 @@ if len(l_aNodes) == 1
         endwith
 
         if l_oDB_InArray:Tally == 1
-            l_cEntityLinkUID        := alltrim(l_aSQLResult[1,1])
+            l_cEntityUID        := alltrim(l_aSQLResult[1,1])
             l_cPackageFullName      := nvl(l_aSQLResult[1,2],"")
             l_cEntityName           := l_aSQLResult[1,3]
             l_cEntityDescription    := nvl(l_aSQLResult[1,4],"")
@@ -2515,7 +2515,7 @@ if len(l_aNodes) == 1
 
                 l_cHtml += [<div class="input-group">]
                     l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFEntity+[: ]+l_cZoomInfo+;
-                                   [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditEntity/]+l_cEntityLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]
+                                   [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditEntity/]+l_cEntityUID+[/"><i class="bi bi-pencil-square"></i></a>]
                                     if !empty(l_cUseStatus)
                                         l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
                                     endif
@@ -2622,7 +2622,7 @@ if len(l_aNodes) == 1
 
                                     // Name
                                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_LinkUID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
+                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_UID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
                                     l_cHtml += [</td>]
 
                                     // Data Type
@@ -2734,7 +2734,7 @@ if len(l_aNodes) == 1
                 else
                     select ListOfOtherModelingDiagram
                     scan all
-                        l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherModelingDiagram->ModelingDiagram_LinkUID+[" onclick="$('#TextModelingDiagramPk').val(]+Trans(ListOfOtherModelingDiagram->ModelingDiagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherModelingDiagram->ModelingDiagram_Name+[</a></div>]
+                        l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherModelingDiagram->ModelingDiagram_UID+[" onclick="$('#TextModelingDiagramPk').val(]+Trans(ListOfOtherModelingDiagram->ModelingDiagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherModelingDiagram->ModelingDiagram_Name+[</a></div>]
                     endscan
                 endif
             l_cHtml += [</div>]
@@ -2867,7 +2867,7 @@ static function GetMLInfoDuringVisualization_AssociationInfo(par_iAssociationPk,
 local l_cHtml := []
 local l_nNumberOfEndpoints
 
-local l_cAssociationLinkUID
+local l_cAssociationUID
 local l_cAssociationName
 local l_cAssociationDescription
 local l_nAssociationNumberOfEndpoints
@@ -2960,7 +2960,7 @@ endwith
 l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB_InArray
     :Table("82763b38-3f40-43f2-aa32-72939f867a95","Association")
-    :Column("Association.LinkUID"           ,"Association_LinkUID")             // 1
+    :Column("Association.UID"           ,"Association_UID")             // 1
     :Column("Package.FullName"              ,"Package_FullName")                // 2
     :Column("Association.Name"              ,"Association_Name")                // 3
     :Column("Association.Description"       ,"Association_Description")         // 4
@@ -2974,7 +2974,7 @@ with object l_oDB_InArray
 endwith
 
 if l_oDB_InArray:Tally == 1
-    l_cAssociationLinkUID           := alltrim(l_aSQLResult[1,1])
+    l_cAssociationUID           := alltrim(l_aSQLResult[1,1])
     l_cPackageFullName              := nvl(l_aSQLResult[1,2],"")
     l_cAssociationName              := nvl(l_aSQLResult[1,3],"")
     l_cAssociationDescription       := nvl(l_aSQLResult[1,4],"")
@@ -3013,7 +3013,7 @@ if l_oDB_InArray:Tally == 1
 
         l_cHtml += [<div class="input-group">]
             l_cHtml += [<span class="navbar-brand ms-3">]+oFcgi:p_ANFAssociation+[: ]+l_cZoomInfo+;
-                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditAssociation/]+l_cAssociationLinkUID+[/"><i class="bi bi-pencil-square"></i></a>]
+                            [<a class="ms-3" target="_blank" href="]+l_cSitePath+[Modeling/EditAssociation/]+l_cAssociationUID+[/"><i class="bi bi-pencil-square"></i></a>]
                             if !empty(l_cUseStatus)
                                 l_cHtml += [<span class="ms-3 fs-6">]+l_cUseStatus+[</span>]
                             endif

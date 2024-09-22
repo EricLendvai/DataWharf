@@ -42,7 +42,7 @@ local l_iCanvasHeight
 local l_lNavigationControl
 local l_lUnknownInGray
 local l_lNeverShowDescriptionOnHover
-local l_cDiagram_LinkUID
+local l_cDiagram_UID
 local l_cURL
 local l_cProtocol
 local l_nPort
@@ -180,7 +180,7 @@ with object l_oDB1
     :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
     :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
     :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
-    :Column("Diagram.LinkUID"            ,"Diagram_LinkUID")
+    :Column("Diagram.UID"            ,"Diagram_UID")
     l_oDataDiagram := :Get(l_iDiagramPk)
 
     l_nRenderMode          := max(1,l_oDataDiagram:Diagram_RenderMode)
@@ -193,7 +193,7 @@ with object l_oDB1
     l_lNodeShowDescription := l_oDataDiagram:Diagram_NodeShowDescription
     l_nNodeMinHeight       := l_oDataDiagram:Diagram_NodeMinHeight
     l_nNodeMaxWidth        := l_oDataDiagram:Diagram_NodeMaxWidth
-    l_cDiagram_LinkUID     := l_oDataDiagram:Diagram_LinkUID
+    l_cDiagram_UID     := l_oDataDiagram:Diagram_UID
 
 endwith
 
@@ -351,7 +351,7 @@ l_cHtml += [<input type="hidden" id="TextNodePositions" name="TextNodePositions"
 l_cHtml += [<input type="hidden" id="TextDiagramPk" name="TextDiagramPk" value="]+Trans(l_iDiagramPk)+[">]
 
 //---------------------------------------------------------------------------
-//Get the current URL and add a reference to the current diagram LinkUID
+//Get the current URL and add a reference to the current diagram UID
 l_cProtocol := oFcgi:RequestSettings["Protocol"]
 l_nPort     := oFcgi:RequestSettings["Port"]
 l_cURL := l_cProtocol+"://"+oFcgi:RequestSettings["Host"]
@@ -360,7 +360,7 @@ if !((l_cProtocol == "http" .and. l_nPort == 80) .or. (l_cProtocol == "https" .a
 endif
 l_cURL += oFcgi:p_cSitePath
 l_cURL += oFcgi:RequestSettings["Path"]
-l_cURL += [?InitialDiagram=]+l_cDiagram_LinkUID
+l_cURL += [?InitialDiagram=]+l_cDiagram_UID
 //---------------------------------------------------------------------------
 
 l_cHtml += [<nav class="navbar navbar-light bg-light">]
@@ -430,7 +430,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
             l_cHtml += [Tables: ]+trans(l_nNumberOfTableInDiagram)
             l_cHtml += [ - Links: ]+trans(l_nNumberOfLinksInDiagram)
             // l_cHtml += [ - DiagramPk: ]+trans(l_iDiagramPk)
-            // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_LinkUID
+            // l_cHtml += [ - DiagramLinkId: ]+l_oDataDiagram:Diagram_UID
             
             l_cHtml += [</span>]
         endif
@@ -908,7 +908,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
             :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
             :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
             :Field("Diagram.RenderMode"    ,RENDERMODE_MXGRAPH)
-            :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+            :Field("Diagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iDiagramPk := :Key()
             endif
@@ -1416,7 +1416,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Field("Diagram.fk_Application",par_iApplicationPk)
                 :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
                 :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
-                :Field("Diagram.LinkUID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Diagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iDiagramPk := :Key()
                 else
@@ -1682,7 +1682,7 @@ case l_cActionOnSubmit == "DuplicateDiagram"
             :Column("Diagram.RenderMode"          ,"Diagram_RenderMode")
             :Column("Diagram.VisPos"              ,"Diagram_VisPos")
             :Column("Diagram.MxgPos"              ,"Diagram_MxgPos")
-            // :Column("Diagram.LinkUID"             ,"Diagram_LinkUID")
+            // :Column("Diagram.UID"             ,"Diagram_UID")
             :Column("Diagram.NodeMaxWidth"        ,"Diagram_NodeMaxWidth")
             :Column("Diagram.NodeMinHeight"       ,"Diagram_NodeMinHeight")
             l_oDataDiagram := :Get(l_iDiagramPk)
@@ -1690,7 +1690,7 @@ case l_cActionOnSubmit == "DuplicateDiagram"
 
                 :Table("5f129adf-af33-4b70-9c1f-3b1a10921b2a","Diagram")
                 :Field("Diagram.fk_Application"      ,par_iApplicationPk)
-                :Field("Diagram.LinkUID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Diagram.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("Diagram.Name"                ,l_cDiagram_Name)
                 :Field("Diagram.UseStatus"           ,l_oDataDiagram:Diagram_UseStatus)
                 :Field("Diagram.DocStatus"           ,l_oDataDiagram:Diagram_DocStatus)
@@ -2217,10 +2217,10 @@ if len(l_aNodes) == 1
         :Column("Application.LinkCode"      ,"Application_LinkCode")
         :Column("Namespace.Name"            ,"Namespace_Name")
         :Column("Namespace.AKA"             ,"Namespace_AKA")
-        :Column("Namespace.LinkUID"         ,"Namespace_LinkUID")
+        :Column("Namespace.UID"         ,"Namespace_UID")
         :Column("Table.Name"                ,"Table_Name")
         :Column("Table.AKA"                 ,"Table_AKA")
-        :Column("Table.LinkUID"             ,"Table_LinkUID")
+        :Column("Table.UID"             ,"Table_UID")
         :Column("Table.Unlogged"            ,"Table_Unlogged")
         :Column("Table.Description"         ,"Table_Description")
         :Column("Table.Information"         ,"Table_Information")
@@ -2243,8 +2243,8 @@ if len(l_aNodes) == 1
         l_cApplicationLinkCode := alltrim(l_oData_Application:Application_LinkCode)
 
         l_cCombinedPath := l_cApplicationLinkCode+[/]+;
-                           PrepareForURLSQLIdentifier("Namespace",l_oData_Application:Namespace_Name,l_oData_Application:Namespace_LinkUID)+[/]+;
-                           PrepareForURLSQLIdentifier("Table"    ,l_oData_Application:Table_Name    ,l_oData_Application:Table_LinkUID)    +[/]
+                           PrepareForURLSQLIdentifier("Namespace",l_oData_Application:Namespace_Name,l_oData_Application:Namespace_UID)+[/]+;
+                           PrepareForURLSQLIdentifier("Table"    ,l_oData_Application:Table_Name    ,l_oData_Application:Table_UID)    +[/]
 
         //Get the applicable l_nAccessLevelDD
         l_iApplicationPk := l_oData_Application:Application_pk
@@ -2284,7 +2284,7 @@ if len(l_aNodes) == 1
             :Column("Column.pk"                  ,"pk")
             :Column("Column.Name"                ,"Column_Name")
             :Column("Column.AKA"                 ,"Column_AKA")
-            :Column("Column.LinkUID"             ,"Column_LinkUID")
+            :Column("Column.UID"             ,"Column_UID")
             :Column("Column.UsedAs"              ,"Column_UsedAs")
             :Column("Column.UsedBy"              ,"Column_UsedBy")
             :Column("Column.UseStatus"           ,"Column_UseStatus")
@@ -2307,14 +2307,14 @@ if len(l_aNodes) == 1
             :Column("Column.TestWarning"         ,"Column_TestWarning")
             :Column("Namespace.Name"             ,"Namespace_Name")
             :Column("Namespace.AKA"              ,"Namespace_AKA")
-            :Column("Namespace.LinkUID"          ,"Namespace_LinkUID")
+            :Column("Namespace.UID"          ,"Namespace_UID")
             :Column("Table.Name"                 ,"Table_Name")
             :Column("Table.AKA"                  ,"Table_AKA")
-            :Column("Table.LinkUID"              ,"Table_LinkUID")
+            :Column("Table.UID"              ,"Table_UID")
             :Column("Enumeration.Pk"             ,"Enumeration_Pk")
             :Column("Enumeration.Name"           ,"Enumeration_Name")
             :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-            :Column("Enumeration.LinkUID"        ,"Enumeration_LinkUID")
+            :Column("Enumeration.UID"        ,"Enumeration_UID")
             :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
             :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
             
@@ -2329,15 +2329,15 @@ if len(l_aNodes) == 1
 
             :Column("ForeignNameSpace.Name"          ,"ForeignNameSpace_Name")
             :Column("ForeignNameSpace.AKA"           ,"ForeignNameSpace_AKA")
-            :Column("ForeignNameSpace.LinkUID"       ,"ForeignNameSpace_LinkUID")
+            :Column("ForeignNameSpace.UID"       ,"ForeignNameSpace_UID")
 
             :Column("ForeignTable.Name"              ,"ForeignTable_Name")
             :Column("ForeignTable.AKA"               ,"ForeignTable_AKA")
-            :Column("ForeignTable.LinkUID"           ,"ForeignTable_LinkUID")
+            :Column("ForeignTable.UID"           ,"ForeignTable_UID")
 
             :Column("EnumerationNamespace.Name"      ,"EnumerationNamespace_Name")
             :Column("EnumerationNamespace.AKA"       ,"EnumerationNamespace_AKA")
-            :Column("EnumerationNamespace.LinkUID"   ,"EnumerationNamespace_LinkUID")
+            :Column("EnumerationNamespace.UID"   ,"EnumerationNamespace_UID")
 
             :Where("Column.fk_Table = ^",l_iTablePk)
             :OrderBy("Column_Order")
@@ -2384,7 +2384,7 @@ if len(l_aNodes) == 1
             :Table("1874ea2e-e91c-4df7-9c98-b3a50664b46e","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("Diagram.UID"    ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("Diagram.fk_Application = ^",l_iApplicationPk)
@@ -2397,7 +2397,7 @@ if len(l_aNodes) == 1
             :Table("144678ca-49af-4e19-84f8-cf52ebac9863","DiagramTable")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.LinkUID"    ,"Diagram_LinkUID")
+            :Column("Diagram.UID"    ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
@@ -2746,7 +2746,7 @@ if len(l_aNodes) == 1
                                 // Name
                                 l_cHtml += [<td class="GridDataControlCells" valign="top">]
                                     l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                                                      PrepareForURLSQLIdentifier("Table",ListOfColumns->Column_Name,ListOfColumns->Column_LinkUID)+[/]+;
+                                                                                                                      PrepareForURLSQLIdentifier("Table",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]+;
                                                                                                                       ["><span class="SpanColumnName">]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</span></a>]
                                 l_cHtml += [</td>]
 
@@ -2785,10 +2785,10 @@ if len(l_aNodes) == 1
                                                                     ListOfColumns->Namespace_Name,;
                                                                     ListOfColumns->EnumerationNamespace_Name,;
                                                                     ListOfColumns->EnumerationNamespace_AKA,;
-                                                                    ListOfColumns->EnumerationNamespace_LinkUID,;
+                                                                    ListOfColumns->EnumerationNamespace_UID,;
                                                                     ListOfColumns->Enumeration_Name,;
                                                                     ListOfColumns->Enumeration_AKA,;
-                                                                    ListOfColumns->Enumeration_LinkUID,;
+                                                                    ListOfColumns->Enumeration_UID,;
                                                                     ListOfColumns->Enumeration_ImplementAs,;
                                                                     ListOfColumns->Enumeration_ImplementLength,;
                                                                     l_cSitePath,;
@@ -2837,8 +2837,8 @@ if len(l_aNodes) == 1
                                     if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
                                         l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
                                                             l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+;
-                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_LinkUID)+"/"+;
-                                                                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_LinkUID)    +[/]+;
+                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
+                                                                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
                                                                                                         [">]
 
                                         if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
@@ -2995,7 +2995,7 @@ if len(l_aNodes) == 1
             else
                 select ListOfOtherDiagrams
                 scan all
-                    l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagrams->Diagram_LinkUID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagrams->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagrams->Diagram_Name+[</a></div>]
+                    l_cHtml += [<div class="mb-2"><a class="link-primary" href="?InitialDiagram=]+ListOfOtherDiagrams->Diagram_UID+[" onclick="$('#TextDiagramPk').val(]+Trans(ListOfOtherDiagrams->Diagram_pk)+[);$('#ActionOnSubmit').val('Show');document.form.submit();">]+ListOfOtherDiagrams->Diagram_Name+[</a></div>]
                 endscan
             endif
         l_cHtml += [</div>]

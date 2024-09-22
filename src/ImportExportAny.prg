@@ -157,7 +157,7 @@ if hb_HHasKey(l_hTableSchema,"public."+par_cTableName)
             //Test if the Field is not discontinued.   See GetColumnsConfiguration
             if hb_Ascan(par_aFieldsToInclude,{|l_cFieldNameInArray| lower(l_cFieldName) == lower(l_cFieldNameInArray)},,,.t.) > 0
 
-                if lower(l_cFieldName) == "linkuid" //Always generate a new uuid for these named fields
+                if lower(l_cFieldName) == "UID" //Always generate a new uuid for these named fields
                     par_oDBImport:FieldValue(par_cTableName+"."+l_cFieldName ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 else
                     l_xValue := (l_nListOfImportData)->(hb_FieldGet(l_cFieldName))

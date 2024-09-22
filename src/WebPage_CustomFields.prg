@@ -23,7 +23,7 @@ local l_hValues := {=>}
 
 local l_aSQLResult := {}
 
-local l_cURLAction              := "ListCustomFields"
+local l_cURLAction          := "ListCustomFields"
 local l_cURLCustomFieldCode := ""
 
 local l_cSitePath := oFcgi:p_cSitePath
@@ -38,11 +38,11 @@ oFcgi:TraceAdd("BuildPageCustomFields")
 // CustomFields/                      Same as CustomFields/ListCustomFields/
 // CustomFields/NewCustomField/
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLCustomFieldCode := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLCustomFieldCode := oFcgi:p_aURLPathElements[3]
     endif
 
 else
@@ -756,7 +756,7 @@ case l_cActionOnSubmit == "Save"
                                     // Remove the Application
                                     with Object l_oDB1
                                         if !:Delete("37ca7d0d-be50-4b44-9182-51ffca0156c9","ApplicationCustomField",ListOfCurrentApplicationForCustomField->ApplicationCustomField_pk)
-                                            l_cErrorMessage := "Failed to Save Application selection."
+                                            l_cErrorMessage := "Failed to delete application setting."
                                             exit
                                         endif
                                     endwith
@@ -868,7 +868,7 @@ case l_cActionOnSubmit == "Delete"   // CustomField
                     l_cErrorMessage := "Related CustomFieldValue record on file"
                 endif
             else
-                l_cErrorMessage := "Related ApplicationCustomField record on file"
+                l_cErrorMessage := "Related ProjectCustomField record on file"
             endif
         else
             l_cErrorMessage := "Related ApplicationCustomField record on file"

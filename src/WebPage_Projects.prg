@@ -25,7 +25,7 @@ local l_cProjectElement := "SETTINGS"  //Default Element
 local l_aSQLResult := {}
 
 local l_cURLAction      := "ListProjects"
-local l_cURLLinkUID     := ""
+local l_cURLUID     := ""
 local l_cURLVersionCode := ""
 
 local l_cSitePath := oFcgi:p_cSitePath
@@ -50,26 +50,26 @@ oFcgi:TraceAdd("BuildPageProjects")
 //Improved and new way:
 // Projects/                      Same as Projects/ListProjects/
 // Projects/NewProject/
-// Projects/ProjectSettings/<ProjectLinkUID>/
-// Projects/ListPrimitiveTypes/<ProjectLinkUID>/
-// Projects/NewPrimitiveType/<ProjectLinkUID>/
-// Projects/EditPrimitiveType/<PrimitiveTypeLinkUID>
+// Projects/ProjectSettings/<ProjectUID>/
+// Projects/ListPrimitiveTypes/<ProjectUID>/
+// Projects/NewPrimitiveType/<ProjectUID>/
+// Projects/EditPrimitiveType/<PrimitiveTypeUID>
 
-if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
-    l_cURLAction := oFcgi:p_URLPathElements[2]
+if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
+    l_cURLAction := oFcgi:p_aURLPathElements[2]
 
-    if len(oFcgi:p_URLPathElements) >= 3 .and. !empty(oFcgi:p_URLPathElements[3])
-        l_cURLLinkUID := oFcgi:p_URLPathElements[3]
+    if len(oFcgi:p_aURLPathElements) >= 3 .and. !empty(oFcgi:p_aURLPathElements[3])
+        l_cURLUID := oFcgi:p_aURLPathElements[3]
     endif
 
     do case
     case el_IsInlist(l_cURLAction,"ProjectSettings","ListPrimitiveTypes","NewPrimitiveType")
         with object l_oDB1
             :Table("a2907501-52d2-43c2-a711-e72dceb91b2b","Project")
-            :Column("Project.LinkUID", "Project_LinkUID")     // Redundant but makes it clearer than to use l_cURLLinkUID
+            :Column("Project.UID", "Project_UID")     // Redundant but makes it clearer than to use l_cURLUID
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
-            :Where("Project.LinkUID = ^" , l_cURLLinkUID)
+            :Where("Project.UID = ^" , l_cURLUID)
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
         endwith
@@ -77,12 +77,12 @@ if len(oFcgi:p_URLPathElements) >= 2 .and. !empty(oFcgi:p_URLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditPrimitiveType")
         with object l_oDB1
             :Table("3cb1f9a9-9324-4f2b-962d-7bcc676ede5d","PrimitiveType")
-            :Column("PrimitiveType.LinkUID" , "PrimitiveType_LinkUID")    // Redundant but makes it clearer than to use l_cURLLinkUID
+            :Column("PrimitiveType.UID" , "PrimitiveType_UID")    // Redundant but makes it clearer than to use l_cURLUID
             :Column("PrimitiveType.pk"      , "PrimitiveType_pk")
-            :Column("Project.LinkUID"       , "Project_LinkUID")
+            :Column("Project.UID"       , "Project_UID")
             :Column("Project.pk"            , "Project_pk")
             :Column("Project.Name"          , "Project_Name")
-            :Where("PrimitiveType.LinkUID = ^" , l_cURLLinkUID)
+            :Where("PrimitiveType.UID = ^" , l_cURLUID)
             :Join("inner","Project","","PrimitiveType.fk_Project = Project.pk")
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
@@ -149,7 +149,7 @@ case l_cURLAction == "NewProject"
 
 case l_cURLAction == "ProjectSettings"
     if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_UID)
         
         if oFcgi:isGet()
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -206,17 +206,17 @@ case l_cURLAction == "ProjectSettings"
             endif
         else
             if l_iProjectPk > 0
-                l_cHtml += ProjectEditFormOnSubmit(l_oDataHeader:Project_LinkUID)
+                l_cHtml += ProjectEditFormOnSubmit(l_oDataHeader:Project_UID)
             endif
         endif
     endif
 
 case l_cURLAction == "ListPrimitiveTypes"
     if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_UID)
 
         if oFcgi:isGet()
-            l_cHtml += PrimitiveTypesListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+            l_cHtml += PrimitiveTypesListFormBuild(l_oDataHeader:Project_pk,l_oDataHeader:Project_UID)
         else
         endif
 
@@ -224,19 +224,19 @@ case l_cURLAction == "ListPrimitiveTypes"
 
 case l_cURLAction == "NewPrimitiveType"
     if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_UID)
 
         if oFcgi:isGet()
             l_cHtml += PrimitiveTypeEditFormBuild(l_oDataHeader:Project_pk,"",0,{=>})
         else
-            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_UID)
         endif
 
     endif
 
 case l_cURLAction == "EditPrimitiveType"
     if oFcgi:p_nAccessLevelML >= 7
-        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_LinkUID,.f.)
+        l_cHtml += ProjectHeaderBuild(l_iProjectPk,l_cProjectName,l_cProjectElement,l_cSitePath,l_oDataHeader:Project_UID)
 
         if oFcgi:isGet()
             l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
@@ -251,7 +251,7 @@ case l_cURLAction == "EditPrimitiveType"
             l_hValues["Description"] := l_oData:PrimitiveType_Description
             l_cHtml += PrimitiveTypeEditFormBuild(l_oDataHeader:Project_pk,"",l_oDataHeader:PrimitiveType_pk,@l_hValues)
         else
-            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_LinkUID)
+            l_cHtml += PrimitiveTypeEditFormOnSubmit(l_oDataHeader:Project_pk,l_oDataHeader:Project_UID)
         endif
 
     endif
@@ -262,7 +262,7 @@ endcase
 
 return l_cHtml
 //=================================================================================================================
-static function ProjectHeaderBuild(par_iProjectPk,par_cProjectName,par_cProjectElement,par_cSitePath,par_cURLProjectLinkUID,par_lActiveHeader)
+static function ProjectHeaderBuild(par_iProjectPk,par_cProjectName,par_cProjectElement,par_cSitePath,par_cURLProjectUID)
 local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
@@ -279,7 +279,7 @@ oFcgi:TraceAdd("ProjectHeaderBuild")
 
 l_cHtml += [<div class="d-flex bg-secondary bg-gradient">]
 l_cHtml +=    [<div class="px-3 py-2 align-middle mb-2"><span class="fs-5 text-white">Configure Project: ]+par_cProjectName+[</span></div>]
-l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="btn btn-primary rounded" href="]+l_cSitePath+[Projects/">Other Projects</a></div>]
+l_cHtml +=    [<div class="px-3 py-2 align-middle ms-auto"><a class="TopTabs btn btn-primary rounded" href="]+l_cSitePath+[Projects/">Other Projects</a></div>]
 l_cHtml += [</div>]
 
 l_cHtml += [<div class="m-3"></div>]
@@ -288,13 +288,13 @@ l_cHtml += [<ul class="nav nav-tabs">]
 
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectLinkUID+[/">Project Settings</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "SETTINGS",[ active],[])+[" href="]+par_cSitePath+[Projects/ProjectSettings/]+par_cURLProjectUID+[/">Project Settings</a>]
         l_cHtml += [</li>]
     endif
 
     if oFcgi:p_nAccessLevelML >= 7
         l_cHtml += [<li class="nav-item">]
-            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectLinkUID+[/">Primitive Types</a>]
+            l_cHtml += [<a class="TopTabs nav-link ]+iif(par_cProjectElement == "PRIMITIVETYPES",[ active],[])+[" href="]+par_cSitePath+[Projects/ListPrimitiveTypes/]+par_cURLProjectUID+[/">Primitive Types</a>]
         l_cHtml += [</li>]
     endif
 
@@ -325,7 +325,7 @@ with object l_oDB1
     :Table("be95fd34-cf27-4c9a-9f59-195f5f3f6bc1","Project")
     :Column("Project.pk"                ,"pk")
     :Column("Project.Name"              ,"Project_Name")
-    :Column("Project.LinkUID"           ,"Project_LinkUID")
+    :Column("Project.UID"           ,"Project_UID")
     :Column("Project.UseStatus"         ,"Project_UseStatus")
     :Column("Project.Description"       ,"Project_Description")
     :Column("Project.DestructiveDelete" ,"Project_DestructiveDelete")
@@ -410,7 +410,7 @@ l_cHtml += [<div class="m-3">]
                     l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+alltrim(ListOfProjects->Project_LinkUID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>]
+                            l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+alltrim(ListOfProjects->Project_UID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>]
                         l_cHtml += [</td>]
 
                         l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -628,13 +628,13 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function ProjectEditFormOnSubmit(par_cURLProjectLinkUID)
+static function ProjectEditFormOnSubmit(par_cURLProjectUID)
 local l_cHtml := []
 local l_cActionOnSubmit
 
 local l_iProjectPk
 local l_cProjectName
-local l_cProjectLinkUID := par_cURLProjectLinkUID  //It will be overridden in case of add  - Not used for now since only 1 tab
+local l_cProjectUID := par_cURLProjectUID  //It will be overridden in case of add  - Not used for now since only 1 tab
 local l_nProjectUseStatus
 local l_cProjectDescription
 local l_nProjectDestructiveDelete
@@ -746,8 +746,8 @@ case l_cActionOnSubmit == "Save"
                     :Field("Project.ValidEndpointBoundUpperValues" , iif(empty(l_cProjectValidEndpointBoundUpperValuesFixed),NULL,l_cProjectValidEndpointBoundUpperValuesFixed))
 
                     if empty(l_iProjectPk)
-                        l_cProjectLinkUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                        :Field("Project.LinkUID" , l_cProjectLinkUID)
+                        l_cProjectUID := oFcgi:p_o_SQLConnection:GetUUIDString()
+                        :Field("Project.UID" , l_cProjectUID)
                         if :Add()
                             l_iProjectPk := :Key()
                         else
@@ -854,10 +854,10 @@ otherwise
     endif
     with object l_oDB1
         :Table("48ef14b8-2ded-4f9e-8075-70b2c9ae47a9","Project")
-        :Column("Project.LinkUID","Project_LinkUID")
+        :Column("Project.UID","Project_UID")
         l_oData := :Get(l_iProjectPk)
         if :Tally == 1
-            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_oData:Project_LinkUID+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ProjectSettings/"+l_oData:Project_UID+"/")
         else
             oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/")
         endif
@@ -868,7 +868,7 @@ endcase
 return l_cHtml
 //=================================================================================================================
 //=================================================================================================================
-static function PrimitiveTypesListFormBuild(par_iProjectPk,par_Project_LinkUID)
+static function PrimitiveTypesListFormBuild(par_iProjectPk,par_Project_UID)
 local l_cHtml := []
 local l_oDB_ListOfPrimitiveTypes := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
@@ -881,7 +881,7 @@ oFcgi:TraceAdd("PrimitiveTypesListFormBuild")
 with object l_oDB_ListOfPrimitiveTypes
     :Table("ade06ccd-1925-4c3c-bf48-dbbd33ede375","PrimitiveType")
     :Column("PrimitiveType.pk"         ,"pk")
-    :Column("PrimitiveType.LinkUID"    ,"PrimitiveType_LinkUID")
+    :Column("PrimitiveType.UID"    ,"PrimitiveType_UID")
     :Column("PrimitiveType.Name"       ,"PrimitiveType_Name")
     :Column("PrimitiveType.Description","PrimitiveType_Description")
     :Column("upper(PrimitiveType.Name)","tag1")
@@ -902,7 +902,7 @@ l_cHtml += [<nav class="navbar navbar-light bg-light">]
                 // ----------------------------------------
                 l_cHtml += [<td>]  // valign="top"
                     if oFcgi:p_nAccessLevelML >= 7
-                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Projects/NewPrimitiveType/]+par_Project_LinkUID+[/]+[">New Primitive Type</a>]
+                        l_cHtml += [<a class="btn btn-primary rounded ms-3 me-5" href="]+l_cSitePath+[Projects/NewPrimitiveType/]+par_Project_UID+[/]+[">New Primitive Type</a>]
                     else
                         l_cHtml += [<span class="ms-3"> </a>]  //To make some spacing
                     endif
@@ -943,7 +943,7 @@ if !empty(l_nNumberOfPrimitiveTypes)
                 l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_LinkUID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>]
+                        l_cHtml += [<a href="]+l_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_UID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>]
                     l_cHtml += [</td>]
 
                     l_cHtml += [<td class="GridDataControlCells" valign="top">]
@@ -1025,7 +1025,7 @@ l_cHtml += GetConfirmationModalFormsDelete()
 
 return l_cHtml
 //=================================================================================================================
-static function PrimitiveTypeEditFormOnSubmit(par_iProjectPk,par_cProjectLinkUID)
+static function PrimitiveTypeEditFormOnSubmit(par_iProjectPk,par_cProjectUID)
 local l_cHtml := []
 
 local l_cActionOnSubmit
@@ -1080,7 +1080,7 @@ case l_cActionOnSubmit == "Save"
             :Field("PrimitiveType.Name"        , l_cPrimitiveTypeName)
             :Field("PrimitiveType.Description" , iif(empty(l_cPrimitiveTypeDescription),NULL,l_cPrimitiveTypeDescription))
             if empty(l_iPrimitiveTypePk)
-                :Field("PrimitiveType.LinkUID"    , oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("PrimitiveType.UID"    , oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("PrimitiveType.fk_Project" , par_iProjectPk)
                 if :Add()
                     l_iPrimitiveTypePk := :Key()
@@ -1132,19 +1132,19 @@ case !empty(l_cErrorMessage)
     l_cHtml += PrimitiveTypeEditFormBuild(par_iProjectPk,l_cErrorMessage,l_iPrimitiveTypePk,l_hValues)
 
 case empty(l_iPrimitiveTypePk)
-    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+    oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectUID+"/")
 
 otherwise
     //Since the Name could have change the redirect URL has to be re-evaluated.
     with object l_oDB1
         :Table("6223983f-81d6-4804-8de5-834bc0e38098","PrimitiveType")
-        :Column("PrimitiveType.LinkUID","PrimitiveType_LinkUID")
+        :Column("PrimitiveType.UID","PrimitiveType_UID")
         l_oData := :Get(l_iPrimitiveTypePk)
         if :Tally == 1
-            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/EditPrimitiveType/"+l_oData:PrimitiveType_LinkUID+"/")
-            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/EditPrimitiveType/"+l_oData:PrimitiveType_UID+"/")
+            // oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectUID+"/")
         else
-            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectLinkUID+"/")
+            oFcgi:Redirect(oFcgi:p_cSitePath+"Projects/ListPrimitiveTypes/"+par_cProjectUID+"/")
         endif
     endif
 

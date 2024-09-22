@@ -50,7 +50,7 @@ endwith
 
 return l_lResult
 //=================================================================================================================
-function APIAccessCheck_Token_EndPoint_Project_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cProjectLinkUID)
+function APIAccessCheck_Token_EndPoint_Project_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cProjectUID)
 local l_lResult
 local l_oDB_ListOfAPIToken := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -65,7 +65,7 @@ with object l_oDB_ListOfAPIToken
 
     :Join("inner","APITokenAccessProject","","APITokenAccessProject.fk_APIToken = APIToken.pk")
     :Join("inner","Project"              ,"","APITokenAccessProject.fk_Project = Project.pk")
-    :Where("Project.LinkUID = ^",par_cProjectLinkUID)
+    :Where("Project.UID = ^",par_cProjectUID)
     :Where("APITokenAccessProject.AccessLevelML >= ^",2)   //ReadOnly and Above
 
     :SQL("ListOfAPIToken")
@@ -75,7 +75,7 @@ endwith
 
 return l_lResult
 //=================================================================================================================
-function APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelLinkUID)
+function APIAccessCheck_Token_EndPoint_Model_ReadRequest(par_cAPITokenKey,par_cAPIEndpointName,par_cModelUID)
 local l_lResult
 local l_oDB_ListOfAPIToken := hb_SQLData(oFcgi:p_o_SQLConnection)
 
@@ -91,7 +91,7 @@ with object l_oDB_ListOfAPIToken
     :Join("inner","APITokenAccessProject","","APITokenAccessProject.fk_APIToken = APIToken.pk")
     :Join("inner","Project"              ,"","APITokenAccessProject.fk_Project = Project.pk")
     :Join("inner","Model"                ,"","Model.fk_Project = Project.pk")
-    :Where("Model.LinkUID = ^"  ,par_cModelLinkUID)
+    :Where("Model.UID = ^"  ,par_cModelUID)
     :Where("APITokenAccessProject.AccessLevelML >= ^",2)   //ReadOnly and Above
 
     :SQL("ListOfAPIToken")
