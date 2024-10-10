@@ -260,7 +260,7 @@ case l_cURLAction == "EditDeployment"
         :Column("Deployment.AllowUpdates"       , "Deployment_AllowUpdates")
 
         :Where([Deployment.fk_Application = ^],l_iApplicationPk)
-        :Where([Deployment.UID = ^]       ,l_cUIDDeployment)
+        :Where([Deployment.UID = ^]           ,l_cUIDDeployment)
         l_oData := :SQL()
     endwith
 
@@ -456,13 +456,13 @@ local l_oDB_ListOfCustomFieldValues  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfTableCounts        := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfRelationshipCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDeploymentsCounts  := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfApplications
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_nCountProposed
 local l_nCount
 local l_nCountDiscontinued
+local l_oGrid
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
@@ -591,104 +591,85 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfApplications")
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"9","10")+[">Applications (]+Trans(l_nNumberOfApplications)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetTitle({|l_nNumberOfRows|"Applications ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Link Code</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Tables</th>]
-                    l_cHtml += [<th class="text-white text-center">Relationships</th>]
-                    l_cHtml += [<th class="text-white text-center">Deployments</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Destructive<br>Deletes</th>]
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfApplications->Application_UseStatus)})
 
-                select ListOfApplications
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfApplications->Application_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Applications/ApplicationInfo/]+alltrim(ListOfApplications->Application_LinkCode)+[/">]+alltrim(ListOfApplications->Application_Name)+[</a>] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            // l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationSettings/]+alltrim(ListOfApplications->Application_LinkCode)+[/">]+alltrim(ListOfApplications->Application_Name)+[</a>]
-                            l_cHtml += [<a href="]+l_cSitePath+[Applications/ApplicationInfo/]+alltrim(ListOfApplications->Application_LinkCode)+[/">]+alltrim(ListOfApplications->Application_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Link Code"},;
+                                "Rows"  =>{"Expression" => {|| alltrim(ListOfApplications->Application_LinkCode) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += alltrim(ListOfApplications->Application_LinkCode)
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfApplications->Application_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfApplications->Application_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Tables","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {||
+                                                                local l_cHtml := ""
+                                                                if el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1")
+                                                                    l_nCountProposed     := ListOfTableCounts->CountProposed
+                                                                    l_nCount             := ListOfTableCounts->Count
+                                                                    l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center"}})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                    :AddColumn({"Header"=>{"Caption"=>"Relationships","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {||
+                                                                local l_cHtml
+                                                                if el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1")
+                                                                    l_nCountProposed     := ListOfRelationshipCounts->CountProposed
+                                                                    l_nCount             := ListOfRelationshipCounts->Count
+                                                                    l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                l_cHtml := GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                            if el_seek(ListOfApplications->pk,"ListOfTableCounts","tag1")
-                                l_nCountProposed     := ListOfTableCounts->CountProposed
-                                l_nCount             := ListOfTableCounts->Count
-                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-                            endif
+                    :AddColumn({"Header"=>{"Caption"=>"Deployments","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {||
+                                                                local l_cHtml  := ""
+                                                                l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfDeploymentsCounts","tag1") , ListOfDeploymentsCounts->Count , 0)
+                                                                if !empty(l_nCount)
+                                                                    l_cHtml += Trans(l_nCount)
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center"}})
 
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
+                    :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfApplications->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfApplications->Application_DocStatus,DOCTATUS_MISSING)] } }})
 
-                            if el_seek(ListOfApplications->pk,"ListOfRelationshipCounts","tag1")
-                                l_nCountProposed     := ListOfRelationshipCounts->CountProposed
-                                l_nCount             := ListOfRelationshipCounts->Count
-                                l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                    :AddColumn({"Header"=>{"Caption"=>"Destructive<br>Deletes","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"None","On Tables/Tags","On Namespaces","Entire Application Content","Can Delete Application"}[iif(el_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)] } }})
 
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{|| (l_nNumberOfCustomFieldValues > 0) },;
+                                "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfApplications->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( el_seek(ListOfApplications->pk,"ListOfDeploymentsCounts","tag1") , ListOfDeploymentsCounts->Count , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
-                            endif
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfApplications->Application_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfApplications->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfApplications->Application_DocStatus,DOCTATUS_MISSING)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Tables/Tags","On Namespaces","Entire Application Content","Can Delete Application"}[iif(el_between(ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE,APPLICATIONDESTRUCTIVEDELETE_CANDELETEAPPLICATION),ListOfApplications->Application_DestructiveDelete,APPLICATIONDESTRUCTIVEDELETE_NONE)]
-                        l_cHtml += [</td>]
-
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfApplications->pk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -1200,8 +1181,8 @@ local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfDeployments
-
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_oGrid
 
 oFcgi:TraceAdd("DeploymentListFormBuild")
 
@@ -1210,7 +1191,7 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
     :Table("78ba7e1c-581f-4f3e-b193-a7bf7a8c84e7","Deployment")
     :Column("Deployment.pk"                 ,"pk")
-    :Column("Deployment.UID"            ,"Deployment_UID")
+    :Column("Deployment.UID"                ,"Deployment_UID")
     :Column("Deployment.Name"               ,"Deployment_Name")
     :Column("Deployment.Status"             ,"Deployment_Status")
     :Column("Deployment.Description"        ,"Deployment_Description")
@@ -1281,97 +1262,67 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="12">]+iif(par_lPersonal,"Personal ","")+[Deployment (]+Trans(l_nNumberOfDeployments)+[)</th>]
-                l_cHtml += [</tr>]
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfDeployments")
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Server<br>Type</th>]
-                    l_cHtml += [<th class="text-white text-center">Server<br>Address/IP</th>]
-                    l_cHtml += [<th class="text-white text-center">Server<br>Port</th>]
-                    l_cHtml += [<th class="text-white text-center">User<br>Name</th>]
-                    l_cHtml += [<th class="text-white text-center">Password<br>Mode</th>]
-                    l_cHtml += [<th class="text-white text-center">Database</th>]
-                    l_cHtml += [<th class="text-white text-center">Namespaces</th>]
-                    l_cHtml += [<th class="text-white text-center">Set Foreign Key</th>]
-                    l_cHtml += [<th class="text-white text-center">Allow Updates</th>]
-                l_cHtml += [</tr>]
+                    :SetTitle({|l_nNumberOfRows|iif(par_lPersonal,"Personal ","")+"Deployments ("+trans(l_nNumberOfRows)+")"})
 
-                select ListOfDeployments
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorDeploymentStatus(recno(),ListOfDeployments->Deployment_Status)+[>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnDeploymentStatus(recno(),ListOfDeployments->Deployment_Status)})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            if par_lPersonal
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditMyDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
-                            else
-                                l_cHtml += [<a href="]+l_cSitePath+[Applications/EditDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>]
-                            endif
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| iif(par_lPersonal, [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditMyDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>] , [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Applications/EditDeployment/]+par_cURLApplicationLinkCode+[/]+ListOfDeployments->Deployment_UID+[/">]+ListOfDeployments->Deployment_Name+[</a>] ) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfDeployments->Deployment_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfDeployments->Deployment_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","On Hold"}[iif(el_between(ListOfDeployments->Deployment_Status,1,2),ListOfDeployments->Deployment_Status,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"Active","On Hold"}[iif(el_between(ListOfDeployments->Deployment_Status,1,2),ListOfDeployments->Deployment_Status,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","MariaDB","MySQL","PostgreSQL","MSSQL","Oracle"}[iif(el_between(ListOfDeployments->Deployment_BackendType,1,5),ListOfDeployments->Deployment_BackendType+1,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Server<br>Type","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","MariaDB","MySQL","PostgreSQL","MSSQL","Oracle"}[iif(el_between(ListOfDeployments->Deployment_BackendType,1,5),ListOfDeployments->Deployment_BackendType+1,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += nvl(ListOfDeployments->Deployment_Server,"")
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Server<br>Address/IP","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| nvl(ListOfDeployments->Deployment_Server,"") } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += iif(nvl(ListOfDeployments->Deployment_Port,0) <= 0,"",trans(ListOfDeployments->Deployment_Port))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Server<br>Port","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| iif(nvl(ListOfDeployments->Deployment_Port,0) <= 0,"",trans(ListOfDeployments->Deployment_Port)) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += nvl(ListOfDeployments->Deployment_User,"")
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"User<br>Name","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| nvl(ListOfDeployments->Deployment_User,"") } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Encrypted","In config.txt:","In Environment Variable:","User is AWS iam account"}[iif(el_between(nvl(ListOfDeployments->Deployment_PasswordStorage,0),1,4),ListOfDeployments->Deployment_PasswordStorage+1,1)]
+                    :AddColumn({"Header"=>{"Caption"=>"Password<br>Mode","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                    local l_cHtml
+                                    l_cHtml := {"","Encrypted","In config.txt:","In Environment Variable:","User is AWS iam account"}[iif(el_between(nvl(ListOfDeployments->Deployment_PasswordStorage,0),1,4),ListOfDeployments->Deployment_PasswordStorage+1,1)]
+                                    switch nvl(ListOfDeployments->Deployment_PasswordStorage,0)
+                                    case 2
+                                        l_cHtml += [ ]+nvl(ListOfDeployments->Deployment_PasswordConfigKey,"")
+                                        exit
+                                    case 3
+                                        l_cHtml += [ ]+nvl(ListOfDeployments->Deployment_PasswordEnvVarName,"")
+                                        exit
+                                    endswitch
+                                    return l_cHtml
+                                } }})
 
-                            switch nvl(ListOfDeployments->Deployment_PasswordStorage,0)
-                            case 2
-                                l_cHtml += [ ]+nvl(ListOfDeployments->Deployment_PasswordConfigKey,"")
-                                exit
-                            case 3
-                                l_cHtml += [ ]+nvl(ListOfDeployments->Deployment_PasswordEnvVarName,"")
-                                exit
-                            endswitch
+                    :AddColumn({"Header"=>{"Caption"=>"Database","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| nvl(ListOfDeployments->Deployment_Database,"") } }})
 
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Namespaces","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| nvl(ListOfDeployments->Deployment_Namespaces,"") } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += nvl(ListOfDeployments->Deployment_Database,"")
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Set Foreign Key","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Not","Foreign Key Constraints","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(el_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += nvl(ListOfDeployments->Deployment_Namespaces,"")
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Allow Updates","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| iif(ListOfDeployments->Deployment_AllowUpdates,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                           "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not","Foreign Key Constraints","On p_&lt;TableName&gt;","On fk_&lt;TableName&gt;","On &lt;TableName&gt;_id"}[iif(el_between(nvl(ListOfDeployments->Deployment_SetForeignKey,0),1,5),ListOfDeployments->Deployment_SetForeignKey+1,1)]
-                        l_cHtml += [</td>]
+                    l_cHtml += :Build()
+                endwith
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_cHtml += iif(ListOfDeployments->Deployment_AllowUpdates,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
             l_cHtml += [</div>]
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -1709,7 +1660,7 @@ case l_cActionOnSubmit == "Save"
                     if empty(l_iDeploymentPk)
                         l_cUID := oFcgi:p_o_SQLConnection:GetUUIDString()
                         :Field("Deployment.fk_Application" , par_iApplicationPk)
-                        :Field("Deployment.UID"        , l_cUID)
+                        :Field("Deployment.UID"            , l_cUID)
                         if par_lPersonal
                             :Field("Deployment.fk_User" , oFcgi:p_iUserPk)
                         endif

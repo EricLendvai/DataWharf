@@ -70,6 +70,9 @@ class MyFcgi from hb_Fcgi
     data p_cSitePath            init ""  // Used to help with site relative path.
     data p_cUserTimeZoneName    init ""  // PostgreSQL timezone name to use when displaying timestamps.
 
+    data p_iHtmlObjectIdCounter        init 0
+    data p_AddedjQueryFloatTableHeader init .f.
+
     //Used in Modeling. ANF stands for "AlternateNameFor"
     data p_ANFModel             init "Model"
     data p_ANFModels            init "Models"
@@ -122,10 +125,10 @@ class MyFcgi from hb_Fcgi
                                  }
     
     data p_cThisAppTitle                 init ""
-    data p_cThisAppColorHeaderBackground init ""
-    data p_cThisAppColorHeaderTextWhite  init ""
-    data p_lThisAppColorHeaderTextWhite  init .f.
     data p_cThisAppLogoThemeName         init ""
+    data p_cThisAppColorHeaderBackground init ""
+    data p_cThisAppHeaderTextColor       init ""
+    data p_cThisAppLogoTextColor         init ""
 
     data p_hCacheTimeZone                init {=>}
 
@@ -147,6 +150,8 @@ class MyFcgi from hb_Fcgi
     method Redirect(par_cURL)
 
     method FixCyanAuditIndexes()
+
+    method SetupJavaScriptjQueryFloatTableHeader()
 
     #include "api.txt"
 
@@ -235,7 +240,9 @@ local l_iTimeZonePk
 local l_cWebUserAgent
 local l_bSha256
 local l_iWebUserAgentPk
+// local l_cOpacity := "0.3"  //hb_DefaultValue(par_cOpacity,"0.3")
 
+SendUDPMessage(UDP_IP,UPD_PORT,"Request Counter "+trans(::RequestCount),.f.)
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))
@@ -250,15 +257,17 @@ endif
 if empty(::p_cThisAppColorHeaderBackground)
     ::p_cThisAppColorHeaderBackground := COLOR_HEADER_BACKGROUND
 endif
-::p_cThisAppColorHeaderTextWhite := ::GetAppConfig("COLOR_HEADER_TEXT_WHITE")
-if empty(::p_cThisAppColorHeaderTextWhite)
-    ::p_lThisAppColorHeaderTextWhite := COLOR_HEADER_TEXT_WHITE
-else
-    ::p_lThisAppColorHeaderTextWhite := ("T" $ upper(::p_cThisAppColorHeaderTextWhite)) .or. ("Y" $ upper(::p_cThisAppColorHeaderTextWhite)) 
-endif
 ::p_cThisAppLogoThemeName := ::GetAppConfig("LOGO_THEME_NAME")
 if empty(::p_cThisAppLogoThemeName)
     ::p_cThisAppLogoThemeName := LOGO_THEME_NAME
+endif
+::p_cThisAppHeaderTextColor := ::GetAppConfig("COLOR_HEADER_TEXT")
+if empty(::p_cThisAppHeaderTextColor)
+    ::p_cThisAppHeaderTextColor := COLOR_HEADER_TEXT
+endif
+::p_cThisAppLogoTextColor := ::GetAppConfig("COLOR_LOGO_TEXT")
+if empty(::p_cThisAppLogoTextColor)
+    ::p_cThisAppLogoTextColor := COLOR_LOGO_TEXT
 endif
 
 ::SetHeaderValue("X-Frame-Options","DENY")  // To help prevent clickhacking, meaning to place the web site into an frame of another site.
@@ -383,9 +392,13 @@ if l_lNoPostgresConnection
 
                         //== Update Schema and data version ====================
 
+SendToDebugView("Before UpdateSchema")
                         UpdateSchema(::p_o_SQLConnection)
+SendToDebugView("After UpdateSchema")
 
+// SendToDebugView("Before SelfDataMigration")
                         l_iCurrentDataVersion := SelfDataMigration()
+// SendToDebugView("After SelfDataMigration")
 
 
 
@@ -488,6 +501,7 @@ else
         UpdateSchema(::p_o_SQLConnection)   //_M_ Why here
     endif
 endif
+
 
 
 // local l_cPostgresDriver         := ::GetAppConfig("POSTGRESDRIVER")
@@ -655,6 +669,49 @@ otherwise
 
                 // l_cPageHeaderHtml += [<script>$.fn.bootstrapBtn = $.fn.button.noConflict();</script>]+CRLF
                 l_cPageHeaderHtml += [<script language="javascript" type="text/javascript" src="]+l_cSitePath+[scripts/jQueryUI_]+JQUERYUI_SCRIPT_VERSION+[/jquery-ui.min.js"></script>]+CRLF
+
+                l_cPageHeaderHtml += [<style type="text/css">]
+
+                l_cPageHeaderHtml += [ .GridRowOdd {background: #FFFFFF;} ]
+                l_cPageHeaderHtml += [ .GridRowEven {background: #F2F2F2;} ]
+
+                l_cPageHeaderHtml += [ .GridRowUsageStatusProposed td         {background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,0.3);} ]
+                l_cPageHeaderHtml += [ .GridRowUsageStatusUnderDevelopment td {background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,0.3);} ]
+                l_cPageHeaderHtml += [ .GridRowUsageStatusToBeDiscontinued td {background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,0.3);} ]
+                l_cPageHeaderHtml += [ .GridRowUsageStatusDiscontinued td     {background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,0.3);} ]
+
+                l_cPageHeaderHtml += [ .GridRowStatusInactive td              {background-color:rgb(]+STATUS_INACTIVE_TR_BACKGROUND+[,0.3);} ]
+                l_cPageHeaderHtml += [ .GridRowStatusHidden td                {background-color:rgb(]+STATUS_HIDDEN_TR_BACKGROUND  +[,0.3);} ]
+
+                //Had to use a more specific CSS selector to work around Bootstrap Table level background
+                l_cPageHeaderHtml += ' .GridRow .GridCellUsageStatusProposed         {background-color:rgb('+USESTATUS_2_NODE_TR_BACKGROUND+',0.3);} '
+                l_cPageHeaderHtml += ' .GridRow .GridCellUsageStatusUnderDevelopment {background-color:rgb('+USESTATUS_3_NODE_TR_BACKGROUND+',0.3);} '
+                l_cPageHeaderHtml += ' .GridRow .GridCellUsageStatusToBeDiscontinued {background-color:rgb('+USESTATUS_5_NODE_TR_BACKGROUND+',0.3);} '
+                l_cPageHeaderHtml += ' .GridRow .GridCellUsageStatusDiscontinued     {background-color:rgb('+USESTATUS_6_NODE_TR_BACKGROUND+',0.3);} '
+
+                l_cPageHeaderHtml += ' .GridRow .StatusProposed            {color:#'+GRID_ROW_USESTATUS_2_COLOR+';} '
+                l_cPageHeaderHtml += ' .GridRow:hover .StatusProposed      {color:#'+GRID_ROW_USESTATUS_2_COLOR_ONHOVER+';} '
+                l_cPageHeaderHtml += ' .GridRow .StatusNormal              {color:#'+GRID_ROW_USESTATUS_0_COLOR+';} '         //FF00FF
+                l_cPageHeaderHtml += ' .GridRow:hover .StatusNormal        {color:#'+GRID_ROW_USESTATUS_0_COLOR_ONHOVER+';} '
+                l_cPageHeaderHtml += ' .GridRow .StatusDiscontinued        {color:#'+GRID_ROW_USESTATUS_6_COLOR+';} '
+                l_cPageHeaderHtml += ' .GridRow:hover .StatusDiscontinued  {color:#'+GRID_ROW_USESTATUS_6_COLOR_ONHOVER+';} '
+                
+                l_cPageHeaderHtml += ' .GridRow .GridLinkNormal             {color:#'+GRID_ROW_USESTATUS_0_COLOR+';} '           //FF00FF
+                l_cPageHeaderHtml += ' .GridRow:hover .GridLinkNormal       {color:#'+GRID_ROW_USESTATUS_0_COLOR_ONHOVER+';} '   //Needed since color in tr will not affect the A content
+                l_cPageHeaderHtml += ' .GridRow .GridLinkProposed           {color:#'+GRID_ROW_USESTATUS_2_COLOR+';} '
+                l_cPageHeaderHtml += ' .GridRow:hover .GridLinkProposed     {color:#'+GRID_ROW_USESTATUS_2_COLOR_ONHOVER+';} '
+                l_cPageHeaderHtml += ' .GridRow .GridLinkDiscontinued       {color:#'+GRID_ROW_USESTATUS_6_COLOR+';} '
+                l_cPageHeaderHtml += ' .GridRow:hover .GridLinkDiscontinued {color:#'+GRID_ROW_USESTATUS_6_COLOR_ONHOVER+';} '
+                
+                l_cPageHeaderHtml += ' .GridRow:hover .GridLinkNewPage  {color:#30FFA0;} '
+
+                l_cPageHeaderHtml += ' .GridRow .GridLinkNewPage        {color:#'+COLOR_ON_LINK_NEWPAGE+';} '
+
+                l_cPageHeaderHtml += [ .GridRow:hover {background: #8F8F8F;color: #FFFFFF;} ]   //696987
+
+                l_cPageHeaderHtml += [ .GridRow:hover .DefaultLink {color: #F4F705;} ]  //FF0000   Will display the default link used. Also Works, except should not be if on another A from another column
+
+                l_cPageHeaderHtml += [</style>]
 
                 ::p_cHeader := l_cPageHeaderHtml
             endif
@@ -1379,8 +1436,6 @@ local l_lShowMenuDataDictionaries := l_lShowMenuApplications
 local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oData
 
-local l_cExtraClass
-
 local l_lShowChangePassword
 
 local l_cBootstrapCurrentPageClasses := [ active border border-2 border-white" aria-current="page]
@@ -1415,16 +1470,22 @@ if par_LoggedIn
     endif
 endif
 
-l_cExtraClass := iif(oFcgi:p_lThisAppColorHeaderTextWhite," text-white","")
+l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between pt-0 pb-1 navbar-light navbar" style="background-color: #]+oFcgi:p_cThisAppColorHeaderBackground+[;">]
 
-// hb_orm_SendToDebugView("Called GetPageHeader",l_cExtraClass)
-
-l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 navbar-light navbar" style="background-color: #]+oFcgi:p_cThisAppColorHeaderBackground+[;">]
+        // l_cHtml += [<img src="]+l_cSitePath+[images/Logo_]+oFcgi:p_cThisAppLogoThemeName+[.png" alt="" height="60" class="d-inline-block" style="vertical-align: middle;">&nbsp;]
 
     l_cHtml += [<div id="app" class="container">]
-        l_cHtml += [<a class="d-flex align-items-center mb-2 mb-md-0]+l_cExtraClass+[ navbar-brand" href="#">]
-        l_cHtml += [<img src="]+l_cSitePath+[images/Logo_]+oFcgi:p_cThisAppLogoThemeName+[.png" alt="" height="60" class="d-inline-block" style="vertical-align: middle;">&nbsp;]
-        l_cHtml += oFcgi:p_cThisAppTitle+[</a>]
+
+        l_cHtml += [<div class="text-end">]
+            l_cHtml += [<div class="text-center">]
+                l_cHtml += [<a class="d-flex align-items-center mb-0 mb-md-0 navbar-brand" href="#">]
+                    l_cHtml += GetDataWharfSVG(300,oFcgi:p_cThisAppLogoTextColor)
+                l_cHtml += [</a>]
+                if !empty(oFcgi:p_cThisAppTitle)
+                    l_cHtml += [<div><span style="font-weight: 500;font-face: Arial;font-size: 120%;color:#]+oFcgi:p_cThisAppHeaderTextColor+[;">]+oFcgi:p_cThisAppTitle+[</span></div>]
+                endif
+            l_cHtml += [</div>]
+        l_cHtml += [</div>]
 
         if par_LoggedIn
 
@@ -1437,25 +1498,25 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
 
             //l_cHtml += [<div class="collapse navbar-collapse" id="navbarNav">]
                 l_cHtml += [<ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">]
-                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "home"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
+                    l_cHtml += [<li class="nav-item"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="nav-link link-dark]+iif(lower(par_cCurrentPage) == "home"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Home">Home</a></li>]
 
                     if l_lShowMenuModeling
-                        l_cHtml += [<li class="nav-item"><a class="text-center nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "modeling"           ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Modeling">Modeling<br>Projects</a></li>]
+                        l_cHtml += [<li class="nav-item"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="text-center nav-link link-dark]+iif(lower(par_cCurrentPage) == "modeling"           ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[Modeling">Modeling<br>Projects</a></li>]
                     endif
 
                     if l_lShowMenuDataDictionaries
-                        l_cHtml += [<li class="nav-item"><a class="text-center nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "datadictionaries"   ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[DataDictionaries">Applications<br>Data Dictionaries</a></li>]
+                        l_cHtml += [<li class="nav-item"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="text-center nav-link link-dark]+iif(lower(par_cCurrentPage) == "datadictionaries"   ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[DataDictionaries">Applications<br>Data Dictionaries</a></li>]
                     endif
 
 // Removed for now the "Inter-App Mapping" option. This feature need to be re-designed to be effective.
             // if (oFcgi:p_nUserAccessMode >= 3) // "All Project and Application Full Access" access right.
-            //     l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
+            //     l_cHtml += [<li class="nav-item"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="nav-link link-dark]+iif(lower(par_cCurrentPage) == "interappmapping"    ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[InterAppMapping">Inter-App Mapping</a></li>]
             // endif
 
                     // if l_lShowMenuProjects .or. l_lShowMenuApplications .or.  (oFcgi:p_nUserAccessMode >= 3) .or. (oFcgi:p_nUserAccessMode >= 4) .or. l_lShowChangePassword
                     if .t.
-// l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
-                        l_cHtml += [<li class="nav-item dropdown"><a class="nav-link link-dark dropdown-toggle]+l_cExtraClass+iif(el_IsInlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","mysettings","errorexplorer")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+// l_cHtml += [<li class="nav-item dropdown"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="nav-link link-dark dropdown-toggle]++[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
+                        l_cHtml += [<li class="nav-item dropdown"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="nav-link link-dark dropdown-toggle]+iif(el_IsInlist(lower(par_cCurrentPage),"projects","applications","customfields","apitokens","users","changepassword","mysettings","errorexplorer")    ,l_cBootstrapCurrentPageClasses,[])+[" href="#" id="navbarDropdownMenuLinkAdmin" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Settings</a>]
 
                         l_cHtml += [<ul class="dropdown-menu" style="z-index: 1030;top: 70%;left: -50%;" aria-labelledby="navbarDropdownMenuLinkAdmin">]
                             if l_lShowMenuProjects
@@ -1486,18 +1547,57 @@ l_cHtml += [<header class="d-flex flex-wrap align-items-center justify-content-c
                         l_cHtml += [</li>]
                     endif
 
-                    l_cHtml += [<li class="nav-item"><a class="nav-link link-dark]+l_cExtraClass+iif(lower(par_cCurrentPage) == "about"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[About">About</a></li>]
+                    l_cHtml += [<li class="nav-item"><a style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="nav-link link-dark]+iif(lower(par_cCurrentPage) == "about"               ,l_cBootstrapCurrentPageClasses,[])+[" href="]+l_cSitePath+[About">About</a></li>]
 
                 l_cHtml += [</ul>]
                 l_cHtml += [<div class="text-end">]
                     l_cHtml += [<div class="text-center">]
                         l_cHtml += [<a class="btn btn-primary" href="]+l_cSitePath+[home?action=logout">Logout (]+oFcgi:p_cUserName+iif(oFcgi:p_nUserAccessMode < 1," / View Only","")+[)</a>]
-                        l_cHtml += [<div class="small">Time Zone: ]+oFcgi:p_cUserTimeZoneName+[</div>]
+                        l_cHtml += [<div style="color:#]+oFcgi:p_cThisAppHeaderTextColor+[;" class="small pt-1">Time Zone: ]+oFcgi:p_cUserTimeZoneName+[</div>]
                     l_cHtml += [</div>]
                 l_cHtml += [</div>]
         endif
     l_cHtml += [</div>]    
 l_cHtml += [</header>]
+
+return l_cHtml
+//=================================================================================================================
+function GetDataWharfSVG(par_nWidth,par_cColor)
+local l_cHtml
+
+l_cHtml := [<svg]
+l_cHtml += [   width="]+trans(par_nWidth)+[px"]
+l_cHtml += [   viewBox="0 0 75.311424 14.767797"]
+l_cHtml += [   version="1.1"]
+l_cHtml += [   id="svg1"]
+l_cHtml += [   xmlns="http://www.w3.org/2000/svg"]
+l_cHtml += [   xmlns:svg="http://www.w3.org/2000/svg">]
+l_cHtml += [  <defs]
+l_cHtml += [     id="defs1" />]
+l_cHtml += [  <g]
+l_cHtml += [     id="layer1"]
+l_cHtml += [     transform="translate(-114.51101,-41.433387)">]
+l_cHtml += [    <path]
+l_cHtml += [       style="font-weight:bold;font-size:3.175px;font-family:Arial;-inkscape-font-specification:'Arial Bold';stroke-width:0.264583"]
+l_cHtml += [       d="m 185.09179,44.611919 v -1.888256 h -0.67438 V 42.33919 h 1.80609 v 0.384473 h -0.67283 v 1.888256 z m 1.42162,0 V 42.33919 h 0.68678 l 0.41237,1.550293 0.40773,-1.550293 h 0.68833 v 2.272729 h -0.42633 v -1.789038 l -0.45113,1.789038 h -0.44184 l -0.44958,-1.789038 v 1.789038 z"]
+l_cHtml += [	   fill="#]+par_cColor+[" />]
+l_cHtml += [       id="text2-3-4"]
+l_cHtml += [       aria-label="TM" />]
+l_cHtml += [    <path]
+l_cHtml += [       style="font-size:11.2889px;font-family:Audiowide;-inkscape-font-specification:Audiowide;stroke-width:0.264583"]
+l_cHtml += [       d="m 123.55658,51.549799 q 0,0.722092 -0.25356,1.32843 -0.24805,0.606337 -0.68902,1.04731 -0.44097,0.43546 -1.04731,0.683508 -0.60634,0.248047 -1.31741,0.248047 h -3.86953 q -0.15434,0 -0.28663,-0.05512 -0.1323,-0.05512 -0.23151,-0.148828 -0.0937,-0.09922 -0.14883,-0.231511 -0.0551,-0.132292 -0.0551,-0.286632 v -6.46025 q 0,-0.148828 0.0551,-0.28112 0.0551,-0.132292 0.14883,-0.23151 0.0992,-0.09922 0.23151,-0.154341 0.13229,-0.05512 0.28663,-0.05512 h 3.86953 q 0.71107,0 1.31741,0.248047 0.60634,0.248047 1.04731,0.689019 0.44097,0.435461 0.68902,1.047311 0.25356,0.606337 0.25356,1.322918 z m -1.43316,-1.289845 q 0,-0.418924 -0.13781,-0.76619 -0.13229,-0.347266 -0.38033,-0.589801 -0.24805,-0.248048 -0.59532,-0.380339 -0.34175,-0.137804 -0.76068,-0.137804 h -3.15846 v 5.038112 h 3.15846 q 0.41893,0 0.76068,-0.132291 0.34727,-0.137804 0.59532,-0.380339 0.24804,-0.248047 0.38033,-0.589801 0.13781,-0.347266 0.13781,-0.771702 z m 8.80291,2.623787 q 0,0.297657 -0.10473,0.644922 -0.10473,0.341754 -0.34175,0.639411 -0.23151,0.292144 -0.61185,0.490582 -0.37483,0.198438 -0.91502,0.198438 h -2.5852 q -0.29766,0 -0.64492,-0.104731 -0.34176,-0.104731 -0.63941,-0.336242 -0.29215,-0.237023 -0.49059,-0.61185 -0.19843,-0.380339 -0.19843,-0.92053 0,-0.297657 0.10473,-0.644923 0.10473,-0.347266 0.33624,-0.63941 0.23702,-0.297657 0.61185,-0.496094 0.38034,-0.198438 0.92053,-0.198438 h 2.5852 v 1.367015 h -2.5852 q -0.29214,0 -0.452,0.181902 -0.15985,0.176389 -0.15985,0.440972 0,0.28112 0.1819,0.440973 0.18741,0.15434 0.44097,0.15434 h 2.57418 q 0.29215,0 0.452,-0.176389 0.15985,-0.176389 0.15985,-0.440972 v -2.000914 q 0,-0.28112 -0.17639,-0.446485 -0.17087,-0.165364 -0.43546,-0.165364 h -3.14744 V 48.89845 h 3.14744 q 0.29766,0 0.63941,0.104731 0.34727,0.104731 0.63941,0.341754 0.29766,0.231511 0.4961,0.61185 0.19843,0.374827 0.19843,0.915018 z m 6.62011,-2.552129 h -2.50252 v 4.525482 h -1.4497 v -4.525482 h -1.86311 V 48.89845 h 1.86311 v -1.945791 h 1.4497 v 1.945791 h 2.50252 z m 6.75239,2.552129 q 0,0.297657 -0.10473,0.644922 -0.10473,0.341754 -0.34175,0.639411 -0.23151,0.292144 -0.61185,0.490582 -0.37483,0.198438 -0.91502,0.198438 h -2.5852 q -0.29766,0 -0.64493,-0.104731 -0.34175,-0.104731 -0.63941,-0.336242 -0.29214,-0.237023 -0.49058,-0.61185 -0.19844,-0.380339 -0.19844,-0.92053 0,-0.297657 0.10474,-0.644923 0.10473,-0.347266 0.33624,-0.63941 0.23702,-0.297657 0.61185,-0.496094 0.38034,-0.198438 0.92053,-0.198438 h 2.5852 v 1.367015 h -2.5852 q -0.29215,0 -0.452,0.181902 -0.15985,0.176389 -0.15985,0.440972 0,0.28112 0.1819,0.440973 0.18741,0.15434 0.44097,0.15434 h 2.57418 q 0.29214,0 0.452,-0.176389 0.15985,-0.176389 0.15985,-0.440972 v -2.000914 q 0,-0.28112 -0.17639,-0.446485 -0.17088,-0.165364 -0.43546,-0.165364 h -3.14744 V 48.89845 h 3.14744 q 0.29766,0 0.63941,0.104731 0.34727,0.104731 0.63941,0.341754 0.29766,0.231511 0.49609,0.61185 0.19844,0.374827 0.19844,0.915018 z m 11.47631,-5.931082 -1.32291,7.40834 q -0.0441,0.220487 -0.19844,0.380339 -0.15434,0.159853 -0.37483,0.20395 -0.226,0.03858 -0.42995,-0.04961 -0.19843,-0.0882 -0.31419,-0.275608 l -2.62379,-4.310508 -2.6293,4.310508 q -0.0937,0.159852 -0.25907,0.248047 -0.15985,0.0882 -0.34726,0.0882 -0.25907,0 -0.45751,-0.165365 -0.19844,-0.165365 -0.24254,-0.429949 l -1.33394,-7.40834 h 1.45521 l 0.94809,5.220014 2.25999,-3.604952 q 0.0937,-0.159853 0.25356,-0.248047 0.16536,-0.08819 0.35277,-0.08819 0.18742,0 0.34727,0.08819 0.15985,0.08819 0.26458,0.248047 l 2.24896,3.604952 0.9481,-5.220014 z m 7.65639,7.904435 h -1.43316 v -3.952218 q 0,-0.28112 -0.14332,-0.424436 -0.14331,-0.148828 -0.42994,-0.148828 H 158.8399 V 48.89845 h 2.58521 q 0.20395,0 0.42994,0.04961 0.226,0.0441 0.44649,0.143316 0.226,0.09922 0.42995,0.259071 0.20395,0.154341 0.35829,0.380339 0.15434,0.220487 0.24804,0.512631 0.0937,0.292144 0.0937,0.661459 z m -5.1704,0 h -1.43316 v -8.4777 h 1.43316 z M 170.895,52.883741 q 0,0.297657 -0.10473,0.644922 -0.10474,0.341754 -0.34176,0.639411 -0.23151,0.292144 -0.61185,0.490582 -0.37482,0.198438 -0.91502,0.198438 h -2.5852 q -0.29765,0 -0.64492,-0.104731 -0.34175,-0.104731 -0.63941,-0.336242 -0.29215,-0.237023 -0.49058,-0.61185 -0.19844,-0.380339 -0.19844,-0.92053 0,-0.297657 0.10473,-0.644923 0.10473,-0.347266 0.33624,-0.63941 0.23702,-0.297657 0.61185,-0.496094 0.38034,-0.198438 0.92053,-0.198438 h 2.5852 v 1.367015 h -2.5852 q -0.29214,0 -0.452,0.181902 -0.15985,0.176389 -0.15985,0.440972 0,0.28112 0.1819,0.440973 0.18742,0.15434 0.44098,0.15434 h 2.57417 q 0.29215,0 0.452,-0.176389 0.15985,-0.176389 0.15985,-0.440972 v -2.000914 q 0,-0.28112 -0.17639,-0.446485 -0.17087,-0.165364 -0.43546,-0.165364 H 165.7742 V 48.89845 h 3.14744 q 0.29766,0 0.63941,0.104731 0.34727,0.104731 0.63941,0.341754 0.29766,0.231511 0.4961,0.61185 0.19844,0.374827 0.19844,0.915018 z m 6.4382,-2.552129 h -3.22462 q -0.29214,0 -0.44097,0.148828 -0.14883,0.143316 -0.14883,0.424436 v 3.952218 h -1.43316 v -3.952218 q 0,-0.369315 0.0937,-0.661459 0.0937,-0.292144 0.24805,-0.512631 0.15985,-0.225998 0.3638,-0.380339 0.20395,-0.159852 0.42444,-0.259071 0.226,-0.09922 0.452,-0.143316 0.23151,-0.04961 0.42994,-0.04961 h 3.23564 z m 6.21771,0 h -3.24115 V 48.89845 h 3.24115 z m 0,-2.585203 h -3.23012 q -0.29215,0 -0.44098,0.148829 -0.14882,0.143316 -0.14882,0.424436 v 6.53742 h -1.43316 v -6.53742 q 0,-0.369315 0.0937,-0.661459 0.0937,-0.292145 0.24804,-0.512631 0.15986,-0.225998 0.36381,-0.380339 0.20395,-0.159852 0.42443,-0.259071 0.226,-0.09922 0.452,-0.143316 0.226,-0.04961 0.42995,-0.04961 h 3.24115 z"]
+l_cHtml += [	   fill="#]+par_cColor+[" />]
+l_cHtml += [       id="text3-5"]
+l_cHtml += [       aria-label="DataWharf" />]
+l_cHtml += [    <rect]
+l_cHtml += [       style="fill:none;stroke:none;stroke-width:0.501887;stroke-dasharray:none;stroke-opacity:1"]
+l_cHtml += [       id="rect3-7"]
+l_cHtml += [       width="75.311417"]
+l_cHtml += [       height="14.767795"]
+l_cHtml += [       x="114.51102"]
+l_cHtml += [       y="41.433388" />]
+l_cHtml += [  </g>]
+l_cHtml += [</svg>]
 
 return l_cHtml
 //=================================================================================================================
@@ -2265,64 +2365,149 @@ return l_lSQLExecResult
     return l_iUserPk
 #endif
 //=================================================================================================================
+function GetTRExtraClassOnUseStatus(par_iRecno,par_nUseStatus)
+local l_cExtraClass
+
+do case
+case par_nUseStatus == USESTATUS_PROPOSED
+    l_cExtraClass := "GridRowUsageStatusProposed"
+case par_nUseStatus == USESTATUS_UNDERDEVELOPMENT
+    l_cExtraClass := "GridRowUsageStatusUnderDevelopment"
+case par_nUseStatus == USESTATUS_TOBEDISCONTINUED
+    l_cExtraClass := "GridRowUsageStatusToBeDiscontinued"
+case par_nUseStatus == USESTATUS_DISCONTINUED
+    l_cExtraClass := "GridRowUsageStatusDiscontinued"
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cExtraClass := "GridRowEven"
+    else
+        l_cExtraClass := "GridRowOdd"
+    endif
+endcase
+return l_cExtraClass
+//=================================================================================================================
+function GetTDExtraClassOnUseStatus(par_iRecno,par_nUseStatus)
+local l_cExtraClass
+
+do case
+case par_nUseStatus == USESTATUS_PROPOSED
+    l_cExtraClass := "GridCellUsageStatusProposed"
+case par_nUseStatus == USESTATUS_UNDERDEVELOPMENT
+    l_cExtraClass := "GridCellUsageStatusUnderDevelopment"
+case par_nUseStatus == USESTATUS_TOBEDISCONTINUED
+    l_cExtraClass := "GridCellUsageStatusToBeDiscontinued"
+case par_nUseStatus == USESTATUS_DISCONTINUED
+    l_cExtraClass := "GridCellUsageStatusDiscontinued"
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cExtraClass := "GridRowEven"
+    else
+        l_cExtraClass := "GridRowOdd"
+    endif
+endcase
+return l_cExtraClass
+//=================================================================================================================
+//_M_ To be discontinued for GetTRExtraClassOnUseStatus instead
 function GetTRStyleBackgroundColorUseStatus(par_iRecno,par_nUseStatus,par_cOpacity)
 local l_cHtml
 local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
+
 do case
 case par_nUseStatus == USESTATUS_PROPOSED
-    // l_cHtml := [ style="background-color:#]+USESTATUS_2_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_2_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+
 case par_nUseStatus == USESTATUS_UNDERDEVELOPMENT
-    // l_cHtml := [ style="background-color:#]+USESTATUS_3_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_3_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+
 case par_nUseStatus == USESTATUS_TOBEDISCONTINUED
-    // l_cHtml := [ style="background-color:#]+USESTATUS_5_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_5_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+
 case par_nUseStatus == USESTATUS_DISCONTINUED
-    // l_cHtml := [ style="background-color:#]+USESTATUS_6_NODE_BACKGROUND+[;"]
     l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+
 otherwise
     if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
         l_cHtml := [ style="background-color:#f2f2f2;"]
     else
         l_cHtml := ""
     endif
+
+    // if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+    //     l_cHtml := [ class="GridRow GridRowEven"]
+    // else
+    //     l_cHtml := [ class="GridRow GridRowOdd"]
+    // endif
 endcase
+
 return l_cHtml
 //=================================================================================================================
-function GetTRStyleBackgroundColorDeploymentStatus(par_iRecno,par_nUseStatus,par_cOpacity)
-local l_cHtml
-local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
+function GetTRExtraClassOnDeploymentStatus(par_iRecno,par_nUseStatus)
+local l_cExtraClass
+
 do case
 case par_nUseStatus == 2  // On Hold
-    l_cHtml := [ style="background-color:rgb(]+USESTATUS_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+    l_cExtraClass := "GridRowUsageStatusDiscontinued"
 otherwise
     if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
-        l_cHtml := [ style="background-color:#f2f2f2;"]
+        l_cExtraClass := "GridRowEven"
     else
-        l_cHtml := ""
+        l_cExtraClass := "GridRowOdd"
     endif
 endcase
-return l_cHtml
+
+return l_cExtraClass
 //=================================================================================================================
-function GetTRStyleBackgroundColorStage(par_iRecno,par_nStage,par_cOpacity)
-local l_cHtml
-local l_cOpacity := hb_DefaultValue(par_cOpacity,"0.3")
+function GetTRExtraClassOnStage(par_iRecno,par_nStage)
+local l_cExtraClass
 
 //1 = Proposed, 2 = Draft, 3 = Beta, 4 = Stable, 5 = In Use, 6 = Discontinued
 
 do case
 case par_nStage == 6  // To be Discontinued
-    l_cHtml := [ style="background-color:rgb(]+STAGE_6_NODE_TR_BACKGROUND+[,]+l_cOpacity+[);"]
+    l_cExtraClass := "GridRowUsageStatusDiscontinued"
 otherwise
     if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
-        l_cHtml := [ style="background-color:#f2f2f2;"]
+        l_cExtraClass := "GridRowEven"
     else
-        l_cHtml := ""
+        l_cExtraClass := "GridRowOdd"
     endif
 endcase
 
-return l_cHtml
+return l_cExtraClass
+//=================================================================================================================
+function GetTRExtraClassOnActiveInactiveStatus(par_iRecno,par_nStatus,par_nInactiveStatus)
+local l_cExtraClass
+
+do case
+case par_nStatus == par_nInactiveStatus
+    l_cExtraClass := "GridRowStatusInactive"
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cExtraClass := "GridRowEven"
+    else
+        l_cExtraClass := "GridRowOdd"
+    endif
+endcase
+
+return l_cExtraClass
+//=================================================================================================================
+function GetTRExtraClassOnActiveInactiveHiddenStatus(par_iRecno,par_nStatus,par_nInactiveStatus,par_nHiddenStatus)
+local l_cExtraClass
+
+do case
+case par_nStatus == par_nInactiveStatus
+    l_cExtraClass := "GridRowStatusInactive"
+case par_nStatus == par_nHiddenStatus
+    l_cExtraClass := "GridRowStatusHidden"
+otherwise
+    if par_iRecno > 0 .and. mod(par_iRecno,2) == 0
+        l_cExtraClass := "GridRowEven"
+    else
+        l_cExtraClass := "GridRowOdd"
+    endif
+endcase
+
+return l_cExtraClass
 //=================================================================================================================
 function CompareVersionsWithDecimals(par_nVal1,par_nVal2)  // return 0 if same, -1 if par_nVal1 < par_nVal2, 1 otherwise
 local l_nResult
@@ -2731,16 +2916,36 @@ l_cHtml := [<input type="text" name="]+par_cObjectName+[" id="]+par_cObjectName+
    //  style="width:100px;"     TextSearchTag
 return l_cHtml
 //=================================================================================================================
-function GetFormattedUseStatusCounts(par_nCountProposed,par_nCount,par_nCountDiscontinued)
+function GetFormattedUseStatusCounts(par_lAsLink,par_nCountProposed,par_nCount,par_nCountDiscontinued)
 local l_cHtml := ""
 
+// if par_nCountProposed+par_nCount+par_nCountDiscontinued > 0
+//     if par_nCountProposed > 0
+//         l_cHtml += [<span class="text-info">]+trans(par_nCountProposed)+[</span>&nbsp;&nbsp;]
+//     endif
+//     l_cHtml += Trans(par_nCount)
+//     if par_nCountDiscontinued > 0
+//         l_cHtml += [&nbsp;&nbsp;<span class="text-danger">]+trans(par_nCountDiscontinued)+[<span>]
+//     endif
+// endif
+
 if par_nCountProposed+par_nCount+par_nCountDiscontinued > 0
-    if par_nCountProposed > 0
-        l_cHtml += [<span class="text-info">]+trans(par_nCountProposed)+[</span>&nbsp;&nbsp;]
-    endif
-    l_cHtml += Trans(par_nCount)
-    if par_nCountDiscontinued > 0
-        l_cHtml += [&nbsp;&nbsp;<span class="text-danger">]+trans(par_nCountDiscontinued)+[<span>]
+    if par_lAsLink
+        if par_nCountProposed > 0
+            l_cHtml += [<span class="GridLinkProposed">]+trans(par_nCountProposed)+[</span>&nbsp;&nbsp;]
+        endif
+        l_cHtml += [<span class="GridLinkNormal">]+Trans(par_nCount)+[</span>]
+        if par_nCountDiscontinued > 0
+            l_cHtml += [&nbsp;&nbsp;<span class="GridLinkDiscontinued">]+trans(par_nCountDiscontinued)+[<span>]
+        endif
+    else
+        if par_nCountProposed > 0
+            l_cHtml += [<span class="StatusProposed">]+trans(par_nCountProposed)+[</span>&nbsp;&nbsp;]
+        endif
+        l_cHtml += [<span class="StatusNormal">]+Trans(par_nCount)+[</span>]
+        if par_nCountDiscontinued > 0
+            l_cHtml += [&nbsp;&nbsp;<span class="StatusDiscontinued">]+trans(par_nCountDiscontinued)+[<span>]
+        endif
     endif
 endif
 
@@ -2883,7 +3088,7 @@ local l_cContent := ""
 
 with object l_oDB_ListOfDeployment
     :Table("748e96a3-a095-43e4-90ab-9eef7090288b","Deployment")
-    :Column("Deployment.UID" ,"Deployment_UID")
+    :Column("Deployment.UID"     ,"Deployment_UID")
     :Column("Deployment.Server"  ,"Deployment_Server")
     :Column("Deployment.Port"    ,"Deployment_Port")
     :Column("Deployment.Database","Deployment_Database")
@@ -3152,9 +3357,11 @@ if ::p_lCyanAuditAware
             l_cSQLCommand := "CREATE INDEX IF NOT EXISTS "+l_cTableName+"_pk_vals2_idx ON cyanaudit."+l_cTableName+" USING btree ((pk_vals[1]) ASC NULLS LAST);"
             ::p_o_SQLConnection:SQLExec("1c0b8ee8-7fab-43e6-b8eb-09647eb09a42",l_cSQLCommand)
 
-            // Since the index is not on a single column, had to trigger an ANALYZE to ensure the Postgresql query engine will use the new index during queries.
-            l_cSQLCommand := "ANALYZE cyanaudit."+l_cTableName
-            ::p_o_SQLConnection:SQLExec("1c0b8ee8-7fab-43e6-b8eb-09647eb09a43",l_cSQLCommand)
+            // // Since the index is not on a single column, had to trigger an ANALYZE to ensure the Postgresql query engine will use the new index during queries.
+//_M_ ENHANCE TO ONLY ANALYZE IF INDEX DID NOT EXISTS BEFORE
+            // l_cSQLCommand := "ANALYZE cyanaudit."+l_cTableName
+            // ::p_o_SQLConnection:SQLExec("1c0b8ee8-7fab-43e6-b8eb-09647eb09a43",l_cSQLCommand)
+
         endscan
     endif
     CloseAlias("ListOfCyanAuditTables")
@@ -3162,4 +3369,43 @@ if ::p_lCyanAuditAware
 endif
 
 return nil
+//=================================================================================================================
+method SetupJavaScriptjQueryFloatTableHeader() class MyFcgi
+// See https://github.com/mkoryak/floatThead
+local l_ScriptFolder
+l_ScriptFolder := oFcgi:p_cSitePath+[scripts/jQuery_FloatHead_]+JQUERYFLOATHEAD_SCRIPT_VERSION+[/]
+oFcgi:p_cHeader += [<script language="javascript" type="text/javascript" src="]+l_ScriptFolder+[jquery.floatThead.min.js"></script>]
+return .t.
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+//=================================================================================================================
+function GetCompleteURLToCurrentRequest()
+local l_cQueryString
+local l_cCompleteCurrentURL
+
+// l_cCompleteCurrentURL := oFcgi:p_cSitePath
+
+// if oFcgi:p_lInStudioAPI
+//     l_cCompleteCurrentURL += "Client_StudioApp/"
+// endif
+
+// l_cCompleteCurrentURL += oFcgi:RequestSettings["Path"]
+
+// if !empty(oFcgi:p_cPageName)
+//     if right(l_cCompleteCurrentURL,1) != "/"
+//         l_cCompleteCurrentURL += "/"
+//     endif
+//     l_cCompleteCurrentURL += oFcgi:p_cPageName
+// endif
+
+l_cCompleteCurrentURL := oFcgi:GetEnvironment("REDIRECT_URL")
+
+l_cQueryString := oFcgi:RequestSettings["QueryString"]
+if !empty(l_cQueryString)
+    l_cCompleteCurrentURL += "?"+l_cQueryString
+endif
+
+return l_cCompleteCurrentURL
 //=================================================================================================================

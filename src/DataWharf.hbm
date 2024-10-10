@@ -12,6 +12,7 @@ ImportExportApplication.prg
 ImportExportModel.prg
 DataDictionaryFixAndTest.prg
 DataDictionaryLibrary.prg
+ClassBuildGrid.prg
 
 WebPages.hbm
 API.hbm

@@ -192,7 +192,7 @@ with object l_oDB1
     :Column("ModelingDiagram.AssociationEndShowName","ModelingDiagram_AssociationEndShowName")
     :Column("ModelingDiagram.NodeMinHeight"         ,"ModelingDiagram_NodeMinHeight")
     :Column("ModelingDiagram.NodeMaxWidth"          ,"ModelingDiagram_NodeMaxWidth")
-    :Column("ModelingDiagram.UID"               ,"ModelingDiagram_UID")
+    :Column("ModelingDiagram.UID"                   ,"ModelingDiagram_UID")
     l_oDataModelingDiagram     := :Get(l_iModelingDiagramPk)
     l_cNodePositions           := l_oDataModelingDiagram:ModelingDiagram_VisPos
     l_lNodeShowDescription     := l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription
@@ -1005,8 +1005,8 @@ l_cJS +=      [return $(e.target).blur().focus();]
 l_cJS +=    [}]
 l_cJS += [});]
 
-// Code to enable the "All" and "Core Only" button
-l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");});]
+// Code to enable the "All" button
+l_cJS += [$("#ButtonShowAll").click(function(){$("#AttributeSearch").val("");$(".SpanAttributeName").each(function (par_SpanEntity){$(this).parent().parent().parent().show();});console.log("test3");});]
 
 l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetMLInfo","modelingdiagrampk='+Trans(l_iModelingDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
 l_cHtml += '      });'
@@ -1088,7 +1088,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelML >= 4
             //Add an initial Diagram File this should not happen, since record was already added
             :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
             :Field("ModelingDiagram.Name"    ,[All ]+oFcgi:p_ANFEntities)
-            :Field("ModelingDiagram.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+            :Field("ModelingDiagram.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iModelingDiagramPk := :Key()
             endif
@@ -1551,7 +1551,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Field("ModelingDiagram.fk_Model",par_oDataHeader:Model_pk)
                 :Field("ModelingDiagram.UseStatus"     ,USESTATUS_UNKNOWN)
                 :Field("ModelingDiagram.DocStatus"     ,DOCTATUS_MISSING)
-                :Field("ModelingDiagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iModelingDiagramPk := :Key()
                 else
@@ -1808,7 +1808,7 @@ case l_cActionOnSubmit == "DuplicateDiagram"
 
                 :Table("946aadba-5312-451a-bd00-282cba8f75e8","ModelingDiagram")
                 :Field("ModelingDiagram.fk_Model"               ,par_oDataHeader:Model_pk)
-                :Field("ModelingDiagram.UID"                ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("ModelingDiagram.UID"                    ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("ModelingDiagram.Name"                   ,l_cModelingDiagram_Name)
                 :Field("ModelingDiagram.NodeShowDescription"    ,l_oDataModelingDiagram:ModelingDiagram_NodeShowDescription)
                 :Field("ModelingDiagram.VisPos"                 ,l_oDataModelingDiagram:ModelingDiagram_VisPos)
@@ -2246,6 +2246,7 @@ local l_cZoomInfo
 local l_cObjectId
 local l_lNeverShowDescriptionOnHover := (GetUserSetting("NeverShowDescriptionOnHover") == "T")
 local l_lUnknownInGray               := (GetUserSetting("UnknownInGray") == "T")
+local l_oGrid
 
 oFcgi:TraceAdd("GetMLInfoDuringVisualization")
 
@@ -2329,7 +2330,7 @@ if len(l_aNodes) == 1
             :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
             :Column("DataType.FullName"        ,"DataType_FullName")
             :Column("Attribute.TreeOrder1"     ,"Attribute_TreeOrder1")
-            :Column("Attribute.UID"        ,"Attribute_UID")
+            :Column("Attribute.UID"            ,"Attribute_UID")
             :Column("Attribute.Name"           ,"Attribute_Name")
             :Column("Attribute.UseStatus"      ,"Attribute_UseStatus")
             :Column("Attribute.BoundLower"     ,"Attribute_BoundLower")
@@ -2347,7 +2348,7 @@ if len(l_aNodes) == 1
             :Table("6205145d-e049-434f-8fbe-8b900873e196","DiagramEntity")
             :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
             :Column("ModelingDiagram.Name"       ,"ModelingDiagram_Name")
-            :Column("ModelingDiagram.UID"    ,"ModelingDiagram_UID")
+            :Column("ModelingDiagram.UID"        ,"ModelingDiagram_UID")
             :Column("upper(ModelingDiagram.Name)","tag1")
             :Join("inner","ModelingDiagram","","DiagramEntity.fk_ModelingDiagram = ModelingDiagram.pk")
             :Where("DiagramEntity.fk_Entity = ^",l_iEntityPk)
@@ -2462,7 +2463,7 @@ if len(l_aNodes) == 1
         l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB_InArray
             :Table("eaca66a4-e311-4e3e-a3c4-8ee000f15df4","Entity")
-            :Column("Entity.UID"       ,"Entity_UID")         // 1
+            :Column("Entity.UID"           ,"Entity_UID")         // 1
             :Column("Package.FullName"     ,"Package_FullName")       // 2
             :Column("Entity.Name"          ,"Entity_Name")            // 3
             :Column("Entity.Description"   ,"Entity_Description")     // 4
@@ -2602,68 +2603,35 @@ if len(l_aNodes) == 1
 
                             l_cHtml += [<div class="m-3"></div>]
 
-                            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                            l_oGrid := Grid()
+                            with object l_oGrid
+                                :SetAlias("ListOfAttributes")
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-white">Name</th>]
-                                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataType+[</th>]
-                                l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
-                                l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
-                                l_cHtml += [<th class="text-white">Description</th>]
-                                l_cHtml += [<th class="text-white text-center">Use<br>Status</th>]
-                                if l_nNumberOfCustomFieldValues > 0
-                                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                                endif
-                            l_cHtml += [</tr>]
+                                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" target="_blank" href="]+oFcgi:p_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_UID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>] } }})
 
-                            select ListOfAttributes
-                            scan all
-                                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAttributes->Attribute_UseStatus)+[>]
+                                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFDataType},;
+                                            "Rows"  =>{"Expression" => {|| ListOfAttributes->DataType_FullName } }})
 
-                                    // Name
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_UID+[/"><span class="SpanAttributeName">]+ListOfAttributes->Attribute_Name+[</span></a>]
-                                    l_cHtml += [</td>]
+                                :AddColumn({"Header"=>{"Caption"=>"Bound<br>Lower","Align" => "center"},;
+                                            "Rows"  =>{"Expression" => {|| iif(!hb_orm_isnull("ListOfAttributes","Attribute_BoundLower"),ListOfAttributes->Attribute_BoundLower,"") } }})
 
-                                    // Data Type
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += ListOfAttributes->DataType_FullName
-                                    l_cHtml += [</td>]
+                                :AddColumn({"Header"=>{"Caption"=>"Bound<br>Upper","Align" => "center"},;
+                                            "Rows"  =>{"Expression" => {|| iif(!hb_orm_isnull("ListOfAttributes","Attribute_BoundLower"),ListOfAttributes->Attribute_BoundLower,"") } }})
 
-                                    // Bound<br>Lower
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundLower")
-                                            l_cHtml += ListOfAttributes->Attribute_BoundLower
-                                        endif
-                                    l_cHtml += [</td>]
+                                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,"")) } }})
 
-                                    // Bound<br>Upper
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundUpper")
-                                            l_cHtml += ListOfAttributes->Attribute_BoundUpper
-                                        endif
-                                    l_cHtml += [</td>]
+                                :AddColumn({"Header"=>{"Caption"=>"Use<br>Status","Align" => "center"},;
+                                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                                    // Description
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,""))
-                                    l_cHtml += [</td>]
+                                :AddColumn({"Condition"=>{|| l_nNumberOfCustomFieldValues > 0 },;
+                                            "Header"=>{"Caption"=>"Other","Align" => "center"},;
+                                            "Rows"  =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfAttributes->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                                    // Use Status
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
-                                    l_cHtml += [</td>]
+                                l_cHtml += :Build()
+                            endwith
 
-                                    if l_nNumberOfCustomFieldValues > 0
-                                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                            l_cHtml += CustomFieldsBuildGridOther(ListOfAttributes->pk,l_hOptionValueToDescriptionMapping)
-                                        l_cHtml += [</td>]
-                                    endif
-
-                                l_cHtml += [</tr>]
-                            endscan
-                            l_cHtml += [</table>]
-                            
                         l_cHtml += [</div>]
                     l_cHtml += [</div>]
 
@@ -2889,6 +2857,8 @@ local l_nAssociationUseStatus
 local l_lUnknownInGray := (GetUserSetting("UnknownInGray") == "T")
 local l_cUseStatus
 
+local l_oGrid
+
 //Get the list of Endpoints
 l_oDB_ListOfEndpoints := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB_ListOfEndpoints
@@ -2960,7 +2930,7 @@ endwith
 l_oDB_InArray := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB_InArray
     :Table("82763b38-3f40-43f2-aa32-72939f867a95","Association")
-    :Column("Association.UID"           ,"Association_UID")             // 1
+    :Column("Association.UID"               ,"Association_UID")             // 1
     :Column("Package.FullName"              ,"Package_FullName")                // 2
     :Column("Association.Name"              ,"Association_Name")                // 3
     :Column("Association.Description"       ,"Association_Description")         // 4
@@ -3053,54 +3023,33 @@ if l_oDB_InArray:Tally == 1
             l_cHtml += [<div class="row">]  //  justify-content-center
                 l_cHtml += [<div class="col-auto">]
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfEndpoints")
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntity+[</th>]
-                        l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
-                        l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
-                        l_cHtml += [<th class="text-white text-center">Aspect<br>Of</th>]
-                        l_cHtml += [<th class="text-white">Name</th>]
-                        l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFEntity},;
+                                    "Rows"  =>{"Expression" => {|| ListOfEndpoints->Entity_Name } }})
 
-                    select ListOfEndpoints
-                    scan all
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-                            // Entity
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += ListOfEndpoints->Entity_Name
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Bound<br>Lower","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfEndpoints->Endpoint_BoundLower,"") },;
+                                    "Align" => "center" }})
 
-                            // Bound<br>Lower
-                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                l_cHtml += nvl(ListOfEndpoints->Endpoint_BoundLower,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Bound<br>Upper","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfEndpoints->Endpoint_BoundUpper,"") },;
+                                    "Align" => "center" }})
 
-                            // Bound<br>Upper
-                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                l_cHtml += nvl(ListOfEndpoints->Endpoint_BoundUpper,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Aspect<br>Of","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| iif(ListOfEndpoints->Endpoint_IsContainment,[<i class="bi bi-check-lg"></i>],[&nbsp;]) } }})
 
-                            // Aspect Of
-                            l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                l_cHtml += iif(ListOfEndpoints->Endpoint_IsContainment,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfEndpoints->Endpoint_Name,"") } }})
 
-                            // Name
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfEndpoints->Endpoint_Name,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                    "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEndpoints->Endpoint_Description,"")) } }})
 
-                            // Description
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfEndpoints->Endpoint_Description,""))
-                            l_cHtml += [</td>]
+                        l_cHtml += :Build()
+                    endwith
 
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
-                    
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
 

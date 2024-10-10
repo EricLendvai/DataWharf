@@ -618,7 +618,7 @@ case l_cURLAction = "EditMyDeployment"
         :Column("Deployment.AllowUpdates"       , "Deployment_AllowUpdates")
 
         :Where("Deployment.fk_Application = ^",l_iApplicationPk)
-        :Where("Deployment.UID = ^"       ,l_cUIDDeployment)
+        :Where("Deployment.UID = ^"           ,l_cUIDDeployment)
         :Where("Deployment.fk_User = ^"       ,oFcgi:p_iUserPk)
         l_oData := :SQL()
     endwith
@@ -658,7 +658,7 @@ case l_cURLAction == "Visualize"
         with object l_oDB1
             :Table("4ce05f54-56f4-4141-9d33-634c3a661d66","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
-            :Column("Diagram.UID"    ,"Diagram_UID")
+            :Column("Diagram.UID"        ,"Diagram_UID")
             :Column("upper(Diagram.Name)","Tag1")
             :Where("Diagram.fk_Application = ^" , l_iApplicationPk)
             :OrderBy("tag1")
@@ -879,14 +879,14 @@ case l_cURLAction == "EditColumn"
         :Column("Table.pk"                        ,"Table_pk")
         :Column("Namespace.Name"                  ,"Namespace_Name")
         :Column("Namespace.AKA"                   ,"Namespace_AKA")
-        :Column("Namespace.UID"               ,"Namespace_UID")
+        :Column("Namespace.UID"                   ,"Namespace_UID")
         :Column("Table.Name"                      ,"Table_Name")
         :Column("Table.AKA"                       ,"Table_AKA")
-        :Column("Table.UID"                   ,"Table_UID")
+        :Column("Table.UID"                       ,"Table_UID")
         :Column("Column.Name"                     ,"Column_Name")
         :Column("Column.TrackNameChanges"         ,"Column_TrackNameChanges")
         :Column("Column.AKA"                      ,"Column_AKA")
-        :Column("Column.UID"                  ,"Column_UID")
+        :Column("Column.UID"                      ,"Column_UID")
         :Column("Column.StaticUID"                ,"Column_StaticUID")
         :Column("Column.UsedAs"                   ,"Column_UsedAs")
         :Column("Column.UsedBy"                   ,"Column_UsedBy")
@@ -1053,12 +1053,12 @@ case l_cURLAction == "EditIndex"
         :Column("Namespace.pk"      ,"Namespace_pk")
         :Column("Table.pk"          ,"Table_pk")
 
-        :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Table.UID"    ,"Table_UID")
-        :Column("Namespace.Name"   ,"Namespace_Name")
-        :Column("Namespace.AKA"    ,"Namespace_AKA")
-        :Column("Namespace.UID","Namespace_UID")
+        :Column("Table.Name"        ,"Table_Name")
+        :Column("Table.AKA"         ,"Table_AKA")
+        :Column("Table.UID"         ,"Table_UID")
+        :Column("Namespace.Name"    ,"Namespace_Name")
+        :Column("Namespace.AKA"     ,"Namespace_AKA")
+        :Column("Namespace.UID"     ,"Namespace_UID")
 
         :Column("Index.Name"        ,"Index_Name")
         :Column("Index.UsedBy"      ,"Index_UsedBy")
@@ -1245,13 +1245,13 @@ case l_cURLAction == "OrderEnumValues"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("0d12fc1c-3b02-4e00-ace2-21eb385eff84","Enumeration")
-            :Column("Namespace.Name"     ,"Namespace_Name")
-            :Column("Namespace.AKA"      ,"Namespace_AKA")
-            :Column("Namespace.UID"  ,"Namespace_UID")
-            :Column("Enumeration.pk"     ,"Enumeration_Pk")
-            :Column("Enumeration.Name"   ,"Enumeration_Name")
-            :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-            :Column("Enumeration.UID","Enumeration_UID")
+            :Column("Namespace.Name"  ,"Namespace_Name")
+            :Column("Namespace.AKA"   ,"Namespace_AKA")
+            :Column("Namespace.UID"   ,"Namespace_UID")
+            :Column("Enumeration.pk"  ,"Enumeration_Pk")
+            :Column("Enumeration.Name","Enumeration_Name")
+            :Column("Enumeration.AKA" ,"Enumeration_AKA")
+            :Column("Enumeration.UID" ,"Enumeration_UID")
             :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
             :Where("Namespace.fk_Application = ^",l_iApplicationPk)
 
@@ -1288,14 +1288,14 @@ case l_cURLAction == "NewEnumValue"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("9a9489dd-bcf1-4688-b03e-6c706960e140","Enumeration")
-            :Column("Namespace.Pk"       ,"Namespace_Pk")
-            :Column("Namespace.Name"     ,"Namespace_Name")
-            :Column("Namespace.AKA"      ,"Namespace_AKA")
-            :Column("Namespace.UID"  ,"Namespace_UID")
-            :Column("Enumeration.Pk"     ,"Enumeration_Pk")
-            :Column("Enumeration.Name"   ,"Enumeration_Name")
-            :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-            :Column("Enumeration.UID","Enumeration_UID")
+            :Column("Namespace.Pk"    ,"Namespace_Pk")
+            :Column("Namespace.Name"  ,"Namespace_Name")
+            :Column("Namespace.AKA"   ,"Namespace_AKA")
+            :Column("Namespace.UID"   ,"Namespace_UID")
+            :Column("Enumeration.Pk"  ,"Enumeration_Pk")
+            :Column("Enumeration.Name","Enumeration_Name")
+            :Column("Enumeration.AKA" ,"Enumeration_AKA")
+            :Column("Enumeration.UID" ,"Enumeration_UID")
             :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
             :Where("Namespace.fk_Application = ^",l_iApplicationPk)
 
@@ -1337,14 +1337,14 @@ case l_cURLAction == "EditEnumValue"
         :Column("Enumeration.pk"            ,"Enumeration_pk")
         :Column("Namespace.Name"            ,"Namespace_Name")
         :Column("Namespace.AKA"             ,"Namespace_AKA")
-        :Column("Namespace.UID"         ,"Namespace_UID")
+        :Column("Namespace.UID"             ,"Namespace_UID")
         :Column("Enumeration.Name"          ,"Enumeration_Name")
         :Column("Enumeration.AKA"           ,"Enumeration_AKA")
-        :Column("Enumeration.UID"       ,"Enumeration_UID")
+        :Column("Enumeration.UID"           ,"Enumeration_UID")
         :Column("EnumValue.Name"            ,"EnumValue_Name")
         :Column("EnumValue.TrackNameChanges","EnumValue_TrackNameChanges")
         :Column("EnumValue.AKA"             ,"EnumValue_AKA")
-        :Column("EnumValue.UID"         ,"EnumValue_UID")
+        :Column("EnumValue.UID"             ,"EnumValue_UID")
         :Column("EnumValue.Number"          ,"EnumValue_Number")
         :Column("EnumValue.Code"            ,"EnumValue_Code")
         :Column("EnumValue.UseStatus"       ,"EnumValue_UseStatus")
@@ -1493,13 +1493,13 @@ case l_cURLAction == "EditTag"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("a5a2cd08-7783-4151-905d-da7c3cb3a2af","Tag")
-        :Column("Tag.pk"             , "Tag_Pk")
-        :Column("Tag.Name"           , "Tag_Name")
-        :Column("Tag.UID"        , "Tag_UID")
-        :Column("Tag.Code"           , "Tag_Code")
-        :Column("Tag.TableUseStatus" , "Tag_TableUseStatus")
-        :Column("Tag.ColumnUseStatus", "Tag_ColumnUseStatus")
-        :Column("Tag.Description"    , "Tag_Description")
+        :Column("Tag.pk"             ,"Tag_Pk")
+        :Column("Tag.Name"           ,"Tag_Name")
+        :Column("Tag.UID"            ,"Tag_UID")
+        :Column("Tag.Code"           ,"Tag_Code")
+        :Column("Tag.TableUseStatus" ,"Tag_TableUseStatus")
+        :Column("Tag.ColumnUseStatus","Tag_ColumnUseStatus")
+        :Column("Tag.Description"    ,"Tag_Description")
         :Where([lower(replace(Tag.Code,' ','')) = ^],lower(StrTran(l_cURLTagCode," ","")))
         :Where([Tag.fk_Application = ^],l_iApplicationPk)
         :Limit(1)  // In case we have duplicate pick one of them
@@ -1552,9 +1552,9 @@ case l_cURLAction == "EditTemplateTable"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("9de1a987-56bf-4965-8fac-dbfdcb2f8183","TemplateTable")
-        :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
-        :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.UID","TemplateTable_UID")
+        :Column("TemplateTable.pk"  ,"TemplateTable_Pk")
+        :Column("TemplateTable.Name","TemplateTable_Name")
+        :Column("TemplateTable.UID" ,"TemplateTable_UID")
         :Where([TemplateTable.fk_Application = ^],l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
@@ -1587,9 +1587,9 @@ case l_cURLAction == "ListTemplateColumns"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("61820e1b-b440-4c71-8e1a-a34b90062fa9","TemplateTable")
-        :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
-        :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.UID","TemplateTable_UID")
+        :Column("TemplateTable.pk"  ,"TemplateTable_Pk")
+        :Column("TemplateTable.Name","TemplateTable_Name")
+        :Column("TemplateTable.UID" ,"TemplateTable_UID")
         :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
@@ -1618,9 +1618,9 @@ case l_cURLAction == "OrderTemplateColumns"
     l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
     with object l_oDB1
         :Table("31de69df-b5ea-4d10-9787-f7e0ab490da6","TemplateTable")
-        :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
-        :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.UID","TemplateTable_UID")
+        :Column("TemplateTable.pk"  ,"TemplateTable_Pk")
+        :Column("TemplateTable.Name","TemplateTable_Name")
+        :Column("TemplateTable.UID" ,"TemplateTable_UID")
         :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
         if left(l_cURLTemplateTableName,1) == "~"
@@ -1650,9 +1650,9 @@ case l_cURLAction == "NewTemplateColumn"
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("f0f14f13-3c12-40b5-b45f-db93c25d651c","TemplateTable")
-            :Column("TemplateTable.pk"     ,"TemplateTable_Pk")
-            :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-            :Column("TemplateTable.UID","TemplateTable_UID")
+            :Column("TemplateTable.pk"  ,"TemplateTable_Pk")
+            :Column("TemplateTable.Name","TemplateTable_Name")
+            :Column("TemplateTable.UID" ,"TemplateTable_UID")
             :Where("TemplateTable.fk_Application = ^",l_iApplicationPk)
 
             if left(l_cURLTemplateTableName,1) == "~"
@@ -1694,7 +1694,7 @@ case l_cURLAction == "EditTemplateColumn"
         :Column("TemplateColumn.pk"           ,"TemplateColumn_pk")
         :Column("TemplateTable.pk"            ,"TemplateTable_pk")
         :Column("TemplateTable.Name"          ,"TemplateTable_Name")
-        :Column("TemplateTable.UID"       ,"TemplateTable_UID")
+        :Column("TemplateTable.UID"           ,"TemplateTable_UID")
         :Column("TemplateColumn.Name"         ,"TemplateColumn_Name")
         :Column("TemplateColumn.AKA"          ,"TemplateColumn_AKA")
         :Column("TemplateColumn.UsedAs"       ,"TemplateColumn_UsedAs")
@@ -1784,10 +1784,10 @@ case l_cURLAction == "TableExportForDataWharfImports"
             :Column("Table.pk"         ,"Table_Pk")
             :Column("Namespace.Name"   ,"Namespace_Name")
             :Column("Namespace.AKA"    ,"Namespace_AKA")
-            :Column("Namespace.UID","Namespace_UID")
+            :Column("Namespace.UID"    ,"Namespace_UID")
             :Column("Table.Name"       ,"Table_Name")
             :Column("Table.AKA"        ,"Table_AKA")
-            :Column("Table.UID"    ,"Table_UID")
+            :Column("Table.UID"        ,"Table_UID")
             :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
             :Where([Namespace.fk_Application = ^],l_iApplicationPk)
 
@@ -1916,14 +1916,17 @@ if l_iTypePos > 0
     case oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS]  // Enumeration
         if !hb_IsNIL(par_cEnumerationName) .and. !hb_IsNIL(par_iEnumerationImplementAs) //.and. !hb_IsNIL(par_iEnumerationImplementLength)
             l_cResult += [&nbsp;(]
-            l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
+
+            l_cResult += [<a target="_blank" href="]+;
                                     par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+;
                                                                                      PrepareForURLSQLIdentifier("Namespace",par_cEnumerationNamespaceName,par_cEnumerationNamespaceUID)+[/]+;
                                                                                      PrepareForURLSQLIdentifier("Namespace",par_cEnumerationName         ,par_cEnumerationUID)         +[/"]
+
+
             if empty(par_cTooltipEnumValues)
                 l_cResult += [>]
             else
-                l_cResult += [data-toggle="tooltip" data-html="true" title="]+par_cTooltipEnumValues+[" class="DisplayEnum">]
+                l_cResult += [data-toggle="tooltip" data-html="true" title="]+par_cTooltipEnumValues+[" class="DisplayEnum GridLinkNewPage">]
             endif
 
             // l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
@@ -1952,7 +1955,7 @@ if l_iTypePos > 0
     // // Not a native Enumeration but has a link to an enumeration - Following was a test to see if should allow to link to an enum without forcing it. Decided not to allow.
     // if !oFcgi:p_ColumnTypes[l_iTypePos,COLUMN_TYPES_SHOW_ENUMS] .and. !hb_IsNIL(par_cEnumerationName)
     //     l_cResult += [&nbsp;(]
-    //     l_cResult += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+[/]+par_cEnumerationName+[/">]
+    //     l_cResult += [<a class="GridLinkNewPage" target="_blank" href="]+par_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+"/"+par_cURLNamespaceName+[/]+par_cEnumerationName+[/">]
     //     l_cResult += par_cEnumerationName+iif(!empty(par_cEnumerationAKA),[&nbsp;(]+Strtran(par_cEnumerationAKA,[&nbsp;],[])+[)],[])
     //     l_cResult += [</a>]
     //     l_cResult += [)]
@@ -2020,7 +2023,7 @@ l_cHtml += [<ul class="nav nav-tabs">]
             with object l_oDB1
                 :Table("34c5c34f-87fb-46ed-ac62-8a374d5cf668","UserSettingApplication")
                 :Column("UserSettingApplication.pk","pk")
-                :Column("Diagram.UID"          ,"Diagram_UID")
+                :Column("Diagram.UID"              ,"Diagram_UID")
                 :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
                 :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
                 :Where("UserSettingApplication.fk_Application = ^",par_iApplicationPk)
@@ -2151,6 +2154,7 @@ local l_nCountProposed
 local l_nCount
 local l_nCountDiscontinued
 local l_cInitialDiagram
+local l_oGrid
 
 oFcgi:TraceAdd("ApplicationListFormBuild")
 
@@ -2364,7 +2368,7 @@ l_cHtml += [<div class="m-3">]
         with object l_oDB_ListOfUserSettingApplicationDefaultDiagram
             :Table("620799a2-adb9-40dc-8136-5a6007fead0f","UserSettingApplication")
             :Column("UserSettingApplication.fk_Application","ApplicationPk")
-            :Column("Diagram.UID"                      ,"Diagram_UID")
+            :Column("Diagram.UID"                          ,"Diagram_UID")
             :Join("inner","Diagram","","UserSettingApplication.fk_Diagram = Diagram.pk")   // Since UserSettingApplication.fk_Diagram could not be set, must use inner join.
             :Where("UserSettingApplication.fk_User = ^",oFcgi:p_iUserPk)
             :SQL("ListOfUserSettingApplicationDefaultDiagram")
@@ -2376,173 +2380,164 @@ l_cHtml += [<div class="m-3">]
 
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
+//jquery
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfDataDictionaries")
+                    :SetTitle({|l_nNumberOfRows|"Applications / Data Dictionaries ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfDataDictionaries->Application_UseStatus)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"11","12")+[">Applications / Data Dictionaries (]+Trans(l_nNumberOfDataDictionaries)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetOnRowBuild({||
+                                        if el_seek(ListOfDataDictionaries->pk,"ListOfNamespaceCounts","tag1")
+                                            l_nCountProposed     := ListOfNamespaceCounts->CountProposed
+                                            l_nCount             := ListOfNamespaceCounts->Count
+                                            l_nCountDiscontinued := ListOfNamespaceCounts->CountDiscontinued
+                                        else
+                                            l_nCountProposed     := 0
+                                            l_nCount             := 0
+                                            l_nCountDiscontinued := 0
+                                        endif
+                                        return nil
+                                   })
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Name-<br>spaces</th>]
-                    l_cHtml += [<th class="text-white text-center">Tables</th>]
-                    l_cHtml += [<th class="text-white text-center">Columns</th>]
-                    l_cHtml += [<th class="text-white text-center">Relationships</th>]
-                    l_cHtml += [<th class="text-white text-center">Enumerations</th>]
-                    l_cHtml += [<th class="text-white text-center">Indexes</th>]
-                    l_cHtml += [<th class="text-white text-center">Diagrams</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                local l_cHtml
+                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                    l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
+                                                else
+                                                    l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
+                                                endif
+                                                return l_cHtml
+                                          } }})
 
-                select ListOfDataDictionaries
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfDataDictionaries->Application_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfDataDictionaries->Application_Description,"")) } }})
 
-                        if el_seek(ListOfDataDictionaries->pk,"ListOfNamespaceCounts","tag1")
-                            l_nCountProposed     := ListOfNamespaceCounts->CountProposed
-                            l_nCount             := ListOfNamespaceCounts->Count
-                            l_nCountDiscontinued := ListOfNamespaceCounts->CountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
+                    :AddColumn({"Header"=>{"Caption"=>"Name-<br>spaces","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Application Name
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
-                            else
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+alltrim(ListOfDataDictionaries->Application_Name)+[</a>]
-                            endif
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Tables","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if el_seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1")
+                                                                    l_nCountProposed     := ListOfTableCounts->CountProposed
+                                                                    l_nCount             := ListOfTableCounts->Count
+                                                                    l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Application Description
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfDataDictionaries->Application_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Columns","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                if el_seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1")
+                                                                    l_nCountProposed     := ListOfColumnCounts->CountProposed
+                                                                    l_nCount             := ListOfColumnCounts->Count
+                                                                    l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                return GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                           },;
+                                            "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Namespace
+                    :AddColumn({"Header"=>{"Caption"=>"Relationships","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                if el_seek(ListOfDataDictionaries->pk,"ListOfRelationshipCounts","tag1")
+                                                                    l_nCountProposed     := ListOfRelationshipCounts->CountProposed
+                                                                    l_nCount             := ListOfRelationshipCounts->Count
+                                                                    l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                return GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                           },;
+                                            "Align" => "center" }})
 
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                            endif
+                    :AddColumn({"Header"=>{"Caption"=>"Enumerations","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if el_seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1")
+                                                                    l_nCountProposed     := ListOfEnumerationCounts->CountProposed
+                                                                    l_nCount             := ListOfEnumerationCounts->Count
+                                                                    l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                            "Align" => "center" }})
 
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Indexes","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                if el_seek(ListOfDataDictionaries->pk,"ListOfIndexCounts","tag1")
+                                                                    l_nCountProposed     := ListOfIndexCounts->CountProposed
+                                                                    l_nCount             := ListOfIndexCounts->Count
+                                                                    l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                return GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Tables
+                    :AddColumn({"Header"=>{"Caption"=>"Diagrams","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                local l_cInitialDiagram
+                                                                l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfDiagramCounts","tag1") , ListOfDiagramCounts->Count , 0)
+                                                                if !empty(l_nCount)
+                                                                    //Will check if we have a previously accessed diagram.
+                                                                    if el_seek(ListOfDataDictionaries->pk,"ListOfUserSettingApplicationDefaultDiagram","ApplicationPk")
+                                                                        l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplicationDefaultDiagram->Diagram_UID
+                                                                    else
+                                                                        l_cInitialDiagram := ""
+                                                                    endif
+                                                                    l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/Visualize/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/]+l_cInitialDiagram+[">]+Trans(l_nCount)+[</a>]
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                            if el_seek(ListOfDataDictionaries->pk,"ListOfTableCounts","tag1")
-                                l_nCountProposed     := ListOfTableCounts->CountProposed
-                                l_nCount             := ListOfTableCounts->Count
-                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                            endif
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfDataDictionaries->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfDataDictionaries->Application_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfDataDictionaries->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfDataDictionaries->Application_DocStatus,DOCTATUS_MISSING)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Columns
+                    :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                                "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfDataDictionaries->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                            if el_seek(ListOfDataDictionaries->pk,"ListOfColumnCounts","tag1")
-                                l_nCountProposed     := ListOfColumnCounts->CountProposed
-                                l_nCount             := ListOfColumnCounts->Count
-                                l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Relationships
-
-                            if el_seek(ListOfDataDictionaries->pk,"ListOfRelationshipCounts","tag1")
-                                l_nCountProposed     := ListOfRelationshipCounts->CountProposed
-                                l_nCount             := ListOfRelationshipCounts->Count
-                                l_nCountDiscontinued := ListOfRelationshipCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Enumerations
-
-                            if el_seek(ListOfDataDictionaries->pk,"ListOfEnumerationCounts","tag1")
-                                l_nCountProposed     := ListOfEnumerationCounts->CountProposed
-                                l_nCount             := ListOfEnumerationCounts->Count
-                                l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                            endif
-
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Indexes
-
-                            if el_seek(ListOfDataDictionaries->pk,"ListOfIndexCounts","tag1")
-                                l_nCountProposed     := ListOfIndexCounts->CountProposed
-                                l_nCount             := ListOfIndexCounts->Count
-                                l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-                            
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Diagrams
-                            l_nCount := iif( el_seek(ListOfDataDictionaries->pk,"ListOfDiagramCounts","tag1") , ListOfDiagramCounts->Count , 0)
-                            if !empty(l_nCount)
-                                //Will check if we have a previously accessed diagram.
-                                if el_seek(ListOfDataDictionaries->pk,"ListOfUserSettingApplicationDefaultDiagram","ApplicationPk")
-                                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingApplicationDefaultDiagram->Diagram_UID
-                                else
-                                    l_cInitialDiagram := ""
-                                endif
-                                l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/Visualize/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/]+l_cInitialDiagram+[">]+Trans(l_nCount)+[</a>]
-                            endif
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Usage Status
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfDataDictionaries->Application_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfDataDictionaries->Application_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Doc Status
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfDataDictionaries->Application_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfDataDictionaries->Application_DocStatus,DOCTATUS_MISSING)]
-                        l_cHtml += [</td>]
-
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]   // Custom Fields
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfDataDictionaries->pk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -2917,11 +2912,11 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfNamespaces
 local l_nNumberOfCustomFieldValues := 0
 local l_lWarnings := .f.
-local l_nColspan
 local l_lHasExternalId :=.f.
 local l_nCountProposed
 local l_nCount
 local l_nCountDiscontinued
+local l_oGrid
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -2930,7 +2925,7 @@ oFcgi:TraceAdd("NamespaceListFormBuild")
 with object l_oDB_ListOfNamespaces
     :Table("27c7cda8-7433-4416-a18a-74b38bb8bd6e","Namespace")
     :Column("Namespace.pk"              ,"pk")
-    :Column("Namespace.UID"         ,"Namespace_UID")
+    :Column("Namespace.UID"             ,"Namespace_UID")
     :Column("Namespace.Name"            ,"Namespace_Name")
     :Column("Namespace.TrackNameChanges","Namespace_TrackNameChanges")
     :Column("Namespace.AKA"             ,"Namespace_AKA")
@@ -3063,130 +3058,102 @@ else
         l_cHtml += [<div class="m-3"></div>]   //Spacer
     endif
 
-    l_nColspan := 6
-    if l_lHasExternalId
-        l_nColspan++
-    endif
-    if l_nNumberOfCustomFieldValues > 0
-        l_nColspan++
-    endif
-    if l_lWarnings
-        l_nColspan++
-    endif
-
     l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfNamespaces")
+                    :SetTitle({|l_nNumberOfRows|"Namespaces ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">Namespaces (]+Trans(l_nNumberOfNamespaces)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfNamespaces->Namespace_UseStatus)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                    if l_lHasExternalId
-                        l_cHtml += [<th class="text-white">External Id</th>]
-                    endif
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                    l_cHtml += [<th class="text-white text-center">Tables</th>]
-                    l_cHtml += [<th class="text-white text-center">Enumerations</th>]
-                    if l_lWarnings
-                        l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                local l_cHtml
+                                                l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditNamespace/]+par_cURLApplicationLinkCode+[/]+;
+                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfNamespaces->Namespace_Name,ListOfNamespaces->Namespace_UID)+;
+                                                                                        [/">]+TextToHtml(ListOfNamespaces->Namespace_Name+FormatAKAForDisplay(ListOfNamespaces->Namespace_AKA))+[</a>]
+                                            
+                                                if el_seek(trans(ListOfNamespaces->pk)+'*',"ListOfPreviousName","tag1")
+                                                    select ListOfPreviousName
+                                                    scan while ListOfPreviousName->pk == ListOfNamespaces->pk
+                                                        l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
+                                                    endscan
+                                                endif
+                                                return l_cHtml
+                                          } }})
 
-                select ListOfNamespaces
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfNamespaces->Namespace_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditNamespace/]+par_cURLApplicationLinkCode+[/]+;
-                                                                PrepareForURLSQLIdentifier("Namespace",ListOfNamespaces->Namespace_Name,ListOfNamespaces->Namespace_UID)+;
-                                                                [/">]+TextToHtml(ListOfNamespaces->Namespace_Name+FormatAKAForDisplay(ListOfNamespaces->Namespace_AKA))+[</a>]
-                        
-                            if el_seek(trans(ListOfNamespaces->pk)+'*',"ListOfPreviousName","tag1")
-                                select ListOfPreviousName
-                                scan while ListOfPreviousName->pk == ListOfNamespaces->pk
-                                    l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
-                                endscan
-                            endif
-                        
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfNamespaces->Namespace_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{||(l_lHasExternalId)},;
+                                "Header"   =>{"Caption"=>"External Id"},;
+                                "Rows"     =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if nvl(ListOfNamespaces->Namespace_ExternalId,0) > 0
+                                                                    l_cHtml += trans(ListOfNamespaces->Namespace_ExternalId)
+                                                                endif
+                                                                return l_cHtml
+                                                              },;
+                                             "Align" => "right"}})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfNamespaces->Namespace_DocStatus,DOCTATUS_MISSING)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                                "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfNamespaces->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                        if l_lHasExternalId
-                            l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                                if nvl(ListOfNamespaces->Namespace_ExternalId,0) > 0
-                                    l_cHtml += trans(ListOfNamespaces->Namespace_ExternalId)
-                                endif
-                            l_cHtml += [</td>]
-                        endif
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfNamespaces->pk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
+                    :AddColumn({"Header"=>{"Caption"=>"Tables","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {||
+                                                                local l_cHtml := ""
+                                                                if el_seek(ListOfNamespaces->pk,"ListOfTableCounts","tag1")
+                                                                    l_nCountProposed     := ListOfTableCounts->CountProposed
+                                                                    l_nCount             := ListOfTableCounts->Count
+                                                                    l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Tables
-                            if el_seek(ListOfNamespaces->pk,"ListOfTableCounts","tag1")
-                                l_nCountProposed     := ListOfTableCounts->CountProposed
-                                l_nCount             := ListOfTableCounts->Count
-                                l_nCountDiscontinued := ListOfTableCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                // l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-                            endif
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Enumerations","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if el_seek(ListOfNamespaces->pk,"ListOfEnumerationCounts","tag1")
+                                                                    l_nCountProposed     := ListOfEnumerationCounts->CountProposed
+                                                                    l_nCount             := ListOfEnumerationCounts->Count
+                                                                    l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
+                                                                else
+                                                                    l_nCountProposed     := 0
+                                                                    l_nCount             := 0
+                                                                    l_nCountDiscontinued := 0
+                                                                endif
+                                                                if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                    l_cHtml += GetFormattedUseStatusCounts(.f.,l_nCountProposed,l_nCount,l_nCountDiscontinued)
+                                                                endif
+                                                                return l_cHtml
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]   // Enumerations
-                            if el_seek(ListOfNamespaces->pk,"ListOfEnumerationCounts","tag1")
-                                l_nCountProposed     := ListOfEnumerationCounts->CountProposed
-                                l_nCount             := ListOfEnumerationCounts->Count
-                                l_nCountDiscontinued := ListOfEnumerationCounts->CountDiscontinued
-                            else
-                                l_nCountProposed     := 0
-                                l_nCount             := 0
-                                l_nCountDiscontinued := 0
-                            endif
-                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                // l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                                l_cHtml += GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)
-                            endif
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                                "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                                "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_TestWarning,"")) } }})
 
-                        if l_lWarnings
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += TextToHtml(hb_DefaultValue(ListOfNamespaces->Namespace_TestWarning,""))
-                            l_cHtml += [</td>]
-                        endif
+                    l_cHtml += :Build()
+                endwith
 
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
             l_cHtml += [</div>]
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -3415,7 +3382,7 @@ case l_cActionOnSubmit == "Save"
                         :Field("Namespace.Description"         ,iif(empty(l_cNamespaceDescription),NULL,l_cNamespaceDescription))
                         if empty(l_iNamespacePk)
                             :Field("Namespace.fk_Application"  ,par_iApplicationPk)
-                            :Field("Namespace.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                            :Field("Namespace.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
                             if :Add()
                                 l_iNamespacePk := :Key()
                             else
@@ -3484,7 +3451,7 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
         l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
         with object l_oDB1
             :Table("e4baa6fb-b62d-49ef-8e88-d68552f9e460","Namespace")
-            :Column("Namespace.UID"         ,"Namespace_UID")
+            :Column("Namespace.UID"             ,"Namespace_UID")
             :Column("Namespace.Name"            ,"Namespace_Name")
             :Column("Namespace.TrackNameChanges","Namespace_TrackNameChanges")
             :Column("Namespace.UseStatus"       ,"Namespace_UseStatus")
@@ -3497,7 +3464,7 @@ case l_cActionOnSubmit == "Duplicate"   // Namespace
                 l_cName := OnDuplicateSanitizeName(l_oData:Namespace_Name,l_cUID,l_oData:Namespace_UID)
                 
                 :Table("b9552326-f36e-4f9a-a353-087f54f4ee08","Namespace")
-                :Field("Namespace.UID"         ,l_cUID)
+                :Field("Namespace.UID"             ,l_cUID)
                 :Field("Namespace.Name"            ,l_cName)
                 :Field("Namespace.TrackNameChanges",l_oData:Namespace_TrackNameChanges)
                 :Field("Namespace.UseStatus"       ,l_oData:Namespace_UseStatus)
@@ -3732,7 +3699,6 @@ local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cColumnSearchParameters
 local l_nNumberOfTags
-local l_nColspan
 local l_cTagsInfo
 local l_nNumberOfUsedTags
 local l_json_TableTags
@@ -3749,6 +3715,7 @@ local l_nNumberOfDiagramsWithAllTables
 local l_cLine
 local l_nMaxWidth
 local l_lExtraInfo
+local l_oGrid
 
 oFcgi:TraceAdd("TableListFormBuild")
 
@@ -3807,10 +3774,10 @@ endwith
 with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
     :Column("Table.pk"         ,"pk")
-    :Column("Namespace.UID","Namespace_UID")
+    :Column("Namespace.UID"    ,"Namespace_UID")
     :Column("Namespace.Name"   ,"Namespace_Name")
     :Column("Namespace.AKA"    ,"Namespace_AKA")
-    :Column("Table.UID"    ,"Table_UID")
+    :Column("Table.UID"        ,"Table_UID")
     :Column("Table.Name"       ,"Table_Name")
     :Column("Table.AKA"        ,"Table_AKA")
     :Column("Table.Unlogged"   ,"Table_Unlogged")
@@ -4083,7 +4050,7 @@ if l_nNumberOfTables > 0
         :Join("left","DiagramTable","","DiagramTable.fk_Diagram = Diagram.pk")
         :Where("DiagramTable.Pk IS NULL")
         l_nNumberOfDiagramsWithAllTables := :Count()
-        SendToDebugView("Number Of Diagrams With All Tables = "+Trans(l_nNumberOfDiagramsWithAllTables))
+        // SendToDebugView("Number Of Diagrams With All Tables = "+Trans(l_nNumberOfDiagramsWithAllTables))
     endwith
 
 else
@@ -4415,207 +4382,166 @@ if !empty(l_nNumberOfTables)
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
-            l_nColspan := 11
-            if l_lHasExternalId
-                l_nColspan++
-            endif
-            if l_nNumberOfCustomFieldValues > 0
-                l_nColspan++
-            endif
-            if l_nNumberOfTags > 0
-                l_nColspan++
-            endif
-            if l_lShowLastUpdated
-                l_nColspan++
-            endif
-            if l_lWarnings
-                l_nColspan++
-            endif
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">Tables (]+Trans(l_nNumberOfTables)+[)</th>]
-            l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Namespace</th>]
-                l_cHtml += [<th class="text-white">Table Name</th>]
-                l_cHtml += [<th class="text-white">Columns</th>]
-                l_cHtml += [<th class="text-white">Indexes</th>]
-                if l_nNumberOfTags > 0
-                    l_cHtml += [<th class="text-white text-center">Tags</th>]
-                endif
-                l_cHtml += [<th class="text-white">Unlogged</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white">Info</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Referenced<br>By</th>]
-                l_cHtml += [<th class="text-white text-center">Diagrams</th>]
 
-                if l_lHasExternalId
-                    l_cHtml += [<th class="text-white">External Id</th>]
-                endif
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-                if l_lShowLastUpdated
-                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
-                endif
-                if l_lWarnings
-                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                endif
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfTables")
+                :SetTitle({|l_nNumberOfRows|"Tables ("+trans(l_nNumberOfRows)+")"})
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfTables->Table_UseStatus)})
 
-            l_cHtml += [</tr>]
+                :SetOnRowBuild({||
+                                    l_iTablePk := ListOfTables->pk
 
-            select ListOfTables
-            scan all
-                l_iTablePk := ListOfTables->pk
+                                    l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
+                                                    PrepareForURLSQLIdentifier("Namespace",ListOfTables->Namespace_Name,ListOfTables->Namespace_UID)+[/]+;
+                                                    PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_UID)    +[/]
+                                    return nil
+                               })
 
-                l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                   PrepareForURLSQLIdentifier("Namespace",ListOfTables->Namespace_Name,ListOfTables->Namespace_UID)+[/]+;
-                                   PrepareForURLSQLIdentifier("Table"    ,ListOfTables->Table_Name    ,ListOfTables->Table_UID)    +[/]
+                :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(ListOfTables->Namespace_Name+FormatAKAForDisplay(ListOfTables->Namespace_AKA)) } }})
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTables->Table_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Table Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditTable/]+l_cCombinedPath+[">]+TextToHtml(ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA))+[</a>]
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(ListOfTables->Namespace_Name+FormatAKAForDisplay(ListOfTables->Namespace_AKA))
-                    l_cHtml += [</td>]
+                                                            if el_seek(trans(ListOfTables->pk)+'*',"ListOfPreviousName","tag1")
+                                                                select ListOfPreviousName
+                                                                scan while ListOfPreviousName->pk == ListOfTables->pk
+                                                                    l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
+                                                                endscan
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTable/]+l_cCombinedPath+[">]+TextToHtml(ListOfTables->Table_Name+FormatAKAForDisplay(ListOfTables->Table_AKA))+[</a>]
+                :AddColumn({"Header"=>{"Caption"=>"Columns"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if el_seek(ListOfTables->pk,"ListOfColumnCounts","tag1")
+                                                                l_nCountProposed     := ListOfColumnCounts->CountProposed
+                                                                l_nCount             := ListOfColumnCounts->Count
+                                                                l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
+                                                            else
+                                                                l_nCountProposed     := 0
+                                                                l_nCount             := 0
+                                                                l_nCountDiscontinued := 0
+                                                            endif
 
-                        if el_seek(trans(ListOfTables->pk)+'*',"ListOfPreviousName","tag1")
-                            select ListOfPreviousName
-                            scan while ListOfPreviousName->pk == ListOfTables->pk
-                                l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
-                            endscan
-                        endif
+                                                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListColumns/]+l_cCombinedPath+;
+                                                                                                                                l_cColumnSearchParameters+[]+;
+                                                                                                                                [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                            endif
+                                                            return l_cHtml
+                                                       },;
+                                        "Align" => "center" }})
 
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Indexes"},;
+                            "Rows"  =>{"Expression" => {||
+                                                            if el_seek(ListOfTables->pk,"ListOfIndexCounts","tag1")
+                                                                l_nCountProposed     := ListOfIndexCounts->CountProposed
+                                                                l_nCount             := ListOfIndexCounts->Count
+                                                                l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
+                                                            else
+                                                                l_nCountProposed     := 0
+                                                                l_nCount             := 0
+                                                                l_nCountDiscontinued := 0
+                                                            endif
+                                                            return [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                       },;
+                                       "Align" => "center"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
+                :AddColumn({"Condition"=>{||(l_nNumberOfTags > 0)},;
+                            "Header"   =>{"Caption"=>"Tags","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| 
+                                                                local l_cTagsInfo
+                                                                l_cTagsInfo := []
+                                                                select ListOfTagTables
+                                                                scan all for ListOfTagTables->fk_entity = l_iTablePk
+                                                                    if !empty(l_cTagsInfo)
+                                                                        l_cTagsInfo += [<br>]
+                                                                    endif
+                                                                    l_cTagsInfo += [<span style="white-space:nowrap;">]+TextToHtml(ListOfTagTables->Tag_Name+[ (]+ListOfTagTables->Tag_Code+[)])+[</span>]
+                                                                endscan
+                                                                return l_cTagsInfo
+                                                          } }})
 
-                        if el_seek(l_iTablePk,"ListOfColumnCounts","tag1")
-                            l_nCountProposed     := ListOfColumnCounts->CountProposed
-                            l_nCount             := ListOfColumnCounts->Count
-                            l_nCountDiscontinued := ListOfColumnCounts->CountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
+                :AddColumn({"Header"=>{"Caption"=>"Unlogged"},;
+                            "Rows"  =>{"Expression" => {|| iif(ListOfTables->Table_Unlogged,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                       "Align" => "center"}})
 
-                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListColumns/]+l_cCombinedPath+;
-                                                                                            l_cColumnSearchParameters+[]+;
-                                                                                            [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                        endif
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,"")) } }})
 
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Info"},;
+                            "Rows"  =>{"Expression" => {|| iif(len(nvl(ListOfTables->Table_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                       "Align" => "center"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        if el_seek(l_iTablePk,"ListOfIndexCounts","tag1")
-                            l_nCountProposed     := ListOfIndexCounts->CountProposed
-                            l_nCount             := ListOfIndexCounts->Count
-                            l_nCountDiscontinued := ListOfIndexCounts->CountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfTables->Table_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfTables->Table_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    if l_nNumberOfTags > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cTagsInfo := []
-                            select ListOfTagTables
-                            scan all for ListOfTagTables->fk_entity = l_iTablePk
-                                if !empty(l_cTagsInfo)
-                                    l_cTagsInfo += [<br>]
-                                endif
-                                l_cTagsInfo += [<span style="white-space:nowrap;">]+TextToHtml(ListOfTagTables->Tag_Name+[ (]+ListOfTagTables->Tag_Code+[)])+[</span>]
-                            endscan
-                            l_cHtml += l_cTagsInfo
-                        l_cHtml += [</td>]
-                    endif
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfTables->Table_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfTables->Table_DocStatus,DOCTATUS_MISSING)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(ListOfTables->Table_Unlogged,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Referenced<br>By","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            if el_seek(ListOfTables->pk,"ListOfReferencedByCounts","tag1")
+                                                                l_nCountProposed     := ListOfReferencedByCounts->CountProposed
+                                                                l_nCount             := ListOfReferencedByCounts->Count
+                                                                l_nCountDiscontinued := ListOfReferencedByCounts->CountDiscontinued
+                                                            else
+                                                                l_nCountProposed     := 0
+                                                                l_nCount             := 0
+                                                                l_nCountDiscontinued := 0
+                                                            endif
+                                                            return [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                       },;
+                                       "Align" => "center"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Diagrams","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_nCount
+                                                            local l_cHtml := ""
+                                                            l_nCount := iif( el_seek(ListOfTables->pk,"ListOfDiagramsCounts","tag1") , ListOfDiagramsCounts->Count , 0)
+                                                            l_nCount += l_nNumberOfDiagramsWithAllTables
+                                                            if l_nCount > 0
+                                                                l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/TableDiagrams/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
+                                                            endif
+                                                            return l_cHtml
+                                                       },;
+                                       "Align" => "center"}})
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(len(nvl(ListOfTables->Table_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lHasExternalId)},;
+                            "Header"   =>{"Caption"=>"External Id","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if nvl(ListOfTables->Table_ExternalId,0) > 0
+                                                                    l_cHtml += trans(ListOfTables->Table_ExternalId)
+                                                                endif
+                                                                return l_cHtml
+                                                          },;
+                                          "Align" => "right"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfTables->Table_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfTables->Table_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfTables->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfTables->Table_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfTables->Table_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lShowLastUpdated)},;
+                            "Header"   =>{"Caption"=>"Last Updated","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| iif(left(ListOfTables->LastUpdated,1) == "0",substr(ListOfTables->LastUpdated,2),ListOfTables->LastUpdated) },;
+                                          "Align" => "right",;
+                                          "CellExtraClasses" => {|| iif(ListOfTables->Inherited,"fst-italic","") }}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        if el_seek(l_iTablePk,"ListOfReferencedByCounts","tag1")
-                            l_nCountProposed     := ListOfReferencedByCounts->CountProposed
-                            l_nCount             := ListOfReferencedByCounts->Count
-                            l_nCountDiscontinued := ListOfReferencedByCounts->CountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                            "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                            "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfTables->Table_TestWarning,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nCount := iif( el_seek(l_iTablePk,"ListOfDiagramsCounts","tag1") , ListOfDiagramsCounts->Count , 0)
-                        l_nCount += l_nNumberOfDiagramsWithAllTables
-                        if l_nCount > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/TableDiagrams/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+Trans(l_nCount)+[</a>]
-                        endif
-                    l_cHtml += [</td>]
-
-                    if l_lHasExternalId
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if nvl(ListOfTables->Table_ExternalId,0) > 0
-                                l_cHtml += trans(ListOfTables->Table_ExternalId)
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(l_iTablePk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lShowLastUpdated
-                        l_cHtml += [<td class="GridDataControlCells]+iif(ListOfTables->Inherited," fst-italic","")+[" valign="top" align="right">]
-                            if left(ListOfTables->LastUpdated,1) == "0"
-                                l_cHtml += substr(ListOfTables->LastUpdated,2)
-                            else
-                                l_cHtml += ListOfTables->LastUpdated
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lWarnings
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfTables->Table_TestWarning,""))
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -4731,21 +4657,21 @@ l_cHtml += [</style>]
 with object l_oDB1
     if !empty(par_iPk)
         :Table("96de9645-1c36-4414-bd84-1b94e600927d","Table")
-        :Column("Namespace.Name"   ,"Namespace_Name")
-        :Column("Namespace.AKA"    ,"Namespace_AKA")
-        :Column("Namespace.UID","Namespace_UID")
-        :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.AKA"        ,"Table_AKA")
-        :Column("Table.UID"    ,"Table_UID")
+        :Column("Namespace.Name","Namespace_Name")
+        :Column("Namespace.AKA" ,"Namespace_AKA")
+        :Column("Namespace.UID" ,"Namespace_UID")
+        :Column("Table.Name"    ,"Table_Name")
+        :Column("Table.AKA"     ,"Table_AKA")
+        :Column("Table.UID"     ,"Table_UID")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oDataTableInfo := :Get(par_iPk)
     endif
 
     :Table("46e97041-1a30-466a-93ed-2172c7dcfedd","Namespace")
-    :Column("Namespace.pk"         ,"pk")
-    :Column("Namespace.Name"       ,"Namespace_Name")
-    :Column("Namespace.AKA"        ,"Namespace_AKA")
-    :Column("Namespace.UID"    ,"Namespace_UID")
+    :Column("Namespace.pk"  ,"pk")
+    :Column("Namespace.Name","Namespace_Name")
+    :Column("Namespace.AKA" ,"Namespace_AKA")
+    :Column("Namespace.UID" ,"Namespace_UID")
     :Column("Upper(Namespace.Name)","tag1")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
     :OrderBy("tag1")
@@ -5200,7 +5126,7 @@ case l_cActionOnSubmit == "Save"
                                     scan all
                                         :Table("ab1b0120-bb64-4cfb-b6bc-e6a740594915","Column")
                                         :Field("Column.fk_Table"     ,l_iTablePk)
-                                        :Field("Column.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                        :Field("Column.UID"          ,oFcgi:p_o_SQLConnection:GetUUIDString())
                                         :Field("Column.Order"        ,ListOfTemplateColumns->TemplateColumn_Order)
                                         :Field("Column.Name"         ,ListOfTemplateColumns->TemplateColumn_Name)
                                         :Field("Column.AKA"          ,ListOfTemplateColumns->TemplateColumn_AKA)
@@ -5414,7 +5340,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
         with object l_oDB1
             :Table("3608cda1-4f7b-4230-ba03-68352d791fa5","Table")
             :Column("Table.fk_Namespace"    ,"Table_fk_Namespace")
-            :Column("Table.UID"         ,"Table_UID")
+            :Column("Table.UID"             ,"Table_UID")
             :Column("Table.Name"            ,"Table_Name")
             :Column("Table.TrackNameChanges","Table_TrackNameChanges")
             :Column("Table.UseStatus"       ,"Table_UseStatus")
@@ -5431,7 +5357,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                 :Table("00b39c52-09d8-4132-9c17-2402267cfd1e","Table")
                 :Field("Table.fk_Namespace"    ,l_oData:Table_fk_Namespace)
                 :Field("Table.Name"            ,l_cName)
-                :Field("Table.UID"         ,l_cUID)
+                :Field("Table.UID"             ,l_cUID)
                 :Field("Table.TrackNameChanges",l_oData:Table_TrackNameChanges)
                 :Field("Table.UseStatus"       ,l_oData:Table_UseStatus)
                 :Field("Table.DocStatus"       ,l_oData:Table_DocStatus)
@@ -5445,8 +5371,8 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     select ListOfColumns
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Column")
-                        :Field("Column.fk_Table"           ,l_iTablePk)
-                        :Field("Column.UID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Column.fk_Table"          ,l_iTablePk)
+                        :Field("Column.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("Column.fk_TableForeign"   ,ListOfColumns->Column_fk_TableForeign)
                         :Field("Column.fk_Enumeration"    ,ListOfColumns->Column_fk_Enumeration)
                         :Field("Column.Order"             ,ListOfColumns->Column_Order)
@@ -5482,7 +5408,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Index")
                         :Field("Index.fk_Table"   ,l_iTablePk)
-                        :Field("Index.UID"    ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Index.UID"        ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("Index.Name"       ,ListOfIndexes->Index_Name)
                         :Field("Index.Unique"     ,ListOfIndexes->Index_Unique)
                         :Field("Index.Expression" ,ListOfIndexes->Index_Expression)
@@ -5549,10 +5475,10 @@ case empty(l_iTablePk)
 otherwise
     with object l_oDB1
         :Table("95c1f7a1-500d-4451-95bd-2c4d9df9114a","Table")
-        :Column("Namespace.Name"   ,"Namespace_Name")
-        :Column("Namespace.UID","Namespace_UID")
-        :Column("Table.Name"       ,"Table_Name")
-        :Column("Table.UID"    ,"Table_UID")
+        :Column("Namespace.Name","Namespace_Name")
+        :Column("Namespace.UID" ,"Namespace_UID")
+        :Column("Table.Name"    ,"Table_Name")
+        :Column("Table.UID"     ,"Table_UID")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iTablePk)
         if :Tally == 1
@@ -5596,7 +5522,6 @@ local l_cSearchColumnStaticUID
 local l_cTooltipEnumValues
 local l_cURL
 local l_cName
-local l_nColspan
 
 local l_lHasExternalId :=.f.
 local l_lWarnings := .f.
@@ -5609,6 +5534,7 @@ local l_lExtraInfo
 
 local l_nLastUpdated
 local l_lShowLastUpdated
+local l_oGrid
 
 oFcgi:TraceAdd("ColumnListFormBuild")
 
@@ -5645,7 +5571,7 @@ with object l_oDB_ListOfColumns
     :Column("Column.Name"                ,"Column_Name")
     :Column("Column.StaticUID"           ,"Column_StaticUID")
     :Column("Column.AKA"                 ,"Column_AKA")
-    :Column("Column.UID"             ,"Column_UID")
+    :Column("Column.UID"                 ,"Column_UID")
     :Column("Column.UsedAs"              ,"Column_UsedAs")
     :Column("Column.UsedBy"              ,"Column_UsedBy")
     :Column("Column.UseStatus"           ,"Column_UseStatus")
@@ -5669,14 +5595,14 @@ with object l_oDB_ListOfColumns
     :Column("Column.ExternalId"          ,"Column_ExternalId")
     :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Namespace.AKA"              ,"Namespace_AKA")
-    :Column("Namespace.UID"          ,"Namespace_UID")
+    :Column("Namespace.UID"              ,"Namespace_UID")
     :Column("Table.Name"                 ,"Table_Name")
     :Column("Table.AKA"                  ,"Table_AKA")
-    :Column("Table.UID"              ,"Table_UID")
+    :Column("Table.UID"                  ,"Table_UID")
     :Column("Enumeration.Pk"             ,"Enumeration_Pk")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
     :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-    :Column("Enumeration.UID"        ,"Enumeration_UID")
+    :Column("Enumeration.UID"            ,"Enumeration_UID")
     :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
     :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
 
@@ -5691,15 +5617,15 @@ with object l_oDB_ListOfColumns
 
     :Column("ForeignNameSpace.Name"          ,"ForeignNameSpace_Name")
     :Column("ForeignNameSpace.AKA"           ,"ForeignNameSpace_AKA")
-    :Column("ForeignNameSpace.UID"       ,"ForeignNameSpace_UID")
+    :Column("ForeignNameSpace.UID"           ,"ForeignNameSpace_UID")
 
     :Column("ForeignTable.Name"              ,"ForeignTable_Name")
     :Column("ForeignTable.AKA"               ,"ForeignTable_AKA")
-    :Column("ForeignTable.UID"           ,"ForeignTable_UID")
+    :Column("ForeignTable.UID"               ,"ForeignTable_UID")
 
     :Column("EnumerationNamespace.Name"      ,"EnumerationNamespace_Name")
     :Column("EnumerationNamespace.AKA"       ,"EnumerationNamespace_AKA")
-    :Column("EnumerationNamespace.UID"   ,"EnumerationNamespace_UID")
+    :Column("EnumerationNamespace.UID"       ,"EnumerationNamespace_UID")
 
     :Where("Column.fk_Table = ^",par_iTablePk)
 
@@ -6009,246 +5935,207 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
-
-            l_nColspan := 10
-            if l_lHasExternalId
-                l_nColspan++
-            endif
-            if l_nNumberOfCustomFieldValues > 0
-                l_nColspan++
-            endif
-            if l_lShowLastUpdated
-                l_nColspan++
-            endif
-            if l_lWarnings
-                l_nColspan++
-            endif
-
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-center text-white" colspan="]+trans(l_nColspan)+[">]
-                    if l_nNumberOfColumns == l_nNumberOfColumnsInSearch
-                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+alltrim(par_oNavData:Table_Name)+FormatAKAForDisplay(par_oNavData:Table_AKA))+["]
-                    else
-                        l_cHtml += [Columns (]+Trans(l_nNumberOfColumnsInSearch)+[ out of ]+Trans(l_nNumberOfColumns)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Table_Name+FormatAKAForDisplay(par_oNavData:Table_AKA))+["]
-                    endif
-                l_cHtml += [</th>]
-            l_cHtml += [</tr>]
-
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-
-                if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<th class="text-center"><a href="]+l_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath+["><span class="text-white bi-plus-lg"></span></a></th>]
-                else
-                    l_cHtml += [<th class="text-white"></th>]
-                endif
-
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Type</th>]
-                l_cHtml += [<th class="text-white">Nullable</th>]
-                l_cHtml += [<th class="text-white">Default</th>]
-                l_cHtml += [<th class="text-white">Foreign Key<br>To/Use/Optional</th>]
-                l_cHtml += [<th class="text-white text-center">On Delete</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                if l_lHasExternalId
-                    l_cHtml += [<th class="text-white">External Id</th>]
-                endif
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-                if l_lShowLastUpdated
-                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
-                endif
-                if l_lWarnings
-                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                endif
-            l_cHtml += [</tr>]
-
-            select ListOfColumns
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
-
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        do case
-                        case ListOfColumns->Column_UsedAs = 2
-                            l_cHtml += [<i class="bi bi-key"></i>]
-                        case ListOfColumns->Column_UsedAs = 3   // !hb_IsNIL(ListOfColumns->Table_Name)
-                            if ListOfColumns->Column_ForeignKeyOptional
-                                l_cHtml += [<i class="bi-arrow-bar-right"></i>]
-                            else
-                                l_cHtml += [<i class="bi-arrow-right"></i>]
-                            endi
-                        case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
-                            l_cHtml += [<i class="bi bi-tools"></i>]
-                        endcase
-                    l_cHtml += [</td>]
-
-                    // Name
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                              PrepareForURLSQLIdentifier("Column",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]
-                        l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
-                        if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
-                            l_cURL  += [:]+trans(ListOfColumns->Column_UsedBy)
-                            l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
-                        endif
-                        l_cHtml += [<a href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
-
-                        if el_seek(trans(ListOfColumns->pk)+'*',"ListOfPreviousName","tag1")
-                            select ListOfPreviousName
-                            scan while ListOfPreviousName->pk == ListOfColumns->pk
-                                l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
-                            endscan
-                        endif
-
-                    l_cHtml += [</td>]
-
-                    // Type
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-
-                        // Prepare the tooltip text for enumeration type fields
-                        if alltrim(ListOfColumns->Column_Type) == "E" .and. el_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
-                            l_cTooltipEnumValues := [<table>]
-                            select ListOfEnumValues
-                            scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                                l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
-                                l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
-                                            {[ ]=>[&nbsp;],;
-                                             ["]=>[&#34;],;
-                                             [']=>[&#39;],;
-                                             [<]=>[&lt;],;
-                                             [>]=>[&gt;]})+[</td>]
-                                l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
-                                if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
-                                    l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfColumns")
+                :SetTitle({|l_nNumberOfRows|
+                                local l_cHtml
+                                if l_nNumberOfColumns == l_nNumberOfColumnsInSearch
+                                    l_cHtml := [Columns (]+Trans(l_nNumberOfColumns)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+alltrim(par_oNavData:Table_Name)+FormatAKAForDisplay(par_oNavData:Table_AKA))+["]
                                 else
-                                    l_cTooltipEnumValues += [<td></td>]
+                                    l_cHtml := [Columns (]+Trans(l_nNumberOfColumnsInSearch)+[ out of ]+Trans(l_nNumberOfColumns)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Table_Name+FormatAKAForDisplay(par_oNavData:Table_AKA))+["]
                                 endif
-                                l_cTooltipEnumValues += [</tr>]
-                            endscan
-                            l_cTooltipEnumValues += [</table>]
-                        else
-                            l_cTooltipEnumValues := ""
-                        endif
+                                return l_cHtml
+                          })
 
-                        l_cHtml += FormatColumnTypeInfo(alltrim(ListOfColumns->Column_Type),;
-                                                        ListOfColumns->Column_Length,;
-                                                        ListOfColumns->Column_Scale,;
-                                                        ListOfColumns->Column_Unicode,;
-                                                        ListOfColumns->Namespace_Name,;
-                                                        ListOfColumns->EnumerationNamespace_Name,;
-                                                        ListOfColumns->EnumerationNamespace_AKA,;
-                                                        ListOfColumns->EnumerationNamespace_UID,;
-                                                        ListOfColumns->Enumeration_Name,;
-                                                        ListOfColumns->Enumeration_AKA,;
-                                                        ListOfColumns->Enumeration_UID,;
-                                                        ListOfColumns->Enumeration_ImplementAs,;
-                                                        ListOfColumns->Enumeration_ImplementLength,;
-                                                        l_cSitePath,;
-                                                        par_cURLApplicationLinkCode,;
-                                                        l_cTooltipEnumValues)
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfColumns->Column_UseStatus)})
 
-                        if ListOfColumns->Column_Array
-                            l_cHtml += " [Array]"
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>iif((oFcgi:p_nAccessLevelDD >= 5),[<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/NewColumn/]+l_cCombinedPath+["><span class="text-white bi-plus-lg"></span></a>],[]),"Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            do case
+                                                            case ListOfColumns->Column_UsedAs = 2
+                                                                l_cHtml := [<i class="bi bi-key"></i>]
+                                                            case ListOfColumns->Column_UsedAs = 3   // !hb_IsNIL(ListOfColumns->Table_Name)
+                                                                if ListOfColumns->Column_ForeignKeyOptional
+                                                                    l_cHtml := [<i class="bi-arrow-bar-right"></i>]
+                                                                else
+                                                                    l_cHtml := [<i class="bi-arrow-right"></i>]
+                                                                endi
+                                                            case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+lower(ListOfColumns->Column_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
+                                                                l_cHtml := [<i class="bi bi-tools"></i>]
+                                                            otherwise
+                                                                l_cHtml := ""
+                                                            endcase
+                                                            return l_cHtml
+                                                       },;
+                                       "Align" => "center"}})
 
-                    // Nullable
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            local l_cURL
+                                                            local l_cName
+                                                            l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
+                                                                                                                PrepareForURLSQLIdentifier("Column",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]
+                                                            l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
+                                                            if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
+                                                                l_cURL  += [:]+trans(ListOfColumns->Column_UsedBy)
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                            endif
+                                                            l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
 
-                    // Default
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
-                    l_cHtml += [</td>]
+                                                            if el_seek(trans(ListOfColumns->pk)+'*',"ListOfPreviousName","tag1")
+                                                                select ListOfPreviousName
+                                                                scan while ListOfPreviousName->pk == ListOfColumns->pk
+                                                                    l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
+                                                                endscan
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    // Foreign Key To/Use/Optional
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
-                            l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
-                                                l_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+;
-                                                                                            PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
-                                                                                            PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
-                                                                                            [">]
+                :AddColumn({"Header"=>{"Caption"=>"Type"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            local l_cTooltipEnumValues
+                                                            // Prepare the tooltip text for enumeration type fields
+                                                            if alltrim(ListOfColumns->Column_Type) == "E" .and. el_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                                                                l_cTooltipEnumValues := [<table>]
+                                                                select ListOfEnumValues
+                                                                scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                                                                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                                                    l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                                                                {[ ]=>[&nbsp;],;
+                                                                                ["]=>[&#34;],;
+                                                                                [']=>[&#39;],;
+                                                                                [<]=>[&lt;],;
+                                                                                [>]=>[&gt;]})+[</td>]
+                                                                    l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                                                                    if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                                                                        l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                                                                    else
+                                                                        l_cTooltipEnumValues += [<td></td>]
+                                                                    endif
+                                                                    l_cTooltipEnumValues += [</tr>]
+                                                                endscan
+                                                                l_cTooltipEnumValues += [</table>]
+                                                            else
+                                                                l_cTooltipEnumValues := ""
+                                                            endif
 
-                            if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
-                                l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
-                            else
-                                // l_cHtml += ListOfColumns->ForeignNamespace_Name+[.]+ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA)  //_M_ To Enhance
-                                l_cHtml += TextToHTML(ListOfColumns->ForeignNamespace_Name+FormatAKAForDisplay(ListOfColumns->ForeignNamespace_AKA))
-                                l_cHtml += [.]
-                                l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
-                            endif
+                                                            l_cHtml := FormatColumnTypeInfo(alltrim(ListOfColumns->Column_Type),;
+                                                                                            ListOfColumns->Column_Length,;
+                                                                                            ListOfColumns->Column_Scale,;
+                                                                                            ListOfColumns->Column_Unicode,;
+                                                                                            ListOfColumns->Namespace_Name,;
+                                                                                            ListOfColumns->EnumerationNamespace_Name,;
+                                                                                            ListOfColumns->EnumerationNamespace_AKA,;
+                                                                                            ListOfColumns->EnumerationNamespace_UID,;
+                                                                                            ListOfColumns->Enumeration_Name,;
+                                                                                            ListOfColumns->Enumeration_AKA,;
+                                                                                            ListOfColumns->Enumeration_UID,;
+                                                                                            ListOfColumns->Enumeration_ImplementAs,;
+                                                                                            ListOfColumns->Enumeration_ImplementLength,;
+                                                                                            oFcgi:p_cSitePath,;
+                                                                                            par_cURLApplicationLinkCode,;
+                                                                                            l_cTooltipEnumValues)
 
-                            l_cHtml += [</a>]
-                            if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
-                                l_cHtml += [<br>]+TextToHTML(ListOfColumns->Column_ForeignKeyUse)
-                            endif
-                            if ListOfColumns->Column_ForeignKeyOptional
-                                l_cHtml += [<br>Optional]
-                            endif
-                        endif
-                    l_cHtml += [</td>]
+                                                            if ListOfColumns->Column_Array
+                                                                l_cHtml += " [Array]"
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    // OnDelete
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        if ListOfColumns->Column_UsedAs = 3
-                            l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Nullable"},;
+                            "Rows"  =>{"Expression" => {|| iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                       "Align" => "center"}})
 
-                    // Description
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Default"},;
+                            "Rows"  =>{"Expression" => {|| GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom) } }})
 
-                    // Usage Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
 
-                    // Doc Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Foreign Key<br>To/Use/Optional"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
+                                                                l_cHtml += [<a class="GridLinkNewPage" target="_blank" href="]+;
+                                                                              oFcgi:p_cSitePath+[DataDictionaries/ListColumns/]+par_cURLApplicationLinkCode+"/"+;
+                                                                                                                                PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
+                                                                                                                                PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
+                                                                                                                                [">]
 
-                    if l_lHasExternalId
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if nvl(ListOfColumns->Column_ExternalId,0) > 0
-                                l_cHtml += trans(ListOfColumns->Column_ExternalId)
-                            endif
-                        l_cHtml += [</td>]
-                    endif
+                                                                if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
+                                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                                                else
+                                                                    // l_cHtml += ListOfColumns->ForeignNamespace_Name+[.]+ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA)  //_M_ To Enhance
+                                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignNamespace_Name+FormatAKAForDisplay(ListOfColumns->ForeignNamespace_AKA))
+                                                                    l_cHtml += [.]
+                                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                                                endif
 
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
+                                                                l_cHtml += [</a>]
+                                                                if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
+                                                                    l_cHtml += [<br>]+TextToHTML(ListOfColumns->Column_ForeignKeyUse)
+                                                                endif
+                                                                if ListOfColumns->Column_ForeignKeyOptional
+                                                                    l_cHtml += [<br>Optional]
+                                                                endif
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    if l_lShowLastUpdated
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if left(ListOfColumns->LastUpdated,1) == "0"
-                                l_cHtml += substr(ListOfColumns->LastUpdated,2)
-                            else
-                                l_cHtml += ListOfColumns->LastUpdated
-                            endif
-                        l_cHtml += [</td>]
-                    endif
+                :AddColumn({"Header"=>{"Caption"=>"On Delete","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if ListOfColumns->Column_UsedAs = 3
+                                                                l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    if l_lWarnings
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
-                        l_cHtml += [</td>]
-                    endif
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,"")) } }})
 
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)] } }})
+
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)] } }})
+
+                :AddColumn({"Condition"=>{||(l_lHasExternalId)},;
+                            "Header"   =>{"Caption"=>"External Id"},;
+                            "Rows"     =>{"Expression" => {||
+                                                                local l_cHtml := ""
+                                                                if nvl(ListOfColumns->Column_ExternalId,0) > 0
+                                                                    l_cHtml += trans(ListOfColumns->Column_ExternalId)
+                                                                endif
+                                                                return l_cHtml
+                                                          },;
+                                          "Align" => "right"}})
+
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping) } }})
+
+                :AddColumn({"Condition"=>{||(l_lShowLastUpdated)},;
+                            "Header"   =>{"Caption"=>"Last Updated","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| 
+                                                                local l_cHtml
+                                                                if left(ListOfColumns->LastUpdated,1) == "0"
+                                                                    l_cHtml := substr(ListOfColumns->LastUpdated,2)
+                                                                else
+                                                                    l_cHtml := ListOfColumns->LastUpdated
+                                                                endif
+                                                                return l_cHtml
+                                                          } }})
+
+                :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                            "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                            "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,"")) } }})
+
+                l_cHtml += :Build()
+            endwith
+
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -7468,7 +7355,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iColumnPk)
                     :Field("Column.fk_Table",par_iTablePk)
                     :Field("Column.Order"   ,l_iColumnOrder)
-                    :Field("Column.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("Column.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iColumnPk := :Key()
                     else
@@ -7591,7 +7478,7 @@ case l_cActionOnSubmit == "Duplicate"   // Column
             :Column("Column.fk_TableForeign"   ,"Column_fk_TableForeign")
             :Column("Column.fk_Enumeration"    ,"Column_fk_Enumeration")
             :Column("Column.Order"             ,"Column_Order")
-            :Column("Column.UID"           ,"Column_UID")
+            :Column("Column.UID"               ,"Column_UID")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.TrackNameChanges"  ,"Column_TrackNameChanges")
             :Column("Column.AKA"               ,"Column_AKA")
@@ -7629,7 +7516,7 @@ case l_cActionOnSubmit == "Duplicate"   // Column
 
                     :Table("c90aba01-148b-470c-b4af-a223992a2fe3","Column")
                     :Field("Column.fk_Table"          ,l_iTablePk)
-                    :Field("Column.UID"           ,l_cUID)
+                    :Field("Column.UID"               ,l_cUID)
                     :Field("Column.Name"              ,l_cName)
 
                     :Field("Column.fk_TableForeign"   ,l_oData:Column_fk_TableForeign)
@@ -7723,13 +7610,13 @@ otherwise
         :Table("b74fe317-938c-4ca8-8172-f69e73efd40b","Column")
         :Column("Namespace.Name"    ,"Namespace_Name")
         :Column("Namespace.AKA"     ,"Namespace_AKA")
-        :Column("Namespace.UID" ,"Namespace_UID")
+        :Column("Namespace.UID"     ,"Namespace_UID")
         :Column("Table.Name"        ,"Table_Name")
         :Column("Table.AKA"         ,"Table_AKA")
-        :Column("Table.UID"     ,"Table_UID")
+        :Column("Table.UID"         ,"Table_UID")
         :Column("Column.Name"       ,"Column_Name")
         :Column("Column.AKA"        ,"Column_AKA")
-        :Column("Column.UID"    ,"Column_UID")
+        :Column("Column.UID"        ,"Column_UID")
         :Join("inner","Table"    ,"","Column.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iColumnPk)
@@ -7761,27 +7648,27 @@ local l_nNumberOfIndexes
 local l_oDB_ListOfColumns
 local l_cURL
 local l_cName
-local l_nColspan
 local l_lWarnings := .f.
 local l_cCombinedPath
+local l_oGrid
 
 oFcgi:TraceAdd("IndexListFormBuild")
 
 l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 with object l_oDB1
     :Table("0154af03-a45d-4a8a-811f-c45d09da73f7","Index")
-    :Column("Index.pk"             ,"pk")
-    :Column("Index.Name"           ,"Index_Name")
+    :Column("Index.pk"         ,"pk")
+    :Column("Index.Name"       ,"Index_Name")
     :Column("Index.UID"        ,"Index_UID")
-    :Column("Index.UsedBy"         ,"Index_UsedBy")
-    :Column("Index.Expression"     ,"Index_Expression")
-    :Column("Index.Unique"         ,"Index_Unique")
-    :Column("Index.Algo"           ,"Index_Algo")
-    :Column("Index.UseStatus"      ,"Index_UseStatus")
-    :Column("Index.DocStatus"      ,"Index_DocStatus")
-    :Column("Index.Description"    ,"Index_Description")
-    :Column("Index.TestWarning"    ,"Index_TestWarning")
-    :Column("upper(Index.Name)"    ,"tag1")
+    :Column("Index.UsedBy"     ,"Index_UsedBy")
+    :Column("Index.Expression" ,"Index_Expression")
+    :Column("Index.Unique"     ,"Index_Unique")
+    :Column("Index.Algo"       ,"Index_Algo")
+    :Column("Index.UseStatus"  ,"Index_UseStatus")
+    :Column("Index.DocStatus"  ,"Index_DocStatus")
+    :Column("Index.Description","Index_Description")
+    :Column("Index.TestWarning","Index_TestWarning")
+    :Column("upper(Index.Name)","tag1")
     :Where("Index.fk_Table = ^",par_iTablePk)
     :OrderBy("tag1")
     :SQL("ListOfIndexes")
@@ -7849,97 +7736,63 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
 
-            l_nColspan := 8
-            if l_lWarnings
-                l_nColspan++
-            endif
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-center text-white" colspan="]+trans(l_nColspan)+[">]
-                    l_cHtml += [Indexes (]+Trans(l_nNumberOfIndexes)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Table_Name+FormatAKAForDisplay(par_oNavData:Table_AKA))+["]
-                l_cHtml += [</th>]
-            l_cHtml += [</tr>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfIndexes")
+                :SetTitle({|l_nNumberOfRows| [Indexes (]+Trans(l_nNumberOfRows)+[) for Table "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Table_Name+FormatAKAForDisplay(par_oNavData:Table_AKA))+["] })
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Expression</th>]
-                l_cHtml += [<th class="text-white">Unique</th>]
-                l_cHtml += [<th class="text-white">Algo</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                // l_cHtml += [<th class="text-white text-center">Used By</th>]
-                l_cHtml += [<th class="text-white text-center">Columns</th>]
-                if l_lWarnings
-                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                endif
-            l_cHtml += [</tr>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfIndexes->Index_UseStatus)})
 
-            select ListOfIndexes
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfIndexes->Index_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cURL
+                                                            local l_cName
+                                                            l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/EditIndex/]+l_cCombinedPath+PrepareForURLSQLIdentifier("Index",alltrim(ListOfIndexes->Index_Name),ListOfIndexes->Index_UID)
+                                                            l_cName := alltrim(ListOfIndexes->Index_Name)
+                                                            if ListOfIndexes->Index_UsedBy <> USEDBY_ALLSERVERS
+                                                                l_cURL  += [:]+trans(ListOfIndexes->Index_UsedBy)
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                            endif
+                                                            return [<a class="GridLinkNormal DefaultLink" href="]+l_cURL+[/">]+l_cName+[</a>]
+                                                       } }})
 
-                    // Name
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cURL  := l_cSitePath+[DataDictionaries/EditIndex/]+l_cCombinedPath+PrepareForURLSQLIdentifier("Index",alltrim(ListOfIndexes->Index_Name),ListOfIndexes->Index_UID)
-                        l_cName := alltrim(ListOfIndexes->Index_Name)
-                        if ListOfIndexes->Index_UsedBy <> USEDBY_ALLSERVERS
-                            l_cURL  += [:]+trans(ListOfIndexes->Index_UsedBy)
-                            l_cName += [ (]+GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
-                        endif
-                        l_cHtml += [<a href="]+l_cURL+[/">]+l_cName+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Expression"},;
+                            "Rows"  =>{"Expression" => {|| hb_DefaultValue(ListOfIndexes->Index_Expression,"") } }})
 
-                    // Expression
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += hb_DefaultValue(ListOfIndexes->Index_Expression,"")
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Unique"},;
+                            "Rows"  =>{"Expression" => {|| iif(ListOfIndexes->Index_Unique,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                       "Align" => "center" }})
 
-                    // Unique
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(ListOfIndexes->Index_Unique,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Algo"},;
+                            "Rows"  =>{"Expression" => {|| {"BTREE"}[iif(el_between(ListOfIndexes->Index_Algo,1,1),ListOfIndexes->Index_Algo,1)] } }})
 
-                    // Algo
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"BTREE"}[iif(el_between(ListOfIndexes->Index_Algo,1,1),ListOfIndexes->Index_Algo,1)]
-                        // 1 = BTREE
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,"")) } }})
 
-                    // Description
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfIndexes->Index_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfIndexes->Index_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    // Usage Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfIndexes->Index_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfIndexes->Index_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING)] } }})
 
-                    // Doc Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfIndexes->Index_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Columns","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            select ListOfColumns
+                                                            scan all for ListOfColumns->Index_pk = ListOfIndexes->pk
+                                                                l_cHtml += [<div>]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</div>]
+                                                            endscan
+                                                            return l_cHtml
+                                                       } }})
 
-                    // Columns
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        select ListOfColumns
-                        scan all for ListOfColumns->Index_pk = ListOfIndexes->pk
-                            l_cHtml += [<div>]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</div>]
-                        endscan
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                            "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                            "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfIndexes->Index_TestWarning,"")) } }})
 
-                    if l_lWarnings
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfIndexes->Index_TestWarning,""))
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -8233,7 +8086,7 @@ case l_cActionOnSubmit == "Save"
         
             if empty(l_iIndexPk)
                 :Field("Index.fk_Table",par_iTablePk)
-                :Field("Index.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Index.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iIndexPk := :Key()
                 else
@@ -8362,13 +8215,13 @@ otherwise
     endif
     with object l_oDB1
         :Table("c4b21f9e-b53d-4c50-b9f6-869e30fb6c2e","Index")
-        :Column("Namespace.Name"    ,"Namespace_Name")
-        :Column("Namespace.AKA"     ,"Namespace_AKA")
+        :Column("Namespace.Name","Namespace_Name")
+        :Column("Namespace.AKA" ,"Namespace_AKA")
         :Column("Namespace.UID" ,"Namespace_UID")
-        :Column("Table.Name"        ,"Table_Name")
-        :Column("Table.AKA"         ,"Table_AKA")
+        :Column("Table.Name"    ,"Table_Name")
+        :Column("Table.AKA"     ,"Table_AKA")
         :Column("Table.UID"     ,"Table_UID")
-        :Column("Index.Name"        ,"Index_Name")
+        :Column("Index.Name"    ,"Index_Name")
         :Column("Index.UID"     ,"Index_UID")
         :Join("inner","Table"    ,"","Index.fk_Table = Table.pk")
         :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -8534,7 +8387,7 @@ local l_cLine
 local l_nMaxWidth
 local l_lExtraInfo
 
-local l_nColspan
+local l_oGrid
 
 oFcgi:TraceAdd("EnumerationListFormBuild")
 
@@ -8563,10 +8416,10 @@ with object l_oDB_ListOfEnumerations
     :Column("Enumeration.pk"             ,"pk")
     :Column("Namespace.Name"             ,"Namespace_Name")
     :Column("Namespace.AKA"              ,"Namespace_AKA")
-    :Column("Namespace.UID"          ,"Namespace_UID")
+    :Column("Namespace.UID"              ,"Namespace_UID")
     :Column("Enumeration.Name"           ,"Enumeration_Name")
     :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-    :Column("Enumeration.UID"        ,"Enumeration_UID")
+    :Column("Enumeration.UID"            ,"Enumeration_UID")
     :Column("Enumeration.UseStatus"      ,"Enumeration_UseStatus")
     :Column("Enumeration.DocStatus"      ,"Enumeration_DocStatus")
     :Column("Enumeration.Description"    ,"Enumeration_Description")
@@ -8935,166 +8788,127 @@ l_cHtml += [<div class="m-3"></div>]   //Spacer
 l_cHtml += [</form>]
 
 if !empty(l_nNumberOfEnumerations)
-    l_nColspan := 8
-    if l_lHasExternalId
-        l_nColspan++
-    endif
-    if l_lShowLastUpdated
-        l_nColspan++
-    endif
-    if l_lWarnings
-        l_nColspan++
-    endif
 
     l_cHtml += [<div class="m-3"></div>]
 
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">] //  table-striped
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+trans(l_nColspan)+[">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
-            l_cHtml += [</tr>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfEnumerations")
+                :SetTitle({|l_nNumberOfRows|"Enumerations ("+trans(l_nNumberOfRows)+")"})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Namespace</th>]
-                l_cHtml += [<th class="text-white">Enumeration Name</th>]
-                l_cHtml += [<th class="text-white">Implemented As</th>]
-                l_cHtml += [<th class="text-white">Values</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Referenced<br>By</th>]
-                // l_cHtml += [<th class="text-white text-center">Warnings</th>]
-                if l_lHasExternalId
-                    l_cHtml += [<th class="text-white">External Id</th>]
-                endif
-                if l_lShowLastUpdated
-                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
-                endif
-                if l_lWarnings
-                    // l_cHtml += [<th class="text-center ]+iif(l_lWarnings,"bg-warning text-danger","text-white")+[">Warning</th>]
-                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                endif
-            l_cHtml += [</tr>]
-            select ListOfEnumerations
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)+[>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(ListOfEnumerations->Namespace_Name+FormatAKAForDisplay(ListOfEnumerations->Namespace_AKA))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(ListOfEnumerations->Namespace_Name+FormatAKAForDisplay(ListOfEnumerations->Namespace_AKA)) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                               PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
-                                                                                               PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
-                                                                                               [">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
-                    
-                        if el_seek(trans(ListOfEnumerations->pk)+'*',"ListOfPreviousName","tag1")
-                            select ListOfPreviousName
-                            scan while ListOfPreviousName->pk == ListOfEnumerations->pk
-                                l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
-                            endscan
-                        endif
-                    
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Enumeration Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml
+                                            l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditEnumeration/]+par_cURLApplicationLinkCode+[/]+;
+                                                       PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                       PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
+                                                       [">]+ListOfEnumerations->Enumeration_Name+FormatAKAForDisplay(ListOfEnumerations->Enumeration_AKA)+[</a>]
+                                        
+                                            if el_seek(trans(ListOfEnumerations->pk)+'*',"ListOfPreviousName","tag1")
+                                                select ListOfPreviousName
+                                                scan while ListOfPreviousName->pk == ListOfEnumerations->pk
+                                                    l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
+                                                endscan
+                                            endif
+                                            return l_cHtml
+                                      } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]+EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength)+[</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Implemented As"},;
+                            "Rows"  =>{"Expression" => {|| EnumerationImplementAsInfo(ListOfEnumerations->Enumeration_ImplementAs,ListOfEnumerations->Enumeration_ImplementLength) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->EnumValueCount , 0)
-                        // if l_nCount > 0
-                        //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
-                        //                                                                         PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
-                        //                                                                         PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
-                        //                                                                         [">]+Trans(l_nCount)+[</a>]
-                        // endif
+                :AddColumn({"Header"=>{"Caption"=>"Values"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml := ""
+                                            if el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1")
+                                                l_nCountProposed     := ListOfEnumerationsEnumValueCounts->EnumValueCountProposed
+                                                l_nCount             := ListOfEnumerationsEnumValueCounts->EnumValueCount
+                                                l_nCountDiscontinued := ListOfEnumerationsEnumValueCounts->EnumValueCountDiscontinued
+                                            else
+                                                l_nCountProposed     := 0
+                                                l_nCount             := 0
+                                                l_nCountDiscontinued := 0
+                                            endif
+                                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
+                                                           [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                            endif
+                                            return l_cHtml
+                                      },;
+                                      "Align" => "center" }})
 
-                        if el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1")
-                            l_nCountProposed     := ListOfEnumerationsEnumValueCounts->EnumValueCountProposed
-                            l_nCount             := ListOfEnumerationsEnumValueCounts->EnumValueCount
-                            l_nCountDiscontinued := ListOfEnumerationsEnumValueCounts->EnumValueCountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
-                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
-                                                                                                PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
-                                                                                                [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                        endif
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_Description,"")) } }})
 
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Referenced<br>By","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml := ""
+                                            if el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1")
+                                                l_nCountProposed     := ListOfReferencedByCounts->ColumnCountProposed
+                                                l_nCount             := ListOfReferencedByCounts->ColumnCount
+                                                l_nCountDiscontinued := ListOfReferencedByCounts->ColumnCountDiscontinued
+                                            else
+                                                l_nCountProposed     := 0
+                                                l_nCount             := 0
+                                                l_nCountDiscontinued := 0
+                                            endif
+                                            if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
+                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
+                                                           PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
+                                                           PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
+                                                           [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                            endif
+                                            return l_cHtml
+                                      },;
+                                      "Align" => "center" }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumerations->Enumeration_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lHasExternalId)},;
+                            "Header"   =>{"Caption"=>"External Id"},;
+                            "Rows"     =>{"Expression" => {|| 
+                                                                local l_cHtml := ""
+                                                                if nvl(ListOfEnumerations->Enumeration_ExternalId,0) > 0
+                                                                    l_cHtml += trans(ListOfEnumerations->Enumeration_ExternalId)
+                                                                endif
+                                                                return l_cHtml
+                                                          },;
+                                         "Align" => "right"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  // Referenced By
-                        // l_nCount := iif( el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1") , ListOfReferencedByCounts->ColumnCount , 0)
-                        // if l_nCount > 0
-                        //     l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
-                        //                                                                                 PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
-                        //                                                                                 PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
-                        //                                                                                 [">]+Trans(l_nCount)+[</a>]
-                        // endif
+                :AddColumn({"Condition"=>{||(l_lShowLastUpdated)},;
+                            "Header"   =>{"Caption"=>"Last Updated","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| 
+                                                local l_cHtml
+                                                if left(ListOfEnumerations->LastUpdated,1) == "0"
+                                                    l_cHtml := substr(ListOfEnumerations->LastUpdated,2)
+                                                else
+                                                    l_cHtml := ListOfEnumerations->LastUpdated
+                                                endif
+                                                return l_cHtml
+                                         },;
+                                         "Align" => "right",;
+                                         "CellExtraClasses" => {|| iif(ListOfEnumerations->Inherited,"fst-italic","") } }})
 
-                        if el_seek(ListOfEnumerations->pk,"ListOfReferencedByCounts","tag1")
-                            l_nCountProposed     := ListOfReferencedByCounts->ColumnCountProposed
-                            l_nCount             := ListOfReferencedByCounts->ColumnCount
-                            l_nCountDiscontinued := ListOfReferencedByCounts->ColumnCountDiscontinued
-                        else
-                            l_nCountProposed     := 0
-                            l_nCount             := 0
-                            l_nCountDiscontinued := 0
-                        endif
-                        if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
-                                                                                                        PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
-                                                                                                        [">]+GetFormattedUseStatusCounts(l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
-                        endif
+                :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                            "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                            "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_TestWarning,"")) } }})
 
-                    l_cHtml += [</td>]
 
-                    if l_lHasExternalId
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if nvl(ListOfEnumerations->Enumeration_ExternalId,0) > 0
-                                l_cHtml += trans(ListOfEnumerations->Enumeration_ExternalId)
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lShowLastUpdated
-                        l_cHtml += [<td class="GridDataControlCells]+iif(ListOfEnumerations->Inherited," fst-italic","")+[" valign="top" align="right">]
-                            if left(ListOfEnumerations->LastUpdated,1) == "0"
-                                l_cHtml += substr(ListOfEnumerations->LastUpdated,2)
-                            else
-                                l_cHtml += ListOfEnumerations->LastUpdated
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lWarnings
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_TestWarning,""))
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -9134,7 +8948,7 @@ with object l_oDB1
     if !empty(par_iPk)
         :Table("fe972943-4a6c-4e04-b03a-5969abc9a8c6","Enumeration")
         :Column("Namespace.Name"     ,"Namespace_Name")
-        :Column("Namespace.UID"  ,"Namespace_UID")
+        :Column("Namespace.UID"      ,"Namespace_UID")
         :Column("Enumeration.Name"   ,"Enumeration_Name")
         :Column("Enumeration.UID","Enumeration_UID")
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
@@ -9547,7 +9361,7 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
             :Table("6e30d9b3-ac94-4a89-9df7-17083e62949b","Enumeration")
             :Column("Enumeration.fk_Namespace"    ,"Enumeration_fk_Namespace")
             :Column("Enumeration.Name"            ,"Enumeration_Name")
-            :Column("Enumeration.UID"         ,"Enumeration_UID")
+            :Column("Enumeration.UID"             ,"Enumeration_UID")
             :Column("Enumeration.TrackNameChanges","Enumeration_TrackNameChanges")
             :Column("Enumeration.ImplementAs"     ,"Enumeration_ImplementAs")
             :Column("Enumeration.ImplementLength" ,"Enumeration_ImplementLength")
@@ -9564,7 +9378,7 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
                 :Table("c7deaef4-1e08-4ea7-b1d7-2fa30a858be8","Enumeration")
                 :Field("Enumeration.fk_Namespace"    ,l_oData:Enumeration_fk_Namespace)
                 :Field("Enumeration.Name"            ,l_cName)
-                :Field("Enumeration.UID"         ,l_cUID)
+                :Field("Enumeration.UID"             ,l_cUID)
 
                 :Field("Enumeration.TrackNameChanges",l_oData:Enumeration_TrackNameChanges)
                 :Field("Enumeration.ImplementAs"     ,l_oData:Enumeration_ImplementAs)
@@ -9579,8 +9393,8 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
                     select ListOfEnumValues
                     scan all
                         :Table("11b1eb0a-0e1c-4a3d-b816-a3ea802c4816","EnumValue")
-                        :Field("EnumValue.fk_Enumeration"     ,l_iEnumerationPk)
-                        :Field("EnumValue.UID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("EnumValue.fk_Enumeration"    ,l_iEnumerationPk)
+                        :Field("EnumValue.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
 
                         :Field("EnumValue.Number"            ,ListOfEnumValues->EnumValue_Number)
                         :Field("EnumValue.Order"             ,ListOfEnumValues->EnumValue_Order)
@@ -9639,10 +9453,10 @@ otherwise
     endif
     with object l_oDB1
         :Table("da356f83-c733-465e-a73c-e0af9e06d192","Enumeration")
-        :Column("Namespace.Name"     ,"Namespace_Name")
-        :Column("Namespace.UID"  ,"Namespace_UID")
-        :Column("Enumeration.Name"   ,"Enumeration_Name")
-        :Column("Enumeration.UID","Enumeration_UID")
+        :Column("Namespace.Name"  ,"Namespace_Name")
+        :Column("Namespace.UID"   ,"Namespace_UID")
+        :Column("Enumeration.Name","Enumeration_Name")
+        :Column("Enumeration.UID" ,"Enumeration_UID")
         :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iEnumerationPk)
         if :Tally == 1
@@ -9670,7 +9484,6 @@ local l_oDB_ListOfEnumValues   := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfPreviousName := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_lHasExternalId :=.f.
 local l_lWarnings := .f.
-local l_nColspan
 local l_cCombinedPath
 
 local l_cLine
@@ -9679,6 +9492,7 @@ local l_lExtraInfo
 
 local l_nLastUpdated
 local l_lShowLastUpdated
+local l_oGrid
 
 l_nLastUpdated     := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_LastUpdated"))))
 l_lShowLastUpdated := (GetUserSetting("Application_"+Trans(par_iApplicationPk)+"_EnumValueSearch_ShowLastUpdated") == "1")
@@ -9688,7 +9502,7 @@ oFcgi:TraceAdd("EnumValueListFormBuild")
 with object l_oDB_ListOfEnumValues
     :Table("6e36b50f-9e7c-43d6-bba3-00d402a649d0","EnumValue")
     :Column("EnumValue.pk"         ,"pk")
-    :Column("EnumValue.UID"    ,"EnumValue_UID")
+    :Column("EnumValue.UID"        ,"EnumValue_UID")
     :Column("EnumValue.Name"       ,"EnumValue_Name")
     :Column("EnumValue.AKA"        ,"EnumValue_AKA")
     :Column("EnumValue.Number"     ,"EnumValue_Number")
@@ -9845,112 +9659,77 @@ else
         endif
     endscan
 
-    l_nColspan := 6
-    if l_lHasExternalId
-        l_nColspan++
-    endif
-    if l_lShowLastUpdated
-        l_nColspan++
-    endif
-    if l_lWarnings
-        l_nColspan++
-    endif
-
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfEnumValues")
+                :SetTitle({|l_nNumberOfRows| [Values (]+Trans(l_nNumberOfRows)+[) for Enumeration "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Enumeration_Name+FormatAKAForDisplay(par_oNavData:Enumeration_AKA)) })
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+trans(l_nColspan)+[">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+TextToHtml(par_oNavData:Namespace_Name+FormatAKAForDisplay(par_oNavData:Namespace_AKA)+[.]+par_oNavData:Enumeration_Name+FormatAKAForDisplay(par_oNavData:Enumeration_AKA))+["</th>]
-            l_cHtml += [</tr>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfEnumValues->EnumValue_UseStatus)})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Number</th>]
-                l_cHtml += [<th class="text-white">Code</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                if l_lHasExternalId
-                    l_cHtml += [<th class="text-white">External Id</th>]
-                endif
-                if l_lShowLastUpdated
-                    l_cHtml += [<th class="text-white text-center">Last Updated</th>]
-                endif
-                if l_lWarnings
-                    l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                endif
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditEnumValue/]+l_cCombinedPath+;
+                                                                       PrepareForURLSQLIdentifier("EnumValue"  ,ListOfEnumValues->EnumValue_Name  ,ListOfEnumValues->EnumValue_UID)+[/]+;
+                                                                       [">]+FcgiPrepFieldForValue(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA))+[</a>]
 
-            select ListOfEnumValues
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumValues->EnumValue_UseStatus)+[>]
+                                                            if el_seek(trans(ListOfEnumValues->pk)+'*',"ListOfPreviousName","tag1")
+                                                                select ListOfPreviousName
+                                                                scan while ListOfPreviousName->pk == ListOfEnumValues->pk
+                                                                    l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
+                                                                endscan
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditEnumValue/]+l_cCombinedPath+;
-                                                                                             PrepareForURLSQLIdentifier("EnumValue"  ,ListOfEnumValues->EnumValue_Name  ,ListOfEnumValues->EnumValue_UID)+[/]+;
-                                                                                             [">]+FcgiPrepFieldForValue(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA))+[</a>]
+                :AddColumn({"Header"=>{"Caption"=>"Number"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
+                                                                l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
+                                                            endif
+                                                            l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
+                                                            return l_cHtml
+                                                       },;
+                                       "Align" => "center"}})
 
-                        if el_seek(trans(ListOfEnumValues->pk)+'*',"ListOfPreviousName","tag1")
-                            select ListOfPreviousName
-                            scan while ListOfPreviousName->pk == ListOfEnumValues->pk
-                                l_cHtml += [<div class="ps-1 small">Previously: ]+TextToHtml(ListOfPreviousName->PreviousName_Name)+[</div>]
-                            endscan
-                        endif
+                :AddColumn({"Header"=>{"Caption"=>"Code"},;
+                            "Rows"  =>{"Expression" => {|| hb_DefaultValue(ListOfEnumValues->EnumValue_Code,"") } }})
 
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
-                            l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
-                        endif
-                        l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumValues->EnumValue_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumValues->EnumValue_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Code,"")
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lHasExternalId)},;
+                            "Header"   =>{"Caption"=>"External Id","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {||
+                                                                local l_cHtml := ""
+                                                                if nvl(ListOfEnumValues->EnumValue_ExternalId,0) > 0
+                                                                    l_cHtml += trans(ListOfEnumValues->EnumValue_ExternalId)
+                                                                endif
+                                                                return l_cHtml
+                                                          },;
+                                          "Align" => "right"}}) 
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumValues->EnumValue_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumValues->EnumValue_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lShowLastUpdated)},;
+                            "Header"=>{"Caption"=>"Last Updated","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| iif((left(ListOfEnumValues->LastUpdated,1) == "0"),substr(ListOfEnumValues->LastUpdated,2),ListOfEnumValues->LastUpdated) },;
+                                       "Align" => "right"}})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfEnumValues->EnumValue_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_lWarnings)},;
+                            "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                            "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_TestWarning,"")) } }})
 
-                    if l_lHasExternalId
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if nvl(ListOfEnumValues->EnumValue_ExternalId,0) > 0
-                                l_cHtml += trans(ListOfEnumValues->EnumValue_ExternalId)
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lShowLastUpdated
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="right">]
-                            if left(ListOfEnumValues->LastUpdated,1) == "0"
-                                l_cHtml += substr(ListOfEnumValues->LastUpdated,2)
-                            else
-                                l_cHtml += ListOfEnumValues->LastUpdated
-                            endif
-                        l_cHtml += [</td>]
-                    endif
-
-                    if l_lWarnings
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_TestWarning,""))
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -10434,7 +10213,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iEnumValuePk)
                     :Field("EnumValue.fk_Enumeration",par_iEnumerationPk)
                     :Field("EnumValue.Order"         ,l_iEnumValueOrder)
-                    :Field("EnumValue.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("EnumValue.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
                     if :Add()
                         l_iEnumValuePk := :Key()
                     else
@@ -10476,7 +10255,7 @@ case l_cActionOnSubmit == "Duplicate"   // EnumValue
             :Column("EnumValue.fk_Enumeration"    ,"EnumValue_fk_Enumeration")
             :Column("EnumValue.Number"            ,"EnumValue_Number")
             :Column("EnumValue.Order"             ,"EnumValue_Order")
-            :Column("EnumValue.UID"           ,"EnumValue_UID")
+            :Column("EnumValue.UID"               ,"EnumValue_UID")
             :Column("EnumValue.Name"              ,"EnumValue_Name")
             :Column("EnumValue.TrackNameChanges"  ,"EnumValue_TrackNameChanges")
             :Column("EnumValue.AKA"               ,"EnumValue_AKA")
@@ -10495,7 +10274,7 @@ case l_cActionOnSubmit == "Duplicate"   // EnumValue
 
                 :Table("c0560ac0-6569-42b0-8372-d18463d0f2a2","EnumValue")
                 :Field("EnumValue.fk_Enumeration"    ,l_iEnumerationPk)
-                :Field("EnumValue.UID"           ,l_cUID)
+                :Field("EnumValue.UID"               ,l_cUID)
                 :Field("EnumValue.Name"              ,l_cName)
 
                 :Field("EnumValue.Number"            ,l_oData:EnumValue_Number)
@@ -10551,14 +10330,14 @@ otherwise
     endif
     with object l_oDB1
         :Table("0565a26a-b9c7-4fd0-ad1e-0e1ff08e64f0","EnumValue")
-        :Column("Namespace.Name"     ,"Namespace_Name")
-        :Column("Namespace.AKA"      ,"Namespace_AKA")
-        :Column("Namespace.UID"  ,"Namespace_UID")
-        :Column("Enumeration.Name"   ,"Enumeration_Name")
-        :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-        :Column("Enumeration.UID","Enumeration_UID")
-        :Column("EnumValue.Name"     ,"EnumValue_Name")
-        :Column("EnumValue.UID"  ,"EnumValue_UID")
+        :Column("Namespace.Name"  ,"Namespace_Name")
+        :Column("Namespace.AKA"   ,"Namespace_AKA")
+        :Column("Namespace.UID"   ,"Namespace_UID")
+        :Column("Enumeration.Name","Enumeration_Name")
+        :Column("Enumeration.AKA" ,"Enumeration_AKA")
+        :Column("Enumeration.UID" ,"Enumeration_UID")
+        :Column("EnumValue.Name"  ,"EnumValue_Name")
+        :Column("EnumValue.UID"   ,"EnumValue_UID")
         :Join("inner","Enumeration","","EnumValue.fk_Enumeration = Enumeration.pk")
         :Join("inner","Namespace"  ,"","Enumeration.fk_Namespace = Namespace.pk")
         l_oData := :Get(l_iEnumValuePk)
@@ -10884,7 +10663,7 @@ case el_IsInlist(l_cActionOnSubmit,"Load","Delta","Update","GenerateScript")
         with object l_oDB_ListOfDeployments
             :Table("d4e737d0-d8a3-4f5e-b05a-aa87e17522b1","public.Deployment")
 
-            :Column("Deployment.UID"            , "UID")
+            :Column("Deployment.UID"                , "UID")
             :Column("Deployment.BackendType"        , "BackendType")
             :Column("Deployment.Server"             , "Server")
             :Column("Deployment.Port"               , "Port")
@@ -11266,6 +11045,7 @@ local l_cHtml := []
 local l_oDB1
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfTags
+local l_oGrid
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -11313,49 +11093,28 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfTags")
+                    :SetTitle({|l_nNumberOfRows|"Tags ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="5">Tags (]+Trans(l_nNumberOfTags)+[)</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditTag/]+par_cURLApplicationLinkCode+[/]+PrepareForURLSQLIdentifier("Tag",ListOfTags->Tag_Code,ListOfTags->pk)+[/]+[">]+TextToHtml(ListOfTags->Tag_Name)+[</a>] } }})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Code</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Table<br>Use<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Column<br>Use<br>Status</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Code"},;
+                                "Rows"  =>{"Expression" => {|| ListOfTags->Tag_Code } }})
 
-                select ListOfTags
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfTags->Tag_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTag/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                           PrepareForURLSQLIdentifier("Tag",ListOfTags->Tag_Code,ListOfTags->pk)+[/]+;
-                                                                                           [">]+TextToHtml(ListOfTags->Tag_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Table<br>Use<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"Do Not Use","Active","Discontinued"}[iif(el_between(ListOfTags->Tag_TableUseStatus,TAGUSESTATUS_DONOTUSE,TAGUSESTATUS_DISCONTINUED),ListOfTags->Tag_TableUseStatus,TAGUSESTATUS_DONOTUSE)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += ListOfTags->Tag_Code
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Column<br>Use<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"Do Not Use","Active","Discontinued"}[iif(el_between(ListOfTags->Tag_ColumnUseStatus,TAGUSESTATUS_DONOTUSE,TAGUSESTATUS_DISCONTINUED),ListOfTags->Tag_ColumnUseStatus,TAGUSESTATUS_DONOTUSE)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfTags->Tag_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Do Not Use","Active","Discontinued"}[iif(el_between(ListOfTags->Tag_TableUseStatus,TAGUSESTATUS_DONOTUSE,TAGUSESTATUS_DISCONTINUED),ListOfTags->Tag_TableUseStatus,TAGUSESTATUS_DONOTUSE)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Do Not Use","Active","Discontinued"}[iif(el_between(ListOfTags->Tag_ColumnUseStatus,TAGUSESTATUS_DONOTUSE,TAGUSESTATUS_DISCONTINUED),ListOfTags->Tag_ColumnUseStatus,TAGUSESTATUS_DONOTUSE)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -11620,8 +11379,8 @@ otherwise
     endif
     with object l_oDB1
         :Table("74f631ed-169f-47be-b06a-e1a727cd3ff2","Tag")
-        :Column("Tag.Name"   ,"Tag_Name")
-        :Column("Tag.UID","Tag_UID")
+        :Column("Tag.Name","Tag_Name")
+        :Column("Tag.UID" ,"Tag_UID")
         l_oData := :Get(l_iTagPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTag/"+par_cURLApplicationLinkCode+"/"+;
@@ -11656,14 +11415,15 @@ local l_nTemplateColumnCount
 
 local l_nNumberOfTemplateTables := 0
 local l_ScriptFolder
+local l_oGrid
 
 oFcgi:TraceAdd("TemplateTableListFormBuild")
 
 with object l_oDB_ListOfTemplateTables
     :Table("f99ba155-3bcd-48f8-bfde-0e9807fd029d","TemplateTable")
-    :Column("TemplateTable.pk"         ,"pk")
-    :Column("TemplateTable.Name"       ,"TemplateTable_Name")
-    :Column("TemplateTable.UID"    ,"TemplateTable_UID")
+    :Column("TemplateTable.pk"  ,"pk")
+    :Column("TemplateTable.Name","TemplateTable_Name")
+    :Column("TemplateTable.UID" ,"TemplateTable_UID")
     :Column("Upper(TemplateTable.Name)","tag1")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
 
@@ -11726,42 +11486,31 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfTemplateTables")
+                :SetTitle({|l_nNumberOfRows|"Template Tables ("+trans(l_nNumberOfRows)+")"})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="2">Template Tables (]+Trans(l_nNumberOfTemplateTables)+[)</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Template Table Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditTemplateTable/]+par_cURLApplicationLinkCode+[/]+;
+                                                                                                                                       PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
+                                                                                                                                       [">]+TextToHtml(ListOfTemplateTables->TemplateTable_Name)+[</a>]
+                                                        } }})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Template Table Name</th>]
-                l_cHtml += [<th class="text-white">Columns</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Columns"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            l_iTemplateTablePk     := ListOfTemplateTables->pk
+                                                            l_nTemplateColumnCount := iif( el_seek(l_iTemplateTablePk,"ListOfTemplateColumnCounts","tag1") , ListOfTemplateColumnCounts->TemplateColumnCount , 0)
+                                                            return [<a class="GridLinkNormal" href="]+l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+;
+                                                                                                                                   PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
+                                                                                                                                   [">]+Trans(l_nTemplateColumnCount)+[</a>]
+                                                       },;
+                                        "Align" => "center"}})
 
-            select ListOfTemplateTables
-            scan all
-                l_iTemplateTablePk := ListOfTemplateTables->pk
+                l_cHtml += :Build()
+            endwith
 
-                l_cHtml += [<tr>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/EditTemplateTable/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                 PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
-                                                                                                 [">]+TextToHtml(ListOfTemplateTables->TemplateTable_Name)+[</a>]
-
-
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nTemplateColumnCount := iif( el_seek(l_iTemplateTablePk,"ListOfTemplateColumnCounts","tag1") , ListOfTemplateColumnCounts->TemplateColumnCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[DataDictionaries/ListTemplateColumns/]+par_cURLApplicationLinkCode+[/]+;
-                                                                                                   PrepareForURLSQLIdentifier("Table",ListOfTemplateTables->TemplateTable_Name,ListOfTemplateTables->TemplateTable_UID)+[/]+;
-                                                                                                   [">]+Trans(l_nTemplateColumnCount)+[</a>]
-                    l_cHtml += [</td>]
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -11785,7 +11534,7 @@ oFcgi:TraceAdd("TemplateTableEditFormBuild")
 with object l_oDB1
     if !empty(par_iPk)
         :Table("48312a8d-fb40-4ba4-bd36-10a7fd1fb2e1","TemplateTable")
-        :Column("TemplateTable.Name"    ,"TemplateTable_Name")
+        :Column("TemplateTable.Name","TemplateTable_Name")
         :Column("TemplateTable.UID" ,"TemplateTable_UID")
         l_oDataTemplateTableInfo := :Get(par_iPk)
     endif
@@ -11902,7 +11651,7 @@ case l_cActionOnSubmit == "Save"
             endif
             if empty(l_iTemplateTablePk)
                 :Field("TemplateTable.fk_Application",par_iApplicationPk)
-                :Field("TemplateTable.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("TemplateTable.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iTemplateTablePk := :Key()
                 else
@@ -11951,8 +11700,8 @@ otherwise
     //Since the Name could have change the redirect URL has to be re-evaluated.
     with object l_oDB1
         :Table("bf3fd002-455f-4ddd-a2a8-4d930f91f4f1","TemplateTable")
-        :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-        :Column("TemplateTable.UID","TemplateTable_UID")
+        :Column("TemplateTable.Name","TemplateTable_Name")
+        :Column("TemplateTable.UID" ,"TemplateTable_UID")
         l_oData := :Get(l_iTemplateTablePk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"DataDictionaries/EditTemplateTable/"+par_cURLApplicationLinkCode+"/"+;
@@ -11979,6 +11728,8 @@ local l_cApplicationSupportColumns
 local l_cURL
 local l_cName
 local l_cCombinedPath
+local l_oGrid
+local l_cColumnHeader
 
 local l_hOptionValueToDescriptionMapping := {=>}
 
@@ -11997,24 +11748,24 @@ with object l_oDB_ListOfTemplateColumns
     l_nNumberOfTemplateColumns := :Count()
 
     :Table("9a0ac423-cfe4-48f8-a6da-36211dae310e","TemplateColumn")
-    :Column("TemplateColumn.pk"                 ,"pk")
-    :Column("TemplateColumn.Name"               ,"TemplateColumn_Name")
-    :Column("TemplateColumn.AKA"                ,"TemplateColumn_AKA")
-    :Column("TemplateColumn.UID"            ,"TemplateColumn_UID")
-    :Column("TemplateColumn.UsedAs"             ,"TemplateColumn_UsedAs")
-    :Column("TemplateColumn.UsedBy"             ,"TemplateColumn_UsedBy")
-    :Column("TemplateColumn.UseStatus"          ,"TemplateColumn_UseStatus")
-    :Column("TemplateColumn.DocStatus"          ,"TemplateColumn_DocStatus")
-    :Column("TemplateColumn.Description"        ,"TemplateColumn_Description")
-    :Column("TemplateColumn.Order"              ,"TemplateColumn_Order")
-    :Column("TemplateColumn.Type"               ,"TemplateColumn_Type")
-    :Column("TemplateColumn.Array"              ,"TemplateColumn_Array")
-    :Column("TemplateColumn.Length"             ,"TemplateColumn_Length")
-    :Column("TemplateColumn.Scale"              ,"TemplateColumn_Scale")
-    :Column("TemplateColumn.Nullable"           ,"TemplateColumn_Nullable")
-    :Column("TemplateColumn.DefaultType"        ,"TemplateColumn_DefaultType")
-    :Column("TemplateColumn.DefaultCustom"      ,"TemplateColumn_DefaultCustom")
-    :Column("TemplateColumn.Unicode"            ,"TemplateColumn_Unicode")
+    :Column("TemplateColumn.pk"           ,"pk")
+    :Column("TemplateColumn.Name"         ,"TemplateColumn_Name")
+    :Column("TemplateColumn.AKA"          ,"TemplateColumn_AKA")
+    :Column("TemplateColumn.UID"          ,"TemplateColumn_UID")
+    :Column("TemplateColumn.UsedAs"       ,"TemplateColumn_UsedAs")
+    :Column("TemplateColumn.UsedBy"       ,"TemplateColumn_UsedBy")
+    :Column("TemplateColumn.UseStatus"    ,"TemplateColumn_UseStatus")
+    :Column("TemplateColumn.DocStatus"    ,"TemplateColumn_DocStatus")
+    :Column("TemplateColumn.Description"  ,"TemplateColumn_Description")
+    :Column("TemplateColumn.Order"        ,"TemplateColumn_Order")
+    :Column("TemplateColumn.Type"         ,"TemplateColumn_Type")
+    :Column("TemplateColumn.Array"        ,"TemplateColumn_Array")
+    :Column("TemplateColumn.Length"       ,"TemplateColumn_Length")
+    :Column("TemplateColumn.Scale"        ,"TemplateColumn_Scale")
+    :Column("TemplateColumn.Nullable"     ,"TemplateColumn_Nullable")
+    :Column("TemplateColumn.DefaultType"  ,"TemplateColumn_DefaultType")
+    :Column("TemplateColumn.DefaultCustom","TemplateColumn_DefaultCustom")
+    :Column("TemplateColumn.Unicode"      ,"TemplateColumn_Unicode")
 
     :Where("TemplateColumn.fk_TemplateTable = ^",par_iTemplateTablePk)
 
@@ -12070,112 +11821,96 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfTemplateColumns")
+                :SetTitle({|l_nNumberOfRows| [Columns (]+Trans(l_nNumberOfRows)+[) for Table "]+TextToHtml(par_oNavData:TemplateTable_Name+FormatAKAForDisplay(par_oNavData:TemplateTable_AKA))+["] })
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-center text-white" colspan="8">]
-                    l_cHtml += [Columns (]+Trans(l_nNumberOfTemplateColumns)+[) for Table "]+TextToHtml(par_oNavData:TemplateTable_Name+FormatAKAForDisplay(par_oNavData:TemplateTable_AKA))+["]
-                l_cHtml += [</th>]
-            l_cHtml += [</tr>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfTemplateColumns->TemplateColumn_UseStatus)})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
                 if oFcgi:p_nAccessLevelDD >= 5
-                    l_cHtml += [<th class="text-center"><a href="]+l_cSitePath+[DataDictionaries/NewTemplateColumn/]+l_cCombinedPath+["><span class="text-white bi-plus-lg"></span></a></th>]
+                    l_cColumnHeader := [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/NewTemplateColumn/]+l_cCombinedPath+["><span class="text-white bi-plus-lg"></span></a>]
                 else
-                    l_cHtml += [<th class="text-white"></th>]
+                    l_cColumnHeader := ""
                 endif
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Type</th>]
-                l_cHtml += [<th class="text-white">Nullable</th>]
-                l_cHtml += [<th class="text-white">Default</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                // l_cHtml += [<th class="text-white text-center">Used By</th>]
-            l_cHtml += [</tr>]
 
-            select ListOfTemplateColumns
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfTemplateColumns->TemplateColumn_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=> l_cColumnHeader ,;
+                                       "Align"  => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            do case
+                                                            case ListOfTemplateColumns->TemplateColumn_UsedAs = 2
+                                                                l_cHtml := [<i class="bi bi-key"></i>]
+                                                            case ListOfTemplateColumns->TemplateColumn_UsedAs = 3
+                                                                l_cHtml := [<i class="bi-arrow-right"></i>]
+                                                            case (ListOfTemplateColumns->TemplateColumn_UsedAs = 4) .or. (ListOfTemplateColumns->TemplateColumn_UsedAs = 1 .and. " "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
+                                                                l_cHtml := [<i class="bi bi-tools"></i>]
+                                                            otherwise
+                                                                l_cHtml := ""
+                                                            endcase
+                                                            return l_cHtml
+                                                       },;
+                                        "Align"     => "center" }})
 
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        do case
-                        case ListOfTemplateColumns->TemplateColumn_UsedAs = 2
-                            l_cHtml += [<i class="bi bi-key"></i>]
-                        case ListOfTemplateColumns->TemplateColumn_UsedAs = 3
-                            l_cHtml += [<i class="bi-arrow-right"></i>]
-                        case (ListOfTemplateColumns->TemplateColumn_UsedAs = 4) .or. (ListOfTemplateColumns->TemplateColumn_UsedAs = 1 .and. " "+lower(ListOfTemplateColumns->TemplateColumn_Name)+" " $ " "+lower(l_cApplicationSupportColumns)+" ")
-                            l_cHtml += [<i class="bi bi-tools"></i>]
-                        endcase
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cURL
+                                                            local l_cName
+                                                            l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/EditTemplateColumn/]+l_cCombinedPath+;
+                                                                       PrepareForURLSQLIdentifier("Column",ListOfTemplateColumns->TemplateColumn_Name,ListOfTemplateColumns->TemplateColumn_UID)
+                                                            l_cName := TextToHTML(ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA))
+                                                            if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
+                                                                l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                            endif
+                                                            return [<a href="]+l_cURL+[/">]+l_cName+[</a>]
+                                                       } }})
 
-                    // Name
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cURL  := l_cSitePath+[DataDictionaries/EditTemplateColumn/]+l_cCombinedPath+;
-                                                                                      PrepareForURLSQLIdentifier("Column",ListOfTemplateColumns->TemplateColumn_Name,ListOfTemplateColumns->TemplateColumn_UID)
-                        l_cName := TextToHTML(ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA))
-                        if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
-                            l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
-                            l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
-                        endif
-                        l_cHtml += [<a href="]+l_cURL+[/">]+l_cName+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Type"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml
+                                                            l_cHtml := FormatColumnTypeInfo(alltrim(ListOfTemplateColumns->TemplateColumn_Type),;
+                                                                                            ListOfTemplateColumns->TemplateColumn_Length,;
+                                                                                            ListOfTemplateColumns->TemplateColumn_Scale,;
+                                                                                            ListOfTemplateColumns->TemplateColumn_Unicode,;
+                                                                                            "",;                                                    // ListOfTemplateColumns->Namespace_Name   (Used to decide if should display Namespace info)
+                                                                                            ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_Name
+                                                                                            ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_AKA
+                                                                                            ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_UID
+                                                                                            ,;                                                      // ListOfTemplateColumns->Enumeration_Name
+                                                                                            ,;                                                      // ListOfTemplateColumns->Enumeration_AKA
+                                                                                            ,;                                                      // ListOfTemplateColumns->Enumeration_UID
+                                                                                            ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementAs
+                                                                                            ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementLength
+                                                                                            oFcgi:p_cSitePath,;
+                                                                                            par_cURLApplicationLinkCode,;
+                                                                                            "")                                                     // l_cTooltipEnumValues
 
-                    // Type
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
+                                                            if ListOfTemplateColumns->TemplateColumn_Array
+                                                                l_cHtml += " [Array]"
+                                                            endif
+                                                            return l_cHtml
+                                                       } }})
 
-                        l_cHtml += FormatColumnTypeInfo(alltrim(ListOfTemplateColumns->TemplateColumn_Type),;
-                                                        ListOfTemplateColumns->TemplateColumn_Length,;
-                                                        ListOfTemplateColumns->TemplateColumn_Scale,;
-                                                        ListOfTemplateColumns->TemplateColumn_Unicode,;
-                                                        "",;                                                    // ListOfTemplateColumns->Namespace_Name   (Used to decide if should display Namespace info)
-                                                        ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_Name
-                                                        ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_AKA
-                                                        ,;                                                      // ListOfTemplateColumns->EnumerationNamespace_UID
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_Name
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_AKA
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_UID
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementAs
-                                                        ,;                                                      // ListOfTemplateColumns->Enumeration_ImplementLength
-                                                        l_cSitePath,;
-                                                        par_cURLApplicationLinkCode,;
-                                                        "")                                                     // l_cTooltipEnumValues
+                :AddColumn({"Header"=>{"Caption"=>"Nullable"},;
+                            "Rows"  =>{"Expression" => {|| iif(ListOfTemplateColumns->TemplateColumn_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;]) },;
+                                       "Align"      => "center" }})
 
-                        if ListOfTemplateColumns->TemplateColumn_Array
-                            l_cHtml += " [Array]"
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Default"},;
+                            "Rows"  =>{"Expression" => {|| GetColumnDefault(.f.,ListOfTemplateColumns->TemplateColumn_Type,ListOfTemplateColumns->TemplateColumn_DefaultType,ListOfTemplateColumns->TemplateColumn_DefaultCustom) } }})
 
-                    // Nullable
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        l_cHtml += iif(ListOfTemplateColumns->TemplateColumn_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfTemplateColumns->TemplateColumn_Description,"")) } }})
 
-                    // Default
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += GetColumnDefault(.f.,ListOfTemplateColumns->TemplateColumn_Type,ListOfTemplateColumns->TemplateColumn_DefaultType,ListOfTemplateColumns->TemplateColumn_DefaultCustom)
-                        // l_cHtml += nvl(ListOfTemplateColumns->TemplateColumn_DefaultCustom,"")
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfTemplateColumns->TemplateColumn_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfTemplateColumns->TemplateColumn_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    // Description
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfTemplateColumns->TemplateColumn_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING)] } }})
 
-                    // Usage Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfTemplateColumns->TemplateColumn_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfTemplateColumns->TemplateColumn_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                l_cHtml += :Build()
+            endwith
 
-                    // Doc Status
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Not Needed","Composing","Completed"}[iif(el_between(ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfTemplateColumns->TemplateColumn_DocStatus,DOCTATUS_MISSING)]
-                    l_cHtml += [</td>]
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -12961,7 +12696,7 @@ case l_cActionOnSubmit == "Save"
             if empty(l_iPk)
                 :Field("TemplateColumn.fk_TemplateTable",par_iTemplateTablePk)
                 :Field("TemplateColumn.Order"           ,l_iColumnOrder)
-                :Field("TemplateColumn.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("TemplateColumn.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iPk := :Key()
                 else
@@ -13024,10 +12759,10 @@ otherwise
     endif
     with object l_oDB1
         :Table("4cee721e-6260-4b54-ba33-4e24098f8c40","TemplateColumn")
-        :Column("TemplateTable.Name"     , "TemplateTable_Name")
-        :Column("TemplateTable.UID"  , "TemplateTable_UID")
-        :Column("TemplateColumn.Name"    , "TemplateColumn_Name")
-        :Column("TemplateColumn.UID" , "TemplateColumn_UID")
+        :Column("TemplateTable.Name" ,"TemplateTable_Name")
+        :Column("TemplateTable.UID"  ,"TemplateTable_UID")
+        :Column("TemplateColumn.Name","TemplateColumn_Name")
+        :Column("TemplateColumn.UID" ,"TemplateColumn_UID")
         :Join("inner","TemplateTable","","TemplateColumn.fk_TemplateTable = TemplateTable.pk")
         l_oData := :Get(l_iPk)
         if :Tally == 1
@@ -13053,11 +12788,11 @@ local l_cHtml := []
 local l_oData
 local l_iTablePk
 local l_cCombinedPath
-local l_cSitePath := oFcgi:p_cSitePath
 local l_oDB_ListOfReferenceTableAndColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cURL
 local l_cName
 local l_nNumberOfReference
+local l_oGrid
 
 oFcgi:TraceAdd("TableReferenceByFormBuild")
 
@@ -13091,15 +12826,15 @@ else
             :Table("0b7fc2ce-3c31-4294-a8af-1c8624e24e22","Column")
             :Column("Namespace.Name"           ,"Namespace_Name")
             :Column("Namespace.AKA"            ,"Namespace_AKA")
-            :Column("Namespace.UID"        ,"Namespace_UID")
+            :Column("Namespace.UID"            ,"Namespace_UID")
             :Column("Namespace.UseStatus"      ,"Namespace_UseStatus")
             :Column("Table.Name"               ,"Table_Name")
             :Column("Table.AKA"                ,"Table_AKA")
-            :Column("Table.UID"            ,"Table_UID")
+            :Column("Table.UID"                ,"Table_UID")
             :Column("Table.UseStatus"          ,"Table_UseStatus")
             :Column("Column.Name"              ,"Column_Name")
             :Column("Column.AKA"               ,"Column_AKA")
-            :Column("Column.UID"           ,"Column_UID")
+            :Column("Column.UID"               ,"Column_UID")
             :Column("Column.UseStatus"         ,"Column_UseStatus")
             :Column("Column.OnDelete"          ,"Column_OnDelete")
             :Column("Column.ForeignKeyUse"     ,"Column_ForeignKeyUse")
@@ -13129,81 +12864,53 @@ else
                 l_cHtml += [<div class="row justify-content-center m-3">]
                     l_cHtml += [<div class="col-auto">]
 
-                        l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                        l_oGrid := Grid()
+                        with object l_oGrid
+                            :SetAlias("ListOfReferenceTableAndColumns")
+                            :SetTitle({|l_nNumberOfRows| [Referenced By (]+Trans(l_nNumberOfRows)+[) for Table "]+TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Table_Name)+FormatAKAForDisplay(l_oData:Table_AKA))+["] })
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-center text-white" colspan="6">]
-                                    l_cHtml += [Referenced By (]+Trans(l_nNumberOfReference)+[) for Table "]+;
-                                            TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Table_Name)+FormatAKAForDisplay(l_oData:Table_AKA))+;
-                                            ["]
-                                l_cHtml += [</th>]
-                            l_cHtml += [</tr>]
+                            :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                                        "Rows"  =>{"Expression"       => {|| TextToHtml(ListOfReferenceTableAndColumns->Namespace_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Namespace_AKA)) },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Namespace_UseStatus) } }})
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-white">Namespace</th>]
-                                l_cHtml += [<th class="text-white">Table</th>]
-                                l_cHtml += [<th class="text-white">Column</th>]
-                                l_cHtml += [<th class="text-white text-center">Foreign Key<br>Use</th>]
-                                l_cHtml += [<th class="text-white text-center">Optional</th>]
-                                l_cHtml += [<th class="text-white text-center">On Delete</th>]
-                                
-                            l_cHtml += [</tr>]
+                            :AddColumn({"Header"=>{"Caption"=>"Table"},;
+                                        "Rows"  =>{"Expression"       => {|| TextToHtml(ListOfReferenceTableAndColumns->Table_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Table_AKA)) },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Table_UseStatus) } }})
 
-                            select ListOfReferenceTableAndColumns
-                            scan all
-                                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                            :AddColumn({"Header"=>{"Caption"=>"Column"},;
+                                        "Rows"  =>{"Expression"       => {|| 
+                                                                            local l_cCombinedPath
+                                                                            local l_cURL
+                                                                            local l_cName
+                                                                            l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
 
-                                    //Namespace
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Namespace_UseStatus)+[>]
-                                        l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Namespace_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Namespace_AKA))
-                                    l_cHtml += [</td>]
-                                    
-                                    //Table
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Table_UseStatus)+[>]
-                                        l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Table_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Table_AKA))
-                                    l_cHtml += [</td>]
-                                    
-                                    //Column
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Column_UseStatus)+[>]
-                                        // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
+                                                                            l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
+                                                                                       PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
+                                                                            l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
+                                                                            if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
+                                                                                l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
+                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                            endif
+                                                                            return [<a class="GridLinkNormal DefaultLink" target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
+                                                                         },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Column_UseStatus) } }})
 
-                                        l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
-                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
+                            :AddColumn({"Header"=>{"Caption"=>"Foreign Key<br>Use","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| iif(!hb_IsNIL(ListOfReferenceTableAndColumns->Column_ForeignKeyUse),TextToHtml(ListOfReferenceTableAndColumns->Column_ForeignKeyUse),"") } }})
 
-                                        l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
-                                        l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
-                                        if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
-                                            l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
-                                            l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
-                                        endif
-                                        l_cHtml += [<a target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
+                            :AddColumn({"Header"=>{"Caption"=>"Optional","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| iif(ListOfReferenceTableAndColumns->Column_ForeignKeyOptional,[<i class="bi bi-check-lg"></i>],"") },;
+                                                   "Align" => "center"}})
 
+                            :AddColumn({"Header"=>{"Caption"=>"On Delete","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfReferenceTableAndColumns->Column_OnDelete,1,4),ListOfReferenceTableAndColumns->Column_OnDelete,1)] },;
+                                                   "Align" => "center"}})
 
-                                    l_cHtml += [</td>]
+                            l_cHtml += :Build()
+                        endwith
 
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Foreign Key Use
-                                        if !hb_IsNIL(ListOfReferenceTableAndColumns->Column_ForeignKeyUse)
-                                            l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_ForeignKeyUse)
-                                        endif
-                                    l_cHtml += [</td>]
-
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]  //Optional
-                                        if ListOfReferenceTableAndColumns->Column_ForeignKeyOptional
-                                            l_cHtml += [<i class="bi bi-check-lg"></i>]
-                                        endif
-                                    l_cHtml += [</td>]
-
-                                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]  //On Delete
-                                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfReferenceTableAndColumns->Column_OnDelete,1,4),ListOfReferenceTableAndColumns->Column_OnDelete,1)]
-                                    l_cHtml += [</td>]
-
-                                l_cHtml += [</tr>]
-                            endscan
-
-                        l_cHtml += [</table>]
-                        
                     l_cHtml += [</div>]
                 l_cHtml += [</div>]
             endif
@@ -13222,13 +12929,13 @@ local l_cHtml := []
 local l_oData
 local l_iTablePk
 local l_cCombinedPath
-local l_cSitePath := oFcgi:p_cSitePath
 local l_oDB_ListOfDiagramsWithTables    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDiagramsWithAllTables := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfDiagrams              := hb_SQLCompoundQuery(oFcgi:p_o_SQLConnection)
 local l_cName
 local l_cURL
 local l_nNumberOfDiagrams
+local l_oGrid
 
 oFcgi:TraceAdd("TableDiagramsFormBuild")
 
@@ -13263,7 +12970,7 @@ else
 
             :Table("0d7201c8-3476-4007-bd17-5587efa3b144","Diagram")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.UID"    ,"Diagram_UID")
+            :Column("Diagram.UID"        ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("Diagram.fk_Application = ^",par_iApplicationPk)
@@ -13275,7 +12982,7 @@ else
         with object l_oDB_ListOfDiagramsWithTables
             :Table("18838cb1-061f-4fef-b01e-46f80878952e","DiagramTable")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.UID"    ,"Diagram_UID")
+            :Column("Diagram.UID"        ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
@@ -13299,34 +13006,23 @@ else
                 l_cHtml += [<div class="row justify-content-center m-3">]
                     l_cHtml += [<div class="col-auto">]
 
-                        l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                        l_oGrid := Grid()
+                        with object l_oGrid
+                            :SetAlias("ListOfDiagrams")
+                            :SetTitle({|l_nNumberOfRows| [Diagrams (]+Trans(l_nNumberOfRows)+[) for Table "]+TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Table_Name)+FormatAKAForDisplay(l_oData:Table_AKA))+["] })
+                            :HideColumnHeaders()
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-center text-white" colspan="1">]
-                                    l_cHtml += [Diagrams (]+Trans(l_nNumberOfDiagrams)+[) for Table "]+;
-                                            TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Table_Name)+FormatAKAForDisplay(l_oData:Table_AKA))+;
-                                            ["]
-                                l_cHtml += [</th>]
-                            l_cHtml += [</tr>]
+                            :AddColumn({"Header"=>{"Caption"=>"Diagram Name","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| 
+                                                                        local l_cName
+                                                                        local l_cURL
+                                                                        l_cName := ListOfDiagrams->Diagram_Name
+                                                                        l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/?InitialDiagram=]+ListOfDiagrams->Diagram_UID
+                                                                        return [<a class="GridLinkNormal DefaultLink" target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
+                                                                } }})
 
-                            // l_cHtml += [<tr class="bg-primary bg-gradient">]
-                            //     l_cHtml += [<th class="text-white text-center">Name</th>]
-                            // l_cHtml += [</tr>]
-
-                            select ListOfDiagrams
-                            scan all
-                                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-                                    l_cName := ListOfDiagrams->Diagram_Name
-                                    l_cURL  := l_cSitePath+[DataDictionaries/Visualize/]+par_cURLApplicationLinkCode+[/?InitialDiagram=]+ListOfDiagrams->Diagram_UID
-
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += [<a target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
-                                    l_cHtml += [</td>]
-                                    
-                                l_cHtml += [</tr>]
-                            endscan
-
-                        l_cHtml += [</table>]
+                            l_cHtml += :Build()
+                        endwith
                         
                     l_cHtml += [</div>]
                 l_cHtml += [</div>]
@@ -13352,11 +13048,11 @@ local l_cHtml := []
 local l_oData
 local l_iEnumerationPk
 local l_cCombinedPath
-local l_cSitePath := oFcgi:p_cSitePath
 local l_oDB_ListOfReferenceTableAndColumns := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cURL
 local l_cName
 local l_nNumberOfReference
+local l_oGrid
 
 oFcgi:TraceAdd("EnumerationReferenceByFormBuild")
 
@@ -13388,19 +13084,19 @@ else
 
         with object l_oDB_ListOfReferenceTableAndColumns
             :Table("4630f00d-dc28-4960-bd0f-d93c3c247146","Column")
-            :Column("Namespace.Name"           ,"Namespace_Name")
-            :Column("Namespace.AKA"            ,"Namespace_AKA")
-            :Column("Namespace.UID"        ,"Namespace_UID")
-            :Column("Namespace.UseStatus"      ,"Namespace_UseStatus")
-            :Column("Table.Name"               ,"Table_Name")
-            :Column("Table.AKA"                ,"Table_AKA")
-            :Column("Table.UID"            ,"Table_UID")
-            :Column("Table.UseStatus"          ,"Table_UseStatus")
-            :Column("Column.Name"              ,"Column_Name")
-            :Column("Column.AKA"               ,"Column_AKA")
-            :Column("Column.UID"           ,"Column_UID")
-            :Column("Column.UseStatus"         ,"Column_UseStatus")
-            :Column("Column.UsedBy"            ,"Column_UsedBy")
+            :Column("Namespace.Name"     ,"Namespace_Name")
+            :Column("Namespace.AKA"      ,"Namespace_AKA")
+            :Column("Namespace.UID"      ,"Namespace_UID")
+            :Column("Namespace.UseStatus","Namespace_UseStatus")
+            :Column("Table.Name"         ,"Table_Name")
+            :Column("Table.AKA"          ,"Table_AKA")
+            :Column("Table.UID"          ,"Table_UID")
+            :Column("Table.UseStatus"    ,"Table_UseStatus")
+            :Column("Column.Name"        ,"Column_Name")
+            :Column("Column.AKA"         ,"Column_AKA")
+            :Column("Column.UID"         ,"Column_UID")
+            :Column("Column.UseStatus"   ,"Column_UseStatus")
+            :Column("Column.UsedBy"      ,"Column_UsedBy")
 
             :Where("Column.fk_Enumeration = ^",l_iEnumerationPk)
             :Where("trim(Column.Type) = 'E'")
@@ -13425,61 +13121,42 @@ else
                 l_cHtml += [<div class="row justify-content-center m-3">]
                     l_cHtml += [<div class="col-auto">]
 
-                        l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                        l_oGrid := Grid()
+                        with object l_oGrid
+                            :SetAlias("ListOfReferenceTableAndColumns")
+                            :SetTitle({|l_nNumberOfRows|"Referenced By ("+trans(l_nNumberOfRows)+")"+[ for Enumeration "]+TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Enumeration_Name)+FormatAKAForDisplay(l_oData:Enumeration_AKA))+["]   })
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-center text-white" colspan="6">]
-                                    l_cHtml += [Referenced By (]+Trans(l_nNumberOfReference)+[) for Enumeration "]+;
-                                            TextToHtml(l_oData:Namespace_Name+FormatAKAForDisplay(l_oData:Namespace_AKA)+[.]+alltrim(l_oData:Enumeration_Name)+FormatAKAForDisplay(l_oData:Enumeration_AKA))+;
-                                            ["]
-                                l_cHtml += [</th>]
-                            l_cHtml += [</tr>]
+                            :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                                        "Rows"  =>{"Expression"       => {|| TextToHtml(ListOfReferenceTableAndColumns->Namespace_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Namespace_AKA)) },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Namespace_UseStatus) } }})
 
-                            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                                l_cHtml += [<th class="text-white">Namespace</th>]
-                                l_cHtml += [<th class="text-white">Table</th>]
-                                l_cHtml += [<th class="text-white">Column</th>]
-                            l_cHtml += [</tr>]
+                            :AddColumn({"Header"=>{"Caption"=>"Table"},;
+                                        "Rows"  =>{"Expression"       => {|| TextToHtml(ListOfReferenceTableAndColumns->Table_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Table_AKA)) },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Table_UseStatus) } }})
 
-                            select ListOfReferenceTableAndColumns
-                            scan all
-                                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                            :AddColumn({"Header"=>{"Caption"=>"Column"},;
+                                        "Rows"  =>{"Expression"       => {|| 
+                                                                            local l_cCombinedPath
+                                                                            local l_cURL
+                                                                            local l_cName
+                                                                            l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
+                                                                                               PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
 
-                                    //Namespace
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Namespace_UseStatus)+[>]
-                                        l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Namespace_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Namespace_AKA))
-                                    l_cHtml += [</td>]
-                                    
-                                    //Table
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Table_UseStatus)+[>]
-                                        l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Table_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Table_AKA))
-                                    l_cHtml += [</td>]
-                                    
-                                    //Column
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top"]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfReferenceTableAndColumns->Column_UseStatus)+[>]
-                                        // l_cHtml += TextToHtml(ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA))
+                                                                            l_cURL  := oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
+                                                                                       PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
+                                                                            l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
+                                                                            if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
+                                                                                l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
+                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                            endif
+                                                                            return [<a class="GridLinkNormal" target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
+                                                                         },;
+                                                   "CellExtraClasses" => {|| GetTDExtraClassOnUseStatus(recno(),ListOfReferenceTableAndColumns->Column_UseStatus) } }})
 
-                                        l_cCombinedPath := par_cURLApplicationLinkCode+[/]+;
-                                                           PrepareForURLSQLIdentifier("Namespace",ListOfReferenceTableAndColumns->Namespace_Name,ListOfReferenceTableAndColumns->Namespace_UID)+[/]+;
-                                                           PrepareForURLSQLIdentifier("Table"    ,ListOfReferenceTableAndColumns->Table_Name    ,ListOfReferenceTableAndColumns->Table_UID)    +[/]
+                            l_cHtml += :Build()
+                        endwith
 
-                                        l_cURL  := l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                            PrepareForURLSQLIdentifier("Column",ListOfReferenceTableAndColumns->Column_Name,ListOfReferenceTableAndColumns->Column_UID)+[/]
-                                        l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
-                                        if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
-                                            l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
-                                            l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
-                                        endif
-                                        l_cHtml += [<a target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
-
-
-                                    l_cHtml += [</td>]
-
-                                l_cHtml += [</tr>]
-                            endscan
-
-                        l_cHtml += [</table>]
-                        
                     l_cHtml += [</div>]
                 l_cHtml += [</div>]
             endif
@@ -13498,15 +13175,13 @@ local l_oData
 local l_cSuffix
 local l_aSQLResult := {}
 local l_aRecord
-// local l_cBogus1
-// local l_cBogus2
 
 if !empty(par_iPk)
     with object par_oDB1
         //Get the current Namespace
         :Table("91c2de20-83fa-4698-803a-23d0de8e5e96",par_cTableName)
-        :Column(par_cTableName+".Name"   ,"Name")
-        :Column(par_cTableName+".UID","UID")
+        :Column(par_cTableName+".Name","Name")
+        :Column(par_cTableName+".UID" ,"UID")
         l_oData := :Get(par_iPk)
         if hb_IsNil(l_oData)
             l_cErrorMessage := "Failed to get current Name."

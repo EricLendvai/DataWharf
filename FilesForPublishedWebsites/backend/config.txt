@@ -9,9 +9,9 @@ POSTGRESPASSWORD=main
 POSTGRESDATABASE=DataWharf
 
 ShowDevelopmentInfo=No                      //No or Yes
-//APPLICATION_TITLE=DataWharf
+//APPLICATION_TITLE=Demo
 //COLOR_HEADER_BACKGROUND=E3F2FD
-//COLOR_HEADER_TEXT_WHITE=No                //No or Yes
+//COLOR_HEADER_TEXT=000000
 //LOGO_THEME_NAME=RainierSailBoat           //Images available from Repo: Earth_001, Blocks_001, Blocks_002, Blocks_003, RainierKayak, RainierSailBoat
 
 

@@ -248,11 +248,11 @@ endwith
 
 with object l_oDB_ListOfTables
     :Table("d72bc32f-57f1-4e1e-b782-dc5b339bbe52","Table")
-    :Column("Table.pk"         ,"pk")
-    :Column("Namespace.Name"   ,"Namespace_Name")
-    :Column("Namespace.UID","Namespace_UID")
-    :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.UID"    ,"Table_UID")
+    :Column("Table.pk"      ,"pk")
+    :Column("Namespace.Name","Namespace_Name")
+    :Column("Namespace.UID" ,"Namespace_UID")
+    :Column("Table.Name"    ,"Table_Name")
+    :Column("Table.UID"     ,"Table_UID")
     :Column("Upper(Namespace.Name)","tag1")
     :Column("Upper(Table.Name)","tag2")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
@@ -319,9 +319,9 @@ l_nLastUpdated := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iAppli
 
 with object l_oDB_ListOfColumns
     :Table("82c9374b-830e-47b7-8203-244e422ad7ba","Column")
-    :Column("Column.pk"     ,"pk")
-    :Column("Column.Name"   ,"Column_Name")
-    :Column("Column.UID","Column_UID")
+    :Column("Column.pk"   ,"pk")
+    :Column("Column.Name" ,"Column_Name")
+    :Column("Column.UID"  ,"Column_UID")
     :Column("Column.Order","tag1")
     :Where("Column.fk_Table = ^",par_iTablePk)
 
@@ -352,9 +352,9 @@ oFcgi:TraceAdd("GetNextPreviousTemplateColumn")
 
 with object l_oDB_ListOfTemplateColumns
     :Table("4bd5c39d-dba3-4f63-a5f4-5ea56fae3a46","TemplateColumn")
-    :Column("TemplateColumn.pk"     ,"pk")
-    :Column("TemplateColumn.Name"   ,"Column_Name")
-    :Column("TemplateColumn.UID","Column_UID")
+    :Column("TemplateColumn.pk"   ,"pk")
+    :Column("TemplateColumn.Name" ,"Column_Name")
+    :Column("TemplateColumn.UID"  ,"Column_UID")
     :Column("TemplateColumn.Order","tag1")
     :Where("TemplateColumn.fk_TemplateTable = ^",par_iTemplateTablePk)
 
@@ -382,9 +382,9 @@ l_nLastUpdated := min(6,max(1,val(GetUserSetting("Application_"+Trans(par_iAppli
 
 with object l_oDB_ListOfColumns
     :Table("a27cc2ee-8d6f-4db0-9653-77ded3821548","EnumValue")
-    :Column("EnumValue.pk"     ,"pk")
-    :Column("EnumValue.Name"   ,"EnumValue_Name")
-    :Column("EnumValue.UID","EnumValue_UID")
+    :Column("EnumValue.pk"   ,"pk")
+    :Column("EnumValue.Name" ,"EnumValue_Name")
+    :Column("EnumValue.UID"  ,"EnumValue_UID")
     :Column("EnumValue.Order","tag1")
     :Where("EnumValue.fk_Enumeration = ^",par_iEnumerationPk)
 
@@ -410,9 +410,9 @@ oFcgi:TraceAdd("GetNextPreviousIndex")
 
 with object l_oDB_ListOfIndexes
     :Table("82c9374b-830e-47b7-8203-244e422ad7ba","Index")
-    :Column("Index.pk"     ,"pk")
-    :Column("Index.Name"   ,"Index_Name")
-    :Column("Index.UID","Index_UID")
+    :Column("Index.pk"         ,"pk")
+    :Column("Index.Name"       ,"Index_Name")
+    :Column("Index.UID"        ,"Index_UID")
     :Column("lower(Index.Name)","tag1")
     :Where("Index.fk_Table = ^",par_iTablePk)
 
@@ -477,12 +477,12 @@ l_cSearchExtraFilters           := GetUserSetting("Application_"+Trans(par_iAppl
 
 with object l_oDB_ListOfEnumerations
     :Table("7e3eeb26-19bc-4ca1-8187-3b3298632cc1","Enumeration")
-    :Column("Enumeration.pk"     ,"pk")
-    :Column("Namespace.Name"     ,"Namespace_Name")
-    :Column("Namespace.UID"  ,"Namespace_UID")
-    :Column("Enumeration.Name"   ,"Enumeration_Name")
-    :Column("Enumeration.UID","Enumeration_UID")
-    :Column("Upper(Namespace.Name)","tag1")
+    :Column("Enumeration.pk"         ,"pk")
+    :Column("Namespace.Name"         ,"Namespace_Name")
+    :Column("Namespace.UID"          ,"Namespace_UID")
+    :Column("Enumeration.Name"       ,"Enumeration_Name")
+    :Column("Enumeration.UID"        ,"Enumeration_UID")
+    :Column("Upper(Namespace.Name)"  ,"tag1")
     :Column("Upper(Enumeration.Name)","tag2")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
@@ -531,9 +531,9 @@ oFcgi:TraceAdd("GetNextPreviousTemplateTable")
 
 with object l_oDB_ListOfTemplateTable
     :Table("9a09b083-5ee8-46ca-b65a-18497c6c36fc","TemplateTable")
-    :Column("TemplateTable.pk"     ,"pk")
-    :Column("TemplateTable.Name"   ,"TemplateTable_Name")
-    :Column("TemplateTable.UID","TemplateTable_UID")
+    :Column("TemplateTable.pk"         ,"pk")
+    :Column("TemplateTable.Name"       ,"TemplateTable_Name")
+    :Column("TemplateTable.UID"        ,"TemplateTable_UID")
     :Column("Upper(TemplateTable.Name)","tag1")
     :Where("TemplateTable.fk_Application = ^",par_iApplicationPk)
 
@@ -1360,14 +1360,14 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
     :Table("07af5b82-c5c1-4aa1-b9d3-13d32b8a89d5","Table")
-    :Column("Namespace.Pk"     ,"Namespace_Pk")
-    :Column("Namespace.Name"   ,"Namespace_Name")
-    :Column("Namespace.AKA"    ,"Namespace_AKA")
-    :Column("Namespace.UID","Namespace_UID")
-    :Column("Table.pk"         ,"Table_Pk")
-    :Column("Table.Name"       ,"Table_Name")
-    :Column("Table.AKA"        ,"Table_AKA")
-    :Column("Table.UID"    ,"Table_UID")
+    :Column("Namespace.Pk"  ,"Namespace_Pk")
+    :Column("Namespace.Name","Namespace_Name")
+    :Column("Namespace.AKA" ,"Namespace_AKA")
+    :Column("Namespace.UID" ,"Namespace_UID")
+    :Column("Table.pk"      ,"Table_Pk")
+    :Column("Table.Name"    ,"Table_Name")
+    :Column("Table.AKA"     ,"Table_AKA")
+    :Column("Table.UID"     ,"Table_UID")
     :Join("inner","Namespace","","Table.fk_Namespace = Namespace.pk")
     :Where([Namespace.fk_Application = ^],par_iApplicationPk)
 
@@ -1399,13 +1399,13 @@ local l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
     :Table("8122e1ae-644c-4b30-bfa6-779400a520e0","Enumeration")
-    :Column("Namespace.Name"     ,"Namespace_Name")
-    :Column("Namespace.AKA"      ,"Namespace_AKA")
-    :Column("Namespace.UID"  ,"Namespace_UID")
-    :Column("Enumeration.pk"     ,"Enumeration_Pk")
-    :Column("Enumeration.Name"   ,"Enumeration_Name")
-    :Column("Enumeration.AKA"    ,"Enumeration_AKA")
-    :Column("Enumeration.UID","Enumeration_UID")
+    :Column("Namespace.Name"  ,"Namespace_Name")
+    :Column("Namespace.AKA"   ,"Namespace_AKA")
+    :Column("Namespace.UID"   ,"Namespace_UID")
+    :Column("Enumeration.pk"  ,"Enumeration_Pk")
+    :Column("Enumeration.Name","Enumeration_Name")
+    :Column("Enumeration.AKA" ,"Enumeration_AKA")
+    :Column("Enumeration.UID" ,"Enumeration_UID")
     :Join("inner","Namespace","","Enumeration.fk_Namespace = Namespace.pk")
     :Where("Namespace.fk_Application = ^",par_iApplicationPk)
 

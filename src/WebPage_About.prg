@@ -25,7 +25,8 @@ l_cHtml += [<div class="row justify-content-center">]
         // l_cHtml += [<div><h3>Info</h3></div>]
 
         l_cHtml += [<table class="table table-sm table-bordered table-striped">]
-
+        
+        l_cHtml += [<tr><td colspan=2"><span style="font-weight: bold">DataWharf is trademarked</span> by Eric Lendvai, Washington, USA.</td></tr>]
         l_cHtml += [<tr><td>Based on and License</td>]  +[<td><a href="https://github.com/EricLendvai/DataWharf" target="_blank">https://github.com/EricLendvai/DataWharf</a></td></tr>]
         l_cHtml += [<tr><td>Protocol</td>]              +[<td>]+oFcgi:RequestSettings["Protocol"]   +[</td></tr>]
         l_cHtml += [<tr><td>Port</td>]                  +[<td>]+trans(oFcgi:RequestSettings["Port"])+[</td></tr>]

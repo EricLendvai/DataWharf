@@ -173,6 +173,7 @@ local l_cHtml := []
 local l_oDB_ListOfCustomFields := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfCustomFields
+local l_oGrid
 
 oFcgi:TraceAdd("CustomFieldListFormBuild")
 
@@ -204,57 +205,35 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfCustomFields")
+                    :SetTitle({|l_nNumberOfRows|"Custom Fields ("+trans(l_nNumberOfRows)+")"})
+                    :SetRowExtraClasses({||GetTRExtraClassOnActiveInactiveHiddenStatus(recno(),ListOfCustomFields->CustomField_Status,2,3)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="7">Custom Fields (]+Trans(l_nNumberOfCustomFields)+[)</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[CustomFields/EditCustomField/]+alltrim(ListOfCustomFields->CustomField_Code)+[/">]+alltrim(ListOfCustomFields->CustomField_Name)+[</a>] } }})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Code</th>]
-                    l_cHtml += [<th class="text-white">Label</th>]
-                    l_cHtml += [<th class="text-white">Type</th>]
-                    l_cHtml += [<th class="text-white">Used On</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Status</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Code"},;
+                                "Rows"  =>{"Expression" => {|| alltrim(ListOfCustomFields->CustomField_Code) } }})
 
-                select ListOfCustomFields
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Label"},;
+                                "Rows"  =>{"Expression" => {|| alltrim(ListOfCustomFields->CustomField_Label) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[CustomFields/EditCustomField/]+alltrim(ListOfCustomFields->CustomField_Code)+[/">]+alltrim(ListOfCustomFields->CustomField_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Type"},;
+                                "Rows"  =>{"Expression" => {|| {"Logical","Multi Choice","String","Text Area","Date"}[iif(el_between(ListOfCustomFields->CustomField_Type,1,5),ListOfCustomFields->CustomField_Type,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += alltrim(ListOfCustomFields->CustomField_Code)
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Used On"},;
+                                "Rows"  =>{"Expression" => {|| {"Application","Namespace","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(el_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += alltrim(ListOfCustomFields->CustomField_Label)
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfCustomFields->CustomField_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Logical","Multi Choice","String","Text Area","Date"}[iif(el_between(ListOfCustomFields->CustomField_Type,1,5),ListOfCustomFields->CustomField_Type,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"Active","Inactive","Hidden"}[iif(el_between(ListOfCustomFields->CustomField_Status,1,3),ListOfCustomFields->CustomField_Status,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Application","Namespace","Table","Column","Model","Entity","Association","Package","Data","Attribute"}[iif(el_between(ListOfCustomFields->CustomField_UsedOn,1,10),ListOfCustomFields->CustomField_UsedOn,1)]
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfCustomFields->CustomField_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","Inactive","Hidden"}[iif(el_between(ListOfCustomFields->CustomField_Status,1,3),ListOfCustomFields->CustomField_Status,1)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]

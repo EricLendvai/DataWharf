@@ -90,7 +90,7 @@ case l_cURLAction == "EditAPIToken"
             with object l_oDB1
                 :Table("b5a14bed-b62c-41ed-9a2c-044e2ac54586","APIToken")
                 :Column("APIToken.pk"         ,"pk")                    // 1
-                :Column("APIToken.UID"    ,"APIToken_UID")      // 2
+                :Column("APIToken.UID"        ,"APIToken_UID")      // 2
                 :Column("APIToken.Name"       ,"APIToken_Name")         // 3
                 :Column("APIToken.Key"        ,"APIToken_Key")          // 4
                 :Column("APIToken.AccessMode" ,"APIToken_AccessMode")   // 5
@@ -177,16 +177,20 @@ local l_oDB_ListOfAPITokens         := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjectAccess     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfApplicationAccess := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfAPIAccessEndpoint := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:p_cSitePath
+// local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfAPITokens
 local l_iAPITokenPk
+local l_oGrid
+local l_bProjectAccess
+local l_bApplicationAccess
+local l_bAPIEndpoints
 
 oFcgi:TraceAdd("APITokenListFormBuild")
 
 with object l_oDB_ListOfAPITokens
     :Table("c5e6ecfc-2a8a-4d48-817c-666d8c990269","APIToken")
     :Column("APIToken.pk"         ,"pk")
-    :Column("APIToken.UID"    ,"APIToken_UID")
+    :Column("APIToken.UID"        ,"APIToken_UID")
     :Column("APIToken.Name"       ,"APIToken_Name")
     :Column("APIToken.Key"        ,"APIToken_Key")
     :Column("APIToken.AccessMode" ,"APIToken_AccessMode")
@@ -257,7 +261,6 @@ endwith
 //Application  APIEndpoint
 //APITokenAccessApplication  APIAccessEndpoint
 
-
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfAPITokens)
@@ -269,72 +272,68 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_bProjectAccess := {|par_iAPITokenPk|
+                    local l_cHtml := ""
+                    l_iAPITokenPk := par_iAPITokenPk
+                    select ListOfProjectAccess
+                    scan all for ListOfProjectAccess->APIToken_Pk == l_iAPITokenPk
+                        l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
+                            l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,5),ListOfProjectAccess->AccessLevel,1)]
+                        l_cHtml += [</div>]
+                    endscan
+                    return l_cHtml
+                }
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="7">APITokens (]+Trans(l_nNumberOfAPITokens)+[)</th>]
-                l_cHtml += [</tr>]
+                l_bApplicationAccess := {|par_iAPITokenPk|
+                    local l_cHtml := ""
+                    l_iAPITokenPk := par_iAPITokenPk
+                    select ListOfApplicationAccess
+                    scan all for ListOfApplicationAccess->APIToken_Pk == l_iAPITokenPk
+                        l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
+                            l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,5),ListOfApplicationAccess->AccessLevel,1)]
+                        l_cHtml += [</div>]
+                    endscan
+                    return l_cHtml
+                }
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Access Mode</th>]
-                    l_cHtml += [<th class="text-white">Projects</th>]
-                    l_cHtml += [<th class="text-white">Applications</th>]
-                    l_cHtml += [<th class="text-white">API Endpoints</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Status</th>]
-                l_cHtml += [</tr>]
+                l_bAPIEndpoints := {|par_iAPITokenPk|
+                    local l_cHtml := ""
+                    l_iAPITokenPk := par_iAPITokenPk
+                    select ListOfAPIAccessEndpoint
+                    scan all for ListOfAPIAccessEndpoint->APIToken_Pk == l_iAPITokenPk
+                        l_cHtml += [<div>]+ListOfAPIAccessEndpoint->APIEndpoint_Name+[</div>]
+                    endscan
+                    return l_cHtml
+                }
 
-                select ListOfAPITokens
-                scan all
-                    l_iAPITokenPk := ListOfAPITokens->pk
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfAPITokens")
+                    :SetTitle({|l_nNumberOfRows|"APITokens ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[APITokens/EditAPIToken/]+alltrim(ListOfAPITokens->APIToken_UID)+[/">]+alltrim(ListOfAPITokens->APIToken_Name)+[</a>] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[APITokens/EditAPIToken/]+alltrim(ListOfAPITokens->APIToken_UID)+[/">]+alltrim(ListOfAPITokens->APIToken_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Access Mode"},;
+                                "Rows"  =>{"Expression" => {|| {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access"}[iif(el_between(ListOfAPITokens->APIToken_AccessMode,1,3),ListOfAPITokens->APIToken_AccessMode,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access"}[iif(el_between(ListOfAPITokens->APIToken_AccessMode,1,3),ListOfAPITokens->APIToken_AccessMode,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Projects"},;
+                                "Rows"  =>{"Expression" => l_bProjectAccess,"ExpressionParameter" => {||ListOfAPITokens->pk} }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Projects
-                            select ListOfProjectAccess
-                            scan all for ListOfProjectAccess->APIToken_Pk == l_iAPITokenPk
-                                l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,5),ListOfProjectAccess->AccessLevel,1)]
-                                l_cHtml += [</div>]
-                            endscan
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Applications"},;
+                                "Rows"  =>{"Expression" => l_bApplicationAccess,"ExpressionParameter" => {||ListOfAPITokens->pk} }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Applications
-                            select ListOfApplicationAccess
-                            scan all for ListOfApplicationAccess->APIToken_Pk == l_iAPITokenPk
-                                l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Update Description and Information Entries","Update Description and Information Entries and Diagrams","Update Anything"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,5),ListOfApplicationAccess->AccessLevel,1)]
-                                l_cHtml += [</div>]
-                            endscan
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"API Endpoints"},;
+                                "Rows"  =>{"Expression" => l_bAPIEndpoints,"ExpressionParameter" => {||ListOfAPITokens->pk} }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //API Endpoints
-                            select ListOfAPIAccessEndpoint
-                            scan all for ListOfAPIAccessEndpoint->APIToken_Pk == l_iAPITokenPk
-                                l_cHtml += [<div>]+ListOfAPIAccessEndpoint->APIEndpoint_Name+[</div>]
-                            endscan
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfAPITokens->APIToken_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfAPITokens->APIToken_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"Active","Inactive"}[iif(el_between(ListOfAPITokens->APIToken_Status,1,2),ListOfAPITokens->APIToken_Status,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","Inactive"}[iif(el_between(ListOfAPITokens->APIToken_Status,1,2),ListOfAPITokens->APIToken_Status,1)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]

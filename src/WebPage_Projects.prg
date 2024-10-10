@@ -66,9 +66,9 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"ProjectSettings","ListPrimitiveTypes","NewPrimitiveType")
         with object l_oDB1
             :Table("a2907501-52d2-43c2-a711-e72dceb91b2b","Project")
-            :Column("Project.UID", "Project_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Project.pk"     , "Project_pk")
-            :Column("Project.Name"   , "Project_Name")
+            :Column("Project.UID" ,"Project_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
             :Where("Project.UID = ^" , l_cURLUID)
             l_oDataHeader := :SQL()
             l_lFoundHeaderInfo := (:Tally == 1)
@@ -77,11 +77,11 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditPrimitiveType")
         with object l_oDB1
             :Table("3cb1f9a9-9324-4f2b-962d-7bcc676ede5d","PrimitiveType")
-            :Column("PrimitiveType.UID" , "PrimitiveType_UID")    // Redundant but makes it clearer than to use l_cURLUID
-            :Column("PrimitiveType.pk"      , "PrimitiveType_pk")
-            :Column("Project.UID"       , "Project_UID")
-            :Column("Project.pk"            , "Project_pk")
-            :Column("Project.Name"          , "Project_Name")
+            :Column("PrimitiveType.UID","PrimitiveType_UID")    // Redundant but makes it clearer than to use l_cURLUID
+            :Column("PrimitiveType.pk" ,"PrimitiveType_pk")
+            :Column("Project.UID"      ,"Project_UID")
+            :Column("Project.pk"       ,"Project_pk")
+            :Column("Project.Name"     ,"Project_Name")
             :Where("PrimitiveType.UID = ^" , l_cURLUID)
             :Join("inner","Project","","PrimitiveType.fk_Project = Project.pk")
             l_oDataHeader := :SQL()
@@ -311,10 +311,10 @@ static function ProjectListFormBuild()
 local l_cHtml := []
 local l_oDB1
 local l_oDB2
-local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfProjects
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_oGrid
 
 oFcgi:TraceAdd("ProjectListFormBuild")
 
@@ -325,7 +325,7 @@ with object l_oDB1
     :Table("be95fd34-cf27-4c9a-9f59-195f5f3f6bc1","Project")
     :Column("Project.pk"                ,"pk")
     :Column("Project.Name"              ,"Project_Name")
-    :Column("Project.UID"           ,"Project_UID")
+    :Column("Project.UID"               ,"Project_UID")
     :Column("Project.UseStatus"         ,"Project_UseStatus")
     :Column("Project.Description"       ,"Project_Description")
     :Column("Project.DestructiveDelete" ,"Project_DestructiveDelete")
@@ -389,51 +389,31 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfProjects")
+                    :SetTitle({|l_nNumberOfRows|"Projects ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfProjects->Project_UseStatus)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name/Manage</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                    l_cHtml += [<th class="text-white text-center">Destructive<br>Deletes</th>]
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name/Manage"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Projects/ProjectSettings/]+alltrim(ListOfProjects->Project_UID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>] } }})
 
-                select ListOfProjects
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfProjects->Project_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Projects/ProjectSettings/]+alltrim(ListOfProjects->Project_UID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfProjects->Project_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Destructive<br>Deletes","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"None","On Entities/Associations","Can Delete Models"}[iif(el_between(ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE,PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS),ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                                "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfProjects->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"None","On Entities/Associations","Can Delete Models"}[iif(el_between(ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE,PROJECTDESTRUCTIVEDELETE_CANDELETEMODELS),ListOfProjects->Project_DestructiveDelete,PROJECTDESTRUCTIVEDELETE_NONE)]
-                        l_cHtml += [</td>]
-
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfProjects->pk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -875,13 +855,14 @@ local l_cSitePath := oFcgi:p_cSitePath
 // local l_oCursor
 local l_nNumberOfPrimitiveTypes
 local l_iPrimitiveTypePk
+local l_oGrid
 
 oFcgi:TraceAdd("PrimitiveTypesListFormBuild")
 
 with object l_oDB_ListOfPrimitiveTypes
     :Table("ade06ccd-1925-4c3c-bf48-dbbd33ede375","PrimitiveType")
     :Column("PrimitiveType.pk"         ,"pk")
-    :Column("PrimitiveType.UID"    ,"PrimitiveType_UID")
+    :Column("PrimitiveType.UID"        ,"PrimitiveType_UID")
     :Column("PrimitiveType.Name"       ,"PrimitiveType_Name")
     :Column("PrimitiveType.Description","PrimitiveType_Description")
     :Column("upper(PrimitiveType.Name)","tag1")
@@ -925,35 +906,20 @@ if !empty(l_nNumberOfPrimitiveTypes)
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
-            
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="2">Primitive Types (]+Trans(l_nNumberOfPrimitiveTypes)+[)</th>]
-            l_cHtml += [</tr>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfPrimitiveTypes")
+                :SetTitle({|l_nNumberOfRows|"Primitive Types ("+trans(l_nNumberOfRows)+")"})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_UID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>] } }})
 
-            select ListOfPrimitiveTypes
-            scan all
-                l_iPrimitiveTypePk := ListOfPrimitiveTypes->pk
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfPrimitiveTypes->PrimitiveType_Description,"")) } }})
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                l_cHtml += :Build()
+            endwith
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Projects/EditPrimitiveType/]+ListOfPrimitiveTypes->PrimitiveType_UID+[/">]+ListOfPrimitiveTypes->PrimitiveType_Name+[</a>]
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfPrimitiveTypes->PrimitiveType_Description,""))
-                    l_cHtml += [</td>]
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -1080,7 +1046,7 @@ case l_cActionOnSubmit == "Save"
             :Field("PrimitiveType.Name"        , l_cPrimitiveTypeName)
             :Field("PrimitiveType.Description" , iif(empty(l_cPrimitiveTypeDescription),NULL,l_cPrimitiveTypeDescription))
             if empty(l_iPrimitiveTypePk)
-                :Field("PrimitiveType.UID"    , oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("PrimitiveType.UID"        , oFcgi:p_o_SQLConnection:GetUUIDString())
                 :Field("PrimitiveType.fk_Project" , par_iProjectPk)
                 if :Add()
                     l_iPrimitiveTypePk := :Key()

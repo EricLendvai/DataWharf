@@ -108,7 +108,7 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"ListModels","NewModel")
         with object l_oDB1
             :Table("68dd8f54-924f-47df-9c9a-6bb1a42b1af3","Project")
-            :Column("Project.UID", "Project_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Project.UID"    , "Project_UID")     // Redundant but makes it clearer than to use l_cURLUID
             :Column("Project.pk"     , "Project_pk")
             :Column("Project.Name"   , "Project_Name")
             :Column("Project.AlternateNameForModel"         , "ANFModel")
@@ -133,26 +133,26 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"ModelSettings","ModelExport","ModelExportForDataWharfImports","ModelImport","ListEntities","ListAssociations","ListPackages","ListDataTypes","ListEnumerations","NewEntity","NewAssociation","NewPackage","NewDataType","NewEnumeration","Visualize")
         with object l_oDB1
             :Table("eaa6b925-b225-4fe2-8eeb-a0afcefc3848","Model")
-            :Column("Model.pk"       , "Model_pk")
-            :Column("Model.UID"  , "Model_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Model.Name"     , "Model_Name")
-            :Column("Project.pk"     , "Project_pk")
-            :Column("Project.Name"   , "Project_Name")
+            :Column("Model.pk"    ,"Model_pk")
+            :Column("Model.UID"   ,"Model_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Model.Name"  ,"Model_Name")
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
             :Column("Project.UID", "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("Model.UID = ^" , l_cURLUID)
             :Join("inner","Project","","Model.fk_Project = Project.pk")
             l_oDataHeader := :SQL()
@@ -162,29 +162,29 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"ListAttributes","OrderAttributes","NewAttribute","NewLinkedEntity")
         with object l_oDB1
             :Table("62211568-2341-4405-bff7-93ba323b529f","Entity")
-            :Column("Entity.pk"      , "Entity_pk")
-            :Column("Entity.UID" , "Entity_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Entity.Name"    , "Entity_Name")
-            :Column("Model.pk"       , "Model_pk")
-            :Column("Model.UID"  , "Model_UID")
-            :Column("Model.Name"     , "Model_Name")
-            :Column("Project.pk"     , "Project_pk")
-            :Column("Project.Name"   , "Project_Name")
-            :Column("Project.UID", "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Entity.pk"   ,"Entity_pk")
+            :Column("Entity.UID"  ,"Entity_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Entity.Name" ,"Entity_Name")
+            :Column("Model.pk"    ,"Model_pk")
+            :Column("Model.UID"   ,"Model_UID")
+            :Column("Model.Name"  ,"Model_Name")
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
+            :Column("Project.UID" ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
             :Where("Entity.UID = ^" , l_cURLUID)
@@ -195,30 +195,30 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditEntity")
         with object l_oDB1
             :Table("08839946-0a7b-4a47-a512-dee69e58e102","Entity")
-            :Column("Entity.pk"      , "Entity_pk")
-            :Column("Entity.UID" , "Entity_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Entity.Name"    , "Entity_Name")
-            :Column("Model.pk"       , "Model_pk")
-            :Column("Model.UID"  , "Model_UID")
-            :Column("Model.Name"     , "Model_Name")
-            :Column("Project.pk"     , "Project_pk")
-            :Column("Project.Name"   , "Project_Name")
-            :Column("Project.UID", "Project_UID")
-            :Column("Package.UID", "Package_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Entity.pk"   ,"Entity_pk")
+            :Column("Entity.UID"  ,"Entity_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Entity.Name" ,"Entity_Name")
+            :Column("Model.pk"    ,"Model_pk")
+            :Column("Model.UID"   ,"Model_UID")
+            :Column("Model.Name"  ,"Model_Name")
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
+            :Column("Project.UID" ,"Project_UID")
+            :Column("Package.UID" ,"Package_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("Entity.UID = ^" , l_cURLUID)
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -230,29 +230,29 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditAssociation")
         with object l_oDB1
             :Table("e65fdb08-1f34-4013-b1d0-169e2c811805","Association")
-            :Column("Association.pk"     , "Association_pk")
-            :Column("Association.UID", "Association_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Model.pk"           , "Model_pk")
-            :Column("Model.UID"      , "Model_UID")
-            :Column("Model.Name"         , "Model_Name")
-            :Column("Project.pk"         , "Project_pk")
-            :Column("Project.Name"       , "Project_Name")
-            :Column("Project.UID"    , "Project_UID")
-            :Column("Package.UID"    , "Package_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Association.pk" ,"Association_pk")
+            :Column("Association.UID","Association_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Model.pk"       ,"Model_pk")
+            :Column("Model.UID"      ,"Model_UID")
+            :Column("Model.Name"     ,"Model_Name")
+            :Column("Project.pk"     ,"Project_pk")
+            :Column("Project.Name"   ,"Project_Name")
+            :Column("Project.UID"    ,"Project_UID")
+            :Column("Package.UID"    ,"Package_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("Association.UID = ^" , l_cURLUID)
             :Join("inner","Model"    ,"","Association.fk_Model = Model.pk")
             :Join("inner","Project"  ,"","Model.fk_Project = Project.pk")
@@ -264,28 +264,28 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditPackage")
         with object l_oDB1
             :Table("b63c5a26-e670-465f-a064-99650edfa9c0","Package")
-            :Column("Package.pk"        , "Package_pk")
-            :Column("Package.UID"   , "Package_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Model.pk"          , "Model_pk")
-            :Column("Model.UID"     , "Model_UID")
-            :Column("Model.Name"        , "Model_Name")
-            :Column("Project.pk"        , "Project_pk")
-            :Column("Project.Name"      , "Project_Name")
-            :Column("Project.UID"   , "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Package.pk"  ,"Package_pk")
+            :Column("Package.UID" ,"Package_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Model.pk"    ,"Model_pk")
+            :Column("Model.UID"   ,"Model_UID")
+            :Column("Model.Name"  ,"Model_Name")
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
+            :Column("Project.UID" ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("Package.UID = ^" , l_cURLUID)
             :Join("inner","Model"  ,"","Package.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -296,28 +296,28 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditDataType")
         with object l_oDB1
             :Table("b4bdf68c-9bc2-43f3-8e7b-9c9a3c278528","DataType")
-            :Column("DataType.pk"     , "DataType_pk")
-            :Column("DataType.UID", "DataType_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Model.pk"        , "Model_pk")
-            :Column("Model.UID"   , "Model_UID")
-            :Column("Model.Name"      , "Model_Name")
-            :Column("Project.pk"      , "Project_pk")
-            :Column("Project.Name"    , "Project_Name")
-            :Column("Project.UID" , "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("DataType.pk" ,"DataType_pk")
+            :Column("DataType.UID","DataType_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Model.pk"    ,"Model_pk")
+            :Column("Model.UID"   ,"Model_UID")
+            :Column("Model.Name"  ,"Model_Name")
+            :Column("Project.pk"  ,"Project_pk")
+            :Column("Project.Name","Project_Name")
+            :Column("Project.UID" ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("DataType.UID = ^" , l_cURLUID)
             :Join("inner","Model","","DataType.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -328,29 +328,29 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditEnumeration","ListEnumValues","OrderEnumValues","NewEnumValue","EditEnumValue")
         with object l_oDB1
             :Table("B2F2BD9B-1BCC-4E36-AFD5-277EF9E82FC1","ModelEnumeration")
-            :Column("ModelEnumeration.pk"     , "Enumeration_pk")
-            :Column("ModelEnumeration.Name"     , "Enumeration_Name")
-            :Column("ModelEnumeration.UID", "Enumeration_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Model.pk"        , "Model_pk")
-            :Column("Model.UID"   , "Model_UID")
-            :Column("Model.Name"      , "Model_Name")
-            :Column("Project.pk"      , "Project_pk")
-            :Column("Project.Name"    , "Project_Name")
-            :Column("Project.UID" , "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("ModelEnumeration.pk"  ,"Enumeration_pk")
+            :Column("ModelEnumeration.Name","Enumeration_Name")
+            :Column("ModelEnumeration.UID" ,"Enumeration_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Model.pk"             ,"Model_pk")
+            :Column("Model.UID"            ,"Model_UID")
+            :Column("Model.Name"           ,"Model_Name")
+            :Column("Project.pk"           ,"Project_pk")
+            :Column("Project.Name"         ,"Project_Name")
+            :Column("Project.UID"          ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("ModelEnumeration.UID = ^" , l_cURLUID)
             :Join("inner","Model","","ModelEnumeration.fk_Model = Model.pk")
             :Join("inner","Project","","Model.fk_Project = Project.pk")
@@ -366,31 +366,31 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditAttribute")
         with object l_oDB1
             :Table("4e93c422-387b-4cb9-a178-50a29250a158","Attribute")
-            :Column("Attribute.pk"      , "Attribute_pk")
-            :Column("Attribute.UID" , "Attribute_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Entity.pk"         , "Entity_pk")
-            :Column("Entity.UID"    , "Entity_UID")
-            :Column("Entity.Name"       , "Entity_Name")
-            :Column("Model.pk"          , "Model_pk")
-            :Column("Model.UID"     , "Model_UID")
-            :Column("Model.Name"        , "Model_Name")
-            :Column("Project.pk"        , "Project_pk")
-            :Column("Project.Name"      , "Project_Name")
-            :Column("Project.UID"   , "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("Attribute.pk" ,"Attribute_pk")
+            :Column("Attribute.UID","Attribute_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Entity.pk"    ,"Entity_pk")
+            :Column("Entity.UID"   ,"Entity_UID")
+            :Column("Entity.Name"  ,"Entity_Name")
+            :Column("Model.pk"     ,"Model_pk")
+            :Column("Model.UID"    ,"Model_UID")
+            :Column("Model.Name"   ,"Model_Name")
+            :Column("Project.pk"   ,"Project_pk")
+            :Column("Project.Name" ,"Project_Name")
+            :Column("Project.UID"  ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("Attribute.UID = ^" , l_cURLUID)
             :Join("inner","Entity","","Attribute.fk_Entity = Entity.pk")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
@@ -402,31 +402,31 @@ if len(oFcgi:p_aURLPathElements) >= 2 .and. !empty(oFcgi:p_aURLPathElements[2])
     case el_IsInlist(l_cURLAction,"EditLinkedEntity")
         with object l_oDB1
             :Table("972C942A-5C3D-4CAD-B972-A86CE41F7986","LinkedEntity")
-            :Column("LinkedEntity.pk"      , "LinkedEntity_pk")
-            :Column("LinkedEntity.UID" , "LinkedEntity_UID")     // Redundant but makes it clearer than to use l_cURLUID
-            :Column("Entity.pk"         , "Entity_pk")
-            :Column("Entity.UID"    , "Entity_UID")
-            :Column("Entity.Name"       , "Entity_Name")
-            :Column("Model.pk"          , "Model_pk")
-            :Column("Model.UID"     , "Model_UID")
-            :Column("Model.Name"        , "Model_Name")
-            :Column("Project.pk"        , "Project_pk")
-            :Column("Project.Name"      , "Project_Name")
-            :Column("Project.UID"   , "Project_UID")
-            :Column("Project.AlternateNameForModel"         , "ANFModel")
-            :Column("Project.AlternateNameForModels"        , "ANFModels")
-            :Column("Project.AlternateNameForEntity"        , "ANFEntity")
-            :Column("Project.AlternateNameForEntities"      , "ANFEntities")
-            :Column("Project.AlternateNameForAssociation"   , "ANFAssociation")
-            :Column("Project.AlternateNameForAssociations"  , "ANFAssociations")
-            :Column("Project.AlternateNameForAttribute"     , "ANFAttribute")
-            :Column("Project.AlternateNameForAttributes"    , "ANFAttributes")
-            :Column("Project.AlternateNameForDataType"      , "ANFDataType")
-            :Column("Project.AlternateNameForDataTypes"     , "ANFDataTypes")
-            :Column("Project.AlternateNameForPackage"       , "ANFPackage")
-            :Column("Project.AlternateNameForPackages"      , "ANFPackages")
-            :Column("Project.AlternateNameForLinkedEntity"  , "ANFLinkedEntity")
-            :Column("Project.AlternateNameForLinkedEntities", "ANFLinkedEntities")
+            :Column("LinkedEntity.pk" ,"LinkedEntity_pk")
+            :Column("LinkedEntity.UID","LinkedEntity_UID")     // Redundant but makes it clearer than to use l_cURLUID
+            :Column("Entity.pk"       ,"Entity_pk")
+            :Column("Entity.UID"      ,"Entity_UID")
+            :Column("Entity.Name"     ,"Entity_Name")
+            :Column("Model.pk"        ,"Model_pk")
+            :Column("Model.UID"       ,"Model_UID")
+            :Column("Model.Name"      ,"Model_Name")
+            :Column("Project.pk"      ,"Project_pk")
+            :Column("Project.Name"    ,"Project_Name")
+            :Column("Project.UID"     ,"Project_UID")
+            :Column("Project.AlternateNameForModel"         ,"ANFModel")
+            :Column("Project.AlternateNameForModels"        ,"ANFModels")
+            :Column("Project.AlternateNameForEntity"        ,"ANFEntity")
+            :Column("Project.AlternateNameForEntities"      ,"ANFEntities")
+            :Column("Project.AlternateNameForAssociation"   ,"ANFAssociation")
+            :Column("Project.AlternateNameForAssociations"  ,"ANFAssociations")
+            :Column("Project.AlternateNameForAttribute"     ,"ANFAttribute")
+            :Column("Project.AlternateNameForAttributes"    ,"ANFAttributes")
+            :Column("Project.AlternateNameForDataType"      ,"ANFDataType")
+            :Column("Project.AlternateNameForDataTypes"     ,"ANFDataTypes")
+            :Column("Project.AlternateNameForPackage"       ,"ANFPackage")
+            :Column("Project.AlternateNameForPackages"      ,"ANFPackages")
+            :Column("Project.AlternateNameForLinkedEntity"  ,"ANFLinkedEntity")
+            :Column("Project.AlternateNameForLinkedEntities","ANFLinkedEntities")
             :Where("LinkedEntity.UID = ^" , l_cURLUID)
             :Join("inner","Entity","","LinkedEntity.fk_Entity1 = Entity.pk")
             :Join("inner","Model","","Entity.fk_Model = Model.pk")
@@ -650,12 +650,12 @@ otherwise
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("e9c40921-bd84-4c03-bc86-c805f20b78ef","Entity")
-                        :Column("Entity.fk_Package"   , "Entity_fk_Package")
-                        :Column("Entity.Name"         , "Entity_Name")
-                        :Column("Entity.UseStatus"    , "Entity_UseStatus")
-                        :Column("Entity.Description"  , "Entity_Description")
-                        :Column("Entity.Information"  , "Entity_Information")
-                        :Column("Package.UID"     , "Package_UID")
+                        :Column("Entity.fk_Package" ,"Entity_fk_Package")
+                        :Column("Entity.Name"       ,"Entity_Name")
+                        :Column("Entity.UseStatus"  ,"Entity_UseStatus")
+                        :Column("Entity.Description","Entity_Description")
+                        :Column("Entity.Information","Entity_Information")
+                        :Column("Package.UID"       ,"Package_UID")
                         :Join("left","Package","","Entity.fk_Package = Package.pk") 
                         l_oData := :Get(l_oDataHeader:Entity_pk)
                     endwith
@@ -1001,12 +1001,12 @@ otherwise
                 if oFcgi:isGet()
                     with object l_oDB1
                         :Table("A1438538-6C53-48B1-8725-EEA249E32D62" ,"ModelEnumeration")
-                        :Column("ModelEnumeration.pk"                 , "Enumeration_Pk")
-                        :Column("ModelEnumeration.fk_Model"           , "Enumeration_fk_Model")
-                        :Column("ModelEnumeration.Name"               , "Enumeration_Name")
-                        :Column("ModelEnumeration.UseStatus"          , "Enumeration_UseStatus")
-                        :Column("ModelEnumeration.Description"        , "Enumeration_Description")
-                        :Column("ModelEnumeration.UID"            , "Enumeration_UID")
+                        :Column("ModelEnumeration.pk"         ,"Enumeration_Pk")
+                        :Column("ModelEnumeration.fk_Model"   ,"Enumeration_fk_Model")
+                        :Column("ModelEnumeration.Name"       ,"Enumeration_Name")
+                        :Column("ModelEnumeration.UseStatus"  ,"Enumeration_UseStatus")
+                        :Column("ModelEnumeration.Description","Enumeration_Description")
+                        :Column("ModelEnumeration.UID"        ,"Enumeration_UID")
                         l_oData := :Get(l_oDataHeader:Enumeration_pk)
                     endwith
                 
@@ -1099,7 +1099,7 @@ otherwise
                 with object l_oDB1
                     :Table("87305d69-4c9f-4569-81e6-a96b075181f6","ModelingDiagram")
                     :Column("ModelingDiagram.pk"         ,"ModelingDiagram_pk")
-                    :Column("ModelingDiagram.UID"    ,"ModelingDiagram_UID")
+                    :Column("ModelingDiagram.UID"        ,"ModelingDiagram_UID")
                     :Column("upper(ModelingDiagram.Name)","Tag1")
                     :Where("ModelingDiagram.fk_Model = ^" ,l_oDataHeader:Model_pk)
                     :OrderBy("tag1")
@@ -1119,7 +1119,7 @@ otherwise
                     else
                         //Add an initial Diagram File
                         :Table("bca28e8c-564b-4af2-9045-fd9845e6eedf","ModelingDiagram")
-                        :Field("ModelingDiagram.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("ModelingDiagram.UID"                   ,oFcgi:p_o_SQLConnection:GetUUIDString())
                         :Field("ModelingDiagram.fk_Model"              ,l_oDataHeader:Model_pk)
                         :Field("ModelingDiagram.Name"                  ,"All Entities")
                         :Field("ModelingDiagram.AssociationShowName"   ,.t.)
@@ -1237,7 +1237,7 @@ l_cHtml += [<ul class="nav flex-column">]
 
         with object l_oDB1
             :Table("b879207d-9a3d-4a54-9563-2db4de482a3c","UserSettingModel")
-            :Column("UserSettingModel.pk"    ,"pk")
+            :Column("UserSettingModel.pk","pk")
             :Column("ModelingDiagram.UID","ModelingDiagram_UID")
             :Join("inner","ModelingDiagram","","UserSettingModel.fk_ModelingDiagram = ModelingDiagram.pk")
             :Where("UserSettingModel.fk_User = ^" ,oFcgi:p_iUserPk)
@@ -1338,11 +1338,11 @@ local l_cHtml := []
 local l_oDB_ListOfProjects    := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_CustomFields      := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfModelCounts := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfProjects
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_nCount
+local l_oGrid
 
 oFcgi:TraceAdd("ProjectListFormBuild")
 
@@ -1350,7 +1350,7 @@ with object l_oDB_ListOfProjects
     :Table("ef540265-9ca9-4045-835c-65772402ca0d","Project")
     :Column("Project.pk"         ,"pk")
     :Column("Project.Name"       ,"Project_Name")
-    :Column("Project.UID"    ,"Project_UID")
+    :Column("Project.UID"        ,"Project_UID")
     :Column("Project.UseStatus"  ,"Project_UseStatus")
     :Column("Project.Description","Project_Description")
     :Column("Upper(Project.Name)","tag1")
@@ -1430,55 +1430,39 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfProjects")
+                    :SetTitle({|l_nNumberOfRows|"Modeling / Projects ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">Modeling / Projects (]+Trans(l_nNumberOfProjects)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfProjects->Project_UseStatus)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModels+[</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/ListModels/]+alltrim(ListOfProjects->Project_UID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>] } }})
 
-                select ListOfProjects
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfProjects->Project_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfProjects->Project_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListModels/]+alltrim(ListOfProjects->Project_UID)+[/">]+alltrim(ListOfProjects->Project_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFModels},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                local l_cHtml := ""
+                                                local l_nCount := iif( el_seek(ListOfProjects->pk,"ListOfModelCounts","tag1") , ListOfModelCounts->ModelCount , 0)
+                                                if !empty(l_nCount)
+                                                    l_cHtml += Trans(l_nCount)
+                                                endif
+                                                return l_cHtml
+                                          } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfProjects->Project_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                            l_nCount := iif( el_seek(ListOfProjects->pk,"ListOfModelCounts","tag1") , ListOfModelCounts->ModelCount , 0)
-                            if !empty(l_nCount)
-                                l_cHtml += Trans(l_nCount)
-                            endif
-                        l_cHtml += [</td>]
+                    :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                                "Header"=>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfProjects->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfProjects->Project_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
+                    l_cHtml += :Build()
+                endwith
 
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(ListOfProjects->pk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
             l_cHtml += [</div>]
         l_cHtml += [</div>]
 
@@ -1524,6 +1508,8 @@ local l_nLinkedModelCount
 local l_nModelingDiagramCount
 local l_cInitialDiagram
 
+local l_oGrid
+
 oFcgi:TraceAdd("ModelListFormBuild")
 
 oFcgi:SetCookieValue("sidebarMenu","false",,"/")  // To re-open the sidebar menu in case was left closed.
@@ -1537,7 +1523,7 @@ with object l_oDB1
     :Column("Model.Name"       ,"Model_Name")
     :Column("Model.Stage"      ,"Model_Stage")
     :Column("Model.Description","Model_Description")
-    :Column("Model.UID"    ,"Model_UID")
+    :Column("Model.UID"        ,"Model_UID")
     :Column("Upper(Model.Name)","tag1")
     :OrderBy("tag1")
     :Where("Model.fk_Project = ^",par_Project_pk)
@@ -1731,7 +1717,7 @@ l_cHtml += [<div class="m-3">]
         with object l_oDB_ListOfUserSettingModelDefaultModelingDiagram
             :Table("ed410689-7946-4597-aa12-f7727255fc74","UserSettingModel")
             :Column("UserSettingModel.fk_Model","ModelPk")
-            :Column("ModelingDiagram.UID"  ,"ModelingDiagram_UID")
+            :Column("ModelingDiagram.UID"      ,"ModelingDiagram_UID")
             :Join("inner","ModelingDiagram","","UserSettingModel.fk_ModelingDiagram = ModelingDiagram.pk")
             :Where("UserSettingModel.fk_User = ^",oFcgi:p_iUserPk)
             :SQL("ListOfUserSettingModelDefaultModelingDiagram")
@@ -1744,119 +1730,111 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">] // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfModels")
+                    :SetTitle({|l_nNumberOfRows|oFcgi:p_ANFModels+" ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"12","13")+[">]+oFcgi:p_ANFModels+[ (]+Trans(l_nNumberOfModels)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnStage(recno(),ListOfModels->Model_Stage)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Project</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModel+[ Name</th>]
-                    l_cHtml += [<th class="text-white">Stage</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackages+[</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntities+[</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAttributes+[</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAssociations+[</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataTypes+[</th>]
-                    l_cHtml += [<th class="text-white">]+oFcgi:p_ANFModelEnumerations+[</th>]
-                    l_cHtml += [<th class="text-white">Linked ]+oFcgi:p_ANFModel+[</th>]
-                    // l_cHtml += [<th class="text-white text-center">Settings</th>]
-                    l_cHtml += [<th class="text-white">Visualize</th>]
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<th class="text-white text-center">Other</th>]
-                    endif
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Project"},;
+                                "Rows"  =>{"Expression" => {|| par_Project_Name } }})
 
-                select ListOfModels
-                scan all
-                    l_iModelPk := ListOfModels->pk
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFModel+" Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/ListEntities/]+alltrim(ListOfModels->Model_UID)+[/">]+alltrim(ListOfModels->Model_Name)+[</a>] } }})
 
-                    // l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorStage(recno(),ListOfModels->Model_Stage)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Stage"},;
+                                "Rows"  =>{"Expression" => {|| {"Proposed","Draft","Beta","Stable","In Use","Discontinued"}[iif(el_between(ListOfModels->Model_Stage,1,6),ListOfModels->Model_Stage,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Project
-                            l_cHtml += par_Project_Name
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfModels->Model_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Model Name
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+alltrim(ListOfModels->Model_UID)+[/">]+alltrim(ListOfModels->Model_Name)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFPackages},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nPackageCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nPackageCount := iif( el_seek(l_iModelPk,"ListOfModelsPackageCounts","tag1") , ListOfModelsPackageCounts->PackageCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListPackages/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nPackageCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Stage
-                            l_cHtml += {"Proposed","Draft","Beta","Stable","In Use","Discontinued"}[iif(el_between(ListOfModels->Model_Stage,1,6),ListOfModels->Model_Stage,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFEntities},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nEntityCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nEntityCount := iif( el_seek(l_iModelPk,"ListOfModelsEntityCounts","tag1") , ListOfModelsEntityCounts->EntityCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListEntities/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nEntityCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]  //Description
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfModels->Model_Description,""))
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFAttributes},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nAttributeCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nAttributeCount := iif( el_seek(l_iModelPk,"ListOfModelsAttributeCounts","tag1") , ListOfModelsAttributeCounts->AttributeCount , 0)
+                                                                return Trans(l_nAttributeCount)
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Packages
-                            l_nPackageCount := iif( el_seek(l_iModelPk,"ListOfModelsPackageCounts","tag1") , ListOfModelsPackageCounts->PackageCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListPackages/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nPackageCount)+[</a>]
-                        l_cHtml += [</td>]
-                        
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Entities
-                            l_nEntityCount := iif( el_seek(l_iModelPk,"ListOfModelsEntityCounts","tag1") , ListOfModelsEntityCounts->EntityCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nEntityCount)+[</a>]
-                        l_cHtml += [</td>]
-                        
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Attributes
-                            l_nAttributeCount := iif( el_seek(l_iModelPk,"ListOfModelsAttributeCounts","tag1") , ListOfModelsAttributeCounts->AttributeCount , 0)
-                            // l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEntities/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nAttributeCount)+[</a>]
-                            l_cHtml += Trans(l_nAttributeCount)
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFAssociations},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nAssociationCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nAssociationCount := iif( el_seek(l_iModelPk,"ListOfModelsAssociationCounts","tag1") , ListOfModelsAssociationCounts->AssociationCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListAssociations/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nAssociationCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Associations
-                            l_nAssociationCount := iif( el_seek(l_iModelPk,"ListOfModelsAssociationCounts","tag1") , ListOfModelsAssociationCounts->AssociationCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListAssociations/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nAssociationCount)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFDataTypes},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nDataTypeCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nDataTypeCount := iif( el_seek(l_iModelPk,"ListOfModelsDataTypeCounts","tag1") , ListOfModelsDataTypeCounts->DataTypeCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListDataTypes/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nDataTypeCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Data Types
-                            l_nDataTypeCount := iif( el_seek(l_iModelPk,"ListOfModelsDataTypeCounts","tag1") , ListOfModelsDataTypeCounts->DataTypeCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListDataTypes/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nDataTypeCount)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFModelEnumerations},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nEnumerationCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nEnumerationCount := iif( el_seek(l_iModelPk,"ListOfModelsEnumerationCounts","tag1") , ListOfModelsEnumerationCounts->EnumerationCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListEnumerations/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nEnumerationCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Enumerations
-                            l_nEnumerationCount := iif( el_seek(l_iModelPk,"ListOfModelsEnumerationCounts","tag1") , ListOfModelsEnumerationCounts->EnumerationCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEnumerations/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nEnumerationCount)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Linked "+oFcgi:p_ANFModel},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nLinkedModelCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nLinkedModelCount := iif( el_seek(l_iModelPk,"ListOfModelsLinkedModelCounts1","tag1") , ListOfModelsLinkedModelCounts1->LinkedModelCount , 0)
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ModelSettings/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nLinkedModelCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">] //Linked Models
-                            l_nLinkedModelCount := iif( el_seek(l_iModelPk,"ListOfModelsLinkedModelCounts1","tag1") , ListOfModelsLinkedModelCounts1->LinkedModelCount , 0)
-                            // l_nLinkedModelCount += iif( el_seek(l_iModelPk,"ListOfModelsLinkedModelCounts2","tag1") , ListOfModelsLinkedModelCounts2->LinkedModelCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ModelSettings/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nLinkedModelCount)+[</a>]
-                        l_cHtml += [</td>]
-                        
-                        // l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Settings
-                        //     l_cHtml += []
-                        // l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Visualize"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                                local l_nModelingDiagramCount
+                                                                l_iModelPk := ListOfModels->pk
+                                                                l_nModelingDiagramCount := iif( el_seek(l_iModelPk,"ListOfModelsModelingDiagramCounts","tag1") , ListOfModelsModelingDiagramCounts->ModelingDiagramCount , 0)
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]  //Visualize
-                            l_nModelingDiagramCount := iif( el_seek(l_iModelPk,"ListOfModelsModelingDiagramCounts","tag1") , ListOfModelsModelingDiagramCounts->ModelingDiagramCount , 0)
-                            // l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+alltrim(ListOfModels->Model_UID)+[/">]+Trans(l_nModelingDiagramCount)+[</a>]
+                                                                //Will check if we have a previously accessed ModelingDiagram.
+                                                                if el_seek(l_iModelPk,"ListOfUserSettingModelDefaultModelingDiagram","ModelPk")
+                                                                    l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingModelDefaultModelingDiagram->ModelingDiagram_UID
+                                                                else
+                                                                    l_cInitialDiagram := ""
+                                                                endif
+                                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/Visualize/]+alltrim(ListOfModels->Model_UID)+[/]+l_cInitialDiagram+[">]+Trans(l_nModelingDiagramCount)+[</a>]
+                                                           },;
+                                          "Align" => "center" }})
 
-                            //Will check if we have a previously accessed ModelingDiagram.
-                            if el_seek(l_iModelPk,"ListOfUserSettingModelDefaultModelingDiagram","ModelPk")
-                                l_cInitialDiagram := "?InitialDiagram="+ListOfUserSettingModelDefaultModelingDiagram->ModelingDiagram_UID
-                            else
-                                l_cInitialDiagram := ""
-                            endif
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/Visualize/]+alltrim(ListOfModels->Model_UID)+[/]+l_cInitialDiagram+[">]+Trans(l_nModelingDiagramCount)+[</a>]
+                    :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                                "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfModels->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                        l_cHtml += [</td>]
+                    l_cHtml += :Build()
+                endwith
 
-                        if l_nNumberOfCustomFieldValues > 0
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += CustomFieldsBuildGridOther(l_iModelPk,l_hOptionValueToDescriptionMapping)
-                            l_cHtml += [</td>]
-                        endif
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
-                
             l_cHtml += [</div>]
         l_cHtml += [</div>]
 
@@ -1938,7 +1916,7 @@ with object l_oDB_ListOfModels
     :Column("Model.Name"       ,"Model_Name")
     :Column("Model.Stage"      ,"Model_Stage")
     :Column("Model.Description","Model_Description")
-    :Column("Model.UID"    ,"Model_UID")
+    :Column("Model.UID"        ,"Model_UID")
     :Column("Upper(Model.Name)","tag1")
     :Column("Project.Name"     ,"Project_Name")
     :OrderBy("tag1")
@@ -2151,7 +2129,7 @@ case l_cActionOnSubmit == "Save"
                     :Field("Model.Description",iif(empty(l_cModelDescription),NULL,l_cModelDescription))
                     
                     if empty(l_iModelPk)
-                        :Field("Model.UID" , oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Field("Model.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
                         if :Add()
                             l_iModelPk := :Key()
                         else
@@ -2394,8 +2372,8 @@ local l_nNumberOfEntities
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
 local l_cAttributeSearchParameters
-local l_nColspan
 local l_cObjectId
+local l_oGrid
 
 oFcgi:TraceAdd("EntityListFormBuild")
 
@@ -2418,7 +2396,7 @@ endif
 with object l_oDB_ListOfEntities
     :Table("e345fe62-2fb5-48f6-a987-ff75b6ee10af","Entity")
     :Column("Entity.pk"         ,"pk")
-    :Column("Entity.UID"    ,"Entity_UID")
+    :Column("Entity.UID"        ,"Entity_UID")
     :Column("Entity.Name"       ,"Entity_Name")
     :Column("Entity.UseStatus"  ,"Entity_UseStatus")
     :Column("Entity.Description","Entity_Description")
@@ -2623,73 +2601,43 @@ if !empty(l_nNumberOfEntities)
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfEntities")
+                :SetTitle({|l_nNumberOfRows|oFcgi:p_ANFEntities+" ("+trans(l_nNumberOfRows)+")"})
 
-            l_nColspan := 6
-            if l_nNumberOfCustomFieldValues > 0
-                l_nColspan += 1
-            endif
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfEntities->Entity_UseStatus)})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFEntities+[ (]+Trans(l_nNumberOfEntities)+[)</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFPackage},;
+                            "Rows"  =>{"Expression" => {|| alltrim(nvl(ListOfEntities->Package_FullName,"")) } }})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackage+[</th>]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntity+[ Name</th>]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAttributes+[</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white">Information</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFEntity+" Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_UID+[/">]+ListOfEntities->Entity_Name+[</a>] } }})
 
-            select ListOfEntities
-            scan all
-                l_iEntityPk := ListOfEntities->pk
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFAttributes},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_nAttributeCount
+                                                            l_iEntityPk := ListOfEntities->pk
+                                                            l_nAttributeCount := iif( el_seek(l_iEntityPk,"ListOfEntitiesAttributeCounts","tag1") , ListOfEntitiesAttributeCounts->AttributeCount , 0)
+                                                            return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListAttributes/]+ListOfEntities->Entity_UID+[/]+l_cAttributeSearchParameters+[">]+Trans(l_nAttributeCount)+[</a>]
+                                                       },;
+                                      "Align" => "center"}})
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEntities->Entity_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += alltrim(nvl(ListOfEntities->Package_FullName,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Information"},;
+                            "Rows"  =>{"Expression" => {|| iif(len(nvl(ListOfEntities->Entity_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;]) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEntity/]+ListOfEntities->Entity_UID+[/">]+ListOfEntities->Entity_Name+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        l_nAttributeCount := iif( el_seek(l_iEntityPk,"ListOfEntitiesAttributeCounts","tag1") , ListOfEntitiesAttributeCounts->AttributeCount , 0)
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListAttributes/]+ListOfEntities->Entity_UID+[/]+l_cAttributeSearchParameters+[">]+Trans(l_nAttributeCount)+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"=>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| CustomFieldsBuildGridOther(l_iEntityPk,l_hOptionValueToDescriptionMapping) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEntities->Entity_Description,""))
-                    l_cHtml += [</td>]
-
-                    l_cObjectId := "entity-description"+Trans(l_iEntityPk)
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" id="]+l_cObjectId+[">]
-                        //Left code below in case would like to make this a user optional feature 
-                        // if !hb_orm_isnull("ListOfEntities","Entity_Information")
-                        //     l_cHtml += [<script> document.getElementById(']+l_cObjectId+[').innerHTML = marked.parse(']+EscapeNewlineAndQuotes(ListOfEntities->Entity_Information)+[');</script>]
-                        // endif
-                        l_cHtml += iif(len(nvl(ListOfEntities->Entity_Information,"")) > 0,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEntities->Entity_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
-
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(l_iEntityPk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -2769,7 +2717,7 @@ with object l_oDB1
     :Column("Entity.pk"        ,"Entity_pk")
     :Column("Entity.Name"      ,"Entity_Name")
     :Column("Package.FullName" ,"Package_FullName")
-    :Column("Package.UID"  ,"Package_UID")
+    :Column("Package.UID"      ,"Package_UID")
     :Join("left","Package","","Entity.fk_Package = Package.pk")
     :Where("Entity.UID = ^",par_cEntityUID)
     l_oEntity := :SQL()
@@ -3024,8 +2972,8 @@ case l_cActionOnSubmit == "Save"
             :Field("Entity.Description" ,iif(empty(l_cEntityDescription),NULL,l_cEntityDescription))
             :Field("Entity.Information" ,iif(empty(l_cEntityInformation),NULL,l_cEntityInformation))
             if empty(l_iEntityPk)
-                :Field("Entity.UID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("Entity.fk_Model" , par_iModelPk)
+                :Field("Entity.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Entity.fk_Model" ,par_iModelPk)
                 if :Add()
                     l_iEntityPk := :Key()
                 else
@@ -3122,7 +3070,7 @@ case empty(l_iEntityPk)
 otherwise
     with object l_oDB1
         :Table("81c56314-d438-4bf2-b972-2d84e1bc89e1","Entity")
-        :Column("Entity.UID" , "Entity_UID")
+        :Column("Entity.UID" ,"Entity_UID")
         l_oData := :Get(l_iEntityPk)
         if :Tally == 1
             oFcgi:Redirect(oFcgi:p_cSitePath+"Modeling/EditEntity/"+alltrim(l_oData:Entity_UID)+"/")
@@ -3164,7 +3112,7 @@ oFcgi:TraceAdd("PackageTreeBuild")
 with object l_oDB_ListOfPackages
     :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
     :Column("Package.pk"        ,"pk")
-    :Column("Package.UID"   ,"Package_UID")
+    :Column("Package.UID"       ,"Package_UID")
     :Column("Package.Name"      ,"Package_Name")
     :Column("Package.FullName"  ,"Package_FullName")
     :Column("Package.FullPk"    ,"Package_FullPk")
@@ -3180,8 +3128,8 @@ endwith
 with object l_oDB_ListOfEntities
     :Table("1FB3D5FB-B8F3-4515-B091-55ED9CB4AB3B","Entity")
     :Column("Entity.pk"        ,"pk")
-    :Column("Entity.UID"   ,"Entity_UID")
-    :Column("Entity.Name"  ,"Entity_Name")
+    :Column("Entity.UID"       ,"Entity_UID")
+    :Column("Entity.Name"      ,"Entity_Name")
     :Column("Entity.fk_Package","Entity_Parent")
     :Where("Entity.fk_Model = ^",par_iModelPk)
     //:Join("left outer","Package","","Entity.fk_Package = Package.pk")
@@ -3193,8 +3141,8 @@ endwith
 with object l_oDB_ListOfAssociations
     :Table("0C757B19-C062-4B1B-B97A-AF70A1974BDE","Association")
     :Column("Association.pk"        ,"pk")
-    :Column("Association.UID"   ,"Association_UID")
-    :Column("Association.Name"  ,"Association_Name")
+    :Column("Association.UID"       ,"Association_UID")
+    :Column("Association.Name"      ,"Association_Name")
     :Column("Association.fk_Package","Association_Parent")
     :Where("Association.fk_Model = ^",par_iModelPk)
     //:Join("left outer","Package","","Association.fk_Package = Package.pk")
@@ -3323,8 +3271,8 @@ oFcgi:TraceAdd("DataTypeTreeBuild")
 with object l_oDB_ListOfDataTypes
     :Table("FDD6607E-63E7-4328-81AB-B85BFDBF6040","DataType")
     :Column("DataType.pk"        ,"pk")
-    :Column("DataType.UID"   ,"DataType_UID")
-    :Column("DataType.Name"  ,"DataType_Name")
+    :Column("DataType.UID"       ,"DataType_UID")
+    :Column("DataType.Name"      ,"DataType_Name")
     :Column("DataType.fk_DataType","DataType_Parent")
     :Column("DataType.FullPk"  ,"DataType_FullPk")
     :Where("DataType.fk_Model = ^",par_iModelPk)
@@ -3336,9 +3284,9 @@ endwith
 
 with object l_oDB_ListOfEnumerations
     :Table("9A99267C-B249-44EB-B59A-166B7E5964FA","ModelEnumeration")
-    :Column("ModelEnumeration.pk"        ,"pk")
-    :Column("ModelEnumeration.UID"   ,"Enumeration_UID")
-    :Column("ModelEnumeration.Name"  ,"Enumeration_Name")
+    :Column("ModelEnumeration.pk"  ,"pk")
+    :Column("ModelEnumeration.UID" ,"Enumeration_UID")
+    :Column("ModelEnumeration.Name","Enumeration_Name")
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
     :OrderBy("Enumeration_Name")
     :SQL("ListOfEnumerations")
@@ -3435,13 +3383,14 @@ local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfPackages
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
+local l_oGrid
 
 oFcgi:TraceAdd("PackageListFormBuild")
 
 with object l_oDB_ListOfPackages
     :Table("e0c3c824-5ab0-4fce-8234-1c646e8ac803","Package")
     :Column("Package.pk"        ,"pk")
-    :Column("Package.UID"   ,"Package_UID")
+    :Column("Package.UID"       ,"Package_UID")
     :Column("Package.Name"      ,"Package_Name")
     :Column("Package.UseStatus" ,"Package_UseStatus")
     :Column("Package.FullName"  ,"Package_FullName")
@@ -3524,42 +3473,27 @@ if !empty(l_nNumberOfPackages)
 
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
-            
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"2","3")+[">]+oFcgi:p_ANFPackages+[ (]+Trans(l_nNumberOfPackages)+[)</th>]
-            l_cHtml += [</tr>]
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Full Name</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-            l_cHtml += [</tr>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfPackages")
+                :SetTitle({|l_nNumberOfRows|oFcgi:p_ANFPackages+" ("+trans(l_nNumberOfRows)+")"})
 
-            select ListOfPackages
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfPackages->Package_UseStatus)+[>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfPackages->Package_UseStatus)})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_UID+[/">]+ListOfPackages->Package_FullName+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Full Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditPackage/]+ListOfPackages->Package_UID+[/">]+ListOfPackages->Package_FullName+[</a>] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfPackages->Package_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(ListOfPackages->pk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfPackages->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
+                l_cHtml += :Build()
+            endwith
+
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -3739,8 +3673,8 @@ case l_cActionOnSubmit == "Save"
                 :Field("Package.UseStatus" ,l_nPackageUseStatus)
             endif
             if empty(l_iPackagePk)
-                :Field("Package.UID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("Package.fk_Model" , par_iModelPk)
+                :Field("Package.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Package.fk_Model"  ,par_iModelPk)
                 if :Add()
                     l_iPackagePk := :Key()
                     FixNonNormalizeFieldsInPackage(par_iModelPk)
@@ -3869,6 +3803,7 @@ local l_nNumberOfPrimitiveTypesWithMissingDataType
 local l_lShowActionButton := .f.
 
 local l_cAction := oFcgi:GetQueryString("action")
+local l_oGrid
 
 oFcgi:TraceAdd("DataTypeListFormBuild")
 
@@ -3905,7 +3840,7 @@ if l_cAction == "LoadAllPrimitives"
                 case :Tally == 0
                     //Add the Primitive Type as a new DataType
                     :Table("a584ae40-ded9-4848-aee6-3aecd314aec5","DataType")
-                    :Field("DataType.UID"          , oFcgi:p_o_SQLConnection:GetUUIDString())
+                    :Field("DataType.UID"              , oFcgi:p_o_SQLConnection:GetUUIDString())
                     :Field("DataType.fk_Model"         , par_iModelPk)
                     :Field("DataType.fk_PrimitiveType" , ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_pk)
                     :Field("DataType.name"             , ListOfPrimitiveTypesWithMissingDataType->PrimitiveType_Name)
@@ -3936,7 +3871,7 @@ endif
 with object l_oDB_ListOfDataTypes
     :Table("96013fec-eb2d-4a2c-ad59-080501e21fd2","DataType")
     :Column("DataType.pk"         ,"pk")
-    :Column("DataType.UID"    ,"DataType_UID")
+    :Column("DataType.UID"        ,"DataType_UID")
     :Column("DataType.FullName"   ,"DataType_FullName")
     :Column("DataType.UseStatus"  ,"DataType_UseStatus")
     :Column("DataType.Description","DataType_Description")
@@ -4024,51 +3959,31 @@ if !empty(l_nNumberOfDataTypes)
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
-            
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"4","5")+[">]+oFcgi:p_ANFDataTypes+[ (]+Trans(l_nNumberOfDataTypes)+[)</th>]
-            l_cHtml += [</tr>]
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfDataTypes")
+                :SetTitle({|l_nNumberOfRows|oFcgi:p_ANFDataTypes+" ("+trans(l_nNumberOfRows)+")"})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Full Name</th>]
-                l_cHtml += [<th class="text-white">Primitive Type</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-            l_cHtml += [</tr>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfDataTypes->DataType_UseStatus)})
 
-            select ListOfDataTypes
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfDataTypes->DataType_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Full Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_UID+[/">]+ListOfDataTypes->DataType_FullName+[</a>] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditDataType/]+ListOfDataTypes->DataType_UID+[/">]+ListOfDataTypes->DataType_FullName+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Primitive Type"},;
+                            "Rows"  =>{"Expression" => {|| nvl(ListOfDataTypes->PrimitiveType_Name,"") } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += nvl(ListOfDataTypes->PrimitiveType_Name,"")
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfDataTypes->DataType_Description,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfDataTypes->DataType_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfDataTypes->DataType_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfDataTypes->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(ListOfDataTypes->pk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -4290,8 +4205,8 @@ case l_cActionOnSubmit == "Save"
                 :Field("DataType.Description"     ,iif(empty(l_cDataTypeDescription),NULL,l_cDataTypeDescription))
             endif
             if empty(l_iDataTypePk)
-                :Field("DataType.UID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("DataType.fk_Model" , par_iModelPk)
+                :Field("DataType.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("DataType.fk_Model",par_iModelPk)
                 if :Add()
                     l_iDataTypePk := :Key()
                     FixNonNormalizeFieldsInDataType(par_iModelPk)
@@ -4411,6 +4326,7 @@ local l_oDB2
 local l_cSitePath := oFcgi:p_cSitePath
 local l_iEnumValueCount
 local l_nNumberOfEnumerations
+local l_oGrid
 
 oFcgi:TraceAdd("EnumerationListFormBuild")
 
@@ -4423,7 +4339,7 @@ with object l_oDB1
     :Column("ModelEnumeration.fk_Model"          ,"Enumeration_fk_Model")
     :Column("ModelEnumeration.Name"              ,"Enumeration_Name")
     :Column("ModelEnumeration.UseStatus"         ,"Enumeration_UseStatus")
-    :Column("ModelEnumeration.UID"           ,"Enumeration_UID")
+    :Column("ModelEnumeration.UID"               ,"Enumeration_UID")
     :Column("ModelEnumeration.Description"       ,"Enumeration_Description")
     :Column("Upper(ModelEnumeration.Name)","tag1")
     :Where("ModelEnumeration.fk_Model = ^",par_iModelPk)
@@ -4474,43 +4390,31 @@ else
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfEnumerations")
+                    :SetTitle({|l_nNumberOfRows|"Enumerations ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="4">Enumerations (]+Trans(l_nNumberOfEnumerations)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Enumeration Name</th>]
-                    l_cHtml += [<th class="text-white">Values</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Enumeration Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_UID+[/">]+ListOfEnumerations->Enumeration_Name+[</a>] } }})
 
-                select ListOfEnumerations
-                scan all
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfEnumerations->Enumeration_UseStatus)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Values"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                                local l_iEnumValueCount
+                                                l_iEnumValueCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->ModelEnumValueCount , 0)
+                                                return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[Modeling/ListEnumValues/]+ListOfEnumerations->Enumeration_UID+[/">]+Trans(l_iEnumValueCount)+[</a>]
+                                          } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumeration/]+ListOfEnumerations->Enumeration_UID+[/">]+ListOfEnumerations->Enumeration_Name+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                            l_iEnumValueCount := iif( el_seek(ListOfEnumerations->pk,"ListOfEnumerationsEnumValueCounts","tag1") , ListOfEnumerationsEnumValueCounts->ModelEnumValueCount , 0)
-                            l_cHtml += [<a href="]+l_cSitePath+[Modeling/ListEnumValues/]+ListOfEnumerations->Enumeration_UID+[/">]+Trans(l_iEnumValueCount)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumerations->Enumeration_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfEnumerations->Enumeration_UseStatus,USESTATUS_UNKNOWN)]
-                        l_cHtml += [</td>]
-                    
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -4745,6 +4649,7 @@ local l_cHtml := []
 local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfEnumValues
 local l_oDB1
+local l_oGrid
 
 oFcgi:TraceAdd("EnumValueListFormBuild")
 
@@ -4786,40 +4691,30 @@ else
     l_cHtml += [<div class="row justify-content-center m-3">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfEnumValues")
+                :SetTitle({|l_nNumberOfRows|"Values ("+trans(l_nNumberOfRows)+") for Enumeration "+["]+alltrim(par_cEnumerationName)+["]})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="3">Values (]+Trans(l_nNumberOfEnumValues)+[) for Enumeration "]+alltrim(par_cEnumerationName)+["</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditEnumValue/]+par_cEnumerationUID+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+[</a>] } }})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Name</th>]
-                l_cHtml += [<th class="text-white">Number</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Number"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
+                                                                l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
+                                                            endif
+                                                            l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
+                                                            return l_cHtml
+                                                       },;
+                                        "Align" => "center" }})
 
-            select ListOfEnumValues
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditEnumValue/]+par_cEnumerationUID+[/]+ListOfEnumValues->EnumValue_Name+[/">]+ListOfEnumValues->EnumValue_Name+[</a>]
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                        if !hb_orm_isnull("ListOfEnumValues","EnumValue_Number")
-                            l_cHtml += trans(ListOfEnumValues->EnumValue_Number)
-                        endif
-                        l_cHtml += hb_DefaultValue(ListOfEnumValues->EnumValue_Number,"")
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfEnumValues->EnumValue_Description,""))
-                    l_cHtml += [</td>]
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -5203,7 +5098,8 @@ local l_cSearchEndpointDescription
 local l_nNumberOfAssociations
 local l_nNumberOfCustomFieldValues := 0
 local l_hOptionValueToDescriptionMapping := {=>}
-local l_nColspan
+
+local l_oGrid
 
 oFcgi:TraceAdd("AssociationListFormBuild")
 
@@ -5216,7 +5112,7 @@ l_cSearchEndpointDescription := GetUserSetting("Model_"+Trans(par_iModelPk)+"_As
 with object l_oDB_ListOfAssociations
     :Table("32746fc3-3116-497f-becc-f51b1213849c","Association")
     :Column("Association.pk"         ,"pk")
-    :Column("Association.UID"    ,"Association_UID")
+    :Column("Association.UID"        ,"Association_UID")
     :Column("Association.Name"       ,"Association_Name")
     :Column("Association.UseStatus"  ,"Association_UseStatus")
     :Column("Association.Description","Association_Description")
@@ -5443,66 +5339,44 @@ if !empty(l_nNumberOfAssociations) .and. l_nNumberOfAssociations > 0
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfAssociations")
+                :SetTitle({|l_nNumberOfRows|oFcgi:p_ANFAssociations+" ("+trans(l_nNumberOfRows)+")"})
 
-            l_nColspan := 6
-            if l_nNumberOfCustomFieldValues > 0
-                l_nColspan += 1
-            endif
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfAssociations->Association_UseStatus)})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white text-center" colspan="]+Trans(l_nColspan)+[">]+oFcgi:p_ANFAssociations+[ (]+Trans(l_nNumberOfAssociations)+[)</th>]
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFPackage},;
+                            "Rows"  =>{"Expression" => {|| alltrim(nvl(ListOfAssociations->Package_FullName,"")) } }})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFPackage+[</th>]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFAssociation+[ Name</th>]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFEntities+[</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFAssociation},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_UID+[/">]+ListOfAssociations->Association_Name+[</a>] } }})
 
-            select ListOfAssociations
-            scan all
-                l_iAssociationPk := ListOfAssociations->pk
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFEntities},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            l_iAssociationPk := ListOfAssociations->pk
+                                                            select ListOfAssociationsEndpoints
+                                                            scan all for ListOfAssociationsEndpoints->Association_pk == l_iAssociationPk
+                                                                l_cHtml += [<div>]+ListOfAssociationsEndpoints->Entity_name+[</div>]
+                                                            endscan
+                                                            return l_cHtml
+                                                       },;
+                                      "Align" => "center" }})
 
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAssociations->Association_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfAssociations->Association_Description,"")) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += alltrim(nvl(ListOfAssociations->Package_FullName,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status</th>","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAssociation/]+ListOfAssociations->Association_UID+[/">]+ListOfAssociations->Association_Name+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfAssociations->pk,l_hOptionValueToDescriptionMapping)} }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                        select ListOfAssociationsEndpoints
-                        scan all for ListOfAssociationsEndpoints->Association_pk == l_iAssociationPk
-                            l_cHtml += [<div>]+ListOfAssociationsEndpoints->Entity_name+[</div>]
-                        endscan
-                    l_cHtml += [</td>]
+                l_cHtml += :Build()
+            endwith
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfAssociations->Association_Description,""))
-                    l_cHtml += [</td>]
-
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAssociations->Association_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
-
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(l_iAssociationPk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
-            
         l_cHtml += [</div>]
     l_cHtml += [</div>]
 
@@ -5568,10 +5442,10 @@ static function GetPackageEditHeader(par_cSitePath, par_cModelUID, par_cPackageU
 
     with object l_oDB1
         :Table("D25D3152-D05C-4EAB-8CAE-12F8E15AC143","Package")
-        :Column("Package.pk","Package_pk")
-        :Column("Package.Name" ,"Package_Name")
+        :Column("Package.pk"             ,"Package_pk")
+        :Column("Package.Name"           ,"Package_Name")
         :Column("PackageParent.FullName" ,"PackageParent_FullName")
-        :Column("PackageParent.UID" ,"PackageParent_UID")
+        :Column("PackageParent.UID"      ,"PackageParent_UID")
         :Join("left","Package","PackageParent","Package.fk_Package = PackageParent.pk")
         :Where("Package.UID = ^",par_cPackageUID)
         l_oPackage := :SQL()
@@ -5646,10 +5520,10 @@ oFcgi:TraceAdd("AssociationEditFormBuild")
 with object l_oDB_ListOfPackages
     //Build the list of Packages
     :Table("2b19ee5b-91ec-4d24-9934-80ef27c3d11d","Package")
-    :Column("Package.pk"         , "pk")
-    :Column("Package.FullName"   , "Package_FullName")
-    :Column("Package.FullPk"     , "Package_FullPk")
-    :Column("Package.UID"    , "Package_UID")
+    :Column("Package.pk"      ,"pk")
+    :Column("Package.FullName","Package_FullName")
+    :Column("Package.FullPk"  ,"Package_FullPk")
+    :Column("Package.UID"     ,"Package_UID")
     :Column("Package.TreeOrder1" , "Tag1")
     :Where("Package.fk_Model = ^" , par_iModelPk)
     :OrderBy("Tag1")
@@ -5736,12 +5610,12 @@ l_cHtml += [<div class="m-3">]
 
     with object l_oDB_ListOfAllEntities
         :Table("8c4054d1-6f50-427e-aa41-2b53f8ebad2b","Entity")
-        :Column("Entity.pk"                      , "pk")
-        :Column("Package.FullName"               , "Package_FullName")
-        :Column("Entity.Name"                    , "Entity_Name")
-        :Column("Entity.UID"                 , "Entity_UID")
-        :Column("COALESCE(Package.TreeOrder1,0)" , "tag1")           // _M_ Cast as integer
-        :Column("Upper(Entity.Name)"             , "tag2")
+        :Column("Entity.pk"                     ,"pk")
+        :Column("Package.FullName"              ,"Package_FullName")
+        :Column("Entity.Name"                   ,"Entity_Name")
+        :Column("Entity.UID"                    ,"Entity_UID")
+        :Column("COALESCE(Package.TreeOrder1,0)","tag1")           // _M_ Cast as integer
+        :Column("Upper(Entity.Name)"            ,"tag2")
         :Where("Entity.fk_Model = ^" , par_iModelPk)
         :join("left","Package","","Entity.fk_Package = Package.pk")
         :OrderBy("tag1")
@@ -6028,8 +5902,8 @@ case l_cActionOnSubmit == "Save"
             endif
 
             if empty(l_iAssociationPk)
-                :Field("Association.UID"  , oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("Association.fk_Model" , par_iModelPk)
+                :Field("Association.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Association.fk_Model" ,par_iModelPk)
                 if :Add()
                     l_iAssociationPk := :Key()
                 else
@@ -6247,6 +6121,7 @@ local l_hOptionValueToDescriptionMapping := {=>}
 
 local l_cSearchAttributeName
 local l_cSearchAttributeDescription
+local l_oGrid
 
 oFcgi:TraceAdd("AttributeListFormBuild")
 
@@ -6268,7 +6143,7 @@ with object l_oDB_ListOfAttributes
     :Column("Attribute.fk_DataType"    ,"Attribute_fk_DataType")
     :Column("DataType.FullName"        ,"DataType_FullName")
     :Column("ModelEnumeration.Name"    ,"Enumeration_Name")
-    :Column("Attribute.UID"        ,"Attribute_UID")
+    :Column("Attribute.UID"            ,"Attribute_UID")
     :Column("Attribute.FullName"       ,"Attribute_FullName")
     :Column("Attribute.TreeOrder1"     ,"tag1")
     :Column("Attribute.IsObject"       ,"Attribute_IsObject")
@@ -6415,82 +6290,69 @@ else
     l_cHtml += [<div class="row justify-content-left">]
         l_cHtml += [<div class="col">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_oGrid := Grid()
+            with object l_oGrid
+                :SetAlias("ListOfAttributes")
+                :SetTitle({|l_nNumberOfRows|
+                                local l_cTitle
+                                if l_nNumberOfAttributes == l_nNumberOfAttributesInSearch
+                                    l_cTitle := oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
+                                else
+                                    l_cTitle := oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributesInSearch)+[ out of ]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
+                                endif
+                                return l_cTitle
+                          })
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-center text-white" colspan="]+iif(l_nNumberOfCustomFieldValues <= 0,"6","7")+[">]
-                    if l_nNumberOfAttributes == l_nNumberOfAttributesInSearch
-                        l_cHtml += oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
-                    else
-                        l_cHtml += oFcgi:p_ANFAttributes+[ (]+Trans(l_nNumberOfAttributesInSearch)+[ out of ]+Trans(l_nNumberOfAttributes)+[) for ]+oFcgi:p_ANFEntity+[ "]+par_cEntityInfo+["]
-                    endif
-                l_cHtml += [</th>]
-            l_cHtml += [</tr>]
+                :SetRowExtraClasses({||GetTRExtraClassOnUseStatus(recno(),ListOfAttributes->Attribute_UseStatus)})
 
-            l_cHtml += [<tr class="bg-primary bg-gradient">]
-                l_cHtml += [<th class="text-white">Full Name</th>]
-                l_cHtml += [<th class="text-white">]+oFcgi:p_ANFDataType+[</th>]
-                l_cHtml += [<th class="text-white text-center">Bound<br>Lower</th>]
-                l_cHtml += [<th class="text-white text-center">Bound<br>Upper</th>]
-                l_cHtml += [<th class="text-white">Description</th>]
-                l_cHtml += [<th class="text-white text-center">Use<br>Status</th>]
-                if l_nNumberOfCustomFieldValues > 0
-                    l_cHtml += [<th class="text-white text-center">Other</th>]
-                endif
-            l_cHtml += [</tr>]
+                :AddColumn({"Header"=>{"Caption"=>"Full Name"},;
+                            "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_UID+[/">]+ListOfAttributes->Attribute_FullName+[</a>] } }})
 
-            select ListOfAttributes
-            scan all
-                l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfAttributes->Attribute_UseStatus)+[>]
+                :AddColumn({"Header"=>{"Caption"=>oFcgi:p_ANFDataType},;
+                            "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml := ""
+                                            if !empty(ListOfAttributes->DataType_FullName)
+                                                l_cHtml += [<i class="bi bi-code"></i>&nbsp;]+ListOfAttributes->DataType_FullName
+                                            elseif !empty(ListOfAttributes->Enumeration_Name)
+                                                l_cHtml += [<i class="bi bi-card-list"></i>&nbsp;]+ListOfAttributes->Enumeration_Name
+                                            elseif ListOfAttributes->Attribute_IsObject
+                                                l_cHtml += [<i class="bi bi-code-square"></i>&nbsp;Object]
+                                            endif
+                                            return l_cHtml
+                                      } }})
 
-                    // Full Name
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += [<a href="]+l_cSitePath+[Modeling/EditAttribute/]+ListOfAttributes->Attribute_UID+[/">]+ListOfAttributes->Attribute_FullName+[</a>]
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Bound<br>Lower","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if !hb_orm_isnull("ListOfAttributes","Attribute_BoundLower")
+                                                                l_cHtml += ListOfAttributes->Attribute_BoundLower
+                                                            endif
+                                                            return l_cHtml
+                                                       },;
+                                      "Align" => "center"}})
 
-                    // Data Type
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        if !empty(ListOfAttributes->DataType_FullName)
-                            l_cHtml += [<i class="bi bi-code"></i>&nbsp;]+ListOfAttributes->DataType_FullName
-                        elseif !empty(ListOfAttributes->Enumeration_Name)
-                            l_cHtml += [<i class="bi bi-card-list"></i>&nbsp;]+ListOfAttributes->Enumeration_Name
-                        elseif ListOfAttributes->Attribute_IsObject
-                            l_cHtml += [<i class="bi bi-code-square"></i>&nbsp;Object]
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Bound<br>Upper","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| 
+                                                            local l_cHtml := ""
+                                                            if !hb_orm_isnull("ListOfAttributes","Attribute_BoundUpper")
+                                                                l_cHtml += ListOfAttributes->Attribute_BoundUpper
+                                                            endif
+                                                            return l_cHtml
+                                                       },;
+                                      "Align" => "center"}})
 
-                    // Bound<br>Lower
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundLower")
-                            l_cHtml += ListOfAttributes->Attribute_BoundLower
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                            "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,"")) } }})
 
-                    // Bound<br>Upper
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        if !hb_orm_isnull("ListOfAttributes","Attribute_BoundUpper")
-                            l_cHtml += ListOfAttributes->Attribute_BoundUpper
-                        endif
-                    l_cHtml += [</td>]
+                :AddColumn({"Header"=>{"Caption"=>"Use<br>Status","Align" => "center"},;
+                            "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                    // Description
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfAttributes->Attribute_Description,""))
-                    l_cHtml += [</td>]
+                :AddColumn({"Condition"=>{||(l_nNumberOfCustomFieldValues > 0)},;
+                            "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                            "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfAttributes->pk,l_hOptionValueToDescriptionMapping) } }})
 
-                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfAttributes->Attribute_UseStatus,USESTATUS_UNKNOWN)]
-                    l_cHtml += [</td>]
-
-                    if l_nNumberOfCustomFieldValues > 0
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += CustomFieldsBuildGridOther(ListOfAttributes->pk,l_hOptionValueToDescriptionMapping)
-                        l_cHtml += [</td>]
-                    endif
-
-                l_cHtml += [</tr>]
-            endscan
-            l_cHtml += [</table>]
+                l_cHtml += :Build()
+            endwith
             
         l_cHtml += [</div>]
     l_cHtml += [</div>]
@@ -6899,7 +6761,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Attribute.fk_Entity"  , par_iEntityPk)
                 :Field("Attribute.TreeOrder1" , l_iAttributeTreeOrder1)
                 l_cAttributeUID := oFcgi:p_o_SQLConnection:GetUUIDString()
-                :Field("Attribute.UID"   , l_cAttributeUID)
+                :Field("Attribute.UID"        , l_cAttributeUID)
                 if :Add()
                     l_iAttributePk := :Key()
                     FixNonNormalizeFieldsInAttribute(par_iEntityPk)
@@ -7149,19 +7011,19 @@ l_oDB1 := hb_SQLData(oFcgi:p_o_SQLConnection)
 
 with object l_oDB1
     :Table("B9DC8B16-0CF7-4B9B-B17D-9B69CAC8779C","LinkedEntity")
-    :Column("LinkedEntity.pk"                    ,"pk")
-    :Column("LinkedEntity.UID"               ,"LinkedEntity_UID")
-    :Column("LinkedEntity.Description"           ,"LinkedEntity_Description")
-    :Column("LinkedEntity.fk_Entity1"            ,"LinkedEntity_fk_Entity1")
-    :Column("LinkedEntity.fk_Entity2"            ,"LinkedEntity_fk_Entity2")
-    :Column("Entity1.Name"                       ,"Entity1_Name")
-    :Column("Entity2.Name"                       ,"Entity2_Name")
-    :Column("Entity1.UID"                    ,"Entity1_UID")
-    :Column("Entity2.UID"                    ,"Entity2_UID")
-    :Column("Model1.Name"                        ,"Model1_Name")
-    :Column("Model2.Name"                        ,"Model2_Name")
-    :Column("Model1.UID"                     ,"Model1_UID")
-    :Column("Model2.UID"                     ,"Model2_UID")
+    :Column("LinkedEntity.pk"         ,"pk")
+    :Column("LinkedEntity.UID"        ,"LinkedEntity_UID")
+    :Column("LinkedEntity.Description","LinkedEntity_Description")
+    :Column("LinkedEntity.fk_Entity1" ,"LinkedEntity_fk_Entity1")
+    :Column("LinkedEntity.fk_Entity2" ,"LinkedEntity_fk_Entity2")
+    :Column("Entity1.Name"            ,"Entity1_Name")
+    :Column("Entity2.Name"            ,"Entity2_Name")
+    :Column("Entity1.UID"             ,"Entity1_UID")
+    :Column("Entity2.UID"             ,"Entity2_UID")
+    :Column("Model1.Name"             ,"Model1_Name")
+    :Column("Model2.Name"             ,"Model2_Name")
+    :Column("Model1.UID"              ,"Model1_UID")
+    :Column("Model2.UID"              ,"Model2_UID")
     :Join("inner","Entity"       ,"Entity1"      ,"LinkedEntity.fk_Entity1 = Entity1.pk")
     :Join("inner","Entity"       ,"Entity2"      ,"LinkedEntity.fk_Entity2 = Entity2.pk")
     :Join("inner","Model"        ,"Model1"       ,"Entity1.fk_Model = Model1.pk")
@@ -7320,7 +7182,7 @@ with object l_oDB_ListOfEntities
     :Table("B436F5AB-75A0-47B2-8AEB-5C3C63C61394","Entity")
     :Column("Entity.pk"         ,"pk")
     :Column("Entity.Name"       ,"Entity_Name")
-    :Column("Entity.UID"    ,"Entity_UID")
+    :Column("Entity.UID"        ,"Entity_UID")
     :Column("Model.Name"        ,"Model_Name")
     :Column("Upper(Entity.Name)","tag1")
     :Join("inner","Model"       ,"Model"        ,"Entity.fk_Model = Model.pk")

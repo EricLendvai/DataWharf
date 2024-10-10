@@ -1,5 +1,11 @@
 # DataWharf - Change Log
 
+## 10/10/2024 v 4.22
+* UI and behavior changes for grids: Current row highlight, easier clicks on rows and cells to navigate, "stick" table headers when scrolling on long lists.
+* Changed DataWharf Logo. New config setting "COLOR_LOGO_TEXT" that compliments "COLOR_HEADER_BACKGROUND".
+* Deprecated the config setting "COLOR_HEADER_TEXT_WHITE" and introduced "COLOR_HEADER_TEXT" instead.
+* Config setting "APPLICATION_TITLE" is now used as a "Sub-Title" located under the DataWharf Logo.
+
 ## 09/21/2024 v 4.21
 * Default "Track Name Changes" to true.
 * Renamed all "LinkUID" columns to "UID" for DataWharf's own database.

@@ -180,7 +180,7 @@ with object l_oDB1
     :Column("Diagram.NodeShowDescription","Diagram_NodeShowDescription")
     :Column("Diagram.NodeMinHeight"      ,"Diagram_NodeMinHeight")
     :Column("Diagram.NodeMaxWidth"       ,"Diagram_NodeMaxWidth")
-    :Column("Diagram.UID"            ,"Diagram_UID")
+    :Column("Diagram.UID"                ,"Diagram_UID")
     l_oDataDiagram := :Get(l_iDiagramPk)
 
     l_nRenderMode          := max(1,l_oDataDiagram:Diagram_RenderMode)
@@ -804,6 +804,25 @@ if l_nNumberOfTableInDiagram <= MAX_TABLES_TO_DISPLAY
     l_cJS += [$("#ButtonShowCoreOnly").click(function(){$("#ColumnSearch").val("");$(".ColumnNotCore").hide(),$(".ColumnCore").show();});]
     l_cJS += [$('.DisplayEnum').tooltip({html: true,sanitize: false});]
 
+    // --- Following code from "ClassBuildGrid" Except always opens in new tab- Begin  See window.open(cHref,'_blank')
+    //Set behavior to go to the link on a cell click
+    l_cJS +=[$('.wf-grid td:has(.GridLinkNewPage)')]+;
+                                [.bind("click",function(e) {e.stopPropagation();let cHref = $(this).find('a').attr('href');if (typeof cHref !== 'undefined') {window.open(cHref,'_blank');}})]+;
+                                [.hover(function() {$(this).css('background-color','rgba(0, 0, 0, 0.2)').css('cursor','pointer');},function() {$(this).css('background-color','').css('cursor','');})]+;
+                                [;]
+
+    //Set behavior to go to the link in new window on a cell click
+    l_cJS +=[$('.wf-grid td:has(.GridLinkNormal)')]+;
+                                [.bind("click",function(e) {e.stopPropagation();let cHref = $(this).find('a').attr('href');if (typeof cHref !== 'undefined') {window.open(cHref,'_blank');}})]+;
+                                [.hover(function() {$(this).css('background-color','rgba(0, 0, 0, 0.2)').css('cursor','pointer');},function() {$(this).css('background-color','').css('cursor','');})]+;
+                                [;]
+
+    //Set behavior to go to the default link on a row click
+    l_cJS += [$('.wf-grid tr').bind("click",function(e) {let cHref = $(this).find('.DefaultLink:first').attr('href');if (typeof cHref !== 'undefined') {window.open(cHref,'_blank');}});]
+    // --- Following code from "ClassBuildGrid" - End
+
+
+
     l_cHtml += '   $("#GraphInfo" ).load( "'+l_cSitePath+'ajax/GetDDInfo","diagrampk='+Trans(l_iDiagramPk)+'&info="+JSON.stringify(params) , function(){'+l_cJS+'});'
     l_cHtml += '      });'
 
@@ -908,7 +927,7 @@ case ("SaveLayout" $ l_cActionOnSubmit) .and. oFcgi:p_nAccessLevelDD >= 4
             :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
             :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
             :Field("Diagram.RenderMode"    ,RENDERMODE_MXGRAPH)
-            :Field("Diagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+            :Field("Diagram.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
             if :Add()
                 l_iDiagramPk := :Key()
             endif
@@ -1416,7 +1435,7 @@ case l_cActionOnSubmit == "SaveDiagram"
                 :Field("Diagram.fk_Application",par_iApplicationPk)
                 :Field("Diagram.UseStatus"     ,USESTATUS_UNKNOWN)
                 :Field("Diagram.DocStatus"     ,DOCTATUS_MISSING)
-                :Field("Diagram.UID"       ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Diagram.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
                 if :Add()
                     l_iDiagramPk := :Key()
                 else
@@ -1689,20 +1708,20 @@ case l_cActionOnSubmit == "DuplicateDiagram"
             if :Tally == 1
 
                 :Table("5f129adf-af33-4b70-9c1f-3b1a10921b2a","Diagram")
-                :Field("Diagram.fk_Application"      ,par_iApplicationPk)
-                :Field("Diagram.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
-                :Field("Diagram.Name"                ,l_cDiagram_Name)
-                :Field("Diagram.UseStatus"           ,l_oDataDiagram:Diagram_UseStatus)
-                :Field("Diagram.DocStatus"           ,l_oDataDiagram:Diagram_DocStatus)
-                :Field("Diagram.Description"         ,l_oDataDiagram:Diagram_Description)
-                :Field("Diagram.NodeDisplayMode"     ,l_oDataDiagram:Diagram_NodeDisplayMode)
-                :Field("Diagram.NodeShowDescription" ,l_oDataDiagram:Diagram_NodeShowDescription)
-                :Field("Diagram.NodeDisplayMode"     ,l_oDataDiagram:Diagram_NodeDisplayMode)
-                :Field("Diagram.RenderMode"          ,l_oDataDiagram:Diagram_RenderMode)
-                :Field("Diagram.VisPos"              ,l_oDataDiagram:Diagram_VisPos)
-                :Field("Diagram.MxgPos"              ,l_oDataDiagram:Diagram_MxgPos)
-                :Field("Diagram.NodeMaxWidth"        ,l_oDataDiagram:Diagram_NodeMaxWidth)
-                :Field("Diagram.NodeMinHeight"       ,l_oDataDiagram:Diagram_NodeMinHeight)
+                :Field("Diagram.fk_Application"     ,par_iApplicationPk)
+                :Field("Diagram.UID"                ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                :Field("Diagram.Name"               ,l_cDiagram_Name)
+                :Field("Diagram.UseStatus"          ,l_oDataDiagram:Diagram_UseStatus)
+                :Field("Diagram.DocStatus"          ,l_oDataDiagram:Diagram_DocStatus)
+                :Field("Diagram.Description"        ,l_oDataDiagram:Diagram_Description)
+                :Field("Diagram.NodeDisplayMode"    ,l_oDataDiagram:Diagram_NodeDisplayMode)
+                :Field("Diagram.NodeShowDescription",l_oDataDiagram:Diagram_NodeShowDescription)
+                :Field("Diagram.NodeDisplayMode"    ,l_oDataDiagram:Diagram_NodeDisplayMode)
+                :Field("Diagram.RenderMode"         ,l_oDataDiagram:Diagram_RenderMode)
+                :Field("Diagram.VisPos"             ,l_oDataDiagram:Diagram_VisPos)
+                :Field("Diagram.MxgPos"             ,l_oDataDiagram:Diagram_MxgPos)
+                :Field("Diagram.NodeMaxWidth"       ,l_oDataDiagram:Diagram_NodeMaxWidth)
+                :Field("Diagram.NodeMinHeight"      ,l_oDataDiagram:Diagram_NodeMinHeight)
 
                 if :Add()
                     l_iNewDiagramPk := :Key()
@@ -2177,10 +2196,10 @@ local l_lFoundData
 local l_nRenderMode
 local l_oDataDiagram
 local l_cTooltipEnumValues
-local l_nColspan
 local l_lWarnings := .f.
 local l_cCombinedPath
 local l_oData
+local l_oGrid
 
 //oFcgi:p_nAccessLevelDD
 
@@ -2217,10 +2236,10 @@ if len(l_aNodes) == 1
         :Column("Application.LinkCode"      ,"Application_LinkCode")
         :Column("Namespace.Name"            ,"Namespace_Name")
         :Column("Namespace.AKA"             ,"Namespace_AKA")
-        :Column("Namespace.UID"         ,"Namespace_UID")
+        :Column("Namespace.UID"             ,"Namespace_UID")
         :Column("Table.Name"                ,"Table_Name")
         :Column("Table.AKA"                 ,"Table_AKA")
-        :Column("Table.UID"             ,"Table_UID")
+        :Column("Table.UID"                 ,"Table_UID")
         :Column("Table.Unlogged"            ,"Table_Unlogged")
         :Column("Table.Description"         ,"Table_Description")
         :Column("Table.Information"         ,"Table_Information")
@@ -2284,7 +2303,7 @@ if len(l_aNodes) == 1
             :Column("Column.pk"                  ,"pk")
             :Column("Column.Name"                ,"Column_Name")
             :Column("Column.AKA"                 ,"Column_AKA")
-            :Column("Column.UID"             ,"Column_UID")
+            :Column("Column.UID"                 ,"Column_UID")
             :Column("Column.UsedAs"              ,"Column_UsedAs")
             :Column("Column.UsedBy"              ,"Column_UsedBy")
             :Column("Column.UseStatus"           ,"Column_UseStatus")
@@ -2307,14 +2326,14 @@ if len(l_aNodes) == 1
             :Column("Column.TestWarning"         ,"Column_TestWarning")
             :Column("Namespace.Name"             ,"Namespace_Name")
             :Column("Namespace.AKA"              ,"Namespace_AKA")
-            :Column("Namespace.UID"          ,"Namespace_UID")
+            :Column("Namespace.UID"              ,"Namespace_UID")
             :Column("Table.Name"                 ,"Table_Name")
             :Column("Table.AKA"                  ,"Table_AKA")
-            :Column("Table.UID"              ,"Table_UID")
+            :Column("Table.UID"                  ,"Table_UID")
             :Column("Enumeration.Pk"             ,"Enumeration_Pk")
             :Column("Enumeration.Name"           ,"Enumeration_Name")
             :Column("Enumeration.AKA"            ,"Enumeration_AKA")
-            :Column("Enumeration.UID"        ,"Enumeration_UID")
+            :Column("Enumeration.UID"            ,"Enumeration_UID")
             :Column("Enumeration.ImplementAs"    ,"Enumeration_ImplementAs")
             :Column("Enumeration.ImplementLength","Enumeration_ImplementLength")
             
@@ -2329,15 +2348,15 @@ if len(l_aNodes) == 1
 
             :Column("ForeignNameSpace.Name"          ,"ForeignNameSpace_Name")
             :Column("ForeignNameSpace.AKA"           ,"ForeignNameSpace_AKA")
-            :Column("ForeignNameSpace.UID"       ,"ForeignNameSpace_UID")
+            :Column("ForeignNameSpace.UID"           ,"ForeignNameSpace_UID")
 
             :Column("ForeignTable.Name"              ,"ForeignTable_Name")
             :Column("ForeignTable.AKA"               ,"ForeignTable_AKA")
-            :Column("ForeignTable.UID"           ,"ForeignTable_UID")
+            :Column("ForeignTable.UID"               ,"ForeignTable_UID")
 
             :Column("EnumerationNamespace.Name"      ,"EnumerationNamespace_Name")
             :Column("EnumerationNamespace.AKA"       ,"EnumerationNamespace_AKA")
-            :Column("EnumerationNamespace.UID"   ,"EnumerationNamespace_UID")
+            :Column("EnumerationNamespace.UID"       ,"EnumerationNamespace_UID")
 
             :Where("Column.fk_Table = ^",l_iTablePk)
             :OrderBy("Column_Order")
@@ -2384,7 +2403,7 @@ if len(l_aNodes) == 1
             :Table("1874ea2e-e91c-4df7-9c98-b3a50664b46e","Diagram")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.UID"    ,"Diagram_UID")
+            :Column("Diagram.UID"        ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("Diagram.fk_Application = ^",l_iApplicationPk)
@@ -2397,7 +2416,7 @@ if len(l_aNodes) == 1
             :Table("144678ca-49af-4e19-84f8-cf52ebac9863","DiagramTable")
             :Column("Diagram.pk"         ,"Diagram_pk")
             :Column("Diagram.Name"       ,"Diagram_Name")
-            :Column("Diagram.UID"    ,"Diagram_UID")
+            :Column("Diagram.UID"        ,"Diagram_UID")
             :Column("lower(Diagram.Name)","tag1")
 
             :Where("DiagramTable.fk_Table = ^",l_iTablePk)
@@ -2693,224 +2712,165 @@ if len(l_aNodes) == 1
 
                         l_cHtml += [<div class="m-3"></div>]
 
-                        l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                        l_oGrid := Grid()
+                        with object l_oGrid
+                            :SetAlias("ListOfColumns")
 
-                        l_cHtml += [<tr class="bg-primary bg-gradient">]
-                            l_cHtml += [<th></th>]
-                            l_cHtml += [<th class="text-white">Name</th>]
-                            l_cHtml += [<th class="text-white">Type</th>]
-                            l_cHtml += [<th class="text-white">Nullable</th>]
-                            l_cHtml += [<th class="text-white">Default</th>]
-                            l_cHtml += [<th class="text-white">Foreign Key<br>To/Use/Optional</th>]
-                            l_cHtml += [<th class="text-white">On Delete</th>]
-                            l_cHtml += [<th class="text-white">Description</th>]
-                            l_cHtml += [<th class="text-white text-center">Usage<br>Status</th>]
-                            l_cHtml += [<th class="text-white text-center">Doc<br>Status</th>]
-                            l_cHtml += [<th class="text-white">Used By</th>]
-                            if l_nNumberOfCustomFieldValues > 0
-                                l_cHtml += [<th class="text-white text-center">Other</th>]
-                            endif
-                            if l_lWarnings
-                                l_cHtml += [<th class="text-center bg-warning text-danger">Warning</th>]
-                            endif
-                        l_cHtml += [</tr>]
+                            :SetRowExtraClasses({||
+                                local l_cTrClasses := GetTRExtraClassOnUseStatus(recno(),ListOfColumns->Column_UseStatus)
+                                do case
+                                case ListOfColumns->Column_UsedAs = 2
+                                    l_cTrClasses += " ColumnNotCore"
+                                case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
+                                    l_cTrClasses += " ColumnNotCore"
+                                case ListOfColumns->Column_UsedAs = 3
+                                    l_cTrClasses += " ColumnNotCore"
+                                otherwise
+                                    l_cTrClasses += " ColumnCore"
+                                endcase
+                                return l_cTrClasses
+                            })
 
-                        select ListOfColumns
-                        scan all
+                            :AddColumn({"Header"=>{"Caption"=>""},;
+                                        "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml_icon
+                                            do case
+                                            case ListOfColumns->Column_UsedAs = 2
+                                                l_cHtml_icon     := [<i class="bi bi-key"></i>]
+                                            case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
+                                                l_cHtml_icon     := [<i class="bi bi-tools"></i>]
+                                            case ListOfColumns->Column_UsedAs = 3
+                                                if ListOfColumns->Column_ForeignKeyOptional
+                                                    l_cHtml_icon     := [<i class="bi-arrow-bar-right"></i>]
+                                                else
+                                                    l_cHtml_icon     := [<i class="bi-arrow-right"></i>]
+                                                endif
+                                            otherwise
+                                                l_cHtml_icon     := []
+                                            endcase
+                                            return l_cHtml_icon
+                                        } }})
 
-                            do case
-                            case ListOfColumns->Column_UsedAs = 2
-                                l_cHtml_icon     := [<i class="bi bi-key"></i>]
-                                l_cHtml_tr_class := "ColumnNotCore"
-                            case (ListOfColumns->Column_UsedAs = 4) .or. (ListOfColumns->Column_UsedAs = 1 .and. " "+ListOfColumns->Column_Name+" " $ " "+l_cApplicationSupportColumns+" ")
-                                l_cHtml_icon     := [<i class="bi bi-tools"></i>]
-                                l_cHtml_tr_class := "ColumnNotCore"
-                            // case !hb_IsNIL(ListOfColumns->Table_Name)
-                            case ListOfColumns->Column_UsedAs = 3
-                                // l_cHtml_icon     := [<i class="bi-arrow-left"></i>]
-                                if ListOfColumns->Column_ForeignKeyOptional
-                                    l_cHtml_icon     := [<i class="bi-arrow-bar-right"></i>]
-                                else
-                                    l_cHtml_icon     := [<i class="bi-arrow-right"></i>]
-                                endif
-                                l_cHtml_tr_class := "ColumnNotCore"
-                            otherwise
-                                l_cHtml_icon     := []
-                                l_cHtml_tr_class := "ColumnCore"
-                            endcase
+                            :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                        "Rows"  =>{"Expression" => {|| 
+            return [<a class="GridLinkNormal DefaultLink" target="_blank" href="]+oFcgi:p_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
+                PrepareForURLSQLIdentifier("Table",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]+;
+                ["><span class="SpanColumnName">]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</span></a>]
+                                        } }})
 
-                            l_cHtml += [<tr class="]+l_cHtml_tr_class+["]+GetTRStyleBackgroundColorUseStatus(recno(),ListOfColumns->Column_UseStatus)+[>]
-
-                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]+l_cHtml_icon+[</td>]
-
-                                // Name
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += [<a target="_blank" href="]+l_cSitePath+[DataDictionaries/EditColumn/]+l_cCombinedPath+;
-                                                                                                                      PrepareForURLSQLIdentifier("Table",ListOfColumns->Column_Name,ListOfColumns->Column_UID)+[/]+;
-                                                                                                                      ["><span class="SpanColumnName">]+TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))+[</span></a>]
-                                l_cHtml += [</td>]
-
-                                // Type
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-
-                                    // Prepare the tooltip text for enumeration type fields
-                                    if alltrim(ListOfColumns->Column_Type) == "E" .and. el_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
-                                        l_cTooltipEnumValues := [<table>]
-                                        select ListOfEnumValues
-                                        scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
-                                            l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
-                                            l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
-                                                        {[ ]=>[&nbsp;],;
-                                                        ["]=>[&#34;],;
-                                                        [']=>[&#39;],;
-                                                        [<]=>[&lt;],;
-                                                        [>]=>[&gt;]})+[</td>]
-                                            l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
-                                            if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
-                                                l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                            :AddColumn({"Header"=>{"Caption"=>"Type"},;
+                                        "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml := ""
+                                            // Prepare the tooltip text for enumeration type fields
+                                            if alltrim(ListOfColumns->Column_Type) == "E" .and. el_seek(trans(ListOfColumns->pk)+'*',"ListOfEnumValues","tag1")
+                                                l_cTooltipEnumValues := [<table>]
+                                                select ListOfEnumValues
+                                                scan while ListOfEnumValues->Column_pk == ListOfColumns->pk
+                                                    l_cTooltipEnumValues += [<tr]+strtran(GetTRStyleBackgroundColorUseStatus(0,ListOfEnumValues->EnumValue_UseStatus,"1.0"),["],['])+[>]
+                                                    l_cTooltipEnumValues += [<td style='text-align:left'>]+hb_StrReplace(ListOfEnumValues->EnumValue_Name+FormatAKAForDisplay(ListOfEnumValues->EnumValue_AKA),;
+                                                                {[ ]=>[&nbsp;],;
+                                                                ["]=>[&#34;],;
+                                                                [']=>[&#39;],;
+                                                                [<]=>[&lt;],;
+                                                                [>]=>[&gt;]})+[</td>]
+                                                    l_cTooltipEnumValues += [<td>]+iif(hb_orm_isnull("ListOfEnumValues","EnumValue_Number"),"","&nbsp;"+trans(ListOfEnumValues->EnumValue_Number))+[</td>]
+                                                    if !hb_orm_isnull("ListOfEnumValues","EnumValue_Description") .and. !empty(ListOfEnumValues->EnumValue_Description)
+                                                        l_cTooltipEnumValues += [<td>&nbsp;...&nbsp;</td>]
+                                                    else
+                                                        l_cTooltipEnumValues += [<td></td>]
+                                                    endif
+                                                    l_cTooltipEnumValues += [</tr>]
+                                                endscan
+                                                l_cTooltipEnumValues += [</table>]
                                             else
-                                                l_cTooltipEnumValues += [<td></td>]
+                                                l_cTooltipEnumValues := ""
                                             endif
-                                            l_cTooltipEnumValues += [</tr>]
-                                        endscan
-                                        l_cTooltipEnumValues += [</table>]
-                                    else
-                                        l_cTooltipEnumValues := ""
-                                    endif
 
-                                    l_cHtml += FormatColumnTypeInfo(alltrim(ListOfColumns->Column_Type),;
-                                                                    ListOfColumns->Column_Length,;
-                                                                    ListOfColumns->Column_Scale,;
-                                                                    ListOfColumns->Column_Unicode,;
-                                                                    ListOfColumns->Namespace_Name,;
-                                                                    ListOfColumns->EnumerationNamespace_Name,;
-                                                                    ListOfColumns->EnumerationNamespace_AKA,;
-                                                                    ListOfColumns->EnumerationNamespace_UID,;
-                                                                    ListOfColumns->Enumeration_Name,;
-                                                                    ListOfColumns->Enumeration_AKA,;
-                                                                    ListOfColumns->Enumeration_UID,;
-                                                                    ListOfColumns->Enumeration_ImplementAs,;
-                                                                    ListOfColumns->Enumeration_ImplementLength,;
-                                                                    l_cSitePath,;
-                                                                    l_cApplicationLinkCode,;
-                                                                    l_cTooltipEnumValues)
+                                            l_cHtml += FormatColumnTypeInfo(alltrim(ListOfColumns->Column_Type),;
+                                                                            ListOfColumns->Column_Length,;
+                                                                            ListOfColumns->Column_Scale,;
+                                                                            ListOfColumns->Column_Unicode,;
+                                                                            ListOfColumns->Namespace_Name,;
+                                                                            ListOfColumns->EnumerationNamespace_Name,;
+                                                                            ListOfColumns->EnumerationNamespace_AKA,;
+                                                                            ListOfColumns->EnumerationNamespace_UID,;
+                                                                            ListOfColumns->Enumeration_Name,;
+                                                                            ListOfColumns->Enumeration_AKA,;
+                                                                            ListOfColumns->Enumeration_UID,;
+                                                                            ListOfColumns->Enumeration_ImplementAs,;
+                                                                            ListOfColumns->Enumeration_ImplementLength,;
+                                                                            l_cSitePath,;
+                                                                            l_cApplicationLinkCode,;
+                                                                            l_cTooltipEnumValues)
 
-                                    if ListOfColumns->Column_Array
-                                        l_cHtml += " [Array]"
-                                    endif
-                                l_cHtml += [</td>]
+                                            if ListOfColumns->Column_Array
+                                                l_cHtml += " [Array]"
+                                            endif
+                                            return l_cHtml
+                                        } }})
 
-                                // Nullable
-                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                    l_cHtml += iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;])
-                                l_cHtml += [</td>]
+                            :AddColumn({"Header"=>{"Caption"=>"Nullable"},;
+                                        "Rows"  =>{"Expression" => {|| iif(ListOfColumns->Column_Nullable,[<i class="bi bi-check-lg"></i>],[&nbsp;]) } }})
 
-                                // Default
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom)
-                                l_cHtml += [</td>]
+                            :AddColumn({"Header"=>{"Caption"=>"Default"},;
+                                        "Rows"  =>{"Expression" => {|| GetColumnDefault(.f.,ListOfColumns->Column_Type,ListOfColumns->Column_DefaultType,ListOfColumns->Column_DefaultCustom) } }})
 
+                            :AddColumn({"Header"=>{"Caption"=>"Foreign Key<br>To/Use/Optional"},;
+                                        "Rows"  =>{"Expression" => {|| 
+                                            local l_cHtml := ""
+                                            if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
+                                                l_cHtml += [<a class="GridLinkNewPage" target="_blank" href="]+;
+                                                                    l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+;
+                                                                                                                PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
+                                                                                                                PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
+                                                                                                                [">]
 
+                                                if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
+                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                                else
+                                                    // l_cHtml += ListOfColumns->ForeignNamespace_Name+[.]+ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA)  //_M_ To Enhance
+                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignNamespace_Name+FormatAKAForDisplay(ListOfColumns->ForeignNamespace_AKA))
+                                                    l_cHtml += [.]
+                                                    l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
+                                                endif
 
-                                // // Foreign Key To/Use/Optional
-                                // l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                //     if !hb_IsNIL(ListOfColumns->Table_Name)
-                                //         l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
-                                //                        l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+[/]+;
-                                //                                         ListOfColumns->Namespace_Name+"/"+ListOfColumns->Table_Name+[/]+;
-                                //                                         [">]
-                                //         l_cHtml += ListOfColumns->Namespace_Name+[.]+ListOfColumns->Table_Name+FormatAKAForDisplay(ListOfColumns->Table_AKA)
-                                //         l_cHtml += [</a>]
-                                //         if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
-                                //             l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
-                                //         endif
-                                //         if ListOfColumns->Column_ForeignKeyOptional
-                                //             l_cHtml += [<br>Optional]
-                                //         endif
-                                //     endif
-                                // l_cHtml += [</td>]
+                                                l_cHtml += [</a>]
+                                                if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
+                                                    l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
+                                                endif
+                                                if ListOfColumns->Column_ForeignKeyOptional
+                                                    l_cHtml += [<br>Optional]
+                                                endif
+                                            endif
+                                            return l_cHtml
+                                        } }})
 
+                            :AddColumn({"Header"=>{"Caption"=>"On Delete"},;
+                                        "Rows"  =>{"Expression" => {|| iif(ListOfColumns->Column_UsedAs = 3,{"","Protect","Cascade","Break Link"}[iif(el_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)],"") } }})
 
+                            :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                        "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,"")) } }})
 
-                                // Foreign Key To/Use/Optional
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    if !hb_IsNIL(ListOfColumns->ForeignTable_Name)
-                                        l_cHtml += [<a style="color:#]+COLOR_ON_LINK_NEWPAGE+[ !important;" target="_blank" href="]+;
-                                                            l_cSitePath+[DataDictionaries/ListColumns/]+l_cApplicationLinkCode+"/"+;
-                                                                                                        PrepareForURLSQLIdentifier("Namespace",ListOfColumns->ForeignNamespace_Name,ListOfColumns->ForeignNamespace_UID)+"/"+;
-                                                                                                        PrepareForURLSQLIdentifier("Table"    ,ListOfColumns->ForeignTable_Name    ,ListOfColumns->ForeignTable_UID)    +[/]+;
-                                                                                                        [">]
+                            :AddColumn({"Header"=>{"Caption"=>"Usage<br>Status","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)] } }})
 
-                                        if ListOfColumns->Namespace_Name == ListOfColumns->ForeignNamespace_Name
-                                            l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
-                                        else
-                                            // l_cHtml += ListOfColumns->ForeignNamespace_Name+[.]+ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA)  //_M_ To Enhance
-                                            l_cHtml += TextToHTML(ListOfColumns->ForeignNamespace_Name+FormatAKAForDisplay(ListOfColumns->ForeignNamespace_AKA))
-                                            l_cHtml += [.]
-                                            l_cHtml += TextToHTML(ListOfColumns->ForeignTable_Name+FormatAKAForDisplay(ListOfColumns->ForeignTable_AKA))
-                                        endif
+                            :AddColumn({"Header"=>{"Caption"=>"Doc<br>Status","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| {"","Not Needed","In Progress","Complete"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)] } }})
 
-                                        l_cHtml += [</a>]
-                                        if !hb_IsNIL(ListOfColumns->Column_ForeignKeyUse)
-                                            l_cHtml += [<br>]+ListOfColumns->Column_ForeignKeyUse
-                                        endif
-                                        if ListOfColumns->Column_ForeignKeyOptional
-                                            l_cHtml += [<br>Optional]
-                                        endif
-                                    endif
-                                l_cHtml += [</td>]
+                            :AddColumn({"Header"=>{"Caption"=>"Used By","Align" => "center"},;
+                                        "Rows"  =>{"Expression" => {|| GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"") } }})
 
+                            :AddColumn({"Condition"=>{|| (l_nNumberOfCustomFieldValues > 0)},;
+                                        "Header"   =>{"Caption"=>"Other","Align" => "center"},;
+                                        "Rows"     =>{"Expression" => {|| CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping) }}})
 
-                                // // Foreign Key Required
-                                // l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                //     if ListOfColumns->Column_UsedAs == COLUMN_USEDAS_FOREIGN_KEY
-                                //         l_cHtml += {"","Yes","No"}[iif(el_between(ListOfColumns->Column_Required,1,3),ListOfColumns->Column_Required,1)]
-                                //     endif
-                                // l_cHtml += [</td>]
+                            :AddColumn({"Condition"=>{||l_lWarnings},;
+                                        "Header"   =>{"Caption"=>"Warning","Align" => "center","Class"=>"bg-warning text-danger"},;
+                                        "Rows"     =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,"")) }}})
 
-                                // OnDelete
-                                l_cHtml += [<td class="GridDataControlCells text-center" valign="top">]
-                                    if ListOfColumns->Column_UsedAs = 3
-                                        l_cHtml += {"","Protect","Cascade","Break Link"}[iif(el_between(ListOfColumns->Column_OnDelete,1,4),ListOfColumns->Column_OnDelete,1)]
-                                    endif
-                                l_cHtml += [</td>]
+                            l_cHtml += :Build()
+                        endwith
 
-                                // Description
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_Description,""))
-                                l_cHtml += [</td>]
-
-                                // Use Status
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += {"","Proposed","Under Development","Active","To Be Discontinued","Discontinued"}[iif(el_between(ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN,USESTATUS_DISCONTINUED),ListOfColumns->Column_UseStatus,USESTATUS_UNKNOWN)]
-                                l_cHtml += [</td>]
-
-                                // Doc Status
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += {"","Not Needed","In Progress","Complete"}[iif(el_between(ListOfColumns->Column_DocStatus,DOCTATUS_MISSING,DOCTATUS_COMPLETE),ListOfColumns->Column_DocStatus,DOCTATUS_MISSING)]
-                                l_cHtml += [</td>]
-
-                                // Used By
-                                l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                    l_cHtml += GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL Only","PostgreSQL Only"},"")
-                                l_cHtml += [</td>]
-
-                                if l_nNumberOfCustomFieldValues > 0
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += CustomFieldsBuildGridOther(ListOfColumns->pk,l_hOptionValueToDescriptionMapping)
-                                    l_cHtml += [</td>]
-                                endif
-
-                                if l_lWarnings
-                                    l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                        l_cHtml += TextToHtml(hb_DefaultValue(ListOfColumns->Column_TestWarning,""))
-                                    l_cHtml += [</td>]
-                                endif
-
-                            l_cHtml += [</tr>]
-                        endscan
-                        l_cHtml += [</table>]
-                        
                     l_cHtml += [</div>]
                 l_cHtml += [</div>]
 

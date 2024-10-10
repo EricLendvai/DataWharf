@@ -1460,7 +1460,7 @@ if l_lContinue
     //Try to find if we already have a streamfile
     with object l_oDB_ListOfFileStream
         :Table("2abb88ca-7317-484b-8fbf-df596fd15403","volatile.FileStream","FileStream")
-        :Column("FileStream.pk"     ,"pk")
+        :Column("FileStream.pk" ,"pk")
         :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"        , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Application = ^" , par_iApplicationPk)
@@ -3038,7 +3038,7 @@ if l_lContinue
     //Try to find if we already have a streamfile
     with object l_oDB_ListOfFileStream
         :Table("299a129d-dab1-4dad-0002-000000000200","volatile.FileStream","FileStream")
-        :Column("FileStream.pk"     ,"pk")
+        :Column("FileStream.pk" ,"pk")
         :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"  , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Table = ^" , par_iTablePk)

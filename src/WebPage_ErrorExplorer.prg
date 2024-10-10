@@ -38,6 +38,8 @@ local l_cLastReviewTime
 
 local l_cQueryParameterInfo := ""
 
+local l_oGrid
+
 oFcgi:TraceAdd("BuildPageErrorExplorer")
 
 //Improved and new way:
@@ -206,73 +208,37 @@ case l_cURLAction == "ApplicationErrors"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfApplicationErrors")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="7">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
+                        :SetTitle({|l_nNumberOfRows|"Application Errors ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="7">Application Errors (]+Trans(l_nNumberOfErrors)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Time"},;
+                                    "Rows"  =>{"Expression" => {|| FormatDatetimeInTwoLines(ListOfApplicationErrors->FastCGIRunLog_ErrorDatetime) } }})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Error Time</th>]
-                        l_cHtml += [<th class="text-white">User</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Version</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Build<br>Info</th>]
-                        l_cHtml += [<th class="text-white">IP</th>]
-                        // l_cHtml += [<th class="text-white">OS Info</th>]
-                        // l_cHtml += [<th class="text-white">Host Info</th>]
-                        l_cHtml += [<th class="text-white text-center">Execution<br>Start Time</th>]
-                        l_cHtml += [<th class="text-white">Error Message</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"User"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(nvl(ListOfApplicationErrors->User_FirstName,"")+"<br>"+nvl(ListOfApplicationErrors->User_LastName,"")," ","&nbsp;") } }})
 
-                    select ListOfApplicationErrors
-                    scan all
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Version","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfApplicationErrors->FastCGIRunLog_ApplicationVersion,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += FormatDatetimeInTwoLines(ListOfApplicationErrors->FastCGIRunLog_ErrorDatetime)
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Build<br>Info","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(strtran(alltrim(nvl(ListOfApplicationErrors->FastCGIRunLog_ApplicationBuildInfo,"")),"  "," 0")," ","<br>") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfApplicationErrors->User_FirstName,"")+"<br>"+nvl(ListOfApplicationErrors->User_LastName,"")," ","&nbsp;")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"IP"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfApplicationErrors->FastCGIRunLog_IP,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                                l_cHtml += nvl(ListOfApplicationErrors->FastCGIRunLog_ApplicationVersion,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Execution<br>Start Time","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| FormatDatetimeInTwoLines(ListOfApplicationErrors->FastCGIRunLog_Datetime) } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(strtran(alltrim(nvl(ListOfApplicationErrors->FastCGIRunLog_ApplicationBuildInfo,"")),"  "," 0")," ","<br>")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Message"},;
+                                    "Rows"  =>{"Expression" => {|| TextToHTML(nvl(ListOfApplicationErrors->FastCGIError_ErrorMessage,"")) } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfApplicationErrors->FastCGIRunLog_IP,"")
-                            l_cHtml += [</td>]
+                        l_cHtml += :Build()
+                    endwith
 
-                            // l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            //     l_cHtml += nvl(ListOfApplicationErrors->FastCGIRunLog_OSInfo,"")
-                            // l_cHtml += [</td>]
-
-                            // l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            //     l_cHtml += nvl(ListOfApplicationErrors->FastCGIRunLog_HostInfo,"")
-                            // l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += FormatDatetimeInTwoLines(ListOfApplicationErrors->FastCGIRunLog_Datetime)
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfApplicationErrors->FastCGIError_ErrorMessage,""),chr(13),"<br>")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
-                    
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
         l_cHtml += [</div>]
@@ -327,32 +293,19 @@ case l_cURLAction == "DistinctApplicationErrors"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfApplicationErrors")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="1">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="1">Distinct Application Errors (]+Trans(l_nNumberOfErrors)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|"Distinct Application Errors ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Error Message</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Message"},;
+                                    "Rows"  =>{"Expression" => {|| TextToHTML(nvl(ListOfApplicationErrors->FastCGIError_ErrorMessage,"")) } }})
 
-                    select ListOfApplicationErrors
-                    scan all
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfApplicationErrors->FastCGIError_ErrorMessage,""),chr(13),"<br>")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
+                        l_cHtml += :Build()
+                    endwith
                     
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
@@ -418,83 +371,46 @@ case l_cURLAction == "DataErrors"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfDataErrors")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="10">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="10">Data Errors (]+Trans(l_nNumberOfErrors)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|"Data Errors ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Error Time</th>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Time"},;
+                                    "Rows"  =>{"Expression" => {|| FormatDatetimeInTwoLines(ListOfDataErrors->SchemaAndDataErrorLog_datetime) } }})
 
-                        l_cHtml += [<th class="text-white">User</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Version</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Build<br>Info</th>]
-                        l_cHtml += [<th class="text-white">Event ID</th>]
-                        l_cHtml += [<th class="text-white">IP</th>]
-                        l_cHtml += [<th class="text-white">Namespace</th>]
-                        l_cHtml += [<th class="text-white">Table</th>]
-                        l_cHtml += [<th class="text-white">pk</th>]
-                        l_cHtml += [<th class="text-white">Error Message</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"User"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(nvl(ListOfDataErrors->User_FirstName,"")+"<br>"+nvl(ListOfDataErrors->User_LastName,"")," ","&nbsp;") } }})
 
-                    select ListOfDataErrors
-                    scan all
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Version","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfDataErrors->SchemaAndDataErrorLog_ApplicationVersion,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += FormatDatetimeInTwoLines(ListOfDataErrors->SchemaAndDataErrorLog_datetime)
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Build<br>Info","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(strtran(alltrim(nvl(ListOfDataErrors->SchemaAndDataErrorLog_ApplicationBuildInfo,"")),"  "," 0")," ","<br>") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                // l_cHtml += strtran(nvl(ListOfDataErrors->User_FirstName,"")+" "+nvl(ListOfDataErrors->User_LastName,"")," ","&nbsp;")
-                                l_cHtml += strtran(nvl(ListOfDataErrors->User_FirstName,"")+"<br>"+nvl(ListOfDataErrors->User_LastName,"")," ","&nbsp;")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Event ID"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(nvl(ListOfDataErrors->SchemaAndDataErrorLog_eventid,""),"-","-<br>") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                                l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_ApplicationVersion,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"IP"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfDataErrors->SchemaAndDataErrorLog_ip,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(strtran(alltrim(nvl(ListOfDataErrors->SchemaAndDataErrorLog_ApplicationBuildInfo,"")),"  "," 0")," ","<br>")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfDataErrors->SchemaAndDataErrorLog_NamespaceName,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                // l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_eventid,"")
-                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorLog_eventid,""),"-","-<br>")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Table"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfDataErrors->SchemaAndDataErrorLog_Tablename,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_ip,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"pk"},;
+                                    "Rows"  =>{"Expression" => {|| iif(nvl(ListOfDataErrors->SchemaAndDataErrorLog_RecordPk,0) > 0,trans(nvl(ListOfDataErrors->SchemaAndDataErrorLog_RecordPk,0)),"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_NamespaceName,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Message"},;
+                                    "Rows"  =>{"Expression" => {|| TextToHTML(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,"")) } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfDataErrors->SchemaAndDataErrorLog_Tablename,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_iPk := nvl(ListOfDataErrors->SchemaAndDataErrorLog_RecordPk,0)
-                                if l_iPk > 0
-                                    l_cHtml += trans(l_iPk)
-                                endif
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,""),chr(13),"<br>")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
+                        l_cHtml += :Build()
+                    endwith
                     
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
@@ -546,32 +462,18 @@ case l_cURLAction == "DistinctDataErrors"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfDataErrors")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="1">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
+                        :SetTitle({|l_nNumberOfRows|"Distinct Data Errors ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="1">Distinct Data Errors (]+Trans(l_nNumberOfErrors)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Error Message"},;
+                                    "Rows"  =>{"Expression" => {|| TextToHTML(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,"")) } }})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Error Message</th>]
-                    l_cHtml += [</tr>]
-
-                    select ListOfDataErrors
-                    scan all
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfDataErrors->SchemaAndDataErrorMessage_ErrorMessage,""),chr(13),"<br>")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
+                        l_cHtml += :Build()
+                    endwith
                     
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
@@ -632,82 +534,45 @@ case l_cURLAction == "AutoTrimEvents"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfAutoTrimLog")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="10">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
+                        :SetTitle({|l_nNumberOfRows|"Trimmed Data Events ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="10">Trimmed Data Events (]+Trans(l_nNumberOfAutoTrim)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Event Time"},;
+                                    "Rows"  =>{"Expression" => {|| FormatDatetimeInTwoLines(ListOfAutoTrimLog->SchemaAutoTrimLog_datetime) } }})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Event Time</th>]
-                        l_cHtml += [<th class="text-white">User</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Version</th>]
-                        l_cHtml += [<th class="text-white text-center">Application<br>Build<br>Info</th>]
-                        l_cHtml += [<th class="text-white">Event ID</th>]
-                        l_cHtml += [<th class="text-white">IP</th>]
-                        l_cHtml += [<th class="text-white">Namespace</th>]
-                        l_cHtml += [<th class="text-white">Table</th>]
-                        l_cHtml += [<th class="text-white">pk</th>]
-                        l_cHtml += [<th class="text-white">Column</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"User"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(nvl(ListOfAutoTrimLog->User_FirstName,"")+"<br>"+nvl(ListOfAutoTrimLog->User_LastName,"")," ","&nbsp;") } }})
 
-                    select ListOfAutoTrimLog
-                    scan all
-                        // l_iUserPk := ListOfAutoTrimLog->pk
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Version","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ApplicationVersion,"") } }})
 
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                        :AddColumn({"Header"=>{"Caption"=>"Application<br>Build<br>Info","Align" => "center"},;
+                                    "Rows"  =>{"Expression" => {|| strtran(strtran(strtran(strtran(alltrim(nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ApplicationBuildInfo,"")),"  "," 0")," ","&nbsp;",,1)," ","<br>",,1),"","&nbsp;",,1) } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += FormatDatetimeInTwoLines(ListOfAutoTrimLog->SchemaAutoTrimLog_datetime)
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Event ID"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_eventid,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(nvl(ListOfAutoTrimLog->User_FirstName,"")+"<br>"+nvl(ListOfAutoTrimLog->User_LastName,"")," ","&nbsp;")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"IP"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ip,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top" align="center">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ApplicationVersion,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_NamespaceName,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += strtran(strtran(strtran(strtran(alltrim(nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ApplicationBuildInfo,"")),"  "," 0")," ","&nbsp;",,1)," ","<br>",,1),"","&nbsp;",,1)
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Table"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_Tablename,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_eventid,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"pk"},;
+                                    "Rows"  =>{"Expression" => {|| iif(nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_RecordPk,0) > 0,trans(nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_RecordPk,0)),"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_ip,"")
-                            l_cHtml += [</td>]
+                        :AddColumn({"Header"=>{"Caption"=>"Column"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_FieldName,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_NamespaceName,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_Tablename,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_iPk := nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_RecordPk,0)
-                                if l_iPk > 0
-                                    l_cHtml += trans(l_iPk)
-                                endif
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_FieldName,"")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
+                        l_cHtml += :Build()
+                    endwith
                     
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
@@ -764,49 +629,27 @@ case l_cURLAction == "DistinctAutoTrimEvents"
                         l_cHtml += [<div class="mb-2">]+l_cQueryParameterInfo+[</div>]
                     endif
 
-                    l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                    l_oGrid := Grid()
+                    with object l_oGrid
+                        :SetAlias("ListOfAutoTrimLog")
 
-                    //Column Header
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="4">Query Time: ]+l_cCurrentDatetimeForDisplay+[</th>]
-                    l_cHtml += [</tr>]
+                        :SetTitle({|l_nNumberOfRows|[Query Time: ]+l_cCurrentDatetimeForDisplay})
+                        :SetTitle({|l_nNumberOfRows|"Trimmed Data Content ("+trans(l_nNumberOfRows)+")"})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white text-center" colspan="4">Trimmed Data Content (]+Trans(l_nNumberOfAutoTrim)+[)</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Event ID"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_eventid,"") } }})
 
-                    l_cHtml += [<tr class="bg-primary bg-gradient">]
-                        l_cHtml += [<th class="text-white">Event ID</th>]
-                        l_cHtml += [<th class="text-white">Namespace</th>]
-                        l_cHtml += [<th class="text-white">Table</th>]
-                        l_cHtml += [<th class="text-white">Column</th>]
-                    l_cHtml += [</tr>]
+                        :AddColumn({"Header"=>{"Caption"=>"Namespace"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_NamespaceName,"") } }})
 
-                    select ListOfAutoTrimLog
-                    scan all
-                        // l_iUserPk := ListOfAutoTrimLog->pk
+                        :AddColumn({"Header"=>{"Caption"=>"Table"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_Tablename,"") } }})
 
-                        l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                        :AddColumn({"Header"=>{"Caption"=>"Column"},;
+                                    "Rows"  =>{"Expression" => {|| nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_FieldName,"") } }})
 
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_eventid,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_NamespaceName,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_Tablename,"")
-                            l_cHtml += [</td>]
-
-                            l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                                l_cHtml += nvl(ListOfAutoTrimLog->SchemaAutoTrimLog_FieldName,"")
-                            l_cHtml += [</td>]
-
-                        l_cHtml += [</tr>]
-                    endscan
-                    l_cHtml += [</table>]
+                        l_cHtml += :Build()
+                    endwith
                 
                 l_cHtml += [</div>]
             l_cHtml += [</div>]
@@ -1253,7 +1096,7 @@ if empty(l_cErrorMessage)
     l_cHtml += [<div class="row justify-content-center mb-3">]
         l_cHtml += [<div class="col-auto">]
 
-            l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+            l_cHtml += [<table class="table table-sm table-bordered">]  // DO NOT USE GRID CLASS
 
                 //Column Header
                 l_cHtml += [<tr class="bg-primary bg-gradient">]

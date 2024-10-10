@@ -168,9 +168,9 @@ local l_cHtml := []
 local l_oDB_ListOfUsers             := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfProjectAccess     := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_oDB_ListOfApplicationAccess := hb_SQLData(oFcgi:p_o_SQLConnection)
-local l_cSitePath := oFcgi:p_cSitePath
 local l_nNumberOfUsers
 local l_iUserPk
+local l_oGrid
 
 oFcgi:TraceAdd("UserListFormBuild")
 
@@ -230,8 +230,6 @@ with object l_oDB_ListOfApplicationAccess
     endwith
 endwith
 
-
-
 l_cHtml += [<div class="m-3">]
 
     if empty(l_nNumberOfUsers)
@@ -243,74 +241,70 @@ l_cHtml += [<div class="m-3">]
         l_cHtml += [<div class="row justify-content-center">]
             l_cHtml += [<div class="col-auto">]
 
-                l_cHtml += [<table class="table table-sm table-bordered">]   // table-striped
+                l_oGrid := Grid()
+                with object l_oGrid
+                    :SetAlias("ListOfUsers")
+                    :SetTitle({|l_nNumberOfRows|"Users ("+trans(l_nNumberOfRows)+")"})
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white text-center" colspan="7">Users (]+Trans(l_nNumberOfUsers)+[)</th>]
-                l_cHtml += [</tr>]
+                    :SetRowExtraClasses({||
+                        local l_cExtraClass
+                        local l_iRecno := recno()
+                        do case
+                        case ListOfUsers->User_Status == 2  // On Hold / Inactive
+                            l_cExtraClass := "GridRowUsageStatusDiscontinued"
+                        otherwise
+                            if l_iRecno > 0 .and. mod(l_iRecno,2) == 0
+                                l_cExtraClass := "GridRowEven"
+                            else
+                                l_cExtraClass := "GridRowOdd"
+                            endif
+                        endcase
+                        return l_cExtraClass
+                        })
 
-                l_cHtml += [<tr class="bg-primary bg-gradient">]
-                    l_cHtml += [<th class="text-white">Name</th>]
-                    l_cHtml += [<th class="text-white">ID</th>]
-                    // l_cHtml += [<th class="text-white">Password</th>]
-                    l_cHtml += [<th class="text-white">Access Mode</th>]
-                    l_cHtml += [<th class="text-white">Projects</th>]
-                    l_cHtml += [<th class="text-white">Applications</th>]
-                    l_cHtml += [<th class="text-white">Description</th>]
-                    l_cHtml += [<th class="text-white text-center">Status</th>]
-                l_cHtml += [</tr>]
+                    :AddColumn({"Header"=>{"Caption"=>"Name"},;
+                                "Rows"  =>{"Expression" => {|| [<a class="GridLinkNormal DefaultLink" href="]+oFcgi:p_cSitePath+[Users/EditUser/]+alltrim(ListOfUsers->User_ID)+[/">]+alltrim(ListOfUsers->User_FirstName)+" "+alltrim(ListOfUsers->User_LastName)+[</a>] } }})
 
-                select ListOfUsers
-                scan all
-                    l_iUserPk := ListOfUsers->pk
+                    :AddColumn({"Header"=>{"Caption"=>"ID"},;
+                                "Rows"  =>{"Expression" => {|| alltrim(ListOfUsers->User_ID) } }})
 
-                    l_cHtml += [<tr]+GetTRStyleBackgroundColorUseStatus(recno(),0)+[>]
+                    :AddColumn({"Header"=>{"Caption"=>"Access Mode"},;
+                                "Rows"  =>{"Expression" => {|| {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access","Root Admin (User Control)"}[iif(el_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += [<a href="]+l_cSitePath+[Users/EditUser/]+alltrim(ListOfUsers->User_ID)+[/">]+alltrim(ListOfUsers->User_FirstName)+" "+alltrim(ListOfUsers->User_LastName)+[</a>]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Projects"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                    local l_cHtml := ""
+                                    l_iUserPk := ListOfUsers->pk
+                                    select ListOfProjectAccess
+                                    scan all for ListOfProjectAccess->User_Pk == l_iUserPk
+                                        l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
+                                            l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","","Full Access"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,7),ListOfProjectAccess->AccessLevel,1)]
+                                        l_cHtml += [</div>]
+                                    endscan
+                                    return l_cHtml
+                                 } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += alltrim(ListOfUsers->User_ID)
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Applications"},;
+                                "Rows"  =>{"Expression" => {|| 
+                                    local l_cHtml := ""
+                                    l_iUserPk := ListOfUsers->pk
+                                    select ListOfApplicationAccess
+                                    scan all for ListOfApplicationAccess->User_Pk == l_iUserPk
+                                        l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
+                                            l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load Schema","Full Access"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
+                                        l_cHtml += [</div>]
+                                    endscan
+                                    return l_cHtml
+                                 } }})
 
-                        // l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                        //     l_cHtml += alltrim(ListOfUsers->User_Password)
-                        // l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Description"},;
+                                "Rows"  =>{"Expression" => {|| TextToHtml(hb_DefaultValue(ListOfUsers->User_Description,"")) } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Project And Application Specific","All Projects and Applications Read Only","All Projects and Applications Full Access","Root Admin (User Control)"}[iif(el_between(ListOfUsers->User_AccessMode,1,4),ListOfUsers->User_AccessMode,1)]
-                        l_cHtml += [</td>]
+                    :AddColumn({"Header"=>{"Caption"=>"Status"},;
+                                "Rows"  =>{"Expression" => {|| {"Active","Inactive"}[iif(el_between(ListOfUsers->User_Status,1,2),ListOfUsers->User_Status,1)] } }})
 
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Projects
-                            select ListOfProjectAccess
-                            scan all for ListOfProjectAccess->User_Pk == l_iUserPk
-                                l_cHtml += [<div>]+ListOfProjectAccess->Project_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything","","Full Access"}[iif(el_between(ListOfProjectAccess->AccessLevel,1,7),ListOfProjectAccess->AccessLevel,1)]
-                                l_cHtml += [</div>]
-                            endscan
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">] //Applications
-                            select ListOfApplicationAccess
-                            scan all for ListOfApplicationAccess->User_Pk == l_iUserPk
-                                l_cHtml += [<div>]+ListOfApplicationAccess->Application_Name+[ - ]
-                                    l_cHtml += {"None","Read Only","Edit Description and Information Entries","Edit Description and Information Entries and Diagrams","Edit Anything and Import/Export","Edit Anything and Load Schema","Full Access"}[iif(el_between(ListOfApplicationAccess->AccessLevel,1,7),ListOfApplicationAccess->AccessLevel,1)]
-                                l_cHtml += [</div>]
-                            endscan
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += TextToHtml(hb_DefaultValue(ListOfUsers->User_Description,""))
-                        l_cHtml += [</td>]
-
-                        l_cHtml += [<td class="GridDataControlCells" valign="top">]
-                            l_cHtml += {"Active","Inactive"}[iif(el_between(ListOfUsers->User_Status,1,2),ListOfUsers->User_Status,1)]
-                        l_cHtml += [</td>]
-
-                    l_cHtml += [</tr>]
-                endscan
-                l_cHtml += [</table>]
+                    l_cHtml += :Build()
+                endwith
                 
             l_cHtml += [</div>]
         l_cHtml += [</div>]

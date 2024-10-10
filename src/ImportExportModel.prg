@@ -267,7 +267,7 @@ if l_lContinue
     //Try to find if we already have a streamfile
     with object l_oDB_ListOfFileStream
         :Table("36b191e4-39b5-4ee3-bd58-4cf39da5d882","volatile.FileStream","FileStream")
-        :Column("FileStream.pk"     ,"pk")
+        :Column("FileStream.pk" ,"pk")
         :Column("FileStream.UID","UID")
         :Where("FileStream.fk_User = ^"  , oFCgi:p_iUserPk)
         :Where("FileStream.fk_Model = ^" , par_iModelPk)

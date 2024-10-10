@@ -1,4 +1,4 @@
-#define BUILDVERSION "4.21"
+#define BUILDVERSION "4.22"
 
 #include "hb_fcgi.ch"
 #include "hb_orm.ch"
@@ -16,24 +16,25 @@
 
 #define MIN_HARBOUR_ORM_VERSION  "4.14"
 #define MIN_HARBOUR_EL_VERSION   "4.4"
-#define MIN_HARBOUR_FCGI_VERSION "1.10"
+#define MIN_HARBOUR_FCGI_VERSION "1.12"
 
-#define DATAWHARF_SCRIPT_VERSION     "2023_01_23"
-#define VISJS_SCRIPT_VERSION         "2022_02_15_001"
-#define MXGRAPH_SCRIPT_VERSION       "18_0_1"
-#define BOOTSTRAP_SCRIPT_VERSION     "5_0_2"
-// #define BOOTSTRAP_SCRIPT_VERSION     "5_3_2"
+#define DATAWHARF_SCRIPT_VERSION       "2023_01_23"
+#define VISJS_SCRIPT_VERSION           "2022_02_15_001"
+#define MXGRAPH_SCRIPT_VERSION         "18_0_1"
+#define BOOTSTRAP_SCRIPT_VERSION       "5_0_2"
+// #define BOOTSTRAP_SCRIPT_VERSION      "5_3_2"
 
-#define JQUERYUI_SCRIPT_VERSION      "1_12_1_NoTooltip"
-#define JQUERY_SCRIPT_VERSION        "3_6_0"
+#define JQUERYUI_SCRIPT_VERSION        "1_12_1_NoTooltip"
+#define JQUERY_SCRIPT_VERSION          "3_6_0"
 
-//#define JQUERY_SCRIPT_VERSION        "3_7_1"
-//#define JQUERYUI_SCRIPT_VERSION      "1_14_0_NoTooltip"
+//#define JQUERY_SCRIPT_VERSION          "3_7_1"
+//#define JQUERYUI_SCRIPT_VERSION        "1_14_0_NoTooltip"
 
-#define JQUERYSELECT2_SCRIPT_VERSION "2022_01_01"
-#define MARKED_SCRIPT_VERSION        "2022_02_23_001"
-#define BSTREEVIEW_SCRIPT_VERSION    "1_2_0"
-#define JQUERYAMSIFY_SCRIPT_VERSION  "2020_01_27"
+#define JQUERYSELECT2_SCRIPT_VERSION   "2022_01_01"
+#define MARKED_SCRIPT_VERSION          "2022_02_23_001"
+#define BSTREEVIEW_SCRIPT_VERSION      "1_2_0"
+#define JQUERYAMSIFY_SCRIPT_VERSION    "2020_01_27"
+#define JQUERYFLOATHEAD_SCRIPT_VERSION "2024_10_09"
 
 #define WEBPAGEHANDLE_NAME            1
 #define WEBPAGEHANDLE_ACCESSMODE      2
@@ -42,12 +43,11 @@
 
 #define COLOR_ON_LINK_NEWPAGE "198754"
 
-#define APPLICATION_TITLE "DataWharf"           // Default Value, Can be overwritten in config.txt
-#define COLOR_HEADER_BACKGROUND "E3F2FD"        // Default Value, Can be overwritten in config.txt
-#define COLOR_HEADER_TEXT_WHITE .f.             // Default Value, Can be overwritten in config.txt
-
-//#define LOGO_THEME_NAME "RainierSailBoat"
+#define APPLICATION_TITLE "Demo"              // Default Value, Can be overwritten in config.txt
+#define COLOR_HEADER_BACKGROUND "E3F2FD"      // Default Value, Can be overwritten in config.txt
 #define LOGO_THEME_NAME "RainierKayak"        // Default Value, Can be overwritten in config.txt
+#define COLOR_HEADER_TEXT "000000"            // Default Value, Can be overwritten in config.txt
+#define COLOR_LOGO_TEXT "0000FF"              // Default Value, Can be overwritten in config.txt
 
 #define GOINEDITMODE "$('.TopTabs').addClass('disabled');$('.RemoveOnEdit').remove();$('#ButtonSave').addClass('btn-warning').removeClass('btn-primary').removeClass('disabled');$('#ButtonDoneCancel').val('Cancel');"
 
@@ -102,10 +102,19 @@
 
 #define USESTATUS_6_NODE_BACKGROUND    "ff9696"       // Discontinued
 #define USESTATUS_6_NODE_TR_BACKGROUND "255,150,150"  // Discontinued
-#define USESTATUS_6_NODE_HIGHLIGHT  "feb4b4"
+#define USESTATUS_6_NODE_HIGHLIGHT     "feb4b4"
 
 #define STAGE_6_NODE_TR_BACKGROUND "255,150,150"  // Discontinued
 #define STAGE_6_NODE_HIGHLIGHT  "feb4b4"
+
+#define GRID_ROW_USESTATUS_2_COLOR         "0DCAF0"   //Proposed
+#define GRID_ROW_USESTATUS_2_COLOR_ONHOVER "66E4FF"   //Proposed
+
+#define GRID_ROW_USESTATUS_0_COLOR         "0D6EFD"   //Unknown or Active
+#define GRID_ROW_USESTATUS_0_COLOR_ONHOVER "FFFFFF"   //Unknown or Active
+
+#define GRID_ROW_USESTATUS_6_COLOR         "DE4554"   //Discontinued
+#define GRID_ROW_USESTATUS_6_COLOR_ONHOVER "FFB6B8"   //Discontinued
 
 #define MODELING_ENTITY_NODE_BACKGROUND "99fdfc"
 #define MODELING_ENTITY_NODE_HIGHLIGHT  "c5e789"
@@ -135,6 +144,14 @@
 
 #define USESTATUS_6_EDGE_BACKGROUND "ff9696"
 #define USESTATUS_6_EDGE_HIGHLIGHT  SELECTED_NODE_BORDER
+
+#define STATUS_INACTIVE_BACKGROUND    "ff9696"
+#define STATUS_INACTIVE_TR_BACKGROUND "255,150,150"
+#define STATUS_INACTIVE_HIGHLIGHT  "feb4b4"
+
+#define STATUS_HIDDEN_BACKGROUND    "ff5050"
+#define STATUS_HIDDEN_TR_BACKGROUND "255,80,80"
+#define STATUS_HIDDEN_HIGHLIGHT  "fe6464"
 
 #define USESTATUS_UNKNOWN          1
 #define USESTATUS_PROPOSED         2
@@ -198,3 +215,6 @@
 
 #define HB_TTOC_FORMAT         "yyyy-mm-dd", "hh:mm:ss"
 #define HB_TTOC_FORMAT_WITH_MS "yyyy-mm-dd", "hh:mm:ss.fff"
+
+#define UDP_IP   "127.0.0.1"
+#define UPD_PORT 49152
