@@ -242,7 +242,7 @@ local l_bSha256
 local l_iWebUserAgentPk
 // local l_cOpacity := "0.3"  //hb_DefaultValue(par_cOpacity,"0.3")
 
-SendUDPMessage(UDP_IP,UPD_PORT,"Request Counter "+trans(::RequestCount),.f.)
+// SendUDPMessage(UDP_IP,UPD_PORT,"Request Counter "+trans(::RequestCount),.f.)         // Used in Conjunction with WharfSystems.
 
 SendToDebugView("Request Counter",::RequestCount)
 SendToDebugView("Requested URL",::GetEnvironment("REDIRECT_URL"))

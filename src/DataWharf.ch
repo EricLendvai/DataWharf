@@ -216,5 +216,5 @@
 #define HB_TTOC_FORMAT         "yyyy-mm-dd", "hh:mm:ss"
 #define HB_TTOC_FORMAT_WITH_MS "yyyy-mm-dd", "hh:mm:ss.fff"
 
-#define UDP_IP   "127.0.0.1"
-#define UPD_PORT 49152
+// #define UDP_IP   "127.0.0.1"
+// #define UPD_PORT 49152
