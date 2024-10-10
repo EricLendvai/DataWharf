@@ -5,6 +5,7 @@
 * Changed DataWharf Logo. New config setting "COLOR_LOGO_TEXT" that compliments "COLOR_HEADER_BACKGROUND".
 * Deprecated the config setting "COLOR_HEADER_TEXT_WHITE" and introduced "COLOR_HEADER_TEXT" instead.
 * Config setting "APPLICATION_TITLE" is now used as a "Sub-Title" located under the DataWharf Logo.
+* New Harbour_FastCGI Repo Support.
 
 ## 09/21/2024 v 4.21
 * Default "Track Name Changes" to true.
