@@ -1,5 +1,8 @@
 # DataWharf - Change Log
 
+## 10/24/2024 v 4.24
+* Fix positioning of "Sticky" "Tables" and "Enumerations" grid header when search option mode is changed.
+
 ## 10/23/2024 v 4.23
 * Updated Deployment tally on data dictionary tab to make the difference between system wide deployments and personal ones.
 * Fix Postgresql Delta false positives on binary fields with length.

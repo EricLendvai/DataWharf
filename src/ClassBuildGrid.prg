@@ -173,7 +173,6 @@ oFcgi:p_cjQueryScript += [$('.wf-grid tr').bind("click",function(e) {let cHref =
 if oFcgi:SetupJavaScriptjQueryFloatTableHeader()
     // oFcgi:p_cjQueryScript += [$('#]+l_cTableId+[').floatThead({position: 'fixed'});]
     oFcgi:p_cjQueryScript += [$('#]+l_cTableId+[').floatThead({position: 'auto'});]
-    
 endif
 
 select (l_select)

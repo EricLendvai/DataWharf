@@ -711,6 +711,8 @@ otherwise
 
                 l_cPageHeaderHtml += [ .GridRow:hover .DefaultLink {color: #F4F705;} ]  //FF0000   Will display the default link used. Also Works, except should not be if on another A from another column
 
+                // l_cPageHeaderHtml += [ .GridHeaderRowCells {position: sticky;top: 0;} ]   Does not work very well with multi row headers since only the "th" elements can be flagged as sticky.
+
                 l_cPageHeaderHtml += [</style>]
 
                 ::p_cHeader := l_cPageHeaderHtml
