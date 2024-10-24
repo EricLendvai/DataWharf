@@ -480,7 +480,7 @@ function FixNonNormalizedTableFields()
 local l_cSQLCommand
 
 l_cSQLCommand := [with table_latest_sys as (]
-l_cSQLCommand += [select "Table"."pk" as table_pk,max("Column"."sysm") as latest_sysm]
+l_cSQLCommand += [ select "Table"."pk" as table_pk,max("Column"."sysm") as latest_sysm]
 l_cSQLCommand += [ from "Table"]
 l_cSQLCommand += [ inner join "Column" on "Column"."fk_Table" = "Table"."pk"]
 l_cSQLCommand += [ group by "Table"."pk")]
@@ -494,13 +494,13 @@ function FixNonNormalizedEnumerationFields()
 local l_cSQLCommand
 
 l_cSQLCommand := [with enumeration_latest_sys as (]
-l_cSQLCommand += [select "Enumeration"."pk" as enumeration_pk,max("EnumValue"."sysm") as latest_sysm]
+l_cSQLCommand += [ select "Enumeration"."pk" as enumeration_pk,max("EnumValue"."sysm") as latest_sysm]
 l_cSQLCommand += [ from "Enumeration"]
 l_cSQLCommand += [ inner join "EnumValue" on "EnumValue"."fk_Enumeration" = "Enumeration"."pk"]
 l_cSQLCommand += [ group by "Enumeration"."pk")]
-l_cSQLCommand += [ update "Enumeration" set "sysr" = enumeration_latest_sys.latest_sysm from enumeration_latest_sys where "Enumeration"."pk" = enumeration_latest_sys.enumeration_pk and "Enumeration"."sysr" IS DISTINCT FROM enumeration_latest_sys.latest_sysm;]
+l_cSQLCommand += [ update "Enumeration" set "sysr" = enumeration_latest_sys.latest_sysm from enumeration_latest_sys where "Enumeration"."pk" = enumeration_latest_sys.enumeration_pk and "Enumeration"."sysr" IS DISTINCT FROM enumeration_latest_sys.latest_sysm]
 
-oFcgi:p_o_SQLConnection:SQLExec("ae1423d6-17d5-467f-aa11-2ca5a3117621",l_cSQLCommand)
+oFcgi:p_o_SQLConnection:SQLExec("ae1423d6-17d5-467f-aa11-2ca5a3117622",l_cSQLCommand)
 
 return nil
 //=================================================================================================================

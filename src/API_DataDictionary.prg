@@ -338,7 +338,7 @@ else
 
                             if empty(l_iNamespacePk)
                                 :Field("Namespace.fk_Application" ,l_iApplicationPk)
-                                :Field("Namespace.UID"        ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                :Field("Namespace.UID"            ,oFcgi:p_o_SQLConnection:GetUUIDString())
                                 if :Add()
                                     l_nAddedRecords++
                                     l_iNamespacePk := :Key()
@@ -642,7 +642,7 @@ else
 
                                 if empty(l_iEnumerationPk)
                                     :Field("Enumeration.fk_Namespace" ,l_iNamespacePk)
-                                    :Field("Enumeration.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                    // :Field("Enumeration.UID"          ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                                     if :Add()
                                         l_nAddedRecords++
                                         l_iEnumerationPk := :Key()
@@ -799,7 +799,7 @@ else
                                             :Field("EnumValue.ExternalId"      ,l_iExternalId)
                                             if empty(l_iEnumValuePk)
                                                 :Field("EnumValue.fk_Enumeration"  ,l_iEnumerationPk)
-                                                :Field("EnumValue.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                                // :Field("EnumValue.UID"         ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                                                 if :Add()
                                                     l_nAddedRecords++
                                                 else
@@ -1120,7 +1120,7 @@ else
 
                                 if empty(l_iTablePk)
                                     :Field("Table.fk_Namespace" ,l_iNamespacePk)
-                                    :Field("Table.UID"      ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                    // :Field("Table.UID"          ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                                     if :Add()
                                         l_nAddedRecords++
                                         l_iTablePk := :Key()
@@ -1549,7 +1549,7 @@ else
 
                                                 if empty(l_iColumnPk)
                                                     :Field("Column.fk_Table",l_iTablePk)
-                                                    :Field("Column.UID" ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                                    :Field("Column.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
                                                     if :Add()
                                                         l_nAddedRecords++
                                                         l_iColumnPk := :Key()
@@ -1770,6 +1770,8 @@ case (lower(left(par_cUsedBy,3)) == "all") .or. empty(par_cUsedBy)
     l_nUsedBy := 1
 case lower(left(par_cUsedBy,5)) == "mysql"
     l_nUsedBy := 2
+case lower(left(par_cUsedBy,6)) == "oracle"
+    l_nUsedBy := 4
 case lower(left(par_cUsedBy,8)) == "postgres"
     l_nUsedBy := 3
 otherwise

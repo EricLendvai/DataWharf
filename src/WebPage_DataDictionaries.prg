@@ -1987,6 +1987,8 @@ local l_cHtml := ""
 local l_oDB1  := hb_SQLData(oFcgi:p_o_SQLConnection)
 local l_aSQLResult := {}
 local l_iReccount
+local l_iSystemCount
+local l_iPersonalCount
 local l_cSitePath := oFcgi:p_cSitePath
 local l_cInitialDiagram
 local l_iNumberOfNameSpace
@@ -2103,14 +2105,25 @@ l_cHtml += [<ul class="nav nav-tabs">]
         l_cHtml += [<li class="nav-item">]
             with object l_oDB1
                 :Table("fa9ced84-f14e-4ef0-9047-ca77a564b327","Deployment")
-                :Column("Count(*)","Total")
+                :Column("sum(CASE WHEN Deployment.fk_User = 0 THEN 1 ELSE 0 END)","TotalSystem")
+                :Column("sum(CASE WHEN Deployment.fk_User > 0 THEN 1 ELSE 0 END)","TotalPersonal")
                 :Where("Deployment.fk_Application = ^"                    ,par_iApplicationPk)
                 :Where("Deployment.fk_User = ^ or Deployment.fk_User = 0" ,oFcgi:p_iUserPk)
                 :SQL(@l_aSQLResult)
-                l_iReccount := iif(:Tally == 1,l_aSQLResult[1,1],0) 
+
+                // l_iReccount := iif(:Tally == 1,l_aSQLResult[1,1],0) 
+                if (:Tally == 1)
+                    l_iSystemCount   := nvl(l_aSQLResult[1,1],0)
+                    l_iPersonalCount := nvl(l_aSQLResult[1,2],0)
+                else
+                    l_iSystemCount   := 0
+                    l_iPersonalCount := 0
+                endif
 
             endwith
-            l_cHtml += [<a class="TopTabs nav-link]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools (]+Trans(l_iReccount)+[)</a>]
+            // l_cHtml += [<a class="TopTabs nav-link]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools (]+Trans(l_iReccount)+[)</a>]
+            l_cHtml += [<a class="TopTabs nav-link]+iif(par_cApplicationElement == "DEVELOPMENTTOOLS",[ active],[])+[" href="]+par_cSitePath+[DataDictionaries/DataDictionaryDeploymentTools/]+par_cURLApplicationLinkCode+[/">Deployment Tools (S:]+Trans(l_iSystemCount)+" P:"+Trans(l_iPersonalCount)+[)</a>]
+
         l_cHtml += [</li>]
     // endif
     //--------------------------------------------------------------------------------------
@@ -5022,7 +5035,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Table.Description" ,iif(empty(l_cTableDescription),NULL,l_cTableDescription))
                 :Field("Table.Information" ,iif(empty(l_cTableInformation),NULL,l_cTableInformation))
                 if empty(l_iTablePk)
-                    :Field("Table.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
+                    // :Field("Table.UID",oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                     if :Add()
                         l_iTablePk := :Key()
                     else
@@ -5126,7 +5139,7 @@ case l_cActionOnSubmit == "Save"
                                     scan all
                                         :Table("ab1b0120-bb64-4cfb-b6bc-e6a740594915","Column")
                                         :Field("Column.fk_Table"     ,l_iTablePk)
-                                        :Field("Column.UID"          ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                                        // :Field("Column.UID"          ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                                         :Field("Column.Order"        ,ListOfTemplateColumns->TemplateColumn_Order)
                                         :Field("Column.Name"         ,ListOfTemplateColumns->TemplateColumn_Name)
                                         :Field("Column.AKA"          ,ListOfTemplateColumns->TemplateColumn_AKA)
@@ -5367,12 +5380,12 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                 if :Add()
                     l_iTablePk := :Key()
 
-                    // Duplicate Column
+                    // Duplicate All Columns
                     select ListOfColumns
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Column")
                         :Field("Column.fk_Table"          ,l_iTablePk)
-                        :Field("Column.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        // :Field("Column.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                         :Field("Column.fk_TableForeign"   ,ListOfColumns->Column_fk_TableForeign)
                         :Field("Column.fk_Enumeration"    ,ListOfColumns->Column_fk_Enumeration)
                         :Field("Column.Order"             ,ListOfColumns->Column_Order)
@@ -5408,7 +5421,7 @@ case l_cActionOnSubmit == "Duplicate"   // Table
                     scan all
                         :Table("e8ca18b3-e4a3-4c4c-bc12-dff9fa9b3f84","Index")
                         :Field("Index.fk_Table"   ,l_iTablePk)
-                        :Field("Index.UID"        ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        // :Field("Index.UID"        ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                         :Field("Index.Name"       ,ListOfIndexes->Index_Name)
                         :Field("Index.Unique"     ,ListOfIndexes->Index_Unique)
                         :Field("Index.Expression" ,ListOfIndexes->Index_Expression)
@@ -5981,7 +5994,7 @@ else
                                                             l_cName := ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA)
                                                             if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                                                                 l_cURL  += [:]+trans(ListOfColumns->Column_UsedBy)
-                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                             endif
                                                             l_cHtml := [<a class="GridLinkNormal DefaultLink" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
 
@@ -6282,7 +6295,7 @@ l_cHtml += [<div class="row justify-content-center">]
     scan all
         l_cName := TextToHTML(ListOfColumns->Column_Name+FormatAKAForDisplay(ListOfColumns->Column_AKA))
         if ListOfColumns->Column_UsedBy <> USEDBY_ALLSERVERS
-            l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+            l_cName += [ (]+GetItemInListAtPosition(ListOfColumns->Column_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
         endif
         l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+l_cName+[</span></li>]
     endscan
@@ -6797,6 +6810,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
             l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="4"]+iif(l_nUsedBy==4,[ selected],[])+[>Oracle Only</option>]
             l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
@@ -7355,7 +7369,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iColumnPk)
                     :Field("Column.fk_Table",par_iTablePk)
                     :Field("Column.Order"   ,l_iColumnOrder)
-                    :Field("Column.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    // :Field("Column.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                     if :Add()
                         l_iColumnPk := :Key()
                     else
@@ -7753,7 +7767,7 @@ else
                                                             l_cName := alltrim(ListOfIndexes->Index_Name)
                                                             if ListOfIndexes->Index_UsedBy <> USEDBY_ALLSERVERS
                                                                 l_cURL  += [:]+trans(ListOfIndexes->Index_UsedBy)
-                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfIndexes->Index_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                             endif
                                                             return [<a class="GridLinkNormal DefaultLink" href="]+l_cURL+[/">]+l_cName+[</a>]
                                                        } }})
@@ -7874,6 +7888,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
             l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="4"]+iif(l_nUsedBy==4,[ selected],[])+[>Oracle Only</option>]
             l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
@@ -8086,7 +8101,7 @@ case l_cActionOnSubmit == "Save"
         
             if empty(l_iIndexPk)
                 :Field("Index.fk_Table",par_iTablePk)
-                :Field("Index.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                // :Field("Index.UID"     ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                 if :Add()
                     l_iIndexPk := :Key()
                 else
@@ -9276,7 +9291,7 @@ case l_cActionOnSubmit == "Save"
                 :Field("Enumeration.DocStatus"  ,l_iEnumerationDocStatus)
                 :Field("Enumeration.Description",iif(empty(l_cEnumerationDescription),NULL,l_cEnumerationDescription))
                 if empty(l_iEnumerationPk)
-                    :Field("Enumeration.UID",oFcgi:p_o_SQLConnection:GetUUIDString())
+                    // :Field("Enumeration.UID",oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                     if :Add()
                         l_iEnumerationPk := :Key()
                     else
@@ -9394,11 +9409,10 @@ case l_cActionOnSubmit == "Duplicate"   // Enumeration
                     scan all
                         :Table("11b1eb0a-0e1c-4a3d-b816-a3ea802c4816","EnumValue")
                         :Field("EnumValue.fk_Enumeration"    ,l_iEnumerationPk)
-                        :Field("EnumValue.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                        // :Field("EnumValue.UID"               ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
 
                         :Field("EnumValue.Number"            ,ListOfEnumValues->EnumValue_Number)
                         :Field("EnumValue.Order"             ,ListOfEnumValues->EnumValue_Order)
-                        // :Field("EnumValue.UID"           ,"EnumValue_UID")
                         :Field("EnumValue.Name"              ,ListOfEnumValues->EnumValue_Name)
                         :Field("EnumValue.TrackNameChanges"  ,ListOfEnumValues->EnumValue_TrackNameChanges)
                         :Field("EnumValue.AKA"               ,ListOfEnumValues->EnumValue_AKA)
@@ -10213,7 +10227,7 @@ case l_cActionOnSubmit == "Save"
                 if empty(l_iEnumValuePk)
                     :Field("EnumValue.fk_Enumeration",par_iEnumerationPk)
                     :Field("EnumValue.Order"         ,l_iEnumValueOrder)
-                    :Field("EnumValue.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                    // :Field("EnumValue.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                     if :Add()
                         l_iEnumValuePk := :Key()
                     else
@@ -11651,7 +11665,7 @@ case l_cActionOnSubmit == "Save"
             endif
             if empty(l_iTemplateTablePk)
                 :Field("TemplateTable.fk_Application",par_iApplicationPk)
-                :Field("TemplateTable.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                // :Field("TemplateTable.UID"           ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                 if :Add()
                     l_iTemplateTablePk := :Key()
                 else
@@ -11861,7 +11875,7 @@ else
                                                             l_cName := TextToHTML(ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA))
                                                             if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
                                                                 l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
-                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                             endif
                                                             return [<a href="]+l_cURL+[/">]+l_cName+[</a>]
                                                        } }})
@@ -12006,7 +12020,7 @@ l_cHtml += [<div class="row justify-content-center">]
     scan all
         l_cName := TextToHTML(ListOfTemplateColumns->TemplateColumn_Name+FormatAKAForDisplay(ListOfTemplateColumns->TemplateColumn_AKA))
         if ListOfTemplateColumns->TemplateColumn_UsedBy <> USEDBY_ALLSERVERS
-            l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+            l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
         endif
         l_cHtml += [<li class="ui-state-default" id="EnumList_]+trans(ListOfTemplateColumns->pk)+["><span class="bi bi-arrow-down-up"></span><span> ]+l_cName+[</span></li>]
     endscan
@@ -12380,6 +12394,7 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [<select]+UPDATE_ONSELECT_SAVEBUTTON+[ name="ComboUsedBy" id="ComboUsedBy"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [<option value="1"]+iif(l_nUsedBy==1,[ selected],[])+[>All Servers</option>]
             l_cHtml += [<option value="2"]+iif(l_nUsedBy==2,[ selected],[])+[>MySQL Only</option>]
+            l_cHtml += [<option value="4"]+iif(l_nUsedBy==4,[ selected],[])+[>Oracle Only</option>]
             l_cHtml += [<option value="3"]+iif(l_nUsedBy==3,[ selected],[])+[>PostgreSQL Only</option>]
             l_cHtml += [</select>]
         l_cHtml += [</td>]
@@ -12696,7 +12711,7 @@ case l_cActionOnSubmit == "Save"
             if empty(l_iPk)
                 :Field("TemplateColumn.fk_TemplateTable",par_iTemplateTablePk)
                 :Field("TemplateColumn.Order"           ,l_iColumnOrder)
-                :Field("TemplateColumn.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())
+                // :Field("TemplateColumn.UID"             ,oFcgi:p_o_SQLConnection:GetUUIDString())     // Will be set via default value instead
                 if :Add()
                     l_iPk := :Key()
                 else
@@ -12891,7 +12906,7 @@ else
                                                                             l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
                                                                             if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                                                                                 l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
-                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                                             endif
                                                                             return [<a class="GridLinkNormal DefaultLink" target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
                                                                          },;
@@ -13148,7 +13163,7 @@ else
                                                                             l_cName := ListOfReferenceTableAndColumns->Column_Name+FormatAKAForDisplay(ListOfReferenceTableAndColumns->Column_AKA)
                                                                             if ListOfReferenceTableAndColumns->Column_UsedBy <> USEDBY_ALLSERVERS
                                                                                 l_cURL  += [:]+trans(ListOfReferenceTableAndColumns->Column_UsedBy)
-                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL"},"")+[)]
+                                                                                l_cName += [ (]+GetItemInListAtPosition(ListOfReferenceTableAndColumns->Column_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                                             endif
                                                                             return [<a class="GridLinkNormal" target="_blank" href="]+l_cURL+[">]+TextToHtml(l_cName)+[</a>]
                                                                          },;

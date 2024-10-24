@@ -102,6 +102,13 @@ local l_lCurrentColumnAutoIncrement
 
 local l_nColumnUsedAs
 
+local l_cColumnCommentType
+local l_nColumnCommentLength
+local l_cColumnComment
+local l_nPos1
+local l_nPos2
+local l_nPos3
+
 do case
 case par_SQLEngineType == HB_ORM_ENGINETYPE_MYSQL
 case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
@@ -163,39 +170,60 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
     l_cSQLCommandEnums += [ ORDER BY namespace_name,enum_name;]
 // hb_orm_SendToDebugView("l_cSQLCommandEnums",l_cSQLCommandEnums)
 
-    l_cSQLCommandFields  := [SELECT columns.table_schema             AS namespace_name,]
-    l_cSQLCommandFields  += [       columns.table_name               AS table_name,]
-    l_cSQLCommandFields  += [       columns.ordinal_position         AS field_position,]
-    l_cSQLCommandFields  += [       columns.column_name              AS field_name,]
+
+    l_cSQLCommandFields  := [WITH unlogged_tables as ]+CRLF
+    l_cSQLCommandFields  += [(SELECT pg_namespace.nspname as namespace_name,]+CRLF
+    l_cSQLCommandFields  += [        pg_class.relname     as table_name]+CRLF
+    l_cSQLCommandFields  += [   FROM pg_class]+CRLF
+    l_cSQLCommandFields  += [   inner join pg_namespace on pg_namespace.oid = pg_class.relnamespace]+CRLF
+    l_cSQLCommandFields  += [   inner join pg_type      on pg_class.reltype = pg_type.oid]+CRLF
+    l_cSQLCommandFields  += [   where pg_class.relpersistence = 'u']+CRLF
+    l_cSQLCommandFields  += [   and   pg_type.typtype = 'c')]+CRLF
+
+    l_cSQLCommandFields  += [SELECT columns.table_schema             AS namespace_name,]+CRLF
+    l_cSQLCommandFields  += [       columns.table_name               AS table_name,]+CRLF
+    l_cSQLCommandFields  += [       columns.ordinal_position         AS field_position,]+CRLF
+    l_cSQLCommandFields  += [       columns.column_name              AS field_name,]+CRLF
+
+    l_cSQLCommandFields  += [       CASE WHEN unlogged_tables.table_name IS NULL THEN false]+CRLF
+    l_cSQLCommandFields  += [            ELSE true]+CRLF
+    l_cSQLCommandFields  += [            END AS table_is_unlogged,]+CRLF
+
 
     // l_cSQLCommandFields  += [       columns.data_type                AS field_type,]
     // l_cSQLCommandFields  += [       element_types.data_type          AS field_type_extra,]
 
-    l_cSQLCommandFields  += [      CASE]+CRLF
-    l_cSQLCommandFields  += [         WHEN columns.data_type = 'ARRAY' THEN element_types.data_type::text]+CRLF
-    l_cSQLCommandFields  += [        ELSE columns.data_type::text]+CRLF
-    l_cSQLCommandFields  += [      END AS field_type,]+CRLF
-    l_cSQLCommandFields  += [         CASE]+CRLF
-    l_cSQLCommandFields  += [         WHEN columns.data_type = 'ARRAY' THEN true]+CRLF
-    l_cSQLCommandFields  += [        ELSE false]+CRLF
-    l_cSQLCommandFields  += [      END AS field_array,]+CRLF
+    l_cSQLCommandFields  += [       CASE]+CRLF
+    l_cSQLCommandFields  += [          WHEN columns.data_type = 'ARRAY' THEN element_types.data_type::text]+CRLF
+    l_cSQLCommandFields  += [         ELSE columns.data_type::text]+CRLF
+    l_cSQLCommandFields  += [       END AS field_type,]+CRLF
+
+    l_cSQLCommandFields  += [       pgd.description                  AS field_comment,]+CRLF
+
+    l_cSQLCommandFields  += [       CASE]+CRLF
+    l_cSQLCommandFields  += [          WHEN columns.data_type = 'ARRAY' THEN true]+CRLF
+    l_cSQLCommandFields  += [         ELSE false]+CRLF
+    l_cSQLCommandFields  += [       END AS field_array,]+CRLF
 
 
-    l_cSQLCommandFields  += [       columns.character_maximum_length AS field_clength,]
-    l_cSQLCommandFields  += [       columns.numeric_precision        AS field_nlength,]
-    l_cSQLCommandFields  += [       columns.datetime_precision       AS field_tlength,]
-    l_cSQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]
-    l_cSQLCommandFields  += [       (columns.is_nullable = 'YES')    AS field_nullable,]
-    l_cSQLCommandFields  += [       columns.Column_Default           AS field_default,]
-    l_cSQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_is_identity,]
-    l_cSQLCommandFields  += [       columns.udt_name                 AS enumeration_name,]
-    l_cSQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]
-    l_cSQLCommandFields  += [       upper(columns.table_name)        AS tag2]
-    l_cSQLCommandFields  += [ FROM information_schema.columns]
-    l_cSQLCommandFields  += [ INNER JOIN information_schema.tables ON columns.table_catalog = columns.table_catalog AND columns.table_schema = tables.table_schema AND columns.table_name = tables.table_name]
-    l_cSQLCommandFields  += [ LEFT  JOIN information_schema.element_types ON ((columns.table_catalog, columns.table_schema, columns.table_name, 'TABLE', columns.dtd_identifier) = (element_types.object_catalog, element_types.object_schema, element_types.object_name, element_types.object_type, element_types.collection_type_identifier))]
-    l_cSQLCommandFields  += [ WHERE NOT (lower(left(columns.table_name,11)) = 'schemacache' OR lower(columns.table_schema) in ('information_schema','pg_catalog'))]
-    l_cSQLCommandFields  += [ AND   tables.table_type = 'BASE TABLE']
+    l_cSQLCommandFields  += [       columns.character_maximum_length AS field_clength,]+CRLF
+    l_cSQLCommandFields  += [       columns.numeric_precision        AS field_nlength,]+CRLF
+    l_cSQLCommandFields  += [       columns.datetime_precision       AS field_tlength,]+CRLF
+    l_cSQLCommandFields  += [       columns.numeric_scale            AS field_decimals,]+CRLF
+    l_cSQLCommandFields  += [       (columns.is_nullable = 'YES')    AS field_nullable,]+CRLF
+    l_cSQLCommandFields  += [       columns.Column_Default           AS field_default,]+CRLF
+    l_cSQLCommandFields  += [       (columns.is_identity = 'YES')    AS field_is_identity,]+CRLF
+    l_cSQLCommandFields  += [       columns.udt_name                 AS enumeration_name,]+CRLF
+    l_cSQLCommandFields  += [       upper(columns.table_schema)      AS tag1,]+CRLF
+    l_cSQLCommandFields  += [       upper(columns.table_name)        AS tag2]+CRLF
+    l_cSQLCommandFields  += [ FROM information_schema.columns]+CRLF
+    l_cSQLCommandFields  += [ INNER JOIN pg_catalog.pg_statio_all_tables AS st ON columns.table_schema = st.schemaname AND columns.table_name = st.relname]+CRLF
+    l_cSQLCommandFields  += [ INNER JOIN information_schema.tables ON columns.table_catalog = columns.table_catalog AND columns.table_schema = tables.table_schema AND columns.table_name = tables.table_name]+CRLF
+    l_cSQLCommandFields  += [ LEFT JOIN pg_catalog.pg_description pgd          ON pgd.objoid=st.relid AND pgd.objsubid=columns.ordinal_position]+CRLF
+    l_cSQLCommandFields  += [ LEFT JOIN information_schema.element_types ON ((columns.table_catalog, columns.table_schema, columns.table_name, 'TABLE', columns.dtd_identifier) = (element_types.object_catalog, element_types.object_schema, element_types.object_name, element_types.object_type, element_types.collection_type_identifier))]+CRLF
+    l_cSQLCommandFields  += [ LEFT JOIN unlogged_tables                        ON unlogged_tables.namespace_name = tables.table_schema AND unlogged_tables.table_name = tables.table_name]+CRLF
+    l_cSQLCommandFields  += [ WHERE NOT (lower(left(columns.table_name,11)) = 'schemacache' OR lower(columns.table_schema) in ('information_schema','pg_catalog'))]+CRLF
+    l_cSQLCommandFields  += [ AND   tables.table_type = 'BASE TABLE']+CRLF
     if !empty(par_cSyncNamespaces)
         l_cSQLCommandFields  += [ AND lower(columns.table_schema) in (]
         l_aNamespaces := hb_ATokens(par_cSyncNamespaces,",",.f.)
@@ -211,13 +239,13 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                 l_cSQLCommandFields += [']+lower(l_aNamespaces[l_iPosition])+[']
             endif
         endfor
-        l_cSQLCommandFields  += [)]
+        l_cSQLCommandFields  += [)]+CRLF
     endif
     l_cSQLCommandFields  += [ ORDER BY tag1,tag2,field_position]
 
 //hb_orm_SendToDebugView("l_cSQLCommandFields",l_cSQLCommandFields)
 
-// SendToClipboard(l_cSQLCommandFields)
+//SendToClipboard(l_cSQLCommandFields)
 
     l_cSQLCommandIndexes := [SELECT pg_indexes.schemaname        AS namespace_name,]
     l_cSQLCommandIndexes += [       pg_indexes.tablename         AS table_name,]
@@ -617,6 +645,43 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
 
                     l_iFk_Enumeration := 0
 
+
+
+// local l_cColumnCommentType
+// local l_nColumnCommentLength
+// local l_cColumnComment
+// local l_nPos1
+// local l_nPos2
+// local l_nPos3
+
+
+
+
+
+
+        //Parse the comment field to see if recorded the field type and its length
+        l_cColumnCommentType   := ""
+        l_nColumnCommentLength := 0
+        l_cColumnComment := nvl(ListOfFieldsForLoads->field_comment,"")
+        l_cColumnComment := upper(MemoLine(l_cColumnComment,1000,1))  // Extract first line of comment, max 1000 char length.   example:  Type=BV|Length=5  or Type=TOZ
+        if !empty(l_cColumnComment) 
+            l_nPos1 := at("|",l_cColumnComment)
+            l_nPos2 := at("TYPE=",l_cColumnComment)
+            l_nPos3 := at("LENGTH=",l_cColumnComment)
+            if l_nPos1 > 0 .and. l_nPos2 > 0 .and. l_nPos3 > 0
+                l_cColumnCommentType   := Alltrim(substr(l_cColumnComment,l_nPos2+len("TYPE="),l_nPos1-(l_nPos2+len("TYPE="))))
+                l_nColumnCommentLength := Val(substr(l_cColumnComment,l_nPos3+len("LENGTH=")))
+            elseif l_nPos2 > 0
+                l_cColumnCommentType   := Alltrim(substr(l_cColumnComment,l_nPos2+len("TYPE=")))
+                l_nColumnCommentLength := 0
+            endif
+        endif
+
+
+//FieldComment
+
+
+
                     // if ListOfFieldsForLoads->field_type == "USER-DEFINED"
                     //     altd()
                     // endif
@@ -683,9 +748,20 @@ case par_SQLEngineType == HB_ORM_ENGINETYPE_POSTGRESQL
                         exit
 
                     case "bytea"
-                        l_cColumnType   := "R"
-                        l_nColumnLength := NIL
-                        l_nColumnScale  := NIL
+                        do case
+                        case l_cColumnCommentType == "B"  .and. l_nColumnCommentLength > 0    // Binary fixed length
+                            l_cColumnType   := "B"
+                            l_nColumnLength := l_nColumnCommentLength
+                            l_nColumnScale  := 0
+                        case l_cColumnCommentType == "BV" .and. l_nColumnCommentLength > 0    // Binary variable length
+                            l_cColumnType   := "BV"
+                            l_nColumnLength := l_nColumnCommentLength
+                            l_nColumnScale  := 0
+                        otherwise 
+                            l_cColumnType   := "R"
+                            l_nColumnLength := NIL
+                            l_nColumnScale  := NIL
+                        endcase
                         exit
 
                     case "boolean"

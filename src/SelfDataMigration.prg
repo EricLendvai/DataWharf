@@ -521,6 +521,28 @@ with object oFcgi:p_o_SQLConnection
         :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
     endif
     //-----------------------------------------------------------------------------------
+    if l_iCurrentDataVersion < 33   //Had to rerun the step 30 due to a bug in initialization
+        with object l_oDB1
+            For each l_cTableName in {"Namespace","Table","Column","Enumeration","EnumValue","Index","TemplateTable","TemplateColumn","Tag"}
+                :Table("f9be0f0b-1a63-4442-a7e4-89cf2ce1745a",l_cTableName)
+                :Column(l_cTableName+".pk" , "pk")
+
+                :Where([Length(Trim(]+l_cTableName+[.UID)) = 0])
+                :SQL("ListOfRecordsToUpdate")
+                select ListOfRecordsToUpdate
+                scan all
+                    with object l_oDB2
+                        :Table("6480d156-77ad-43b1-880e-4f5a3aaa9c8f",l_cTableName)
+                        :Field(l_cTableName+".UID" , oFcgi:p_o_SQLConnection:GetUUIDString())
+                        :Update(ListOfRecordsToUpdate->pk)
+                    endwith
+                endscan
+            endfor
+        endwith
+        l_iCurrentDataVersion := 33
+        :SetSchemaDefinitionVersion("Core",l_iCurrentDataVersion)
+    endif
+    //-----------------------------------------------------------------------------------
 
 
     //-----------------------------------------------------------------------------------
@@ -535,5 +557,5 @@ endwith
 return l_iCurrentDataVersion
 //=================================================================================================================
 function GetLatestDataVersionNumber()
-return 32
+return 33
 //=================================================================================================================

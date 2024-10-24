@@ -1,11 +1,17 @@
 # DataWharf - Change Log
 
+## 10/23/2024 v 4.23
+* Updated Deployment tally on data dictionary tab to make the difference between system wide deployments and personal ones.
+* Fix Postgresql Delta false positives on binary fields with length.
+* Added "Oracle" as a "Used By" for Columns and Indexes.
+* Remove false positive data errors.
+* Fix off internal UID initialization for some data dictionary tables.
+
 ## 10/10/2024 v 4.22
 * UI and behavior changes for grids: Current row highlight, easier clicks on rows and cells to navigate, "stick" table headers when scrolling on long lists.
 * Changed DataWharf Logo. New config setting "COLOR_LOGO_TEXT" that compliments "COLOR_HEADER_BACKGROUND".
 * Deprecated the config setting "COLOR_HEADER_TEXT_WHITE" and introduced "COLOR_HEADER_TEXT" instead.
 * Config setting "APPLICATION_TITLE" is now used as a "Sub-Title" located under the DataWharf Logo.
-* New Harbour_FastCGI Repo Support.
 
 ## 09/21/2024 v 4.21
 * Default "Track Name Changes" to true.
