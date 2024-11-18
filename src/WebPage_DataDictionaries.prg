@@ -2432,7 +2432,7 @@ l_cHtml += [<div class="m-3">]
                                 "Rows"  =>{"Expression" => {|| 
                                                                 local l_cHtml := ""
                                                                 if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                    l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListNamespaces/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                                 endif
                                                                 return l_cHtml
                                                            },;
@@ -2451,7 +2451,7 @@ l_cHtml += [<div class="m-3">]
                                                                     l_nCountDiscontinued := 0
                                                                 endif
                                                                 if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                    l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListTables/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                                 endif
                                                                 return l_cHtml
                                                            },;
@@ -2500,7 +2500,7 @@ l_cHtml += [<div class="m-3">]
                                                                     l_nCountDiscontinued := 0
                                                                 endif
                                                                 if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                                    l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                                    l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumerations/]+alltrim(ListOfDataDictionaries->Application_LinkCode)+[/">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                                 endif
                                                                 return l_cHtml
                                                            },;
@@ -4445,7 +4445,7 @@ if !empty(l_nNumberOfTables)
                                                             endif
 
                                                             if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListColumns/]+l_cCombinedPath+;
+                                                                l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListColumns/]+l_cCombinedPath+;
                                                                                                                                 l_cColumnSearchParameters+[]+;
                                                                                                                                 [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                             endif
@@ -4464,7 +4464,7 @@ if !empty(l_nNumberOfTables)
                                                                 l_nCount             := 0
                                                                 l_nCountDiscontinued := 0
                                                             endif
-                                                            return [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                            return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListIndexes/]+l_cCombinedPath+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                        },;
                                        "Align" => "center"}})
 
@@ -4511,7 +4511,7 @@ if !empty(l_nNumberOfTables)
                                                                 l_nCount             := 0
                                                                 l_nCountDiscontinued := 0
                                                             endif
-                                                            return [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
+                                                            return [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/TableReferencedBy/]+l_cCombinedPath+l_cColumnSearchParameters+[">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
                                                        },;
                                        "Align" => "center"}})
 
@@ -6836,11 +6836,14 @@ l_cHtml += [<div class="m-3">]
             l_cHtml += [</span>]
 
             l_cHtml += [<span class="pe-5" id="SpanLength" style="display: none;">]
-                l_cHtml += [<span class="pe-2">Length</span><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLength" id="TextLength" value="]+FcgiPrepFieldForValue(l_cLength)+[" size="5" maxlength="5"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                l_cHtml += [<span class="pe-2">Length</span>]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextLength" id="TextLength" value="]+FcgiPrepFieldForValue(l_cLength)+[" size="5" maxlength="5"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
             l_cHtml += [</span>]
 
             l_cHtml += [<span class="pe-5" id="SpanScale" style="display: none;">]
-                l_cHtml += [<span class="pe-2">Scale</span><input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextScale" id="TextScale" value="]+FcgiPrepFieldForValue(l_cScale)+[" size="2" maxlength="2"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                l_cHtml += [<span class="pe-2">Scale</span>]
+                l_cHtml += [<input]+UPDATE_ONTEXTINPUT_SAVEBUTTON+[name="TextScale" id="TextScale" value="]+FcgiPrepFieldForValue(l_cScale)+[" size="2" maxlength="2"]+iif(oFcgi:p_nAccessLevelDD >= 5,[],[ disabled])+[>]
+                l_cHtml += [<span class="ps-3"><small>(Length includes Scale. Decimal Point not counted.)</small></span>]
             l_cHtml += [</span>]
 
             l_cHtml += [<span class="pe-5" id="SpanEnumeration" style="display: none;">]
@@ -8852,7 +8855,7 @@ if !empty(l_nNumberOfEnumerations)
                                                 l_nCountDiscontinued := 0
                                             endif
                                             if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
+                                                l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/ListEnumValues/]+par_cURLApplicationLinkCode+[/]+;
                                                            PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
                                                            PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                                                            [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
@@ -8883,7 +8886,7 @@ if !empty(l_nNumberOfEnumerations)
                                                 l_nCountDiscontinued := 0
                                             endif
                                             if l_nCountProposed+l_nCount+l_nCountDiscontinued > 0
-                                                l_cHtml += [<a href="]+oFcgi:p_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
+                                                l_cHtml += [<a class="GridLinkNormal" href="]+oFcgi:p_cSitePath+[DataDictionaries/EnumerationReferencedBy/]+par_cURLApplicationLinkCode+[/]+;
                                                            PrepareForURLSQLIdentifier("Namespace",ListOfEnumerations->Namespace_Name,ListOfEnumerations->Namespace_UID)+[/]+;
                                                            PrepareForURLSQLIdentifier("Enumeration",ListOfEnumerations->Enumeration_Name,ListOfEnumerations->Enumeration_UID)+[/]+;
                                                            [">]+GetFormattedUseStatusCounts(.t.,l_nCountProposed,l_nCount,l_nCountDiscontinued)+[</a>]
@@ -11877,7 +11880,7 @@ else
                                                                 l_cURL  += [:]+trans(ListOfTemplateColumns->TemplateColumn_UsedBy)
                                                                 l_cName += [ (]+GetItemInListAtPosition(ListOfTemplateColumns->TemplateColumn_UsedBy,{"","MySQL","PostgreSQL","Oracle"},"")+[)]
                                                             endif
-                                                            return [<a href="]+l_cURL+[/">]+l_cName+[</a>]
+                                                            return [<a class="GridLinkNormal DefaultLink" href="]+l_cURL+[/">]+l_cName+[</a>]
                                                        } }})
 
                 :AddColumn({"Header"=>{"Caption"=>"Type"},;

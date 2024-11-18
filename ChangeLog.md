@@ -1,5 +1,9 @@
 # DataWharf - Change Log
 
+## 11/17/2024 v 4.25
+* Minor UI Fix on Default click behavior on some table rows.
+* Minor UI Fix on Dropdown conflicting with Sticky tables.
+
 ## 10/24/2024 v 4.24
 * Fix positioning of "Sticky" "Tables" and "Enumerations" grid header when search option mode is changed.
 

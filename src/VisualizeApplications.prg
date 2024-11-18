@@ -2200,6 +2200,7 @@ local l_lWarnings := .f.
 local l_cCombinedPath
 local l_oData
 local l_oGrid
+// local l_lDiscontinued
 
 //oFcgi:p_nAccessLevelDD
 
@@ -2439,11 +2440,12 @@ if len(l_aNodes) == 1
             // Parent Of
             :Table("c9f6365d-fa6e-496d-95f9-c0266c79df49","Column")
             :Distinct(.t.)
-            :Column("Table.pk"       , "Table_pk")
-            :Column("Namespace.Name" , "Namespace_Name")
-            :Column("Namespace.AKA"  , "Namespace_AKA")
-            :Column("Table.Name"     , "Table_Name")
-            :Column("Table.AKA"      , "Table_AKA")
+            :Column("Table.pk"              , "Table_pk")
+            :Column("Namespace.Name"        , "Namespace_Name")
+            :Column("Namespace.AKA"         , "Namespace_AKA")
+            :Column("Table.Name"            , "Table_Name")
+            :Column("Table.AKA"             , "Table_AKA")
+            :Column("Table.UseStatus"       , "Table_UseStatus")
             :Column("upper(Namespace.Name)" , "tag1")
             :Column("upper(Table.Name)"     , "tag2")
             :Where("Column.fk_TableForeign = ^" , l_iTablePk)
@@ -2462,6 +2464,7 @@ if len(l_aNodes) == 1
                                                                ListOfRelatedTables->Namespace_AKA,;
                                                                ListOfRelatedTables->Table_Name,;
                                                                ListOfRelatedTables->Table_AKA,;
+                                                               ListOfRelatedTables->Table_UseStatus,;
                                                                .t.,.f.}   // Parent Of, Child Of
                 endscan
             endif
@@ -2474,6 +2477,7 @@ if len(l_aNodes) == 1
             :Column("Namespace.AKA"  , "Namespace_AKA")
             :Column("Table.Name"     , "Table_Name")
             :Column("Table.AKA"      , "Table_AKA")
+            :Column("Table.UseStatus", "Table_UseStatus")
             :Column("upper(Namespace.Name)" , "tag1")
             :Column("upper(Table.Name)"     , "tag2")
             :Where("Column.fk_Table = ^" , l_iTablePk)
@@ -2496,10 +2500,11 @@ if len(l_aNodes) == 1
                                                                    ListOfRelatedTables->Namespace_AKA,;
                                                                    ListOfRelatedTables->Table_Name,;
                                                                    ListOfRelatedTables->Table_AKA,;
+                                                                   ListOfRelatedTables->Table_UseStatus,;
                                                                    .f.,;    // Parent Of
-                                                                   .t.  }   // Child Of    8th array element
+                                                                   .t.  }   // Child Of    9th array element
                     else
-                        l_hRelatedTables[l_cRelatedTablesKey][8] := .t.
+                        l_hRelatedTables[l_cRelatedTablesKey][9] := .t.
                     endif
                 endscan
             endif
@@ -2911,28 +2916,39 @@ if len(l_aNodes) == 1
                 //     4 = Namespace_AKA
                 //     5 = Table_Name
                 //     6 = Table_AKA
-                //     7 = Parent Of
-                //     8 = Child Of
+                //     7 = Table_UseStatus
+                //     8 = Parent Of
+                //     9 = Child Of
                 l_cHtml += [<table class="">]
 
                 for each l_aRelatedTableInfo in l_hRelatedTables
-                    l_cHtml += [<tr><td>]
+                    l_cHtml += [<tr]
+                        do case
+                        case l_aRelatedTableInfo[7] == USESTATUS_PROPOSED
+                            l_cHtml += [ class="GridRowUsageStatusProposed"]
+                        case l_aRelatedTableInfo[7] == USESTATUS_UNDERDEVELOPMENT
+                            l_cHtml += [ class="GridRowUsageStatusUnderDevelopment"]
+                        case l_aRelatedTableInfo[7] == USESTATUS_TOBEDISCONTINUED
+                            l_cHtml += [ class="GridRowUsageStatusToBeDiscontinued"]
+                        case l_aRelatedTableInfo[7] == USESTATUS_DISCONTINUED
+                            l_cHtml += [ class="GridRowUsageStatusDiscontinued"]
+                        endcase
+                    l_cHtml += [><td>]
                         l_CheckBoxId := "CheckTable"+Trans(l_aRelatedTableInfo[2])
                         if !empty(l_cListOfRelatedTablePks)
                             l_cListOfRelatedTablePks += "*"
                         endif
                         l_cListOfRelatedTablePks += Trans(l_aRelatedTableInfo[2])
 
-                        // l_cHtml += [<input]+UPDATE_ONCHECKBOXINPUT_SAVEBUTTON+[name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input">]
                         l_cHtml += [<input type="checkbox" name="]+l_CheckBoxId+[" id="]+l_CheckBoxId+[" value="1"]+iif(l_aRelatedTableInfo[1]," checked","")+[ class="form-check-input"]+l_cDisabled+[>]
 
                         l_cHtml += [<label class="form-check-label" for="]+l_CheckBoxId+[">]
 
                         l_cHtml += TextToHTML(l_aRelatedTableInfo[3]+FormatAKAForDisplay(l_aRelatedTableInfo[4])+[.]+l_aRelatedTableInfo[5]+FormatAKAForDisplay(l_aRelatedTableInfo[6]))
-                        if l_aRelatedTableInfo[8]
+                        if l_aRelatedTableInfo[9]
                             l_cHtml += [<span class="bi bi-arrow-left ms-2">]
                         endif
-                        if l_aRelatedTableInfo[7]
+                        if l_aRelatedTableInfo[8]
                             l_cHtml += [<span class="bi bi-arrow-right ms-2">]
                         endif
 

@@ -1265,6 +1265,7 @@ try
     ::Print("<div>"+::TraceList(4)+"</div>")
 
     if !empty(l_cErrorInfo)
+        l_cErrorInfo := strtran(l_cErrorInfo,[<br>],chr(13))
         l_bSha256 := hb_SHA256(l_cErrorInfo,.t.)
         l_lNoPostgresConnection := (::p_o_SQLConnection == NIL) .or. (::RequestCount > 1 .and. !::p_o_SQLConnection:CheckIfStillConnected())
         if !l_lNoPostgresConnection
@@ -2900,6 +2901,7 @@ l_cJS += 'function RefreshGetMultiFlagSearchInput_'+par_cObjectName+'(){'
                                                                         "showAllSuggestions: true,"+;
                                                                         "keepLastOnHoverTag: false"+;
                                                                         [},"refresh");]
+        l_cJS += [$(".amsify-suggestags-list").css("z-index", "10000");]
         l_cJS += [}]
     l_cJS += '};'
 l_cJS += [</script>]
@@ -2912,7 +2914,8 @@ oFcgi:p_cjQueryScript += [$("#]+par_cObjectName+[").amsifySuggestags({]+;
                                                                 "selectOnHover: true,"+;
                                                                 "showAllSuggestions: true,"+;
                                                                 "keepLastOnHoverTag: false"+;
-                                                                [});]
+                                                                [});]+;
+                                                                [$(".amsify-suggestags-list").css("z-index", "10000");]
 
 l_cHtml := [<input type="text" name="]+par_cObjectName+[" id="]+par_cObjectName+[" size="]+Trans(par_nSize)+[" maxlength="10000" value="]+FcgiPrepFieldForValue(par_cCurrentValue)+[" class="form-control TextSearchTag" placeholder="">]
    //  style="width:100px;"     TextSearchTag
